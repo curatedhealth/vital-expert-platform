@@ -1,8 +1,8 @@
 'use client';
 
-import { LayoutGrid, List, Table as TableIcon, BarChart3 } from 'lucide-react';
+import { LayoutGrid, List, Table as TableIcon, BarChart3, Network, Kanban, TrendingUp } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { useAgentsFilter } from '@/contexts/agents-filter-context';
@@ -10,12 +10,19 @@ import { AgentDetailsModal } from '@/features/agents/components/agent-details-mo
 import { AgentsBoard } from '@/features/agents/components/agents-board';
 import { AgentsOverview } from '@/features/agents/components/agents-overview';
 import { AgentsTable } from '@/features/agents/components/agents-table';
+import { KnowledgeGraphVisualization } from '@/features/agents/components/knowledge-graph-view';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
 import { type Agent } from '@/lib/stores/chat-store';
 import { PageHeader } from '@/components/page-header';
 import { Users } from 'lucide-react';
+
+// Phase 2 & 3 Components
+import { AgentsTableVirtualized } from '@/features/agents/components/agents-table-virtualized';
+import { AgentsKanban } from '@/features/agents/components/agents-kanban';
+import { AgentsAnalyticsDashboard } from '@/features/agents/components/agents-analytics-dashboard';
+import { convertToClientAgent, generateMockUsageData, type ClientAgent } from '@/features/agents/types/agent-schema';
 
 function AgentsPageContent() {
   const router = useRouter();
@@ -26,7 +33,21 @@ function AgentsPageContent() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [editingAgent, setEditingAgent] = useState<AgentsStoreAgent | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'grid' | 'list' | 'table'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'grid' | 'list' | 'table' | 'kanban' | 'analytics' | 'graph'>('overview');
+
+  // Phase 2 & 3: Get agents from store and convert to ClientAgent format
+  const { agents: storeAgents } = useAgentsStore();
+  const clientAgents: ClientAgent[] = useMemo(
+    () => storeAgents.map(convertToClientAgent),
+    [storeAgents]
+  );
+
+  // Phase 3: Generate mock usage data for analytics (TODO: Replace with real data)
+  const usageData = useMemo(() => generateMockUsageData(clientAgents), [clientAgents]);
+
+  // Phase 2: Selection and sorting for virtual table
+  const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
+  const [sortConfig, setSortConfig] = useState<any>(null);
 
   const handleTabChange = (value: string) => {
     console.log('Tab changed to:', value);
@@ -120,6 +141,61 @@ function AgentsPageContent() {
     setEditingAgent(agentForEditing);
     setShowCreateModal(true);
     setSelectedAgent(null); // Close the details modal
+  };
+
+  // Phase 2: Handler for status change (used by Kanban)
+  const handleStatusChange = async (agentId: string, newStatus: string) => {
+    try {
+      const agent = storeAgents.find((a) => a.id === agentId);
+      if (!agent) return;
+
+      // TODO: Update agent status via API
+      console.log(`Updating agent ${agentId} status to ${newStatus}`);
+      // For now, just log - actual implementation would update via store/API
+    } catch (error) {
+      console.error('Failed to update agent status:', error);
+    }
+  };
+
+  // Phase 2: Handler for tier change (used by Kanban)
+  const handleTierChange = async (agentId: string, newTier: string) => {
+    try {
+      const agent = storeAgents.find((a) => a.id === agentId);
+      if (!agent) return;
+
+      // TODO: Update agent tier via API
+      console.log(`Updating agent ${agentId} tier to ${newTier}`);
+      // For now, just log - actual implementation would update via store/API
+    } catch (error) {
+      console.error('Failed to update agent tier:', error);
+    }
+  };
+
+  // Phase 2: Handler for virtual table agent selection
+  const handleVirtualTableAgentSelect = (agent: ClientAgent) => {
+    // Convert ClientAgent to chat-store Agent format
+    const chatStoreAgent: Agent = {
+      id: agent.id,
+      name: agent.name,
+      description: agent.description,
+      systemPrompt: agent.system_prompt || '',
+      model: agent.model || 'gpt-4',
+      avatar: agent.avatar || '🤖',
+      color: agent.color || 'text-market-purple',
+      capabilities: agent.capabilities || [],
+      ragEnabled: agent.rag_enabled || false,
+      temperature: agent.temperature || 0.7,
+      maxTokens: agent.max_tokens || 2000,
+      isCustom: agent.is_custom || false,
+      tools: [],
+      knowledgeDomains: agent.knowledge_domains || [],
+      businessFunction: agent.business_function || undefined,
+      department: agent.department || undefined,
+      organizationalRole: agent.organizational_role || agent.role || undefined,
+      tier: agent.tier || undefined,
+    };
+
+    setSelectedAgent(chatStoreAgent);
   };
 
   const handleAddAgentToChat = async (agent: AgentsStoreAgent) => {
@@ -256,7 +332,7 @@ function AgentsPageContent() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full max-w-md grid-cols-4 relative z-10 pointer-events-auto">
+        <TabsList className="grid w-full max-w-4xl grid-cols-7 relative z-10 pointer-events-auto">
           <TabsTrigger value="overview" className="flex items-center gap-2 cursor-pointer">
             <BarChart3 className="h-4 w-4" />
             Overview
@@ -272,6 +348,18 @@ function AgentsPageContent() {
           <TabsTrigger value="table" className="flex items-center gap-2 cursor-pointer">
             <TableIcon className="h-4 w-4" />
             Table
+          </TabsTrigger>
+          <TabsTrigger value="kanban" className="flex items-center gap-2 cursor-pointer">
+            <Kanban className="h-4 w-4" />
+            Kanban
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2 cursor-pointer">
+            <TrendingUp className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="graph" className="flex items-center gap-2 cursor-pointer">
+            <Network className="h-4 w-4" />
+            Graph
           </TabsTrigger>
         </TabsList>
 
@@ -310,10 +398,86 @@ function AgentsPageContent() {
         </TabsContent>
 
         <TabsContent value="table" className="mt-6">
-          <AgentsTable
-            onAgentSelect={handleAgentSelect}
-            onAddToChat={handleAddAgentToChat}
+          <div className="h-[calc(100vh-300px)]">
+            <AgentsTableVirtualized
+              agents={clientAgents}
+              onAgentSelect={handleVirtualTableAgentSelect}
+              selectedAgents={selectedAgentIds}
+              onSelectionChange={setSelectedAgentIds}
+              sortConfig={sortConfig}
+              onSortChange={setSortConfig}
+              onAddToChat={(agent) => {
+                // Convert ClientAgent to AgentsStoreAgent for addToChat
+                const storeAgent = storeAgents.find((a) => a.id === agent.id);
+                if (storeAgent) handleAddAgentToChat(storeAgent);
+              }}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="kanban" className="mt-6">
+          <AgentsKanban
+            agents={clientAgents}
+            groupBy="status"
+            onStatusChange={handleStatusChange}
+            onTierChange={handleTierChange}
+            onAgentClick={handleVirtualTableAgentSelect}
           />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-6">
+          <AgentsAnalyticsDashboard
+            agents={clientAgents}
+            usageData={usageData}
+          />
+        </TabsContent>
+
+        <TabsContent value="graph" className="mt-6">
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <Network className="w-6 h-6 text-blue-600" />
+                  Agent Knowledge Graph
+                </h2>
+                <p className="text-sm text-gray-600 mt-2">
+                  Interactive visualization of agent relationships, skills, tools, and knowledge domains using Neo4j, Pinecone, and Supabase.
+                  {selectedAgent ? ` Showing graph for: ${selectedAgent.name}` : ' Select an agent to view their knowledge graph.'}
+                </p>
+              </div>
+              
+              {selectedAgent ? (
+                <KnowledgeGraphVisualization
+                  agentId={selectedAgent.id}
+                  height="700px"
+                />
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
+                  <Network className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No Agent Selected
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Select an agent from the Grid, List, or Table view to visualize their knowledge graph
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      onClick={() => setActiveTab('grid')}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Go to Grid View
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('table')}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                    >
+                      Go to Table View
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 

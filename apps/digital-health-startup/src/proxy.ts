@@ -176,7 +176,13 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user }, error } = await supabase.auth.getUser();
   const userId = user?.id;
-  const isAuthenticated = !!user && !error;
+  let isAuthenticated = !!user && !error;
+
+  // DEVELOPMENT BYPASS: Skip auth check in development mode
+  if (process.env.NODE_ENV === 'development' && !isAuthenticated) {
+    console.warn('🔓 [Proxy] Development mode: Bypassing authentication for:', url.pathname);
+    isAuthenticated = true; // Pretend user is authenticated
+  }
 
   // Redirect unauthenticated users to login page (except for public routes)
   if (!isAuthenticated && !isPublicRoute) {

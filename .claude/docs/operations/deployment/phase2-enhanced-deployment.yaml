@@ -1,0 +1,801 @@
+# ===================================================================
+# VITAL Path Phase 2 Enhanced - Kubernetes Deployment Manifests
+# Complete system deployment for production Kubernetes cluster
+# ===================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vital-path
+  labels:
+    name: vital-path
+    version: "2.0"
+    environment: production
+
+---
+# ===================================================================
+# ConfigMaps and Secrets
+# ===================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vital-path-config
+  namespace: vital-path
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "info"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "vital_path"
+  MONGODB_HOST: "mongodb-service"
+  MONGODB_PORT: "27017"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"
+  PROMETHEUS_ENDPOINT: "http://prometheus-service:9090"
+  ELASTICSEARCH_HOST: "elasticsearch-service"
+  ELASTICSEARCH_PORT: "9200"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vital-path-secrets
+  namespace: vital-path
+type: Opaque
+stringData:
+  POSTGRES_PASSWORD: "change-me-in-production"
+  REDIS_PASSWORD: "change-me-in-production"
+  MONGODB_PASSWORD: "change-me-in-production"
+  JWT_SECRET: "change-me-in-production"
+  SECRET_KEY: "change-me-in-production"
+  SUPABASE_SERVICE_ROLE_KEY: "change-me-in-production"
+  OPENAI_API_KEY: "change-me-in-production"
+
+---
+# ===================================================================
+# Enterprise Master Orchestrator
+# ===================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enterprise-orchestrator
+  namespace: vital-path
+  labels:
+    app: enterprise-orchestrator
+    version: "2.0"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: enterprise-orchestrator
+  template:
+    metadata:
+      labels:
+        app: enterprise-orchestrator
+        version: "2.0"
+    spec:
+      containers:
+      - name: orchestrator
+        image: vital-path/enterprise-orchestrator:2.0
+        ports:
+        - containerPort: 8001
+        - containerPort: 9090
+        env:
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: vital-path-config
+              key: ENVIRONMENT
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: vital-path-config
+              key: REDIS_HOST
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: vital-path-secrets
+              key: REDIS_PASSWORD
+        - name: POSTGRES_URL
+          value: "postgresql://vital_path:$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: vital-path-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: vital-path-config
+              key: POSTGRES_HOST
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: vital-path-config
+              key: POSTGRES_DB
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orchestrator-service
+  namespace: vital-path
+  labels:
+    app: enterprise-orchestrator
+spec:
+  selector:
+    app: enterprise-orchestrator
+  ports:
+  - name: http
+    port: 8001
+    targetPort: 8001
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+  type: ClusterIP
+
+---
+# ===================================================================
+# Clinical Agent Registry
+# ===================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clinical-agent-registry
+  namespace: vital-path
+  labels:
+    app: clinical-agent-registry
+    version: "2.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: clinical-agent-registry
+  template:
+    metadata:
+      labels:
+        app: clinical-agent-registry
+        version: "2.0"
+    spec:
+      containers:
+      - name: agent-registry
+        image: vital-path/clinical-agent-registry:2.0
+        ports:
+        - containerPort: 8003
+        - containerPort: 9090
+        env:
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: vital-path-config
+              key: ENVIRONMENT
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: vital-path-config
+              key: REDIS_HOST
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: vital-path-secrets
+              key: REDIS_PASSWORD
+        - name: POSTGRES_URL
+          value: "postgresql://vital_path:$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: vital-path-secrets
+              key: POSTGRES_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-registry-service
+  namespace: vital-path
+  labels:
+    app: clinical-agent-registry
+spec:
+  selector:
+    app: clinical-agent-registry
+  ports:
+  - name: http
+    port: 8003
+    targetPort: 8003
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+  type: ClusterIP
+
+---
+# ===================================================================
+# Clinical Prompt Library
+# ===================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clinical-prompt-library
+  namespace: vital-path
+  labels:
+    app: clinical-prompt-library
+    version: "2.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: clinical-prompt-library
+  template:
+    metadata:
+      labels:
+        app: clinical-prompt-library
+        version: "2.0"
+    spec:
+      containers:
+      - name: prompt-library
+        image: vital-path/clinical-prompt-library:2.0
+        ports:
+        - containerPort: 8002
+        - containerPort: 9090
+        env:
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: vital-path-config
+              key: ENVIRONMENT
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: vital-path-config
+              key: REDIS_HOST
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: vital-path-secrets
+              key: REDIS_PASSWORD
+        - name: POSTGRES_URL
+          value: "postgresql://vital_path:$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: vital-path-secrets
+              key: POSTGRES_PASSWORD
+        - name: HIPAA_COMPLIANCE_ENABLED
+          value: "true"
+        - name: FDA_COMPLIANCE_ENABLED
+          value: "true"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prompt-library-service
+  namespace: vital-path
+  labels:
+    app: clinical-prompt-library
+spec:
+  selector:
+    app: clinical-prompt-library
+  ports:
+  - name: http
+    port: 8002
+    targetPort: 8002
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+  type: ClusterIP
+
+---
+# ===================================================================
+# Real-time Advisory Board
+# ===================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: advisory-board
+  namespace: vital-path
+  labels:
+    app: advisory-board
+    version: "2.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: advisory-board
+  template:
+    metadata:
+      labels:
+        app: advisory-board
+        version: "2.0"
+    spec:
+      containers:
+      - name: advisory-board
+        image: vital-path/advisory-board:2.0
+        ports:
+        - containerPort: 8004
+        - containerPort: 9090
+        env:
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: vital-path-config
+              key: ENVIRONMENT
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: vital-path-config
+              key: REDIS_HOST
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: vital-path-secrets
+              key: REDIS_PASSWORD
+        - name: POSTGRES_URL
+          value: "postgresql://vital_path:$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: vital-path-secrets
+              key: POSTGRES_PASSWORD
+        - name: WEBSOCKET_ENABLED
+          value: "true"
+        - name: SESSION_RECORDING_ENABLED
+          value: "true"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8004
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8004
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: advisory-board-service
+  namespace: vital-path
+  labels:
+    app: advisory-board
+spec:
+  selector:
+    app: advisory-board
+  ports:
+  - name: http
+    port: 8004
+    targetPort: 8004
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+  type: ClusterIP
+
+---
+# ===================================================================
+# Frontend Application
+# ===================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: vital-path
+  labels:
+    app: frontend
+    version: "2.0"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+        version: "2.0"
+    spec:
+      containers:
+      - name: frontend
+        image: vital-path/frontend:2.0
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: NEXT_PUBLIC_ORCHESTRATOR_URL
+          value: "http://orchestrator-service:8001"
+        - name: NEXT_PUBLIC_AGENT_REGISTRY_URL
+          value: "http://agent-registry-service:8003"
+        - name: NEXT_PUBLIC_PROMPT_LIBRARY_URL
+          value: "http://prompt-library-service:8002"
+        - name: NEXT_PUBLIC_ADVISORY_BOARD_URL
+          value: "http://advisory-board-service:8004"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: vital-path
+  labels:
+    app: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+  type: ClusterIP
+
+---
+# ===================================================================
+# Infrastructure Services
+# ===================================================================
+
+# PostgreSQL Database
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: vital-path
+  labels:
+    app: postgres
+spec:
+  serviceName: "postgres-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: vital-path-config
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          value: "vital_path"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: vital-path-secrets
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - vital_path
+            - -d
+            - vital_path
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - vital_path
+            - -d
+            - vital_path
+          initialDelaySeconds: 10
+          periodSeconds: 10
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 20Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: vital-path
+  labels:
+    app: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+
+---
+# Redis Cache
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: vital-path
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        args:
+        - redis-server
+        - --requirepass
+        - $(REDIS_PASSWORD)
+        - --appendonly
+        - "yes"
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: vital-path-secrets
+              key: REDIS_PASSWORD
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: vital-path
+  labels:
+    app: redis
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP
+
+---
+# ===================================================================
+# Ingress Controller
+# ===================================================================
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vital-path-ingress
+  namespace: vital-path
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - vital-path.example.com
+    - api.vital-path.example.com
+    secretName: vital-path-tls
+  rules:
+  - host: vital-path.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 3000
+  - host: api.vital-path.example.com
+    http:
+      paths:
+      - path: /orchestrator
+        pathType: Prefix
+        backend:
+          service:
+            name: orchestrator-service
+            port:
+              number: 8001
+      - path: /agents
+        pathType: Prefix
+        backend:
+          service:
+            name: agent-registry-service
+            port:
+              number: 8003
+      - path: /prompts
+        pathType: Prefix
+        backend:
+          service:
+            name: prompt-library-service
+            port:
+              number: 8002
+      - path: /advisory
+        pathType: Prefix
+        backend:
+          service:
+            name: advisory-board-service
+            port:
+              number: 8004
+
+---
+# ===================================================================
+# Horizontal Pod Autoscaler
+# ===================================================================
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: orchestrator-hpa
+  namespace: vital-path
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: enterprise-orchestrator
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend-hpa
+  namespace: vital-path
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  minReplicas: 3
+  maxReplicas: 15
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70

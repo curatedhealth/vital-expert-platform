@@ -1,0 +1,221 @@
+# VITAL Platform - Directory Structure
+
+**Last Updated**: November 23, 2025
+**Version**: 4.0 - Clean Documentation Structure
+
+---
+
+## 📂 Current Root Structure
+
+```
+VITAL-platform/
+│
+├── .claude/                     ← 🎛️ Claude Code Command Center (SINGLE SOURCE OF TRUTH)
+│   ├── README.md                ← Command Center overview
+│   ├── INDEX.md                 ← Master navigation (deprecated - use docs/INDEX.md)
+│   ├── STRUCTURE.md             ← This file
+│   ├── CATALOGUE.md             ← Complete catalog
+│   ├── MASTER_DOCUMENTATION_INDEX.md (deprecated)
+│   ├── CONSOLIDATION_COMPLETE.md ← Migration history
+│   │
+│   ├── CLAUDE.md                ← Claude operational rules
+│   ├── VITAL.md                 ← VITAL Platform standards
+│   ├── EVIDENCE_BASED_RULES.md  ← Evidence-based operation policy
+│   ├── settings.local.json      ← Claude Code settings
+│   │
+│   ├── agents/                  ← 🤖 14 Production Agents
+│   │   ├── ask-expert-service-agent.md
+│   │   ├── ask-panel-service-agent.md
+│   │   ├── business-analytics-strategist.md
+│   │   ├── byoai-orchestration-service-agent.md
+│   │   ├── data-architecture-expert.md
+│   │   ├── documentation-qa-lead.md
+│   │   ├── frontend-ui-architect.md
+│   │   ├── implementation-compliance-qa-agent.md
+│   │   ├── langgraph-workflow-translator.md
+│   │   ├── prd-architect.md
+│   │   ├── python-ai-ml-engineer.md
+│   │   ├── sql-supabase-specialist.md
+│   │   ├── strategy-vision-architect.md
+│   │   └── system-architecture-architect.md
+│   │
+│   └── docs/                    ← 📚 DOCUMENTATION (SINGLE SOURCE OF TRUTH)
+│       ├── README.md            ← Documentation overview (START HERE)
+│       ├── INDEX.md             ← Quick navigation index
+│       │
+│       ├── strategy/            ← Vision, Strategy, Business
+│       │   ├── vision/          ← Platform vision documents
+│       │   ├── prd/             ← Product Requirements Documents
+│       │   ├── ard/             ← Architecture Requirements Documents
+│       │   ├── business/        ← Business requirements
+│       │   └── roadmap/         ← Product roadmap
+│       │
+│       ├── platform/            ← Platform Assets & Resources
+│       │   ├── agents/          ← Agent definitions (distinct from .claude/agents/)
+│       │   ├── personas/        ← User personas
+│       │   ├── prompts/         ← Prompt library
+│       │   ├── workflows/       ← Workflow templates
+│       │   ├── jtbds/           ← Jobs-to-be-done
+│       │   ├── knowledge-domains/ ← Knowledge domain definitions
+│       │   ├── capabilities/    ← Platform capabilities
+│       │   └── skills/          ← Skill definitions
+│       │
+│       ├── services/            ← Service Documentation
+│       │   ├── ask-expert/      ← Ask Expert (1:1 consultation)
+│       │   ├── ask-panel/       ← Ask Panel (multi-expert)
+│       │   ├── ask-committee/   ← Ask Committee (deliberation)
+│       │   └── byoai-orchestration/ ← BYOAI custom workflows
+│       │
+│       ├── architecture/        ← Technical Architecture
+│       │   ├── data-schema/     ← Database schemas (383 files)
+│       │   ├── architecture/    ← System architecture docs
+│       │   ├── api/             ← API specifications
+│       │   ├── backend/         ← Backend architecture
+│       │   ├── frontend/        ← Frontend architecture
+│       │   ├── infrastructure/  ← Infrastructure as code
+│       │   └── rag-pipeline/    ← RAG pipeline design
+│       │
+│       ├── workflows/           ← Workflow Guides
+│       │   └── WORKFLOW-DESIGNER-GUIDE.md
+│       │
+│       ├── operations/          ← Operations & DevOps
+│       │   ├── deployment/      ← Deployment guides
+│       │   ├── monitoring/      ← Monitoring setup
+│       │   ├── maintenance/     ← Maintenance procedures
+│       │   ├── runbooks/        ← Operational runbooks
+│       │   └── scripts/         ← Operational scripts
+│       │
+│       ├── testing/             ← Testing Documentation
+│       │   ├── testing/         ← Test strategies
+│       │   ├── compliance/      ← Compliance testing
+│       │   ├── performance/     ← Performance testing
+│       │   └── security/        ← Security testing
+│       │
+│       └── coordination/        ← Agent Coordination Guides
+│           ├── AGENT_COORDINATION_GUIDE.md
+│           ├── AGENT_IMPLEMENTATION_GUIDE.md
+│           ├── AGENTS_DOCUMENTATION_GUIDE.md
+│           ├── QUICK_START_VISUAL_GUIDE.md
+│           ├── RECOMMENDED_AGENT_STRUCTURE.md
+│           ├── SQL_SUPABASE_SPECIALIST_GUIDE.md
+│           ├── DOCUMENTATION_CONVENTION.md
+│           └── VITAL_SYSTEM_SOURCE_OF_TRUTH.md
+│
+├── apps/                        ← ✅ Frontend applications (active code)
+│   ├── vital-system/            ← Main application (source of truth)
+│   ├── digital-health-startup/
+│   ├── consulting/
+│   ├── pharma/
+│   └── payers/
+│
+├── packages/                    ← ✅ Shared packages (active code)
+│   ├── ui/
+│   ├── sdk/
+│   ├── config/
+│   └── utils/
+│
+├── services/                    ← ✅ Backend services (active code)
+│   └── ai-engine/               ← Python FastAPI + LangGraph
+│
+├── database/                    ← ✅ Production database files
+├── logs/                        ← ✅ Runtime logs
+├── node_modules/                ← ✅ Dependencies
+├── README.md                    ← ✅ Platform entry point
+└── [config files]               ← ✅ .env, .gitignore, railway.toml, etc.
+
+✅ = Active/Essential (keep at root)
+```
+
+---
+
+## 🎯 Key Principles
+
+### Single Source of Truth
+- **All Documentation**: `.claude/docs/` (645+ files)
+- **All Agents**: `.claude/agents/` (14 agents)
+- **All Rules**: `.claude/` root (CLAUDE.md, VITAL.md, EVIDENCE_BASED_RULES.md)
+
+### Clean Separation
+- **Claude Resources**: `.claude/` (config, agents, docs, rules)
+- **Application Code**: `apps/`, `packages/`, `services/` (active development)
+- **Infrastructure**: `database/`, `logs/`, config files
+
+### Logical Organization
+- **8 Categories**: strategy, platform, services, architecture, workflows, operations, testing, coordination
+- **Clear Hierarchy**: Category → Subcategory → Documents
+- **Easy Navigation**: README.md + INDEX.md in docs/
+
+---
+
+## 🔗 Quick Access
+
+### For Everything Claude Code
+```bash
+cd .claude
+cat README.md          # Command Center overview
+cat docs/README.md     # Documentation overview
+cat docs/INDEX.md      # Quick navigation
+```
+
+### For Agents
+```bash
+cd .claude/agents
+ls -la                 # List all 14 agents
+```
+
+### For Documentation
+```bash
+cd .claude/docs
+cat README.md          # Start here
+cat INDEX.md           # Navigate by category/role/topic
+```
+
+### For Coordination
+```bash
+cd .claude/docs/coordination
+cat AGENT_COORDINATION_GUIDE.md
+```
+
+---
+
+## 📊 Documentation Statistics
+
+**Total Files**: 645+ markdown files
+**Categories**: 8 main categories
+**Agents**: 14 production-ready agents
+**Rules**: 3 core rule documents
+
+---
+
+## 🆕 What Changed (v4.0)
+
+### Simplified Structure
+- ✅ Merged `vital-expert-docs/` into `docs/`
+- ✅ Single documentation location
+- ✅ Cleaner category names
+- ✅ Better navigation
+
+### Before (v3.0)
+```
+.claude/
+├── docs/              ← Agent coordination only
+└── vital-expert-docs/ ← Platform documentation
+```
+
+### After (v4.0)
+```
+.claude/
+└── docs/              ← EVERYTHING (645+ files)
+    ├── strategy/
+    ├── platform/
+    ├── services/
+    ├── architecture/
+    ├── workflows/
+    ├── operations/
+    ├── testing/
+    └── coordination/
+```
+
+---
+
+**Next Steps**: See `.claude/docs/README.md` for complete documentation guide

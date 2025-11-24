@@ -480,7 +480,8 @@ def create_initial_state(
         session_id=session_id,
         
         # Lists (empty defaults)
-        selected_agents=[],
+        # FIXED: Map agent_id kwarg to selected_agents list (for Mode 1 manual selection)
+        selected_agents=[kwargs.get('agent_id')] if kwargs.get('agent_id') else [],
         retrieved_documents=[],
         agent_responses=[],
         errors=[],

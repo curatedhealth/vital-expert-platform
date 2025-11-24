@@ -19,8 +19,25 @@ import {
 } from '@/lib/errors/agent-errors';
 
 // Get Supabase credentials from environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Support multiple environment variable naming conventions
+const supabaseUrl = 
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 
+  process.env.SUPABASE_URL || 
+  process.env.NEW_SUPABASE_URL ||
+  '';
+
+const supabaseServiceKey = 
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 
+  process.env.NEW_SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_SERVICE_KEY ||
+  '';
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('❌ Supabase credentials missing:', {
+    hasUrl: !!supabaseUrl,
+    hasServiceKey: !!supabaseServiceKey,
+  });
+}
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 

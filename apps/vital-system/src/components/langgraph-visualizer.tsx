@@ -46,7 +46,8 @@ import {
   Download,
   Upload,
 } from 'lucide-react';
-import { getLangGraphState } from '@/features/chat/services/langgraph-mode-orchestrator';
+// NOTE: Commenting out server-side import to prevent 'fs' module error in client component
+// import { getLangGraphState } from '@/features/chat/services/langgraph-mode-orchestrator';
 
 // Custom Node Component for LangGraph workflow nodes
 function LangGraphNode({ data }: { data: any }) {
@@ -147,19 +148,20 @@ export function LangGraphWorkflowVisualizer({
   const [state, setState] = useState(workflowState);
   const [executionHistory, setExecutionHistory] = useState<any[]>([]);
 
+  // NOTE: Commented out to prevent server-side import issue
   // Load state from sessionId if provided
-  useEffect(() => {
-    if (sessionId && !workflowState) {
-      setIsLoading(true);
-      getLangGraphState(sessionId)
-        .then((loadedState) => {
-          if (loadedState) {
-            setState(loadedState.values);
-          }
-        })
-        .finally(() => setIsLoading(false));
-    }
-  }, [sessionId, workflowState]);
+  // useEffect(() => {
+  //   if (sessionId && !workflowState) {
+  //     setIsLoading(true);
+  //     getLangGraphState(sessionId)
+  //       .then((loadedState) => {
+  //         if (loadedState) {
+  //           setState(loadedState.values);
+  //         }
+  //       })
+  //       .finally(() => setIsLoading(false));
+  //   }
+  // }, [sessionId, workflowState]);
 
   // Generate nodes and edges from LangGraph workflow structure
   const { initialNodes, initialEdges } = useMemo(() => {

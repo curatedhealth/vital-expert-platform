@@ -1,0 +1,675 @@
+{
+  "table": "org_roles",
+  "version": "2.0.0",
+  "description": "Job roles and positions within pharmaceutical/biotech organizations with comprehensive metadata",
+  "sourceFile": "supabase/migrations/20251120000002_comprehensive_schema.sql",
+  "primaryKey": "id",
+  "indexes": [
+    {
+      "name": "org_roles_pkey",
+      "columns": ["id"],
+      "unique": true,
+      "type": "btree"
+    },
+    {
+      "name": "org_roles_unique_id_key",
+      "columns": ["unique_id"],
+      "unique": true,
+      "type": "btree"
+    },
+    {
+      "name": "idx_org_roles_function_id",
+      "columns": ["function_id"],
+      "type": "btree"
+    },
+    {
+      "name": "idx_org_roles_department_id",
+      "columns": ["department_id"],
+      "type": "btree"
+    },
+    {
+      "name": "idx_org_roles_tenant_id",
+      "columns": ["tenant_id"],
+      "type": "btree"
+    },
+    {
+      "name": "idx_org_roles_reports_to",
+      "columns": ["reports_to_role_id"],
+      "type": "btree"
+    },
+    {
+      "name": "idx_org_roles_is_active",
+      "columns": ["is_active"],
+      "type": "btree",
+      "where": "is_active = true"
+    },
+    {
+      "name": "idx_org_roles_seniority",
+      "columns": ["seniority_level"],
+      "type": "btree"
+    },
+    {
+      "name": "idx_org_roles_search",
+      "columns": ["search_vector"],
+      "type": "gin"
+    },
+    {
+      "name": "idx_org_roles_role_type",
+      "columns": ["role_type"],
+      "type": "btree",
+      "proposed": true
+    },
+    {
+      "name": "idx_org_roles_gxp_critical",
+      "columns": ["gxp_critical"],
+      "type": "btree",
+      "where": "gxp_critical = true",
+      "proposed": true
+    },
+    {
+      "name": "idx_org_roles_regulatory",
+      "columns": ["regulatory_oversight"],
+      "type": "btree",
+      "where": "regulatory_oversight = true",
+      "proposed": true
+    }
+  ],
+  "columns": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": false,
+      "default": "uuid_generate_v4()",
+      "description": "Unique identifier for the role",
+      "primaryKey": true
+    },
+    {
+      "name": "unique_id",
+      "type": "varchar(50)",
+      "nullable": false,
+      "unique": true,
+      "description": "Human-readable unique identifier (e.g., MSL-001, CRA-002)",
+      "validationRules": {
+        "pattern": "^[A-Z0-9-]+$",
+        "minLength": 3,
+        "maxLength": 50
+      }
+    },
+    {
+      "name": "role_name",
+      "type": "varchar(255)",
+      "nullable": false,
+      "description": "Display name of the role (e.g., Medical Science Liaison)",
+      "validationRules": {
+        "minLength": 2,
+        "maxLength": 255
+      }
+    },
+    {
+      "name": "role_title",
+      "type": "varchar(255)",
+      "nullable": true,
+      "description": "Alternative or official title for the role"
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "nullable": true,
+      "description": "Detailed description of role responsibilities and scope"
+    },
+    {
+      "name": "seniority_level",
+      "type": "varchar(50)",
+      "nullable": true,
+      "description": "Organizational seniority level",
+      "enum": ["Executive", "Senior", "Mid", "Junior", "Entry"],
+      "constraintName": "org_roles_seniority_level_check"
+    },
+    {
+      "name": "reports_to_role_id",
+      "type": "uuid",
+      "nullable": true,
+      "description": "Role this position reports to (hierarchical relationship)",
+      "foreignKey": {
+        "table": "org_roles",
+        "column": "id",
+        "onDelete": "SET NULL"
+      }
+    },
+    {
+      "name": "function_area",
+      "type": "varchar(255)",
+      "nullable": true,
+      "description": "Legacy text field for function area (prefer function_id)",
+      "deprecated": false,
+      "notes": "Maintained for backward compatibility"
+    },
+    {
+      "name": "department_name",
+      "type": "varchar(255)",
+      "nullable": true,
+      "description": "Legacy text field for department name (prefer department_id)",
+      "deprecated": false,
+      "notes": "Maintained for backward compatibility"
+    },
+    {
+      "name": "required_skills",
+      "type": "text[]",
+      "nullable": true,
+      "description": "DEPRECATED: Array of required skills (migrating to role_skills junction table)",
+      "deprecated": true,
+      "deprecationNote": "Migrate to role_skills junction table in phase 4",
+      "replacedBy": "role_skills junction table"
+    },
+    {
+      "name": "required_certifications",
+      "type": "text[]",
+      "nullable": true,
+      "description": "DEPRECATED: Array of required certifications (migrating to role_certifications junction table)",
+      "deprecated": true,
+      "deprecationNote": "Migrate to role_certifications junction table in phase 4",
+      "replacedBy": "role_certifications junction table"
+    },
+    {
+      "name": "years_experience_min",
+      "type": "integer",
+      "nullable": true,
+      "description": "Minimum years of experience required",
+      "validationRules": {
+        "min": 0,
+        "max": 50
+      }
+    },
+    {
+      "name": "years_experience_max",
+      "type": "integer",
+      "nullable": true,
+      "description": "Maximum years of experience (for targeting/planning)",
+      "validationRules": {
+        "min": 0,
+        "max": 50
+      }
+    },
+    {
+      "name": "migration_ready",
+      "type": "boolean",
+      "nullable": false,
+      "default": "false",
+      "description": "Flag indicating role data is ready for migration/export"
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "nullable": false,
+      "default": "true",
+      "description": "Whether the role is currently active in the organization"
+    },
+    {
+      "name": "function_id",
+      "type": "uuid",
+      "nullable": true,
+      "description": "Reference to organizational function this role belongs to",
+      "foreignKey": {
+        "table": "org_functions",
+        "column": "id",
+        "onDelete": "SET NULL"
+      }
+    },
+    {
+      "name": "department_id",
+      "type": "uuid",
+      "nullable": true,
+      "description": "Reference to department this role belongs to",
+      "foreignKey": {
+        "table": "org_departments",
+        "column": "id",
+        "onDelete": "SET NULL"
+      }
+    },
+    {
+      "name": "tenant_id",
+      "type": "uuid",
+      "nullable": true,
+      "description": "Multi-tenancy isolation - organization this role belongs to",
+      "foreignKey": {
+        "table": "tenants",
+        "column": "id",
+        "onDelete": "CASCADE"
+      }
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "NOW()",
+      "description": "Record creation timestamp"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "NOW()",
+      "description": "Record last update timestamp"
+    },
+    {
+      "name": "created_by",
+      "type": "varchar(255)",
+      "nullable": true,
+      "description": "User who created this record"
+    },
+    {
+      "name": "updated_by",
+      "type": "varchar(255)",
+      "nullable": true,
+      "description": "User who last updated this record"
+    },
+    {
+      "name": "search_vector",
+      "type": "tsvector",
+      "nullable": true,
+      "description": "Full-text search vector (auto-generated)",
+      "generatedAlways": true,
+      "generationExpression": "to_tsvector('english', coalesce(role_name, '') || ' ' || coalesce(role_title, '') || ' ' || coalesce(description, ''))",
+      "stored": true
+    },
+    {
+      "name": "role_type",
+      "type": "varchar(50)",
+      "nullable": true,
+      "description": "High-level role categorization specific to pharma/biotech",
+      "enum": ["Clinical", "Research", "Regulatory", "Commercial", "Operations", "Support", "Leadership"],
+      "constraintName": "org_roles_role_type_check",
+      "proposed": true,
+      "pharmaSpecific": true
+    },
+    {
+      "name": "regulatory_oversight",
+      "type": "boolean",
+      "nullable": false,
+      "default": "false",
+      "description": "Whether role has regulatory oversight responsibilities",
+      "proposed": true,
+      "pharmaSpecific": true
+    },
+    {
+      "name": "gxp_critical",
+      "type": "boolean",
+      "nullable": false,
+      "default": "false",
+      "description": "Whether role involves GxP compliance activities (GCP, GLP, GMP, GVP)",
+      "proposed": true,
+      "pharmaSpecific": true
+    },
+    {
+      "name": "patient_facing",
+      "type": "boolean",
+      "nullable": false,
+      "default": "false",
+      "description": "Whether role involves direct patient interaction",
+      "proposed": true,
+      "pharmaSpecific": true
+    },
+    {
+      "name": "safety_critical",
+      "type": "boolean",
+      "nullable": false,
+      "default": "false",
+      "description": "Whether role involves pharmacovigilance or safety responsibilities",
+      "proposed": true,
+      "pharmaSpecific": true
+    },
+    {
+      "name": "travel_requirement_pct",
+      "type": "integer",
+      "nullable": true,
+      "description": "Percentage of time required for travel (0-100)",
+      "validationRules": {
+        "min": 0,
+        "max": 100
+      },
+      "constraintName": "org_roles_travel_requirement_pct_check",
+      "proposed": true
+    },
+    {
+      "name": "remote_eligible",
+      "type": "boolean",
+      "nullable": false,
+      "default": "false",
+      "description": "Whether role is eligible for remote work",
+      "proposed": true
+    },
+    {
+      "name": "oncall_required",
+      "type": "boolean",
+      "nullable": false,
+      "default": "false",
+      "description": "Whether role requires on-call rotation",
+      "proposed": true
+    },
+    {
+      "name": "salary_band_min",
+      "type": "integer",
+      "nullable": true,
+      "description": "Minimum salary for the role (for planning purposes)",
+      "proposed": true,
+      "notes": "Store as integer (e.g., 75000 for $75,000)"
+    },
+    {
+      "name": "salary_band_max",
+      "type": "integer",
+      "nullable": true,
+      "description": "Maximum salary for the role (for planning purposes)",
+      "proposed": true,
+      "notes": "Store as integer (e.g., 120000 for $120,000)"
+    },
+    {
+      "name": "salary_currency",
+      "type": "varchar(3)",
+      "nullable": false,
+      "default": "'USD'",
+      "description": "ISO 4217 currency code for salary band",
+      "validationRules": {
+        "pattern": "^[A-Z]{3}$",
+        "length": 3
+      },
+      "proposed": true
+    },
+    {
+      "name": "job_family",
+      "type": "varchar(100)",
+      "nullable": true,
+      "description": "HR job family classification (e.g., 'Medical Affairs', 'Clinical Operations')",
+      "proposed": true
+    },
+    {
+      "name": "career_level",
+      "type": "varchar(50)",
+      "nullable": true,
+      "description": "Career progression level (e.g., 'IC1', 'IC2', 'M1', 'M2')",
+      "proposed": true
+    },
+    {
+      "name": "succession_planning_priority",
+      "type": "integer",
+      "nullable": true,
+      "description": "Priority score for succession planning (0-100, higher = more critical)",
+      "validationRules": {
+        "min": 0,
+        "max": 100
+      },
+      "constraintName": "org_roles_succession_planning_priority_check",
+      "proposed": true
+    },
+    {
+      "name": "metadata",
+      "type": "jsonb",
+      "nullable": false,
+      "default": "'{}'::jsonb",
+      "description": "Flexible JSON metadata for custom attributes",
+      "proposed": true,
+      "notes": "Use for tenant-specific or ad-hoc attributes that don't warrant their own columns"
+    }
+  ],
+  "constraints": [
+    {
+      "type": "check",
+      "name": "org_roles_seniority_level_check",
+      "expression": "seniority_level IN ('Executive', 'Senior', 'Mid', 'Junior', 'Entry')"
+    },
+    {
+      "type": "check",
+      "name": "org_roles_role_type_check",
+      "expression": "role_type IN ('Clinical', 'Research', 'Regulatory', 'Commercial', 'Operations', 'Support', 'Leadership')",
+      "proposed": true
+    },
+    {
+      "type": "check",
+      "name": "org_roles_travel_requirement_pct_check",
+      "expression": "travel_requirement_pct >= 0 AND travel_requirement_pct <= 100",
+      "proposed": true
+    },
+    {
+      "type": "check",
+      "name": "org_roles_succession_planning_priority_check",
+      "expression": "succession_planning_priority >= 0 AND succession_planning_priority <= 100",
+      "proposed": true
+    },
+    {
+      "type": "check",
+      "name": "org_roles_salary_currency_check",
+      "expression": "salary_currency ~ '^[A-Z]{3}$'",
+      "proposed": true
+    }
+  ],
+  "triggers": [
+    {
+      "name": "update_roles_updated_at",
+      "event": "BEFORE UPDATE",
+      "function": "update_updated_at_column()",
+      "description": "Automatically update updated_at timestamp on row modification"
+    }
+  ],
+  "rowLevelSecurity": {
+    "enabled": true,
+    "policies": [
+      {
+        "name": "Allow read access to all authenticated users",
+        "command": "SELECT",
+        "using": "true",
+        "role": "authenticated"
+      },
+      {
+        "name": "Tenant isolation",
+        "command": "ALL",
+        "using": "tenant_id = (current_setting('app.current_tenant_id'))::uuid",
+        "role": "authenticated",
+        "proposed": true
+      }
+    ]
+  },
+  "junctionTables": {
+    "existing": [
+      {
+        "name": "org_role_responsibilities",
+        "references": "org_responsibilities",
+        "description": "Links roles to their responsibilities with priority weighting"
+      },
+      {
+        "name": "org_department_roles",
+        "references": "org_departments",
+        "description": "Links departments to roles with headcount information"
+      },
+      {
+        "name": "org_function_roles",
+        "references": "org_functions",
+        "description": "Links organizational functions to roles"
+      },
+      {
+        "name": "role_goals",
+        "references": "goals",
+        "description": "Links roles to their primary goals"
+      },
+      {
+        "name": "role_challenges",
+        "references": "challenges",
+        "description": "Links roles to common challenges faced"
+      },
+      {
+        "name": "role_motivations",
+        "references": "motivations",
+        "description": "Links roles to motivational factors"
+      }
+    ],
+    "proposed": [
+      {
+        "name": "role_skills",
+        "references": "skills",
+        "description": "Links roles to required skills with proficiency levels"
+      },
+      {
+        "name": "role_certifications",
+        "references": "certifications",
+        "description": "Links roles to required or preferred certifications"
+      },
+      {
+        "name": "role_competencies",
+        "references": "competencies",
+        "description": "Links roles to core competencies with proficiency requirements"
+      },
+      {
+        "name": "role_kpis",
+        "references": "kpis",
+        "description": "Links roles to key performance indicators"
+      },
+      {
+        "name": "role_training_programs",
+        "references": "training_programs",
+        "description": "Links roles to required training programs"
+      },
+      {
+        "name": "role_regulatory_requirements",
+        "references": "regulatory_requirements",
+        "description": "Links roles to applicable regulatory requirements"
+      },
+      {
+        "name": "role_systems",
+        "references": "systems",
+        "description": "Links roles to software systems used"
+      },
+      {
+        "name": "role_deliverables",
+        "references": "deliverables",
+        "description": "Links roles to key deliverables produced"
+      },
+      {
+        "name": "role_therapeutic_areas",
+        "references": "therapeutic_areas",
+        "description": "Links roles to relevant therapeutic areas"
+      },
+      {
+        "name": "role_stakeholder_interactions",
+        "references": "stakeholder_types",
+        "description": "Links roles to stakeholders they interact with"
+      },
+      {
+        "name": "role_career_paths",
+        "references": "org_roles (self-join) + career_paths",
+        "description": "Defines career progression pathways between roles"
+      }
+    ]
+  },
+  "relatedTables": [
+    {
+      "name": "org_functions",
+      "relationship": "many-to-one",
+      "description": "Organizational function this role belongs to"
+    },
+    {
+      "name": "org_departments",
+      "relationship": "many-to-one",
+      "description": "Department this role belongs to"
+    },
+    {
+      "name": "tenants",
+      "relationship": "many-to-one",
+      "description": "Organization tenant for multi-tenancy"
+    },
+    {
+      "name": "personas",
+      "relationship": "one-to-many",
+      "description": "User personas that map to this role"
+    }
+  ],
+  "dataQuality": {
+    "requiredFields": ["unique_id", "role_name"],
+    "recommendedFields": [
+      "description",
+      "seniority_level",
+      "function_id",
+      "department_id",
+      "role_type"
+    ],
+    "validationRules": {
+      "unique_id_format": "Should follow pattern: [DEPT]-[NUM] (e.g., MSL-001)",
+      "role_name_uniqueness": "Within tenant, role_name should be unique",
+      "hierarchy_validation": "reports_to_role_id should not create circular references",
+      "experience_validation": "years_experience_max should be >= years_experience_min"
+    }
+  },
+  "usageNotes": {
+    "bestPractices": [
+      "Always set tenant_id for multi-tenant deployments",
+      "Use function_id and department_id instead of text fields when possible",
+      "Populate junction tables for rich role metadata",
+      "Use metadata JSONB field for tenant-specific attributes",
+      "Set role_type for pharma-specific roles to enable filtering"
+    ],
+    "commonQueries": [
+      "Find all GXP-critical roles: WHERE gxp_critical = true",
+      "Get roles requiring specific skill: JOIN role_skills WHERE skill_id = X",
+      "Career path analysis: Recursive CTE on role_career_paths",
+      "Regulatory compliance: JOIN role_regulatory_requirements"
+    ],
+    "performanceTips": [
+      "Use indexes on frequently filtered columns (is_active, role_type, gxp_critical)",
+      "Cache complete role profiles with all junction data",
+      "Consider materialized views for complex role reports",
+      "Use prepared statements with parameters for queries"
+    ]
+  },
+  "migration": {
+    "currentVersion": "1.0.0",
+    "proposedVersion": "2.0.0",
+    "changes": [
+      {
+        "type": "add_columns",
+        "count": 15,
+        "columns": [
+          "role_type",
+          "regulatory_oversight",
+          "gxp_critical",
+          "patient_facing",
+          "safety_critical",
+          "travel_requirement_pct",
+          "remote_eligible",
+          "oncall_required",
+          "salary_band_min",
+          "salary_band_max",
+          "salary_currency",
+          "job_family",
+          "career_level",
+          "succession_planning_priority",
+          "metadata"
+        ]
+      },
+      {
+        "type": "deprecate_columns",
+        "count": 2,
+        "columns": ["required_skills", "required_certifications"],
+        "action": "Migrate to junction tables, then rename to *_deprecated"
+      },
+      {
+        "type": "add_junction_tables",
+        "count": 11,
+        "tables": [
+          "role_skills",
+          "role_certifications",
+          "role_competencies",
+          "role_kpis",
+          "role_training_programs",
+          "role_regulatory_requirements",
+          "role_systems",
+          "role_deliverables",
+          "role_therapeutic_areas",
+          "role_stakeholder_interactions",
+          "role_career_paths"
+        ]
+      }
+    ],
+    "migrationFiles": [
+      "20251122000003_pharma_roles_extend_org_roles.sql",
+      "20251122000004_pharma_roles_migrate_array_data.sql"
+    ],
+    "rollbackAvailable": true
+  }
+}

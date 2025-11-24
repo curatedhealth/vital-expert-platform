@@ -24,6 +24,7 @@ import {
   SidebarWorkflowsContent,
   SidebarAdminContent,
   SidebarPersonasContent,
+  SidebarDesignerContent,
 } from "@/components/sidebar-view-content"
 
 export function AppSidebar({
@@ -56,10 +57,13 @@ export function AppSidebar({
   // Render content based on pathname - only compute after mount
   const renderContent = () => {
     if (!mounted) return <SidebarDashboardContent />
-    
+
     if (!pathname) return <SidebarDashboardContent />
     if (pathname.startsWith("/admin")) {
       return <SidebarAdminContent />
+    }
+    if (pathname.startsWith("/designer")) {
+      return <SidebarDesignerContent />
     }
     if (pathname.startsWith("/ask-expert")) {
       return <SidebarAskExpert />
@@ -108,18 +112,35 @@ export function AppSidebar({
   }
 
   return (
-    <Sidebar collapsible="icon" className={cn("border-r", className)} {...props}>
-      <SidebarHeader className="px-3 py-2 border-b">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span className="text-sm font-medium text-foreground">Startup</span>
+    <Sidebar collapsible="icon" className={cn("border-r border-border/40 bg-sidebar", className)} {...props}>
+      <SidebarHeader className="px-3 py-3 border-b border-border/40 relative">
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
+
+        <div className="relative flex items-center gap-3">
+          {/* Animated status indicator with glow */}
+          <div className="relative">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
+            <div className="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-ping opacity-75"></div>
+          </div>
+          <span className="text-sm font-semibold text-foreground group-data-[collapsible=icon]:hidden">VITAL Platform</span>
         </div>
       </SidebarHeader>
-      <SidebarContent className="px-3 py-4 space-y-4 overflow-y-auto">
+
+      <SidebarContent className="px-3 py-4 space-y-4 overflow-y-auto relative">
+        {/* Subtle gradient overlay at top for depth */}
+        <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-background/50 to-transparent pointer-events-none z-10" />
         {renderContent()}
+        {/* Subtle gradient overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background/50 to-transparent pointer-events-none z-10" />
       </SidebarContent>
-      <SidebarFooter className="px-3 pb-4">
-        {mounted && user ? <NavUser user={sidebarUser} /> : <div className="h-16" />}
+
+      <SidebarFooter className="px-3 pb-4 pt-3 border-t border-border/40 relative">
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-muted/30 via-transparent to-muted/20 pointer-events-none" />
+        <div className="relative">
+          {mounted && user ? <NavUser user={sidebarUser} /> : <div className="h-16" />}
+        </div>
       </SidebarFooter>
     </Sidebar>
   )

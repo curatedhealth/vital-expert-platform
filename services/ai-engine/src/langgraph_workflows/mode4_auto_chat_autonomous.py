@@ -70,7 +70,7 @@ from services.agent_selector_service import AgentSelectorService
 from services.agent_orchestrator import AgentOrchestrator
 from services.sub_agent_spawner import SubAgentSpawner
 from services.panel_orchestrator import PanelOrchestrator
-from services.consensus_calculator import ConsensusCalculator
+from services.consensus_calculator import SimpleConsensusCalculator
 from services.unified_rag_service import UnifiedRAGService
 from services.tool_registry import ToolRegistry
 from services.enhanced_conversation_manager import EnhancedConversationManager
@@ -173,7 +173,7 @@ class Mode4AutoChatAutonomousWorkflow(BaseWorkflow):
         self.agent_orchestrator = agent_orchestrator or AgentOrchestrator(supabase_client, rag_pipeline)
         self.sub_agent_spawner = sub_agent_spawner or SubAgentSpawner()
         self.panel_orchestrator = panel_orchestrator or PanelOrchestrator(supabase_client)
-        self.consensus_calculator = consensus_calculator or ConsensusCalculator()
+        self.consensus_calculator = consensus_calculator or SimpleConsensusCalculator()
         self.rag_service = rag_service or UnifiedRAGService(supabase_client)
         self.tool_registry = tool_registry or ToolRegistry()
         self.conversation_manager = conversation_manager or EnhancedConversationManager(supabase_client)

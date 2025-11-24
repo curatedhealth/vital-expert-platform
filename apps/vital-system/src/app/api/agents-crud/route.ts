@@ -137,12 +137,12 @@ async function resolveAvatarUrl(avatar: string | undefined, adminSupabase: any):
 async function normalizeAgent(agent: any, adminSupabase: any) {
   if (!agent) return null;
 
-  // Normalize specializations (used to be capabilities)
+  // Normalize capabilities - use actual capabilities field from database
   let normalizedCapabilities: string[] = [];
-  if (Array.isArray(agent.specializations)) {
-    normalizedCapabilities = agent.specializations;
-  } else if (typeof agent.specializations === 'string') {
-    const cleanString = agent.specializations.replace(/[{}]/g, '');
+  if (Array.isArray(agent.capabilities)) {
+    normalizedCapabilities = agent.capabilities;
+  } else if (typeof agent.capabilities === 'string') {
+    const cleanString = agent.capabilities.replace(/[{}]/g, '');
     normalizedCapabilities = cleanString
       .split(',')
       .map((cap: string) => cap.trim())
@@ -154,32 +154,32 @@ async function normalizeAgent(agent: any, adminSupabase: any) {
   // Extract data from metadata
   const metadata = agent.metadata || {};
 
-  // Resolve avatar URL from icons table if needed or use avatar_url from agent
-  const avatarValue = agent.avatar_url || metadata.avatar || '🤖';
+  // Resolve avatar URL from icons table if needed - use correct field name
+  const avatarValue = agent.avatar || metadata.avatar || '🤖';
   const resolvedAvatar = await resolveAvatarUrl(avatarValue, adminSupabase);
 
   return {
     id: agent.id,
     name: agent.name,
-    slug: agent.slug,
-    display_name: metadata.display_name || agent.title || agent.name,
-    tagline: agent.tagline,
+    slug: agent.name?.toLowerCase().replace(/\s+/g, '-') || agent.id, // Generate slug from name
+    display_name: metadata.display_name || agent.name, // display_name from metadata
+    tagline: agent.description?.substring(0, 100) || '', // Use first 100 chars of description
     description: agent.description,
-    title: agent.title,
-    expertise_level: agent.expertise_level,
+    title: metadata.display_name || agent.name,
+    expertise_level: metadata.tier || metadata.expertise_level || 1, // tier from metadata
     system_prompt: agent.system_prompt,
     capabilities: normalizedCapabilities,
-    specializations: agent.specializations || [],
-    knowledge_domains: metadata.knowledge_domains || [],
-    tier: metadata.tier || 1,
-    model: agent.base_model || metadata.model || 'gpt-4',
+    specializations: metadata.specializations || [],
+    knowledge_domains: agent.knowledge_domains || metadata.knowledge_domains || [],
+    tier: metadata.tier || metadata.expertise_level || 1, // tier from metadata
+    model: agent.model || metadata.model || 'gpt-4',
     avatar: resolvedAvatar,
-    avatar_url: agent.avatar_url,
+    avatar_url: resolvedAvatar, // Use same resolved avatar for both fields
     color: metadata.color || '#3B82F6',
     temperature: metadata.temperature || 0.7,
     max_tokens: metadata.max_tokens || 2000,
     metadata: metadata,
-    tags: agent.tags || [],
+    tags: metadata.tags || [],
     status: agent.status || 'active',
     is_custom: metadata.is_custom || false,
     business_function: metadata.business_function || null,
@@ -218,40 +218,33 @@ export const GET = withAgentAuth(async (
     });
 
     // Build query using user session (RLS enabled)
+    // Only select columns that actually exist in the database
     let query = supabase
       .from('agents')
       .select(`
         id,
         name,
-        slug,
-        tagline,
         description,
-        title,
-        expertise_level,
-        specializations,
         avatar_url,
         system_prompt,
-        base_model,
+        model,
         status,
         metadata,
-        tags,
-        tenant_id,
+        capabilities,
+        knowledge_domains,
+        domain_expertise,
         created_at,
         updated_at
       `);
 
-    // Apply tenant filtering using allowed_tenants array
+    // Apply status filtering - only show active or testing agents
     if (showAll && (profile.role === 'super_admin' || profile.role === 'admin')) {
-      // Only super admins/admins with explicit showAll=true can see all agents across all tenants
+      // Only super admins/admins with explicit showAll=true can see all agents across all statuses
       logger.debug('agents_crud_get_admin_view_all_tenants', { operationId });
-    } else if (profile.tenant_id) {
-      // Everyone else sees only agents that allow their current tenant
-      query = query.contains('allowed_tenants', [profile.tenant_id]);
-      logger.debug('agents_crud_get_tenant_filtered', { operationId, tenantId: profile.tenant_id });
     } else {
-      // If no tenant_id, default to showing no agents (safe fallback)
-      query = query.contains('allowed_tenants', ['00000000-0000-0000-0000-000000000000']);
-      logger.warn('agents_crud_get_no_tenant', { operationId, userId: context.user.id });
+      // Everyone else sees only active/testing agents (ready for use)
+      query = query.in('status', ['active', 'testing']);
+      logger.debug('agents_crud_get_status_filtered', { operationId, tenantId: profile.tenant_id });
     }
 
     // Add ordering

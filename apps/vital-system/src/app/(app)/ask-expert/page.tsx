@@ -18,6 +18,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from 'next-themes';
 import {
   Sparkles,
   Send,
@@ -213,14 +214,17 @@ function AskExpertPageContent() {
   // Get agents and selection from context (loaded by layout sidebar)
   const { selectedAgents, agents, setSelectedAgents } = useAskExpert();
   const { user } = useAuth();
-  
+
+  // Theme hook (global dark/light mode)
+  const { theme } = useTheme();
+
   // Chat history context
-  const { 
-    currentSession, 
-    messages: chatMessages, 
-    addMessage, 
+  const {
+    currentSession,
+    messages: chatMessages,
+    addMessage,
     createSession,
-    updateSession 
+    updateSession
   } = useChatHistory();
 
   // State management
@@ -229,7 +233,6 @@ function AskExpertPageContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState('');
   const [streamingReasoning, setStreamingReasoning] = useState<string>('');
@@ -1777,7 +1780,7 @@ function AskExpertPageContent() {
   }, [conversations, handleConversationSelect, handleNewConversation]);
 
   return (
-    <div className={`flex flex-col h-full w-full ${darkMode ? 'dark bg-gray-950' : 'bg-white'}`}>
+    <div className="flex flex-col h-full w-full bg-white dark:bg-gray-950">
       {/* Top Bar - Clean like Claude */}
       <header className="h-14 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 bg-white dark:bg-gray-900">
         <div className="flex items-center gap-3 flex-wrap">
@@ -1818,17 +1821,6 @@ function AskExpertPageContent() {
               }`}
             >
               <Settings2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </button>
-
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              {darkMode ? (
-                <Sun className="w-4 h-4 text-gray-400" />
-              ) : (
-                <Moon className="w-4 h-4 text-gray-600" />
-              )}
             </button>
           </div>
         </header>
@@ -2159,7 +2151,6 @@ function AskExpertPageContent() {
                       prompts={promptStarters}
                       onSelectPrompt={(promptText) => setInputValue(promptText)}
                       isLoading={loadingPromptStarters}
-                      darkMode={darkMode}
                     />
                   </div>
                 )}

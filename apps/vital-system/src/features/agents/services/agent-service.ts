@@ -133,8 +133,7 @@ export class AgentService {
         .from('agents')
         .select('*')
         .in('status', ['active', 'testing'])
-        .order('tier', { ascending: true })
-        .order('priority', { ascending: true })
+        .order('name', { ascending: true }) // tier column doesn't exist, use name instead
         .limit(1000);
 
       if (dbError) {
@@ -152,6 +151,8 @@ export class AgentService {
 
   // Get agents by tier
   async getAgentsByTier(tier: number): Promise<AgentWithCategories[]> {
+    // Note: tier column doesn't exist in DB, it's stored in metadata
+    // Fetch all agents and filter by tier in-memory
     const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .select(`
@@ -161,18 +162,23 @@ export class AgentService {
         )
       `)
       .in('status', ['active', 'testing'])
-      .eq('tier', tier)
-      .order('priority', { ascending: true });
+      .order('name', { ascending: true }); // Can't order by tier since it doesn't exist
 
     if (error) {
       console.error('Error fetching agents by tier:', error);
       throw new Error('Failed to fetch agents by tier');
     }
 
-    return data?.map((agent: any) => ({
+    // Filter by tier from metadata (in-memory)
+    const filteredData = data?.filter((agent: any) => {
+      const agentTier = agent.metadata?.tier || agent.metadata?.expertise_level || 1;
+      return agentTier === tier;
+    }) || [];
+
+    return filteredData.map((agent: any) => ({
       ...agent,
       categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
-    })) || [];
+    }));
   }
 
   // Get agents by implementation phase
@@ -320,7 +326,7 @@ export class AgentService {
       `)
       .in('status', ['active', 'testing'])
       .eq(userId ? 'agent_performance_metrics.user_id' : 'agent_performance_metrics.user_id', userId || null)
-      .order('tier', { ascending: true })
+      .order('name', { ascending: true }) // tier column doesn't exist
       .order('priority', { ascending: true });
 
     if (error) {
@@ -497,7 +503,7 @@ export class AgentService {
       `)
       .in('status', ['active', 'testing'])
       .or(`display_name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,capabilities.cs.["${searchTerm}"]`)
-      .order('tier', { ascending: true })
+      .order('name', { ascending: true }) // tier column doesn't exist
       .order('priority', { ascending: true });
 
     if (error) {
@@ -611,7 +617,7 @@ export class AgentService {
       `)
       .in('status', ['active', 'testing'])
       .eq('agent_capabilities.capability.name', capabilityName)
-      .order('tier', { ascending: true })
+      .order('name', { ascending: true }) // tier column doesn't exist
       .order('priority', { ascending: true });
 
     if (error) {

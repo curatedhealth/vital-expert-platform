@@ -176,38 +176,39 @@
   }
 
   .dark {
-    --background: 222 47% 11%;  /* Slate-900 */
-    --foreground: 210 40% 98%;  /* Slate-50 */
-    --card: 222 47% 11%;  /* Slate-900 */
+    /* Improved dark mode with better contrast and visual appeal */
+    --background: 222 47% 7%;  /* Darker slate-950 for deeper contrast */
+    --foreground: 210 40% 98%;  /* Slate-50 - crisp white text */
+    --card: 222 47% 11%;  /* Slate-900 - elevated surface */
     --card-foreground: 210 40% 98%;  /* Slate-50 */
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 268 68% 62%;  /* Primary Purple #9B5DE0 */
+    --popover: 222 47% 11%;  /* Slate-900 */
+    --popover-foreground: 210 40% 98%;  /* Slate-50 */
+    --primary: 268 68% 65%;  /* Slightly lighter purple for better visibility */
     --primary-foreground: 0 0% 100%;  /* White */
-    --secondary: 192 100% 50%;  /* Secondary Cyan #00CAFF */
+    --secondary: 192 100% 55%;  /* Slightly lighter cyan for better visibility */
     --secondary-foreground: 0 0% 100%;  /* White */
-    --muted: 217 33% 17.5%;  /* Slate-800 */
-    --muted-foreground: 215 20% 65%;  /* Slate-400 */
-    --accent: 268 68% 96%;  /* Primary-100 */
-    --accent-foreground: 268 68% 32%;  /* Primary-600 */
-    --destructive: 0 62.8% 50.2%;  /* Error red - brighter for dark mode */
-    --border: 217 33% 17.5%;  /* Slate-800 */
-    --input: 217 33% 17.5%;  /* Slate-800 */
-    --ring: 268 68% 62%;  /* Primary Purple */
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar: oklch(0.21 0.006 285.885);
+    --muted: 217 33% 22%;  /* Lighter slate-800 for better contrast */
+    --muted-foreground: 215 20% 70%;  /* Lighter slate-400 for better readability */
+    --accent: 268 68% 25%;  /* Darker accent background for contrast */
+    --accent-foreground: 268 68% 85%;  /* Lighter accent foreground */
+    --destructive: 0 72% 60%;  /* Brighter error red for visibility */
+    --border: 217 33% 24%;  /* Much lighter borders for better definition */
+    --input: 217 33% 22%;  /* Slightly lighter input backgrounds */
+    --ring: 268 68% 65%;  /* Primary Purple - lighter */
+    --chart-1: 220 70% 55%;
+    --chart-2: 160 60% 50%;
+    --chart-3: 30 80% 60%;
+    --chart-4: 280 65% 65%;
+    --chart-5: 340 75% 60%;
+    --sidebar: oklch(0.16 0.006 285.885);  /* Slightly darker sidebar */
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 268 68% 65%;  /* Brand purple for consistency */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent: 240 3.7% 20%;  /* Lighter accent for better hover states */
     --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-    --sidebar-background: 240 5.9% 10%;
+    --sidebar-border: 240 3.7% 24%;  /* Lighter borders */
+    --sidebar-ring: 268 68% 65%;  /* Brand purple */
+    --sidebar-background: 240 5.9% 8%;  /* Darker sidebar background */
     --destructive-foreground: 0 0% 98%;
   }
 }

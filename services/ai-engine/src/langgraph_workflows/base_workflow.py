@@ -209,7 +209,16 @@ class BaseWorkflow(ABC):
             session_id=session_id,
             **kwargs
         )
-        
+
+        logger.debug(
+            "Initial state created",
+            workflow=self.workflow_name,
+            selected_agents=initial_state.get('selected_agents', []),
+            enable_rag=initial_state.get('enable_rag'),
+            enable_tools=initial_state.get('enable_tools'),
+            kwargs_keys=list(kwargs.keys())
+        )
+
         # Validate state
         validate_state(initial_state)
         

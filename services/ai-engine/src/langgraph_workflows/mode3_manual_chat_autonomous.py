@@ -1,52 +1,42 @@
 """
-Mode 3: Manual Selection + Multi-Turn Chat + Autonomous Reasoning
+Mode 3: Manual-Autonomous (Manual Selection + Autonomous Execution with Deep Work)
 
-User selects a specific expert for multi-turn conversation with autonomous task execution.
-Expert uses deep reasoning (Chain-of-Thought, Tree-of-Thoughts) and spawns sub-agents.
+User selects expert, agent performs autonomous deep work with long-term planning.
+
+**PHASE 4 ENHANCEMENTS:**
+- ✅ HITL System (5 checkpoints, 3 safety levels)
+- ✅ Tree-of-Thoughts planning
+- ✅ Full pattern chain (ToT → ReAct → Constitutional)
+- ✅ Default Tier 2+ (autonomous mode requires higher accuracy)
+- ✅ Multi-step execution with approval gates
 
 PRD Specification:
-- Interaction: CHAT (Multi-Turn Conversation)
+- Interaction: AUTONOMOUS (Deep work, long-term planning)
 - Selection: MANUAL (User chooses expert)
-- Autonomous: YES (Chain-of-Thought, multi-step reasoning)
-- Response Time: 45-75 seconds
+- Response Time: 60-120 seconds
 - Experts: 1 selected expert + sub-agents
-- Deep Agent Support: Expert spawns specialists and workers as needed
+- Deep Agent Support: Expert spawns specialists and workers
 - Tools: RAG, Web Search, Code Execution, Database Tools
 - Context: Persistent conversation history, 1M+ tokens
-- Reasoning: Chain-of-Thought, Tree-of-Thoughts, Self-Critique
-- Checkpoints: Human validation at critical decision points
+- **NEW**: HITL approval checkpoints, ToT planning, Full safety validation
 
 Golden Rules Compliance:
 - ✅ LangGraph StateGraph (Golden Rule #1)
 - ✅ Caching at all nodes (Golden Rule #2)
 - ✅ Tenant isolation enforced (Golden Rule #3)
 - ✅ RAG/Tools enforcement (Golden Rule #4)
-- ✅ Feedback-driven learning (Golden Rule #5)
+- ✅ Evidence-based responses (Golden Rule #5)
 
 Use Cases:
-- "Design a complete 510(k) submission strategy" (autonomous multi-step planning)
-- "Analyze my clinical trial data and provide recommendations" (code execution)
-- "Review my regulatory submission and suggest improvements" (iterative refinement)
-- "Create FMEA for my medical device" (structured autonomous task)
-
-Autonomous Task Scope (Handled in Mode 3):
-- ✅ Single end-to-end tasks (1-5 steps)
-- ✅ Guidance and detailed recommendations
-- ✅ Report generation with artifacts
-- ✅ Risk assessments and analysis
-- ✅ Competitive intelligence briefings
-- ✅ Strategic recommendations
-- ✅ Protocol drafting
-
-Workflow Handoff Triggers (Redirects to Workflow Service):
-- ❌ "Complete FDA 510(k) submission package" (15+ coordinated tasks)
-- ❌ "Execute end-to-end clinical trial" (multi-system coordination)
-- ❌ "Develop complete go-to-market strategy with execution" (10+ steps)
+- "Design complete 510(k) submission strategy" → Plan approval, multi-step execution
+- "Analyze clinical trial data and provide recommendations" → Tool approval, code execution
+- "Create comprehensive FMEA for medical device" → Sub-agent approval, structured task
 
 Frontend Mapping:
 - isAutomatic: false (manual selection)
 - isMultiTurn: true (chat mode)
-- isAutonomous: true (autonomous reasoning)
+- isAutonomous: true (deep work with planning)
+- hitlEnabled: true (user approval at checkpoints)
 - selectedAgents: [agent_id] (pre-selected by user)
 """
 
@@ -81,47 +71,83 @@ from services.compliance_service import (
 )
 import time
 
+# PHASE 4: HITL System
+try:
+    from services.hitl_service import (
+        create_hitl_service,
+        HITLSafetyLevel,
+        PlanApprovalRequest,
+        ToolExecutionApprovalRequest,
+        SubAgentApprovalRequest,
+        CriticalDecisionApprovalRequest
+    )
+    HITL_AVAILABLE = True
+except ImportError:
+    HITL_AVAILABLE = False
+    logger_temp = structlog.get_logger()
+    logger_temp.warning("HITL Service not available")
+
+# PHASE 4: Full Pattern Suite
+try:
+    from langgraph_compilation.patterns.tree_of_thoughts import TreeOfThoughtsAgent
+    from langgraph_compilation.patterns.react import ReActAgent
+    from langgraph_compilation.patterns.constitutional_ai import ConstitutionalAgent
+    PATTERNS_AVAILABLE = True
+except ImportError:
+    PATTERNS_AVAILABLE = False
+
+# PHASE 4: Tier System
+try:
+    from services.evidence_based_selector import AgentTier
+    TIER_SYSTEM_AVAILABLE = True
+except ImportError:
+    TIER_SYSTEM_AVAILABLE = False
+
 logger = structlog.get_logger()
 
 
 class Mode3ManualChatAutonomousWorkflow(BaseWorkflow):
     """
-    Mode 3: Manual Selection + Multi-Turn Chat + Autonomous Reasoning
+    Mode 3: Manual-Autonomous (Manual Selection + Autonomous Deep Work)
+
+    **PHASE 4 ENHANCEMENTS:**
+    - HITL System with 5 approval checkpoints
+    - Tree-of-Thoughts for planning
+    - Full pattern chain (ToT → ReAct → Constitutional)
+    - Default Tier 2+ for autonomous work
 
     Golden Rules Compliance:
     - ✅ Uses LangGraph StateGraph (Golden Rule #1)
     - ✅ Caching integrated at all nodes (Golden Rule #2)
     - ✅ Tenant validation enforced (Golden Rule #3)
     - ✅ RAG/Tools enabled by default (Golden Rule #4)
-    - ✅ Feedback stored for learning (Golden Rule #5)
+    - ✅ Evidence-based responses (Golden Rule #5)
 
-    Deep Agent Architecture with Autonomous Reasoning:
+    Deep Agent Architecture:
     Level 1: Master Agent (Autonomous Task Coordinator)
     Level 2: Expert Agent (Selected by user) ← USER SELECTS HERE
-    Level 3: Specialist Agents (Spawned by expert during reasoning)
+    Level 3: Specialist Agents (Spawned during execution)
     Level 4: Worker Agents (Spawned for parallel tasks)
-    Level 5: Tool Agents (Code execution, web search, databases, etc.)
+    Level 5: Tool Agents (Code execution, searches, databases)
 
-    Autonomous Reasoning Capabilities:
-    - ✅ Chain-of-Thought: Visible step-by-step reasoning
-    - ✅ Tree-of-Thoughts: Multiple reasoning paths explored
-    - ✅ Self-Critique: Expert challenges own assumptions
-    - ✅ Evidence Gathering: Automatic literature search
-    - ✅ Hypothesis Testing: Multiple approaches tested
-    - ✅ Strategic Planning: Multi-step action plans
-    - ✅ Code Execution: R, Python, SAS statistical analysis
-    - ✅ Checkpoint System: Human validation at key decision points
+    Autonomous Capabilities:
+    - ✅ Tree-of-Thoughts planning (multiple reasoning paths)
+    - ✅ ReAct execution (reasoning + acting with tools)
+    - ✅ Constitutional AI safety validation
+    - ✅ HITL approval at critical checkpoints
+    - ✅ Multi-step task execution
+    - ✅ Sub-agent spawning with approval
+    - ✅ Tool execution with approval
+    - ✅ Code execution (Python, R, SAS)
 
     Features:
-    - ✅ User selects specific expert from 319+ catalog
+    - ✅ User selects expert from 319+ catalog
     - ✅ Multi-turn conversation with full history
-    - ✅ Autonomous multi-step task execution (1-5 steps)
-    - ✅ Expert spawns specialists and workers as needed
-    - ✅ Chain-of-Thought reasoning (visible thinking)
-    - ✅ Code execution (Python, R, SAS)
-    - ✅ Checkpoint system for human approval
-    - ✅ Persistent conversation context
-    - ✅ Workflow handoff for complex multi-task workflows
+    - ✅ Autonomous multi-step execution with approval gates
+    - ✅ Tree-of-Thoughts planning
+    - ✅ Full pattern chain for Tier 3
+    - ✅ HITL checkpoints (plan, tools, sub-agents, decisions)
+    - ✅ Default Tier 2+ (higher accuracy for autonomous work)
     """
 
     def __init__(
@@ -163,7 +189,17 @@ class Mode3ManualChatAutonomousWorkflow(BaseWorkflow):
         self.conversation_manager = conversation_manager or EnhancedConversationManager(supabase_client)
         self.session_memory_service = session_memory_service or SessionMemoryService(supabase_client)
 
-        logger.info("✅ Mode3ManualChatAutonomousWorkflow initialized")
+        # PHASE 4: HITL Service (initialized per-request based on user settings)
+        self.hitl_service = None
+
+        # PHASE 4: Initialize all pattern agents
+        self.tot_agent = TreeOfThoughtsAgent() if PATTERNS_AVAILABLE else None
+        self.react_agent = ReActAgent() if PATTERNS_AVAILABLE else None
+        self.constitutional_agent = ConstitutionalAgent() if PATTERNS_AVAILABLE else None
+
+        logger.info("✅ Mode3ManualChatAutonomousWorkflow initialized",
+                   hitl_available=HITL_AVAILABLE,
+                   patterns_available=PATTERNS_AVAILABLE)
 
     def build_graph(self) -> StateGraph:
         """

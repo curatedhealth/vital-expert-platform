@@ -1,0 +1,2465 @@
+{
+  "metadata": {
+    "phase": "Phase 2 - Medical Information Services Enrichment",
+    "created_date": "2025-11-23",
+    "total_roles": 15,
+    "department_id": "2b320eab-1758-42d7-adfa-7f49c12cdf40",
+    "department_name": "Medical Information Services",
+    "function_id": "06127088-4d52-40aa-88c9-93f4e79e085a",
+    "function_name": "Medical Affairs",
+    "description": "Enrichment data for 15 Medical Information Services roles including Specialists, Managers, Operations Leads, Associates, and Scientists",
+    "prerequisites": "Run database/seeds/00_run_all_reference_data_seeds.sql first to populate reference tables",
+    "data_sources": [
+      "MAPS Medical Affairs Competency Framework",
+      "Industry job descriptions and requirements",
+      "Pharmaceutical KPIs and metrics standards 2024",
+      "GxP training requirements"
+    ]
+  },
+  "roles": [
+    {
+      "role_id": "TBD",
+      "role_name": "Global Medical Information Specialist",
+      "geographic_scope": "global",
+      "seniority_level": "mid",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Provides accurate, balanced, and timely medical information to healthcare professionals, patients, and internal stakeholders globally. Responds to unsolicited medical inquiries, conducts literature searches, and ensures compliance with regulatory guidelines. Serves as a scientific resource bridging pharmaceutical knowledge with healthcare community needs.",
+        "required_skills": [
+          "Medical and scientific literature searching (PubMed, EMBASE, Cochrane)",
+          "Critical appraisal of clinical data and scientific publications",
+          "Regulatory compliance (FDA, EMA, local regulations)",
+          "Medical writing and documentation",
+          "Pharmacovigilance and adverse event reporting",
+          "Database management (CRM, Medical Information systems)",
+          "Cross-functional collaboration with Medical, Regulatory, and Commercial teams",
+          "Global standard response development",
+          "Multi-channel communication (phone, email, chat)",
+          "Project management and prioritization"
+        ],
+        "required_certifications": [
+          "Bachelor's degree in Life Sciences, Pharmacy, or related field (minimum)",
+          "Advanced degree preferred (PharmD, PhD, MD)",
+          "GCP certification (ICH E6 R2)",
+          "Medical Information certification (DIA or similar)"
+        ],
+        "years_experience_min": 2,
+        "years_experience_max": 5,
+        "gxp_role_type": "gcp",
+        "regulatory_inspection_role": true,
+        "sox_critical": false,
+        "cfr_part_11_required": true,
+        "pharmacovigilance_responsibility": true,
+        "clinical_trial_phase_focus": [
+          "Phase 2",
+          "Phase 3",
+          "Phase 4",
+          "Post-market"
+        ],
+        "drug_lifecycle_stage": [
+          "Clinical Development",
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "patient_facing": true,
+        "hcp_facing": true,
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "high",
+        "typical_entry_point": true,
+        "typical_meeting_hours_per_week": 10,
+        "administrative_load_percent": 30,
+        "strategic_vs_tactical": "tactical",
+        "innovation_vs_execution": "execution",
+        "travel_percentage_min": 5,
+        "travel_percentage_max": 15,
+        "international_travel": false,
+        "overnight_travel_frequency": "quarterly",
+        "regulatory_frameworks": [
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "FDA 21 CFR Part 11",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "GDPR and Data Privacy",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "PhRMA Code on Interactions with Healthcare Professionals",
+            "proficiency_level": "working_knowledge"
+          },
+          {
+            "name": "ICH E2A",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "GCP Fundamentals",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Pharmacovigilance Basics",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "Medical Information Best Practices",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "Adverse Event Recognition and Reporting",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "Data Privacy and Security",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Standard Response Letter Development",
+            "is_mandatory": false,
+            "due_within_days_of_hire": 120
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Medical & Scientific Literature Searching",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Critical Appraisal of Clinical Data",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Medical Writing & Documentation",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Regulatory Compliance & Guidelines",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Pharmacovigilance & Drug Safety",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Database Management & CRM Systems",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Cross-functional Collaboration",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Customer Service Excellence",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Quality Management Systems",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Response time to medical inquiries",
+            "target_value": "<24 hours for urgent, <5 days standard",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Quality score of responses",
+            "target_value": "95%+",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Inquiry volume handled",
+            "target_value": "40-60 per month",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Customer satisfaction score",
+            "target_value": "4.5/5.0",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Compliance audit score",
+            "target_value": "100%",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Standard response letters updated",
+            "target_value": "10-15 per quarter",
+            "measurement_frequency": "quarterly"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "10439276-39a3-488a-8c49-2531934fe511",
+      "role_name": "Regional Medical Information Specialist",
+      "geographic_scope": "regional",
+      "seniority_level": "mid",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Provides medical information support within a specific geographic region, adapting global strategies to local healthcare environments. Manages regional medical inquiries, collaborates with regional teams, and ensures compliance with local regulations while maintaining global standards.",
+        "required_skills": [
+          "Regional regulatory knowledge and compliance",
+          "Local language proficiency (as required)",
+          "Medical literature searching and evaluation",
+          "Cross-cultural communication",
+          "Regional healthcare system understanding",
+          "Adverse event reporting per regional requirements",
+          "Regional medical terminology and practices",
+          "Stakeholder management across time zones",
+          "Local medical information database management",
+          "Regional KOL relationship support"
+        ],
+        "required_certifications": [
+          "Bachelor's degree in Life Sciences or Pharmacy",
+          "Regional regulatory compliance certification",
+          "GCP certification (ICH E6 R2)",
+          "Local language certification (if applicable)"
+        ],
+        "years_experience_min": 2,
+        "years_experience_max": 5,
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+        "patient_facing": true,
+        "clinical_trial_phase_focus": [
+          "Phase 2",
+          "Phase 3",
+          "Phase 4",
+          "Post-market"
+        ],
+        "drug_lifecycle_stage": [
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "moderate",
+        "typical_entry_point": true,
+        "typical_meeting_hours_per_week": 12,
+        "administrative_load_percent": 25,
+        "strategic_vs_tactical": "tactical",
+        "innovation_vs_execution": "execution",
+        "travel_percentage_min": 10,
+        "travel_percentage_max": 25,
+        "international_travel": true,
+        "overnight_travel_frequency": "monthly",
+        "regulatory_frameworks": [
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Regional Regulatory Requirements",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "GDPR and Data Privacy",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Local Healthcare Compliance",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "PhRMA Code",
+            "proficiency_level": "working_knowledge"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "GCP Fundamentals",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Regional Regulatory Compliance",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Pharmacovigilance Basics",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "Medical Information Best Practices",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "Cross-cultural Communication",
+            "is_mandatory": false,
+            "due_within_days_of_hire": 120
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Regional Healthcare System Knowledge",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Medical Literature Review",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Regional Regulatory Compliance",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Cross-cultural Communication",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Medical Writing",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Pharmacovigilance",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Stakeholder Management",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Database Management",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Quality Assurance",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Regional inquiry response time",
+            "target_value": "<48 hours urgent, <7 days standard",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Regional compliance score",
+            "target_value": "100%",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Regional inquiry volume",
+            "target_value": "30-45 per month",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Local stakeholder satisfaction",
+            "target_value": "4.3/5.0",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Regional SRL development",
+            "target_value": "5-10 per quarter",
+            "measurement_frequency": "quarterly"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "c15316a2-2b06-4d31-890a-86a3f056a68c",
+      "role_name": "Local Medical Information Specialist",
+      "geographic_scope": "local",
+      "seniority_level": "mid",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Manages medical information requests at the local/country level, ensuring responses align with local regulations and healthcare practices. Works closely with local medical and commercial teams to support product launches and maintain medical information services.",
+        "required_skills": [
+          "Local regulatory compliance expertise",
+          "Local language fluency",
+          "Medical literature searching",
+          "Local healthcare system navigation",
+          "Country-specific adverse event reporting",
+          "Local medical terminology",
+          "Local HCP relationship management",
+          "Country-specific database management",
+          "Local formulary and reimbursement knowledge",
+          "Cross-functional collaboration with local teams"
+        ],
+        "required_certifications": [
+          "Bachelor's degree in Life Sciences or Pharmacy",
+          "Local regulatory compliance certification",
+          "Country-specific medical information training",
+          "GCP certification"
+        ],
+        "years_experience_min": 1,
+        "years_experience_max": 4,
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+        "patient_facing": true,
+        "clinical_trial_phase_focus": [
+          "Phase 3",
+          "Phase 4",
+          "Post-market"
+        ],
+        "drug_lifecycle_stage": [
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "typical_time_in_role_years": 2.5,
+        "advancement_potential": "moderate",
+        "typical_entry_point": true,
+        "typical_meeting_hours_per_week": 8,
+        "administrative_load_percent": 35,
+        "strategic_vs_tactical": "tactical",
+        "innovation_vs_execution": "execution",
+        "travel_percentage_min": 5,
+        "travel_percentage_max": 10,
+        "international_travel": false,
+        "overnight_travel_frequency": "rarely",
+        "regulatory_frameworks": [
+          {
+            "name": "Local Regulatory Requirements",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "working_knowledge"
+          },
+          {
+            "name": "Local Data Privacy Laws",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Country Healthcare Regulations",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Local Advertising and Promotion Guidelines",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "Local Regulatory Compliance",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "GCP Basics",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Local Pharmacovigilance Requirements",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "Medical Information Best Practices",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Local Healthcare System Training",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Local Healthcare System Expertise",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Local Regulatory Compliance",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Medical Literature Review",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Local Language Medical Communication",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Pharmacovigilance",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Customer Service",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Database Management",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Quality Control",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Local inquiry response time",
+            "target_value": "<24 hours urgent, <5 days standard",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Local compliance rate",
+            "target_value": "100%",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Monthly inquiry volume",
+            "target_value": "25-40",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Local HCP satisfaction",
+            "target_value": "4.4/5.0",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Local SRL maintenance",
+            "target_value": "100% up-to-date",
+            "measurement_frequency": "monthly"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "d2300d04-9ab9-4402-810d-c41281981047",
+      "role_name": "Global Medical Information Manager",
+      "geographic_scope": "global",
+      "seniority_level": "senior",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Leads global medical information strategy and operations, managing teams of specialists and ensuring consistent, high-quality medical information services worldwide. Develops global policies, procedures, and standard response documents while ensuring regulatory compliance across all regions.",
+        "required_skills": [
+          "Strategic planning and execution",
+          "Team leadership and development",
+          "Global regulatory expertise",
+          "Medical information systems optimization",
+          "Budget management and resource allocation",
+          "Cross-functional senior stakeholder management",
+          "Quality management systems",
+          "Global SOP development and implementation",
+          "Vendor management and outsourcing",
+          "Change management and process improvement"
+        ],
+        "required_certifications": [
+          "Advanced degree (PharmD, PhD, MD preferred)",
+          "Management or leadership certification",
+          "GCP certification (ICH E6 R2)",
+          "Six Sigma or Lean certification (preferred)"
+        ],
+        "years_experience_min": 5,
+        "years_experience_max": 10,
+        "gxp_role_type": "gcp",
+        "regulatory_inspection_role": true,
+        "sox_critical": false,
+        "cfr_part_11_required": true,
+        "pharmacovigilance_responsibility": true,
+        "clinical_trial_phase_focus": [
+          "Phase 1",
+          "Phase 2",
+          "Phase 3",
+          "Phase 4",
+          "Post-market"
+        ],
+        "drug_lifecycle_stage": [
+          "Clinical Development",
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "patient_facing": false,
+        "hcp_facing": false,
+        "typical_time_in_role_years": 4,
+        "advancement_potential": "very_high",
+        "typical_entry_point": false,
+        "typical_meeting_hours_per_week": 20,
+        "administrative_load_percent": 40,
+        "strategic_vs_tactical": "strategic",
+        "innovation_vs_execution": "balanced",
+        "travel_percentage_min": 20,
+        "travel_percentage_max": 35,
+        "international_travel": true,
+        "overnight_travel_frequency": "monthly",
+        "regulatory_frameworks": [
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "FDA 21 CFR Part 11",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Global Data Privacy Regulations",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "PhRMA Code",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "EFPIA Code",
+            "proficiency_level": "advanced"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "GCP Advanced",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Leadership in Medical Information",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Global Regulatory Compliance",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Quality Management Systems",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Risk Management",
+            "is_mandatory": false,
+            "due_within_days_of_hire": 120
+          },
+          {
+            "name": "Budget and Resource Management",
+            "is_mandatory": false,
+            "due_within_days_of_hire": 180
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Strategic Planning & Execution",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Team Leadership & Development",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Global Regulatory Compliance",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Quality Management",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Stakeholder Management",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Process Optimization",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Medical Information Systems",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Budget Management",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Change Management",
+            "proficiency_level": "advanced"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Global service level achievement",
+            "target_value": "95%+",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Team productivity metrics",
+            "target_value": "Meeting targets",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Global compliance score",
+            "target_value": "100%",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Budget variance",
+            "target_value": "<5%",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Customer satisfaction (global)",
+            "target_value": "4.5/5.0",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Process improvement initiatives",
+            "target_value": "2-3 per year",
+            "measurement_frequency": "annually"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "99ef84bc-0e17-4b8e-9079-120bb9f5758c",
+      "role_name": "Regional Medical Information Manager",
+      "geographic_scope": "regional",
+      "seniority_level": "senior",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Manages medical information operations for a specific region, leading regional teams and adapting global strategies to regional needs. Ensures compliance with regional regulations while maintaining alignment with global standards and objectives.",
+        "required_skills": [
+          "Regional team management",
+          "Regional regulatory expertise",
+          "Strategic planning for region",
+          "Cross-cultural leadership",
+          "Regional budget management",
+          "Stakeholder management across countries",
+          "Regional SOP adaptation",
+          "Multi-country coordination",
+          "Regional vendor management",
+          "Regional quality assurance"
+        ],
+        "required_certifications": [
+          "Advanced degree (PharmD, PhD, MD preferred)",
+          "Regional regulatory certifications",
+          "Management certification",
+          "GCP certification"
+        ],
+        "years_experience_min": 4,
+        "years_experience_max": 8,
+        "gxp_role_type": "gcp",
+        "regulatory_inspection_role": true,
+        "pharmacovigilance_responsibility": true,
+        "clinical_trial_phase_focus": [
+          "Phase 2",
+          "Phase 3",
+          "Phase 4",
+          "Post-market"
+        ],
+        "drug_lifecycle_stage": [
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "typical_time_in_role_years": 3.5,
+        "advancement_potential": "high",
+        "typical_entry_point": false,
+        "typical_meeting_hours_per_week": 18,
+        "administrative_load_percent": 35,
+        "strategic_vs_tactical": "balanced",
+        "innovation_vs_execution": "balanced",
+        "travel_percentage_min": 25,
+        "travel_percentage_max": 40,
+        "international_travel": true,
+        "overnight_travel_frequency": "bi-weekly",
+        "regulatory_frameworks": [
+          {
+            "name": "Regional Regulatory Framework",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Regional Data Privacy Laws",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Regional Healthcare Regulations",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Regional Industry Codes",
+            "proficiency_level": "advanced"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "Regional Regulatory Compliance",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "GCP Advanced",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Regional Leadership",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Cross-cultural Management",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 120
+          },
+          {
+            "name": "Regional Quality Systems",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Regional Leadership",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Regional Regulatory Compliance",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Strategic Planning",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Cross-cultural Management",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Stakeholder Management",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Quality Management",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Budget Management",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Process Improvement",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Regional service metrics",
+            "target_value": "Meeting targets",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Regional compliance rate",
+            "target_value": "100%",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Regional team performance",
+            "target_value": "90% meeting objectives",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Regional customer satisfaction",
+            "target_value": "4.3/5.0",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Regional budget adherence",
+            "target_value": "Within 5%",
+            "measurement_frequency": "quarterly"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "87614dbc-ddde-4104-9959-18f33382bb84",
+      "role_name": "Local Medical Information Manager",
+      "geographic_scope": "local",
+      "seniority_level": "senior",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Leads medical information operations at the country level, managing local teams and ensuring services meet local healthcare needs and regulatory requirements. Works closely with local medical affairs and commercial leadership.",
+        "required_skills": [
+          "Local team leadership",
+          "Country regulatory expertise",
+          "Local strategic planning",
+          "Local stakeholder management",
+          "Country budget management",
+          "Local SOP implementation",
+          "Local vendor management",
+          "Local quality assurance",
+          "Local healthcare system expertise",
+          "Cross-functional collaboration"
+        ],
+        "required_certifications": [
+          "Advanced degree preferred",
+          "Local regulatory certification",
+          "Management training",
+          "GCP certification"
+        ],
+        "years_experience_min": 3,
+        "years_experience_max": 7,
+        "gxp_role_type": "gcp",
+        "regulatory_inspection_role": true,
+        "pharmacovigilance_responsibility": true,
+        "clinical_trial_phase_focus": [
+          "Phase 3",
+          "Phase 4",
+          "Post-market"
+        ],
+        "drug_lifecycle_stage": [
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "moderate",
+        "typical_entry_point": false,
+        "typical_meeting_hours_per_week": 15,
+        "administrative_load_percent": 40,
+        "strategic_vs_tactical": "balanced",
+        "innovation_vs_execution": "execution",
+        "travel_percentage_min": 10,
+        "travel_percentage_max": 20,
+        "international_travel": false,
+        "overnight_travel_frequency": "monthly",
+        "regulatory_frameworks": [
+          {
+            "name": "Local Regulatory Framework",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Local Data Privacy Laws",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Country Healthcare Regulations",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Local Industry Codes",
+            "proficiency_level": "advanced"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "Local Regulatory Compliance",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "GCP Fundamentals",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Local Team Leadership",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Local Quality Systems",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Local Healthcare System",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Local Team Leadership",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Local Regulatory Compliance",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Local Healthcare System",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Stakeholder Management",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Quality Management",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Budget Management",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Process Management",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Vendor Management",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Local service metrics",
+            "target_value": "95% achievement",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Local compliance score",
+            "target_value": "100%",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Team productivity",
+            "target_value": "Meeting targets",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Local stakeholder satisfaction",
+            "target_value": "4.4/5.0",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Budget variance",
+            "target_value": "<3%",
+            "measurement_frequency": "monthly"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "e9e4728e-392f-494f-9b77-6392041b6c25",
+      "role_name": "Global MI Operations Lead",
+      "geographic_scope": "global",
+      "seniority_level": "senior",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Leads global medical information operations, focusing on process optimization, system implementation, and operational excellence. Drives continuous improvement initiatives and ensures efficient delivery of medical information services worldwide.",
+        "required_skills": [
+          "Operations management",
+          "Process optimization and Lean Six Sigma",
+          "System implementation and integration",
+          "Global project management",
+          "Vendor and outsourcing management",
+          "Quality management systems",
+          "Data analytics and reporting",
+          "Change management",
+          "Technology assessment and adoption",
+          "Cross-functional collaboration"
+        ],
+        "required_certifications": [
+          "Bachelor's degree minimum, advanced degree preferred",
+          "Six Sigma or Lean certification",
+          "Project management certification (PMP preferred)",
+          "GCP certification"
+        ],
+        "years_experience_min": 5,
+        "years_experience_max": 10,
+        "gxp_role_type": "gcp",
+        "regulatory_inspection_role": true,
+        "sox_critical": true,
+        "cfr_part_11_required": true,
+        "pharmacovigilance_responsibility": false,
+        "clinical_trial_phase_focus": [
+          "All phases"
+        ],
+        "drug_lifecycle_stage": [
+          "All stages"
+        ],
+        "patient_facing": false,
+        "hcp_facing": false,
+        "typical_time_in_role_years": 4,
+        "advancement_potential": "high",
+        "typical_entry_point": false,
+        "typical_meeting_hours_per_week": 25,
+        "administrative_load_percent": 30,
+        "strategic_vs_tactical": "balanced",
+        "innovation_vs_execution": "innovation",
+        "travel_percentage_min": 15,
+        "travel_percentage_max": 30,
+        "international_travel": true,
+        "overnight_travel_frequency": "monthly",
+        "regulatory_frameworks": [
+          {
+            "name": "FDA 21 CFR Part 11",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "ISO 9001 Quality Management",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "GDPR and Data Privacy",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "SOX Compliance",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "GCP Advanced",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "21 CFR Part 11 Compliance",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Quality Management Systems",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Process Improvement Methodologies",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 120
+          },
+          {
+            "name": "Change Management",
+            "is_mandatory": false,
+            "due_within_days_of_hire": 180
+          },
+          {
+            "name": "Project Management Excellence",
+            "is_mandatory": false,
+            "due_within_days_of_hire": 180
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Operations Management",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Process Optimization",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "System Implementation",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Quality Management",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Project Management",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Data Analytics",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Vendor Management",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Change Management",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Technology Assessment",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Operational efficiency metrics",
+            "target_value": "10% YoY improvement",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "System uptime",
+            "target_value": "99.9%",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Process improvement initiatives",
+            "target_value": "4-6 per year",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Cost reduction",
+            "target_value": "5-10% annually",
+            "measurement_frequency": "annually"
+          },
+          {
+            "kpi_name": "Quality metrics",
+            "target_value": "Zero critical findings",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Project delivery",
+            "target_value": "90% on time/budget",
+            "measurement_frequency": "quarterly"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "b129992d-31de-47d4-bf1c-ab4a8be7a5c7",
+      "role_name": "Regional MI Operations Lead",
+      "geographic_scope": "regional",
+      "seniority_level": "senior",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Manages medical information operations for a region, implementing global strategies while addressing regional operational needs. Focuses on regional process optimization and ensuring operational excellence across multiple countries.",
+        "required_skills": [
+          "Regional operations management",
+          "Multi-country coordination",
+          "Regional process optimization",
+          "Regional system management",
+          "Cross-cultural team coordination",
+          "Regional vendor management",
+          "Regional quality assurance",
+          "Regional reporting and analytics",
+          "Regional project management",
+          "Stakeholder management"
+        ],
+        "required_certifications": [
+          "Bachelor's degree minimum",
+          "Regional operations certification",
+          "Project management training",
+          "GCP certification"
+        ],
+        "years_experience_min": 4,
+        "years_experience_max": 8,
+        "gxp_role_type": "gcp",
+        "regulatory_inspection_role": true,
+        "pharmacovigilance_responsibility": false,
+        "clinical_trial_phase_focus": [
+          "Phase 2",
+          "Phase 3",
+          "Phase 4",
+          "Post-market"
+        ],
+        "drug_lifecycle_stage": [
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "typical_time_in_role_years": 3.5,
+        "advancement_potential": "moderate",
+        "typical_entry_point": false,
+        "typical_meeting_hours_per_week": 20,
+        "administrative_load_percent": 30,
+        "strategic_vs_tactical": "tactical",
+        "innovation_vs_execution": "execution",
+        "travel_percentage_min": 20,
+        "travel_percentage_max": 35,
+        "international_travel": true,
+        "overnight_travel_frequency": "bi-weekly",
+        "regulatory_frameworks": [
+          {
+            "name": "Regional Regulatory Requirements",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Regional Quality Standards",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Regional Data Privacy",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "21 CFR Part 11",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "GCP Fundamentals",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Regional Operations Excellence",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Regional Quality Systems",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Cross-cultural Management",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 120
+          },
+          {
+            "name": "Regional Compliance",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Regional Operations Management",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Multi-country Coordination",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Process Optimization",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Quality Management",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Project Management",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Vendor Management",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Data Analytics",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Stakeholder Management",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Regional operational metrics",
+            "target_value": "Meeting targets",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Regional system performance",
+            "target_value": "99.5% uptime",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Process improvements",
+            "target_value": "2-3 per year",
+            "measurement_frequency": "semi-annually"
+          },
+          {
+            "kpi_name": "Regional cost optimization",
+            "target_value": "3-5% reduction",
+            "measurement_frequency": "annually"
+          },
+          {
+            "kpi_name": "Quality compliance",
+            "target_value": "100%",
+            "measurement_frequency": "quarterly"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "e1a8d2a3-c0b8-4faf-981e-a6c8efdcfa04",
+      "role_name": "Local MI Operations Lead",
+      "geographic_scope": "local",
+      "seniority_level": "senior",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Manages medical information operations at the country level, ensuring efficient local service delivery and compliance with local requirements. Implements and adapts global/regional processes to local needs.",
+        "required_skills": [
+          "Local operations management",
+          "Local process implementation",
+          "Local system administration",
+          "Local team coordination",
+          "Local vendor management",
+          "Local quality control",
+          "Local reporting",
+          "Local project coordination",
+          "Local compliance management",
+          "Cross-functional collaboration"
+        ],
+        "required_certifications": [
+          "Bachelor's degree",
+          "Local operations training",
+          "GCP basics",
+          "Local compliance certification"
+        ],
+        "years_experience_min": 3,
+        "years_experience_max": 6,
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": false,
+        "clinical_trial_phase_focus": [
+          "Phase 3",
+          "Phase 4",
+          "Post-market"
+        ],
+        "drug_lifecycle_stage": [
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "moderate",
+        "typical_entry_point": false,
+        "typical_meeting_hours_per_week": 15,
+        "administrative_load_percent": 35,
+        "strategic_vs_tactical": "tactical",
+        "innovation_vs_execution": "execution",
+        "travel_percentage_min": 5,
+        "travel_percentage_max": 15,
+        "international_travel": false,
+        "overnight_travel_frequency": "quarterly",
+        "regulatory_frameworks": [
+          {
+            "name": "Local Regulatory Requirements",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Local Quality Standards",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Local Data Privacy",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "awareness"
+          },
+          {
+            "name": "Local Healthcare Regulations",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "Local Operations Training",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Local Quality Systems",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "GCP Basics",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Local Compliance",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "Process Management",
+            "is_mandatory": false,
+            "due_within_days_of_hire": 120
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Local Operations Management",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Process Implementation",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Quality Control",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Team Coordination",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Local Compliance",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "System Administration",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Project Coordination",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Vendor Management",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Local operational efficiency",
+            "target_value": "95% SLA achievement",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Local system availability",
+            "target_value": "99%",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Process compliance",
+            "target_value": "100%",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Local cost management",
+            "target_value": "Within budget",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Quality metrics",
+            "target_value": "Zero critical issues",
+            "measurement_frequency": "monthly"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "702f6a9f-372c-49f6-8d4a-3efc8dec8902",
+      "role_name": "Global Medical Info Associate",
+      "geographic_scope": "global",
+      "seniority_level": "entry",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Entry-level position supporting global medical information operations. Assists with medical inquiry responses, database management, and administrative tasks while developing expertise in medical information practices.",
+        "required_skills": [
+          "Scientific literature searching basics",
+          "Medical terminology",
+          "Database entry and management",
+          "Basic regulatory awareness",
+          "Documentation skills",
+          "Attention to detail",
+          "Time management",
+          "Team collaboration",
+          "Microsoft Office proficiency",
+          "Basic data analysis"
+        ],
+        "required_certifications": [
+          "Bachelor's degree in Life Sciences or related field",
+          "GCP training (can be completed after hire)",
+          "Medical information basics training"
+        ],
+        "years_experience_min": 0,
+        "years_experience_max": 2,
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": false,
+        "patient_facing": false,
+        "clinical_trial_phase_focus": [
+          "Phase 3",
+          "Phase 4",
+          "Post-market"
+        ],
+        "drug_lifecycle_stage": [
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "typical_time_in_role_years": 2,
+        "advancement_potential": "high",
+        "typical_entry_point": true,
+        "typical_meeting_hours_per_week": 5,
+        "administrative_load_percent": 50,
+        "strategic_vs_tactical": "tactical",
+        "innovation_vs_execution": "execution",
+        "travel_percentage_min": 0,
+        "travel_percentage_max": 5,
+        "international_travel": false,
+        "overnight_travel_frequency": "rarely",
+        "regulatory_frameworks": [
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "awareness"
+          },
+          {
+            "name": "FDA 21 CFR Part 11",
+            "proficiency_level": "awareness"
+          },
+          {
+            "name": "GDPR and Data Privacy",
+            "proficiency_level": "awareness"
+          },
+          {
+            "name": "PhRMA Code",
+            "proficiency_level": "awareness"
+          },
+          {
+            "name": "Pharmacovigilance Basics",
+            "proficiency_level": "working_knowledge"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "GCP Basics",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Medical Information Fundamentals",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "Pharmacovigilance Basics",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Database Management Basics",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "Scientific Literature Searching",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Literature Searching",
+            "proficiency_level": "beginner"
+          },
+          {
+            "name": "Medical Terminology",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Database Management",
+            "proficiency_level": "beginner"
+          },
+          {
+            "name": "Documentation",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Quality Control",
+            "proficiency_level": "beginner"
+          },
+          {
+            "name": "Team Collaboration",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Time Management",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Attention to Detail",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Task completion rate",
+            "target_value": "95%",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Quality accuracy",
+            "target_value": "90%",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Training completion",
+            "target_value": "100% on schedule",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Response support volume",
+            "target_value": "15-20 per month",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Database entry accuracy",
+            "target_value": "95%",
+            "measurement_frequency": "monthly"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "1f7e4517-2e32-4108-b10c-8dc4bf1fa589",
+      "role_name": "Regional Medical Info Associate",
+      "geographic_scope": "regional",
+      "seniority_level": "entry",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Entry-level position supporting regional medical information activities. Assists regional specialists with inquiry responses, documentation, and administrative support while learning regional requirements.",
+        "required_skills": [
+          "Regional language skills",
+          "Literature searching",
+          "Regional database management",
+          "Regional documentation",
+          "Cross-cultural awareness",
+          "Basic regulatory knowledge",
+          "Administrative support",
+          "Team collaboration",
+          "Time management",
+          "Microsoft Office"
+        ],
+        "required_certifications": [
+          "Bachelor's degree in Life Sciences",
+          "Regional language proficiency",
+          "GCP basics training"
+        ],
+        "years_experience_min": 0,
+        "years_experience_max": 2,
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "clinical_trial_phase_focus": [
+          "Phase 3",
+          "Phase 4",
+          "Post-market"
+        ],
+        "drug_lifecycle_stage": [
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "typical_time_in_role_years": 2,
+        "advancement_potential": "moderate",
+        "typical_entry_point": true,
+        "typical_meeting_hours_per_week": 6,
+        "administrative_load_percent": 45,
+        "strategic_vs_tactical": "tactical",
+        "innovation_vs_execution": "execution",
+        "travel_percentage_min": 0,
+        "travel_percentage_max": 10,
+        "international_travel": false,
+        "overnight_travel_frequency": "rarely",
+        "regulatory_frameworks": [
+          {
+            "name": "Regional Regulatory Basics",
+            "proficiency_level": "awareness"
+          },
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "awareness"
+          },
+          {
+            "name": "Regional Data Privacy",
+            "proficiency_level": "awareness"
+          },
+          {
+            "name": "Pharmacovigilance Basics",
+            "proficiency_level": "working_knowledge"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "Regional Compliance Basics",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "GCP Basics",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Medical Information Fundamentals",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "Regional Pharmacovigilance",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Cross-cultural Communication",
+            "is_mandatory": false,
+            "due_within_days_of_hire": 120
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Regional Language Skills",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Literature Searching",
+            "proficiency_level": "beginner"
+          },
+          {
+            "name": "Documentation",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Database Management",
+            "proficiency_level": "beginner"
+          },
+          {
+            "name": "Cross-cultural Awareness",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Team Collaboration",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Quality Control",
+            "proficiency_level": "beginner"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Regional task completion",
+            "target_value": "93%",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Documentation accuracy",
+            "target_value": "90%",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Training progress",
+            "target_value": "On schedule",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Support volume",
+            "target_value": "12-18 per month",
+            "measurement_frequency": "monthly"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "f9fdae17-b752-4211-8ba0-55b0b6423941",
+      "role_name": "Local Medical Info Associate",
+      "geographic_scope": "local",
+      "seniority_level": "entry",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Entry-level position supporting local medical information team. Provides administrative and operational support for local medical information activities while developing expertise in local healthcare environment.",
+        "required_skills": [
+          "Local language fluency",
+          "Basic literature searching",
+          "Local database management",
+          "Documentation in local language",
+          "Local healthcare basics",
+          "Administrative skills",
+          "Attention to detail",
+          "Team support",
+          "Time management",
+          "Computer skills"
+        ],
+        "required_certifications": [
+          "Bachelor's degree",
+          "Local language certification",
+          "Basic medical information training"
+        ],
+        "years_experience_min": 0,
+        "years_experience_max": 2,
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "clinical_trial_phase_focus": [
+          "Phase 4",
+          "Post-market"
+        ],
+        "drug_lifecycle_stage": [
+          "Growth",
+          "Maturity"
+        ],
+        "typical_time_in_role_years": 1.5,
+        "advancement_potential": "moderate",
+        "typical_entry_point": true,
+        "typical_meeting_hours_per_week": 4,
+        "administrative_load_percent": 55,
+        "strategic_vs_tactical": "tactical",
+        "innovation_vs_execution": "execution",
+        "travel_percentage_min": 0,
+        "travel_percentage_max": 5,
+        "international_travel": false,
+        "overnight_travel_frequency": "never",
+        "regulatory_frameworks": [
+          {
+            "name": "Local Regulatory Basics",
+            "proficiency_level": "awareness"
+          },
+          {
+            "name": "Local Data Privacy",
+            "proficiency_level": "awareness"
+          },
+          {
+            "name": "Local Pharmacovigilance",
+            "proficiency_level": "working_knowledge"
+          },
+          {
+            "name": "GCP Basics",
+            "proficiency_level": "awareness"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "Local Compliance Basics",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "Medical Information Basics",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          },
+          {
+            "name": "Local Pharmacovigilance",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Database Training",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 30
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Local Language Communication",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Documentation",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Database Entry",
+            "proficiency_level": "beginner"
+          },
+          {
+            "name": "Administrative Support",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Team Support",
+            "proficiency_level": "intermediate"
+          },
+          {
+            "name": "Quality Basics",
+            "proficiency_level": "beginner"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Task completion",
+            "target_value": "90%",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Data entry accuracy",
+            "target_value": "90%",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Training completion",
+            "target_value": "100%",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Support tasks",
+            "target_value": "10-15 per month",
+            "measurement_frequency": "monthly"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "4674cdd3-f12c-4b69-9f10-e8edd5138d14",
+      "role_name": "Global Medical Info Scientist",
+      "geographic_scope": "global",
+      "seniority_level": "senior",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Senior scientific expert providing advanced medical and scientific support for complex inquiries. Develops global scientific content, conducts in-depth literature reviews, and serves as subject matter expert for therapeutic areas.",
+        "required_skills": [
+          "Advanced therapeutic area expertise",
+          "Systematic literature review methodology",
+          "Meta-analysis and evidence synthesis",
+          "Scientific writing and publication",
+          "Critical appraisal of clinical trials",
+          "Statistical analysis interpretation",
+          "Medical education content development",
+          "Scientific advisory board support",
+          "Thought leader engagement",
+          "Complex inquiry management"
+        ],
+        "required_certifications": [
+          "Advanced degree required (PhD, PharmD, MD)",
+          "Therapeutic area specialization",
+          "GCP certification (ICH E6 R2)",
+          "Scientific writing certification preferred"
+        ],
+        "years_experience_min": 5,
+        "years_experience_max": 10,
+        "gxp_role_type": "gcp",
+        "regulatory_inspection_role": false,
+        "pharmacovigilance_responsibility": true,
+        "clinical_trial_phase_focus": [
+          "Phase 1",
+          "Phase 2",
+          "Phase 3",
+          "Phase 4"
+        ],
+        "drug_lifecycle_stage": [
+          "Clinical Development",
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "patient_facing": false,
+        "hcp_facing": true,
+        "typical_time_in_role_years": 4,
+        "advancement_potential": "high",
+        "typical_entry_point": false,
+        "typical_meeting_hours_per_week": 12,
+        "administrative_load_percent": 20,
+        "strategic_vs_tactical": "strategic",
+        "innovation_vs_execution": "innovation",
+        "travel_percentage_min": 10,
+        "travel_percentage_max": 25,
+        "international_travel": true,
+        "overnight_travel_frequency": "monthly",
+        "regulatory_frameworks": [
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "FDA Guidance Documents",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "EMA Scientific Guidelines",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "ICH E3 Clinical Study Reports",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "CONSORT Guidelines",
+            "proficiency_level": "advanced"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "GCP Advanced",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Advanced Pharmacovigilance",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Scientific Writing Excellence",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 120
+          },
+          {
+            "name": "Evidence-based Medicine",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Biostatistics for Medical Information",
+            "is_mandatory": false,
+            "due_within_days_of_hire": 180
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Therapeutic Area Expertise",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Systematic Literature Review",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Scientific Writing",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Critical Appraisal",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Evidence Synthesis",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Statistical Interpretation",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Medical Education Development",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Thought Leader Engagement",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Complex inquiry resolution",
+            "target_value": "20-25 per month",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Scientific content development",
+            "target_value": "5-8 documents per quarter",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Literature review completion",
+            "target_value": "3-4 systematic reviews per year",
+            "measurement_frequency": "annually"
+          },
+          {
+            "kpi_name": "Scientific accuracy score",
+            "target_value": "100%",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Internal training delivered",
+            "target_value": "4-6 sessions per year",
+            "measurement_frequency": "semi-annually"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "d969ac11-b1fc-4835-8f4c-3718e0aa5051",
+      "role_name": "Regional Medical Info Scientist",
+      "geographic_scope": "regional",
+      "seniority_level": "senior",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Regional scientific expert adapting global scientific strategies to regional needs. Provides advanced scientific support for regional inquiries and develops region-specific scientific content.",
+        "required_skills": [
+          "Regional therapeutic expertise",
+          "Regional scientific literature knowledge",
+          "Regional clinical practice understanding",
+          "Scientific content localization",
+          "Regional guideline interpretation",
+          "Cross-cultural scientific communication",
+          "Regional HCP education",
+          "Regional language scientific writing",
+          "Regional regulatory science",
+          "Complex regional inquiry management"
+        ],
+        "required_certifications": [
+          "Advanced degree (PhD, PharmD, MD)",
+          "Regional scientific certification",
+          "GCP certification",
+          "Regional language proficiency"
+        ],
+        "years_experience_min": 4,
+        "years_experience_max": 8,
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "clinical_trial_phase_focus": [
+          "Phase 2",
+          "Phase 3",
+          "Phase 4"
+        ],
+        "drug_lifecycle_stage": [
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "typical_time_in_role_years": 3.5,
+        "advancement_potential": "moderate",
+        "typical_entry_point": false,
+        "typical_meeting_hours_per_week": 10,
+        "administrative_load_percent": 25,
+        "strategic_vs_tactical": "balanced",
+        "innovation_vs_execution": "balanced",
+        "travel_percentage_min": 15,
+        "travel_percentage_max": 30,
+        "international_travel": true,
+        "overnight_travel_frequency": "bi-weekly",
+        "regulatory_frameworks": [
+          {
+            "name": "Regional Scientific Guidelines",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Regional Clinical Guidelines",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Regional Regulatory Science",
+            "proficiency_level": "advanced"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "Regional Scientific Excellence",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "GCP Advanced",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Regional Medical Writing",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 120
+          },
+          {
+            "name": "Cross-cultural Scientific Communication",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 120
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Regional Scientific Expertise",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Regional Literature Review",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Scientific Content Localization",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Regional Medical Writing",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Cross-cultural Communication",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Regional Guideline Interpretation",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Regional HCP Education",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Regional complex inquiries",
+            "target_value": "15-20 per month",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Regional content development",
+            "target_value": "4-6 per quarter",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Regional training delivery",
+            "target_value": "3-4 per year",
+            "measurement_frequency": "semi-annually"
+          },
+          {
+            "kpi_name": "Regional scientific quality",
+            "target_value": "98%",
+            "measurement_frequency": "quarterly"
+          }
+        ]
+      }
+    },
+    {
+      "role_id": "7e076164-9acd-46cd-872d-1c4cdc980bda",
+      "role_name": "Local Medical Info Scientist",
+      "geographic_scope": "local",
+      "seniority_level": "senior",
+      "role_category": "office",
+      "enrichment": {
+        "description": "Local scientific expert providing advanced scientific support for country-specific medical information needs. Develops local scientific content and ensures alignment with local clinical practice.",
+        "required_skills": [
+          "Local therapeutic area expertise",
+          "Local clinical practice knowledge",
+          "Local scientific literature",
+          "Local guideline expertise",
+          "Local language scientific writing",
+          "Local HCP education development",
+          "Local regulatory science",
+          "Local formulary knowledge",
+          "Complex local inquiry resolution",
+          "Local stakeholder engagement"
+        ],
+        "required_certifications": [
+          "Advanced degree (PhD, PharmD, MD)",
+          "Local medical/scientific certification",
+          "GCP certification",
+          "Local professional registration"
+        ],
+        "years_experience_min": 3,
+        "years_experience_max": 7,
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "clinical_trial_phase_focus": [
+          "Phase 3",
+          "Phase 4",
+          "Post-market"
+        ],
+        "drug_lifecycle_stage": [
+          "Launch",
+          "Growth",
+          "Maturity"
+        ],
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "moderate",
+        "typical_entry_point": false,
+        "typical_meeting_hours_per_week": 8,
+        "administrative_load_percent": 30,
+        "strategic_vs_tactical": "balanced",
+        "innovation_vs_execution": "execution",
+        "travel_percentage_min": 5,
+        "travel_percentage_max": 15,
+        "international_travel": false,
+        "overnight_travel_frequency": "quarterly",
+        "regulatory_frameworks": [
+          {
+            "name": "Local Clinical Guidelines",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Local Regulatory Science",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Local Formulary Requirements",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "ICH GCP E6(R2)",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "gxp_training_modules": [
+          {
+            "name": "Local Scientific Excellence",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 60
+          },
+          {
+            "name": "Local Medical Writing",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "GCP Fundamentals",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 90
+          },
+          {
+            "name": "Local HCP Education",
+            "is_mandatory": true,
+            "due_within_days_of_hire": 120
+          }
+        ],
+        "clinical_competencies": [
+          {
+            "name": "Local Scientific Expertise",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Local Clinical Practice",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Local Medical Writing",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Local Guideline Expertise",
+            "proficiency_level": "expert"
+          },
+          {
+            "name": "Local HCP Education",
+            "proficiency_level": "advanced"
+          },
+          {
+            "name": "Local Stakeholder Engagement",
+            "proficiency_level": "intermediate"
+          }
+        ],
+        "kpis": [
+          {
+            "kpi_name": "Local complex inquiries",
+            "target_value": "10-15 per month",
+            "measurement_frequency": "monthly"
+          },
+          {
+            "kpi_name": "Local content development",
+            "target_value": "3-5 per quarter",
+            "measurement_frequency": "quarterly"
+          },
+          {
+            "kpi_name": "Local education programs",
+            "target_value": "2-3 per year",
+            "measurement_frequency": "semi-annually"
+          },
+          {
+            "kpi_name": "Local scientific quality",
+            "target_value": "98%",
+            "measurement_frequency": "quarterly"
+          }
+        ]
+      }
+    }
+  ]
+}

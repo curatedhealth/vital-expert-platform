@@ -28,6 +28,16 @@ interface WorkflowNodeProps {
 }
 
 export const WorkflowNode = memo(({ data, isConnectable, selected }: WorkflowNodeProps) => {
+  // Safety check for data
+  if (!data || !data.type) {
+    console.warn('WorkflowNode received invalid data:', data);
+    return (
+      <div className="px-4 py-2 bg-red-50 border-2 border-red-300 rounded-lg">
+        <p className="text-xs text-red-600">Invalid node data</p>
+      </div>
+    );
+  }
+
   const nodeDef = getNodeTypeDefinition(data.type);
   const Icon = nodeDef.icon;
 
@@ -46,6 +56,7 @@ export const WorkflowNode = memo(({ data, isConnectable, selected }: WorkflowNod
 
   const hasInputs = data.type !== 'start';
   const hasOutputs = data.type !== 'end';
+  const config = data.config || {};
 
   return (
     <div
@@ -93,28 +104,28 @@ export const WorkflowNode = memo(({ data, isConnectable, selected }: WorkflowNod
       </div>
 
       {/* Node Description */}
-      {data.config.description && (
+      {config.description && (
         <p className="text-xs text-gray-600 mt-2 line-clamp-2">
-          {data.config.description}
+          {config.description}
         </p>
       )}
 
       {/* Node Config Preview */}
-      {data.type === 'agent' && data.config.model && (
+      {data.type === 'agent' && config.model && (
         <div className="mt-2 pt-2 border-t border-gray-200">
           <div className="flex items-center justify-between text-xs text-gray-600">
-            <span>{data.config.model}</span>
-            {data.config.temperature !== undefined && (
-              <span>T: {data.config.temperature}</span>
+            <span>{config.model}</span>
+            {config.temperature !== undefined && (
+              <span>T: {config.temperature}</span>
             )}
           </div>
         </div>
       )}
 
-      {data.type === 'tool' && data.config.toolName && (
+      {data.type === 'tool' && config.toolName && (
         <div className="mt-2 pt-2 border-t border-gray-200">
           <div className="text-xs text-gray-600 truncate">
-            Tool: {data.config.toolName}
+            Tool: {config.toolName}
           </div>
         </div>
       )}

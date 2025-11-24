@@ -1,0 +1,71 @@
+# VITAL Platform - Docker Compose (Fixed Paths)
+# Backend services: API Gateway, Python AI Engine, Redis
+# 
+# Usage from project root:
+#   docker-compose up -d          # Start all services
+#   docker-compose logs -f         # View logs
+#   docker-compose down            # Stop all services
+
+version: '3.8'
+
+services:
+  # Redis - Caching and Session Storage
+  redis:
+    image: redis:7-alpine
+    container_name: vital-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    networks:
+      - vital-backend-network
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Python AI Engine - FastAPI Backend
+  python-ai-engine:
+    build:
+      context: ./services/ai-engine
+      dockerfile: Dockerfile
+    container_name: vital-python-ai-engine
+    ports:
+      - "8000:8080"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PORT=8080
+      - LOG_LEVEL=info
+      - REDIS_URL=redis://redis:6379
+      - LANGGRAPH_GUI_WORKFLOWS_PATH=/app/workflows
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - vital-backend-network
+    restart: unless-stopped
+    volumes:
+      - ./logs/python:/app/logs
+      - ./services/ai-engine/workflows:/app/workflows:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+
+# Volumes
+volumes:
+  redis-data:
+    driver: local
+
+# Network
+networks:
+  vital-backend-network:
+    driver: bridge
+

@@ -420,17 +420,36 @@ export function SidebarAskExpert() {
             data-active={isActive}
             onClick={() => setActiveSessionId(session.sessionId)}
             className={cn(
-              "w-full transition-all",
-              isPinned && "bg-yellow-50/50 dark:bg-yellow-900/10 border-l-2 border-l-yellow-500",
-              isKeyboardSelected && !isActive && "ring-2 ring-vital-primary-300 bg-vital-primary-50/30"
+              "group relative w-full rounded-lg transition-all duration-200",
+              isPinned && "bg-gradient-to-r from-yellow-50/80 to-yellow-50/40 dark:from-yellow-900/20 dark:to-yellow-900/10 border-l-2 border-l-yellow-500 shadow-sm",
+              !isPinned && !isActive && "hover:bg-gradient-to-r hover:from-accent/50 hover:to-accent/30 hover:shadow-sm hover:-translate-y-0.5",
+              isActive && "bg-gradient-to-r from-primary/15 to-primary/5 border-l-2 border-l-primary shadow-md",
+              isKeyboardSelected && !isActive && "ring-2 ring-primary/30 bg-primary/10"
             )}
           >
-            <div className="flex w-full items-center gap-2">
-              <UserCircle2Icon className="h-4 w-4 shrink-0" />
+            {/* Subtle gradient overlay */}
+            <div className={cn(
+              "absolute inset-0 rounded-lg transition-all duration-300 pointer-events-none",
+              isActive ? "bg-gradient-to-br from-primary/5 to-transparent" : "bg-gradient-to-br from-accent/0 to-accent/0 group-hover:from-accent/5 group-hover:to-transparent"
+            )} />
+
+            <div className="relative flex w-full items-center gap-3">
+              <div className={cn(
+                "p-1.5 rounded-md transition-all duration-200",
+                isActive ? "bg-primary/20" : "bg-muted/50 group-hover:bg-accent/30"
+              )}>
+                <UserCircle2Icon className={cn(
+                  "h-3.5 w-3.5 shrink-0 transition-all duration-200",
+                  isActive ? "text-primary" : "group-hover:scale-110"
+                )} />
+              </div>
               <div className="flex flex-1 flex-col items-start gap-0.5 min-w-0">
                 <div className="flex items-center gap-1.5 w-full">
                   {isPinned && <Pin className="h-3 w-3 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />}
-                  <span className="text-sm font-medium truncate">
+                  <span className={cn(
+                    "text-sm truncate transition-colors duration-200",
+                    isActive ? "font-semibold text-primary" : "font-medium group-hover:text-foreground"
+                  )}>
                     {session.agent?.name || "Consultation"}
                   </span>
                 </div>
@@ -439,7 +458,10 @@ export function SidebarAskExpert() {
                 </span>
               </div>
               {session.messageCount > 0 && (
-                <Badge variant="outline" className="ml-auto flex-shrink-0">
+                <Badge variant="outline" className={cn(
+                  "ml-auto flex-shrink-0 transition-all duration-200",
+                  isActive && "bg-primary/10 border-primary/30 text-primary"
+                )}>
                   {session.messageCount}
                 </Badge>
               )}
@@ -507,56 +529,71 @@ export function SidebarAskExpert() {
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              Quick Actions
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            <CollapsibleTrigger className="group flex w-full items-center justify-between hover:bg-gradient-to-r hover:from-accent/50 hover:to-accent/30 rounded-lg px-3 py-2 transition-all duration-200">
+              <span className="text-xs font-bold uppercase tracking-wider text-foreground/80 group-hover:text-foreground">Quick Actions</span>
+              <ChevronDown className="ml-auto h-3.5 w-3.5 transition-all duration-200 group-data-[state=open]/collapsible:rotate-180 group-hover:text-primary" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
           <CollapsibleContent>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="space-y-1.5">
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    className="justify-between"
+                    className="group relative justify-between rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:shadow-sm hover:-translate-y-0.5"
                     onClick={handleNewChat}
                     disabled={isCreatingChat}
                   >
-                    <div className="flex items-center gap-2">
-                      {isCreatingChat ? (
-                        <Loader2Icon className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <PlusIcon className="h-4 w-4" />
-                      )}
-                      <span>New Consultation</span>
+                    {/* Subtle gradient overlay on hover */}
+                    <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:to-transparent transition-all duration-300 pointer-events-none" />
+
+                    <div className="relative flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-all duration-200">
+                        {isCreatingChat ? (
+                          <Loader2Icon className="h-3.5 w-3.5 animate-spin text-primary" />
+                        ) : (
+                          <PlusIcon className="h-3.5 w-3.5 text-primary transition-transform duration-200 group-hover:scale-110 group-hover:rotate-90" />
+                        )}
+                      </div>
+                      <span className="font-medium">New Consultation</span>
                     </div>
                     {selectedAgents.length > 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        {selectedAgents.length} selected
+                      <Badge variant="outline" className="text-xs ml-auto bg-primary/10 border-primary/20">
+                        {selectedAgents.length}
                       </Badge>
                     )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    className="justify-between"
+                    className="group relative justify-between rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-secondary/10 hover:to-secondary/5 hover:shadow-sm hover:-translate-y-0.5"
                     onClick={handleRefresh}
                     disabled={isRefreshing}
                   >
-                    <div className="flex items-center gap-2">
-                      {isRefreshing ? (
-                        <Loader2Icon className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <RefreshCwIcon className="h-4 w-4" />
-                      )}
-                      <span>Refresh</span>
+                    <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-secondary/0 to-secondary/0 group-hover:from-secondary/5 group-hover:to-transparent transition-all duration-300 pointer-events-none" />
+
+                    <div className="relative flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-md bg-secondary/10 group-hover:bg-secondary/20 transition-all duration-200">
+                        {isRefreshing ? (
+                          <Loader2Icon className="h-3.5 w-3.5 animate-spin text-secondary-foreground" />
+                        ) : (
+                          <RefreshCwIcon className="h-3.5 w-3.5 text-secondary-foreground transition-transform duration-200 group-hover:scale-110 group-hover:rotate-180" />
+                        )}
+                      </div>
+                      <span className="font-medium">Refresh</span>
                     </div>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className="group relative rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-accent/50 hover:to-accent/30 hover:shadow-sm hover:-translate-y-0.5">
                     <Link href="/agents">
-                      <SparklesIcon className="h-4 w-4" />
-                      <span>Browse Agent Store</span>
+                      <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-accent/0 to-accent/0 group-hover:from-accent/10 group-hover:to-transparent transition-all duration-300 pointer-events-none" />
+
+                      <div className="relative flex items-center gap-2.5">
+                        <div className="p-1.5 rounded-md bg-accent/20 group-hover:bg-accent/30 transition-all duration-200">
+                          <SparklesIcon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:scale-110" />
+                        </div>
+                        <span className="font-medium">Browse Agent Store</span>
+                      </div>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -569,23 +606,30 @@ export function SidebarAskExpert() {
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              Conversations
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            <CollapsibleTrigger className="group flex w-full items-center justify-between hover:bg-gradient-to-r hover:from-accent/50 hover:to-accent/30 rounded-lg px-3 py-2 transition-all duration-200">
+              <span className="text-xs font-bold uppercase tracking-wider text-foreground/80 group-hover:text-foreground">Conversations</span>
+              <ChevronDown className="ml-auto h-3.5 w-3.5 transition-all duration-200 group-data-[state=open]/collapsible:rotate-180 group-hover:text-primary" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
           <CollapsibleContent>
-            <SidebarGroupContent className="space-y-2">
-              {/* Conversation Search */}
+            <SidebarGroupContent className="space-y-3">
+              {/* Conversation Search with premium styling */}
               <div className="relative px-2">
-                <SearchIcon className="pointer-events-none absolute left-5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  ref={conversationSearchRef}
-                  value={conversationSearch}
-                  onChange={(e) => setConversationSearch(e.target.value)}
-                  placeholder="Search conversations… (⌘K)"
-                  className="h-8 pl-8 text-xs"
-                />
+                <div className="relative group">
+                  {/* Gradient border effect on focus */}
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/20 to-secondary/20 opacity-0 group-focus-within:opacity-100 blur-sm transition-opacity duration-300 pointer-events-none" />
+
+                  <div className="relative">
+                    <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors duration-200" />
+                    <Input
+                      ref={conversationSearchRef}
+                      value={conversationSearch}
+                      onChange={(e) => setConversationSearch(e.target.value)}
+                      placeholder="Search conversations… (⌘K)"
+                      className="h-9 pl-9 text-xs rounded-lg bg-muted/50 border-border/40 focus-visible:ring-primary/20 transition-all duration-200"
+                    />
+                  </div>
+                </div>
               </div>
 
               {sessionsLoading && (
@@ -611,10 +655,12 @@ export function SidebarAskExpert() {
                   <div className="space-y-4">
                     {/* Pinned Conversations */}
                     {groupedSessions.pinned.length > 0 && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 px-2 py-1">
-                          <Pin className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-yellow-50/50 to-yellow-50/30 dark:from-yellow-900/10 dark:to-yellow-900/5">
+                          <div className="p-1 rounded-md bg-yellow-500/10">
+                            <Pin className="h-3 w-3 text-yellow-600 dark:text-yellow-400" />
+                          </div>
+                          <span className="text-xs font-bold text-yellow-900 dark:text-yellow-300 uppercase tracking-wider">
                             Pinned
                           </span>
                         </div>
@@ -626,10 +672,12 @@ export function SidebarAskExpert() {
 
                     {/* Today */}
                     {groupedSessions.today.length > 0 && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 px-2 py-1">
-                          <Clock className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5">
+                          <div className="p-1 rounded-md bg-primary/10">
+                            <Clock className="h-3 w-3 text-primary" />
+                          </div>
+                          <span className="text-xs font-bold text-primary uppercase tracking-wider">
                             Today
                           </span>
                         </div>
@@ -643,10 +691,12 @@ export function SidebarAskExpert() {
 
                     {/* Yesterday */}
                     {groupedSessions.yesterday.length > 0 && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 px-2 py-1">
-                          <Calendar className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-muted/50 to-muted/30">
+                          <div className="p-1 rounded-md bg-muted/50">
+                            <Calendar className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                          <span className="text-xs font-bold text-foreground/70 uppercase tracking-wider">
                             Yesterday
                           </span>
                         </div>
@@ -710,22 +760,29 @@ export function SidebarAskExpert() {
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              My Agents
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            <CollapsibleTrigger className="group flex w-full items-center justify-between hover:bg-gradient-to-r hover:from-accent/50 hover:to-accent/30 rounded-lg px-3 py-2 transition-all duration-200">
+              <span className="text-xs font-bold uppercase tracking-wider text-foreground/80 group-hover:text-foreground">My Agents</span>
+              <ChevronDown className="ml-auto h-3.5 w-3.5 transition-all duration-200 group-data-[state=open]/collapsible:rotate-180 group-hover:text-primary" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
           <CollapsibleContent>
             <SidebarGroupContent className="space-y-3">
               <div className="space-y-2">
-                <div className="relative">
-                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="Search agents…"
-                    className="pl-9"
-                  />
+                <div className="relative px-2">
+                  <div className="relative group">
+                    {/* Gradient border effect on focus */}
+                    <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/20 to-secondary/20 opacity-0 group-focus-within:opacity-100 blur-sm transition-opacity duration-300 pointer-events-none" />
+
+                    <div className="relative">
+                      <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors duration-200" />
+                      <Input
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        placeholder="Search agents…"
+                        className="pl-9 rounded-lg bg-muted/50 border-border/40 focus-visible:ring-primary/20 transition-all duration-200"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 

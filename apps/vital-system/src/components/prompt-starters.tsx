@@ -21,14 +21,12 @@ interface PromptStartersProps {
   prompts: PromptStarter[];
   onSelectPrompt: (promptText: string) => void;
   isLoading?: boolean;
-  darkMode?: boolean;
 }
 
 export function PromptStarters({
   prompts,
   onSelectPrompt,
   isLoading = false,
-  darkMode = false,
 }: PromptStartersProps) {
   if (isLoading) {
     return (

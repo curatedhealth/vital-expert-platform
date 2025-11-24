@@ -64,12 +64,15 @@ export interface WorkflowMetadata {
 export type NodeType = 
   | 'start'
   | 'end'
+  | 'input'    // Legacy type, maps to 'start'
+  | 'output'   // Legacy type, maps to 'end'
   | 'agent'
   | 'tool'
   | 'condition'
   | 'parallel'
   | 'human'
-  | 'subgraph';
+  | 'subgraph'
+  | 'orchestrator';
 
 export interface NodeConfig {
   // Agent-specific

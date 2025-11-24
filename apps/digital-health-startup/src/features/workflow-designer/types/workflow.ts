@@ -69,7 +69,8 @@ export type NodeType =
   | 'condition'
   | 'parallel'
   | 'human'
-  | 'subgraph';
+  | 'subgraph'
+  | 'orchestrator';
 
 export interface NodeConfig {
   // Agent-specific
@@ -99,6 +100,11 @@ export interface NodeConfig {
   
   // Subgraph
   subgraphId?: string;
+  
+  // Orchestrator-specific
+  decisionMode?: 'auto' | 'manual';
+  condition?: string;
+  phase?: string;
   
   // Common
   description?: string;

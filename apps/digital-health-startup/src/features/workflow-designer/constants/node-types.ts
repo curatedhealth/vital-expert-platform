@@ -13,6 +13,7 @@ import {
   CheckCircle,
   Play,
   Box,
+  Target,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { NodeType } from '../types/workflow';
@@ -142,6 +143,25 @@ export const NODE_TYPE_DEFINITIONS: Record<NodeType, NodeTypeDefinition> = {
     category: 'flow',
     defaultConfig: {
       subgraphId: '',
+    },
+  },
+  
+  orchestrator: {
+    type: 'orchestrator',
+    label: 'Orchestrator',
+    description: 'Core AI brain for coordinating workflow execution and conditional decisions',
+    icon: Target,
+    color: '#d946ef',
+    bgColor: '#fae8ff',
+    borderColor: '#f0abfc',
+    category: 'agent',
+    defaultConfig: {
+      model: 'gpt-4',
+      temperature: 0.7,
+      systemPrompt: 'You are an orchestrator AI that coordinates and manages workflow execution.',
+      decisionMode: 'auto',
+      condition: '',
+      phase: 'orchestration',
     },
   },
 };

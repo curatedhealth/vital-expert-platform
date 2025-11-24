@@ -5,7 +5,7 @@ Multi-expert advisory board coordination
 
 import asyncio
 import json
-from typing import List, Dict, Any, Optional, AsyncGenerator
+from typing import List, Dict, Any, Optional, AsyncGenerator, Union
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 import structlog

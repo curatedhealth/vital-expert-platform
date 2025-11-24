@@ -699,6 +699,242 @@ class SupabaseClient:
                 "error": str(e)
             }
 
+    # =========================================================================
+    # MODE 1 SESSION & MESSAGE OPERATIONS (Async Wrappers)
+    # =========================================================================
+
+    async def create_session(
+        self,
+        tenant_id: str,
+        user_id: str,
+        agent_id: str,
+        mode: str = 'mode_1_interactive_manual',
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Create a new Mode 1 conversation session.
+
+        Args:
+            tenant_id: Tenant UUID
+            user_id: User UUID
+            agent_id: Agent UUID
+            mode: Workflow mode
+            metadata: Optional session metadata
+
+        Returns:
+            Created session record or None if failed
+        """
+        try:
+            # Insert and retrieve in separate calls (Supabase Python client limitation)
+            def _create():
+                result = self.client.table('ask_expert_sessions').insert({
+                    'tenant_id': tenant_id,
+                    'user_id': user_id,
+                    'agent_id': agent_id,
+                    'mode': mode,
+                    'status': 'active',
+                    'metadata': metadata or {},
+                    'total_messages': 0,
+                    'total_tokens': 0,
+                    'total_cost': 0.0,
+                }).execute()
+
+                # Return first inserted record
+                if result.data and len(result.data) > 0:
+                    return result.data[0]
+                return None
+
+            session = await asyncio.to_thread(_create)
+
+            if session:
+                logger.info("✅ Session created", session_id=session['id'], agent_id=agent_id)
+                return session
+            else:
+                logger.error("❌ Failed to create session - no data returned")
+                return None
+
+        except Exception as e:
+            logger.error("❌ Failed to create session", error=str(e), tenant_id=tenant_id)
+            return None
+
+    async def get_session(
+        self,
+        session_id: str,
+        tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get existing session by ID.
+
+        Args:
+            session_id: Session UUID
+            tenant_id: Tenant UUID (for RLS)
+
+        Returns:
+            Session record or None if not found
+        """
+        try:
+            def _get():
+                result = self.client.table('ask_expert_sessions')\
+                    .select('*')\
+                    .eq('id', session_id)\
+                    .eq('tenant_id', tenant_id)\
+                    .execute()
+
+                # Return first record or None
+                if result.data and len(result.data) > 0:
+                    return result.data[0]
+                return None
+
+            session = await asyncio.to_thread(_get)
+
+            if session:
+                logger.info("📋 Session retrieved", session_id=session_id)
+                return session
+            else:
+                logger.warning("⚠️ Session not found", session_id=session_id)
+                return None
+
+        except Exception as e:
+            logger.error("❌ Failed to get session", session_id=session_id, error=str(e))
+            return None
+
+    async def get_messages(
+        self,
+        session_id: str,
+        limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """
+        Get message history for a session.
+
+        Args:
+            session_id: Session UUID
+            limit: Maximum messages to retrieve
+
+        Returns:
+            List of message records (oldest first)
+        """
+        try:
+            def _get():
+                return self.client.table('ask_expert_messages')\
+                    .select('*')\
+                    .eq('session_id', session_id)\
+                    .order('created_at', desc=False)\
+                    .limit(limit)\
+                    .execute()
+
+            result = await asyncio.to_thread(_get)
+
+            if result.data:
+                logger.info("💬 Messages retrieved", session_id=session_id, count=len(result.data))
+                return result.data
+            else:
+                logger.info("💬 No messages found", session_id=session_id)
+                return []
+
+        except Exception as e:
+            logger.error("❌ Failed to get messages", session_id=session_id, error=str(e))
+            return []
+
+    async def save_message(
+        self,
+        session_id: str,
+        role: str,
+        content: str,
+        agent_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        tokens: Optional[int] = None,
+        cost: Optional[float] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Save a message to the session.
+
+        Args:
+            session_id: Session UUID
+            role: Message role ('user' or 'assistant')
+            content: Message content
+            agent_id: Agent UUID (for assistant messages)
+            metadata: Optional message metadata
+            tokens: Tokens used
+            cost: Cost in USD
+
+        Returns:
+            Created message record or None if failed
+        """
+        try:
+            def _save():
+                return self.client.table('ask_expert_messages').insert({
+                    'session_id': session_id,
+                    'role': role,
+                    'content': content,
+                    'agent_id': agent_id,
+                    'metadata': metadata or {},
+                    'tokens': tokens,
+                    'cost': cost,
+                }).execute()
+
+            result = await asyncio.to_thread(_save)
+
+            if result.data:
+                logger.info("💾 Message saved", session_id=session_id, role=role, tokens=tokens)
+                return result.data[0] if result.data else None
+            else:
+                logger.error("❌ Failed to save message - no data returned")
+                return None
+
+        except Exception as e:
+            logger.error("❌ Failed to save message", session_id=session_id, error=str(e))
+            return None
+
+    async def update_session_metadata(
+        self,
+        session_id: str,
+        total_messages: Optional[int] = None,
+        total_tokens: Optional[int] = None,
+        total_cost: Optional[float] = None,
+        status: Optional[str] = None
+    ) -> bool:
+        """
+        Update session metadata and stats.
+
+        Args:
+            session_id: Session UUID
+            total_messages: Total message count
+            total_tokens: Total tokens used
+            total_cost: Total cost in USD
+            status: Session status
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            update_data = {
+                'updated_at': datetime.now(timezone.utc).isoformat(),
+            }
+
+            if total_messages is not None:
+                update_data['total_messages'] = total_messages
+            if total_tokens is not None:
+                update_data['total_tokens'] = total_tokens
+            if total_cost is not None:
+                update_data['total_cost'] = total_cost
+            if status is not None:
+                update_data['status'] = status
+
+            def _update():
+                return self.client.table('ask_expert_sessions')\
+                    .update(update_data)\
+                    .eq('id', session_id)\
+                    .execute()
+
+            result = await asyncio.to_thread(_update)
+
+            logger.info("📊 Session metadata updated", session_id=session_id)
+            return True
+
+        except Exception as e:
+            logger.error("❌ Failed to update session metadata", session_id=session_id, error=str(e))
+            return False
+
     async def cleanup(self):
         """Cleanup resources"""
         try:

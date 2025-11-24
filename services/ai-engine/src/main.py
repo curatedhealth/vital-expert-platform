@@ -5,6 +5,13 @@ Medical AI Agent Orchestration with LangChain
 
 import os
 import sys
+from pathlib import Path
+
+# Add src directory to Python path for absolute imports
+src_path = Path(__file__).parent
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
+
 from dotenv import load_dotenv
 
 # Load environment variables FIRST before any other imports
@@ -95,6 +102,7 @@ from langgraph_workflows import (
     get_observability
 )
 # Mode workflows for LangGraph execution
+from langgraph_workflows.mode1_interactive_manual import Mode1InteractiveManualWorkflow  # FIXED: Added correct Mode 1
 from langgraph_workflows.mode1_interactive_auto_workflow import Mode1InteractiveAutoWorkflow
 from langgraph_workflows.mode2_interactive_manual_workflow import Mode2InteractiveManualWorkflow
 from langgraph_workflows.mode3_autonomous_auto_workflow import Mode3AutonomousAutoWorkflow
@@ -102,6 +110,7 @@ from langgraph_workflows.mode4_autonomous_manual_workflow import Mode4Autonomous
 # Ask Panel imports
 from api.dependencies import set_supabase_client
 from api.routes import panels as panel_routes
+from api.routes import ask_expert
 from models.requests import (
     AgentQueryRequest,
     RAGSearchRequest,
@@ -666,6 +675,10 @@ app.add_middleware(
 app.include_router(panel_routes.router, prefix="", tags=["ask-panel"])
 logger.info("✅ Ask Panel routes registered")
 
+# Include Ask Expert routes
+app.include_router(ask_expert.router, prefix="/v1/ai", tags=["ask-expert"])
+logger.info("✅ Ask Expert routes registered (4-Mode System)")
+
 # Include Shared Framework routes (LangGraph, AutoGen, CrewAI)
 try:
     # Debug: Check if the file exists
@@ -710,6 +723,19 @@ except ImportError as e:
     logger.warning("   Continuing without auth endpoints")
 except Exception as e:
     logger.error(f"❌ Unexpected error loading auth router: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
+
+# Include Knowledge Graph routes (Neo4j + Pinecone + Supabase)
+try:
+    from api.routes.knowledge_graph import router as kg_router
+    app.include_router(kg_router, prefix="/v1", tags=["knowledge-graph"])
+    logger.info("✅ Knowledge Graph routes registered (Neo4j + Pinecone + Supabase)")
+except ImportError as e:
+    logger.warning(f"⚠️  Could not import knowledge graph router: {e}")
+    logger.warning("   Continuing without knowledge graph endpoints")
+except Exception as e:
+    logger.error(f"❌ Unexpected error loading knowledge graph router: {e}")
     import traceback
     logger.error(traceback.format_exc())
 
@@ -882,13 +908,12 @@ async def execute_mode1_manual(
 
     try:
         logger.info("🚀 [Mode 1] Executing via LangGraph workflow (Manual agent selection)", agent_id=request.agent_id)
-        
-        # Initialize LangGraph workflow - Mode2InteractiveManualWorkflow for manual agent selection
-        workflow = Mode2InteractiveManualWorkflow(
+
+        # FIXED: Use Mode1InteractiveManualWorkflow (not Mode2!)
+        workflow = Mode1InteractiveManualWorkflow(
             supabase_client=supabase_client,
             rag_service=unified_rag_service,
-            agent_orchestrator=agent_orchestrator,
-            conversation_manager=None  # Will be initialized by workflow
+            agent_orchestrator=agent_orchestrator
         )
         await workflow.initialize()
         
@@ -931,7 +956,7 @@ async def execute_mode1_manual(
         # Build metadata
         metadata: Dict[str, Any] = {
             "langgraph_execution": True,
-            "workflow": "Mode2InteractiveManualWorkflow",
+            "workflow": "Mode1InteractiveManualWorkflow",  # FIXED: Correct workflow name
             "nodes_executed": result.get('nodes_executed', []),
             "reasoning_steps": reasoning_steps,
             "request": {

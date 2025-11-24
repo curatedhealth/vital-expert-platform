@@ -1,0 +1,107 @@
+# VITAL Platform - Docker Compose
+# Backend services: API Gateway, Python AI Engine, Redis
+# 
+# Usage:
+#   docker-compose up -d          # Start all services
+#   docker-compose logs -f         # View logs
+#   docker-compose down            # Stop all services
+#
+# Note: This project uses Supabase (cloud) for the database, so no local PostgreSQL is needed.
+
+version: '3.8'
+
+services:
+  # Redis - Caching and Session Storage
+  redis:
+    image: redis:7-alpine
+    container_name: vital-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    networks:
+      - vital-backend-network
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Python AI Engine - FastAPI Backend
+  python-ai-engine:
+    build:
+      context: ./services/ai-engine
+      dockerfile: Dockerfile
+    container_name: vital-python-ai-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PORT=8000
+      - LOG_LEVEL=info
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - REDIS_URL=redis://redis:6379
+      - LANGGRAPH_GUI_WORKFLOWS_PATH=/app/workflows
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - vital-backend-network
+    restart: unless-stopped
+    volumes:
+      - ./logs/python:/app/logs
+      - ./services/ai-engine/workflows:/app/workflows
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+
+  # Node.js API Gateway
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: vital-api-gateway
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - AI_ENGINE_URL=http://python-ai-engine:8000
+      - REDIS_URL=redis://redis:6379
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+    depends_on:
+      python-ai-engine:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - vital-backend-network
+    restart: unless-stopped
+    volumes:
+      - ./logs/gateway:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+
+# Volumes
+volumes:
+  redis-data:
+    driver: local
+
+# Network
+networks:
+  vital-backend-network:
+    driver: bridge

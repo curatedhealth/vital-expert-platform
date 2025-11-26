@@ -147,7 +147,15 @@ export class MultiFrameworkOrchestrator {
    * Execute using LangGraph
    */
   private async executeLangGraph(request: ExecutionRequest): Promise<ExecutionResult> {
-    const response = await fetch('/api/frameworks/langgraph/execute', {
+    // Node.js fetch requires absolute URLs. Build a base URL that works in both
+    // local dev and deployed environments.
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.NEXT_PUBLIC_VERCEL_URL
+        ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+        : 'http://localhost:3000');
+
+    const response = await fetch(`${baseUrl}/api/frameworks/langgraph/execute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),
@@ -164,7 +172,13 @@ export class MultiFrameworkOrchestrator {
    * Execute using AutoGen
    */
   private async executeAutoGen(request: ExecutionRequest): Promise<ExecutionResult> {
-    const response = await fetch('/api/frameworks/autogen/execute', {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.NEXT_PUBLIC_VERCEL_URL
+        ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+        : 'http://localhost:3000');
+
+    const response = await fetch(`${baseUrl}/api/frameworks/autogen/execute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),
@@ -181,7 +195,13 @@ export class MultiFrameworkOrchestrator {
    * Execute using CrewAI
    */
   private async executeCrewAI(request: ExecutionRequest): Promise<ExecutionResult> {
-    const response = await fetch('/api/frameworks/crewai/execute', {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.NEXT_PUBLIC_VERCEL_URL
+        ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+        : 'http://localhost:3000');
+
+    const response = await fetch(`${baseUrl}/api/frameworks/crewai/execute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),

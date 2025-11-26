@@ -40,6 +40,10 @@ import {
   Zap,
   Palette,
   GitBranch,
+  Stethoscope,
+  FlaskConical,
+  UserCog,
+  HeartPulse,
   Layers as LayersIcon,
 } from "lucide-react"
 
@@ -48,6 +52,24 @@ import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, Side
 import { createClient } from "@vital/sdk/client"
 import { useSavedPanels } from "@/contexts/ask-panel-context"
 import { useDesigner } from "@/contexts/designer-context"
+import { PANEL_TEMPLATES } from "@/features/ask-panel/constants/panel-templates"
+import { ScrollArea } from "@/components/ui/scroll-area"
+
+// Map category to icon
+const CATEGORY_ICONS: Record<string, any> = {
+  'clinical': Stethoscope,
+  'clinical-trials': Stethoscope,
+  'research': FlaskConical,
+  'regulatory': Shield,
+  'patient-care': HeartPulse,
+  'operations': UserCog,
+  'default': Users,
+};
+
+function getCategoryIcon(category: string) {
+  const key = category.toLowerCase().replace(/\s+/g, '-');
+  return CATEGORY_ICONS[key] || CATEGORY_ICONS['default'];
+}
 
 export function SidebarDashboardContent() {
   return (
@@ -215,26 +237,51 @@ export function SidebarAskPanelContent() {
           </SidebarGroupLabel>
           <CollapsibleContent>
             <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton>
-                    <Users className="h-4 w-4" />
-                    <span>Expert Panel</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton>
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Approvals</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton>
-                    <ShieldCheck className="h-4 w-4" />
-                    <span>Compliance Review</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
+              <ScrollArea className="h-[calc(100vh-400px)]">
+                <SidebarMenu>
+                  {PANEL_TEMPLATES.map((template) => {
+                    const IconComponent = getCategoryIcon(template.category);
+                    
+                    return (
+                      <SidebarMenuItem key={template.id}>
+                        <SidebarMenuButton
+                          asChild
+                          className="h-auto py-2 px-3 flex-col items-start gap-1"
+                        >
+                          <Link href={`/ask-panel?panelId=${template.id}`}>
+                            <div className="flex items-center gap-2 w-full">
+                              <div className="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                <IconComponent className="w-4 h-4 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium truncate">
+                                  {template.name}
+                                </div>
+                                <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                                  {template.description}
+                                </div>
+                                <div className="flex flex-wrap gap-1 mt-1.5">
+                                  <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 capitalize">
+                                    {template.category}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+                                    <Zap className="w-2.5 h-2.5 mr-0.5" />
+                                    {template.mode}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+                                    <Bot className="w-2.5 h-2.5 mr-0.5" />
+                                    {template.suggestedAgents.length}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </ScrollArea>
             </SidebarGroupContent>
           </CollapsibleContent>
         </SidebarGroup>

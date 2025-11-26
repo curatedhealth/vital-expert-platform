@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 
+                    process.env.SUPABASE_URL || 
+                    process.env.NEW_SUPABASE_URL || 
+                    '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
+                           process.env.NEW_SUPABASE_SERVICE_KEY ||
+                           process.env.SUPABASE_SERVICE_KEY || 
+                           '';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +27,27 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Validate environment variables
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('[Nodes API] Missing Supabase configuration:', {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey
+      });
+      return NextResponse.json(
+        { 
+          error: 'Supabase configuration missing',
+          nodes: [],
+          pagination: {
+            total: 0,
+            limit: 100,
+            offset: 0,
+            hasMore: false
+          }
+        },
+        { status: 200 } // Return empty result instead of 500
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const searchParams = request.nextUrl.searchParams;
     
@@ -66,10 +93,33 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await query;
 
     if (error) {
-      console.error('Error fetching nodes:', error);
+      console.error('[Nodes API] Error fetching nodes:', error);
+      // If table doesn't exist, return empty array instead of error
+      if (error.code === '42P01') {
+        return NextResponse.json({
+          nodes: [],
+          pagination: {
+            total: 0,
+            limit,
+            offset,
+            hasMore: false,
+          },
+          warning: 'node_library table not initialized'
+        });
+      }
       return NextResponse.json(
-        { error: 'Failed to fetch nodes', details: error.message },
-        { status: 500 }
+        { 
+          error: 'Failed to fetch nodes', 
+          details: error.message,
+          nodes: [],
+          pagination: {
+            total: 0,
+            limit,
+            offset,
+            hasMore: false
+          }
+        },
+        { status: 200 } // Return empty result instead of 500
       );
     }
 
@@ -97,6 +147,14 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Validate environment variables
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const body = await request.json();
 

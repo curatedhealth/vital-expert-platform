@@ -85,22 +85,47 @@ export class UnifiedRAGService {
   private config: Required<RAGServiceConfig>;
 
   constructor(config: RAGServiceConfig = {}) {
-    // Initialize configuration
+    // Initialize configuration with fallbacks
+    const supabaseUrl = config.supabaseUrl || 
+                       process.env.NEXT_PUBLIC_SUPABASE_URL || 
+                       process.env.SUPABASE_URL || 
+                       process.env.NEW_SUPABASE_URL || 
+                       '';
+    
+    const supabaseServiceKey = config.supabaseServiceKey || 
+                              process.env.SUPABASE_SERVICE_ROLE_KEY || 
+                              process.env.NEW_SUPABASE_SERVICE_KEY ||
+                              process.env.SUPABASE_SERVICE_KEY || 
+                              '';
+    
     this.config = {
-      supabaseUrl: config.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      supabaseServiceKey: config.supabaseServiceKey || process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      openaiApiKey: config.openaiApiKey || process.env.OPENAI_API_KEY!,
+      supabaseUrl,
+      supabaseServiceKey,
+      openaiApiKey: config.openaiApiKey || process.env.OPENAI_API_KEY || '',
       enableCaching: config.enableCaching ?? true,
       enableEvaluation: config.enableEvaluation ?? false,
       defaultStrategy: config.defaultStrategy || 'hybrid',
       maxCacheSize: config.maxCacheSize || 1000,
     };
 
-    // Initialize Supabase client (for metadata only)
-    this.supabase = createClient(
-      this.config.supabaseUrl,
-      this.config.supabaseServiceKey
-    );
+    // Initialize Supabase client only if credentials are available
+    if (this.config.supabaseUrl && this.config.supabaseServiceKey && 
+        this.config.supabaseUrl !== '' && this.config.supabaseServiceKey !== '') {
+      try {
+        this.supabase = createClient(
+          this.config.supabaseUrl,
+          this.config.supabaseServiceKey
+        );
+      } catch (error) {
+        console.warn('[UnifiedRAGService] Failed to initialize Supabase client:', error);
+        // Set to null and handle gracefully in methods
+        this.supabase = null as any;
+      }
+    } else {
+      // Don't create a client if credentials are missing
+      console.warn('[UnifiedRAGService] Supabase credentials missing, RAG features will be limited');
+      this.supabase = null as any;
+    }
 
     // Initialize Pinecone (for vectors)
     this.pinecone = pineconeVectorService;
@@ -991,14 +1016,14 @@ export class UnifiedRAGService {
     redisStats?: any;
   }> {
     const [docsCount, chunksCount, pineconeStats] = await Promise.all([
-      this.supabase.from('knowledge_documents').select('*', { count: 'exact', head: true }),
-      this.supabase.from('document_chunks').select('*', { count: 'exact', head: true }),
+      this.supabase ? this.supabase.from('knowledge_documents').select('*', { count: 'exact', head: true }) : Promise.resolve({ count: 0 }),
+      this.supabase ? this.supabase.from('document_chunks').select('*', { count: 'exact', head: true }) : Promise.resolve({ count: 0 }),
       this.pinecone.getIndexStats().catch(() => null),
       // Redis stats removed (ioredis is server-only)
     ]);
 
     const isPineconeHealthy = pineconeStats !== null;
-    const isSupabaseHealthy = docsCount.count !== null && chunksCount.count !== null;
+    const isSupabaseHealthy = this.supabase && docsCount.count !== null && chunksCount.count !== null;
 
     return {
       status: isPineconeHealthy && isSupabaseHealthy ? 'healthy' : 'degraded',
@@ -1127,4 +1152,13 @@ export class UnifiedRAGService {
 }
 
 // Export singleton instance
-export const unifiedRAGService = new UnifiedRAGService();
+// Lazy initialization to prevent module-load-time errors
+let _unifiedRAGServiceInstance: UnifiedRAGService | null = null;
+export const unifiedRAGService = new Proxy({} as UnifiedRAGService, {
+  get(target, prop) {
+    if (!_unifiedRAGServiceInstance) {
+      _unifiedRAGServiceInstance = new UnifiedRAGService();
+    }
+    return (_unifiedRAGServiceInstance as any)[prop];
+  }
+});

@@ -14,7 +14,7 @@ load_dotenv()
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse, Response
 import uvicorn
 import structlog
 import sentry_sdk
@@ -498,6 +498,11 @@ async def initialize_services_background():
         # Set Supabase client for Ask Panel dependencies
         set_supabase_client(supabase_client)
         logger.info("✅ Ask Panel dependencies initialized")
+
+        # Initialize panel template service
+        from services.panel_template_service import initialize_panel_template_service
+        await initialize_panel_template_service(supabase_client)
+        logger.info("✅ Panel template service initialized")
     except asyncio.TimeoutError:
         logger.error("❌ Supabase initialization timed out")
         supabase_client = None
@@ -718,14 +723,89 @@ logger.info("ℹ️ Middleware temporarily disabled for testing")
 #     logger.info("ℹ️ Rate Limiting Middleware disabled (development mode)")
 
 # CORS middleware - Configure based on environment
-cors_origins = (
-    settings.cors_origins if isinstance(settings.cors_origins, list) 
-    else (settings.cors_origins.split(",") if isinstance(settings.cors_origins, str) 
+# NOTE: For /execute and /panels/execute endpoints, CORS is handled manually
+# to avoid conflicts. These endpoints have explicit OPTIONS handlers.
+cors_origins_env = (
+    settings.cors_origins if isinstance(settings.cors_origins, list)
+    else (settings.cors_origins.split(",") if isinstance(settings.cors_origins, str)
           else ["http://localhost:3000", "http://localhost:3001"])
 )
+cors_origins = [origin.strip() for origin in cors_origins_env if origin]
+
+def resolve_cors_origin(request: Optional[Request] = None) -> str:
+    """
+    Determine the appropriate CORS origin for manual endpoints.
+    Mirrors the CORSMiddleware configuration and falls back gracefully.
+    """
+    origin = request.headers.get("origin") if request else None
+    if origin and ("*" in cors_origins or origin in cors_origins):
+        return origin
+    return cors_origins[0] if cors_origins else "*"
+
+
+def map_workflow_body_to_simple_request(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Normalize workflow designer payloads into the SimpleLangGraphRequest schema.
+    """
+    workflow_payload = payload.get("workflow") or {}
+    selected_agent_ids = (
+        payload.get("selected_agent_ids")
+        or payload.get("enabled_agents")
+        or []
+    )
+
+    enabled_agents: List[str] = []
+    if isinstance(selected_agent_ids, list):
+        enabled_agents = [
+            str(agent_id)
+            for agent_id in selected_agent_ids
+            if isinstance(agent_id, (str, int)) and str(agent_id).strip()
+        ]
+
+    if not enabled_agents and isinstance(workflow_payload, dict):
+        nodes = workflow_payload.get("nodes") or []
+        enabled_agents = [
+            str(
+                node.get("data", {}).get("agentId")
+                or node.get("data", {}).get("id")
+                or node.get("id")
+            )
+            for node in nodes
+            if isinstance(node, dict)
+            and (
+                node.get("data", {}).get("agentId")
+                or node.get("data", {}).get("id")
+                or node.get("id")
+            )
+        ]
+
+    if not enabled_agents:
+        enabled_agents = ["workflow-agent"]
+
+    metadata = workflow_payload.get("metadata") if isinstance(workflow_payload, dict) else {}
+    derived_query = (
+        payload.get("query")
+        or payload.get("message")
+        or payload.get("user_query")
+        or (metadata or {}).get("test_prompt")
+        or workflow_payload.get("description")
+        or workflow_payload.get("name")
+        or "Workflow execution request"
+    )
+
+    return {
+        "query": derived_query,
+        "openai_api_key": payload.get("openai_api_key"),
+        "pinecone_api_key": payload.get("pinecone_api_key"),
+        "provider": payload.get("provider"),
+        "ollama_base_url": payload.get("ollama_base_url"),
+        "ollama_model": payload.get("ollama_model"),
+        "orchestrator_system_prompt": payload.get("orchestrator_system_prompt"),
+        "enabled_agents": enabled_agents,
+    }
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=cors_origins or ["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "x-tenant-id", "x-user-id"],
@@ -2418,11 +2498,112 @@ async def trigger_error():
     division_by_zero = 1 / 0
     return {"status": "This should never be reached"}
 
+# ============================================================================
+# ROOT-LEVEL ALIASES FOR DIRECT FRONTEND CALLS
+# ============================================================================
+
+@app.options("/execute")
+async def options_execute(request: Request):
+    """Handle CORS preflight for /execute"""
+    allow_origin = resolve_cors_origin(request)
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": allow_origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": request.headers.get("access-control-request-headers", "*"),
+            "Vary": "Origin",
+        }
+    )
+
+@app.post("/execute")
+async def root_execute(request: Request):
+    """
+    Alias for /frameworks/langgraph/execute-simple
+    Handles direct calls from frontend with apiBaseUrl="http://localhost:8000"
+    """
+    body = await request.json()
+
+    # Import here to avoid circular imports
+    from api.frameworks import execute_langgraph_simple, SimpleLangGraphRequest
+
+    # Convert to proper request format
+    simple_request_payload = (
+        map_workflow_body_to_simple_request(body)
+        if "workflow" in body
+        else body
+    )
+
+    simple_request = SimpleLangGraphRequest(**simple_request_payload)
+    result = await execute_langgraph_simple(simple_request)
+
+    # Return with explicit CORS headers
+    allow_origin = resolve_cors_origin(request)
+
+    return JSONResponse(
+        content=result,
+        headers={
+            "Access-Control-Allow-Origin": allow_origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": request.headers.get("access-control-request-headers", "*"),
+            "Vary": "Origin",
+        }
+    )
+
+
+@app.options("/panels/execute")
+async def options_panels_execute(request: Request):
+    """Handle CORS preflight for /panels/execute"""
+    allow_origin = resolve_cors_origin(request)
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": allow_origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": request.headers.get("access-control-request-headers", "*"),
+            "Vary": "Origin",
+        }
+    )
+
+@app.post("/panels/execute")
+async def root_panels_execute(request: Request):
+    """
+    Alias for /frameworks/panels/execute-simple
+    Handles direct calls from frontend with apiBaseUrl="http://localhost:8000"
+    """
+    body = await request.json()
+
+    # Import here to avoid circular imports
+    from api.frameworks import execute_panel_simple, SimplePanelRequest
+
+    # Convert to proper request format
+    simple_request = SimplePanelRequest(**body)
+    result = await execute_panel_simple(simple_request)
+
+    # Return with explicit CORS headers
+    allow_origin = resolve_cors_origin(request)
+
+    return JSONResponse(
+        content=result,
+        headers={
+            "Access-Control-Allow-Origin": allow_origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": request.headers.get("access-control-request-headers", "*"),
+            "Vary": "Origin",
+        }
+    )
+
+
 if __name__ == "__main__":
+    port = int(os.getenv("PORT", "8000"))
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=port,
         reload=True,
         log_level="info"
     )

@@ -95,12 +95,22 @@ def get_storage_uri() -> str:
     local_redis = "redis://localhost:6379"
     try:
         import redis
-        client = redis.from_url(local_redis, socket_timeout=1)
-        client.ping()
-        logger.info("✅ Rate limiting using local Redis")
-        return local_redis
-    except Exception:
-        logger.warning("⚠️  Redis unavailable, falling back to memory storage")
+        try:
+            client = redis.from_url(local_redis, socket_timeout=1, socket_connect_timeout=1)
+            client.ping()  # Test connection
+            logger.info("✅ Rate limiting using local Redis")
+            return local_redis
+        except (redis.ConnectionError, redis.TimeoutError, OSError) as e:
+            logger.warning("⚠️  Redis connection failed, falling back to memory storage", error=str(e))
+            return "memory://"
+        except Exception as e:
+            logger.warning("⚠️  Redis error, falling back to memory storage", error=str(e))
+            return "memory://"
+    except ImportError:
+        logger.warning("⚠️  Redis package not installed, falling back to memory storage")
+        return "memory://"
+    except Exception as e:
+        logger.warning("⚠️  Redis unavailable, falling back to memory storage", error=str(e))
         return "memory://"
 
 

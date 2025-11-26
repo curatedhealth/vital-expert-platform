@@ -48,6 +48,11 @@ interface OrchestrateRequest {
   
   // LangGraph integration (NEW)
   useLangGraph?: boolean; // Enable LangGraph workflow orchestration
+
+  // Workflow integration (NEW)
+  workflowId?: string; // ID of the workflow to use
+  workflow?: any; // Workflow definition (nodes, edges, etc.)
+  workflowFramework?: string; // Framework used by the workflow (langgraph, autogen, crewai)
 }
 
 export async function POST(request: NextRequest) {
@@ -84,6 +89,78 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          // Check if workflow is provided - use workflow execution
+          if (body.workflowId && body.workflow) {
+            console.log('🎯 [Orchestrate] Using workflow execution:', body.workflowId, 'Framework:', body.workflowFramework);
+            
+            try {
+              // Route to workflow execution endpoint based on framework
+              const workflowEndpoint = body.workflowFramework === 'langgraph' 
+                ? '/api/langgraph-gui/execute'
+                : body.workflowFramework === 'autogen'
+                ? '/api/frameworks/autogen/execute'
+                : body.workflowFramework === 'crewai'
+                ? '/api/frameworks/crewai/execute'
+                : '/api/langgraph-gui/execute'; // Default to langgraph
+
+              // Forward request to workflow execution endpoint
+              const workflowResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}${workflowEndpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  workflow: body.workflow,
+                  query: body.message,
+                  conversationHistory: body.conversationHistory,
+                  enableRAG: body.enableRAG,
+                  enableTools: body.enableTools,
+                  model: body.model,
+                  temperature: body.temperature,
+                  maxTokens: body.maxTokens,
+                }),
+              });
+
+              if (!workflowResponse.ok) {
+                throw new Error(`Workflow execution failed: ${workflowResponse.statusText}`);
+              }
+
+              // Stream the workflow response
+              const reader = workflowResponse.body?.getReader();
+              const decoder = new TextDecoder();
+
+              if (reader) {
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+
+                  const chunk = decoder.decode(value, { stream: true });
+                  const lines = chunk.split('\n');
+
+                  for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                      const data = line.slice(6);
+                      controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+                    }
+                  }
+                }
+              }
+
+              controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
+              controller.close();
+              return;
+
+            } catch (workflowError) {
+              console.error('❌ [Orchestrate] Workflow execution error:', workflowError);
+              const errorEvent = {
+                type: 'error',
+                message: workflowError instanceof Error ? workflowError.message : 'Workflow execution failed',
+                timestamp: new Date().toISOString()
+              };
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+              controller.close();
+              return;
+            }
+          }
+
           // Check if LangGraph integration is enabled
           if (body.useLangGraph) {
             console.log('🎯 [Orchestrate] Using LangGraph workflow orchestration');

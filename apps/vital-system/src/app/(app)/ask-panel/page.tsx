@@ -11,7 +11,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Sparkles,
@@ -53,6 +53,7 @@ import { PanelExecutionView } from '@/features/ask-panel/components/PanelExecuti
 import { PANEL_TEMPLATES } from '@/features/ask-panel/constants/panel-templates';
 import type { PanelConfiguration } from '@/features/ask-panel/types/agent';
 import { useSavedPanels, type SavedPanel } from '@/contexts/ask-panel-context';
+import { useSearchParams } from 'next/navigation';
 
 // Map emoji categories to lucide-react icons
 const CATEGORY_ICONS: Record<string, any> = {
@@ -213,16 +214,78 @@ export default function AskPanelPage() {
   const [initialQuery, setInitialQuery] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [templates, setTemplates] = useState<typeof PANEL_TEMPLATES>(PANEL_TEMPLATES);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
   const [selectedPanel, setSelectedPanel] = useState<SavedPanel | null>(null);
   const [showPanelDetails, setShowPanelDetails] = useState(false);
   const [executingPanel, setExecutingPanel] = useState<SavedPanel | null>(null);
 
   const { addPanel } = useSavedPanels();
+  const searchParams = useSearchParams();
+  const initialPanelId = searchParams.get('panelId');
+  const [currentPanelId, setCurrentPanelId] = useState<string | null>(null);
 
   // State for consultation view
   const [showConsultation, setShowConsultation] = useState(false);
   const [consultationConfig, setConsultationConfig] = useState<PanelConfiguration | null>(null);
   const [consultationQuestion, setConsultationQuestion] = useState('');
+
+  // Load panel templates from Supabase-backed API
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        setLoadingTemplates(true);
+        setTemplateError(null);
+
+        const res = await fetch('/api/panels');
+        if (!res.ok) {
+          throw new Error(await res.text());
+        }
+        const json = await res.json();
+
+        if (json.success && Array.isArray(json.panels)) {
+          const mapped = json.panels.map((p: any) => {
+            // Find matching template to get the full suggestedAgents list (should be 10)
+            const templateMatch = PANEL_TEMPLATES.find(t => t.id === p.slug);
+            
+            return {
+              id: p.slug,
+              name: p.name,
+              description: p.description,
+              useCase: p.category,
+              // Always prefer template's suggestedAgents (10 agents) over Supabase data
+              suggestedAgents: templateMatch?.suggestedAgents || p.suggested_agents || [],
+              mode: p.mode || templateMatch?.mode || 'sequential',
+              framework: p.framework || templateMatch?.framework || 'langgraph',
+              defaultSettings: p.default_settings || templateMatch?.defaultSettings || {
+                userGuidance: 'medium',
+                allowDebate: true,
+                maxRounds: 3,
+                requireConsensus: false,
+              },
+              icon: p.metadata?.icon ?? templateMatch?.icon ?? '👥',
+              category: p.category || templateMatch?.category || 'panel',
+              tags: p.metadata?.tags ?? templateMatch?.tags ?? [],
+              popularity: p.metadata?.popularity ?? templateMatch?.popularity ?? 0,
+            };
+          });
+          setTemplates(mapped);
+        } else {
+          // Fallback to local templates
+          setTemplates(PANEL_TEMPLATES);
+        }
+      } catch (e: any) {
+        console.error('[AskPanel] Failed to load templates from Supabase:', e);
+        setTemplateError('Failed to load panel templates from Supabase. Using local defaults.');
+        setTemplates(PANEL_TEMPLATES);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+
+    loadTemplates();
+  }, []);
 
   // Handle panel creation
   function handlePanelCreated(config: PanelConfiguration) {
@@ -278,8 +341,34 @@ export default function AskPanelPage() {
     setExecutingPanel(panel);
   };
 
+  // If navigated from sidebar with a specific panelId, auto-open execution view
+  useEffect(() => {
+    // No panel selected in URL
+    if (!initialPanelId) return;
+
+    // If we're already executing this panel, do nothing
+    if (executingPanel && currentPanelId === initialPanelId) return;
+
+    // If we've already auto-opened this panel and user went back, don't re-open
+    if (!executingPanel && currentPanelId === initialPanelId) return;
+
+    const template = templates.find((t) => t.id === initialPanelId);
+    if (!template) return;
+
+    const IconComponent = getCategoryIcon(template.category);
+    const panel: SavedPanel = {
+      ...template,
+      purpose: template.description,
+      IconComponent,
+    };
+
+    addPanel(panel);
+    setExecutingPanel(panel);
+    setCurrentPanelId(initialPanelId);
+  }, [initialPanelId, addPanel, executingPanel, currentPanelId, templates]);
+
   // Filter templates
-  const filteredTemplates = PANEL_TEMPLATES.filter((template) => {
+  const filteredTemplates = templates.filter((template) => {
     const matchesSearch =
       searchQuery === '' ||
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -292,7 +381,7 @@ export default function AskPanelPage() {
   });
 
   // Get unique categories
-  const categories = ['all', ...Array.from(new Set(PANEL_TEMPLATES.map((t) => t.category)))];
+  const categories = ['all', ...Array.from(new Set(templates.map((t) => t.category)))];
 
   // Show execution view if active
   if (executingPanel) {

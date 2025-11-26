@@ -178,6 +178,12 @@ export const TaskFlowModal: React.FC<TaskFlowModalProps> = ({
     onClose();
   };
 
+  // Use ref to avoid including setNodes in dependencies
+  const setNodesRef = React.useRef(setNodes);
+  React.useEffect(() => {
+    setNodesRef.current = setNodes;
+  }, [setNodes]);
+
   const nodeTypes = React.useMemo(() => ({
     'task-input': TaskInputNode,
     'task-output': TaskOutputNode,
@@ -186,7 +192,7 @@ export const TaskFlowModal: React.FC<TaskFlowModalProps> = ({
         {...props}
         selected={false}
         updateNodeData={(data: any) => {
-          setNodes((nds) =>
+          setNodesRef.current((nds) =>
             nds.map((node) =>
               node.id === props.id ? { ...node, data: { ...node.data, ...data } } : node
             ) as Node[]
@@ -194,9 +200,22 @@ export const TaskFlowModal: React.FC<TaskFlowModalProps> = ({
         }}
       />
     ),
-  }), [setNodes]);
+  }), []); // Empty dependency array - setNodes accessed via ref
 
-  if (!isOpen) {
+  // Ensure component is fully mounted before rendering React Flow
+  const [isMounted, setIsMounted] = React.useState(false);
+  
+  React.useEffect(() => {
+    if (isOpen) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => setIsMounted(true), 0);
+      return () => clearTimeout(timer);
+    } else {
+      setIsMounted(false);
+    }
+  }, [isOpen]);
+
+  if (!isOpen || !isMounted) {
     return null;
   }
 

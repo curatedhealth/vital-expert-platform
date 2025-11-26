@@ -54,7 +54,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAskExpert } from '@/contexts/ask-expert-context';
-import { cn } from '@vital/ui/lib/utils';
+// Removed import { cn } from '@vital/ui/lib/utils'; as it causes a module not found error
+import { PANEL_TEMPLATES } from '@/features/ask-panel/constants/panel-templates';
+import { Badge } from '@/components/ui/badge';
+import { Bot, Stethoscope, FlaskConical, UserCog, HeartPulse } from 'lucide-react';
 
 // ============================================================================
 // DASHBOARD SIDEBAR
@@ -822,6 +825,22 @@ function AdminSidebarContent() {
 // ============================================================================
 // DEFAULT NAVIGATION SIDEBAR (for routes without specific sidebar)
 // ============================================================================
+// Map category to icon
+const CATEGORY_ICONS: Record<string, any> = {
+  'clinical': Stethoscope,
+  'clinical-trials': Stethoscope,
+  'research': FlaskConical,
+  'regulatory': Shield,
+  'patient-care': HeartPulse,
+  'operations': UserCog,
+  'default': UsersIcon,
+};
+
+function getCategoryIcon(category: string) {
+  const key = category.toLowerCase().replace(/\s+/g, '-');
+  return CATEGORY_ICONS[key] || CATEGORY_ICONS['default'];
+}
+
 function DefaultNavigationContent() {
   const pathname = usePathname();
   const navigationItems = [
@@ -864,6 +883,60 @@ function DefaultNavigationContent() {
               );
             })}
           </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      {/* Panel Workflows Section */}
+      <SidebarGroup>
+        <SidebarGroupLabel>Panel Workflows</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <ScrollArea className="h-[calc(100vh-300px)]">
+            <div className="space-y-2 pr-2">
+              {PANEL_TEMPLATES.map((template) => {
+                const IconComponent = getCategoryIcon(template.category);
+                const isActive = pathname.startsWith('/ask-panel');
+                
+                return (
+                  <SidebarMenuItem key={template.id}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className="h-auto py-2 px-3 flex-col items-start gap-1"
+                    >
+                      <Link href="/ask-panel">
+                        <div className="flex items-center gap-2 w-full">
+                          <div className="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                            <IconComponent className="w-4 h-4 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">
+                              {template.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                              {template.description}
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 capitalize">
+                                {template.category}
+                              </Badge>
+                              <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+                                <Zap className="w-2.5 h-2.5 mr-0.5" />
+                                {template.mode}
+                              </Badge>
+                              <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+                                <Bot className="w-2.5 h-2.5 mr-0.5" />
+                                {template.suggestedAgents.length}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </div>
+          </ScrollArea>
         </SidebarGroupContent>
       </SidebarGroup>
     </SidebarContent>

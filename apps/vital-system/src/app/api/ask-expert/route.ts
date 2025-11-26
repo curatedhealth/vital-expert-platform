@@ -521,12 +521,22 @@ async function saveConversation(
 export async function GET(request: NextRequest) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
+                                process.env.NEW_SUPABASE_SERVICE_KEY ||
+                                process.env.SUPABASE_SERVICE_KEY;
     
     if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('[Ask Expert API] Missing Supabase configuration:', {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey
+      });
       return NextResponse.json(
-        { error: 'Supabase configuration missing' },
-        { status: 500 }
+        { 
+          error: 'Supabase configuration missing',
+          success: true,
+          sessions: [] 
+        },
+        { status: 200 } // Return empty sessions instead of 500
       );
     }
 
@@ -544,16 +554,30 @@ export async function GET(request: NextRequest) {
     // Get user's Ask Expert sessions
     // ⚡ RESILIENCE: Use separate queries to handle NULL agent_id
     // The agents!inner() join fails when messages don't have agent_id (which is common)
-    const { data: messages, error } = await supabase
-      .from('chat_messages')
-      .select('session_id, agent_id, agent_name, created_at')
-      .eq('user_id', userId)
-      .eq('role', 'user')
-      .order('created_at', { ascending: false })
-      .limit(50);
+    let messages: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('session_id, agent_id, agent_name, created_at')
+        .eq('user_id', userId)
+        .eq('role', 'user')
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-    if (error) {
-      console.error('[Ask Expert API] Failed to fetch sessions:', error);
+      if (error) {
+        console.error('[Ask Expert API] Failed to fetch sessions:', error);
+        // If table doesn't exist, return empty array
+        if (error.code === '42P01') {
+          return NextResponse.json({ success: true, sessions: [] });
+        }
+        // For other errors, also return empty array (graceful degradation)
+        return NextResponse.json({ success: true, sessions: [] });
+      }
+
+      messages = data || [];
+    } catch (queryError: any) {
+      console.error('[Ask Expert API] Query error:', queryError);
+      // Return empty sessions on any error (graceful degradation)
       return NextResponse.json({ success: true, sessions: [] });
     }
 
@@ -567,15 +591,23 @@ export async function GET(request: NextRequest) {
     // Fetch agent details if we have agent IDs
     let agentMap = new Map();
     if (agentIds.length > 0) {
-      const { data: agents, error: agentError } = await supabase
-        .from('agents')
-        .select('id, name, description, avatar_url')
-        .in('id', agentIds);
+      try {
+        const { data: agents, error: agentError } = await supabase
+          .from('agents')
+          .select('id, name, description, avatar_url')
+          .in('id', agentIds);
 
-      if (!agentError && agents) {
-        agents.forEach((agent: any) => {
-          agentMap.set(agent.id, agent);
-        });
+        if (!agentError && agents) {
+          agents.forEach((agent: any) => {
+            agentMap.set(agent.id, agent);
+          });
+        } else if (agentError) {
+          console.error('[Ask Expert API] Failed to fetch agents:', agentError);
+          // Continue without agent details - not critical
+        }
+      } catch (agentError: any) {
+        console.error('[Ask Expert API] Error fetching agent details:', agentError);
+        // Continue without agent details - not critical
       }
     }
 

@@ -8,13 +8,11 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json(
-        { error: 'Supabase configuration missing' },
-        { status: 500 }
-      );
+      console.warn('[Knowledge Domains API] Supabase configuration missing, returning empty array');
+      return NextResponse.json({ domains: [] });
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -39,10 +37,14 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching knowledge domains:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch knowledge domains', details: error.message },
-        { status: 500 }
-      );
+      // If table doesn't exist, return empty array instead of error
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        console.warn('[Knowledge Domains API] Knowledge domains table does not exist yet, returning empty array');
+        return NextResponse.json({ domains: [] });
+      }
+      // For other errors, return empty array gracefully
+      console.warn('[Knowledge Domains API] Database error, returning empty array:', error.message);
+      return NextResponse.json({ domains: [] });
     }
 
     // Filter domains to only include those with content (knowledge sources)
@@ -89,9 +91,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Unexpected error in knowledge-domains API:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    // Return empty array instead of error to prevent UI breakage
+    return NextResponse.json({
+      domains: [],
+      count: 0,
+    });
   }
 }

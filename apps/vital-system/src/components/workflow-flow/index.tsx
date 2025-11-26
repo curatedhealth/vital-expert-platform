@@ -21,21 +21,21 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Workflow as WorkflowIcon, GitBranch, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 
-// Register custom node types
-const nodeTypes = {
+// Register custom node types - using Object.freeze to prevent recreation
+const nodeTypes = Object.freeze({
   start: StartNode,
   end: EndNode,
   workflowHeader: WorkflowHeaderNode,
   task: TaskNode,
-};
+});
 
-// Register custom edge types
-const edgeTypes = {
+// Register custom edge types - using Object.freeze to prevent recreation
+const edgeTypes = Object.freeze({
   workflow: WorkflowEdge,
   task: TaskEdge,
   start: StartEdge,
   end: EndEdge,
-};
+});
 
 interface Task {
   id: string;

@@ -14,7 +14,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Singleton instance to prevent multiple GoTrueClient warnings
-let clientInstance: SupabaseClient | null = null;
+const globalForSupabase = globalThis as typeof globalThis & {
+  __vitalBrowserSupabaseClient?: SupabaseClient | null;
+};
+
+let clientInstance: SupabaseClient | null =
+  globalForSupabase.__vitalBrowserSupabaseClient ?? null;
 
 // Create a browser client that properly handles cookies for SSR
 export const createClient = (): SupabaseClient => {
@@ -33,9 +38,19 @@ export const createClient = (): SupabaseClient => {
     },
   });
 
+  globalForSupabase.__vitalBrowserSupabaseClient = clientInstance;
+
   return clientInstance;
 };
 
-// Export the singleton instance directly
-export const supabase = createClient();
+// Export a lazy-loaded singleton instance to prevent module-level instantiation
+// This ensures the client is only created when actually used, not at module load time
+let _supabaseInstance: SupabaseClient | null = null;
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(target, prop) {
+    const client = _supabaseInstance ?? createClient();
+    _supabaseInstance = client;
+    return (client as any)[prop];
+  }
+});
 

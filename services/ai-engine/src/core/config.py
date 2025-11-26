@@ -85,7 +85,12 @@ class Settings(BaseSettings):
 
     # Security Configuration
     cors_origins: list = Field(
-        default=["http://localhost:3002", "http://localhost:3001"],
+        default=[
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:3001",
+            "http://localhost:3002",
+        ],
         env="CORS_ORIGINS"
     )
     api_key_header: str = Field(default="X-API-Key", env="API_KEY_HEADER")

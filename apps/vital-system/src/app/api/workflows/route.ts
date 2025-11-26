@@ -10,7 +10,7 @@ import type { WorkflowDefinition } from '@/features/workflow-designer/types/work
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -47,10 +47,15 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching workflows:', error);
-      return NextResponse.json({ error: 'Failed to fetch workflows' }, { status: 500 });
+      // If table doesn't exist, return empty array instead of error
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        console.warn('[Workflows API] Workflows table does not exist yet, returning empty array');
+        return NextResponse.json({ workflows: [] });
+      }
+      return NextResponse.json({ error: 'Failed to fetch workflows', details: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(workflows);
+    return NextResponse.json({ workflows: workflows || [] });
   } catch (error) {
     console.error('Error in GET /api/workflows:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -59,7 +64,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();

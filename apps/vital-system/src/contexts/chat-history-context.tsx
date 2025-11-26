@@ -231,7 +231,11 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
 
       const response = await fetch(`/api/chat/sessions?userId=${user.id}&limit=50`);
       if (!response.ok) {
-        throw new Error(`Failed to fetch sessions: ${response.statusText}`);
+        // API returns empty array on error, so parse it
+        const data = await response.json().catch(() => ({ sessions: [] }));
+        setSessions(data.sessions || []);
+        console.warn('⚠️ [ChatHistory] Failed to fetch sessions, using empty list');
+        return;
       }
 
       const { sessions: fetchedSessions } = await response.json();
@@ -239,7 +243,7 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
       
       setSessions(fetchedSessions || []);
     } catch (error) {
-      console.error('❌ [ChatHistory] Error refreshing sessions:', error);
+      console.warn('⚠️ [ChatHistory] Error refreshing sessions, using empty list:', error);
       setSessions([]);
     } finally {
       setSessionsLoading(false);

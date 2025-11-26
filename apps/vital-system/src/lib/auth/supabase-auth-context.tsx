@@ -91,9 +91,12 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
 
     const getInitialSession = async () => {
       try {
-        console.log('🚀 [Auth Debug] getInitialSession - Starting session check');
-        console.log('🚀 [Auth Debug] Supabase URL configured:', !!SUPABASE_URL);
-        console.log('🚀 [Auth Debug] Is Production:', IS_PRODUCTION);
+        const debugEnabled = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_AUTH_DEBUG === 'true';
+        if (debugEnabled) {
+          console.debug('🚀 [Auth Debug] getInitialSession - Starting session check');
+          console.debug('🚀 [Auth Debug] Supabase URL configured:', !!SUPABASE_URL);
+          console.debug('🚀 [Auth Debug] Is Production:', IS_PRODUCTION);
+        }
 
         // Production: Don't allow mock auth unless explicitly in development
         const useMockAuth =
@@ -116,11 +119,13 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
         }
 
         // Production: Real Supabase authentication
-        console.log('🔑 [Auth Debug] Calling supabase.auth.getSession()...');
+        if (debugEnabled) {
+          console.debug('🔑 [Auth Debug] Calling supabase.auth.getSession()...');
+        }
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        console.log('🔑 [Auth Debug] getSession() returned:', { hasSession: !!currentSession, errorMsg: error?.message });
-
-        console.log('🔍 [Auth Debug] getInitialSession - Session check:', {
+        if (debugEnabled) {
+          console.debug('🔑 [Auth Debug] getSession() returned:', { hasSession: !!currentSession, errorMsg: error?.message });
+          console.debug('🔍 [Auth Debug] getInitialSession - Session check:', {
           hasSession: !!currentSession,
           hasUser: !!currentSession?.user,
           userId: currentSession?.user?.id,
@@ -133,7 +138,8 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
           supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
           isProduction: IS_PRODUCTION,
           userMetadata: currentSession?.user?.user_metadata
-        });
+          });
+        }
 
         if (error) {
           log.error('Error getting session:', error);
@@ -145,18 +151,24 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
           if (expiresAt > now) {
             setSession(currentSession);
             setUser(currentSession.user);
-            console.log('✅ [Auth Debug] User session set:', currentSession.user.email);
+            if (debugEnabled) {
+              console.debug('✅ [Auth Debug] User session set:', currentSession.user.email);
+            }
             // Create immediate profile from session
             createProfileFromSession(currentSession.user);
           } else {
-            console.log('❌ [Auth Debug] Session expired, clearing');
+            if (debugEnabled) {
+              console.debug('❌ [Auth Debug] Session expired, clearing');
+            }
             setSession(null);
             setUser(null);
             setUserProfile(null);
             setOrganization(null);
           }
         } else {
-          console.log('❌ [Auth Debug] No valid session found');
+          if (debugEnabled) {
+            console.debug('❌ [Auth Debug] No valid session found');
+          }
         }
       } catch (error) {
         log.error('Error in getInitialSession:', error);
@@ -172,19 +184,24 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
     if (SUPABASE_URL && SUPABASE_URL !== 'undefined') {
       const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
         async (event, newSession) => {
-          console.log('🔄 [Auth Debug] Auth state changed:', {
-            event,
-            hasSession: !!newSession,
-            hasUser: !!newSession?.user,
-            userEmail: newSession?.user?.email,
-            currentUserEmail: user?.email
-          });
+          const debugEnabled = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_AUTH_DEBUG === 'true';
+          if (debugEnabled) {
+            console.debug('🔄 [Auth Debug] Auth state changed:', {
+              event,
+              hasSession: !!newSession,
+              hasUser: !!newSession?.user,
+              userEmail: newSession?.user?.email,
+              currentUserEmail: user?.email
+            });
+          }
 
           if (!mounted) return;
 
           // Prevent clearing session if we already have a valid user and this is just a refresh
           if (event === 'TOKEN_REFRESHED' && user && newSession?.user?.id === user.id) {
-            console.log('✅ [Auth Debug] Token refreshed, keeping existing user');
+            if (debugEnabled) {
+              console.debug('✅ [Auth Debug] Token refreshed, keeping existing user');
+            }
             setSession(newSession);
             return;
           }
@@ -193,11 +210,15 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
           setUser(newSession?.user ?? null);
 
           if (newSession?.user) {
-            console.log('✅ [Auth Debug] Auth state change - User set:', newSession.user.email);
+            if (debugEnabled) {
+              console.debug('✅ [Auth Debug] Auth state change - User set:', newSession.user.email);
+            }
             // Immediate profile creation - non-blocking
             createProfileFromSession(newSession.user);
           } else {
-            console.log('❌ [Auth Debug] Auth state change - No user, clearing profile');
+            if (debugEnabled) {
+              console.debug('❌ [Auth Debug] Auth state change - No user, clearing profile');
+            }
             setUserProfile(null);
             setOrganization(null);
           }
@@ -218,7 +239,10 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
 
   // Create profile immediately from session user data
   const createProfileFromSession = (authUser: User) => {
-    console.log('📝 [Auth Debug] Creating profile from session for user:', authUser.id, authUser.email);
+    const debugEnabled = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_AUTH_DEBUG === 'true';
+    if (debugEnabled) {
+      console.debug('📝 [Auth Debug] Creating profile from session for user:', authUser.id, authUser.email);
+    }
 
     const primaryEmail =
       authUser.email ||
@@ -257,6 +281,18 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
   // Background profile fetch - doesn't block login
   const fetchUserProfileInBackground = async (userId: string, fallbackProfile: UserProfile) => {
     try {
+      // Optional DB lookups can be disabled entirely if you don't need
+      // per-organization tenancy or profile records in Supabase.
+      // When NEXT_PUBLIC_ENABLE_AUTH_DB_LOOKUPS is not 'true', we skip
+      // hitting the 'profiles', 'users' and 'organizations' tables and
+      // just use the session-based profile for all users.
+      if (process.env.NEXT_PUBLIC_ENABLE_AUTH_DB_LOOKUPS !== 'true') {
+        if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_AUTH_DEBUG === 'true') {
+          console.debug('🛑 [Auth Debug] Skipping profile/organization DB lookups (flag disabled)');
+        }
+        return;
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -283,17 +319,22 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
       }
 
       // Fetch organization from users table
-      console.log('🏢 [Auth Debug] Fetching organization for user:', userId);
+      const debugEnabled = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_AUTH_DEBUG === 'true';
+      if (debugEnabled) {
+        console.debug('🏢 [Auth Debug] Fetching organization for user:', userId);
+      }
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('organization_id')
         .eq('id', userId)
         .single();
 
-      console.log('🏢 [Auth Debug] User data from users table:', {
-        organizationId: userData?.organization_id,
-        error: userError?.message
-      });
+      if (debugEnabled) {
+        console.debug('🏢 [Auth Debug] User data from users table:', {
+          organizationId: userData?.organization_id,
+          error: userError?.message
+        });
+      }
 
       if (!userError && userData?.organization_id) {
         // Fetch organization separately
@@ -303,21 +344,29 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
           .eq('id', userData.organization_id)
           .single();
 
-        console.log('🏢 [Auth Debug] Organization data:', {
-          org: orgData,
-          error: orgError?.message
-        });
+        if (debugEnabled) {
+          console.debug('🏢 [Auth Debug] Organization data:', {
+            org: orgData,
+            error: orgError?.message
+          });
+        }
 
         if (!orgError && orgData) {
           setOrganization(orgData as Organization);
-          console.log('✅ [Auth Debug] Organization set:', orgData.name, 'Type:', orgData.tenant_type);
+          if (debugEnabled) {
+            console.debug('✅ [Auth Debug] Organization set:', orgData.name, 'Type:', orgData.tenant_type);
+          }
           log.info('Organization loaded:', orgData.name, 'Type:', orgData.tenant_type);
         } else {
-          console.error('❌ [Auth Debug] Failed to load organization:', orgError?.message);
+          if (debugEnabled) {
+            console.debug('❌ [Auth Debug] Failed to load organization:', orgError?.message);
+          }
           log.warn('Organization not found:', orgError?.message);
         }
       } else {
-        console.warn('⚠️  [Auth Debug] No organization_id found for user or error:', userError?.message);
+        if (debugEnabled) {
+          console.debug('⚠️  [Auth Debug] No organization_id found for user or error:', userError?.message);
+        }
         log.warn('No organization_id found for user');
       }
     } catch (error) {
@@ -371,14 +420,16 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
     organization
   };
 
-  // Debug logging for user state
-  console.log('🔍 [Auth Debug] AuthContext value:', {
-    hasUser: !!user,
-    userEmail: user?.email,
-    hasSession: !!session,
-    hasProfile: !!userProfile,
-    loading
-  });
+  // Debug logging for user state (only in development and when explicitly enabled)
+  if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_AUTH_DEBUG === 'true') {
+    console.debug('🔍 [Auth Debug] AuthContext value:', {
+      hasUser: !!user,
+      userEmail: user?.email,
+      hasSession: !!session,
+      hasProfile: !!userProfile,
+      loading
+    });
+  }
 
   return (
     <AuthContext.Provider value={value}>

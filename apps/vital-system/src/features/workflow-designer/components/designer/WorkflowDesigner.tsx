@@ -56,10 +56,10 @@ import type {
   ValidationResult,
 } from '../../types/workflow';
 
-// Custom node types for React Flow
-const nodeTypes = {
+// Custom node types for React Flow - using Object.freeze to prevent recreation
+const nodeTypes = Object.freeze({
   workflowNode: CustomWorkflowNode,
-};
+});
 
 interface WorkflowDesignerProps {
   initialWorkflow?: WorkflowDefinition;

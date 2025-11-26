@@ -382,3 +382,89 @@ async def get_panel_consensus(
             detail=f"Failed to get consensus: {str(e)}"
         )
 
+
+@router.get("/templates", response_model=List[Dict[str, Any]])
+async def get_panel_templates():
+    """
+    Get all available panel templates from Supabase dynamically.
+
+    Returns 6 Ask Panel mode templates:
+    - Mode 1: Open Discussion Panel
+    - Mode 2: Structured Panel
+    - Mode 3: Consensus Building
+    - Mode 4: Debate Panel
+    - Mode 5: Expert Review
+    - Mode 6: Multi-Phase Analysis
+    """
+    try:
+        from services.panel_template_service import get_panel_template_service
+
+        template_service = get_panel_template_service()
+        if not template_service:
+            logger.error("Panel template service not initialized")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Panel template service not available"
+            )
+
+        templates = await template_service.get_all_panel_templates()
+
+        logger.info(
+            "panel_templates_fetched",
+            count=len(templates)
+        )
+
+        return templates
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("get_templates_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get panel templates: {str(e)}"
+        )
+
+
+@router.get("/templates/{slug}", response_model=Dict[str, Any])
+async def get_panel_template_by_slug(slug: str):
+    """
+    Get a specific panel template by slug.
+
+    Args:
+        slug: Template slug (e.g., 'ap_mode_1', 'ap_mode_2')
+    """
+    try:
+        from services.panel_template_service import get_panel_template_service
+
+        template_service = get_panel_template_service()
+        if not template_service:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Panel template service not available"
+            )
+
+        template = await template_service.get_template_by_slug(slug)
+
+        if not template:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Template '{slug}' not found"
+            )
+
+        logger.info(
+            "panel_template_fetched",
+            slug=slug
+        )
+
+        return template
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("get_template_failed", error=str(e), slug=slug)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get template: {str(e)}"
+        )
+

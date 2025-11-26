@@ -62,6 +62,7 @@ import { AdvancedStreamingWindow } from '@/features/ask-expert/components/Advanc
 import { AgentAvatar, Button } from '@vital/ui';
 import { Suggestions, Suggestion } from '@/components/ai/suggestion';
 import { useAgentWithStats } from '@/features/ask-expert/hooks/useAgentWithStats';
+import { WorkflowSelector } from '@/components/ask-expert/WorkflowSelector';
 
 // ============================================================================
 // TYPES
@@ -258,6 +259,8 @@ function AskExpertPageContent() {
   const [allAvailableRagDomains, setAllAvailableRagDomains] = useState<string[]>([]);
   const [loadingTools, setLoadingTools] = useState(false);
   const [loadingRagDomains, setLoadingRagDomains] = useState(false);
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
+  const [selectedWorkflow, setSelectedWorkflow] = useState<any>(null);
   const [streamingMeta, setStreamingMeta] = useState<{
     ragSummary?: NonNullable<Message['metadata']>['ragSummary'];
     toolSummary?: NonNullable<Message['metadata']>['toolSummary'];
@@ -408,10 +411,14 @@ function AskExpertPageContent() {
           const toolNames = (data.tools || []).map((tool: any) => tool.name || tool.slug).filter(Boolean);
           setAllAvailableTools(toolNames);
         } else {
-          console.error('Failed to fetch tools:', response.statusText);
+          // API returns empty array on error, so just log and continue
+          const errorText = await response.text();
+          console.warn('Failed to fetch tools, using empty list:', errorText);
+          setAllAvailableTools([]);
         }
       } catch (error) {
-        console.error('Error fetching tools:', error);
+        console.warn('Error fetching tools, using empty list:', error);
+        setAllAvailableTools([]);
       } finally {
         setLoadingTools(false);
       }
@@ -431,10 +438,14 @@ function AskExpertPageContent() {
           const domainNames = (data.domains || []).map((domain: any) => domain.name).filter(Boolean);
           setAllAvailableRagDomains(domainNames);
         } else {
-          console.error('Failed to fetch RAG domains:', response.statusText);
+          // API returns empty array on error, so just log and continue
+          const errorText = await response.text();
+          console.warn('Failed to fetch RAG domains, using empty list:', errorText);
+          setAllAvailableRagDomains([]);
         }
       } catch (error) {
-        console.error('Error fetching RAG domains:', error);
+        console.warn('Error fetching RAG domains, using empty list:', error);
+        setAllAvailableRagDomains([]);
       } finally {
         setLoadingRagDomains(false);
       }
@@ -847,30 +858,41 @@ function AskExpertPageContent() {
         enableTools,
       });
       
+      // Build request body
+      const requestBody: any = {
+        mode: mode,
+        agentId: (mode === 'manual' || mode === 'multi-expert') ? agentId : undefined, // For manual and multi-expert modes
+        message: messageContent,
+        conversationHistory: conversationContext.map(m => ({
+          role: m.role,
+          content: m.content
+        })),
+        // Optional settings
+        enableRAG: enableRAG,
+        enableTools: enableTools,
+        requestedTools: enableTools ? selectedTools : undefined,
+        selectedRagDomains: enableRAG ? selectedRagDomains : undefined,
+        model: selectedModel,
+        temperature: 0.7,
+        maxTokens: 2000,
+        userId: user?.id, // For Mode 2 and Mode 3 agent selection
+        // Autonomous mode settings
+        maxIterations: (mode === 'autonomous' || mode === 'multi-expert') ? 10 : undefined,
+        confidenceThreshold: (mode === 'autonomous' || mode === 'multi-expert') ? 0.95 : undefined,
+      };
+
+      // If workflow is selected, include workflow definition
+      if (selectedWorkflowId && selectedWorkflow) {
+        requestBody.workflowId = selectedWorkflowId;
+        requestBody.workflow = selectedWorkflow.workflow_definition;
+        requestBody.workflowFramework = selectedWorkflow.framework;
+        console.log('[AskExpert] Using workflow:', selectedWorkflow.name, 'Framework:', selectedWorkflow.framework);
+      }
+
       const response = await fetch('/api/ask-expert/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: mode,
-          agentId: (mode === 'manual' || mode === 'multi-expert') ? agentId : undefined, // For manual and multi-expert modes
-          message: messageContent,
-          conversationHistory: conversationContext.map(m => ({
-            role: m.role,
-            content: m.content
-          })),
-          // Optional settings
-          enableRAG: enableRAG,
-          enableTools: enableTools,
-          requestedTools: enableTools ? selectedTools : undefined,
-          selectedRagDomains: enableRAG ? selectedRagDomains : undefined,
-          model: selectedModel,
-          temperature: 0.7,
-          maxTokens: 2000,
-          userId: user?.id, // For Mode 2 and Mode 3 agent selection
-          // Autonomous mode settings
-          maxIterations: (mode === 'autonomous' || mode === 'multi-expert') ? 10 : undefined,
-          confidenceThreshold: (mode === 'autonomous' || mode === 'multi-expert') ? 0.95 : undefined,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -1835,6 +1857,32 @@ function AskExpertPageContent() {
               className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 overflow-hidden"
             >
               <div className="p-4 space-y-4">
+                {/* Workflow Selector */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Workflow (Optional)
+                  </label>
+                  <WorkflowSelector
+                    selectedWorkflowId={selectedWorkflowId}
+                    onWorkflowChange={(workflowId) => {
+                      setSelectedWorkflowId(workflowId);
+                      if (workflowId) {
+                        // Fetch workflow details
+                        fetch(`/api/workflows/${workflowId}`)
+                          .then(res => res.json())
+                          .then(data => {
+                            if (data.workflow) {
+                              setSelectedWorkflow(data.workflow);
+                            }
+                          })
+                          .catch(err => console.error('Error fetching workflow:', err));
+                      } else {
+                        setSelectedWorkflow(null);
+                      }
+                    }}
+                  />
+                </div>
+
                 {/* Model Selector */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">

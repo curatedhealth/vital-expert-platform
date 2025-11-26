@@ -91,10 +91,11 @@ import type {
   ValidationResult,
 } from '../../types/workflow';
 
-// Custom node types for React Flow
-const nodeTypes = {
+// Custom node types for React Flow - defined outside component to prevent recreation
+// Using Object.freeze to ensure the object reference never changes
+const nodeTypes = Object.freeze({
   workflowNode: CustomWorkflowNode,
-};
+});
 
 interface ApiKeys {
   openai: string;
@@ -334,18 +335,41 @@ export function WorkflowDesignerEnhanced({
     [saveToUndoStack]
   );
 
-  // Handle property changes
-  const handlePropertyChange = useCallback((nodeId: string, config: NodeConfig) => {
+  // Handle property changes - accepts partial config updates
+  const handlePropertyChange = useCallback((nodeId: string, configUpdate: Partial<NodeConfig> | { label?: string }) => {
     saveToUndoStack();
     setNodes((nds) =>
-      nds.map((node) =>
-        node.id === nodeId
-          ? { ...node, data: { ...node.data, config } }
-          : node
-      )
+      nds.map((node) => {
+        if (node.id === nodeId) {
+          const updatedData = { ...node.data };
+          
+          // Handle label update separately (it's not in config)
+          if ('label' in configUpdate && configUpdate.label !== undefined) {
+            updatedData.label = configUpdate.label;
+          }
+          
+          // Merge config updates
+          if (Object.keys(configUpdate).some(key => key !== 'label')) {
+            updatedData.config = {
+              ...updatedData.config,
+              ...configUpdate,
+            };
+            // Remove label from config if it was mistakenly included
+            delete (updatedData.config as any).label;
+          }
+          
+          // Update selectedNode state if this is the selected node
+          if (selectedNode?.id === nodeId) {
+            setSelectedNode(updatedData as WorkflowNode);
+          }
+          
+          return { ...node, data: updatedData };
+        }
+        return node;
+      })
     );
     setIsDirty(true);
-  }, [setNodes, saveToUndoStack]);
+  }, [setNodes, saveToUndoStack, selectedNode]);
 
   // Auto-layout
   const handleAutoLayout = useCallback(() => {
@@ -1047,8 +1071,9 @@ workflow = StateGraph(WorkflowState)
               </Button>
             </div>
             <PropertyPanel
-              node={selectedNode}
-              onChange={(config) => handlePropertyChange(selectedNode.id, config)}
+              selectedNode={selectedNode}
+              onUpdate={handlePropertyChange}
+              onClose={() => setSelectedNode(null)}
             />
           </Card>
         </div>

@@ -137,12 +137,12 @@ async function resolveAvatarUrl(avatar: string | undefined, adminSupabase: any):
 async function normalizeAgent(agent: any, adminSupabase: any) {
   if (!agent) return null;
 
-  // Normalize capabilities - use actual capabilities field from database
+  // Normalize specializations (used to be capabilities)
   let normalizedCapabilities: string[] = [];
-  if (Array.isArray(agent.capabilities)) {
-    normalizedCapabilities = agent.capabilities;
-  } else if (typeof agent.capabilities === 'string') {
-    const cleanString = agent.capabilities.replace(/[{}]/g, '');
+  if (Array.isArray(agent.specializations)) {
+    normalizedCapabilities = agent.specializations;
+  } else if (typeof agent.specializations === 'string') {
+    const cleanString = agent.specializations.replace(/[{}]/g, '');
     normalizedCapabilities = cleanString
       .split(',')
       .map((cap: string) => cap.trim())
@@ -154,32 +154,32 @@ async function normalizeAgent(agent: any, adminSupabase: any) {
   // Extract data from metadata
   const metadata = agent.metadata || {};
 
-  // Resolve avatar URL from icons table if needed - use correct field name
-  const avatarValue = agent.avatar || metadata.avatar || '🤖';
+  // Resolve avatar URL from icons table if needed or use avatar_url from agent
+  const avatarValue = agent.avatar_url || metadata.avatar || '🤖';
   const resolvedAvatar = await resolveAvatarUrl(avatarValue, adminSupabase);
 
   return {
     id: agent.id,
     name: agent.name,
-    slug: agent.name?.toLowerCase().replace(/\s+/g, '-') || agent.id, // Generate slug from name
-    display_name: metadata.display_name || agent.name, // display_name from metadata
-    tagline: agent.description?.substring(0, 100) || '', // Use first 100 chars of description
+    slug: agent.slug,
+    display_name: metadata.display_name || agent.title || agent.name,
+    tagline: agent.tagline,
     description: agent.description,
-    title: metadata.display_name || agent.name,
-    expertise_level: metadata.tier || metadata.expertise_level || 1, // tier from metadata
+    title: agent.title,
+    expertise_level: agent.expertise_level,
     system_prompt: agent.system_prompt,
     capabilities: normalizedCapabilities,
-    specializations: metadata.specializations || [],
-    knowledge_domains: agent.knowledge_domains || metadata.knowledge_domains || [],
-    tier: metadata.tier || metadata.expertise_level || 1, // tier from metadata
-    model: agent.model || metadata.model || 'gpt-4',
+    specializations: agent.specializations || [],
+    knowledge_domains: metadata.knowledge_domains || [],
+    tier: metadata.tier || 1,
+    model: agent.base_model || metadata.model || 'gpt-4',
     avatar: resolvedAvatar,
-    avatar_url: resolvedAvatar, // Use same resolved avatar for both fields
+    avatar_url: agent.avatar_url,
     color: metadata.color || '#3B82F6',
     temperature: metadata.temperature || 0.7,
     max_tokens: metadata.max_tokens || 2000,
     metadata: metadata,
-    tags: metadata.tags || [],
+    tags: agent.tags || [],
     status: agent.status || 'active',
     is_custom: metadata.is_custom || false,
     business_function: metadata.business_function || null,
@@ -198,9 +198,33 @@ export const GET = withAgentAuth(async (
   const operationId = `agents_crud_get_${Date.now()}`;
   const startTime = Date.now();
 
+  // Development bypass mode - use admin client to bypass RLS
+  const BYPASS_AUTH = process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV === 'development';
+  const isDevBypass = BYPASS_AUTH && context.user.id === 'dev-user';
+
   try {
-    // Use user session client (RLS automatically applies tenant filtering)
-    const supabase = await createClient();
+    // Detect tenant from subdomain via cookies/headers
+    const tenantKey = request.cookies.get('tenant_key')?.value || 
+                      request.headers.get('x-tenant-key') || 
+                      'vital-system';
+    const isVitalSystemTenant = tenantKey === 'vital-system';
+    
+    // For vital-system tenant OR dev bypass: use admin client (bypasses RLS, sees all agents)
+    // For other tenants: use user session client (RLS filters by tenant)
+    let supabase;
+    if (isDevBypass || isVitalSystemTenant) {
+      const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+      const supabaseConfig = env.getSupabaseConfig();
+      supabase = createSupabaseClient(supabaseConfig.url, supabaseConfig.serviceRoleKey);
+      logger.info('agents_crud_using_admin_client', { 
+        operationId, 
+        reason: isDevBypass ? 'dev_bypass' : 'vital_system_tenant',
+        tenantKey 
+      });
+    } else {
+      supabase = await createClient();
+    }
+    
     const { profile } = context;
     const tenantIds = env.getTenantIds();
 
@@ -213,38 +237,35 @@ export const GET = withAgentAuth(async (
       operationId,
       userId: context.user.id,
       tenantId: profile.tenant_id,
+      tenantKey,
       role: profile.role,
       showAll,
+      isVitalSystemTenant,
     });
 
-    // Build query using user session (RLS enabled)
-    // Only select columns that actually exist in the database
+    // Build query - select all columns with * to avoid missing column errors
+    // The database schema may vary, so we use * and let the normalizeAgent function handle the data
     let query = supabase
       .from('agents')
-      .select(`
-        id,
-        name,
-        description,
-        avatar_url,
-        system_prompt,
-        model,
-        status,
-        metadata,
-        capabilities,
-        knowledge_domains,
-        domain_expertise,
-        created_at,
-        updated_at
-      `);
+      .select('*');
 
-    // Apply status filtering - only show active or testing agents
-    if (showAll && (profile.role === 'super_admin' || profile.role === 'admin')) {
-      // Only super admins/admins with explicit showAll=true can see all agents across all statuses
-      logger.debug('agents_crud_get_admin_view_all_tenants', { operationId });
-    } else {
-      // Everyone else sees only active/testing agents (ready for use)
+    // Apply tenant filtering based on tenant context
+    // vital-system tenant: sees ALL agents (no filtering) - this is the platform admin view
+    // Other tenants: filter by allowed_tenants array
+    if (isVitalSystemTenant || isDevBypass) {
+      // Platform/admin view - see all agents across all tenants
+      // Only filter by status (active/testing) for production readiness
       query = query.in('status', ['active', 'testing']);
-      logger.debug('agents_crud_get_status_filtered', { operationId, tenantId: profile.tenant_id });
+      logger.debug('agents_crud_get_platform_view', { operationId, tenantKey });
+    } else if (profile.tenant_id) {
+      // Tenant-specific view - filter by allowed_tenants
+      query = query.contains('allowed_tenants', [profile.tenant_id]);
+      query = query.in('status', ['active', 'testing']);
+      logger.debug('agents_crud_get_tenant_filtered', { operationId, tenantId: profile.tenant_id });
+    } else {
+      // No tenant context - safe fallback, show no agents
+      query = query.contains('allowed_tenants', ['00000000-0000-0000-0000-000000000000']);
+      logger.warn('agents_crud_get_no_tenant', { operationId, userId: context.user.id });
     }
 
     // Add ordering

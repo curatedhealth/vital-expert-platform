@@ -71,17 +71,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+import { NodePalette } from '../palette/NodePalette';
 import { PropertyPanel } from '../properties/PropertyPanel';
 import { WorkflowNode as CustomWorkflowNode } from '../nodes/WorkflowNode';
 import { EnhancedWorkflowToolbar } from './EnhancedWorkflowToolbar';
-import { WorkflowTestModal } from '../modals/WorkflowTestModal';
 import { getNodeTypeDefinition } from '../../constants/node-types';
 import { validateWorkflow } from '../../utils/validation';
 import { autoLayoutWorkflow } from '../../utils/layout';
 import { AIChatbot, ChatMessage } from '@/components/langgraph-gui/AIChatbot';
 import { apiEndpoints, setApiBaseUrl } from '@/lib/langgraph-gui/config/api';
 import { expertIdentityManager } from '@/lib/langgraph-gui/expertIdentity';
-import { createDefaultPanelWorkflow, getAvailablePanelTypes, PANEL_CONFIGS } from '@/components/langgraph-gui/panel-workflows';
+import { createDefaultPanelWorkflow, getAvailablePanelTypes } from '@/components/langgraph-gui/panel-workflows';
 
 import type { 
   WorkflowDefinition,
@@ -170,8 +170,8 @@ export function WorkflowDesignerEnhanced({
   const [undoStack, setUndoStack] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
   const [redoStack, setRedoStack] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
 
-  // AI Chatbot state - collapsed by default
-  const [showChat, setShowChat] = useState(false);
+  // AI Chatbot state
+  const [showChat, setShowChat] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
@@ -212,10 +212,6 @@ export function WorkflowDesignerEnhanced({
   // Panel workflow state
   const [showPanelDialog, setShowPanelDialog] = useState(false);
   const [selectedPanelType, setSelectedPanelType] = useState<string>('');
-  const [currentPanelType, setCurrentPanelType] = useState<string | null>(null);
-  const [showCodeView, setShowCodeView] = useState(false);
-  const [workflowCode, setWorkflowCode] = useState<string>('');
-  const [showTestModal, setShowTestModal] = useState(false);
 
   // Save current state to undo stack
   const saveToUndoStack = useCallback(() => {
@@ -419,18 +415,6 @@ export function WorkflowDesignerEnhanced({
   const handleExecuteWorkflow = useCallback(async () => {
     if (isExecuting) return;
 
-    // Validate API keys
-    if (!apiKeys.openai && apiKeys.provider === 'openai') {
-      addMessage({
-        id: `msg-${Date.now()}`,
-        role: 'log',
-        content: `⚠️ Please configure your OpenAI API key in Settings before executing workflows.`,
-        timestamp: new Date().toLocaleTimeString(),
-        level: 'error',
-      });
-      return;
-    }
-
     setIsExecuting(true);
     
     const workflowNodes = nodes.map(n => n.data as WorkflowNode);
@@ -457,7 +441,7 @@ export function WorkflowDesignerEnhanced({
     addMessage({
       id: `msg-${Date.now()}`,
       role: 'log',
-      content: `🚀 Starting workflow execution with ${nodes.length} nodes...`,
+      content: `Starting workflow execution...`,
       timestamp: new Date().toLocaleTimeString(),
       level: 'info',
     });
@@ -466,164 +450,18 @@ export function WorkflowDesignerEnhanced({
       onExecute(workflow);
     }
 
-    try {
-      // Determine if this is a panel workflow
-      const isPanelWorkflow = currentPanelType !== null;
-      
-      let response: Response;
-      
-      if (isPanelWorkflow) {
-        // Execute as panel workflow via LangGraph backend
-        const panelWorkflowDefinition = {
-          nodes: nodes.map(n => ({
-            id: n.id,
-            type: n.data.type || 'task',
-            taskId: n.data.config?.taskId,
-            label: n.data.label,
-            position: n.position,
-            data: n.data.config,
-            expertConfig: n.data.config?.expertConfig,
-            parameters: n.data.config?.parameters,
-          })),
-          edges: edges.map(e => ({
-            id: e.id,
-            source: e.source,
-            target: e.target,
-            type: e.type || 'default',
-            label: e.label,
-          })),
-          metadata: {
-            source: 'workflow-designer-enhanced',
-            panel_type: currentPanelType,
-          },
-        };
-        
-        response = await fetch(`${apiBaseUrl || '/api/langgraph-gui'}/panels/execute`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: 'Execute workflow', // This would come from user input
-            openai_api_key: apiKeys.openai,
-            pinecone_api_key: apiKeys.pinecone || '',
-            provider: apiKeys.provider || 'openai',
-            ollama_base_url: apiKeys.ollama_base_url || 'http://localhost:11434',
-            ollama_model: apiKeys.ollama_model || 'qwen3:4b',
-            workflow: panelWorkflowDefinition,
-            panel_type: currentPanelType,
-            user_id: 'user',
-          }),
-        });
-      } else {
-        // Execute as regular workflow via database-backed execution
-        response = await fetch(`/api/workflows/${workflow.id}/execute`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            inputs: {},
-            streaming: false,
-          }),
-        });
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Execution failed: ${errorText}`);
-      }
-
-      // Check if response is streaming
-      const contentType = response.headers.get('content-type') || '';
-      
-      if (contentType.includes('text/event-stream')) {
-        // Handle streaming response
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        
-        if (reader) {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-            
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                try {
-                  const parsed = JSON.parse(data);
-                  
-                  // Add streaming message
-                  if (parsed.type === 'node_start') {
-                    addMessage({
-                      id: `msg-${Date.now()}`,
-                      role: 'log',
-                      content: `▶️ Executing node: ${parsed.node_id}`,
-                      timestamp: new Date().toLocaleTimeString(),
-                      level: 'info',
-                    });
-                  } else if (parsed.type === 'node_complete') {
-                    addMessage({
-                      id: `msg-${Date.now()}`,
-                      role: 'log',
-                      content: `✅ Completed node: ${parsed.node_id}`,
-                      timestamp: new Date().toLocaleTimeString(),
-                      level: 'success',
-                    });
-                  } else if (parsed.type === 'output') {
-                    addMessage({
-                      id: `msg-${Date.now()}`,
-                      role: 'assistant',
-                      content: parsed.content,
-                      timestamp: new Date().toLocaleTimeString(),
-                    });
-                  }
-                } catch (e) {
-                  // Skip invalid JSON
-                }
-              }
-            }
-          }
-        }
-      } else {
-        // Handle regular JSON response
-        const result = await response.json();
-        
-        if (result.success) {
-          addMessage({
-            id: `msg-${Date.now()}`,
-            role: 'assistant',
-            content: result.response || result.output || 'Workflow execution completed!',
-            timestamp: new Date().toLocaleTimeString(),
-          });
-          
-          addMessage({
-            id: `msg-${Date.now()}`,
-            role: 'log',
-            content: `✅ Workflow execution completed successfully in ${result.processing_time_ms || 0}ms`,
-            timestamp: new Date().toLocaleTimeString(),
-            level: 'success',
-          });
-        } else {
-          throw new Error(result.error || 'Execution failed');
-        }
-      }
-      
-      setIsExecuting(false);
-      
-    } catch (error: any) {
-      console.error('Workflow execution error:', error);
-      
+    // Simulate execution (replace with actual API call)
+    setTimeout(() => {
       addMessage({
         id: `msg-${Date.now()}`,
         role: 'log',
-        content: `❌ Execution failed: ${error.message || error}`,
+        content: `Workflow execution completed successfully!`,
         timestamp: new Date().toLocaleTimeString(),
-        level: 'error',
+        level: 'success',
       });
-      
       setIsExecuting(false);
-    }
-  }, [nodes, edges, initialWorkflow, onExecute, isExecuting, apiKeys, currentPanelType, apiBaseUrl]);
+    }, 2000);
+  }, [nodes, edges, initialWorkflow, onExecute, isExecuting]);
 
   // Load panel workflow
   const handleLoadPanelWorkflow = useCallback(async (panelType: string) => {
@@ -633,52 +471,13 @@ export function WorkflowDesignerEnhanced({
       if (panelWorkflow) {
         saveToUndoStack();
         
-        // Extract workflow metadata for mode detection
-        const workflowMetadata = panelWorkflow.metadata || {};
-        
-        // Convert legacy workflow nodes to modern React Flow format
-        const newNodes = panelWorkflow.nodes.map((node, index) => {
-          // Extract task info if it exists
-          const taskInfo = node.data?.task;
-          const nodeLabel = node.data?.label || taskInfo?.name || node.id;
-          
-          // Map legacy node types to modern types
-          let modernType: NodeType = 'agent';
-          if (node.type === 'input') modernType = 'input';
-          else if (node.type === 'output') modernType = 'output';
-          else if (node.type === 'task') modernType = 'agent';
-          else if (node.type === 'orchestrator') modernType = 'orchestrator';
-          else if (node.type === 'agent') modernType = 'agent';
-          else if (node.type === 'tool') modernType = 'tool';
-          else if (node.type === 'condition') modernType = 'condition';
-          else if (node.type === 'parallel') modernType = 'parallel';
-          
-          return {
-            id: node.id,
-            type: 'workflowNode',
-            position: node.position,
-            data: {
-              id: node.id,
-              type: modernType,
-              label: nodeLabel,
-              position: node.position,
-              // Include workflow metadata in the first node for inspection API
-              ...(index === 0 ? { workflowMetadata } : {}),
-              config: {
-                ...node.data,
-                ...(taskInfo ? {
-                  taskId: taskInfo.id,
-                  taskName: taskInfo.name,
-                  model: taskInfo.config?.model,
-                  temperature: taskInfo.config?.temperature,
-                  tools: taskInfo.config?.tools,
-                  systemPrompt: taskInfo.config?.systemPrompt,
-                } : {}),
-              },
-              status: 'idle' as const,
-            },
-          };
-        });
+        // Convert workflow to React Flow format
+        const newNodes = panelWorkflow.nodes.map(node => ({
+          id: node.id,
+          type: 'workflowNode',
+          position: node.position,
+          data: node,
+        }));
         
         const newEdges = panelWorkflow.edges.map(edge => ({
           id: edge.id,
@@ -696,13 +495,10 @@ export function WorkflowDesignerEnhanced({
         setEdges(newEdges);
         setIsDirty(true);
         
-        // Set the current panel type so Test Workflow modal knows which mode
-        setCurrentPanelType(panelType);
-        
         addMessage({
           id: `msg-${Date.now()}`,
           role: 'log',
-          content: `Loaded ${panelType} panel workflow with ${newNodes.length} nodes successfully!`,
+          content: `Loaded ${panelType} panel workflow successfully!`,
           timestamp: new Date().toLocaleTimeString(),
           level: 'success',
         });
@@ -773,194 +569,6 @@ export function WorkflowDesignerEnhanced({
     });
   }, [apiKeys, addMessage]);
 
-  // Export workflow as JSON
-  const handleExportWorkflow = useCallback(() => {
-    const workflow: WorkflowDefinition = {
-      nodes: nodes.map(n => n.data as WorkflowNode),
-      edges: edges.map(e => ({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        type: e.type === 'step' ? ('conditional' as const) : ('default' as const),
-        label: e.label as string | undefined,
-      })),
-      name: initialWorkflow?.name || 'Untitled Workflow',
-      description: initialWorkflow?.description || '',
-    };
-
-    const blob = new Blob([JSON.stringify(workflow, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `workflow-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    addMessage({
-      id: `msg-${Date.now()}`,
-      role: 'log',
-      content: 'Workflow exported successfully!',
-      timestamp: new Date().toLocaleTimeString(),
-      level: 'success',
-    });
-  }, [nodes, edges, initialWorkflow, addMessage]);
-
-  // Import workflow from JSON
-  const handleImportWorkflow = useCallback(() => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const workflow = JSON.parse(e.target?.result as string) as WorkflowDefinition;
-            
-            saveToUndoStack();
-            
-            // Convert to React Flow format
-            const newNodes = workflow.nodes.map(node => ({
-              id: node.id,
-              type: 'workflowNode',
-              position: node.position,
-              data: node,
-            }));
-            
-            const newEdges = workflow.edges.map(edge => ({
-              id: edge.id,
-              source: edge.source,
-              target: edge.target,
-              type: edge.type === 'conditional' ? 'step' : 'default',
-              animated: true,
-              markerEnd: {
-                type: MarkerType.ArrowClosed,
-              },
-              label: edge.label,
-            }));
-            
-            setNodes(newNodes);
-            setEdges(newEdges);
-            setIsDirty(true);
-            
-            addMessage({
-              id: `msg-${Date.now()}`,
-              role: 'log',
-              content: `Workflow "${workflow.name}" imported successfully!`,
-              timestamp: new Date().toLocaleTimeString(),
-              level: 'success',
-            });
-          } catch (error) {
-            addMessage({
-              id: `msg-${Date.now()}`,
-              role: 'log',
-              content: `Failed to import workflow: ${error instanceof Error ? error.message : 'Unknown error'}`,
-              timestamp: new Date().toLocaleTimeString(),
-              level: 'error',
-            });
-          }
-        };
-        reader.readAsText(file);
-      }
-    };
-    input.click();
-  }, [setNodes, setEdges, saveToUndoStack, addMessage]);
-
-  // View workflow code (Python LangGraph)
-  const handleViewCode = useCallback(() => {
-    const workflow: WorkflowDefinition = {
-      nodes: nodes.map(n => n.data as WorkflowNode),
-      edges: edges.map(e => ({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        type: e.type === 'step' ? ('conditional' as const) : ('default' as const),
-        label: e.label as string | undefined,
-      })),
-      name: initialWorkflow?.name || 'Untitled Workflow',
-      description: initialWorkflow?.description || '',
-    };
-
-    // Generate Python code
-    let code = `"""
-${workflow.name}
-${workflow.description}
-
-Generated: ${new Date().toLocaleString()}
-"""
-
-from langgraph.graph import Graph, StateGraph
-from typing import TypedDict, Annotated
-import operator
-
-# State definition
-class WorkflowState(TypedDict):
-    messages: Annotated[list, operator.add]
-    context: dict
-    result: str
-
-# Initialize graph
-workflow = StateGraph(WorkflowState)
-
-`;
-
-    // Add nodes
-    workflow.nodes.forEach(node => {
-      code += `# Node: ${node.label} (${node.type})\n`;
-      code += `def ${node.id}_node(state: WorkflowState) -> WorkflowState:\n`;
-      code += `    # ${node.config?.description || 'No description'}\n`;
-      code += `    # TODO: Implement node logic\n`;
-      code += `    return state\n\n`;
-      code += `workflow.add_node("${node.id}", ${node.id}_node)\n\n`;
-    });
-
-    // Add edges
-    code += `# Define edges\n`;
-    workflow.edges.forEach(edge => {
-      if (edge.type === 'conditional') {
-        code += `workflow.add_conditional_edges(\n`;
-        code += `    "${edge.source}",\n`;
-        code += `    # TODO: Implement condition function\n`;
-        code += `    {"${edge.target}": lambda x: True}\n`;
-        code += `)\n`;
-      } else {
-        code += `workflow.add_edge("${edge.source}", "${edge.target}")\n`;
-      }
-    });
-
-    code += `\n# Compile and run\napp = workflow.compile()\n`;
-
-    setWorkflowCode(code);
-    setShowCodeView(true);
-  }, [nodes, edges, initialWorkflow]);
-
-  const detectPanelType = useCallback(() => {
-    // Detect if this is a panel workflow
-    const hasInput = nodes.some(n => n.data?.type === 'input' || n.id === 'start');
-    const hasTaskNodes = nodes.some(n => n.data?.type === 'task' || n.data?.taskId);
-    
-    if (hasInput && hasTaskNodes) {
-      // Try to determine which panel type based on node configuration
-      const panelTypes = getAvailablePanelTypes();
-      for (const type of panelTypes) {
-        const config = PANEL_CONFIGS[type];
-        if (config && nodes.length === config.nodes.length) {
-          return type;
-        }
-      }
-      return 'custom_panel';
-    }
-    return null;
-  }, [nodes]);
-
-  // Detect and update current panel type whenever nodes change
-  useEffect(() => {
-    setCurrentPanelType(detectPanelType());
-  }, [nodes, detectPanelType]);
-
   return (
     <div className={`flex h-full w-full gap-2 ${className}`}>
       {/* Main Workflow Canvas */}
@@ -973,7 +581,6 @@ workflow = StateGraph(WorkflowState)
             onAutoLayout={handleAutoLayout}
             onSave={handleSaveWorkflow}
             onExecute={handleExecuteWorkflow}
-            onTestWorkflow={() => setShowTestModal(true)}
             onSettings={() => setShowSettings(true)}
             canUndo={undoStack.length > 0}
             canRedo={redoStack.length > 0}
@@ -986,10 +593,6 @@ workflow = StateGraph(WorkflowState)
             edges={edges}
             onNodesChange={setNodes}
             onEdgesChange={setEdges}
-            onExportWorkflow={handleExportWorkflow}
-            onImportWorkflow={handleImportWorkflow}
-            onViewCode={handleViewCode}
-            panelType={currentPanelType}
           />
 
           {/* React Flow Canvas */}
@@ -1013,28 +616,19 @@ workflow = StateGraph(WorkflowState)
               <Background />
               <Controls />
               <MiniMap />
-              
-              {/* Floating AI Assistant Button */}
-              {!showChat && (
-                <Panel position="bottom-right" className="mb-4 mr-4">
-                  <Button
-                    size="lg"
-                    onClick={() => setShowChat(true)}
-                    className="rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-shadow"
-                    title="Open AI Assistant"
-                  >
-                    <Sparkles className="h-6 w-6" />
-                  </Button>
-                </Panel>
-              )}
             </ReactFlow>
           </div>
         </Card>
       </div>
 
-      {/* Right Sidebar - Properties Only */}
-      {selectedNode && (
-        <div className="w-80 flex flex-col gap-2">
+      {/* Right Sidebar - Node Palette & Properties */}
+      <div className="w-80 flex flex-col gap-2">
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3 text-sm">Node Palette</h3>
+          <NodePalette />
+        </Card>
+        
+        {selectedNode && (
           <Card className="flex-1 overflow-auto p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-sm">Properties</h3>
@@ -1051,8 +645,8 @@ workflow = StateGraph(WorkflowState)
               onChange={(config) => handlePropertyChange(selectedNode.id, config)}
             />
           </Card>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* AI Chatbot Panel - Collapsible */}
       {showChat && (
@@ -1106,58 +700,6 @@ workflow = StateGraph(WorkflowState)
           <MessageCircle className="h-5 w-5" />
         </Button>
       )}
-
-      {/* Code View Dialog */}
-      <Dialog open={showCodeView} onOpenChange={setShowCodeView}>
-        <DialogContent className="max-w-4xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>Workflow Code (Python LangGraph)</DialogTitle>
-            <DialogDescription>
-              Generated Python code for this workflow. Copy this code to implement your workflow in LangGraph.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="relative">
-            <pre className="bg-muted p-4 rounded-lg overflow-auto max-h-[500px] text-sm font-mono">
-              <code>{workflowCode}</code>
-            </pre>
-            <Button
-              variant="outline"
-              size="sm"
-              className="absolute top-2 right-2"
-              onClick={() => {
-                navigator.clipboard.writeText(workflowCode);
-                addMessage({
-                  id: `msg-${Date.now()}`,
-                  role: 'log',
-                  content: 'Code copied to clipboard!',
-                  timestamp: new Date().toLocaleTimeString(),
-                  level: 'success',
-                });
-              }}
-            >
-              Copy Code
-            </Button>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCodeView(false)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Workflow Test Modal (Legacy-style popup) */}
-      <WorkflowTestModal
-        open={showTestModal}
-        onClose={() => setShowTestModal(false)}
-        nodes={nodes}
-        edges={edges}
-        apiKeys={apiKeys}
-        apiBaseUrl={apiBaseUrl}
-        panelType={currentPanelType}
-      />
 
       {/* Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>

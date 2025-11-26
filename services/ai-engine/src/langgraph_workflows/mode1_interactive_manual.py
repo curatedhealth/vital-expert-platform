@@ -143,16 +143,7 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
         logger.info(
             "✅ Mode1InteractiveManualWorkflow initialized",
             workflow=self.workflow_name,
-            checkpoints_enabled=self.enable_checkpoints,
-            services_initialized={
-                'agent_orchestrator': self.agent_orchestrator is not None,
-                'sub_agent_spawner': self.sub_agent_spawner is not None,
-                'rag_service': self.rag_service is not None,
-                'tool_registry': self.tool_registry is not None,
-                'confidence_calculator': self.confidence_calculator is not None,
-                'compliance_service': self.compliance_service is not None,
-                'human_validator': self.human_validator is not None,
-            }
+            checkpoints_enabled=self.enable_checkpoints
         )
     
     def build_graph(self) -> StateGraph:
@@ -280,15 +271,21 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
         
         try:
             if session_id:
-                # Load existing session using async wrapper
-                session = await self.supabase.get_session(session_id, tenant_id)
-
-                if not session:
+                # Load existing session
+                session_result = self.supabase.table('ask_expert_sessions') \
+                    .select('*') \
+                    .eq('id', session_id) \
+                    .eq('tenant_id', tenant_id) \
+                    .single() \
+                    .execute()
+                
+                if not session_result.data:
                     logger.warning("Session not found, creating new one", session_id=session_id)
                     session_id = None  # Will create new
                 else:
+                    session = session_result.data
                     logger.info("Session loaded", session_id=session_id, total_messages=session.get('total_messages', 0))
-
+                    
                     return {
                         **state,
                         'session_id': session_id,
@@ -301,24 +298,30 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
                         },
                         'current_node': 'load_session'
                     }
-
-            # Create new session (first message) using async wrapper
+            
+            # Create new session (first message)
             if not session_id:
-                session = await self.supabase.create_session(
-                    tenant_id=tenant_id,
-                    user_id=user_id,
-                    agent_id=agent_id,
-                    mode='mode_1_interactive_manual',
-                    metadata={}
-                )
-
-                if not session:
-                    raise Exception("Failed to create session")
-
+                new_session = self.supabase.table('ask_expert_sessions') \
+                    .insert({
+                        'tenant_id': tenant_id,
+                        'user_id': user_id,
+                        'agent_id': agent_id,
+                        'mode': 'mode_1_interactive_manual',
+                        'status': 'active',
+                        'metadata': {},
+                        'total_messages': 0,
+                        'total_tokens': 0,
+                        'total_cost': 0.0,
+                    }) \
+                    .select() \
+                    .single() \
+                    .execute()
+                
+                session = new_session.data
                 session_id = session['id']
-
+                
                 logger.info("New session created", session_id=session_id)
-
+                
                 return {
                     **state,
                     'session_id': session_id,
@@ -344,7 +347,7 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
     async def load_agent_profile_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
         Node: Load expert agent profile and persona.
-
+        
         Retrieves:
         - Agent profile (name, description, tier)
         - System prompt/persona
@@ -353,15 +356,9 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
         - Communication style
         """
         selected_agents = state.get('selected_agents', [])
-
-        logger.info(
-            "Loading agent profile",
-            selected_agents=selected_agents,
-            agents_count=len(selected_agents)
-        )
-
+        
         if not selected_agents or len(selected_agents) == 0:
-            logger.error("Mode 1 requires manual agent selection", state_keys=list(state.keys()))
+            logger.error("Mode 1 requires manual agent selection")
             return {
                 **state,
                 'status': ExecutionStatus.FAILED,
@@ -373,15 +370,21 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
         agent_id = selected_agents[0] if isinstance(selected_agents, list) else selected_agents
         
         try:
-            # Fetch agent with full profile using wrapper method
-            agent = await self.supabase.get_agent_by_id(agent_id)
-
-            if not agent:
+            # Fetch agent with full profile
+            agent_result = self.supabase.table('agents') \
+                .select('*') \
+                .eq('id', agent_id) \
+                .single() \
+                .execute()
+            
+            if not agent_result.data:
                 return {
                     **state,
                     'status': ExecutionStatus.FAILED,
                     'errors': state.get('errors', []) + [f"Expert agent not found: {agent_id}"]
                 }
+            
+            agent = agent_result.data
             
             logger.info(
                 "Agent profile loaded",
@@ -440,11 +443,15 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
             }
         
         try:
-            # Load conversation history from database using async wrapper
-            history = await self.supabase.get_messages(
-                session_id=session_id,
-                limit=max_history_messages
-            )
+            # Load conversation history from database
+            history_result = self.supabase.table('ask_expert_messages') \
+                .select('*') \
+                .eq('session_id', session_id) \
+                .order('created_at', desc=False) \
+                .limit(max_history_messages) \
+                .execute()
+            
+            history = history_result.data if history_result.data else []
             
             # Build conversation context
             context_parts = []
@@ -564,11 +571,11 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
                     }
             
             # Perform RAG retrieval
-            rag_results = await self.rag_service.query(
-                query_text=query,
+            rag_results = await self.rag_service.search(
+                query=query,
                 tenant_id=tenant_id,
                 agent_id=selected_agent_id,
-                domain_ids=selected_domains if selected_domains else None,
+                domains=selected_domains if selected_domains else None,
                 max_results=max_results
             )
             
@@ -585,7 +592,8 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
                         'documents': documents,
                         'context_summary': context_summary_rag
                     },
-                    ttl=7200  # 2 hours
+                    ttl=7200,  # 2 hours
+                    tenant_id=tenant_id
                 )
             
             logger.info(
@@ -742,23 +750,29 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
                 context_length=len(combined_context)
             )
             
-            # Create AgentQueryRequest for process_query
+            # Import AgentQueryRequest to properly call process_query
             from models.requests import AgentQueryRequest
+            
+            # Create properly formatted request for AgentOrchestrator
             agent_request = AgentQueryRequest(
-                agent_id=expert_agent_id,
-                agent_type=agent_profile.get('type', 'general'),
                 query=query,
+                agent_id=expert_agent_id,
+                session_id=state.get('session_id'),
                 user_id=state.get('user_id'),
-                organization_id=tenant_id,
-                max_context_docs=10
+                tenant_id=tenant_id,
+                context={'combined_context': combined_context},
+                agent_type='expert',
+                organization_id=tenant_id
             )
-
+            
+            # Call the correct method: process_query (not execute_agent)
             agent_response_obj = await self.agent_orchestrator.process_query(agent_request)
-
+            
+            # Extract response data
             response_text = agent_response_obj.response
-            citations = agent_response_obj.citations if agent_response_obj.citations else []
-            artifacts = []  # process_query doesn't return artifacts directly
-            tokens_used = agent_response_obj.processing_metadata.get('tokens_used', 0) if agent_response_obj.processing_metadata else 0
+            citations = agent_response_obj.citations or []
+            artifacts = []  # AgentQueryResponse doesn't return artifacts
+            tokens_used = agent_response_obj.tokens_used
             
             # Spawn sub-agents if needed
             sub_agents_spawned = []
@@ -781,15 +795,11 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
                     response_text += f"\n\n**Sub-Agent Analysis:**\n{specialist_result.get('response', '')}"
             
             # Calculate confidence using ConfidenceCalculator
-            confidence_result = await self.confidence_calculator.calculate_confidence(
-                query=query,
+            confidence = await self.confidence_calculator.calculate(
                 response=response_text,
-                agent_metadata=agent_profile,
-                rag_results=state.get('retrieved_documents', []),
-                context={'combined_context': combined_context}
+                context=combined_context,
+                citations=citations
             )
-
-            confidence = confidence_result.get('confidence_score', 0.0)
             
             # Cache response (Golden Rule #2)
             cache_data = {
@@ -806,7 +816,8 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
                 await self.cache_manager.set(
                     cache_key,
                     cache_data,
-                    ttl=1800  # 30 minutes (shorter for multi-turn)
+                    ttl=1800,  # 30 minutes (shorter for multi-turn)
+                    tenant_id=tenant_id
                 )
             
             logger.info(
@@ -953,37 +964,41 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
         cost = state.get('estimated_cost', 0.0)
         
         try:
-            # Save user message using async wrapper
-            user_msg = await self.supabase.save_message(
-                session_id=session_id,
-                role='user',
-                content=query,
-                agent_id=None,
-                metadata={}
-            )
-
-            # Save assistant message using async wrapper
-            assistant_msg = await self.supabase.save_message(
-                session_id=session_id,
-                role='assistant',
-                content=agent_response,
-                agent_id=agent_id,
-                metadata={
-                    'thinking_steps': state.get('thinking_steps', []),
-                    'tool_results': state.get('tools_executed', []),
-                    'citations': state.get('citations', []),
-                    'confidence': state.get('response_confidence', 0.0),
-                    'sub_agents': state.get('sub_agents_spawned', []),
-                },
-                tokens=tokens_used,
-                cost=cost
-            )
-
+            # Save user message
+            user_msg = self.supabase.table('ask_expert_messages') \
+                .insert({
+                    'session_id': session_id,
+                    'role': 'user',
+                    'content': query,
+                    'agent_id': None,
+                    'metadata': {},
+                }) \
+                .execute()
+            
+            # Save assistant message
+            assistant_msg = self.supabase.table('ask_expert_messages') \
+                .insert({
+                    'session_id': session_id,
+                    'role': 'assistant',
+                    'content': agent_response,
+                    'agent_id': agent_id,
+                    'metadata': {
+                        'thinking_steps': state.get('thinking_steps', []),
+                        'tool_results': state.get('tools_executed', []),
+                        'citations': state.get('citations', []),
+                        'confidence': state.get('response_confidence', 0.0),
+                        'sub_agents': state.get('sub_agents_spawned', []),
+                    },
+                    'tokens': tokens_used,
+                    'cost': cost,
+                }) \
+                .execute()
+            
             logger.info(
                 "Messages saved to database",
                 session_id=session_id,
-                user_msg_id=user_msg.get('id') if user_msg else None,
-                assistant_msg_id=assistant_msg.get('id') if assistant_msg else None
+                user_msg_id=user_msg.data[0]['id'] if user_msg.data else None,
+                assistant_msg_id=assistant_msg.data[0]['id'] if assistant_msg.data else None
             )
             
             return {
@@ -1018,13 +1033,16 @@ class Mode1InteractiveManualWorkflow(BaseWorkflow):
             new_total_tokens = session_metadata.get('total_tokens', 0) + tokens_used
             new_total_cost = session_metadata.get('total_cost', 0.0) + cost
             
-            # Update in database using async wrapper
-            await self.supabase.update_session_metadata(
-                session_id=session_id,
-                total_messages=new_total_messages,
-                total_tokens=new_total_tokens,
-                total_cost=new_total_cost
-            )
+            # Update in database
+            self.supabase.table('ask_expert_sessions') \
+                .update({
+                    'total_messages': new_total_messages,
+                    'total_tokens': new_total_tokens,
+                    'total_cost': new_total_cost,
+                    'updated_at': datetime.utcnow().isoformat(),
+                }) \
+                .eq('id', session_id) \
+                .execute()
             
             logger.info(
                 "Session metadata updated",

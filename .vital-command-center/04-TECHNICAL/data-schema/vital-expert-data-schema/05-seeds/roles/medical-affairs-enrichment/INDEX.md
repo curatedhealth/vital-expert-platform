@@ -38,29 +38,20 @@ medical-affairs-enrichment/
 │   ├── query_phase3_role_ids_FIXED.sql (database query) ⭐ USE THIS
 │   └── query_phase3_role_ids.sql (deprecated - wrong column names)
 │
-├── 🛠️ Update Tools & Scripts
-│   ├── apply_role_ids_from_export.py (✅ USED - automated update from export)
-│   ├── create_missing_roles.sql (⭐ RUN THIS - creates 4 missing roles)
-│   ├── update_role_ids_from_db.py (deprecated - use apply script instead)
+├── 🛠️ Update Tools
+│   ├── update_role_ids_from_db.py (automated role_id replacement)
 │   ├── 00_check_actual_schema.sql (schema verification)
-│   └── SCHEMA_FIX_README.md (column name fix documentation)
-│
-└── 📚 Guides & Documentation
-    ├── QUICK_START_COMPLETE_UPDATE.md (⚡ 10-min guide to 100% completion)
-    ├── CREATE_MISSING_ROLES_GUIDE.md (detailed step-by-step)
-    ├── ROLE_ID_UPDATE_COMPLETE.md (87% completion report)
-    └── README_UPDATE_ROLE_IDS.md (original update guide)
+│   └── SCHEMA_FIX_README.md (column name fix documentation) ⚠️ READ THIS
 ```
 
 ---
 
 ## 🎯 Quick Access Guide
 
-### 🎯 ACTION REQUIRED: Complete Final 4 Roles (2025-11-23)
-**Quick Start:** `QUICK_START_COMPLETE_UPDATE.md` ⚡ (10 minutes)
-**Full Guide:** `CREATE_MISSING_ROLES_GUIDE.md`
-**Status:** 26/30 roles updated (87%) → Target: 100%
-**Action:** Run `create_missing_roles.sql` in Supabase, then re-run update script
+### ✅ COMPLETE: Role IDs Updated (2025-11-23)
+**Read this:** `ROLE_ID_UPDATE_COMPLETE.md`
+**Status:** 26/30 roles updated (87%)
+**Action:** 4 roles missing from database - see report for options
 
 ### New to this project?
 **Start here:** `README.md`
@@ -177,16 +168,15 @@ jq '.roles[] | select(.role_name | contains("MSL"))' phase1_field_medical_enrich
 ## 📞 Support
 
 **Questions about:**
-- **🎯 Completing 100% Update** → See `QUICK_START_COMPLETE_UPDATE.md` ⚡ **START HERE**
-- **Creating Missing Roles** → See `CREATE_MISSING_ROLES_GUIDE.md` 📖
-- **Current Update Status** → See `ROLE_ID_UPDATE_COMPLETE.md` (87% report)
-- **Multi-agent Research** → See `ORCHESTRATED_RESEARCH_COMPLETE.md`
+- **Schema Column Name Issues** → See `SCHEMA_FIX_README.md` ⚠️ **IMPORTANT**
 - **Structure/Organization** → See `README.md`
+- **Updating role_ids** → See `README_UPDATE_ROLE_IDS.md` ⭐ **NEW**
+- **Multi-agent research** → See `ORCHESTRATED_RESEARCH_COMPLETE.md` ⭐ **NEW**
 - **Phase 1 Deployment** → See `README_PHASE1_DEPLOYMENT.md`
 - **Schema Details** → See `org_roles_complete_attribute_mapping.md`
 - **Phase 1 Deliverables** → See `PHASE1_DELIVERY_SUMMARY.md`
-- **Database Queries** → Use `query_phase*_FIXED.sql` files
-- **Schema Column Issues** → See `SCHEMA_FIX_README.md`
+- **Database Queries** → Use `query_phase*_FIXED.sql` files ⭐
+- **Automation Scripts** → See `update_role_ids_from_db.py`
 - **Schema Verification** → See `00_check_actual_schema.sql`
 
 ---

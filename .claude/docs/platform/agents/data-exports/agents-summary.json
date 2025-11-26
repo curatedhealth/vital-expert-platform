@@ -1,0 +1,53 @@
+{
+  "total_agents": 254,
+  "by_tier": {
+    "1": 7,
+    "2": 159,
+    "3": 88
+  },
+  "by_status": {
+    "inactive": 243,
+    "active": 6,
+    "testing": 3,
+    "development": 2
+  },
+  "by_business_function": {
+    "IT/Digital": 20,
+    "Clinical Development": 26,
+    "Regulatory Affairs": 25,
+    "Manufacturing": 9,
+    "Operations": 74,
+    "Research & Development": 38,
+    "Commercial": 15,
+    "Legal": 9,
+    "Quality": 10,
+    "Pharmacovigilance": 12,
+    "Business Development": 10,
+    "Medical Affairs": 6
+  },
+  "by_department": {
+    "Information Technology": 34,
+    "Clinical Development": 9,
+    "Quality Compliance": 8,
+    "Market Access": 5,
+    "Drug Product": 4,
+    "unknown": 127,
+    "Marketing": 7,
+    "Quality Assurance": 6,
+    "Global Regulatory": 6,
+    "Strategic Planning": 9,
+    "Data Management": 4,
+    "Medical Communications": 2,
+    "Medical Science Liaisons": 2,
+    "Drug Discovery": 5,
+    "Preclinical Development": 8,
+    "Epidemiology": 1,
+    "Translational Medicine": 5,
+    "Medical Information": 1,
+    "Biostatistics": 2,
+    "Supply Chain": 4,
+    "Sales": 3,
+    "BD&L": 1,
+    "Drug Substance": 1
+  }
+}

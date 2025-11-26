@@ -9,9 +9,16 @@ from typing import List, Dict, Any, Optional, Union
 from datetime import datetime, timezone
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from langchain.agents import create_openai_tools_agent, AgentExecutor
-from langchain.tools import Tool
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+# LangChain 1.0+: AgentExecutor and tools moved to langchain-classic for legacy support
+try:
+    from langchain.agents import create_openai_tools_agent, AgentExecutor
+    from langchain.tools import Tool
+    from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+except ImportError:
+    # Fallback for LangChain 1.0+ - use langchain-classic
+    from langchain_classic.agents import create_openai_tools_agent, AgentExecutor
+    from langchain_classic.tools import Tool
+    from langchain_classic.prompts import ChatPromptTemplate, MessagesPlaceholder
 import structlog
 import uuid
 
@@ -595,11 +602,12 @@ Content: {doc.get('content', '')[:800]}...
             metadata = {
                 "token_count": self._estimate_tokens(final_prompt),
                 "capabilities": request.selected_capabilities,
-                "competencies": list(request.competency_selection.keys()) if request.competency_selection else [],
+                "skills": request.required_skills or [],
                 "tools": request.tools or [],
+                "agent_level": request.required_agent_level,
                 "compliance_level": "High" if (request.pharma_protocol_required and request.verify_protocol_required) else "Medium",
-                "medical_specialty": request.medical_context.medical_specialty,
-                "business_function": request.medical_context.business_function,
+                "medical_specialty": request.medical_context.get('medical_specialty') if request.medical_context else None,
+                "business_function": request.medical_context.get('business_function') if request.medical_context else None,
                 "generated_at": datetime.now(timezone.utc).isoformat()
             }
 

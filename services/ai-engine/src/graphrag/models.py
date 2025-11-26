@@ -212,3 +212,11 @@ class EntityExtractionResult(BaseModel):
     entities: List[ExtractedEntity]
     processed_query: str  # Query with entities highlighted/normalized
 
+
+# ============================================================================
+# Backward Compatibility Aliases
+# ============================================================================
+
+# Alias for tests that expect VectorResult
+VectorResult = ContextChunk
+

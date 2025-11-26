@@ -24,7 +24,6 @@ export function createPanelWorkflow(
     edges,
     phases: config.phases,
     workflowName: config.name,
-    metadata: config.metadata, // Pass through metadata
   };
 }
 

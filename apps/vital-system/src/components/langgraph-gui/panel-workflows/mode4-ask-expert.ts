@@ -24,16 +24,6 @@ export const MODE4_ASK_EXPERT_CONFIG: PanelWorkflowConfig = {
   description: 'AI assembles expert team (up to 4) → Collaborative autonomous execution',
   icon: Users,
   defaultQuery: 'Create a complete FDA 510(k) submission package for my cardiac monitoring device',
-  
-  // Metadata for mode detection
-  metadata: {
-    mode: 'mode4',
-    selection: 'automatic',
-    interaction: 'autonomous',
-    requires_agent_selection: false,
-    supports_hitl: true,
-    features: ['auto_selection', 'multi_agent', 'team_collaboration', 'autonomous', 'artifact_generation', 'hitl', 'parallel_execution', 'tools'],
-  },
 
   // Mode 4 uses up to 4 experts (AI selected) working collaboratively
   experts: [

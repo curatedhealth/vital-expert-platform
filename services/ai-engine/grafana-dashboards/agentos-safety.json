@@ -1,0 +1,324 @@
+{
+  "dashboard": {
+    "title": "AgentOS 3.0 - Safety & Compliance Dashboard",
+    "description": "Safety gates, human oversight, escalations, and compliance tracking",
+    "tags": ["agentos", "safety", "compliance", "hitl"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "1m",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Safety Gates Triggered (1h)",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(increase(agentos_safety_gates_triggered_total[1h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 10, "color": "yellow"},
+                {"value": 50, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Human Oversight Rate",
+        "type": "gauge",
+        "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(rate(agentos_human_oversight_total[5m])) / sum(rate(agentos_requests_total[5m])) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 100,
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 20, "color": "yellow"},
+                {"value": 50, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Escalations (24h)",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(increase(agentos_escalations_total[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 50, "color": "yellow"},
+                {"value": 100, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Tier 3 (High Safety) Usage",
+        "type": "stat",
+        "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(increase(agentos_requests_total{tier=\"tier_3\"}[1h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "thresholds"}
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Safety Gate Triggers Over Time",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(agentos_safety_gates_triggered_total[5m]) * 60",
+            "legendFormat": "{{trigger_type}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "legend": {"show": true, "placement": "bottom"},
+          "tooltip": {"mode": "multi"}
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "rpm",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Escalation Reasons",
+        "type": "piechart",
+        "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by (reason) (increase(agentos_escalations_total[24h]))",
+            "legendFormat": "{{reason}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "legend": {"show": true, "placement": "right"},
+          "pieType": "pie",
+          "displayLabels": ["name", "value", "percent"]
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Mandatory Escalation Compliance",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 12, "w": 8, "h": 6},
+        "targets": [
+          {
+            "expr": "sum(agentos_mandatory_escalations_compliant) / sum(agentos_mandatory_escalations_total) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 95, "color": "yellow"},
+                {"value": 99.9, "color": "green"}
+              ]
+            }
+          }
+        },
+        "description": "Critical: Must be 100% for FDA/EMA compliance"
+      },
+      {
+        "id": 8,
+        "title": "Human Review Response Time",
+        "type": "graph",
+        "gridPos": {"x": 8, "y": 12, "w": 16, "h": 6},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(agentos_human_review_duration_seconds_bucket[5m]))",
+            "legendFormat": "P50 - Median",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(agentos_human_review_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(agentos_human_review_duration_seconds_bucket[5m]))",
+            "legendFormat": "P99",
+            "refId": "C"
+          }
+        ],
+        "options": {
+          "legend": {"show": true, "placement": "bottom"}
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "HITL Safety Levels Distribution",
+        "type": "bargauge",
+        "gridPos": {"x": 0, "y": 18, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by (safety_level) (increase(agentos_hitl_requests_total[24h]))",
+            "legendFormat": "{{safety_level}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "orientation": "horizontal",
+          "displayMode": "gradient",
+          "showUnfilled": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "continuous-GrYlRd"},
+            "mappings": [
+              {"type": "value", "options": {"conservative": {"text": "Conservative", "color": "red"}}},
+              {"type": "value", "options": {"balanced": {"text": "Balanced", "color": "yellow"}}},
+              {"type": "value", "options": {"minimal": {"text": "Minimal", "color": "green"}}}
+            ]
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Compliance Audit Trail",
+        "type": "table",
+        "gridPos": {"x": 12, "y": 18, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by (audit_event) (increase(agentos_audit_events_total[24h]))",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [{"displayName": "Value", "desc": true}]
+        },
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "Value"},
+              "properties": [
+                {"id": "custom.width", "value": 150}
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 11,
+        "title": "Critical Safety Triggers (Last Hour)",
+        "type": "logs",
+        "gridPos": {"x": 0, "y": 26, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "{job=\"agentos\"} |= \"CRITICAL\" |= \"safety\"",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "showLabels": true,
+          "wrapLogMessage": true,
+          "sortOrder": "Descending"
+        }
+      }
+    ],
+    "time": {"from": "now-24h", "to": "now"},
+    "timepicker": {
+      "refresh_intervals": ["30s", "1m", "5m", "15m"]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "Safety Incidents",
+          "datasource": "Prometheus",
+          "expr": "agentos_safety_incidents_total",
+          "iconColor": "red",
+          "enable": true
+        }
+      ]
+    }
+  }
+}
+

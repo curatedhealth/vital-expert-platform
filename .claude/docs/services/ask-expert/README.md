@@ -1,108 +1,136 @@
-# Ask Expert Service - Master Documentation
+# Ask Expert System - Documentation Index
 
-**Version**: 2.0.0
-**Last Updated**: November 23, 2025
-**Status**: Active (Modes 1-2 Production Ready | Modes 3-4 Planned Q1-Q2 2026)
-**Service Type**: 1-on-1 AI Consultation
-
----
-
-## Quick Links
-
-| Document | Purpose |
-|----------|---------|
-| **[4-Mode System](4_MODE_SYSTEM_FINAL.md)** | Complete 4-mode specification (Interactive/Autonomous × Manual/Auto) |
-| **[Implementation Plan](ASK_EXPERT_IMPLEMENTATION_PLAN.md)** | Full implementation guide & technical specs |
-| **[Comprehensive Audit](ASK_EXPERT_COMPREHENSIVE_AUDIT.md)** | Implementation status & evidence |
-| **[PRD Update](../../ASK_EXPERT_PRD_UPDATE_2025-11-22.md)** | Mode 1-2 completion status, performance metrics |
+**Last Updated:** 2025-11-26  
+**Status:** ✅ Production-Ready  
+**Version:** 2.0 (LangGraph 1.0+ / LangChain 0.3.x)
 
 ---
 
-## Executive Summary
+## 📚 **Documentation Structure**
 
-Ask Expert enables Medical Affairs professionals to consult with 136+ specialized AI agents for expert-quality responses in 22-42 seconds.
+### **📋 Implementation & Status**
+- **`IMPLEMENTATION_STATUS.md`** ⭐ **START HERE** - Current system status, all 4 modes
+- **`IMPLEMENTATION_SUMMARY.md`** - Complete implementation details
+- **`BUG_FIXES_REPORT.md`** - Critical bug fixes applied
+- **`TEST_REPORT.md`** - Test results and validation
+- **`QUICK_REFERENCE.md`** - Developer quick reference card
 
-**Value Delivered**:
-- ✅ **Speed**: 96% faster than manual research (22s vs 2-8 hours)
-- ✅ **Quality**: 96% first-pass approval rate  
-- ✅ **Scale**: Unlimited inquiry capacity without headcount growth
-- ✅ **Compliance**: Built-in regulatory guardrails
+### **⚡ Performance Optimization**
+- **`MODE3_OPTIMIZATIONS.py`** - Mode 3 optimization strategies
+- **`MODE4_OPTIMIZATIONS.py`** - Mode 4 optimization strategies
+- **`WORKFLOW_ENHANCEMENT_GUIDE.md`** - Workflow enhancement patterns
 
----
+### **📖 Architecture & Design**
+- **`4_MODE_SYSTEM_FINAL.md`** - 4-mode system overview
+- **`VITAL_Ask_Expert_PRD_ENHANCED_v2.md`** - Product requirements
+- **`VITAL_Ask_Expert_ARD_ENHANCED_v2.md`** - Architecture requirements
+- **`PHASE4_PRD_ENHANCEMENTS.md`** - Phase 4 features (HITL, ToT, etc)
 
-## 4-Mode System
+### **🔍 Audits & Analysis**
+- **`ASK_EXPERT_COMPREHENSIVE_AUDIT.md`** - System audit
+- **`ASK_EXPERT_AUDIT.md`** - Implementation audit
+- **`VITAL_AGENT_EVIDENCE_BASED_CRITICAL_ANALYSIS.md`** - Agent selection analysis
 
-```
-                    MANUAL              AUTO
-                    (You Pick)          (AI Picks)
-                    ─────────────────────────────────
-INTERACTIVE         Mode 1 ✅           Mode 2 ✅
-(Conversation)      30-45s, 1 expert   45-60s, 2 experts
-
-AUTONOMOUS          Mode 3 ⏳           Mode 4 ⏳
-(Goal-Driven)       Q1 2026            Q2 2026
-```
-
-**Current Status**:
-- **Mode 1 (Interactive + Manual)**: ✅ 95% Complete | P50: 22s | 96% approval
-- **Mode 2 (Interactive + Auto)**: ✅ 95% Complete | P50: 35s | 92% approval  
-- **Mode 3 (Autonomous + Manual)**: ⏳ Planned Q1 2026
-- **Mode 4 (Autonomous + Auto)**: ⏳ Planned Q2 2026
-
----
-
-## Implementation
-
-### Frontend
-- **Location**: `apps/vital-system/src/app/(app)/ask-expert/`
-- **Features**: 
-  - Mode 1: `src/features/ask-expert/mode-1/`
-  - Mode 2: `src/features/ask-expert/mode-2/`
-
-### Backend
-- **API**: `apps/vital-system/src/app/api/ask-expert/`
-- **Orchestration**: LangGraph state machines
-- **RAG Pipeline**: Pinecone (vector) + Neo4j (graph) + Claude 3.5 Sonnet
-
-### Database
-```sql
-ask_expert_sessions     -- Session tracking (mode, agent, query, status)
-ask_expert_messages     -- Message history (user/assistant/system)
-```
+### **📚 Input Documentation/**
+Original specifications and gold standards:
+- `MODE_1_INTERACTIVE_MANUAL_GOLD_STANDARD.md`
+- `MODE_2_QUERY_MANUAL_GOLD_STANDARD.md`
+- `MODE_3_QUERY_AUTOMATIC_GOLD_STANDARD.md`
+- `MODE_4_CHAT_AUTO_GOLD_STANDARD.md`
+- `AGENT_SELECTION_GOLD_STANDARD_FINAL.md`
+- `VITAL_Ask_Expert_PRD.md` (original)
+- `VITAL_Ask_Expert_ARD.md` (original)
+- Plus enhanced architecture docs
 
 ---
 
-## Performance (Production)
+## 🚀 **Quick Start**
 
-| Metric | Mode 1 | Mode 2 | Target | Status |
-|--------|--------|--------|--------|--------|
-| **P50 Latency** | 22s | 35s | 20-45s | ✅ |
-| **P95 Latency** | 28s | 42s | 25-45s | ✅ |
-| **Accuracy** | 96% | 92% | 90%+ | ✅ |
-| **Uptime** | 99.95% | 99.9% | 99.9%+ | ✅ |
+### **1. Understand the System**
+Read: `IMPLEMENTATION_STATUS.md` (5 min)
 
----
+### **2. Review Mode Details**
+Read: `4_MODE_SYSTEM_FINAL.md` (10 min)
 
-## Architecture
+### **3. Check Performance**
+Read: `TEST_REPORT.md` (5 min)
 
-**RAG Pipeline** (20-40 seconds):
-1. **Retrieval**: Vector search (Pinecone) + Graph traversal (Neo4j) → Top 10-20 docs
-2. **Augmentation**: Add product metadata, regulatory context, historical similar queries
-3. **Generation**: Claude 3.5 Sonnet (temp: 0.3) → Structured response with citations
-4. **Post-Processing**: Citation verification, compliance checks, quality scoring
+### **4. Optimize (Optional)**
+Read: `MODE3_OPTIMIZATIONS.py`, `MODE4_OPTIMIZATIONS.py` (15 min)
 
 ---
 
-## Related Documentation
+## 📊 **Current System Status**
 
-- **PRD**: `00-STRATEGIC/prd/ask-expert/`
-- **ARD**: `00-STRATEGIC/ard/ask-expert/`
-- **PRD Update**: `ASK_EXPERT_PRD_UPDATE_2025-11-22.md`
-- **API Docs**: `04-TECHNICAL/api/ask-expert/`
-- **Database Schema**: `04-TECHNICAL/data-schema/GOLD_STANDARD_SCHEMA.md`
-- **Platform Agents**: `02-PLATFORM-ASSETS/agents/`
+### **All 4 Modes:**
+| Mode | Status | Performance | Endpoint |
+|------|--------|-------------|----------|
+| Mode 1 | ✅ Operational | ~475ms | `/api/mode1/manual` |
+| Mode 2 | ✅ Operational | ~335ms | `/api/mode2/automatic` |
+| Mode 3 | ✅ Operational | ~1951ms | `/api/mode3/autonomous-automatic` |
+| Mode 4 | ✅ Operational | ~4665ms | `/api/mode4/autonomous-manual` |
+
+### **Features Implemented:**
+- ✅ LangGraph 1.0+ workflows
+- ✅ Multi-turn conversations
+- ✅ Evidence-based agent selection
+- ✅ RAG integration
+- ✅ Tool execution
+- ✅ Autonomous reasoning
+- ✅ HITL checkpoints
+- ✅ Sub-agent spawning
+- ✅ Citation tracking
+- ✅ Confidence scoring
 
 ---
 
-**Maintained By**: PRD Architect, Implementation Compliance & QA Agent
-**Questions?**: See [CATALOGUE.md](../../CATALOGUE.md) or ask Implementation Compliance & QA Agent
+## 🔧 **Technical Stack**
+
+### **Backend:**
+- Python 3.13
+- FastAPI
+- LangChain 0.3.x
+- LangGraph 1.0+
+- OpenAI GPT-4
+- Supabase (PostgreSQL)
+- Redis (caching)
+- Pinecone (vector DB)
+
+### **Key Services:**
+- `AgentOrchestrator` - Agent execution
+- `UnifiedRAGService` - RAG retrieval
+- `AgentSelectorService` - Evidence-based selection
+- `PanelOrchestrator` - Multi-agent panels
+- `SubAgentSpawner` - Deep agent architecture
+- `ToolRegistry` - Tool management
+
+---
+
+## 🐛 **Known Issues**
+
+### **Resolved:**
+- ✅ Agent UUID validation (fixed)
+- ✅ RAG namespace callable (fixed)
+- ✅ RLS functions missing (deployed)
+- ✅ Mode 3 performance (15% improvement)
+
+### **In Progress:**
+- ⚠️ Mode 4 agent selector (returns too many agents)
+- ⚠️ Empty responses in some cases (agent orchestrator)
+- ⚠️ Conversation caching (planned)
+
+---
+
+## 📞 **Support**
+
+For questions or issues:
+1. Check `IMPLEMENTATION_STATUS.md` for current status
+2. Review `BUG_FIXES_REPORT.md` for known fixes
+3. Check `TEST_REPORT.md` for test results
+4. See optimization guides for performance improvements
+
+---
+
+**System Status:** 🟢 Production-Ready  
+**Last Major Update:** 2025-11-26  
+**Maintainer:** AI Engine Team

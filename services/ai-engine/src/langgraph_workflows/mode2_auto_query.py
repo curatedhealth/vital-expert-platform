@@ -304,7 +304,7 @@ class Mode2AutoQueryWorkflow(BaseWorkflow):
             # Use AI to analyze query (can be cached)
             cache_key = f"query_analysis:mode2:{hash(query)}"
             if self.cache_manager and self.cache_manager.enabled:
-                cached_analysis = await self.cache_manager.get(cache_key, tenant_id)
+                cached_analysis = await self.cache_manager.get(cache_key)
                 if cached_analysis:
                     logger.info("✅ Query analysis cache hit (Mode 2)")
                     return {

@@ -1,12 +1,12 @@
 """
-Mode 2: Interactive-Manual Workflow (Gold Standard)
+Mode 2: Interactive-Automatic Workflow (Gold Standard)
 
-User manually selects agent(s), system facilitates multi-turn conversation.
+AI automatically selects best agent(s), system facilitates multi-turn conversation.
 
 Frontend Mapping:
-- isAutomatic: false (Manual agent selection)
+- isAutomatic: true (Automatic agent selection by AI)
 - isAutonomous: false (Interactive conversation)
-- selectedAgents: ["agent_id"] (User-selected)
+- selectedAgents: [] (AI-selected automatically)
 
 Golden Rules Compliance:
 ✅ #1: LangGraph StateGraph
@@ -74,9 +74,9 @@ logger = structlog.get_logger()
 
 class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrationMixin):
     """
-    Mode 2: Interactive-Manual Workflow (Gold Standard) + Tool Chaining + Long-Term Memory
+    Mode 2: Interactive-Automatic Workflow (Gold Standard) + Tool Chaining + Long-Term Memory
     
-    User manually selects expert(s), system facilitates conversation.
+    AI automatically selects best expert(s), system facilitates conversation.
     
     Golden Rules Compliance:
     - ✅ #1: LangGraph StateGraph
@@ -110,8 +110,8 @@ class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegra
     ):
         """Initialize Mode 2 workflow with all services."""
         super().__init__(
-            workflow_name="Mode2_Interactive_Manual",
-            mode=WorkflowMode.MODE_1_MANUAL,  # Using MODE_1_MANUAL enum
+            workflow_name="Mode2_Interactive_Automatic",
+            mode=WorkflowMode.MODE_2_AUTOMATIC,  # Using MODE_2_AUTOMATIC enum for automatic selection
             enable_checkpoints=True
         )
         
@@ -159,7 +159,7 @@ class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegra
         # NEW: Long-term memory (Phase 2) - Initialize from mixin
         self.init_memory_integration(supabase_client)
         
-        logger.info("✅ Mode2InteractiveManualWorkflow initialized with tool chaining + long-term memory")
+        logger.info("✅ Mode2InteractiveAutomaticWorkflow initialized with tool chaining + long-term memory")
     
     async def _get_agent_tool_names(self, agent_id: str) -> List[str]:
         """
@@ -221,12 +221,12 @@ class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegra
     
     def build_graph(self) -> StateGraph:
         """
-        Build Mode 2 workflow with manual agent selection.
+        Build Mode 2 workflow with automatic agent selection.
         
         Flow:
         1. Validate tenant
         2. Retrieve relevant memory
-        3. Validate user's agent selection
+        3. Automatically select best agent(s) using AI
         4. Check conversation type
         5. Load/initialize conversation
         6. Analyze query
@@ -375,79 +375,83 @@ class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegra
     # MODE 2 SPECIFIC NODES
     # =========================================================================
     
-    @trace_node("mode2_validate_agent_selection")
+    @trace_node("mode2_select_agents_automatic")
     async def validate_agent_selection_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
-        Node: Validate user's manually selected agent(s).
+        Node: Automatically select best agent(s) using AI.
         
-        Checks:
-        1. At least one agent selected
-        2. Agent(s) exist in database
-        3. Agent(s) are active
-        4. User has permission to use agent(s)
+        Uses AgentSelectorService to analyze query and select optimal agent(s).
         
         Golden Rule #3: Tenant isolation enforced.
         """
         tenant_id = state['tenant_id']
-        selected_agents = state.get('selected_agents', [])
+        query = state.get('query', '')
         
         logger.info(
-            "Validating user agent selection",
-            tenant_id=tenant_id[:8],
-            selected_agents=selected_agents
+            "Automatically selecting agents using AI",
+            tenant_id=tenant_id[:8]
         )
         
         try:
-            # Check if agents provided
-            if not selected_agents or len(selected_agents) == 0:
-                logger.error("No agents selected by user")
+            # Use AgentSelectorService to automatically select best agent(s)
+            from services.agent_selector_service import AgentSelectorService
+            agent_selector = AgentSelectorService(self.supabase)
+            
+            # Select best agent for the query
+            selection_result = await agent_selector.select_single_expert(
+                query=query,
+                tenant_id=tenant_id
+            )
+            
+            selected_agent_id = selection_result.get('agent_id')
+            
+            if not selected_agent_id:
+                logger.error("AI failed to select an agent")
                 return {
                     **state,
-                    'agent_validation_error': 'No agents selected. Please select at least one agent.',
+                    'agent_validation_error': 'Could not automatically select an appropriate agent.',
                     'agent_validation_valid': False,
                     'current_node': 'validate_agent_selection'
                 }
             
-            # Set tenant context (Golden Rule #3)
-            await self.supabase.set_tenant_context(tenant_id)
+            # Fetch agent details
+            response = await self.supabase.client.from_('agents').select('*').eq(
+                'tenant_id', tenant_id
+            ).eq('id', selected_agent_id).eq('status', 'active').execute()
             
-            # Validate each selected agent
-            validated_agents = []
-            for agent_id in selected_agents:
-                response = await self.supabase.client.from_('agents').select('*').eq(
-                    'tenant_id', tenant_id
-                ).eq('id', agent_id).eq('status', 'active').execute()
-                
-                if not response.data or len(response.data) == 0:
-                    logger.warning(f"Agent not found or inactive: {agent_id}")
-                    return {
-                        **state,
-                        'agent_validation_error': f'Agent "{agent_id}" not found or inactive.',
-                        'agent_validation_valid': False,
-                        'current_node': 'validate_agent_selection'
-                    }
-                
-                validated_agents.append(response.data[0])
+            if not response.data or len(response.data) == 0:
+                logger.warning(f"Selected agent not found or inactive: {selected_agent_id}")
+                return {
+                    **state,
+                    'agent_validation_error': f'Selected agent not found or inactive.',
+                    'agent_validation_valid': False,
+                    'current_node': 'validate_agent_selection'
+                }
+            
+            validated_agents = [response.data[0]]
             
             logger.info(
-                "✅ Agent selection validated",
-                validated_count=len(validated_agents)
+                "✅ Agent automatically selected",
+                agent_id=selected_agent_id,
+                reasoning=selection_result.get('reasoning', 'AI-based selection')
             )
             
             return {
                 **state,
+                'selected_agents': [selected_agent_id],
                 'validated_agents': validated_agents,
                 'agent_validation_valid': True,
+                'selection_reasoning': selection_result.get('reasoning', ''),
                 'current_node': 'validate_agent_selection'
             }
             
         except Exception as e:
-            logger.error("❌ Agent validation failed", error=str(e))
+            logger.error("❌ Automatic agent selection failed", error=str(e))
             return {
                 **state,
-                'agent_validation_error': f'Agent validation error: {str(e)}',
+                'agent_validation_error': f'Automatic selection error: {str(e)}',
                 'agent_validation_valid': False,
-                'errors': state.get('errors', []) + [f'Agent validation failed: {str(e)}'],
+                'errors': state.get('errors', []) + [f'Agent selection failed: {str(e)}'],
                 'current_node': 'validate_agent_selection'
             }
     
@@ -655,22 +659,28 @@ class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegra
                 include_system_prompt=False
             )
             
-            # Execute agent
-            agent_response = await self.agent_orchestrator.execute_agent(
-                agent_id=selected_agent,
+            # Import AgentQueryRequest
+            from models.requests import AgentQueryRequest
+            
+            # Create properly formatted request
+            agent_request = AgentQueryRequest(
                 query=query,
-                context=context_summary,
-                conversation_history=formatted_conversation,
-                model=model,
-                temperature=state.get('temperature', 0.1),
-                max_tokens=state.get('max_tokens', 4000),
-                tenant_id=tenant_id
+                agent_id=selected_agent,
+                session_id=state.get('session_id'),
+                user_id=state.get('user_id'),
+                tenant_id=tenant_id,
+                context={'summary': context_summary, 'history': formatted_conversation},
+                agent_type='expert',
+                organization_id=tenant_id
             )
             
-            response_text = agent_response.get('response', '')
-            confidence = agent_response.get('confidence', 0.0)
-            citations = agent_response.get('citations', [])
-            tokens_used = agent_response.get('tokens_used', 0)
+            # Execute agent with correct method
+            agent_response_obj = await self.agent_orchestrator.process_query(agent_request)
+            
+            response_text = agent_response_obj.response
+            confidence = agent_response_obj.confidence
+            citations = agent_response_obj.citations or []
+            tokens_used = agent_response_obj.tokens_used
             
             logger.info(
                 "Agent executed successfully (Mode 2)",

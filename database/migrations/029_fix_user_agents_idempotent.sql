@@ -96,3 +96,4 @@ BEGIN
     RAISE NOTICE '✅ user_agents table and policies configured successfully!';
 END $$;
 
+

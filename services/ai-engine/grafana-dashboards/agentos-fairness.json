@@ -1,0 +1,478 @@
+{
+  "dashboard": {
+    "title": "AgentOS 3.0 - Fairness & Bias Monitoring Dashboard",
+    "description": "Demographic parity, bias detection, and fairness compliance tracking",
+    "tags": ["agentos", "fairness", "bias", "compliance", "gdpr"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "5m",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Overall Demographic Parity",
+        "type": "gauge",
+        "gridPos": {"x": 0, "y": 0, "w": 8, "h": 8},
+        "targets": [
+          {
+            "expr": "abs(avg(agentos_fairness_demographic_parity))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 0.20,
+            "unit": "percentunit",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 0.05, "color": "yellow"},
+                {"value": 0.10, "color": "red"}
+              ]
+            }
+          }
+        },
+        "description": "Target: < 0.10 (10% demographic parity threshold)"
+      },
+      {
+        "id": 2,
+        "title": "Bias Violations (Last 24h)",
+        "type": "stat",
+        "gridPos": {"x": 8, "y": 0, "w": 8, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(increase(agentos_fairness_violations_total[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Compliance Status",
+        "type": "stat",
+        "gridPos": {"x": 16, "y": 0, "w": 8, "h": 4},
+        "targets": [
+          {
+            "expr": "100 - (sum(increase(agentos_fairness_violations_total[7d])) / sum(increase(agentos_requests_total[7d])) * 100)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "decimals": 2,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 99, "color": "yellow"},
+                {"value": 99.9, "color": "green"}
+              ]
+            }
+          }
+        },
+        "description": "Percentage of interactions without fairness violations"
+      },
+      {
+        "id": 4,
+        "title": "Total Interactions Monitored",
+        "type": "stat",
+        "gridPos": {"x": 8, "y": 4, "w": 8, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(increase(agentos_requests_total[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Active Bias Alerts",
+        "type": "stat",
+        "gridPos": {"x": 16, "y": 4, "w": 8, "h": 4},
+        "targets": [
+          {
+            "expr": "sum(agentos_fairness_active_alerts)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 3, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Success Rate by Age Group",
+        "type": "bargauge",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by (age_group) (rate(agentos_requests_total{success=\"true\"}[1h])) / sum by (age_group) (rate(agentos_requests_total[1h])) * 100",
+            "legendFormat": "{{age_group}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "orientation": "horizontal",
+          "displayMode": "gradient",
+          "showUnfilled": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 100,
+            "unit": "percent",
+            "color": {"mode": "continuous-GrYlRd"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 85, "color": "yellow"},
+                {"value": 90, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Success Rate by Gender",
+        "type": "bargauge",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by (gender) (rate(agentos_requests_total{success=\"true\"}[1h])) / sum by (gender) (rate(agentos_requests_total[1h])) * 100",
+            "legendFormat": "{{gender}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "orientation": "horizontal",
+          "displayMode": "gradient",
+          "showUnfilled": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 100,
+            "unit": "percent",
+            "color": {"mode": "continuous-GrYlRd"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 85, "color": "yellow"},
+                {"value": 90, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Demographic Parity by Protected Attribute",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 16, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "abs(agentos_fairness_demographic_parity{protected_attribute=\"age_group\"})",
+            "legendFormat": "Age Group - {{attribute_value}}",
+            "refId": "A"
+          },
+          {
+            "expr": "abs(agentos_fairness_demographic_parity{protected_attribute=\"gender\"})",
+            "legendFormat": "Gender - {{attribute_value}}",
+            "refId": "B"
+          },
+          {
+            "expr": "abs(agentos_fairness_demographic_parity{protected_attribute=\"region\"})",
+            "legendFormat": "Region - {{attribute_value}}",
+            "refId": "C"
+          },
+          {
+            "expr": "abs(agentos_fairness_demographic_parity{protected_attribute=\"ethnicity\"})",
+            "legendFormat": "Ethnicity - {{attribute_value}}",
+            "refId": "D"
+          }
+        ],
+        "options": {
+          "legend": {"show": true, "placement": "bottom"},
+          "tooltip": {"mode": "multi"}
+        },
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 0.20,
+            "unit": "percentunit",
+            "color": {"mode": "palette-classic"}
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "Threshold"},
+              "properties": [
+                {"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}},
+                {"id": "custom.lineStyle", "value": {"fill": "dash"}}
+              ]
+            }
+          ]
+        },
+        "thresholds": [
+          {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 0.10, "color": "red"}
+            ]
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Equal Opportunity (TPR Parity)",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "agentos_fairness_equal_opportunity",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {"Time": true},
+              "indexByName": {},
+              "renameByName": {
+                "protected_attribute": "Attribute",
+                "attribute_value": "Group",
+                "Value": "TPR Difference"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [{"displayName": "TPR Difference", "desc": true}]
+        },
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "TPR Difference"},
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "percentunit"
+                },
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-background"
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {"value": -0.10, "color": "red"},
+                      {"value": -0.05, "color": "yellow"},
+                      {"value": 0.05, "color": "green"},
+                      {"value": 0.10, "color": "yellow"}
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "description": "True Positive Rate parity across demographics"
+      },
+      {
+        "id": 10,
+        "title": "Fairness Metrics Summary",
+        "type": "table",
+        "gridPos": {"x": 12, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "avg by (agent_id) (agentos_fairness_demographic_parity)",
+            "format": "table",
+            "refId": "A"
+          },
+          {
+            "expr": "avg by (agent_id) (agentos_fairness_equal_opportunity)",
+            "format": "table",
+            "refId": "B"
+          },
+          {
+            "expr": "sum by (agent_id) (increase(agentos_fairness_violations_total[24h]))",
+            "format": "table",
+            "refId": "C"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "merge",
+            "options": {}
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {"Time": true},
+              "renameByName": {
+                "Value #A": "Demographic Parity",
+                "Value #B": "Equal Opportunity",
+                "Value #C": "Violations (24h)"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true
+        },
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {"id": "byRegexp", "options": ".*Parity|.*Opportunity"},
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "percentunit"
+                },
+                {
+                  "id": "decimals",
+                  "value": 4
+                },
+                {
+                  "id": "custom.displayMode",
+                  "value": "gradient-gauge"
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {"value": -0.10, "color": "red"},
+                      {"value": -0.05, "color": "yellow"},
+                      {"value": 0.05, "color": "green"}
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Violations (24h)"},
+              "properties": [
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {"value": 0, "color": "green"},
+                      {"value": 1, "color": "yellow"},
+                      {"value": 5, "color": "red"}
+                    ]
+                  }
+                },
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-background"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 11,
+        "title": "Bias Alert History",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 32, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "increase(agentos_fairness_violations_total[1h])",
+            "legendFormat": "{{protected_attribute}} - {{attribute_value}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "legend": {"show": true, "placement": "bottom"},
+          "tooltip": {"mode": "multi"}
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      }
+    ],
+    "time": {"from": "now-7d", "to": "now"},
+    "timepicker": {
+      "refresh_intervals": ["1m", "5m", "15m", "30m", "1h"]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "Bias Violations",
+          "datasource": "Prometheus",
+          "expr": "agentos_fairness_violations_total",
+          "iconColor": "red",
+          "enable": true
+        }
+      ]
+    }
+  }
+}
+

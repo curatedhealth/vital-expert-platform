@@ -1,13 +1,205 @@
 import { type Agent } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
 
-// Support both old and new interfaces for backward compatibility
+// ============================================================================
+// VITAL AVATAR SYSTEM
+// All agents use VITAL avatars from /assets/vital/avatars
+// ============================================================================
+
+// Super Agent avatars for Master level agents (Level 1)
+const SUPER_AGENT_AVATARS = [
+  '/assets/vital/super_agents/super_orchestrator.svg',
+  '/assets/vital/super_agents/super_reasoner.svg',
+  '/assets/vital/super_agents/super_synthesizer.svg',
+  '/assets/vital/super_agents/super_architect.svg',
+  '/assets/vital/super_agents/super_critic.svg',
+];
+
+// Available avatar prefixes (tenant/style types)
+const AVATAR_PREFIXES = ['expert', 'foresight', 'medical', 'pharma', 'startup'] as const;
+
+// Available business function categories
+const BUSINESS_FUNCTION_CATEGORIES = [
+  'analytics_insights',
+  'commercial_marketing', 
+  'market_access',
+  'medical_affairs',
+  'product_innovation',
+] as const;
+
+// Business function keyword mapping to avatar categories
+const BUSINESS_FUNCTION_AVATAR_MAP: Record<string, string> = {
+  // Analytics & Insights
+  'analytics': 'analytics_insights',
+  'analytics_insights': 'analytics_insights',
+  'data_analytics': 'analytics_insights',
+  'data_science': 'analytics_insights',
+  'data': 'analytics_insights',
+  'business_intelligence': 'analytics_insights',
+  'bi': 'analytics_insights',
+  'reporting': 'analytics_insights',
+  'insights': 'analytics_insights',
+  'intelligence': 'analytics_insights',
+  'forecasting': 'analytics_insights',
+  'prediction': 'analytics_insights',
+  'modeling': 'analytics_insights',
+  'statistics': 'analytics_insights',
+  
+  // Commercial & Marketing
+  'commercial': 'commercial_marketing',
+  'commercial_marketing': 'commercial_marketing',
+  'marketing': 'commercial_marketing',
+  'sales': 'commercial_marketing',
+  'sales_marketing': 'commercial_marketing',
+  'brand': 'commercial_marketing',
+  'branding': 'commercial_marketing',
+  'advertising': 'commercial_marketing',
+  'promotion': 'commercial_marketing',
+  'communications': 'commercial_marketing',
+  'digital': 'commercial_marketing',
+  'content': 'commercial_marketing',
+  'campaign': 'commercial_marketing',
+  'customer': 'commercial_marketing',
+  'crm': 'commercial_marketing',
+  
+  // Market Access
+  'market_access': 'market_access',
+  'access': 'market_access',
+  'pricing': 'market_access',
+  'reimbursement': 'market_access',
+  'health_economics': 'market_access',
+  'heor': 'market_access',
+  'payer': 'market_access',
+  'hta': 'market_access',
+  'value': 'market_access',
+  'outcomes': 'market_access',
+  'policy': 'market_access',
+  'government': 'market_access',
+  'tender': 'market_access',
+  
+  // Medical Affairs
+  'medical': 'medical_affairs',
+  'medical_affairs': 'medical_affairs',
+  'clinical': 'medical_affairs',
+  'clinical_operations': 'medical_affairs',
+  'regulatory': 'medical_affairs',
+  'pharmacovigilance': 'medical_affairs',
+  'safety': 'medical_affairs',
+  'compliance': 'medical_affairs',
+  'legal': 'medical_affairs',
+  'quality': 'medical_affairs',
+  'affairs': 'medical_affairs',
+  'science': 'medical_affairs',
+  'msl': 'medical_affairs',
+  'kol': 'medical_affairs',
+  'trial': 'medical_affairs',
+  'study': 'medical_affairs',
+  
+  // Product & Innovation
+  'product': 'product_innovation',
+  'product_innovation': 'product_innovation',
+  'innovation': 'product_innovation',
+  'r_and_d': 'product_innovation',
+  'r&d': 'product_innovation',
+  'research': 'product_innovation',
+  'development': 'product_innovation',
+  'engineering': 'product_innovation',
+  'technology': 'product_innovation',
+  'tech': 'product_innovation',
+  'design': 'product_innovation',
+  'strategy': 'product_innovation',
+  'portfolio': 'product_innovation',
+  'pipeline': 'product_innovation',
+  'discovery': 'product_innovation',
+};
+
+// Level to prefix mapping for avatar files
+const LEVEL_AVATAR_PREFIX: Record<number, string> = {
+  1: 'expert',    // Master agents use expert style
+  2: 'expert',    // Expert
+  3: 'foresight', // Specialist
+  4: 'pharma',    // Worker
+  5: 'startup',   // Tool
+};
+
+// Get a consistent hash for deterministic avatar selection
+const getHash = (identifier: string): number => {
+  let hash = 0;
+  for (let i = 0; i < identifier.length; i++) {
+    hash = ((hash << 5) - hash) + identifier.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return Math.abs(hash);
+};
+
+// Get a consistent super agent avatar based on agent name/id
+const getSuperAgentAvatar = (identifier: string): string => {
+  const index = getHash(identifier) % SUPER_AGENT_AVATARS.length;
+  return SUPER_AGENT_AVATARS[index];
+};
+
+// Match business function to avatar category
+const matchBusinessFunctionCategory = (businessFunction: string | undefined | null): string => {
+  if (!businessFunction) return 'analytics_insights';
+  
+  // Normalize: lowercase, replace spaces/hyphens with underscores
+  const normalized = businessFunction.toLowerCase().replace(/[\s-]+/g, '_');
+  
+  // Direct match
+  if (BUSINESS_FUNCTION_AVATAR_MAP[normalized]) {
+    return BUSINESS_FUNCTION_AVATAR_MAP[normalized];
+  }
+  
+  // Partial match - check if any keyword is contained
+  for (const [keyword, category] of Object.entries(BUSINESS_FUNCTION_AVATAR_MAP)) {
+    if (normalized.includes(keyword) || keyword.includes(normalized)) {
+      return category;
+    }
+  }
+  
+  // Word-by-word matching
+  const words = normalized.split('_');
+  for (const word of words) {
+    if (word.length >= 3 && BUSINESS_FUNCTION_AVATAR_MAP[word]) {
+      return BUSINESS_FUNCTION_AVATAR_MAP[word];
+    }
+  }
+  
+  // Default fallback
+  return 'analytics_insights';
+};
+
+// Get VITAL avatar path for any agent
+const getVitalAvatar = (
+  level: number | undefined,
+  businessFunction: string | undefined | null,
+  identifier: string
+): string => {
+  // Determine prefix based on level (default to 'expert')
+  const prefix = level ? (LEVEL_AVATAR_PREFIX[level] || 'expert') : 'expert';
+  
+  // Match business function to category
+  const category = matchBusinessFunctionCategory(businessFunction);
+  
+  // Get consistent avatar number (1-20) based on identifier
+  const avatarNumber = (getHash(identifier) % 20) + 1;
+  const paddedNumber = avatarNumber.toString().padStart(2, '0');
+  
+  return `/assets/vital/avatars/vital_avatar_${prefix}_${category}_${paddedNumber}.svg`;
+};
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
 interface AgentAvatarProps {
   agent?: Agent;
   avatar?: string;
   name?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'list' | 'card';
   className?: string;
+  level?: number;
+  businessFunction?: string;
 }
 
 const sizeClasses = {
@@ -20,107 +212,64 @@ const sizeClasses = {
   card: 'w-[50px] h-[50px]'
 };
 
-export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 'md', className }: AgentAvatarProps) {
-  // Support both old and new interfaces
-  const avatar = agent?.avatar || avatarProp || '🤖';
+export function AgentAvatar({ 
+  agent, 
+  avatar: avatarProp, 
+  name: nameProp, 
+  size = 'md', 
+  className, 
+  level, 
+  businessFunction 
+}: AgentAvatarProps) {
+  // Get identifier for consistent avatar selection
   const name = agent?.name || nameProp || 'Agent';
-
-  // Function to get the proper icon URL with simplified PNG naming
-  const getIconUrl = (iconUrl: string) => {
-    // Handle full URLs (Supabase storage or external URLs)
-    if (iconUrl.startsWith('http://') || iconUrl.startsWith('https://')) {
-      return iconUrl;
-    }
-
-    // If it's already a local PNG path, use it
-    if (iconUrl.startsWith('/icons/png/')) {
-      return iconUrl;
-    }
-
-    // For avatar names that match our database icons, use them directly
-    if (iconUrl.match(/^avatar_\d{4}$/)) {
-      // Use 4-digit PNG filenames
-      return `/icons/png/avatars/${iconUrl}.png`;
-    }
-
-    // Support legacy 3-digit format by converting to 4-digit
-    if (iconUrl.match(/^avatar_\d{3}$/)) {
-      const num = iconUrl.replace('avatar_', '');
-      const paddedNum = num.padStart(4, '0');
-      return `/icons/png/avatars/avatar_${paddedNum}.png`;
-    }
-
-    return iconUrl;
-  };
-
-  // Check if avatar is a file path, URL, or our avatar naming pattern
-  const isImagePath = avatar && (
-    avatar.startsWith('/') ||
-    avatar.startsWith('http') ||
-    avatar.match(/^avatar_\d{3,4}$/) // Support both 3-digit and 4-digit avatar patterns
-  );
-
-  if (isImagePath) {
-    const iconUrl = getIconUrl(avatar);
-    const fallbackAvatar = '/icons/png/avatars/avatar_0001.png';
-
-    return (
-      <div
-        className={cn(
-          'flex items-center justify-center rounded-lg overflow-hidden flex-shrink-0',
-          sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md,
-          className
-        )}
-        style={{
-          minWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
-          minHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
-          maxWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
-          maxHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
-        }}
-      >
-        <img
-          src={iconUrl}
-          alt={name}
-          className="w-full h-full object-contain"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            if (target.src !== fallbackAvatar) {
-              target.src = fallbackAvatar;
-            } else {
-              // If fallback also fails, show emoji
-              target.style.display = 'none';
-              if (target.parentNode) {
-                const fallback = document.createElement('span');
-                fallback.textContent = '🤖';
-                fallback.className = 'text-2xl';
-                target.parentNode.appendChild(fallback);
-              }
-            }
-          }}
-        />
-      </div>
-    );
+  const identifier = agent?.id || agent?.name || name;
+  
+  // Determine agent level
+  const agentLevel = level || (agent as any)?.tier || (agent as any)?.agent_levels?.level_number;
+  
+  // Get business function from props or agent object
+  const agentBusinessFunction = businessFunction || (agent as any)?.business_function || (agent as any)?.function_name;
+  
+  // ALWAYS use VITAL avatars
+  let avatar: string;
+  
+  if (agentLevel === 1) {
+    // Level 1 (Master): Use super agent avatars
+    avatar = getSuperAgentAvatar(identifier);
+  } else {
+    // ALL other agents: Use VITAL avatars based on business function
+    avatar = getVitalAvatar(agentLevel, agentBusinessFunction, identifier);
   }
 
-  // For emoji avatars, display them with proper sizing
+  // Fallback avatar path
+  const fallbackAvatar = '/assets/vital/avatars/vital_avatar_expert_analytics_insights_01.svg';
+
   return (
-    <div className={cn(
-      'flex items-center justify-center rounded-sm bg-gray-50 border border-gray-200',
-      sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md,
-      className
-    )}>
-      <span className={cn(
-        'text-center',
-        size === 'sm' && 'text-xs',
-        size === 'md' && 'text-sm',
-        size === 'lg' && 'text-base',
-        size === 'xl' && 'text-lg',
-        size === '2xl' && 'text-2xl',
-        size === 'list' && 'text-xs',
-        size === 'card' && 'text-sm'
-      )}>
-        {avatar || '🤖'}
-      </span>
+    <div
+      className={cn(
+        'flex items-center justify-center rounded-lg overflow-hidden flex-shrink-0 bg-gray-50',
+        sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md,
+        className
+      )}
+      style={{
+        minWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+        minHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+        maxWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+        maxHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+      }}
+    >
+      <img
+        src={avatar}
+        alt={name}
+        className="w-full h-full object-contain"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          if (!target.src.includes(fallbackAvatar)) {
+            target.src = fallbackAvatar;
+          }
+        }}
+      />
     </div>
   );
 }

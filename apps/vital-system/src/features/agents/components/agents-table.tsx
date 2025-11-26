@@ -112,9 +112,10 @@ export function AgentsTable({ onAgentSelect, onAddToChat }: AgentsTableProps) {
 
       // Tier filter
       const matchesTier =
-        filters.selectedTier === 'all' ||
-        (filters.selectedTier === 'core' && agent.tier === 0) ||
-        agent.tier?.toString() === filters.selectedTier;
+        filters.selectedAgentLevel === 'all' ||
+        agent.agent_level === filters.selectedAgentLevel ||
+        agent.agent_level_name === filters.selectedAgentLevel ||
+        agent.level === filters.selectedAgentLevel;
 
       // Status filter
       const matchesStatus =
@@ -179,14 +180,15 @@ export function AgentsTable({ onAgentSelect, onAddToChat }: AgentsTableProps) {
                           variant="outline"
                           className={cn(
                             'text-xs font-bold',
-                            agent.tier === 0 &&
+                            agent.tier === 1 &&
                               'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300',
-                            agent.tier === 1 && 'bg-blue-50 text-blue-700 border-blue-200',
-                            agent.tier === 2 && 'bg-green-50 text-green-700 border-green-200',
-                            agent.tier === 3 && 'bg-orange-50 text-orange-700 border-orange-200'
+                            agent.tier === 2 && 'bg-blue-50 text-blue-700 border-blue-200',
+                            agent.tier === 3 && 'bg-green-50 text-green-700 border-green-200',
+                            agent.tier === 4 && 'bg-orange-50 text-orange-700 border-orange-200',
+                            agent.tier === 5 && 'bg-gray-50 text-gray-700 border-gray-200'
                           )}
                         >
-                          {agent.tier === 0 ? 'Core' : `Tier ${agent.tier}`}
+                          L{agent.tier}
                         </Badge>
                       )}
                     </TableCell>

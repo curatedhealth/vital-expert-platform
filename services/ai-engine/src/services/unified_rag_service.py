@@ -362,9 +362,8 @@ class UnifiedRAGService:
 
             if self.pinecone_index:
                 # Use Pinecone for vector search
-                search_response = self.pinecone_index.namespace(
-                    self.knowledge_namespace
-                ).query(
+                search_response = self.pinecone_index.query(
+                    namespace=self.knowledge_namespace,  # Pass namespace as parameter
                     vector=query_embedding,
                     top_k=max_results,
                     include_metadata=True,
@@ -426,9 +425,8 @@ class UnifiedRAGService:
             vector_results = []
 
             if self.pinecone_index:
-                search_response = self.pinecone_index.namespace(
-                    self.knowledge_namespace
-                ).query(
+                search_response = self.pinecone_index.query(
+                    namespace=self.knowledge_namespace,  # Pass namespace as parameter
                     vector=query_embedding,
                     top_k=max_results * 2,  # Get more for re-ranking
                     include_metadata=True,
@@ -803,4 +801,25 @@ class UnifiedRAGService:
     async def cleanup(self):
         """Cleanup resources"""
         logger.info("🧹 Unified RAG service cleanup completed")
+    
+    async def search(self, query: str, tenant_id: str, agent_id: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+        """
+        Backward compatibility alias for query() method.
+        Workflows call search() but the service uses query().
+        
+        Args:
+            query: User query text
+            tenant_id: Tenant ID
+            agent_id: Optional agent ID
+            **kwargs: Additional arguments passed to query()
+            
+        Returns:
+            Query results
+        """
+        return await self.query(
+            query_text=query,
+            tenant_id=tenant_id,
+            agent_id=agent_id,
+            **kwargs
+        )
 

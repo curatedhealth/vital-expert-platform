@@ -44,3 +44,4 @@ These will appear in the **Node Library** section of your designer sidebar!
 
 **Note**: The current migration (`026_seed_legacy_node_library.sql`) contains a sample set. To generate the FULL migration with all 148 nodes, we need to fix the generator script's import issues first.
 
+

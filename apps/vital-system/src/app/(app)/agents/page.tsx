@@ -1,8 +1,9 @@
 'use client';
 
-import { LayoutGrid, List, Table as TableIcon, BarChart3, Network, Kanban, TrendingUp } from 'lucide-react';
+import { LayoutGrid, List, Table as TableIcon, BarChart3, Network } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, Suspense, useMemo } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { useAgentsFilter } from '@/contexts/agents-filter-context';
@@ -18,36 +19,17 @@ import { type Agent } from '@/lib/stores/chat-store';
 import { PageHeader } from '@/components/page-header';
 import { Users } from 'lucide-react';
 
-// Phase 2 & 3 Components
-import { AgentsTableVirtualized } from '@/features/agents/components/agents-table-virtualized';
-import { AgentsKanban } from '@/features/agents/components/agents-kanban';
-import { AgentsAnalyticsDashboard } from '@/features/agents/components/agents-analytics-dashboard';
-import { convertToClientAgent, generateMockUsageData, type ClientAgent } from '@/features/agents/types/agent-schema';
-
 function AgentsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { createUserCopy } = useAgentsStore();
   const { searchQuery, setSearchQuery, filters, setFilters, viewMode, setViewMode } = useAgentsFilter();
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [editingAgent, setEditingAgent] = useState<AgentsStoreAgent | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'grid' | 'list' | 'table' | 'kanban' | 'analytics' | 'graph'>('overview');
-
-  // Phase 2 & 3: Get agents from store and convert to ClientAgent format
-  const { agents: storeAgents } = useAgentsStore();
-  const clientAgents: ClientAgent[] = useMemo(
-    () => storeAgents.map(convertToClientAgent),
-    [storeAgents]
-  );
-
-  // Phase 3: Generate mock usage data for analytics (TODO: Replace with real data)
-  const usageData = useMemo(() => generateMockUsageData(clientAgents), [clientAgents]);
-
-  // Phase 2: Selection and sorting for virtual table
-  const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
-  const [sortConfig, setSortConfig] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'grid' | 'list' | 'table' | 'graph'>('overview');
 
   const handleTabChange = (value: string) => {
     console.log('Tab changed to:', value);
@@ -141,61 +123,6 @@ function AgentsPageContent() {
     setEditingAgent(agentForEditing);
     setShowCreateModal(true);
     setSelectedAgent(null); // Close the details modal
-  };
-
-  // Phase 2: Handler for status change (used by Kanban)
-  const handleStatusChange = async (agentId: string, newStatus: string) => {
-    try {
-      const agent = storeAgents.find((a) => a.id === agentId);
-      if (!agent) return;
-
-      // TODO: Update agent status via API
-      console.log(`Updating agent ${agentId} status to ${newStatus}`);
-      // For now, just log - actual implementation would update via store/API
-    } catch (error) {
-      console.error('Failed to update agent status:', error);
-    }
-  };
-
-  // Phase 2: Handler for tier change (used by Kanban)
-  const handleTierChange = async (agentId: string, newTier: string) => {
-    try {
-      const agent = storeAgents.find((a) => a.id === agentId);
-      if (!agent) return;
-
-      // TODO: Update agent tier via API
-      console.log(`Updating agent ${agentId} tier to ${newTier}`);
-      // For now, just log - actual implementation would update via store/API
-    } catch (error) {
-      console.error('Failed to update agent tier:', error);
-    }
-  };
-
-  // Phase 2: Handler for virtual table agent selection
-  const handleVirtualTableAgentSelect = (agent: ClientAgent) => {
-    // Convert ClientAgent to chat-store Agent format
-    const chatStoreAgent: Agent = {
-      id: agent.id,
-      name: agent.name,
-      description: agent.description,
-      systemPrompt: agent.system_prompt || '',
-      model: agent.model || 'gpt-4',
-      avatar: agent.avatar || '🤖',
-      color: agent.color || 'text-market-purple',
-      capabilities: agent.capabilities || [],
-      ragEnabled: agent.rag_enabled || false,
-      temperature: agent.temperature || 0.7,
-      maxTokens: agent.max_tokens || 2000,
-      isCustom: agent.is_custom || false,
-      tools: [],
-      knowledgeDomains: agent.knowledge_domains || [],
-      businessFunction: agent.business_function || undefined,
-      department: agent.department || undefined,
-      organizationalRole: agent.organizational_role || agent.role || undefined,
-      tier: agent.tier || undefined,
-    };
-
-    setSelectedAgent(chatStoreAgent);
   };
 
   const handleAddAgentToChat = async (agent: AgentsStoreAgent) => {
@@ -308,10 +235,14 @@ function AgentsPageContent() {
       const result = await response.json();
       console.log(`✅ Agent "${agent.display_name}" added to user's chat list:`, result);
       
+      // Invalidate the React Query cache so the chat page will refetch agents
+      queryClient.invalidateQueries({ queryKey: ['user-agents', user.id] });
+      console.log('🔄 [Add to Chat] Invalidated React Query cache for user agents');
+      
       alert(`✅ "${agent.display_name}" has been added to your chat list!`);
       
-      // Navigate to ask-expert page to see the added agent
-      router.push('/ask-expert');
+      // Navigate to chat page to see the added agent
+      router.push('/chat');
       
     } catch (error) {
       console.error('❌ Failed to add agent to chat:', error);
@@ -332,7 +263,7 @@ function AgentsPageContent() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full max-w-4xl grid-cols-7 relative z-10 pointer-events-auto">
+        <TabsList className="grid w-full max-w-2xl grid-cols-5 relative z-10 pointer-events-auto">
           <TabsTrigger value="overview" className="flex items-center gap-2 cursor-pointer">
             <BarChart3 className="h-4 w-4" />
             Overview
@@ -349,17 +280,9 @@ function AgentsPageContent() {
             <TableIcon className="h-4 w-4" />
             Table
           </TabsTrigger>
-          <TabsTrigger value="kanban" className="flex items-center gap-2 cursor-pointer">
-            <Kanban className="h-4 w-4" />
-            Kanban
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2 cursor-pointer">
-            <TrendingUp className="h-4 w-4" />
-            Analytics
-          </TabsTrigger>
           <TabsTrigger value="graph" className="flex items-center gap-2 cursor-pointer">
             <Network className="h-4 w-4" />
-            Graph
+            Knowledge Graph
           </TabsTrigger>
         </TabsList>
 
@@ -398,37 +321,9 @@ function AgentsPageContent() {
         </TabsContent>
 
         <TabsContent value="table" className="mt-6">
-          <div className="h-[calc(100vh-300px)]">
-            <AgentsTableVirtualized
-              agents={clientAgents}
-              onAgentSelect={handleVirtualTableAgentSelect}
-              selectedAgents={selectedAgentIds}
-              onSelectionChange={setSelectedAgentIds}
-              sortConfig={sortConfig}
-              onSortChange={setSortConfig}
-              onAddToChat={(agent) => {
-                // Convert ClientAgent to AgentsStoreAgent for addToChat
-                const storeAgent = storeAgents.find((a) => a.id === agent.id);
-                if (storeAgent) handleAddAgentToChat(storeAgent);
-              }}
-            />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="kanban" className="mt-6">
-          <AgentsKanban
-            agents={clientAgents}
-            groupBy="status"
-            onStatusChange={handleStatusChange}
-            onTierChange={handleTierChange}
-            onAgentClick={handleVirtualTableAgentSelect}
-          />
-        </TabsContent>
-
-        <TabsContent value="analytics" className="mt-6">
-          <AgentsAnalyticsDashboard
-            agents={clientAgents}
-            usageData={usageData}
+          <AgentsTable
+            onAgentSelect={handleAgentSelect}
+            onAddToChat={handleAddAgentToChat}
           />
         </TabsContent>
 

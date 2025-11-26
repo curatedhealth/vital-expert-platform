@@ -16,16 +16,6 @@ export const MODE1_ASK_EXPERT_CONFIG: PanelWorkflowConfig = {
   description: 'User selects specific expert → Multi-turn conversation with full context retention',
   icon: Users,
   defaultQuery: 'What testing is required for a Class II device similar to the Smith Cardiac Monitor?',
-  
-  // Metadata for mode detection
-  metadata: {
-    mode: 'mode1',
-    selection: 'manual',
-    interaction: 'interactive',
-    requires_agent_selection: true,
-    supports_hitl: false,
-    features: ['feedback', 'memory', 'knowledge_enrichment', 'rag', 'tools'],
-  },
 
   // Mode 1 uses one expert (user selected), but can spawn specialists
   experts: [

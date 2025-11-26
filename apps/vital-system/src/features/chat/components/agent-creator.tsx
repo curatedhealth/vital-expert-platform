@@ -119,6 +119,46 @@ const availableTools = [
 import { IconService, type Icon } from '@/lib/services/icon-service';
 import { ModelFitnessScorer, type FitnessScore, type ModelCapabilities, type AgentProfile } from '@/lib/services/model-fitness-scorer';
 
+// Agent Level Constants (5-Level Hierarchy)
+const AGENT_LEVELS = {
+  MASTER: {
+    id: '5e27905e-6f58-462e-93a4-6fad5388ebaf',
+    name: 'Master',
+    tier_equivalent: 3, // For backward compatibility
+    description: 'Top-level orchestrator managing entire domains or functions'
+  },
+  EXPERT: {
+    id: 'a6e394b0-6ca1-4cb1-8097-719523ee6782',
+    name: 'Expert',
+    tier_equivalent: 3, // Expert level
+    description: 'Deep domain specialist with advanced analytical capabilities'
+  },
+  SPECIALIST: {
+    id: '5a3647eb-a2bd-43f2-9c8b-6413d39ed0fb',
+    name: 'Specialist',
+    tier_equivalent: 2, // Mid-level
+    description: 'Focused specialist for specific sub-domains or technical tasks'
+  },
+  WORKER: {
+    id: 'c6f7eec5-3fc5-4f10-b030-bce0d22480e8',
+    name: 'Worker',
+    tier_equivalent: 1, // Basic level
+    description: 'Task-execution agent for routine, repeatable work'
+  },
+  TOOL: {
+    id: '45420d67-67bf-44cf-a842-44bbaf3145e7',
+    name: 'Tool',
+    tier_equivalent: 1, // Basic level
+    description: 'Micro-agent wrapping specific tools, APIs, or atomic operations'
+  }
+} as const;
+
+// Helper function to get tier equivalent for backward compatibility
+const getTierFromAgentLevel = (agentLevelId: string): 1 | 2 | 3 => {
+  const level = Object.values(AGENT_LEVELS).find(l => l.id === agentLevelId);
+  return (level?.tier_equivalent || 2) as 1 | 2 | 3;
+};
+
 interface PromptStarter {
   id: string;
   title: string;
@@ -276,7 +316,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     promptStarters: [] as PromptStarter[],
 
     // Agent Classification Fields
-    tier: 1 as 1 | 2 | 3,
+    agent_level_id: '5a3647eb-a2bd-43f2-9c8b-6413d39ed0fb' as string, // Default to Specialist level
     status: 'active' as 'active' | 'inactive' | 'testing' | 'development' | 'deprecated',
     priority: 1,
 
@@ -589,6 +629,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         role: roleValue,
         department: departmentValue,
         promptStarters: defaultPromptStarters,
+        // Agent Level (5-level hierarchy)
+        agent_level_id: (editingAgent as any)?.agent_level_id || '5a3647eb-a2bd-43f2-9c8b-6413d39ed0fb', // Default to Specialist
         // Medical Compliance Fields (with safe property access)
         medicalSpecialty: (editingAgent as unknown)?.medical_specialty || '',
         clinicalValidationStatus: ((editingAgent as unknown)?.clinical_validation_status as "pending" | "validated" | "expired" | "under_review") || 'pending',
@@ -1525,7 +1567,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             knowledge_domains: formData.knowledgeDomains,
             is_custom: true,
             status: 'active' as const,
-            tier: 1,
+            agent_level_id: formData.agent_level_id,
             priority: 1,
             implementation_phase: 1,
           };
@@ -1544,8 +1586,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           console.log('  Role UUID:', formData.role);
           console.log('  Found role:', selectedRole);
 
-          // Update existing agent - Only send updateable fields
-          // Note: business_function, department, and role should be stored in metadata, not as direct columns
+          // Update existing agent - Send both IDs and names to database
           const updates = {
             display_name: formData.name,
             description: formData.description,
@@ -1561,12 +1602,13 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             temperature: formData.temperature,
             max_tokens: formData.maxTokens,
             knowledge_domains: formData.knowledgeDomains,
-            // Store organization info in metadata (not as direct columns to avoid schema errors)
-            metadata: {
-              business_function: selectedFunction?.name || selectedFunction?.department_name || null,
-              department: selectedDept?.name || selectedDept?.department_name || null,
-              role: selectedRole?.name || selectedRole?.role_name || null,
-            },
+            // Store organization structure in database columns
+            function_id: formData.businessFunction || null,
+            function_name: selectedFunction?.name || null,
+            department_id: formData.department || null,
+            department_name: selectedDept?.name || null,
+            role_id: formData.role || null,
+            role_name: selectedRole?.name || null,
           };
 
           console.log('[Agent Creator] Updating agent:', editingAgent.id);
@@ -1665,7 +1707,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
       // Build comprehensive system prompt following industry gold standard
       const timestamp = new Date().toISOString();
-      const agentId = `AGT-${formData.tier}-${Date.now().toString(36).toUpperCase()}`;
+      const agentId = `AGT-${getTierFromAgentLevel(formData.agent_level_id)}-${Date.now().toString(36).toUpperCase()}`;
 
       let prompt = '';
 
@@ -1681,7 +1723,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       prompt += `## 1. CORE IDENTITY & PURPOSE\n\n`;
 
       prompt += `### Role Definition\n`;
-      const tierLevel = formData.tier === 3 ? 'expert-level' : formData.tier === 2 ? 'specialist-level' : 'foundational';
+      const tierLevel = getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'expert-level' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? 'specialist-level' : 'foundational';
       prompt += `You are ${formData.name}, a ${tierLevel} ${formData.medicalSpecialty || 'healthcare'} specialist operating as a ${formData.architecturePattern || 'HYBRID'} agent.\n\n`;
 
       if (formData.primaryMission) {
@@ -1734,9 +1776,9 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       prompt += `1. Evidence-Based Practice: Ground all recommendations in current research and clinical evidence\n`;
       prompt += `2. Safety First: Prioritize patient/user safety in all decisions and recommendations\n`;
       prompt += `3. Regulatory Compliance: Adhere strictly to applicable healthcare regulations and standards\n`;
-      if (formData.tier === 3) {
+      if (getTierFromAgentLevel(formData.agent_level_id) === 3) {
         prompt += `4. Expert Consultation: Provide deep, nuanced insights reflecting expert-level knowledge\n`;
-      } else if (formData.tier === 2) {
+      } else if (getTierFromAgentLevel(formData.agent_level_id) === 2) {
         prompt += `4. Specialized Guidance: Offer specialized knowledge while recognizing limitations\n`;
       } else {
         prompt += `4. Clear Communication: Provide accessible, foundational guidance appropriate for general users\n`;
@@ -1757,7 +1799,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       prompt += `### Communication Protocol\n`;
       prompt += `Tone: ${formData.communicationTone || 'Professional'} with ${formData.medicalSpecialty ? 'clinical precision' : 'empathetic understanding'}\n`;
       prompt += `Style: ${formData.communicationStyle || 'Clear and structured'}\n`;
-      prompt += `Complexity Level: ${formData.tier === 3 ? 'Expert (technical terminology appropriate)' : formData.tier === 2 ? 'Intermediate (balanced technical/accessible)' : 'Foundational (accessible language)'}\n`;
+      prompt += `Complexity Level: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'Expert (technical terminology appropriate)' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? 'Intermediate (balanced technical/accessible)' : 'Foundational (accessible language)'}\n`;
       prompt += `Language Constraints: Clear, unambiguous medical terminology when appropriate\n\n`;
 
       prompt += `Response Structure:\n`;
@@ -2027,7 +2069,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       prompt += `  Escalation: Route to human expert for validation\n\n`;
 
       // ===== 8. MULTI-AGENT COORDINATION (if tier 3) =====
-      if (formData.tier === 3) {
+      if (getTierFromAgentLevel(formData.agent_level_id) === 3) {
         prompt += `## 8. MULTI-AGENT COORDINATION\n\n`;
         prompt += `### Architecture Pattern\n`;
         prompt += `- Pattern Type: HIERARCHICAL with specialist consultation\n`;
@@ -2059,11 +2101,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
       prompt += `### Success Criteria\n`;
       prompt += `TASK COMPLETION:\n`;
-      if (formData.tier === 3) {
+      if (getTierFromAgentLevel(formData.agent_level_id) === 3) {
         prompt += `- Expert-level clinical accuracy maintained\n`;
         prompt += `- Complex multi-factorial problems solved systematically\n`;
         prompt += `- Deep domain insights provided with evidence\n`;
-      } else if (formData.tier === 2) {
+      } else if (getTierFromAgentLevel(formData.agent_level_id) === 2) {
         prompt += `- Specialist knowledge applied appropriately\n`;
         prompt += `- Moderate complexity problems addressed competently\n`;
         prompt += `- Balanced technical and accessible communication\n`;
@@ -2127,8 +2169,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       prompt += `- Session management: Secure session tokens with expiration\n\n`;
 
       prompt += `### Rate Limiting\n`;
-      prompt += `- Per user: ${formData.tier === 3 ? '100 requests/hour' : formData.tier === 2 ? '200 requests/hour' : '500 requests/hour'}\n`;
-      prompt += `- Per session: ${formData.tier === 3 ? '20 requests/minute' : formData.tier === 2 ? '30 requests/minute' : '50 requests/minute'}\n`;
+      prompt += `- Per user: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '100 requests/hour' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? '200 requests/hour' : '500 requests/hour'}\n`;
+      prompt += `- Per session: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '20 requests/minute' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? '30 requests/minute' : '50 requests/minute'}\n`;
       prompt += `- Per tool: Tool-specific limits enforced\n`;
       prompt += `- Burst protection: Enabled with exponential backoff\n\n`;
 
@@ -2137,11 +2179,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       prompt += `- At-rest: AES-256 encryption for stored data\n`;
       prompt += `- PII handling: Automatic redaction and de-identification\n`;
       prompt += `- Privacy policy: ${formData.hipaaCompliant ? 'HIPAA-compliant' : 'GDPR-compliant'} data processing\n`;
-      prompt += `- Data retention: ${formData.tier === 3 ? '7 years (clinical records)' : formData.tier === 2 ? '3 years' : '1 year'}\n\n`;
+      prompt += `- Data retention: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '7 years (clinical records)' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? '3 years' : '1 year'}\n\n`;
 
       prompt += `### Governance & Audit\n`;
       prompt += `- Audit logs: Comprehensive logging of all agent interactions\n`;
-      prompt += `- Approval workflows: Required for ${formData.tier === 3 ? 'all clinical recommendations' : 'high-risk operations'}\n`;
+      prompt += `- Approval workflows: Required for ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'all clinical recommendations' : 'high-risk operations'}\n`;
       prompt += `- Compliance checks: Automated ${protocols.join('/')} compliance validation\n`;
       prompt += `- Change management: Version control with rollback capability\n`;
       prompt += `- Incident response: 24/7 monitoring with escalation procedures\n\n`;
@@ -2152,28 +2194,28 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       prompt += `### Deployment Configuration\n`;
       prompt += `- **Version**: v1.0\n`;
       prompt += `- **Environment**: ${formData.status === 'active' ? 'production' : formData.status === 'beta' ? 'staging' : 'development'}\n`;
-      prompt += `- **Deployment Strategy**: ${formData.tier === 3 ? 'Blue-Green with validation period' : 'Rolling deployment with canary'}\n`;
+      prompt += `- **Deployment Strategy**: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'Blue-Green with validation period' : 'Rolling deployment with canary'}\n`;
       prompt += `- **Owner/Team**: ${formData.department || 'Clinical Operations'}\n`;
       prompt += `- **Domain**: ${formData.medicalSpecialty || 'Healthcare'}\n\n`;
 
       prompt += `### Scaling & Performance\n`;
       prompt += `- Auto-scaling: Enabled based on request volume\n`;
-      prompt += `- Horizontal scaling: ${formData.tier === 3 ? '2-8 instances' : formData.tier === 2 ? '2-6 instances' : '2-4 instances'}\n`;
+      prompt += `- Horizontal scaling: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '2-8 instances' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? '2-6 instances' : '2-4 instances'}\n`;
       prompt += `- Load balancing: Round-robin with health checks\n`;
       prompt += `- Health checks: /health endpoint (30s interval)\n`;
       prompt += `- Circuit breaker: Enabled for tool failures (3 failures → open circuit)\n\n`;
 
       prompt += `### Backup & Recovery\n`;
-      prompt += `- Backup schedule: ${formData.tier === 3 ? 'Continuous (every 6 hours)' : 'Daily at 2 AM UTC'}\n`;
-      prompt += `- Retention: ${formData.tier === 3 ? '90 days full + 1 year incremental' : '30 days'}\n`;
-      prompt += `- Recovery Point Objective (RPO): ${formData.tier === 3 ? '< 1 hour' : '< 6 hours'}\n`;
-      prompt += `- Recovery Time Objective (RTO): ${formData.tier === 3 ? '< 2 hours' : '< 4 hours'}\n`;
-      prompt += `- Disaster recovery: Multi-region replication ${formData.tier === 3 ? 'enabled' : 'optional'}\n\n`;
+      prompt += `- Backup schedule: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'Continuous (every 6 hours)' : 'Daily at 2 AM UTC'}\n`;
+      prompt += `- Retention: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '90 days full + 1 year incremental' : '30 days'}\n`;
+      prompt += `- Recovery Point Objective (RPO): ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '< 1 hour' : '< 6 hours'}\n`;
+      prompt += `- Recovery Time Objective (RTO): ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '< 2 hours' : '< 4 hours'}\n`;
+      prompt += `- Disaster recovery: Multi-region replication ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'enabled' : 'optional'}\n\n`;
 
       prompt += `### Rollback Procedures\n`;
       prompt += `- Automated rollback: On critical errors or accuracy drop > 10%\n`;
       prompt += `- Manual rollback: Admin-initiated via deployment console\n`;
-      prompt += `- Rollback window: ${formData.tier === 3 ? '24 hours' : '48 hours'}\n`;
+      prompt += `- Rollback window: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '24 hours' : '48 hours'}\n`;
       prompt += `- Validation: Post-rollback smoke tests required\n\n`;
 
       // ===== 13. TOOL REGISTRY & CAPABILITIES =====
@@ -2186,11 +2228,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           prompt += `- **Description**: ${tool.description}\n`;
           prompt += `- **Input Schema**: Structured parameters (validated)\n`;
           prompt += `- **Output Schema**: Standardized response format\n`;
-          prompt += `- **Rate Limit**: ${formData.tier === 3 ? '10/min' : formData.tier === 2 ? '20/min' : '50/min'}\n`;
-          prompt += `- **Cost Profile**: ${formData.tier === 3 ? 'High (expert usage)' : formData.tier === 2 ? 'Moderate' : 'Low'}\n`;
-          prompt += `- **Safety Checks**: ${formData.tier === 3 ? 'Pre-validation + post-validation + human review' : 'Pre-validation + post-validation'}\n`;
+          prompt += `- **Rate Limit**: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '10/min' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? '20/min' : '50/min'}\n`;
+          prompt += `- **Cost Profile**: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'High (expert usage)' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? 'Moderate' : 'Low'}\n`;
+          prompt += `- **Safety Checks**: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'Pre-validation + post-validation + human review' : 'Pre-validation + post-validation'}\n`;
           prompt += `- **Error Handling**: Retry with exponential backoff (max 3 attempts)\n`;
-          prompt += `- **Timeout**: ${formData.tier === 3 ? '10s' : '5s'}\n\n`;
+          prompt += `- **Timeout**: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '10s' : '5s'}\n\n`;
         });
       }
 
@@ -2206,10 +2248,10 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           expertCaps.forEach((cap, index) => {
             prompt += `\n#### ${index + 1}. ${cap}\n`;
             prompt += `- **Proficiency**: Expert (>90% accuracy)\n`;
-            prompt += `- **Application Context**: ${formData.tier === 3 ? 'Complex, safety-critical scenarios' : formData.tier === 2 ? 'Specialized domain scenarios' : 'Common use cases'}\n`;
-            prompt += `- **Training Requirements**: ${formData.tier === 3 ? 'Advanced domain knowledge + regulatory training' : formData.tier === 2 ? 'Specialized training' : 'Foundational training'}\n`;
-            prompt += `- **Validation**: ${formData.tier === 3 ? 'Continuous monitoring with expert oversight' : 'Periodic review'}\n`;
-            prompt += `- **Success Metrics**: Accuracy ≥ ${formData.tier === 3 ? '95%' : formData.tier === 2 ? '90%' : '85%'}, User satisfaction ≥ 4.2/5.0\n`;
+            prompt += `- **Application Context**: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'Complex, safety-critical scenarios' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? 'Specialized domain scenarios' : 'Common use cases'}\n`;
+            prompt += `- **Training Requirements**: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'Advanced domain knowledge + regulatory training' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? 'Specialized training' : 'Foundational training'}\n`;
+            prompt += `- **Validation**: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'Continuous monitoring with expert oversight' : 'Periodic review'}\n`;
+            prompt += `- **Success Metrics**: Accuracy ≥ ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '95%' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? '90%' : '85%'}, User satisfaction ≥ 4.2/5.0\n`;
           });
         }
 
@@ -2239,7 +2281,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       prompt += `- [ ] Compliance verification (${protocols.join(', ') || 'regulatory standards'})\n`;
       prompt += `- [ ] Monitoring and alerting configured\n`;
       prompt += `- [ ] Error handling and escalation tested\n`;
-      prompt += `- [ ] Load testing completed (expected ${formData.tier === 3 ? 'low-medium' : formData.tier === 2 ? 'medium' : 'high'} volume)\n`;
+      prompt += `- [ ] Load testing completed (expected ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'low-medium' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? 'medium' : 'high'} volume)\n`;
       prompt += `- [ ] Documentation finalized (user guides, API docs, troubleshooting)\n\n`;
 
       prompt += `### Post-Deployment\n`;
@@ -2250,7 +2292,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       prompt += `- [ ] Performance baseline established\n`;
       prompt += `- [ ] Incident response procedures documented\n`;
       prompt += `- [ ] Training materials delivered to end users\n`;
-      prompt += `- [ ] Regular review schedule established (${formData.tier === 3 ? 'weekly' : formData.tier === 2 ? 'bi-weekly' : 'monthly'})\n\n`;
+      prompt += `- [ ] Regular review schedule established (${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'weekly' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? 'bi-weekly' : 'monthly'})\n\n`;
 
       prompt += `### Ongoing Operations\n`;
       prompt += `- [ ] Weekly performance review\n`;
@@ -2258,7 +2300,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       prompt += `- [ ] Quarterly knowledge base updates\n`;
       prompt += `- [ ] Annual security assessment\n`;
       prompt += `- [ ] Continuous improvement based on user feedback\n`;
-      prompt += `- [ ] Regular disaster recovery drills (${formData.tier === 3 ? 'quarterly' : 'semi-annual'})\n\n`;
+      prompt += `- [ ] Regular disaster recovery drills (${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'quarterly' : 'semi-annual'})\n\n`;
 
       // ===== 16. EXAMPLE USE CASES =====
       if (formData.promptStarters && formData.promptStarters.length > 0) {
@@ -2293,7 +2335,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       prompt += `**Classification**: INTERNAL\n\n`;
 
       prompt += `### Configuration Summary\n`;
-      prompt += `**Tier**: ${formData.tier} (${formData.tier === 3 ? 'Expert - High complexity, safety-critical' : formData.tier === 2 ? 'Specialist - Moderate complexity, domain-specific' : 'Foundational - Standard complexity, general purpose'})\n`;
+      prompt += `**Tier**: ${formData.tier} (${getTierFromAgentLevel(formData.agent_level_id) === 3 ? 'Expert - High complexity, safety-critical' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? 'Specialist - Moderate complexity, domain-specific' : 'Foundational - Standard complexity, general purpose'})\n`;
       prompt += `**Status**: ${formData.status || 'active'}\n`;
       prompt += `**Priority**: ${formData.priority || 5}/10\n`;
       prompt += `**Architecture Pattern**: ${formData.architecturePattern || 'HYBRID'}\n`;
@@ -2331,7 +2373,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       prompt += `- Average Latency: < 3 seconds\n`;
       prompt += `- Safety Compliance: 100% (zero violations)\n`;
       prompt += `- User Satisfaction: ≥ 4.2/5.0\n`;
-      prompt += `- Escalation Rate: ${formData.tier === 3 ? '< 5%' : formData.tier === 2 ? '< 10%' : '< 15%'} (appropriate escalations)\n`;
+      prompt += `- Escalation Rate: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '< 5%' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? '< 10%' : '< 15%'} (appropriate escalations)\n`;
       prompt += `\n`;
 
       prompt += `---\n\n`;
@@ -2342,12 +2384,12 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
       prompt += `**Template Compliance**: ✓ All 16 sections completed\n`;
       prompt += `**Regulatory Compliance**: ✓ ${protocols.join(', ') || 'Standard Protocols'}\n`;
-      prompt += `**Security Audit**: ${formData.tier === 3 ? '✓ Completed' : '⚠ Required before production'}\n`;
+      prompt += `**Security Audit**: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '✓ Completed' : '⚠ Required before production'}\n`;
       prompt += `**Documentation**: ✓ Comprehensive system prompt generated\n\n`;
 
       prompt += `---\n`;
       prompt += `*This system prompt is a living document and should be updated as the agent evolves.*\n`;
-      prompt += `*Next review scheduled: ${formData.tier === 3 ? '1 week' : formData.tier === 2 ? '2 weeks' : '1 month'} from deployment.*\n`;
+      prompt += `*Next review scheduled: ${getTierFromAgentLevel(formData.agent_level_id) === 3 ? '1 week' : getTierFromAgentLevel(formData.agent_level_id) === 2 ? '2 weeks' : '1 month'} from deployment.*\n`;
 
       // Update the system prompt field
       setFormData(prev => ({
@@ -2882,15 +2924,17 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         />
                       </div>
                       <div>
-                        <Label>Tier</Label>
+                        <Label>Agent Level</Label>
                         <select
-                          value={personaSuggestions.tier || 1}
-                          onChange={(e) => setPersonaSuggestions({...personaSuggestions, tier: parseInt(e.target.value)})}
+                          value={personaSuggestions.agent_level_id || '5a3647eb-a2bd-43f2-9c8b-6413d39ed0fb'}
+                          onChange={(e) => setPersonaSuggestions({...personaSuggestions, agent_level_id: e.target.value})}
                           className="w-full p-2 border rounded-lg"
                         >
-                          <option value={1}>Tier 1 - Foundational</option>
-                          <option value={2}>Tier 2 - Specialist</option>
-                          <option value={3}>Tier 3 - Expert</option>
+                          <option value="5e27905e-6f58-462e-93a4-6fad5388ebaf">Master - Top-level orchestrator</option>
+                          <option value="a6e394b0-6ca1-4cb1-8097-719523ee6782">Expert - Deep domain specialist</option>
+                          <option value="5a3647eb-a2bd-43f2-9c8b-6413d39ed0fb">Specialist - Focused sub-domain expert</option>
+                          <option value="c6f7eec5-3fc5-4f10-b030-bce0d22480e8">Worker - Task execution agent</option>
+                          <option value="45420d67-67bf-44cf-a842-44bbaf3145e7">Tool - API/Tool wrapper</option>
                         </select>
                       </div>
                     </div>
@@ -3185,21 +3229,25 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                   {/* Agent Classification */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div>
-                      <Label htmlFor="tier">Tier *</Label>
+                      <Label htmlFor="agent_level_id">Agent Level *</Label>
                       <select
-                        id="tier"
-                        value={formData.tier}
-                        onChange={(e) => setFormData(prev => ({ ...prev, tier: parseInt(e.target.value) as 1 | 2 | 3 }))}
+                        id="agent_level_id"
+                        value={formData.agent_level_id}
+                        onChange={(e) => setFormData(prev => ({ ...prev, agent_level_id: e.target.value }))}
                         className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
                       >
-                        <option value={1}>Tier 1 - Foundational</option>
-                        <option value={2}>Tier 2 - Specialist</option>
-                        <option value={3}>Tier 3 - Ultra-Specialist</option>
+                        <option value="5e27905e-6f58-462e-93a4-6fad5388ebaf">Master - Top-level orchestrator</option>
+                        <option value="a6e394b0-6ca1-4cb1-8097-719523ee6782">Expert - Deep domain specialist</option>
+                        <option value="5a3647eb-a2bd-43f2-9c8b-6413d39ed0fb">Specialist - Focused sub-domain expert</option>
+                        <option value="c6f7eec5-3fc5-4f10-b030-bce0d22480e8">Worker - Task execution agent</option>
+                        <option value="45420d67-67bf-44cf-a842-44bbaf3145e7">Tool - API/Tool wrapper</option>
                       </select>
                       <p className="text-xs text-gray-500 mt-1">
-                        {formData.tier === 1 && 'General purpose, broad knowledge'}
-                        {formData.tier === 2 && 'Domain-specific expertise'}
-                        {formData.tier === 3 && 'Highly specialized, niche expertise'}
+                        {formData.agent_level_id === '5e27905e-6f58-462e-93a4-6fad5388ebaf' && 'Manages entire domains or functions'}
+                        {formData.agent_level_id === 'a6e394b0-6ca1-4cb1-8097-719523ee6782' && 'Advanced analytical capabilities'}
+                        {formData.agent_level_id === '5a3647eb-a2bd-43f2-9c8b-6413d39ed0fb' && 'Specific sub-domain or technical tasks'}
+                        {formData.agent_level_id === 'c6f7eec5-3fc5-4f10-b030-bce0d22480e8' && 'Routine, repeatable work'}
+                        {formData.agent_level_id === '45420d67-67bf-44cf-a842-44bbaf3145e7' && 'Wraps specific tools or APIs'}
                       </p>
                     </div>
 

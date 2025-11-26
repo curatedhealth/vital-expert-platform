@@ -1,0 +1,986 @@
+'use client';
+
+/**
+ * Knowledge Graph Visualization Component - Multiple Views
+ * Interactive graph with multiple view modes and agent detail drill-down
+ * View modes: Agents, Skills, Knowledge Domains, Roles, Functions, Departments
+ */
+
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import ReactFlow, {
+  Node,
+  Edge,
+  Controls,
+  Background,
+  MiniMap,
+  useNodesState,
+  useEdgesState,
+  MarkerType,
+  Panel,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+import {
+  Network,
+  Filter,
+  Download,
+  RefreshCw,
+  Info,
+  X,
+  Layers,
+  Users,
+  Zap,
+  BookOpen,
+  Briefcase,
+  Building2,
+  Shield,
+} from 'lucide-react';
+import { Card, CardContent } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { cn } from '@vital/ui/lib/utils';
+import { type Agent as AgentsStoreAgent } from '@/lib/stores/agents-store';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@vital/ui';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+interface KnowledgeGraphProps {
+  agents: AgentsStoreAgent[];
+  height?: string;
+  className?: string;
+}
+
+type ViewMode = 'agents' | 'skills' | 'knowledge' | 'roles' | 'functions' | 'departments';
+
+// ============================================================================
+// Colors
+// ============================================================================
+
+const agentLevelColors: Record<number, string> = {
+  1: '#8B5CF6', // Purple - Master (Orchestrators)
+  2: '#3B82F6', // Blue - Expert (Domain Specialists)
+  3: '#10B981', // Green - Specialist (Sub-Experts)
+  4: '#F59E0B', // Orange - Worker (Task Executors)
+  5: '#6B7280', // Gray - Tool (Integrations)
+};
+
+const agentLevelNames: Record<number, string> = {
+  1: 'Master',
+  2: 'Expert',
+  3: 'Specialist',
+  4: 'Worker',
+  5: 'Tool',
+};
+
+const functionColors: Record<string, string> = {
+  'Medical Affairs': '#EC4899',
+  'Clinical Development': '#8B5CF6',
+  'Regulatory Affairs': '#EF4444',
+  'Market Access': '#F59E0B',
+  'Commercial': '#10B981',
+  'Manufacturing': '#06B6D4',
+  'Quality': '#6366F1',
+  default: '#6B7280',
+};
+
+const viewModeColors: Record<ViewMode, string> = {
+  agents: '#3B82F6',
+  skills: '#10B981',
+  knowledge: '#8B5CF6',
+  roles: '#F59E0B',
+  functions: '#EC4899',
+  departments: '#06B6D4',
+};
+
+// ============================================================================
+// Custom Node Components
+// ============================================================================
+
+function CustomAgentNode({ data }: { data: any }) {
+  const levelNumber = data.agent_level?.level_number || 3;
+  const levelName = data.agent_level?.name || 'Specialist';
+  const levelColor = agentLevelColors[levelNumber] || agentLevelColors[3];
+
+  return (
+    <div
+      className="px-3 py-2 rounded-lg border-2 shadow-lg bg-white min-w-[100px] max-w-[200px] cursor-pointer hover:shadow-xl transition-shadow"
+      style={{ borderColor: levelColor }}
+      title={`${data.label}\n${data.function || 'No function'}\n${data.department || 'No department'}\nLevel ${levelNumber}: ${levelName}\nDouble-click for details`}
+    >
+      <div className="flex items-center gap-2">
+        <div
+          className="w-2 h-2 rounded-full"
+          style={{ backgroundColor: levelColor }}
+        />
+        <div className="font-medium text-xs text-gray-900 truncate">{data.label}</div>
+      </div>
+      {data.function && (
+        <div className="text-[10px] text-gray-500 mt-1 truncate">{data.function}</div>
+      )}
+      <div className="flex gap-1 mt-1">
+        <Badge variant="outline" className="text-[8px] px-1 py-0">
+          T{data.tier}
+        </Badge>
+        {data.count && (
+          <Badge variant="outline" className="text-[8px] px-1 py-0 bg-blue-50">
+            {data.count}
+          </Badge>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CustomGroupNode({ data }: { data: any }) {
+  return (
+    <div
+      className="px-4 py-3 rounded-lg border-2 shadow-lg bg-white min-w-[120px] cursor-pointer hover:shadow-xl transition-shadow"
+      style={{ borderColor: data.color || '#6B7280' }}
+      title={`${data.label}\n${data.count} agents\nDouble-click for details`}
+    >
+      <div className="flex items-center gap-2">
+        <div
+          className="w-3 h-3 rounded-full"
+          style={{ backgroundColor: data.color || '#6B7280' }}
+        />
+        <div className="font-semibold text-sm text-gray-900">{data.label}</div>
+      </div>
+      <div className="text-xs text-gray-600 mt-1">{data.count} agents</div>
+    </div>
+  );
+}
+
+const nodeTypes = {
+  agent: CustomAgentNode,
+  group: CustomGroupNode,
+};
+
+// ============================================================================
+// Agent Detail Modal
+// ============================================================================
+
+function AgentDetailModal({ agent, onClose }: { agent: AgentsStoreAgent | null; onClose: () => void }) {
+  if (!agent) return null;
+
+  return (
+    <Dialog open={!!agent} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Network className="w-5 h-5 text-blue-600" />
+            {agent.display_name || agent.name} - Knowledge Graph
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Agent Details */}
+          <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+            <div>
+              <div className="text-xs font-medium text-gray-500">Function</div>
+              <div className="text-sm text-gray-900">{agent.business_function || agent.function_name || 'N/A'}</div>
+            </div>
+            <div>
+              <div className="text-xs font-medium text-gray-500">Department</div>
+              <div className="text-sm text-gray-900">{agent.department || agent.department_name || 'N/A'}</div>
+            </div>
+            <div>
+              <div className="text-xs font-medium text-gray-500">Role</div>
+              <div className="text-sm text-gray-900">{agent.role || agent.role_name || 'N/A'}</div>
+            </div>
+            <div>
+              <div className="text-xs font-medium text-gray-500">Tier</div>
+              <div className="text-sm">
+                <Badge style={{ backgroundColor: tierColors[agent.tier || 1] }}>
+                  Tier {agent.tier || 1}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* Description */}
+          {agent.description && (
+            <div>
+              <div className="text-sm font-medium text-gray-700 mb-2">Description</div>
+              <div className="text-sm text-gray-600">{agent.description}</div>
+            </div>
+          )}
+
+          {/* Capabilities */}
+          {agent.capabilities && agent.capabilities.length > 0 && (
+            <div>
+              <div className="text-sm font-medium text-gray-700 mb-2">
+                Capabilities ({agent.capabilities.length})
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {agent.capabilities.map((cap, idx) => (
+                  <Badge key={idx} variant="outline">
+                    {cap}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Knowledge Domains */}
+          {agent.knowledge_domains && agent.knowledge_domains.length > 0 && (
+            <div>
+              <div className="text-sm font-medium text-gray-700 mb-2">
+                Knowledge Domains ({agent.knowledge_domains.length})
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {agent.knowledge_domains.map((domain, idx) => (
+                  <Badge key={idx} variant="outline" className="bg-purple-50">
+                    {domain}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-3 gap-4 p-4 bg-blue-50 rounded-lg">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{agent.capabilities?.length || 0}</div>
+              <div className="text-xs text-gray-600">Capabilities</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">{agent.knowledge_domains?.length || 0}</div>
+              <div className="text-xs text-gray-600">Domains</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{agent.tier || 1}</div>
+              <div className="text-xs text-gray-600">Tier Level</div>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
+export function KnowledgeGraphVisualization({
+  agents,
+  height = '600px',
+  className,
+}: KnowledgeGraphProps) {
+  // State
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('agents');
+  const [selectedAgent, setSelectedAgent] = useState<AgentsStoreAgent | null>(null);
+
+  // Filters
+  const [selectedFunctions, setSelectedFunctions] = useState<string[]>([]);
+  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [selectedTiers, setSelectedTiers] = useState<number[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['active', 'testing']);
+
+  // Extract unique values for filters
+  const uniqueFunctions = useMemo(() => {
+    const functions = new Set(agents.map(a => a.business_function || a.function_name).filter(Boolean));
+    return Array.from(functions).sort();
+  }, [agents]);
+
+  const uniqueDepartments = useMemo(() => {
+    const depts = new Set(agents.map(a => a.department || a.department_name).filter(Boolean));
+    return Array.from(depts).sort();
+  }, [agents]);
+
+  const uniqueTiers = useMemo(() => {
+    const tiers = new Set(agents.map(a => a.tier).filter(t => t !== undefined));
+    return Array.from(tiers).sort();
+  }, [agents]);
+
+  // Filter agents based on selected criteria
+  const filteredAgents = useMemo(() => {
+    return agents.filter(agent => {
+      if (selectedStatuses.length > 0 && !selectedStatuses.includes(agent.status)) {
+        return false;
+      }
+      if (selectedFunctions.length > 0) {
+        const agentFunction = agent.business_function || agent.function_name;
+        if (!agentFunction || !selectedFunctions.includes(agentFunction)) {
+          return false;
+        }
+      }
+      if (selectedDepartments.length > 0) {
+        const agentDept = agent.department || agent.department_name;
+        if (!agentDept || !selectedDepartments.includes(agentDept)) {
+          return false;
+        }
+      }
+      if (selectedTiers.length > 0 && !selectedTiers.includes(agent.tier)) {
+        return false;
+      }
+      return true;
+    });
+  }, [agents, selectedFunctions, selectedDepartments, selectedTiers, selectedStatuses]);
+
+  // Build graph when filters or view mode changes
+  useEffect(() => {
+    buildGraph();
+  }, [filteredAgents, viewMode]);
+
+  const buildGraph = () => {
+    setLoading(true);
+
+    try {
+      if (viewMode === 'agents') {
+        buildAgentGraph();
+      } else if (viewMode === 'skills') {
+        buildSkillsGraph();
+      } else if (viewMode === 'knowledge') {
+        buildKnowledgeGraph();
+      } else if (viewMode === 'roles') {
+        buildRolesGraph();
+      } else if (viewMode === 'functions') {
+        buildFunctionsGraph();
+      } else if (viewMode === 'departments') {
+        buildDepartmentsGraph();
+      }
+    } catch (error) {
+      console.error('Error building graph:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Build agent-centric graph
+  const buildAgentGraph = () => {
+    const flowNodes: Node[] = filteredAgents.map((agent, index) => ({
+      id: agent.id,
+      type: 'agent',
+      position: calculateNodePosition(index, filteredAgents.length),
+      data: {
+        label: agent.display_name || agent.name,
+        tier: agent.tier || 1,
+        function: agent.business_function || agent.function_name,
+        department: agent.department || agent.department_name,
+        role: agent.role || agent.role_name,
+        status: agent.status,
+        agentData: agent,
+      },
+    }));
+
+    const flowEdges: Edge[] = [];
+    const edgeMap = new Map<string, boolean>();
+
+    filteredAgents.forEach((agent1, i) => {
+      filteredAgents.slice(i + 1).forEach(agent2 => {
+        const func1 = agent1.business_function || agent1.function_name;
+        const func2 = agent2.business_function || agent2.function_name;
+
+        if (func1 && func2 && func1 === func2) {
+          const edgeId = `${agent1.id}-${agent2.id}`;
+          if (!edgeMap.has(edgeId)) {
+            edgeMap.set(edgeId, true);
+            flowEdges.push({
+              id: edgeId,
+              source: agent1.id,
+              target: agent2.id,
+              type: 'default',
+              style: {
+                stroke: functionColors[func1] || functionColors.default,
+                strokeWidth: 2,
+                opacity: 0.6,
+              },
+            });
+          }
+        }
+      });
+    });
+
+    console.log(`[KG] Agent view: ${flowNodes.length} nodes, ${flowEdges.length} edges`);
+    setNodes(flowNodes);
+    setEdges(flowEdges);
+  };
+
+  // Build skills-centric graph
+  const buildSkillsGraph = () => {
+    const skillMap = new Map<string, { count: number; agents: string[] }>();
+
+    filteredAgents.forEach(agent => {
+      (agent.capabilities || []).forEach(skill => {
+        if (!skillMap.has(skill)) {
+          skillMap.set(skill, { count: 0, agents: [] });
+        }
+        const data = skillMap.get(skill)!;
+        data.count++;
+        data.agents.push(agent.id);
+      });
+    });
+
+    const flowNodes: Node[] = Array.from(skillMap.entries()).map(([skill, data], index) => ({
+      id: `skill-${skill}`,
+      type: 'group',
+      position: calculateNodePosition(index, skillMap.size),
+      data: {
+        label: skill,
+        count: data.count,
+        color: '#10B981',
+        type: 'skill',
+      },
+    }));
+
+    const flowEdges: Edge[] = [];
+    Array.from(skillMap.entries()).forEach(([skill1, data1], i) => {
+      Array.from(skillMap.entries()).slice(i + 1).forEach(([skill2, data2]) => {
+        const sharedAgents = data1.agents.filter(a => data2.agents.includes(a));
+        if (sharedAgents.length > 0) {
+          flowEdges.push({
+            id: `skill-${skill1}-${skill2}`,
+            source: `skill-${skill1}`,
+            target: `skill-${skill2}`,
+            label: `${sharedAgents.length}`,
+            type: 'default',
+            style: {
+              stroke: '#10B981',
+              strokeWidth: Math.min(sharedAgents.length / 2, 5),
+              opacity: 0.6,
+            },
+            labelStyle: {
+              fontSize: 10,
+              fill: '#059669',
+            },
+          });
+        }
+      });
+    });
+
+    console.log(`[KG] Skills view: ${flowNodes.length} nodes, ${flowEdges.length} edges`);
+    setNodes(flowNodes);
+    setEdges(flowEdges);
+  };
+
+  // Build knowledge domains graph
+  const buildKnowledgeGraph = () => {
+    const domainMap = new Map<string, { count: number; agents: string[] }>();
+
+    filteredAgents.forEach(agent => {
+      (agent.knowledge_domains || []).forEach(domain => {
+        if (!domainMap.has(domain)) {
+          domainMap.set(domain, { count: 0, agents: [] });
+        }
+        const data = domainMap.get(domain)!;
+        data.count++;
+        data.agents.push(agent.id);
+      });
+    });
+
+    const flowNodes: Node[] = Array.from(domainMap.entries()).map(([domain, data], index) => ({
+      id: `domain-${domain}`,
+      type: 'group',
+      position: calculateNodePosition(index, domainMap.size),
+      data: {
+        label: domain,
+        count: data.count,
+        color: '#8B5CF6',
+        type: 'knowledge',
+      },
+    }));
+
+    const flowEdges: Edge[] = [];
+    Array.from(domainMap.entries()).forEach(([domain1, data1], i) => {
+      Array.from(domainMap.entries()).slice(i + 1).forEach(([domain2, data2]) => {
+        const sharedAgents = data1.agents.filter(a => data2.agents.includes(a));
+        if (sharedAgents.length > 0) {
+          flowEdges.push({
+            id: `domain-${domain1}-${domain2}`,
+            source: `domain-${domain1}`,
+            target: `domain-${domain2}`,
+            label: `${sharedAgents.length}`,
+            type: 'default',
+            style: {
+              stroke: '#8B5CF6',
+              strokeWidth: Math.min(sharedAgents.length / 2, 5),
+              opacity: 0.6,
+            },
+            labelStyle: {
+              fontSize: 10,
+              fill: '#7C3AED',
+            },
+          });
+        }
+      });
+    });
+
+    console.log(`[KG] Knowledge view: ${flowNodes.length} nodes, ${flowEdges.length} edges`);
+    setNodes(flowNodes);
+    setEdges(flowEdges);
+  };
+
+  // Build roles graph
+  const buildRolesGraph = () => {
+    const roleMap = new Map<string, { count: number; agents: AgentsStoreAgent[] }>();
+
+    filteredAgents.forEach(agent => {
+      const role = agent.role || agent.role_name || 'Unknown';
+      if (!roleMap.has(role)) {
+        roleMap.set(role, { count: 0, agents: [] });
+      }
+      const data = roleMap.get(role)!;
+      data.count++;
+      data.agents.push(agent);
+    });
+
+    const flowNodes: Node[] = Array.from(roleMap.entries()).map(([role, data], index) => ({
+      id: `role-${role}`,
+      type: 'group',
+      position: calculateNodePosition(index, roleMap.size),
+      data: {
+        label: role,
+        count: data.count,
+        color: '#F59E0B',
+        type: 'role',
+      },
+    }));
+
+    const flowEdges: Edge[] = [];
+    Array.from(roleMap.entries()).forEach(([role1, data1], i) => {
+      Array.from(roleMap.entries()).slice(i + 1).forEach(([role2, data2]) => {
+        const sharedFunction = data1.agents.some(a1 =>
+          data2.agents.some(a2 =>
+            (a1.business_function || a1.function_name) === (a2.business_function || a2.function_name)
+          )
+        );
+        if (sharedFunction) {
+          flowEdges.push({
+            id: `role-${role1}-${role2}`,
+            source: `role-${role1}`,
+            target: `role-${role2}`,
+            type: 'default',
+            style: {
+              stroke: '#F59E0B',
+              strokeWidth: 2,
+              opacity: 0.6,
+            },
+          });
+        }
+      });
+    });
+
+    console.log(`[KG] Roles view: ${flowNodes.length} nodes, ${flowEdges.length} edges`);
+    setNodes(flowNodes);
+    setEdges(flowEdges);
+  };
+
+  // Build functions graph
+  const buildFunctionsGraph = () => {
+    const functionMap = new Map<string, { count: number; agents: AgentsStoreAgent[] }>();
+
+    filteredAgents.forEach(agent => {
+      const func = agent.business_function || agent.function_name || 'Unknown';
+      if (!functionMap.has(func)) {
+        functionMap.set(func, { count: 0, agents: [] });
+      }
+      const data = functionMap.get(func)!;
+      data.count++;
+      data.agents.push(agent);
+    });
+
+    const flowNodes: Node[] = Array.from(functionMap.entries()).map(([func, data], index) => ({
+      id: `function-${func}`,
+      type: 'group',
+      position: calculateNodePosition(index, functionMap.size),
+      data: {
+        label: func,
+        count: data.count,
+        color: functionColors[func] || functionColors.default,
+        type: 'function',
+      },
+    }));
+
+    console.log(`[KG] Functions view: ${flowNodes.length} nodes, 0 edges (no cross-function connections)`);
+    setNodes(flowNodes);
+    setEdges([]);
+  };
+
+  // Build departments graph
+  const buildDepartmentsGraph = () => {
+    const deptMap = new Map<string, { count: number; function: string; agents: AgentsStoreAgent[] }>();
+
+    filteredAgents.forEach(agent => {
+      const dept = agent.department || agent.department_name || 'Unknown';
+      const func = agent.business_function || agent.function_name || 'Unknown';
+      if (!deptMap.has(dept)) {
+        deptMap.set(dept, { count: 0, function: func, agents: [] });
+      }
+      const data = deptMap.get(dept)!;
+      data.count++;
+      data.agents.push(agent);
+    });
+
+    const flowNodes: Node[] = Array.from(deptMap.entries()).map(([dept, data], index) => ({
+      id: `dept-${dept}`,
+      type: 'group',
+      position: calculateNodePosition(index, deptMap.size),
+      data: {
+        label: dept,
+        count: data.count,
+        color: functionColors[data.function] || functionColors.default,
+        type: 'department',
+      },
+    }));
+
+    const flowEdges: Edge[] = [];
+    Array.from(deptMap.entries()).forEach(([dept1, data1], i) => {
+      Array.from(deptMap.entries()).slice(i + 1).forEach(([dept2, data2]) => {
+        if (data1.function === data2.function) {
+          flowEdges.push({
+            id: `dept-${dept1}-${dept2}`,
+            source: `dept-${dept1}`,
+            target: `dept-${dept2}`,
+            type: 'default',
+            style: {
+              stroke: functionColors[data1.function] || functionColors.default,
+              strokeWidth: 2,
+              opacity: 0.6,
+            },
+          });
+        }
+      });
+    });
+
+    console.log(`[KG] Departments view: ${flowNodes.length} nodes, ${flowEdges.length} edges`);
+    setNodes(flowNodes);
+    setEdges(flowEdges);
+  };
+
+  // Calculate node positions
+  const calculateNodePosition = (index: number, total: number) => {
+    const cols = Math.ceil(Math.sqrt(total));
+    const row = Math.floor(index / cols);
+    const col = index % cols;
+
+    return {
+      x: col * 200,
+      y: row * 120,
+    };
+  };
+
+  // Handle double-click on node
+  const onNodeDoubleClick = useCallback((event: React.MouseEvent, node: Node) => {
+    console.log('Node double-clicked:', node);
+
+    if (viewMode === 'agents' && node.data.agentData) {
+      setSelectedAgent(node.data.agentData);
+    } else {
+      // For non-agent views, could show list of agents in that group
+      console.log(`Showing details for ${node.data.type}: ${node.data.label}`);
+    }
+  }, [viewMode]);
+
+  // Export graph
+  const handleExport = () => {
+    const graphData = {
+      viewMode,
+      nodes,
+      edges,
+      filters: {
+        functions: selectedFunctions,
+        departments: selectedDepartments,
+        tiers: selectedTiers,
+        statuses: selectedStatuses,
+      },
+      stats: {
+        total_agents: agents.length,
+        filtered_agents: filteredAgents.length,
+        nodes: nodes.length,
+        edges: edges.length,
+      },
+      exported_at: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(graphData, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `agent-knowledge-graph-${viewMode}-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Toggle filters
+  const toggleFilter = (filterArray: string[], value: string, setter: (arr: string[]) => void) => {
+    if (filterArray.includes(value)) {
+      setter(filterArray.filter(v => v !== value));
+    } else {
+      setter([...filterArray, value]);
+    }
+  };
+
+  const toggleTierFilter = (tier: number) => {
+    if (selectedTiers.includes(tier)) {
+      setSelectedTiers(selectedTiers.filter(t => t !== tier));
+    } else {
+      setSelectedTiers([...selectedTiers, tier]);
+    }
+  };
+
+  const toggleStatusFilter = (status: string) => {
+    if (selectedStatuses.includes(status)) {
+      setSelectedStatuses(selectedStatuses.filter(s => s !== status));
+    } else {
+      setSelectedStatuses([...selectedStatuses, status]);
+    }
+  };
+
+  return (
+    <div className={cn('flex flex-col', className)}>
+      {/* View Mode Selector */}
+      <Card className="mb-4">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Layers className="w-5 h-5 text-gray-600" />
+              <span className="font-medium text-gray-900">View Mode</span>
+            </div>
+            <div className="text-sm text-gray-600">
+              {filteredAgents.length} of {agents.length} agents · {nodes.length} nodes · {edges.length} connections
+            </div>
+          </div>
+
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              variant={viewMode === 'agents' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('agents')}
+              className="gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Agents
+            </Button>
+            <Button
+              variant={viewMode === 'skills' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('skills')}
+              className="gap-2"
+            >
+              <Zap className="w-4 h-4" />
+              Skills
+            </Button>
+            <Button
+              variant={viewMode === 'knowledge' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('knowledge')}
+              className="gap-2"
+            >
+              <BookOpen className="w-4 h-4" />
+              Knowledge
+            </Button>
+            <Button
+              variant={viewMode === 'roles' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('roles')}
+              className="gap-2"
+            >
+              <Shield className="w-4 h-4" />
+              Roles
+            </Button>
+            <Button
+              variant={viewMode === 'functions' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('functions')}
+              className="gap-2"
+            >
+              <Briefcase className="w-4 h-4" />
+              Functions
+            </Button>
+            <Button
+              variant={viewMode === 'departments' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('departments')}
+              className="gap-2"
+            >
+              <Building2 className="w-4 h-4" />
+              Departments
+            </Button>
+          </div>
+
+          {edges.length === 0 && nodes.length > 0 && (
+            <p className="text-xs text-orange-600 mt-3">
+              ⚠️ No connections in this view. Try selecting filters or switching view modes.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Filters */}
+      <Card className="mb-4">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            {/* Status Filter */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-2">
+                <Filter className="w-4 h-4" />
+                Filter by Status
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {['active', 'testing', 'development', 'inactive'].map(status => (
+                  <Badge
+                    key={status}
+                    variant={selectedStatuses.includes(status) ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    onClick={() => toggleStatusFilter(status)}
+                  >
+                    {status} ({agents.filter(a => a.status === status).length})
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Tier Filter */}
+            {viewMode === 'agents' && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Filter by Tier
+                </label>
+                <div className="flex gap-2">
+                  {uniqueTiers.map(tier => (
+                    <Badge
+                      key={tier}
+                      variant={selectedTiers.includes(tier) ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      style={selectedTiers.includes(tier) ? {
+                        backgroundColor: tierColors[tier],
+                        borderColor: tierColors[tier],
+                      } : {
+                        borderColor: tierColors[tier],
+                        color: tierColors[tier],
+                      }}
+                      onClick={() => toggleTierFilter(tier)}
+                    >
+                      Tier {tier} ({agents.filter(a => a.tier === tier).length})
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Function Filter */}
+            {uniqueFunctions.length > 0 && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Filter by Function {selectedFunctions.length > 0 && `(${selectedFunctions.length})`}
+                </label>
+                <div className="flex gap-2 flex-wrap">
+                  {uniqueFunctions.slice(0, 8).map(func => (
+                    <Badge
+                      key={func}
+                      variant={selectedFunctions.includes(func) ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => toggleFilter(selectedFunctions, func, setSelectedFunctions)}
+                    >
+                      {func}
+                    </Badge>
+                  ))}
+                  {selectedFunctions.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedFunctions([])}
+                      className="h-6 text-xs"
+                    >
+                      <X className="w-3 h-3 mr-1" /> Clear
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Graph Visualization */}
+      <div style={{ height }} className="border border-gray-200 rounded-lg bg-gray-50 relative">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeDoubleClick={onNodeDoubleClick}
+          nodeTypes={nodeTypes}
+          fitView
+          attributionPosition="bottom-left"
+        >
+          <Background />
+          <Controls />
+          <MiniMap
+            nodeColor={(node) => {
+              if (node.type === 'agent') {
+                const tier = node.data?.tier as number;
+                return tierColors[tier] || tierColors[1];
+              }
+              return node.data?.color || '#6B7280';
+            }}
+            maskColor="rgba(0, 0, 0, 0.1)"
+          />
+
+          {/* Info Panel */}
+          <Panel position="top-right" className="bg-white rounded-lg shadow-md p-3 max-w-xs">
+            <div className="flex items-center gap-2 text-sm text-gray-700 mb-2">
+              <Info className="w-4 h-4 text-blue-600" />
+              <span className="font-medium">Navigation</span>
+            </div>
+            <ul className="text-xs text-gray-600 space-y-1">
+              <li>• Double-click nodes for details</li>
+              <li>• Drag to rearrange</li>
+              <li>• Scroll to zoom</li>
+              <li>• Use filters above to focus</li>
+              <li>• Switch view modes for different perspectives</li>
+            </ul>
+
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="text-xs font-medium text-gray-700 mb-2">Current View</div>
+              <Badge
+                style={{
+                  backgroundColor: viewModeColors[viewMode],
+                  color: 'white',
+                }}
+              >
+                {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}
+              </Badge>
+            </div>
+          </Panel>
+
+          {/* Export Button */}
+          <Panel position="bottom-right" className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={buildGraph}
+              disabled={loading}
+              className="bg-white"
+            >
+              <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExport} className="bg-white">
+              <Download className="w-4 h-4" />
+            </Button>
+          </Panel>
+        </ReactFlow>
+
+        {/* Loading Overlay */}
+        {loading && (
+          <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg z-10">
+            <div className="flex flex-col items-center gap-3">
+              <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
+              <p className="text-sm text-gray-600">Building {viewMode} graph...</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Agent Detail Modal */}
+      <AgentDetailModal agent={selectedAgent} onClose={() => setSelectedAgent(null)} />
+    </div>
+  );
+}

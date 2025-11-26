@@ -357,6 +357,23 @@ class UnifiedWorkflowState(TypedDict):
     context_summary: NotRequired[Dict[str, Any]]
     
     # =========================================================================
+    # GRAPHRAG STATE (PHASE 4: HYBRID SEARCH WITH EVIDENCE CHAINS)
+    # =========================================================================
+    
+    # GraphRAG configuration
+    rag_profile_id: NotRequired[Optional[str]]  # RAG profile to use
+    graphrag_enabled: NotRequired[bool]  # Whether GraphRAG was executed
+    
+    # GraphRAG results
+    graphrag_context: NotRequired[List[Dict[str, Any]]]  # Context chunks with citations
+    evidence_chain: NotRequired[List[Dict[str, Any]]]  # Evidence provenance
+    citations: NotRequired[List[Dict[str, Any]]]  # Citation list
+    
+    # GraphRAG metadata
+    graphrag_metadata: NotRequired[Dict[str, Any]]  # Search methods, profile used, etc.
+    graphrag_error: NotRequired[Optional[str]]  # Error if GraphRAG failed
+    
+    # =========================================================================
     # AGENT EXECUTION STATE (WITH CACHING - GOLDEN RULE #2)
     # =========================================================================
     
@@ -465,6 +482,12 @@ def create_initial_state(
     """
     now = datetime.utcnow()
     
+    # Handle agent_id vs selected_agents (Mode 1 uses agent_id, Mode 2/3/4 use selected_agents)
+    selected_agents = kwargs.get('selected_agents', [])
+    if not selected_agents and 'agent_id' in kwargs and kwargs['agent_id']:
+        # Convert single agent_id to list for consistency
+        selected_agents = [kwargs['agent_id']]
+    
     return UnifiedWorkflowState(
         # Required fields
         tenant_id=tenant_id,
@@ -480,8 +503,7 @@ def create_initial_state(
         session_id=session_id,
         
         # Lists (empty defaults)
-        # FIXED: Map agent_id kwarg to selected_agents list (for Mode 1 manual selection)
-        selected_agents=[kwargs.get('agent_id')] if kwargs.get('agent_id') else [],
+        selected_agents=selected_agents,
         retrieved_documents=[],
         agent_responses=[],
         errors=[],

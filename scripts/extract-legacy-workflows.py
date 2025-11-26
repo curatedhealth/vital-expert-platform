@@ -240,3 +240,4 @@ print(f"\n⚠️  NOTE: This migration creates placeholder workflow structures."
 print(f"   Full node/edge extraction requires parsing complex TypeScript objects.")
 print(f"   Consider manual verification of each workflow definition.")
 
+

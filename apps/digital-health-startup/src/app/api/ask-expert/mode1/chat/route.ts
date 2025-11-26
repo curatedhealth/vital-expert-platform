@@ -153,9 +153,8 @@ export async function POST(request: NextRequest) {
     // =========================================================================
     // 4. CALL PYTHON AI ENGINE
     // =========================================================================
-
-    // FIXED: Changed from /interactive to /manual (actual backend endpoint)
-    const aiEngineEndpoint = `${AI_ENGINE_URL}/api/mode1/manual`;
+    
+    const aiEngineEndpoint = `${AI_ENGINE_URL}/api/mode1/interactive`;
     
     console.log('[Mode1 API] Calling Python AI Engine:', aiEngineEndpoint);
     

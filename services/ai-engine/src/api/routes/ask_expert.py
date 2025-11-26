@@ -11,17 +11,14 @@ from datetime import datetime
 import structlog
 
 from api.auth import get_current_user
-from api.dependencies import get_supabase_client
-from langgraph_workflows.mode1_enhanced_workflow import Mode1EnhancedWorkflow
+from services.supabase_client import get_supabase_client
+from langgraph_workflows.mode1_manual_query import Mode1ManualQueryWorkflow
 from langgraph_workflows.mode2_auto_query import Mode2AutoQueryWorkflow
 from langgraph_workflows.mode3_manual_chat_autonomous import Mode3ManualChatAutonomousWorkflow
 from langgraph_workflows.mode4_auto_chat_autonomous import Mode4AutoChatAutonomousWorkflow
 
 logger = structlog.get_logger()
 router = APIRouter()
-
-# Note: Using Mode1EnhancedWorkflow as the GOLD STANDARD implementation
-# It includes: Feedback, Memory, Knowledge Enrichment, Sub-Agent Spawning, RAG/Tools
 
 # ========== REQUEST/RESPONSE SCHEMAS ==========
 
@@ -232,14 +229,8 @@ async def ask_expert_query(
         result = None
         
         if mode == "mode1":
-            # Mode 1: Enhanced Interactive-Automatic with Feedback & Memory
-            # This is the GOLD STANDARD implementation with:
-            # - Feedback collection & learning
-            # - Semantic memory extraction & retrieval
-            # - Knowledge enrichment from tools
-            # - Sub-agent spawning
-            # - RAG/Tools enforcement
-            workflow = Mode1EnhancedWorkflow(supabase_client=supabase)
+            # Mode 1: Manual-Interactive
+            workflow = Mode1ManualQueryWorkflow(supabase_client=supabase)
             result = await workflow.execute(
                 query=request.query,
                 tenant_id=request.tenant_id,
@@ -247,13 +238,11 @@ async def ask_expert_query(
                 session_id=request.session_id,
                 selected_agent_ids=request.selected_agent_ids,
                 context=request.context,
-                max_response_tokens=request.max_response_tokens,
-                enable_rag=True,  # RAG enabled by default (Golden Rule #4)
-                enable_tools=True  # Tools enabled by default (Golden Rule #4)
+                max_response_tokens=request.max_response_tokens
             )
         
         elif mode == "mode2":
-            # Mode 2: Auto-Interactive with Evidence-Based Selection
+            # Mode 2: Auto-Interactive
             workflow = Mode2AutoQueryWorkflow(supabase_client=supabase)
             result = await workflow.execute(
                 query=request.query,
@@ -265,7 +254,7 @@ async def ask_expert_query(
             )
         
         elif mode == "mode3":
-            # Mode 3: Manual-Autonomous with Human-in-the-Loop
+            # Mode 3: Manual-Autonomous
             workflow = Mode3ManualChatAutonomousWorkflow(supabase_client=supabase)
             result = await workflow.execute(
                 query=request.query,
@@ -280,7 +269,7 @@ async def ask_expert_query(
             )
         
         elif mode == "mode4":
-            # Mode 4: Auto-Autonomous with Multi-Expert Orchestration
+            # Mode 4: Auto-Autonomous
             workflow = Mode4AutoChatAutonomousWorkflow(supabase_client=supabase)
             result = await workflow.execute(
                 query=request.query,

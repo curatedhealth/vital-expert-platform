@@ -16,6 +16,7 @@ import {
   Building2,
   Briefcase,
   UserCircle,
+  Network,
 } from 'lucide-react';
 
 import { AgentAvatar } from '@vital/ui';
@@ -25,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { type Agent, useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@vital/ui/lib/utils';
+import { KnowledgeGraphVisualization } from './knowledge-graph-view';
 
 interface AgentDetailsModalProps {
   agent: Agent;
@@ -120,10 +122,14 @@ export function AgentDetailsModal({
         {/* Content */}
         <div className="overflow-y-auto flex-1 p-6">
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
               <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
+              <TabsTrigger value="graph">
+                <Network className="w-4 h-4 mr-2" />
+                Knowledge Graph
+              </TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
 
@@ -350,6 +356,28 @@ export function AgentDetailsModal({
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Knowledge Graph Tab */}
+            <TabsContent value="graph" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Network className="w-5 h-5 text-blue-600" />
+                    Knowledge Graph Visualization
+                  </CardTitle>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Interactive visualization of this agent's knowledge graph using Neo4j, Pinecone, and Supabase.
+                    Explore relationships, skills, tools, and connected knowledge domains.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <KnowledgeGraphVisualization
+                    agentId={agent.id}
+                    height="700px"
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

@@ -258,7 +258,7 @@ class GraphRAGSelector:
             pc = Pinecone(api_key=api_key)
 
             # Use dedicated agent index (not document index)
-            index = pc.Index("vital-agents")
+            index = pc.Index("vital-medical-agents")  # Corrected index name
 
             results = index.query(
                 vector=query_embedding,

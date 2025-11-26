@@ -278,6 +278,16 @@ async def _execute_search_skill(
 
 
 async def _load_skill(pg, skill_id: UUID) -> Dict[str, Any]:
+    """Load skill from database"""
+    # Placeholder implementation
+    return {
+        "skill_id": str(skill_id),
+        "name": "Example Skill",
+        "type": "analysis"
+    }
+
+
+async def _execute_analysis_skill(
     state: AgentState,
     skill_data: Dict,
     config: Dict

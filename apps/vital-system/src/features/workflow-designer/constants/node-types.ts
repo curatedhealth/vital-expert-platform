@@ -13,8 +13,6 @@ import {
   CheckCircle,
   Play,
   Box,
-  ArrowRight,
-  Flag,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { NodeType } from '../types/workflow';
@@ -49,31 +47,6 @@ export const NODE_TYPE_DEFINITIONS: Record<NodeType, NodeTypeDefinition> = {
     label: 'End',
     description: 'Exit point of the workflow',
     icon: CheckCircle,
-    color: '#ef4444',
-    bgColor: '#fee2e2',
-    borderColor: '#fca5a5',
-    category: 'flow',
-    defaultConfig: {},
-  },
-  
-  // Legacy types - map to start/end
-  input: {
-    type: 'input',
-    label: 'Input',
-    description: 'Workflow input (legacy)',
-    icon: ArrowRight,
-    color: '#10b981',
-    bgColor: '#d1fae5',
-    borderColor: '#6ee7b7',
-    category: 'flow',
-    defaultConfig: {},
-  },
-  
-  output: {
-    type: 'output',
-    label: 'Output',
-    description: 'Workflow output (legacy)',
-    icon: Flag,
     color: '#ef4444',
     bgColor: '#fee2e2',
     borderColor: '#fca5a5',
@@ -196,18 +169,10 @@ export function getNodeTypesByCategory(category: 'flow' | 'agent' | 'tool' | 'co
 }
 
 /**
- * Get node type definition with fallback
+ * Get node type definition
  */
 export function getNodeTypeDefinition(type: NodeType): NodeTypeDefinition {
-  const definition = NODE_TYPE_DEFINITIONS[type];
-  
-  // Fallback to 'agent' if type not found (safety check)
-  if (!definition) {
-    console.warn(`Node type "${type}" not found, using fallback`);
-    return NODE_TYPE_DEFINITIONS['agent'];
-  }
-  
-  return definition;
+  return NODE_TYPE_DEFINITIONS[type];
 }
 
 /**

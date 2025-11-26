@@ -23,16 +23,6 @@ export const MODE3_ASK_EXPERT_CONFIG: PanelWorkflowConfig = {
   description: 'User selects expert → Autonomous multi-step execution with tool usage',
   icon: Users,
   defaultQuery: 'Create a Phase II study protocol for my cardiac monitoring device',
-  
-  // Metadata for mode detection
-  metadata: {
-    mode: 'mode3',
-    selection: 'manual',
-    interaction: 'autonomous',
-    requires_agent_selection: true,
-    supports_hitl: true,
-    features: ['goal_driven', 'autonomous', 'multi_step', 'artifact_generation', 'hitl', 'tools'],
-  },
 
   // Mode 3 uses one expert (user selected) for autonomous execution
   experts: [

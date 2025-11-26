@@ -36,28 +36,35 @@ async def get_current_user(
     token = credentials.credentials
     
     try:
-        # TODO: Replace with your actual JWT validation
-        # Example with Supabase:
-        # from supabase import create_client
-        # supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-        # user = supabase.auth.get_user(token)
+        # JWT validation with Supabase
+        from services.supabase_client import get_supabase_client
         
-        # Example with PyJWT:
-        # import jwt
-        # from core.config import get_settings
-        # settings = get_settings()
-        # payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
-        
-        # For now, placeholder validation
         if not token or len(token) < 10:
             raise ValueError("Invalid token format")
         
-        # Mock user (replace with actual user from token)
+        # Validate token with Supabase
+        supabase = await get_supabase_client()
+        auth_response = supabase.auth.get_user(token)
+        
+        if not auth_response.user:
+            raise ValueError("Invalid or expired token")
+        
+        # Extract user information
+        user_data = auth_response.user
+        
+        # Fetch additional user data from database
+        user_record = supabase.table("users").select("*").eq("id", user_data.id).single().execute()
+        
+        if not user_record.data:
+            raise ValueError("User not found in database")
+        
+        # Construct user dict
         user = {
-            "id": UUID("12345678-1234-1234-1234-123456789012"),
-            "email": "user@example.com",
-            "tenant_id": UUID("87654321-4321-4321-4321-210987654321"),
-            "roles": ["user"]
+            "id": UUID(str(user_data.id)),
+            "email": user_data.email,
+            "tenant_id": UUID(str(user_record.data.get("tenant_id"))) if user_record.data.get("tenant_id") else None,
+            "roles": user_record.data.get("roles", ["user"]),
+            "is_active": user_record.data.get("is_active", True)
         }
         
         logger.info(

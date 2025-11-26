@@ -1,46 +1,93 @@
+/**
+ * AgentsOverview - Minimalist Dashboard
+ * Following VITAL Brand Guidelines v5.0
+ * 
+ * Colors:
+ * - Expert Purple: #9B5DE0
+ * - Pharma Blue: #0046FF
+ * - Systems Teal: #00B5AD
+ * - Velocity Orange: #FF6B00
+ * - Neutral-900: #1A1A1A
+ * - Neutral-600: #555555
+ * - Neutral-200: #E8E5DC
+ * - Warm Ivory: #FAF8F1
+ */
+
 'use client';
 
-import { Brain, Users, Zap, TrendingUp, Activity, Award } from 'lucide-react';
+import { Crown, Star, Shield, Wrench, Cog, Users, Zap, TrendingUp, Activity } from 'lucide-react';
 import { useMemo, useEffect } from 'react';
 
 import { Badge } from '@vital/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 
+// ============================================================================
+// VITAL BRAND COLORS
+// ============================================================================
+
+const COLORS = {
+  // Primary
+  expertPurple: '#9B5DE0',
+  pharmaBue: '#0046FF',
+  systemsTeal: '#00B5AD',
+  velocityOrange: '#FF6B00',
+  researchIndigo: '#4F46E5',
+  foresightPink: '#FF3796',
+  
+  // Semantic
+  success: '#22c55e',
+  warning: '#f59e0b',
+  error: '#ef4444',
+  info: '#3b82f6',
+  
+  // Neutrals
+  neutral900: '#1A1A1A',
+  neutral600: '#555555',
+  neutral400: '#BFBFBF',
+  neutral200: '#E8E5DC',
+  warmIvory: '#FAF8F1',
+};
+
+// Level configuration with VITAL colors
+const levelConfig = {
+  1: { label: 'L1 Master', color: COLORS.expertPurple, icon: Crown },
+  2: { label: 'L2 Expert', color: COLORS.pharmaBue, icon: Star },
+  3: { label: 'L3 Specialist', color: COLORS.systemsTeal, icon: Shield },
+  4: { label: 'L4 Worker', color: COLORS.velocityOrange, icon: Wrench },
+  5: { label: 'L5 Tool', color: COLORS.neutral600, icon: Cog },
+};
+
 export function AgentsOverview() {
   const { agents, loadAgents, isLoading, error } = useAgentsStore();
 
-  // Load tenant-filtered agents on mount
   useEffect(() => {
-    console.log('AgentsOverview mounted, agents.length:', agents.length);
     if (agents.length === 0) {
-      console.log('Loading agents for current tenant...');
-      loadAgents(false).then(() => {
-        console.log('Agents loaded successfully');
-      }).catch(err => {
-        console.error('Failed to load agents:', err);
-      });
+      loadAgents(false).catch(console.error);
     }
   }, []);
-
-  console.log('AgentsOverview render - agents count:', agents.length, 'isLoading:', isLoading, 'error:', error);
 
   const statistics = useMemo(() => {
     const total = agents.length;
     const active = agents.filter((a: any) => a.status === 'active').length;
-    const custom = agents.filter((a: any) => a.is_custom).length;
-    const byTier = {
-      core: agents.filter((a: any) => a.tier === 0).length,
-      tier1: agents.filter((a: any) => a.tier === 1).length,
-      tier2: agents.filter((a: any) => a.tier === 2).length,
-      tier3: agents.filter((a: any) => a.tier === 3).length,
+    const canSpawn = agents.filter((a: any) => (a.tier || 2) <= 3).length;
+    
+    // Count by level (L1-L5)
+    const byLevel = {
+      1: agents.filter((a: any) => a.tier === 1).length,
+      2: agents.filter((a: any) => a.tier === 2 || !a.tier).length, // Default to L2
+      3: agents.filter((a: any) => a.tier === 3).length,
+      4: agents.filter((a: any) => a.tier === 4).length,
+      5: agents.filter((a: any) => a.tier === 5).length,
     };
+    
     const byStatus = {
       active: agents.filter((a: any) => a.status === 'active').length,
       development: agents.filter((a: any) => a.status === 'development').length,
       testing: agents.filter((a: any) => a.status === 'testing').length,
       inactive: agents.filter((a: any) => a.status === 'inactive').length,
     };
+    
     const byFunction = agents.reduce((acc, agent) => {
       const func = agent.business_function || 'Unassigned';
       acc[func] = (acc[func] || 0) + 1;
@@ -51,33 +98,18 @@ export function AgentsOverview() {
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5);
 
-    const byDepartment = agents.reduce((acc, agent) => {
-      const dept = agent.department || 'Unassigned';
-      acc[dept] = (acc[dept] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const topDepartments = Object.entries(byDepartment)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5);
-
-    return {
-      total,
-      active,
-      custom,
-      byTier,
-      byStatus,
-      topFunctions,
-      topDepartments,
-    };
+    return { total, active, canSpawn, byLevel, byStatus, topFunctions };
   }, [agents]);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-16">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-progress-teal border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-medical-gray">Loading agents...</p>
+          <div 
+            className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3"
+            style={{ borderColor: COLORS.expertPurple, borderTopColor: 'transparent' }}
+          />
+          <p style={{ color: COLORS.neutral600 }}>Loading agents...</p>
         </div>
       </div>
     );
@@ -85,10 +117,10 @@ export function AgentsOverview() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center text-red-600">
+      <div className="flex items-center justify-center py-16">
+        <div className="text-center" style={{ color: COLORS.error }}>
           <p className="font-semibold">Error loading agents</p>
-          <p className="text-sm">{error}</p>
+          <p className="text-sm mt-1">{error}</p>
         </div>
       </div>
     );
@@ -96,283 +128,205 @@ export function AgentsOverview() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-deep-charcoal">Agents Overview</h1>
-        <p className="text-medical-gray">
-          Dashboard and statistics for your AI agent ecosystem
-        </p>
+      {/* Key Metrics - Clean cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Agents */}
+        <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-[#555555] uppercase tracking-wide">Total Agents</p>
+                <p className="text-3xl font-bold text-[#1A1A1A] mt-1">{statistics.total}</p>
+              </div>
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: `${COLORS.expertPurple}15` }}
+              >
+                <Users className="w-5 h-5" style={{ color: COLORS.expertPurple }} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Active */}
+        <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-[#555555] uppercase tracking-wide">Active</p>
+                <p className="text-3xl font-bold mt-1" style={{ color: COLORS.success }}>{statistics.active}</p>
+              </div>
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: `${COLORS.success}15` }}
+              >
+                <Activity className="w-5 h-5" style={{ color: COLORS.success }} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Can Spawn */}
+        <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-[#555555] uppercase tracking-wide">Can Spawn</p>
+                <p className="text-3xl font-bold mt-1" style={{ color: COLORS.systemsTeal }}>{statistics.canSpawn}</p>
+              </div>
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: `${COLORS.systemsTeal}15` }}
+              >
+                <Zap className="w-5 h-5" style={{ color: COLORS.systemsTeal }} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Active Rate */}
+        <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-[#555555] uppercase tracking-wide">Active Rate</p>
+                <p className="text-3xl font-bold text-[#1A1A1A] mt-1">
+                  {statistics.total > 0 ? Math.round((statistics.active / statistics.total) * 100) : 0}%
+                </p>
+              </div>
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: `${COLORS.pharmaBue}15` }}
+              >
+                <TrendingUp className="w-5 h-5" style={{ color: COLORS.pharmaBue }} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Agents</CardTitle>
-            <Brain className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{statistics.total}</div>
-            <p className="text-xs text-muted-foreground">
-              Across all tiers and functions
-            </p>
-          </CardContent>
-        </Card>
+      {/* Level Distribution */}
+      <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base font-semibold text-[#1A1A1A]">
+            Agents by Level
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-5 gap-3">
+            {([1, 2, 3, 4, 5] as const).map((level) => {
+              const config = levelConfig[level];
+              const count = statistics.byLevel[level];
+              const Icon = config.icon;
+              
+              return (
+                <div 
+                  key={level}
+                  className="text-center p-4 rounded-xl border border-[#E8E5DC] bg-white"
+                >
+                  <div 
+                    className="w-10 h-10 rounded-lg mx-auto mb-2 flex items-center justify-center"
+                    style={{ backgroundColor: config.color }}
+                  >
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <p className="text-2xl font-bold text-[#1A1A1A]">{count}</p>
+                  <p className="text-[10px] font-medium text-[#555555] uppercase tracking-wide mt-1">
+                    {config.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Agents</CardTitle>
-            <Activity className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{statistics.active}</div>
-            <p className="text-xs text-muted-foreground">
-              {((statistics.active / statistics.total) * 100).toFixed(1)}% of total
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Custom Agents</CardTitle>
-            <Users className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{statistics.custom}</div>
-            <p className="text-xs text-muted-foreground">
-              User-created agents
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Core Agents</CardTitle>
-            <Award className="h-4 w-4 text-indigo-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-indigo-600">{statistics.byTier.core}</div>
-            <p className="text-xs text-muted-foreground">
-              Premium tier agents
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Distribution Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Tier Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Agents by Tier
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300">
-                    Core
-                  </Badge>
-                  <span className="text-sm text-gray-600">Premium specialists</span>
-                </div>
-                <span className="font-semibold">{statistics.byTier.core}</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
-                  style={{ width: `${(statistics.byTier.core / statistics.total) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-blue-50 text-blue-700 border-blue-200">Tier 1</Badge>
-                  <span className="text-sm text-gray-600">Advanced agents</span>
-                </div>
-                <span className="font-semibold">{statistics.byTier.tier1}</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-blue-500"
-                  style={{ width: `${(statistics.byTier.tier1 / statistics.total) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-green-50 text-green-700 border-green-200">Tier 2</Badge>
-                  <span className="text-sm text-gray-600">Standard agents</span>
-                </div>
-                <span className="font-semibold">{statistics.byTier.tier2}</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-green-500"
-                  style={{ width: `${(statistics.byTier.tier2 / statistics.total) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-orange-50 text-orange-700 border-orange-200">Tier 3</Badge>
-                  <span className="text-sm text-gray-600">Basic agents</span>
-                </div>
-                <span className="font-semibold">{statistics.byTier.tier3}</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-orange-500"
-                  style={{ width: `${(statistics.byTier.tier3 / statistics.total) * 100}%` }}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Status Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5" />
-              Agents by Status
+        <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base font-semibold text-[#1A1A1A]">
+              Status Distribution
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-green-100 text-green-700 border-green-200">Active</Badge>
-                  <span className="text-sm text-gray-600">Production ready</span>
+            {[
+              { key: 'active', label: 'Active', color: COLORS.success },
+              { key: 'development', label: 'Development', color: COLORS.info },
+              { key: 'testing', label: 'Testing', color: COLORS.warning },
+              { key: 'inactive', label: 'Inactive', color: COLORS.neutral400 },
+            ].map(({ key, label, color }) => {
+              const count = statistics.byStatus[key as keyof typeof statistics.byStatus];
+              const percentage = statistics.total > 0 ? (count / statistics.total) * 100 : 0;
+              
+              return (
+                <div key={key} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: color }}
+                      />
+                      <span className="text-sm font-medium text-[#1A1A1A]">{label}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-[#1A1A1A]">{count}</span>
+                  </div>
+                  <div className="h-1.5 bg-[#E8E5DC] rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${percentage}%`,
+                        backgroundColor: color 
+                      }}
+                    />
+                  </div>
                 </div>
-                <span className="font-semibold">{statistics.byStatus.active}</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-green-500"
-                  style={{ width: `${(statistics.byStatus.active / statistics.total) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-blue-100 text-blue-700 border-blue-200">Development</Badge>
-                  <span className="text-sm text-gray-600">In progress</span>
-                </div>
-                <span className="font-semibold">{statistics.byStatus.development}</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-blue-500"
-                  style={{ width: `${(statistics.byStatus.development / statistics.total) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Testing</Badge>
-                  <span className="text-sm text-gray-600">Under review</span>
-                </div>
-                <span className="font-semibold">{statistics.byStatus.testing}</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-yellow-500"
-                  style={{ width: `${(statistics.byStatus.testing / statistics.total) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-gray-100 text-gray-600 border-gray-200">Inactive</Badge>
-                  <span className="text-sm text-gray-600">Not deployed</span>
-                </div>
-                <span className="font-semibold">{statistics.byStatus.inactive}</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gray-500"
-                  style={{ width: `${(statistics.byStatus.inactive / statistics.total) * 100}%` }}
-                />
-              </div>
-            </div>
+              );
+            })}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Top Business Functions and Departments */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Business Functions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Business Functions</CardTitle>
+        <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base font-semibold text-[#1A1A1A]">
+              Top Business Functions
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {statistics.topFunctions.map(([func, count], index) => (
-                <div key={func} className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm">
+          <CardContent className="space-y-3">
+            {statistics.topFunctions.map(([func, count], index) => {
+              const percentage = statistics.total > 0 ? (count / statistics.total) * 100 : 0;
+              
+              return (
+                <div key={func} className="flex items-center gap-3">
+                  <div 
+                    className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold text-white"
+                    style={{ backgroundColor: COLORS.expertPurple }}
+                  >
                     {index + 1}
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm">{func.replace(/_/g, ' ')}</span>
-                      <span className="text-sm font-semibold">{count} agents</span>
+                      <span className="text-sm font-medium text-[#1A1A1A] truncate">
+                        {func.replace(/_/g, ' ')}
+                      </span>
+                      <span className="text-xs font-semibold text-[#555555] ml-2">
+                        {count}
+                      </span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-1 bg-[#E8E5DC] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-indigo-500"
-                        style={{ width: `${(count / statistics.total) * 100}%` }}
+                        className="h-full rounded-full"
+                        style={{ 
+                          width: `${percentage}%`,
+                          backgroundColor: COLORS.expertPurple 
+                        }}
                       />
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Departments */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Departments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {statistics.topDepartments.map(([dept, count], index) => (
-                <div key={dept} className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-teal-100 text-teal-700 font-bold text-sm">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm">{dept.replace(/_/g, ' ')}</span>
-                      <span className="text-sm font-semibold">{count} agents</span>
-                    </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-teal-500"
-                        style={{ width: `${(count / statistics.total) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+              );
+            })}
           </CardContent>
         </Card>
       </div>

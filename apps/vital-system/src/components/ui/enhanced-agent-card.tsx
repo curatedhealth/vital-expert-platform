@@ -16,30 +16,41 @@ interface EnhancedAgentCardProps {
   onAddToChat?: (agent: Agent) => void;
   className?: string;
   showReasoning?: boolean;
-  showTier?: boolean;
+  showAgentLevel?: boolean; // Changed from showTier
   size?: 'sm' | 'md' | 'lg';
 }
 
-const tierConfig = {
-  0: { 
-    label: 'Core', 
-    color: 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300',
-    icon: Star
+// 5-Level Agent Hierarchy Configuration
+const agentLevelConfig = {
+  'Master': { 
+    label: 'Master', 
+    color: 'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-900 border-purple-400',
+    icon: Star,
+    description: 'Top-level orchestrator'
   },
-  1: { 
-    label: 'Tier 1', 
-    color: 'bg-vital-primary-100 text-vital-primary-700 border-vital-primary-200',
-    icon: Shield
+  'Expert': { 
+    label: 'Expert', 
+    color: 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-800 border-blue-300',
+    icon: Shield,
+    description: 'Deep domain specialist'
   },
-  2: { 
-    label: 'Tier 2', 
-    color: 'bg-green-50 text-green-700 border-green-200',
-    icon: CheckCircle
+  'Specialist': { 
+    label: 'Specialist', 
+    color: 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-300',
+    icon: CheckCircle,
+    description: 'Focused sub-domain expert'
   },
-  3: { 
-    label: 'Tier 3', 
-    color: 'bg-orange-50 text-orange-700 border-orange-200',
-    icon: Target
+  'Worker': { 
+    label: 'Worker', 
+    color: 'bg-gradient-to-r from-orange-50 to-amber-50 text-orange-700 border-orange-300',
+    icon: Target,
+    description: 'Task execution agent'
+  },
+  'Tool': { 
+    label: 'Tool', 
+    color: 'bg-gradient-to-r from-gray-50 to-slate-50 text-gray-700 border-gray-300',
+    icon: Zap,
+    description: 'API/Tool wrapper'
   }
 };
 
@@ -78,12 +89,15 @@ export function EnhancedAgentCard({
   onAddToChat,
   className,
   showReasoning = true,
-  showTier = true,
+  showAgentLevel = true, // Changed from showTier
   size = 'md'
 }: EnhancedAgentCardProps) {
   const config = sizeConfig[size];
-  const tierInfo = agent.tier !== undefined ? tierConfig[agent.tier as keyof typeof tierConfig] : null;
-  const TierIcon = tierInfo?.icon || Target;
+  
+  // Get agent level from the agent object (supports both agent_level and agent_level_name)
+  const agentLevelName = agent.agent_level || agent.agent_level_name || agent.level;
+  const levelInfo = agentLevelName ? agentLevelConfig[agentLevelName as keyof typeof agentLevelConfig] : null;
+  const LevelIcon = levelInfo?.icon || Target;
 
   return (
     <Card
@@ -166,17 +180,18 @@ export function EnhancedAgentCard({
                   </Badge>
                 )}
                 
-                {showTier && tierInfo && (
+                {showAgentLevel && levelInfo && (
                   <Badge 
                     variant="outline"
                     className={cn(
                       'font-medium border-2',
-                      tierInfo.color,
+                      levelInfo.color,
                       config.badge
                     )}
+                    title={levelInfo.description}
                   >
-                    <TierIcon className="w-3 h-3 mr-1" />
-                    {tierInfo.label}
+                    <LevelIcon className="w-3 h-3 mr-1" />
+                    {levelInfo.label}
                   </Badge>
                 )}
               </div>

@@ -170,12 +170,12 @@ const VirtualizedRow = React.memo(({ index, style, agents, selectedAgents, onRow
         </div>
       </div>
 
-      {/* Tier Column */}
+      {/* Level Column */}
       <div className="w-24 flex-shrink-0">
         {agent.tier ? (
           <Badge variant="outline" className={cn('text-xs', TIER_COLORS[agent.tier])}>
             <TierIcon className="h-3 w-3 mr-1" />
-            T{agent.tier}
+            L{agent.tier}
           </Badge>
         ) : (
           <span className="text-xs text-muted-foreground">-</span>

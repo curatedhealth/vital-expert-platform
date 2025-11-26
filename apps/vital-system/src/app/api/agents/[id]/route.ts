@@ -14,6 +14,12 @@ const updateAgentSchema = z.object({
   knowledge_domains: z.array(z.string()).optional(),
   metadata: z.record(z.any()).optional(),
   avatar: z.string().optional(),
+  function_id: z.string().uuid().optional(),
+  function_name: z.string().optional(),
+  department_id: z.string().uuid().optional(),
+  department_name: z.string().optional(),
+  role_id: z.string().uuid().optional(),
+  role_name: z.string().optional(),
 }).passthrough(); // Allow additional fields
 
 export const PUT = withAgentAuth(async (
@@ -89,10 +95,31 @@ export const PUT = withAgentAuth(async (
       };
     }
 
+    // Handle organizational structure fields - update both ID and name columns
+    if (validatedData.function_id !== undefined) {
+      updatePayload.function_id = validatedData.function_id;
+    }
+    if (validatedData.function_name !== undefined) {
+      updatePayload.function_name = validatedData.function_name;
+    }
+    if (validatedData.department_id !== undefined) {
+      updatePayload.department_id = validatedData.department_id;
+    }
+    if (validatedData.department_name !== undefined) {
+      updatePayload.department_name = validatedData.department_name;
+    }
+    if (validatedData.role_id !== undefined) {
+      updatePayload.role_id = validatedData.role_id;
+    }
+    if (validatedData.role_name !== undefined) {
+      updatePayload.role_name = validatedData.role_name;
+    }
+
     // Handle other direct column updates
-    const metadataOnlyFields = ['display_name', 'avatar', 'business_function', 'department', 'role'];
+    const metadataOnlyFields = ['display_name', 'avatar'];
+    const orgFields = ['function_id', 'function_name', 'department_id', 'department_name', 'role_id', 'role_name'];
     Object.keys(validatedData).forEach((key) => {
-      if (!metadataOnlyFields.includes(key) && key !== 'metadata') {
+      if (!metadataOnlyFields.includes(key) && !orgFields.includes(key) && key !== 'metadata') {
         updatePayload[key] = validatedData[key];
       }
     });

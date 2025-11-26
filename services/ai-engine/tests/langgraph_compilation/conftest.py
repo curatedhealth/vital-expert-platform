@@ -8,7 +8,7 @@ from uuid import uuid4, UUID
 from typing import Dict, Any
 from unittest.mock import AsyncMock, MagicMock
 
-from langgraph_compilation.state import init_agent_state, AgentState, PlanState, CritiqueState
+from langgraph_workflows.state_schemas import UnifiedWorkflowState
 
 
 @pytest.fixture
@@ -44,43 +44,47 @@ def sample_tenant_id():
 @pytest.fixture
 def sample_agent_state(sample_query, sample_user_id, sample_session_id, sample_agent_id, sample_tenant_id):
     """Create sample agent state for testing"""
-    return init_agent_state(
-        query=sample_query,
-        user_id=sample_user_id,
-        session_id=sample_session_id,
-        agent_id=sample_agent_id,
-        tenant_id=sample_tenant_id
-    )
+    return {
+        'query': sample_query,
+        'user_id': str(sample_user_id),
+        'session_id': str(sample_session_id),
+        'agent_id': str(sample_agent_id),
+        'tenant_id': str(sample_tenant_id),
+        'context': [],
+        'response': None,
+        'confidence_score': None,
+        'metadata': {}
+    }
 
 
 @pytest.fixture
 def sample_plan_state(sample_query):
     """Create sample plan state for ToT testing"""
-    return PlanState(
-        original_query=sample_query,
-        thought_tree={},
-        best_path=[],
-        plan_steps=[],
-        execution_results=[],
-        metadata={}
-    )
+    return {
+        'original_query': sample_query,
+        'thought_tree': {},
+        'best_path': [],
+        'plan_steps': [],
+        'execution_results': [],
+        'metadata': {}
+    }
 
 
 @pytest.fixture
 def sample_critique_state():
     """Create sample critique state for Constitutional AI testing"""
-    return CritiqueState(
-        original_response="Here is medical advice without disclaimers.",
-        constitution=[
+    return {
+        'original_response': "Here is medical advice without disclaimers.",
+        'constitution': [
             {
                 "principle": "Medical Accuracy",
                 "rule": "Medical information must include appropriate disclaimers"
             }
         ],
-        critique_results=[],
-        violations_found=[],
-        safe_to_return=False
-    )
+        'critique_results': [],
+        'violations_found': [],
+        'safe_to_return': False
+    }
 
 
 @pytest.fixture
@@ -233,7 +237,7 @@ def reset_singletons():
     yield
     
     # Reset any global instances here if needed
-    import langgraph_compilation.checkpointer as checkpointer_module
+    from langgraph_workflows import postgres_checkpointer as checkpointer_module
     checkpointer_module._checkpointer = None
 
 

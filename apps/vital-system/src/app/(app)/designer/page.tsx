@@ -46,6 +46,15 @@ export default function DesignerPage() {
   return (
     <div className="flex h-full flex-col min-h-0 overflow-hidden">
       {/* Success Banner - Migration Complete */}
+      <Alert variant="default" className="mx-4 mt-4 border-emerald-500 bg-emerald-50">
+        <CheckCircle className="h-4 w-4 text-emerald-600" />
+        <AlertTitle className="text-emerald-900">Enhanced Workflow Designer (Migrated)</AlertTitle>
+        <AlertDescription className="text-emerald-800">
+          This is the modern workflow designer with all features from the legacy builder and Ask Panel V1 integrated.
+          Includes AI chatbot, panel workflows, advanced layout, and more.
+        </AlertDescription>
+      </Alert>
+
       {/* Page Header */}
       <PageHeader
         icon={Sparkles}

@@ -6,7 +6,7 @@ Constructs context with evidence chains and citations
 from typing import List, Dict, Tuple
 import structlog
 
-from ..models import (
+from .models import (
     ContextChunk,
     GraphEvidence,
     SearchSource,

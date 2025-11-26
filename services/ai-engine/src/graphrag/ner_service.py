@@ -6,7 +6,7 @@ Extracts medical entities from text using spaCy or LLM
 from typing import List, Optional
 import structlog
 
-from ..models import EntityExtractionResult, ExtractedEntity
+from .models import EntityExtractionResult, ExtractedEntity
 
 logger = structlog.get_logger()
 

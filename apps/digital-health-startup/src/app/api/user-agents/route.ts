@@ -280,13 +280,12 @@ export async function GET(request: NextRequest) {
     try {
       
       // Get all agents that the user has added, including agent details
-      // Note: Using agents!user_agents_agent_id_fkey to specify which foreign key relationship to use
-      // (the user_agents table has two foreign keys to agents: agent_id and original_agent_id)
+      // Simplified query without explicit foreign key naming  
       const { data, error } = await supabaseAdmin
         .from('user_agents')
         .select(`
           *,
-          agents!user_agents_agent_id_fkey (
+          agents (
             id,
             name,
             description,
@@ -305,7 +304,25 @@ export async function GET(request: NextRequest) {
           )
         `)
         .eq('user_id', userId)
+        .is('deleted_at', null)  // Only get active (non-deleted) agents
         .order('created_at', { ascending: false });
+
+      // Log the actual error for debugging
+      if (error) {
+        console.error('❌ [user-agents GET] Supabase error:', JSON.stringify(error, null, 2));
+        requestLogger.error(
+          'user_agent_get_supabase_error',
+          new Error(JSON.stringify(error)),
+          {
+            operation: 'get_user_agents',
+            userId,
+            errorCode: error.code,
+            errorMessage: error.message,
+            errorDetails: error.details,
+            errorHint: error.hint,
+          }
+        );
+      }
 
       // If table doesn't exist, return empty array (graceful degradation)
       if (error && error.code === '42P01') {

@@ -77,10 +77,12 @@ function calculateAgentMetrics(agents: ClientAgent[], usageData?: AgentUsageData
   const active = agents.filter((a) => a.status === 'active').length;
   const testing = agents.filter((a) => a.status === 'testing').length;
 
-  const byTier = {
-    tier1: agents.filter((a) => a.tier === '1').length,
-    tier2: agents.filter((a) => a.tier === '2').length,
-    tier3: agents.filter((a) => a.tier === '3').length,
+  const byLevel = {
+    level1: agents.filter((a) => a.tier === '1' || a.tier === 1).length,
+    level2: agents.filter((a) => a.tier === '2' || a.tier === 2).length,
+    level3: agents.filter((a) => a.tier === '3' || a.tier === 3).length,
+    level4: agents.filter((a) => a.tier === '4' || a.tier === 4).length,
+    level5: agents.filter((a) => a.tier === '5' || a.tier === 5).length,
   };
 
   const totalQueries = usageData?.reduce((sum, d) => sum + d.totalQueries, 0) || 0;
@@ -97,7 +99,7 @@ function calculateAgentMetrics(agents: ClientAgent[], usageData?: AgentUsageData
     total,
     active,
     testing,
-    byTier,
+    byLevel,
     totalQueries,
     totalCost,
     averageSatisfaction,
@@ -330,39 +332,59 @@ export function AgentsAnalyticsDashboard({
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Distribution by Tier
+              Distribution by Level
             </CardTitle>
-            <CardDescription>Foundational vs Specialist vs Ultra-Specialist</CardDescription>
+            <CardDescription>L1 Master → L5 Tool hierarchy</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Tier 1: Foundational</span>
+                <span className="text-muted-foreground">L1: Master</span>
                 <span className="font-medium">
-                  {metrics.byTier.tier1} ({((metrics.byTier.tier1 / metrics.total) * 100).toFixed(0)}%)
+                  {metrics.byLevel.level1} ({((metrics.byLevel.level1 / metrics.total) * 100).toFixed(0)}%)
                 </span>
               </div>
-              <Progress value={(metrics.byTier.tier1 / metrics.total) * 100} className="h-2 bg-blue-100" />
+              <Progress value={(metrics.byLevel.level1 / metrics.total) * 100} className="h-2 bg-purple-100" />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Tier 2: Specialist</span>
+                <span className="text-muted-foreground">L2: Expert</span>
                 <span className="font-medium">
-                  {metrics.byTier.tier2} ({((metrics.byTier.tier2 / metrics.total) * 100).toFixed(0)}%)
+                  {metrics.byLevel.level2} ({((metrics.byLevel.level2 / metrics.total) * 100).toFixed(0)}%)
                 </span>
               </div>
-              <Progress value={(metrics.byTier.tier2 / metrics.total) * 100} className="h-2 bg-purple-100" />
+              <Progress value={(metrics.byLevel.level2 / metrics.total) * 100} className="h-2 bg-blue-100" />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Tier 3: Ultra-Specialist</span>
+                <span className="text-muted-foreground">L3: Specialist</span>
                 <span className="font-medium">
-                  {metrics.byTier.tier3} ({((metrics.byTier.tier3 / metrics.total) * 100).toFixed(0)}%)
+                  {metrics.byLevel.level3} ({((metrics.byLevel.level3 / metrics.total) * 100).toFixed(0)}%)
                 </span>
               </div>
-              <Progress value={(metrics.byTier.tier3 / metrics.total) * 100} className="h-2 bg-amber-100" />
+              <Progress value={(metrics.byLevel.level3 / metrics.total) * 100} className="h-2 bg-emerald-100" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">L4: Worker</span>
+                <span className="font-medium">
+                  {metrics.byLevel.level4} ({((metrics.byLevel.level4 / metrics.total) * 100).toFixed(0)}%)
+                </span>
+              </div>
+              <Progress value={(metrics.byLevel.level4 / metrics.total) * 100} className="h-2 bg-amber-100" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">L5: Tool</span>
+                <span className="font-medium">
+                  {metrics.byLevel.level5} ({((metrics.byLevel.level5 / metrics.total) * 100).toFixed(0)}%)
+                </span>
+              </div>
+              <Progress value={(metrics.byLevel.level5 / metrics.total) * 100} className="h-2 bg-gray-100" />
             </div>
           </CardContent>
         </Card>
@@ -424,7 +446,7 @@ export function AgentsAnalyticsDashboard({
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            T{agent.tier}
+                            L{agent.tier}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono text-sm">{label}</TableCell>
@@ -476,7 +498,7 @@ export function AgentsAnalyticsDashboard({
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            T{agent.tier}
+                            L{agent.tier}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono text-sm">{label}</TableCell>
@@ -528,7 +550,7 @@ export function AgentsAnalyticsDashboard({
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            T{agent.tier}
+                            L{agent.tier}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono text-sm">{label}</TableCell>
@@ -580,7 +602,7 @@ export function AgentsAnalyticsDashboard({
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            T{agent.tier}
+                            L{agent.tier}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono text-sm text-amber-600">

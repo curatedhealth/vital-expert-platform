@@ -19,25 +19,8 @@ import {
 } from '@/lib/errors/agent-errors';
 
 // Get Supabase credentials from environment variables
-// Support multiple environment variable naming conventions
-const supabaseUrl = 
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 
-  process.env.SUPABASE_URL || 
-  process.env.NEW_SUPABASE_URL ||
-  '';
-
-const supabaseServiceKey = 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEW_SUPABASE_SERVICE_KEY ||
-  process.env.SUPABASE_SERVICE_KEY ||
-  '';
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('❌ Supabase credentials missing:', {
-    hasUrl: !!supabaseUrl,
-    hasServiceKey: !!supabaseServiceKey,
-  });
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -289,8 +272,8 @@ export async function GET(request: NextRequest) {
     try {
       
       // Get all agents that the user has added, including agent details
-      // Note: Using agents!user_agents_agent_id_fkey to specify which foreign key relationship to use
-      // (the user_agents table has two foreign keys to agents: agent_id and original_agent_id)
+      // Note: Must specify which foreign key to use because user_agents has TWO relationships to agents
+      // (one for agent_id and one for original_agent_id)
       const { data, error } = await supabaseAdmin
         .from('user_agents')
         .select(`
@@ -303,19 +286,35 @@ export async function GET(request: NextRequest) {
             description,
             title,
             expertise_level,
-            specializations,
             avatar_url,
             system_prompt,
             base_model,
             status,
             metadata,
-            tags,
             created_at,
             updated_at
           )
         `)
         .eq('user_id', userId)
+        .is('deleted_at', null)  // Only get active (non-deleted) agents
         .order('created_at', { ascending: false });
+
+      // Log the actual error for debugging
+      if (error) {
+        console.error('❌ [user-agents GET] Supabase error:', JSON.stringify(error, null, 2));
+        requestLogger.error(
+          'user_agent_get_supabase_error',
+          new Error(JSON.stringify(error)),
+          {
+            operation: 'get_user_agents',
+            userId,
+            errorCode: error.code,
+            errorMessage: error.message,
+            errorDetails: error.details,
+            errorHint: error.hint,
+          }
+        );
+      }
 
       // If table doesn't exist, return empty array (graceful degradation)
       if (error && error.code === '42P01') {
@@ -430,6 +429,47 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     const duration = Date.now() - startTime;
+    
+    // Check if this is a connection timeout or network error
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isConnectionError = 
+      errorMessage.includes('timeout') ||
+      errorMessage.includes('ECONNREFUSED') ||
+      errorMessage.includes('ENOTFOUND') ||
+      errorMessage.includes('Connection terminated') ||
+      errorMessage.includes('fetch failed') ||
+      errorMessage.includes('network');
+    
+    if (isConnectionError) {
+      requestLogger.warn(
+        'user_agent_get_connection_error',
+        {
+          message: 'Database connection error, returning empty array gracefully',
+          error: errorMessage,
+          operation: 'get_user_agents',
+          duration,
+        }
+      );
+
+      // Return empty array instead of error for better UX
+      return NextResponse.json(
+        {
+          success: true,
+          agents: [],
+          requestId,
+          count: 0,
+          warning: 'Database temporarily unavailable',
+        },
+        {
+          status: 200,
+          headers: {
+            'Cache-Control': 'no-store', // Don't cache connection errors
+            'X-Request-ID': requestId,
+          },
+        }
+      );
+    }
+    
     requestLogger.error(
       'user_agent_get_error',
       error instanceof Error ? error : new Error(String(error)),

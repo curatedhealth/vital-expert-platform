@@ -44,10 +44,11 @@ export async function POST(request: NextRequest) {
 
     // Fetch prompt starters from database
     const { data: promptStarters, error: startersError } = await supabase
-      .from('dh_agent_prompt_starter')
-      .select('id, title, description, tags, position, metadata, prompt_id, agent_id')
+      .from('agent_prompt_starters')
+      .select('id, text, icon, category, sequence_order, is_active, agent_id')
       .in('agent_id', agentIds)
-      .order('position', { ascending: true })
+      .eq('is_active', true)
+      .order('sequence_order', { ascending: true })
       .limit(20);
 
     console.log('Supabase query result:', {
@@ -82,72 +83,36 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Get unique agent and prompt IDs
-    const uniqueAgentIds = [...new Set(promptStarters.map((s: any) => s.agent_id))];
-    const uniquePromptIds = [...new Set(promptStarters.map((s: any) => s.prompt_id))];
+    // Format prompts directly from agent_prompt_starters table
+    const prompts = promptStarters.map((starter: any) => ({
+      id: starter.id,
+      prompt_starter: starter.text,
+      name: starter.text,
+      display_name: starter.text,
+      description: starter.text, // Use text as description
+      domain: starter.category || 'general',
+      complexity_level: 'intermediate',
+      category: starter.category,
+      tags: [],
+      position: starter.sequence_order,
+      icon: starter.icon || '💡',
+      color: getCategoryColor(starter.category),
+      agent: {
+        id: starter.agent_id,
+        name: 'Agent',
+        title: 'Agent'
+      }
+    }));
 
-    // Fetch agents data
-    const { data: agents, error: agentsError } = await supabase
-      .from('agents')
-      .select('id, name, title, category, expertise')
-      .in('id', uniqueAgentIds);
-
-    if (agentsError) {
-      console.error('Error fetching agents:', agentsError);
-    }
-
-    // Fetch prompts data
-    const { data: promptsData, error: promptsError } = await supabase
-      .from('prompts')
-      .select('id, name, display_name, description, domain, complexity_level, category')
-      .in('id', uniquePromptIds);
-
-    if (promptsError) {
-      console.error('Error fetching prompts:', promptsError);
-    }
-
-    // Create lookup maps
-    const agentsMap = new Map((agents || []).map((a: any) => [a.id, a]));
-    const promptsMap = new Map((promptsData || []).map((p: any) => [p.id, p]));
-
-    // Transform the data to match the expected format
-    const prompts = promptStarters.map((starter: any) => {
-      const agent = agentsMap.get(starter.agent_id);
-      const prompt = promptsMap.get(starter.prompt_id);
-
-      return {
-        id: starter.id,
-        prompt_id: starter.prompt_id,
-        prompt_starter: starter.title,
-        name: prompt?.name || `prompt_${starter.id}`,
-        display_name: starter.title,
-        description: starter.description,
-        domain: prompt?.domain || starter.metadata?.domain || 'general',
-        complexity_level: prompt?.complexity_level || starter.metadata?.complexity_level || 'intermediate',
-        category: prompt?.category,
-        tags: starter.tags || [],
-        position: starter.position,
-        agent: {
-          id: agent?.id,
-          name: agent?.name,
-          title: agent?.title
-        }
-      };
-    });
-
-    // Get unique agents and domains
-    const uniqueAgents = Array.from(
-      new Set(prompts.map((p: any) => p.agent?.title || p.agent?.name).filter(Boolean))
-    );
+    // Get unique categories for domains
     const uniqueDomains = Array.from(
-      new Set(prompts.map((p: any) => p.domain).filter(Boolean))
+      new Set(prompts.map((p: any) => p.category).filter(Boolean))
     );
 
     console.log('Returning prompts:', prompts.length);
 
     return NextResponse.json({
       prompts: prompts.slice(0, 4), // Return exactly 4 prompts
-      agents: uniqueAgents,
       domains: uniqueDomains,
       total: promptStarters.length
     });
@@ -159,4 +124,16 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Helper function to get color based on category
+function getCategoryColor(category: string | null): string {
+  const colorMap: Record<string, string> = {
+    'Analytics': 'blue',
+    'Government': 'purple',
+    'Regulatory': 'green',
+    'Clinical': 'orange',
+    'Market': 'cyan',
+  };
+  return colorMap[category || ''] || 'gray';
 }

@@ -165,35 +165,14 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch(`/api/user-agents?userId=${encodeURIComponent(user.id)}`);
 
       if (!response.ok) {
-        console.warn('⚠️ [AskExpertContext] Failed to fetch user agents:', response.statusText);
-        console.warn('⚠️ [AskExpertContext] Using fallback: fetching all agents from agent store');
-        
-        // Fallback: fetch all agents from the agents table instead
-        const fallbackResponse = await fetch('/api/agents?status=active');
-        if (!fallbackResponse.ok) {
-          throw new Error(`Failed to fetch agents: ${fallbackResponse.statusText}`);
+        // Handle service unavailable gracefully - just return empty agents
+        if (response.status === 503 || response.status === 500) {
+          console.warn('⚠️ [AskExpertContext] User agents service temporarily unavailable, using empty list');
+          setAgents([]);
+          setAgentsLoading(false);
+          return;
         }
-        
-        const fallbackData = await fallbackResponse.json();
-        const allAgents = (fallbackData.agents || []).map((agent: any) => ({
-          id: agent.id,
-          name: agent.name,
-          role: agent.category || 'general',
-          expertise: agent.specializations || [],
-          displayName: agent.name,
-          description: agent.description || '',
-          avatar: agent.avatar_url || null,
-          tier: agent.tier || 'tier_3',
-          status: agent.status || 'active',
-          category: agent.category || 'general',
-          metadata: agent.metadata || {}
-        }));
-        
-        console.log('✅ [AskExpertContext] Loaded agents from fallback:', allAgents.length);
-        setAgents(allAgents);
-        setUserAddedAgentIds(new Set());
-        setAgentsLoading(false);
-        return;
+        throw new Error(`Failed to fetch user agents: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -366,37 +345,7 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('❌ [AskExpertContext] Error refreshing agents:', error);
-      
-      // Final fallback: try to fetch all agents from agent store
-      try {
-        console.warn('⚠️ [AskExpertContext] Attempting final fallback to agent store...');
-        const fallbackResponse = await fetch('/api/agents?status=active');
-        if (fallbackResponse.ok) {
-          const fallbackData = await fallbackResponse.json();
-          const allAgents = (fallbackData.agents || []).map((agent: any) => ({
-            id: agent.id,
-            name: agent.name,
-            role: agent.category || 'general',
-            expertise: agent.specializations || [],
-            displayName: agent.name,
-            description: agent.description || '',
-            avatar: agent.avatar_url || null,
-            tier: agent.tier || 'tier_3',
-            status: agent.status || 'active',
-            category: agent.category || 'general',
-            metadata: agent.metadata || {}
-          }));
-          
-          console.log('✅ [AskExpertContext] Loaded agents from final fallback:', allAgents.length);
-          setAgents(allAgents);
-        } else {
-          console.warn('⚠️ [AskExpertContext] Final fallback also failed, using empty agent list');
-          setAgents([]);
-        }
-      } catch (fallbackError) {
-        console.error('❌ [AskExpertContext] Final fallback failed:', fallbackError);
-        setAgents([]);
-      }
+      setAgents([]);
     } finally {
       setAgentsLoading(false);
     }

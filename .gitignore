@@ -27,7 +27,6 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
-.env.bak
 !.env.example
 .env-configs/
 !.env-configs/README.md
@@ -230,3 +229,8 @@ services/ai-engine/.env.backup
 # Railway environment variables (contain secrets)
 railway-environment-variables.json
 railway-env-*.txt
+
+# Environment backup files (contain secrets)
+.env.bak
+.env.local.backup_*
+.env.*.backup

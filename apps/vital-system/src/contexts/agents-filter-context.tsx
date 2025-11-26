@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface AgentFilters {
-  selectedTier: string;
+  selectedAgentLevel: string;
   selectedStatus: string;
   selectedBusinessFunction: string;
   selectedDepartment: string;
@@ -24,7 +24,7 @@ const AgentsFilterContext = createContext<AgentsFilterContextType | undefined>(u
 export function AgentsFilterProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<AgentFilters>({
-    selectedTier: 'all',
+    selectedAgentLevel: 'all',
     selectedStatus: 'all',
     selectedBusinessFunction: 'all',
     selectedDepartment: 'all',

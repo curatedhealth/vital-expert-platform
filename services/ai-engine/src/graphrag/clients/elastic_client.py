@@ -299,3 +299,7 @@ async def get_elastic_client() -> ElasticClient:
     
     return _elastic_client
 
+
+# Alias for backward compatibility
+ElasticsearchClient = ElasticClient
+

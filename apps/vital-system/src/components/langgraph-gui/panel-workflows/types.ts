@@ -70,15 +70,6 @@ export interface PanelWorkflowConfig {
   nodes: PanelNodeConfig[];
   edges: PanelEdgeConfig[];
   phases: WorkflowPhaseConfig;
-  metadata?: {
-    mode?: string;
-    selection?: 'manual' | 'automatic';
-    interaction?: 'interactive' | 'autonomous';
-    requires_agent_selection?: boolean;
-    supports_hitl?: boolean;
-    features?: string[];
-    [key: string]: any;
-  };
 }
 
 /**
@@ -89,14 +80,5 @@ export interface PanelWorkflowResult {
   edges: Edge[];
   phases: WorkflowPhaseConfig;
   workflowName: string;
-  metadata?: {
-    mode?: string;
-    selection?: 'manual' | 'automatic';
-    interaction?: 'interactive' | 'autonomous';
-    requires_agent_selection?: boolean;
-    supports_hitl?: boolean;
-    features?: string[];
-    [key: string]: any;
-  };
 }
 

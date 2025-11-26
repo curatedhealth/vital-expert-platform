@@ -465,7 +465,7 @@ class Mode1ManualQueryWorkflow(BaseWorkflow):
             # Check cache first (Golden Rule #2)
             cache_key = f"rag:mode1:{hash(query)}:{selected_agent_id}"
             if self.cache_manager and self.cache_manager.enabled:
-                cached_results = await self.cache_manager.get(cache_key, tenant_id)
+                cached_results = await self.cache_manager.get(cache_key)
                 if cached_results:
                     logger.info("✅ RAG cache hit (Mode 1)", cache_key=cache_key[:32])
                     return {
@@ -631,7 +631,7 @@ class Mode1ManualQueryWorkflow(BaseWorkflow):
             # Check cache first (Golden Rule #2)
             cache_key = f"agent:mode1:{expert_agent_id}:{hash(query)}"
             if self.cache_manager and self.cache_manager.enabled:
-                cached_response = await self.cache_manager.get(cache_key, tenant_id)
+                cached_response = await self.cache_manager.get(cache_key)
                 if cached_response:
                     logger.info("✅ Agent response cache hit (Mode 1)", cache_key=cache_key[:32])
                     return {
@@ -649,17 +649,28 @@ class Mode1ManualQueryWorkflow(BaseWorkflow):
                 requires_sub_agents=requires_sub_agents
             )
 
-            agent_response = await self.agent_orchestrator.execute_agent(
-                agent_id=expert_agent_id,
+            # Import AgentQueryRequest
+            from models.requests import AgentQueryRequest
+            
+            # Create properly formatted request
+            agent_request = AgentQueryRequest(
                 query=query,
-                context=context_summary,
-                tenant_id=tenant_id
+                agent_id=expert_agent_id,
+                session_id=state.get('session_id'),
+                user_id=state.get('user_id'),
+                tenant_id=tenant_id,
+                context={'summary': context_summary},
+                agent_type='expert',
+                organization_id=tenant_id
             )
+            
+            # Call the correct method
+            agent_response_obj = await self.agent_orchestrator.process_query(agent_request)
 
-            response_text = agent_response.get('response', '')
-            citations = agent_response.get('citations', [])
-            artifacts = agent_response.get('artifacts', [])
-            tokens_used = agent_response.get('tokens_used', 0)
+            response_text = agent_response_obj.response
+            citations = agent_response_obj.citations or []
+            artifacts = []
+            tokens_used = agent_response_obj.tokens_used
 
             # Spawn sub-agents if needed
             sub_agents_spawned = []
@@ -762,14 +773,22 @@ class Mode1ManualQueryWorkflow(BaseWorkflow):
             )
 
             # Step 1: Standard agent execution
-            agent_response = await self.agent_orchestrator.execute_agent(
-                agent_id=expert_agent_id,
+            from models.requests import AgentQueryRequest
+            
+            agent_request = AgentQueryRequest(
                 query=query,
-                context=context_summary,
-                tenant_id=tenant_id
+                agent_id=expert_agent_id,
+                session_id=state.get('session_id'),
+                user_id=state.get('user_id'),
+                tenant_id=tenant_id,
+                context={'summary': context_summary},
+                agent_type='expert',
+                organization_id=tenant_id
             )
+            
+            agent_response_obj = await self.agent_orchestrator.process_query(agent_request)
 
-            response_text = agent_response.get('response', '')
+            response_text = agent_response_obj.response
 
             # Step 2: ReAct pattern (if tools are needed)
             if self.react_agent and tools_results:

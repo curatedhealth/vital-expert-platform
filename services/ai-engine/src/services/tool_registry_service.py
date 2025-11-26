@@ -308,7 +308,11 @@ class ToolRegistryService:
         Returns:
             List of LangChain Tool instances
         """
-        from langchain.tools import StructuredTool
+        # LangChain 1.0+: tools moved to langchain-classic
+        try:
+            from langchain.tools import StructuredTool
+        except (ImportError, ModuleNotFoundError):
+            from langchain_classic.tools import StructuredTool
         from pydantic import BaseModel, Field, create_model
         
         tools = await self.get_agent_tools(agent_id, context)

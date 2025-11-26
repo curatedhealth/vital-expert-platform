@@ -313,9 +313,34 @@ class VectorDBClient:
                 self._index.upsert(vectors=vectors, namespace=namespace)
                 logger.info("pinecone_upsert_success", count=len(vectors))
             elif self.provider == "pgvector":
-                # Implement pgvector upsert
-                logger.warning("pgvector_upsert_not_implemented")
-                pass
+                # Implement pgvector upsert using asyncpg
+                if not self._pool:
+                    raise ValueError("pgvector pool not initialized")
+                
+                async with self._pool.acquire() as conn:
+                    # Prepare batch insert/update
+                    query = """
+                        INSERT INTO documents (id, embedding, metadata, content)
+                        VALUES ($1, $2::vector, $3::jsonb, $4)
+                        ON CONFLICT (id) 
+                        DO UPDATE SET 
+                            embedding = EXCLUDED.embedding,
+                            metadata = EXCLUDED.metadata,
+                            content = EXCLUDED.content,
+                            updated_at = NOW()
+                    """
+                    
+                    # Execute batch upsert
+                    for vector in vectors:
+                        await conn.execute(
+                            query,
+                            vector['id'],
+                            vector['values'],  # pgvector accepts list directly
+                            vector.get('metadata', {}),
+                            vector.get('metadata', {}).get('text', '')
+                        )
+                
+                logger.info("pgvector_upsert_success", count=len(vectors))
         except Exception as e:
             logger.error("vector_upsert_failed", error=str(e))
             raise

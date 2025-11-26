@@ -1,0 +1,53 @@
+[tool.pytest.ini_options]
+# Pytest configuration for GraphRAG tests
+
+# Test discovery
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Output options
+addopts = [
+    "-v",                    # Verbose output
+    "--tb=short",            # Short traceback format
+    "--strict-markers",      # Strict marker enforcement
+    "--cov=graphrag",        # Coverage for graphrag module
+    "--cov-report=term-missing",  # Show missing lines
+    "--cov-report=html",     # Generate HTML coverage report
+    "--cov-branch",          # Branch coverage
+    "--asyncio-mode=auto",   # Auto-detect async tests
+    "-W", "ignore::DeprecationWarning",  # Ignore deprecation warnings
+]
+
+# Async configuration
+asyncio_mode = "auto"
+
+# Markers
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "performance: Performance tests",
+    "slow: Slow tests (deselect with '-m \"not slow\"')",
+]
+
+# Coverage options
+[tool.coverage.run]
+source = ["graphrag"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+

@@ -13,7 +13,11 @@ These tools enable deep agents to:
 5. Aggregate and synthesize results
 """
 
-from langchain.tools import BaseTool
+# LangChain 1.0+: BaseTool moved to langchain-classic
+try:
+    from langchain.tools import BaseTool
+except (ImportError, ModuleNotFoundError):
+    from langchain_classic.tools import BaseTool
 from typing import List, Dict, Optional
 import structlog
 import json

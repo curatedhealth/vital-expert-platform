@@ -3,6 +3,7 @@
 import { LayoutGrid, List, Table as TableIcon, BarChart3 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { useAgentsFilter } from '@/contexts/agents-filter-context';
@@ -21,6 +22,7 @@ function AgentsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { createUserCopy } = useAgentsStore();
   const { searchQuery, setSearchQuery, filters, setFilters, viewMode, setViewMode } = useAgentsFilter();
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
@@ -232,10 +234,14 @@ function AgentsPageContent() {
       const result = await response.json();
       console.log(`✅ Agent "${agent.display_name}" added to user's chat list:`, result);
       
+      // Invalidate the React Query cache so the chat page will refetch agents
+      queryClient.invalidateQueries({ queryKey: ['user-agents', user.id] });
+      console.log('🔄 [Add to Chat] Invalidated React Query cache for user agents');
+      
       alert(`✅ "${agent.display_name}" has been added to your chat list!`);
       
-      // Navigate to ask-expert page to see the added agent
-      router.push('/ask-expert');
+      // Navigate to chat page to see the added agent
+      router.push('/chat');
       
     } catch (error) {
       console.error('❌ Failed to add agent to chat:', error);

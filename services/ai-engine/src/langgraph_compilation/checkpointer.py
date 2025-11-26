@@ -1,10 +1,14 @@
 """
 Postgres Checkpointer for LangGraph
 Enables state persistence using PostgreSQL via Supabase
+
+NOTE: Currently uses MemorySaver as placeholder.
+TODO: Implement AsyncPostgresSaver for production persistence.
 """
 
 from typing import Optional
-from langgraph.checkpoint.postgres import PostgresSaver
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.base import BaseCheckpointSaver
 import structlog
 
 from graphrag.config import get_graphrag_config
@@ -13,10 +17,10 @@ logger = structlog.get_logger()
 
 
 # Global checkpointer instance
-_checkpointer: Optional[PostgresSaver] = None
+_checkpointer: Optional[BaseCheckpointSaver] = None
 
 
-async def get_postgres_checkpointer() -> PostgresSaver:
+async def get_postgres_checkpointer() -> BaseCheckpointSaver:
     """
     Get or create Postgres checkpointer for LangGraph
     
@@ -35,17 +39,13 @@ async def get_postgres_checkpointer() -> PostgresSaver:
         config = get_graphrag_config()
         
         try:
-            # Create PostgresSaver with connection string
-            _checkpointer = PostgresSaver(
-                conn_string=config.database_url
-            )
-            
-            # Initialize checkpointer tables
-            await _checkpointer.setup()
+            # Create MemorySaver (upgrade to AsyncPostgresSaver for production)
+            _checkpointer = MemorySaver()
             
             logger.info(
-                "postgres_checkpointer_initialized",
-                database="supabase"
+                "checkpointer_initialized",
+                mode="memory",
+                note="Using MemorySaver. Upgrade to AsyncPostgresSaver for production persistence."
             )
             
         except Exception as e:

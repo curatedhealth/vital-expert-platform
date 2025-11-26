@@ -1,12 +1,16 @@
 """
 Agent Graph Compiler
 Compiles agent graphs from PostgreSQL into executable LangGraph workflows
+
+NOTE: Currently uses MemorySaver for checkpointing.
+TODO: Upgrade to AsyncPostgresSaver for production persistence.
 """
 
 from typing import Dict, Any, Optional, Callable
 from uuid import UUID
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.postgres import PostgresSaver
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.base import BaseCheckpointSaver
 import structlog
 
 from graphrag.clients.postgres_client import get_postgres_client
@@ -51,7 +55,7 @@ class AgentGraphCompiler:
     async def compile_graph(
         self,
         graph_id: UUID,
-        checkpointer: Optional[PostgresSaver] = None
+        checkpointer: Optional[BaseCheckpointSaver] = None
     ) -> StateGraph:
         """
         Compile agent graph from database
@@ -250,7 +254,7 @@ class AgentGraphCompiler:
 # Convenience function
 async def compile_agent_graph(
     graph_id: UUID,
-    checkpointer: Optional[PostgresSaver] = None
+    checkpointer: Optional[BaseCheckpointSaver] = None
 ) -> StateGraph:
     """
     Compile agent graph from database

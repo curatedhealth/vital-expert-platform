@@ -29,8 +29,7 @@ import { cn } from '@vital/ui';
 import { LazyAgentCreator } from '@/lib/utils/lazy-components';
 import { useUserAgents } from '@/lib/hooks/use-user-agents';
 import {
-  SidebarInset,
-  SidebarProvider
+  SidebarInset
 } from '@/shared/components/ui/sidebar';
 
 // Global navigation items (unused in chat page but kept for consistency)
@@ -1209,116 +1208,113 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <SidebarProvider defaultOpen={sidebarOpen}>
-        <ChatSidebar
-          chats={filteredChats}
-          currentChat={currentChat ? {
-            ...currentChat,
-            updatedAt: currentChat.updatedAt instanceof Date ? currentChat.updatedAt.toISOString() : currentChat.updatedAt
-          } : null}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onNewChat={createNewChat}
-          onSelectChat={selectChat}
-          onAgentStoreClick={handleAgentStoreClick}
-          onCreateAgentClick={handleCreateAgentClick}
-          onAgentSelect={handleAgentSelect}
-          onAgentRemove={handleAgentRemove}
-          selectedAgentId={selectedAgent?.id}
-          agents={mounted ? userAgents : []}
-          formatDate={formatDate}
-          isCollapsed={isCollapsed}
-          onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-          mounted={mounted}
-          interactionMode={interactionMode}
-          onToggleMode={setInteractionMode}
-          autonomousMode={autonomousMode}
-          onToggleAutonomous={setAutonomousMode}
-        />
+      <ChatSidebar
+        chats={filteredChats}
+        currentChat={currentChat ? {
+          ...currentChat,
+          updatedAt: currentChat.updatedAt instanceof Date ? currentChat.updatedAt.toISOString() : currentChat.updatedAt
+        } : null}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onNewChat={createNewChat}
+        onSelectChat={selectChat}
+        onAgentStoreClick={handleAgentStoreClick}
+        onCreateAgentClick={handleCreateAgentClick}
+        onAgentSelect={handleAgentSelect}
+        onAgentRemove={handleAgentRemove}
+        selectedAgentId={selectedAgent?.id}
+        agents={mounted ? userAgents : []}
+        formatDate={formatDate}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+        mounted={mounted}
+        interactionMode={interactionMode}
+        onToggleMode={setInteractionMode}
+        autonomousMode={autonomousMode}
+        onToggleAutonomous={setAutonomousMode}
+      />
 
-        <SidebarInset className="flex flex-col flex-1 overflow-hidden">
-          {/* Content - Show initial welcome, agent selection, or chat interface */}
-          <div className="flex-1 overflow-hidden">
-            {(() => {
-              // Debug logging
-              console.log('🔍 Render Decision:', {
-                interactionMode,
-                selectedExpert: !!selectedExpert,
-                messagesLength: messages.length,
-                useDirectLLM,
-                hasUserSelectedAgent,
-                selectedAgent: !!selectedAgent
-              });
+      <SidebarInset className="flex flex-col flex-1 overflow-hidden">
+        {/* Content - Show initial welcome, agent selection, or chat interface */}
+        <div className="flex-1 overflow-hidden">
+          {(() => {
+            // Debug logging
+            console.log('🔍 Render Decision:', {
+              interactionMode,
+              selectedExpert: !!selectedExpert,
+              messagesLength: messages.length,
+              useDirectLLM,
+              hasUserSelectedAgent,
+              selectedAgent: !!selectedAgent
+            });
 
-              // Simplified dual-mode logic (prioritize new system)
-              if (interactionMode === 'manual') {
-                // In manual mode, show agent profile when agent is selected
-                if (selectedAgent) {
-                  console.log('✅ Rendering: Manual mode with selected agent - Chat Interface with Agent Profile');
-                  return renderChatInterface();
-                } else if (selectedExpert) {
-                  console.log('✅ Rendering: Manual mode with expert - Chat Interface');
-                  return renderChatInterface();
-                } else {
-                  console.log('✅ Rendering: Manual mode no agent - Initial Welcome with Agents Board');
-                  return renderInitialWelcome();
-                }
-              }
-
-              if (interactionMode === 'automatic') {
-                if (messages.length > 0) {
-                  console.log('✅ Rendering: Automatic mode with messages - Chat Interface');
-                  return renderChatInterface();
-                } else {
-                  console.log('✅ Rendering: Automatic mode no messages - Initial Welcome');
-                  return renderInitialWelcome();
-                }
-              }
-
-              // Legacy fallbacks (should rarely be hit now)
-              if (!useDirectLLM && !hasUserSelectedAgent) {
-                console.log('⚠️ Legacy: Agent mode no agent - Initial Welcome');
+            // Simplified dual-mode logic (prioritize new system)
+            if (interactionMode === 'manual') {
+              // In manual mode, show agent profile when agent is selected
+              if (selectedAgent) {
+                console.log('✅ Rendering: Manual mode with selected agent - Chat Interface with Agent Profile');
+                return renderChatInterface();
+              } else if (selectedExpert) {
+                console.log('✅ Rendering: Manual mode with expert - Chat Interface');
+                return renderChatInterface();
+              } else {
+                console.log('✅ Rendering: Manual mode no agent - Initial Welcome with Agents Board');
                 return renderInitialWelcome();
               }
+            }
 
+            if (interactionMode === 'automatic') {
               if (messages.length > 0) {
-                console.log('⚠️ Legacy: Has messages - Chat Interface');
+                console.log('✅ Rendering: Automatic mode with messages - Chat Interface');
                 return renderChatInterface();
+              } else {
+                console.log('✅ Rendering: Automatic mode no messages - Initial Welcome');
+                return renderInitialWelcome();
               }
+            }
 
-              if (selectedAgent && hasUserSelectedAgent) {
-                console.log('⚠️ Legacy: Agent selected - Chat Interface');
-                return renderChatInterface();
-              }
+            // Legacy fallbacks (should rarely be hit now)
+            if (!useDirectLLM && !hasUserSelectedAgent) {
+              console.log('⚠️ Legacy: Agent mode no agent - Initial Welcome');
+              return renderInitialWelcome();
+            }
 
-              console.log('⚠️ Fallback: Agent Selection');
-              return renderAgentSelection();
-            })()}
-          </div>
-        </SidebarInset>
+            if (messages.length > 0) {
+              console.log('⚠️ Legacy: Has messages - Chat Interface');
+              return renderChatInterface();
+            }
 
-        {/* Agent Creator Modal - Lazy loaded for code splitting */}
-        {(editingAgent || showAgentCreator) && (
-          <LazyAgentCreator
-            isOpen={!!editingAgent || showAgentCreator}
-            onClose={() => {
-              setEditingAgent(null);
-              setShowAgentCreator(false);
-            }}
-            onSave={() => {
-              setEditingAgent(null);
-              setShowAgentCreator(false);
-              // Refresh agents list after saving and sync with global store
-              loadAgentsFromDatabase();
-              syncWithGlobalStore();
-              // UserAgents will be automatically refreshed via useUserAgents hook
-              // No need to read from localStorage anymore
-            }}
-            editingAgent={editingAgent}
-          />
-        )}
+            if (selectedAgent && hasUserSelectedAgent) {
+              console.log('⚠️ Legacy: Agent selected - Chat Interface');
+              return renderChatInterface();
+            }
 
-      </SidebarProvider>
+            console.log('⚠️ Fallback: Agent Selection');
+            return renderAgentSelection();
+          })()}
+        </div>
+      </SidebarInset>
+
+      {/* Agent Creator Modal - Lazy loaded for code splitting */}
+      {(editingAgent || showAgentCreator) && (
+        <LazyAgentCreator
+          isOpen={!!editingAgent || showAgentCreator}
+          onClose={() => {
+            setEditingAgent(null);
+            setShowAgentCreator(false);
+          }}
+          onSave={() => {
+            setEditingAgent(null);
+            setShowAgentCreator(false);
+            // Refresh agents list after saving and sync with global store
+            loadAgentsFromDatabase();
+            syncWithGlobalStore();
+            // UserAgents will be automatically refreshed via useUserAgents hook
+            // No need to read from localStorage anymore
+          }}
+          editingAgent={editingAgent}
+        />
+      )}
     </div>
   );
 }

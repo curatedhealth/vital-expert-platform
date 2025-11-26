@@ -162,3 +162,4 @@ print(f"✅ Generated SQL migration: {output_path}")
 print(f"📊 Total nodes: {len(tasks)}")
 print(f"📄 File size: {len(sql) / 1024:.2f} KB")
 
+

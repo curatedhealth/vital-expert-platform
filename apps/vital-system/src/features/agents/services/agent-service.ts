@@ -90,12 +90,10 @@ export class AgentService {
   // Get all active agents
   async getActiveAgents(showAll: boolean = false): Promise<AgentWithCategories[]> {
     try {
-      console.log(`🔍 AgentService: Fetching all agents from /api/agents (RLS handles filtering)...`);
+      console.log(`🔍 AgentService: Fetching ${showAll ? 'all' : 'active/testing'} agents from /api/agents-crud...`);
 
-      // TEMPORARY: Use /api/agents (service role bypass) instead of /api/agents-crud (auth issues)
-      // TODO: Fix authentication and switch back to /api/agents-crud
-      // Always fetch status=all - RLS policy handles tenant-specific filtering
-      const url = '/api/agents?status=all';
+      // Use API route with retry logic to handle Next.js dev server cold starts
+      const url = showAll ? '/api/agents-crud?showAll=true' : '/api/agents-crud';
       const response = await this.fetchWithRetry(url);
 
       if (!response.ok) {
@@ -135,7 +133,8 @@ export class AgentService {
         .from('agents')
         .select('*')
         .in('status', ['active', 'testing'])
-        .order('name', { ascending: true }) // tier column doesn't exist, use name instead
+        .order('tier', { ascending: true })
+        .order('priority', { ascending: true })
         .limit(1000);
 
       if (dbError) {
@@ -153,8 +152,6 @@ export class AgentService {
 
   // Get agents by tier
   async getAgentsByTier(tier: number): Promise<AgentWithCategories[]> {
-    // Note: tier column doesn't exist in DB, it's stored in metadata
-    // Fetch all agents and filter by tier in-memory
     const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .select(`
@@ -164,23 +161,18 @@ export class AgentService {
         )
       `)
       .in('status', ['active', 'testing'])
-      .order('name', { ascending: true }); // Can't order by tier since it doesn't exist
+      .eq('tier', tier)
+      .order('priority', { ascending: true });
 
     if (error) {
       console.error('Error fetching agents by tier:', error);
       throw new Error('Failed to fetch agents by tier');
     }
 
-    // Filter by tier from metadata (in-memory)
-    const filteredData = data?.filter((agent: any) => {
-      const agentTier = agent.metadata?.tier || agent.metadata?.expertise_level || 1;
-      return agentTier === tier;
-    }) || [];
-
-    return filteredData.map((agent: any) => ({
+    return data?.map((agent: any) => ({
       ...agent,
       categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
-    }));
+    })) || [];
   }
 
   // Get agents by implementation phase
@@ -328,7 +320,7 @@ export class AgentService {
       `)
       .in('status', ['active', 'testing'])
       .eq(userId ? 'agent_performance_metrics.user_id' : 'agent_performance_metrics.user_id', userId || null)
-      .order('name', { ascending: true }) // tier column doesn't exist
+      .order('tier', { ascending: true })
       .order('priority', { ascending: true });
 
     if (error) {
@@ -505,7 +497,7 @@ export class AgentService {
       `)
       .in('status', ['active', 'testing'])
       .or(`display_name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,capabilities.cs.["${searchTerm}"]`)
-      .order('name', { ascending: true }) // tier column doesn't exist
+      .order('tier', { ascending: true })
       .order('priority', { ascending: true });
 
     if (error) {
@@ -619,7 +611,7 @@ export class AgentService {
       `)
       .in('status', ['active', 'testing'])
       .eq('agent_capabilities.capability.name', capabilityName)
-      .order('name', { ascending: true }) // tier column doesn't exist
+      .order('tier', { ascending: true })
       .order('priority', { ascending: true });
 
     if (error) {

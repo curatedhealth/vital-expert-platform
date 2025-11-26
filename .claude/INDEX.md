@@ -2,8 +2,8 @@
 
 **Gold Standard Navigation - Structured Index**
 
-**Version**: 1.0
-**Last Updated**: 2025-11-22
+**Version**: 2.0.0
+**Last Updated**: 2025-11-25
 **Purpose**: Hierarchical navigation of all documentation
 
 ---
@@ -133,6 +133,33 @@
 - Task Prompts (specific operations)
 - Safety Prompts (compliance guardrails)
 - Few-Shot Examples
+
+### User Management ✨ NEW!
+**Location**: `docs/platform/users/` (9 files)
+**Status**: ✅ Production-Ready (v3.0.0)
+
+**Core Documentation**:
+- [README.md](docs/platform/users/README.md) - Navigation hub
+- [INDEX.md](docs/platform/users/INDEX.md) - Quick reference
+
+**Schema Documentation**:
+- [USER_AGENTS_SCHEMA.md](docs/platform/users/schema/USER_AGENTS_SCHEMA.md) - 54-column table
+- [USER_DATA_SCHEMA_COMPLETE.md](docs/platform/users/schema/USER_DATA_SCHEMA_COMPLETE.md) - 14 tables
+- [DATABASE_NORMALIZATION_GUIDE.md](docs/platform/users/schema/DATABASE_NORMALIZATION_GUIDE.md) - Design principles
+
+**Implementation**:
+- [USER_AGENTS_API_REFERENCE.md](docs/platform/users/api/USER_AGENTS_API_REFERENCE.md) - REST API & React Query
+- [GETTING_STARTED_GUIDE.md](docs/platform/users/guides/GETTING_STARTED_GUIDE.md) - 5-minute setup
+- [MIGRATION_HISTORY.md](docs/platform/users/migrations/MIGRATION_HISTORY.md) - Changelog
+- [USER_MANAGEMENT_TEST_DATA.sql](docs/platform/users/seeds/USER_MANAGEMENT_TEST_DATA.sql) - Test data
+
+**Key Features**:
+- 54-column user_agents table (3NF normalized)
+- 14 user-related tables
+- 23 performance indexes
+- 6 RLS policies
+- 5 helper functions
+- 4 pre-built views
 
 ---
 
@@ -377,8 +404,8 @@
 - Monthly: Compliance audits
 - Quarterly: Structure reviews
 
-**Last Full Audit**: 2025-11-22
-**Next Scheduled Audit**: 2025-12-22
+**Last Full Audit**: 2025-11-25
+**Next Scheduled Audit**: 2025-12-25
 
 ---
 
@@ -387,3 +414,92 @@
 **Can't Find Something?** → Check [CATALOGUE.md](CATALOGUE.md)
 
 **Need Onboarding?** → Start with [QUICK_START.md](QUICK_START.md)
+
+---
+
+## 06-PLATFORM-AGENTS - AgentOS 3.0 Documentation
+
+### AgentOS 3.0 Complete Documentation
+**Location**: `docs/platform/agents/`
+**Status**: ✅ Production-Ready (100% Complete)
+**Version**: 1.0.0
+**Last Updated**: November 26, 2025
+**Total Agents**: 489 (fully enriched)
+
+### Quick Start
+- **[README.md](docs/platform/agents/README.md)** - Master index and navigation
+- **[AGENT_SCHEMA_SPEC.md](docs/platform/agents/AGENT_SCHEMA_SPEC.md)** - Complete technical specification
+- **[AGENT_SCHEMA_REFERENCE.md](docs/platform/agents/AGENT_SCHEMA_REFERENCE.md)** - Quick SQL reference
+
+### Core Schema Documentation
+- **AGENT_SCHEMA_SPEC.md** - Complete technical spec for 35+ agent tables
+- **AGENT_SCHEMA_REFERENCE.md** - Quick SQL snippets and API examples
+- **AGENT_SCHEMA_ARCHITECTURE.md** - Visual ERD and architecture diagrams
+
+### Enrichment Documentation
+- **AGENT_ENRICHMENT_REPORT.md** - Enrichment status and verification (100% complete)
+- **AGENT_ENRICHMENT_REFERENCE.md** - Quick enrichment reference
+- **AGENT_ENRICHMENT_PLAN.md** - Master enrichment plan
+
+### Implementation & Delivery
+- **AGENTOS_3_DELIVERY_REPORT.md** - Final delivery summary
+- **AGENTOS_3_IMPLEMENTATION_GUIDE.md** - Implementation guide
+
+### Function-Specific Documentation
+- **MEDICAL_AFFAIRS_ENRICHMENT_REPORT.md** - Medical Affairs enrichment
+- **MARKET_ACCESS_SUMMARY.md** - Market Access completion
+- **AGENT_WORKFLOW_GUIDE.md** - Agent workflow patterns
+
+### SQL Seeds & Migrations
+**Location**: `docs/platform/agents/sql-seeds/` (12 files)
+
+**Core Migrations** (Run in order):
+1. `20251126-alter-agents-system-prompts.sql` - Add system prompt fields
+2. `20251126-link-agents-to-templates.sql` - Link agents to templates
+3. `20251126-assign-agent-capabilities.sql` - Assign capabilities
+4. `20251126-assign-agent-skills.sql` - Assign skills
+5. `20251126-assign-agent-knowledge-domains.sql` - Assign knowledge domains
+
+**System Prompt Seeds**:
+- `20251126-system-prompt-infrastructure.sql` - Infrastructure tables
+- `20251126-system-prompt-seed-data.sql` - Base seed data
+- `20251126-system-prompt-l2-l3-templates.sql` - L2/L3 Expert templates
+- `20251126-system-prompt-l4-l5-templates.sql` - L4/L5 Worker/Tool templates
+
+**Additional**:
+- `20251125-agent-relationships-workflows.sql` - Agent relationships
+- `20251126-medical-affairs-capabilities.sql` - Medical Affairs taxonomy (WIP)
+- `20251126-drop-agentos3-tables.sql` - Cleanup script (if needed)
+
+### Agent Distribution
+- **L1 MASTER**: 24 agents (Strategic orchestrators)
+- **L2 EXPERT**: 110 agents (Domain specialists)
+- **L3 SPECIALIST**: 266 agents (Focused experts)
+- **L4 WORKER**: 39 agents (Task executors)
+- **L5 TOOL**: 50 agents (Automated functions)
+
+### Multi-Tenant Support
+- **Pharma**: 400+ agents (8 functions)
+- **Digital Health**: 89 agents (6 functions)
+
+### Key Features
+✅ 5-Level Agent Hierarchy (L1 Master → L5 Tool)
+✅ 489 Fully Enriched Agents
+✅ Capabilities & Skills System (30+ capabilities, 150+ skills)
+✅ Knowledge Domains (50+ domains)
+✅ System Prompt Templates (AgentOS 3.0 gold standard)
+✅ Agent Relationships (440 relationships)
+✅ Complete Schema Documentation
+✅ SQL Seed Files
+
+---
+
+**Updated**: November 26, 2025 (AgentOS 3.0)  
+**Updated**: November 25, 2025 (User Management v3.0.0)  
+**Next Review**: December 26, 2025
+
+## Version History
+
+- **v2.0.0** (Nov 25, 2025) - Added User Management System documentation
+- **v1.1.0** (Nov 26, 2025) - Added AgentOS 3.0 documentation
+- **v1.0.0** (Nov 22, 2025) - Initial version

@@ -186,3 +186,4 @@ BEGIN
     RAISE NOTICE '✅✅✅ user_agents table fully configured with all columns, indexes, and policies!';
 END $$;
 
+

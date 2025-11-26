@@ -6,8 +6,8 @@ Implements Cohere reranking for improved result relevance
 from typing import List, Optional
 import structlog
 
-from ..models import ContextChunk
-from ..config import get_graphrag_config
+from graphrag.models import ContextChunk
+from graphrag.config import get_graphrag_config
 
 logger = structlog.get_logger()
 

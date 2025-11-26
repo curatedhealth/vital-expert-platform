@@ -1,16 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
-// Get Supabase credentials - EXPLICITLY USE NEW SUPABASE
-const supabaseUrl = 'https://bomltkhixeatxuoxmolq.supabase.co';
-const supabaseServiceKey = process.env.NEW_SUPABASE_SERVICE_KEY || 
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvbWx0a2hpeGVhdHh1b3htb2xxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Mjc4MzkxNSwiZXhwIjoyMDc4MzU5OTE1fQ.dhhJIMib1DMTuIvacv4VnDYjXAgVFRZ5Zrrl_LkpD6Q';
+// Get Supabase credentials
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 /**
  * GET /api/agents - Fetch all agents from the agents table
- * Used for Mode 1 agent selection
+ * Used for agent selection and display
  */
 export async function GET(request: NextRequest) {
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -20,12 +19,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'active';
 
-    console.log(`[${requestId}] Fetching agents from NEW SUPABASE`, {
+    console.log(`[${requestId}] Fetching agents from Supabase`, {
       url: supabaseUrl,
       status,
     });
 
-    // Build query - using actual schema from NEW SUPABASE
+    // Build query - Include organizational structure IDs and names
     let query = supabaseAdmin
       .from('agents')
       .select(`
@@ -48,8 +47,14 @@ export async function GET(request: NextRequest) {
         created_at,
         updated_at,
         role_name,
+        role_id,
         function_name,
-        department_name
+        function_id,
+        department_name,
+        department_id,
+        capabilities,
+        knowledge_domains,
+        rag_enabled
       `);
 
     // Only filter by status if not "all"
@@ -127,4 +132,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
 

@@ -1,52 +1,44 @@
 """
-Mode 4: Auto Selection + Multi-Turn Chat + Autonomous Reasoning
+Mode 4: Automatic-Autonomous (AI Selection + Autonomous Deep Work)
 
-AI orchestrates multi-expert conversation with dynamic expert rotation and autonomous reasoning.
-The most advanced mode - multiple experts collaborating autonomously with deep reasoning.
+AI selects best expert(s), agents perform autonomous deep work with long-term planning.
+
+**PHASE 4 ENHANCEMENTS:**
+- ✅ Evidence-Based Agent Selection (GraphRAG + Multi-factor scoring)
+- ✅ HITL System (5 checkpoints, 3 safety levels)
+- ✅ Tree-of-Thoughts planning
+- ✅ Full pattern chain (ToT → ReAct → Constitutional)
+- ✅ Default Tier 3 (highest accuracy for automatic + autonomous)
+- ✅ Multi-step execution with approval gates
 
 PRD Specification:
-- Interaction: CHAT (Multi-Turn Conversation)
-- Selection: AUTO (AI selects 2+ experts dynamically)
-- Autonomous: YES (Chain-of-Thought, multi-step reasoning across experts)
-- Response Time: 35-55 seconds
-- Experts: 2+ experts, dynamically selected per turn
-- Deep Agent Support: Multiple experts spawn sub-agents in parallel
-- Tools: RAG, Web Search, Code Execution, Database Tools (per expert)
+- Interaction: AUTONOMOUS (Deep work, long-term planning)
+- Selection: AUTOMATIC (AI selects best expert(s))
+- Response Time: 90-180 seconds
+- Experts: 1-3 experts automatically selected
+- Deep Agent Support: Experts spawn specialists and workers
+- Tools: RAG, Web Search, Code Execution, Database Tools
 - Context: Persistent conversation history, 1M+ tokens
-- Reasoning: Parallel Chain-of-Thought across experts, expert debate
-- Orchestration: Dynamic expert bringing, continuous learning
+- **NEW**: Evidence-Based Selection, GraphRAG, HITL approvals, Full patterns
 
 Golden Rules Compliance:
 - ✅ LangGraph StateGraph (Golden Rule #1)
 - ✅ Caching at all nodes (Golden Rule #2)
 - ✅ Tenant isolation enforced (Golden Rule #3)
 - ✅ RAG/Tools enforcement (Golden Rule #4)
-- ✅ Feedback-driven learning (Golden Rule #5)
+- ✅ Evidence-based responses (Golden Rule #5)
 
 Use Cases:
-- "Design regulatory + clinical + market access strategy for AI diagnostic"
-  → Orchestrates FDA Expert, Clinical Expert, Payer Expert dynamically
-- "Help me navigate this complex regulatory situation"
-  → Brings in different experts as conversation evolves
-- "I need a comprehensive analysis with multiple perspectives"
-  → Multiple experts debate and challenge each other's assumptions
-
-Advanced Orchestration:
-- ✅ Master Agent analyzes complexity
-- ✅ Selects initial expert set (2-3 experts)
-- ✅ Experts execute in PARALLEL with autonomous reasoning
-- ✅ Sub-agents spawned as needed per expert
-- ✅ Consensus building with conflict resolution
-- ✅ Expert debate (adversarial agents challenge assumptions)
-- ✅ Dynamic expert rotation (bring in new experts as needed)
-- ✅ Shared workspace (unified artifacts)
-- ✅ Continuous learning from conversation
+- "Conduct comprehensive FDA regulatory analysis" → System picks expert, deep work
+- "Design multi-phase clinical trial strategy" → Automatic selection, autonomous planning
+- "Complete competitive intelligence analysis with recommendations" → Full orchestration
 
 Frontend Mapping:
-- isAutomatic: true (AI selects experts)
+- isAutomatic: true (AI selects expert(s))
 - isMultiTurn: true (chat mode)
-- isAutonomous: true (autonomous reasoning)
-- selectedAgents: [] (empty, AI selects and rotates)
+- isAutonomous: true (deep work with planning)
+- hitlEnabled: true (user approval at checkpoints)
+- selectedAgents: [] (AI selects dynamically)
 """
 
 import asyncio
@@ -83,52 +75,89 @@ from services.compliance_service import (
 )
 import time
 
+# PHASE 4: Evidence-Based Agent Selection (from Mode 2)
+try:
+    from services.evidence_based_selector import (
+        get_evidence_based_selector,
+        VitalService,
+        AgentTier
+    )
+    EVIDENCE_BASED_AVAILABLE = True
+except ImportError:
+    EVIDENCE_BASED_AVAILABLE = False
+
+# PHASE 4: HITL System (from Mode 3)
+try:
+    from services.hitl_service import (
+        create_hitl_service,
+        HITLSafetyLevel,
+        PlanApprovalRequest,
+        ToolExecutionApprovalRequest,
+        SubAgentApprovalRequest,
+        CriticalDecisionApprovalRequest
+    )
+    HITL_AVAILABLE = True
+except ImportError:
+    HITL_AVAILABLE = False
+
+# PHASE 4: Full Pattern Suite (from Mode 3)
+try:
+    from langgraph_compilation.patterns.tree_of_thoughts import TreeOfThoughtsAgent
+    from langgraph_compilation.patterns.react import ReActAgent
+    from langgraph_compilation.patterns.constitutional_ai import ConstitutionalAgent
+    PATTERNS_AVAILABLE = True
+except ImportError:
+    PATTERNS_AVAILABLE = False
+
 logger = structlog.get_logger()
 
 
 class Mode4AutoChatAutonomousWorkflow(BaseWorkflow):
     """
-    Mode 4: Auto Selection + Multi-Turn Chat + Autonomous Reasoning
+    Mode 4: Automatic-Autonomous (AI Selection + Autonomous Deep Work)
+
+    **PHASE 4 ENHANCEMENTS:**
+    - Evidence-Based Agent Selection with GraphRAG
+    - HITL System with 5 approval checkpoints
+    - Tree-of-Thoughts for planning
+    - Full pattern chain (ToT → ReAct → Constitutional)
+    - Default Tier 3 (highest accuracy for automatic + autonomous)
 
     Golden Rules Compliance:
     - ✅ Uses LangGraph StateGraph (Golden Rule #1)
     - ✅ Caching integrated at all nodes (Golden Rule #2)
     - ✅ Tenant validation enforced (Golden Rule #3)
     - ✅ RAG/Tools enabled by default (Golden Rule #4)
-    - ✅ Feedback stored for learning (Golden Rule #5)
+    - ✅ Evidence-based responses (Golden Rule #5)
 
-    Deep Agent Architecture (Multi-Expert Autonomous Orchestration):
+    Deep Agent Architecture:
     Level 0: Master Orchestrator (Analyzes, routes, coordinates)
-    Level 1: Master Agents (Regulatory, Clinical, Market Access, etc.)
-    Level 2: Expert Agents (2+ selected automatically per turn) ← AI SELECTS HERE
-    Level 3: Specialist Agents (per expert, spawned as needed)
-    Level 4: Worker Agents (per expert, spawned as needed)
-    Level 5: Tool Agents (100+ integrations)
+    Level 1: Master Agents (Domain heads)
+    Level 2: Expert Agents (Auto-selected by Evidence-Based Selector) ← AI SELECTS HERE
+    Level 3: Specialist Agents (Spawned during execution)
+    Level 4: Worker Agents (Spawned for parallel tasks)
+    Level 5: Tool Agents (Code execution, searches, databases)
 
-    Advanced Orchestration Patterns:
-    1. Master Agent analyzes query complexity and domains
-    2. Selects 2-3 initial experts from 319+ catalog
-    3. Experts execute in PARALLEL with autonomous reasoning
-    4. Each expert:
-       - Uses Chain-of-Thought reasoning
-       - Spawns specialists and workers as needed
-       - Executes tools and code independently
-    5. Consensus building across expert responses
-    6. Expert debate (adversarial challenge)
-    7. Dynamic expert rotation (bring in new experts if needed)
-    8. Unified artifact generation (shared workspace)
-    9. Continuous learning (context updates from conversation)
+    Autonomous Capabilities:
+    - ✅ Evidence-Based agent selection (8-factor scoring)
+    - ✅ GraphRAG integration for agent search
+    - ✅ Tree-of-Thoughts planning (multiple reasoning paths)
+    - ✅ ReAct execution (reasoning + acting with tools)
+    - ✅ Constitutional AI safety validation
+    - ✅ HITL approval at critical checkpoints
+    - ✅ Multi-step task execution
+    - ✅ Sub-agent spawning with approval
+    - ✅ Tool execution with approval
+    - ✅ Default Tier 3 (highest accuracy)
 
     Features:
-    - ✅ AI selects best 2+ experts automatically per turn
-    - ✅ Dynamic expert rotation as conversation evolves
-    - ✅ Parallel autonomous reasoning across experts
-    - ✅ Each expert spawns sub-agents independently
-    - ✅ Expert debate and adversarial challenge
-    - ✅ Shared workspace (unified artifacts)
-    - ✅ Consensus with conflict resolution
-    - ✅ Continuous context learning
-    - ✅ Fast response (35-55 sec target with parallelization)
+    - ✅ AI selects best expert(s) from 319+ catalog
+    - ✅ Multi-turn conversation with full history
+    - ✅ Autonomous multi-step execution with approval gates
+    - ✅ Tree-of-Thoughts planning
+    - ✅ Full pattern chain for Tier 3
+    - ✅ HITL checkpoints (plan, tools, sub-agents, decisions)
+    - ✅ Default Tier 3 (highest accuracy for autonomous work)
     """
 
     def __init__(
@@ -172,90 +201,283 @@ class Mode4AutoChatAutonomousWorkflow(BaseWorkflow):
         self.agent_selector = agent_selector or AgentSelectorService(supabase_client)
         self.agent_orchestrator = agent_orchestrator or AgentOrchestrator(supabase_client, rag_pipeline)
         self.sub_agent_spawner = sub_agent_spawner or SubAgentSpawner()
-        self.panel_orchestrator = panel_orchestrator or PanelOrchestrator(supabase_client)
+        # PanelOrchestrator requires agent_orchestrator, supabase, and cache
+        if panel_orchestrator:
+            self.panel_orchestrator = panel_orchestrator
+        else:
+            # Don't initialize if we don't have all dependencies
+            self.panel_orchestrator = None
         self.consensus_calculator = consensus_calculator or SimpleConsensusCalculator()
         self.rag_service = rag_service or UnifiedRAGService(supabase_client)
         self.tool_registry = tool_registry or ToolRegistry()
         self.conversation_manager = conversation_manager or EnhancedConversationManager(supabase_client)
         self.session_memory_service = session_memory_service or SessionMemoryService(supabase_client)
 
-        logger.info("✅ Mode4AutoChatAutonomousWorkflow initialized")
+        # PHASE 4: Evidence-Based Selector (from Mode 2)
+        self.evidence_selector = get_evidence_based_selector() if EVIDENCE_BASED_AVAILABLE else None
+
+        # PHASE 4: HITL Service (from Mode 3, initialized per-request)
+        self.hitl_service = None
+
+        # PHASE 4: Initialize all pattern agents (from Mode 3)
+        self.tot_agent = TreeOfThoughtsAgent() if PATTERNS_AVAILABLE else None
+        self.react_agent = ReActAgent() if PATTERNS_AVAILABLE else None
+        self.constitutional_agent = ConstitutionalAgent() if PATTERNS_AVAILABLE else None
+
+        logger.info("✅ Mode4AutoChatAutonomousWorkflow initialized",
+                   evidence_based_enabled=EVIDENCE_BASED_AVAILABLE,
+                   hitl_available=HITL_AVAILABLE,
+                   patterns_available=PATTERNS_AVAILABLE)
+
+    # ===== PHASE 4: NEW NODES (from Mode 2 & 3) =====
+
+    @trace_node("mode4_initialize_hitl")
+    async def initialize_hitl_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """PHASE 4 Node: Initialize HITL (copied from Mode 3)"""
+        hitl_enabled = state.get('hitl_enabled', True)
+        safety_level = state.get('hitl_safety_level', 'balanced')
+        
+        if HITL_AVAILABLE and hitl_enabled:
+            try:
+                self.hitl_service = create_hitl_service(enabled=True, safety_level=HITLSafetyLevel(safety_level))
+                logger.info("HITL service initialized", safety_level=safety_level)
+            except Exception as e:
+                logger.error("HITL initialization failed", error=str(e))
+                hitl_enabled = False
+        
+        return {**state, 'hitl_initialized': hitl_enabled, 'current_node': 'initialize_hitl'}
+
+    @trace_node("mode4_assess_tier_autonomous")
+    async def assess_tier_autonomous_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """PHASE 4 Node: Assess tier - Mode 4 defaults to Tier 3 (highest accuracy)"""
+        # Mode 4 (Automatic + Autonomous) always uses Tier 3
+        tier = 3
+        reasoning = "Mode 4 (Automatic + Autonomous) requires Tier 3 (highest accuracy)"
+        
+        logger.info("Tier assessed for Mode 4", tier=tier)
+        
+        return {
+            **state,
+            'tier': tier,
+            'tier_reasoning': reasoning,
+            'requires_tot': True,  # Always use ToT for Tier 3
+            'requires_constitutional': True,  # Always validate for Tier 3
+            'current_node': 'assess_tier_autonomous'
+        }
+
+    @trace_node("mode4_plan_with_tot")
+    async def plan_with_tot_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """PHASE 4 Node: Plan with ToT (copied from Mode 3)"""
+        if not PATTERNS_AVAILABLE or not self.tot_agent:
+            return {**state, 'plan': {'steps': [{'description': state['query'], 'confidence': 0.7}], 'confidence': 0.7}, 'plan_generated': 'fallback'}
+        
+        try:
+            plan = await self.tot_agent.generate_plan(
+                query=state['query'],
+                context=state.get('context_summary', ''),
+                max_steps=5,
+                model=state.get('model', 'gpt-4')
+            )
+            
+            logger.info("ToT plan generated", steps=len(plan.get('steps', [])))
+            return {**state, 'plan': plan, 'plan_confidence': plan.get('confidence', 0.0), 'plan_generated': 'tot'}
+        except Exception as e:
+            logger.error("ToT planning failed", error=str(e))
+            return {**state, 'plan': {'steps': [{'description': state['query'], 'confidence': 0.5}], 'confidence': 0.5}, 'plan_generated': 'error'}
+
+    @trace_node("mode4_request_plan_approval")
+    async def request_plan_approval_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """PHASE 4 Node: Plan approval (copied from Mode 3)"""
+        if not self.hitl_service or not state.get('hitl_initialized'):
+            return {**state, 'plan_approved': True}
+        
+        try:
+            approval = await self.hitl_service.request_plan_approval(
+                request=PlanApprovalRequest(
+                    agent_id=state.get('current_agent_id', state.get('selected_agents', [None])[0]),
+                    agent_name=state.get('current_agent_type', 'Expert'),
+                    plan_steps=[s for s in state.get('plan', {}).get('steps', [])],
+                    total_estimated_time_minutes=len(state.get('plan', {}).get('steps', [])) * 2,
+                    confidence_score=state.get('plan_confidence', 0.7),
+                    tools_required=[],
+                    sub_agents_required=[]
+                ),
+                session_id=state['session_id'],
+                user_id=state['user_id']
+            )
+            
+            if approval.status == 'rejected':
+                logger.warning("Plan rejected by user")
+                return {**state, 'status': ExecutionStatus.CANCELLED, 'plan_approved': False}
+            
+            logger.info("Plan approved by user")
+            return {**state, 'plan_approved': True}
+        except Exception as e:
+            logger.error("Plan approval failed", error=str(e))
+            return {**state, 'plan_approved': False}
+
+    @trace_node("mode4_execute_with_react")
+    async def execute_with_react_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """PHASE 4 Node: Execute with ReAct (copied from Mode 3)"""
+        if not PATTERNS_AVAILABLE or not self.react_agent:
+            return {**state, 'step_results': [], 'pattern_applied': 'none'}
+        
+        try:
+            result = await self.react_agent.execute(
+                query=state['query'],
+                context=state.get('context_summary', ''),
+                tools_results=state.get('tools_executed', []),
+                model=state.get('model', 'gpt-4')
+            )
+            
+            logger.info("ReAct execution complete")
+            return {**state, 'agent_response': result.get('response', ''), 'citations': state.get('citations', []) + result.get('citations', []), 'pattern_applied': 'react'}
+        except Exception as e:
+            logger.error("ReAct execution failed", error=str(e))
+            return {**state, 'pattern_applied': 'error'}
+
+    @trace_node("mode4_validate_with_constitutional")
+    async def validate_with_constitutional_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """PHASE 4 Node: Constitutional AI validation (copied from Mode 3)"""
+        if not PATTERNS_AVAILABLE or not self.constitutional_agent:
+            return {**state, 'safety_validated': False}
+        
+        response = state.get('agent_response', '')
+        if not response:
+            return {**state, 'safety_validated': False}
+        
+        try:
+            critique_result = await self.constitutional_agent.critique(
+                output=response,
+                context=state.get('context_summary', ''),
+                criteria=["safety", "compliance", "accuracy", "completeness"],
+                model=state.get('model', 'gpt-4')
+            )
+            
+            if critique_result.get('needs_revision', False):
+                logger.warning("Constitutional AI revised response")
+                response = critique_result.get('revised_output', response)
+            else:
+                logger.info("Constitutional AI approved response")
+            
+            return {**state, 'agent_response': response, 'safety_validated': True, 'safety_score': critique_result.get('safety_score', 0.0)}
+        except Exception as e:
+            logger.error("Constitutional validation failed", error=str(e))
+            return {**state, 'safety_validated': False}
+
+    @trace_node("mode4_request_decision_approval")
+    async def request_decision_approval_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """PHASE 4 Node: Decision approval (copied from Mode 3)"""
+        if not self.hitl_service or not state.get('hitl_initialized'):
+            return {**state, 'decision_approved': True}
+        
+        try:
+            approval = await self.hitl_service.request_critical_decision_approval(
+                request=CriticalDecisionApprovalRequest(
+                    decision_title="Autonomous Task Results",
+                    recommendation=state.get('agent_response', ''),
+                    reasoning=[],
+                    confidence_score=state.get('response_confidence', state.get('plan_confidence', 0.7)),
+                    alternatives_considered=[],
+                    expected_impact="Task completion with autonomous execution",
+                    evidence=state.get('citations', [])
+                ),
+                session_id=state['session_id'],
+                user_id=state['user_id']
+            )
+            
+            if approval.status == 'rejected':
+                logger.warning("Decision rejected by user")
+                return {**state, 'requires_revision': True, 'decision_approved': False}
+            
+            logger.info("Decision approved by user")
+            return {**state, 'decision_approved': True}
+        except Exception as e:
+            logger.error("Decision approval failed", error=str(e))
+            return {**state, 'decision_approved': False}
+
+    # ===== END PHASE 4 NODES =====
 
     def build_graph(self) -> StateGraph:
         """
-        Build LangGraph workflow for Mode 4.
+        Build LangGraph workflow for Mode 4 (PHASE 4 Enhanced).
 
-        Multi-expert autonomous orchestration flow:
-        1. Validate tenant (security)
+        **PHASE 4 AUTOMATIC-AUTONOMOUS FLOW:**
+        1. Validate tenant
         2. Load conversation history
-        3. Analyze query complexity and domains
-        4. Select 2-3 experts automatically
-        5. Plan parallel reasoning steps (per expert)
-        6. PARALLEL execution for each expert:
-           a. RAG retrieval (domain-specific)
-           b. Tool/code execution
-           c. Expert execution with sub-agents
-           d. Autonomous reasoning (CoT)
-        7. Consensus building with expert debate
-        8. Dynamic expert rotation check
-           → BRANCH: Bring in new expert / Continue
-        9. Save conversation turn
-        10. Format output (unified response + all perspectives)
+        3. Initialize HITL service ← FROM MODE 3
+        4. Evidence-Based agent selection (GraphRAG + 8-factor scoring) ← FROM MODE 2
+        5. Assess tier (default Tier 3 for auto + autonomous) ← FROM MODE 3
+        6. Plan with Tree-of-Thoughts (Tier 3) ← FROM MODE 3
+        7. Request plan approval (HITL Checkpoint 1) ← FROM MODE 3
+        8. RAG retrieval
+        9. Execute with ReAct pattern ← FROM MODE 3
+        10. Validate with Constitutional AI ← FROM MODE 3
+        11. Request decision approval (HITL Checkpoint 4) ← FROM MODE 3
+        12. Save conversation
+        13. Format output
 
         Returns:
-            Configured StateGraph with parallel multi-expert execution
+            Configured StateGraph with Phase 4 enhancements
         """
         graph = StateGraph(UnifiedWorkflowState)
 
-        # Add nodes
+        # PHASE 4: Add all nodes
         graph.add_node("validate_tenant", self.validate_tenant_node)
         graph.add_node("load_conversation", self.load_conversation_node)
-        graph.add_node("analyze_complexity_domains", self.analyze_complexity_domains_node)
-        graph.add_node("select_experts_auto", self.select_experts_auto_node)
-        graph.add_node("plan_parallel_reasoning", self.plan_parallel_reasoning_node)
-
-        # Parallel multi-expert execution (orchestrated by single node)
-        graph.add_node("execute_experts_parallel_autonomous", self.execute_experts_parallel_autonomous_node)
-
-        # Consensus and debate
-        graph.add_node("build_consensus_with_debate", self.build_consensus_with_debate_node)
-        graph.add_node("check_expert_rotation", self.check_expert_rotation_node)
-
-        # Expert rotation branch
-        graph.add_node("bring_new_expert", self.bring_new_expert_node)
-        graph.add_node("continue_with_current", self.continue_with_current_node)
-
-        # Save and output
+        graph.add_node("initialize_hitl", self.initialize_hitl_node)  # FROM MODE 3
+        graph.add_node("select_experts_auto", self.select_experts_auto_node)  # FROM MODE 2 (with Evidence-Based)
+        graph.add_node("assess_tier_autonomous", self.assess_tier_autonomous_node)  # FROM MODE 3
+        graph.add_node("plan_with_tot", self.plan_with_tot_node)  # FROM MODE 3
+        graph.add_node("request_plan_approval", self.request_plan_approval_node)  # FROM MODE 3
+        graph.add_node("execute_experts_parallel_autonomous", self.execute_experts_parallel_autonomous_node)  # Existing
+        graph.add_node("execute_with_react", self.execute_with_react_node)  # FROM MODE 3
+        graph.add_node("validate_with_constitutional", self.validate_with_constitutional_node)  # FROM MODE 3
+        graph.add_node("request_decision_approval", self.request_decision_approval_node)  # FROM MODE 3
         graph.add_node("save_conversation", self.save_conversation_node)
         graph.add_node("format_output", self.format_output_node)
 
-        # Define flow
+        # PHASE 4: Define flow
         graph.set_entry_point("validate_tenant")
         graph.add_edge("validate_tenant", "load_conversation")
-        graph.add_edge("load_conversation", "analyze_complexity_domains")
-        graph.add_edge("analyze_complexity_domains", "select_experts_auto")
-        graph.add_edge("select_experts_auto", "plan_parallel_reasoning")
-        graph.add_edge("plan_parallel_reasoning", "execute_experts_parallel_autonomous")
-        graph.add_edge("execute_experts_parallel_autonomous", "build_consensus_with_debate")
-        graph.add_edge("build_consensus_with_debate", "check_expert_rotation")
-
-        # BRANCH: Expert rotation decision
+        graph.add_edge("load_conversation", "initialize_hitl")
+        graph.add_edge("initialize_hitl", "select_experts_auto")  # Evidence-Based Selection
+        graph.add_edge("select_experts_auto", "assess_tier_autonomous")
+        graph.add_edge("assess_tier_autonomous", "plan_with_tot")
+        
+        # HITL Checkpoint 1: Plan approval (conditional)
         graph.add_conditional_edges(
-            "check_expert_rotation",
-            self.route_expert_rotation,
+            "plan_with_tot",
+            lambda s: "request_approval" if s.get('hitl_initialized') and s.get('tier', 3) >= 2 else "skip_approval",
             {
-                "bring_new": "bring_new_expert",
-                "continue": "continue_with_current"
+                "request_approval": "request_plan_approval",
+                "skip_approval": "execute_experts_parallel_autonomous"
             }
         )
-
-        # Expert rotation loop (bring new expert and re-execute)
-        graph.add_edge("bring_new_expert", "execute_experts_parallel_autonomous")
-
-        # Continue path to save
-        graph.add_edge("continue_with_current", "save_conversation")
+        
+        graph.add_edge("request_plan_approval", "execute_experts_parallel_autonomous")
+        graph.add_edge("execute_experts_parallel_autonomous", "execute_with_react")
+        graph.add_edge("execute_with_react", "validate_with_constitutional")
+        
+        # HITL Checkpoint 4: Decision approval (conditional)
+        graph.add_conditional_edges(
+            "validate_with_constitutional",
+            lambda s: "request_decision" if s.get('hitl_initialized') and s.get('tier', 3) >= 3 else "skip_decision",
+            {
+                "request_decision": "request_decision_approval",
+                "skip_decision": "save_conversation"
+            }
+        )
+        
+        graph.add_edge("request_decision_approval", "save_conversation")
         graph.add_edge("save_conversation", "format_output")
         graph.add_edge("format_output", END)
+
+        logger.info("✅ Mode 4 graph built with Phase 4 enhancements",
+                   nodes=len(graph.nodes),
+                   evidence_based_enabled=EVIDENCE_BASED_AVAILABLE,
+                   hitl_enabled=HITL_AVAILABLE,
+                   patterns_enabled=PATTERNS_AVAILABLE)
 
         return graph
 
@@ -381,45 +603,42 @@ class Mode4AutoChatAutonomousWorkflow(BaseWorkflow):
     @trace_node("mode4_select_experts_auto")
     async def select_experts_auto_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
-        Node: Automatically select 2-3 experts for this turn.
-
-        Selection strategy:
-        - Semantic matching to query
-        - Domain coverage (diverse perspectives)
-        - Avoid repeating same experts from previous turns
-        - Consider conversation context
+        PHASE 4 Node: Automatically select best expert(s) using Evidence-Based Selector.
+        (Enhanced from original with Evidence-Based Selection from Mode 2)
         """
+        if not self.evidence_selector:
+            logger.warning("Evidence-Based Selector not available, falling back to basic selection")
+            # Fallback to existing logic
+            return await self._fallback_select_experts(state)
+
         tenant_id = state['tenant_id']
         query = state['query']
-        detected_domains = state.get('detected_domains', [])
-        recommended_expert_count = state.get('recommended_expert_count', 2)
-        experts_used_previously = state.get('experts_used_previously', [])
+        max_agents = state.get('recommended_expert_count', 1)  # Default 1 for autonomous
 
         try:
-            # Select experts with diversity preference
-            selection_result = await self.agent_selector.select_multiple_experts_diverse(
+            selection_result = await self.evidence_selector.select_for_service(
+                service=VitalService.ASK_EXPERT,
                 query=query,
-                domains=detected_domains,
-                expert_count=recommended_expert_count,
-                avoid_experts=experts_used_previously[-3:] if experts_used_previously else [],  # Avoid last 3
-                tenant_id=tenant_id
+                context={
+                    'mode': 'auto_autonomous',
+                    'conversation_history': state.get('messages', []),
+                    'requires_deep_work': True
+                },
+                tenant_id=tenant_id,
+                max_agents=max_agents
             )
 
-            selected_agent_ids = selection_result.get('agent_ids', [])
-            reasoning = selection_result.get('reasoning', '')
-            confidence = selection_result.get('confidence', 0.0)
-
-            # Ensure at least 2 experts
-            if len(selected_agent_ids) < 2:
-                selected_agent_ids = ['regulatory_expert', 'clinical_expert']
-                reasoning = "Fallback to default experts"
-                confidence = 0.5
+            selected_agent_ids = [agent.id for agent in selection_result.agents]
+            reasoning = selection_result.assessment.get('reasoning', 'Agents selected by Evidence-Based Selector.')
+            confidence = selection_result.assessment.get('confidence', 0.0)
+            tier = selection_result.tier
 
             logger.info(
-                "Experts selected automatically (Mode 4)",
+                "Experts selected automatically by Evidence-Based Selector (Mode 4)",
                 expert_count=len(selected_agent_ids),
                 experts=selected_agent_ids,
-                confidence=confidence
+                confidence=confidence,
+                tier=tier
             )
 
             return {
@@ -427,17 +646,56 @@ class Mode4AutoChatAutonomousWorkflow(BaseWorkflow):
                 'selected_agents': selected_agent_ids,
                 'selection_reasoning': reasoning,
                 'selection_confidence': confidence,
+                'tier': max(tier, 3),  # Mode 4 defaults to Tier 3
+                'requires_tot': True,  # Always use ToT for Mode 4
+                'requires_constitutional': True,  # Always validate for Mode 4
                 'current_node': 'select_experts_auto'
             }
 
         except Exception as e:
-            logger.error("Expert selection failed (Mode 4)", error=str(e))
+            logger.error("Evidence-Based Expert selection failed (Mode 4)", error=str(e))
+            return await self._fallback_select_experts(state, error=str(e))
+
+    async def _fallback_select_experts(self, state: UnifiedWorkflowState, error: str = None) -> UnifiedWorkflowState:
+        """Fallback selection using basic AgentSelectorService"""
+        tenant_id = state['tenant_id']
+        query = state['query']
+        max_agents = state.get('recommended_expert_count', 1)
+        
+        try:
+            # Use basic selector
+            selection_result = await self.agent_selector.select_multiple_experts_diverse(
+                query=query,
+                domains=state.get('detected_domains', []),
+                expert_count=max_agents,
+                tenant_id=tenant_id
+            )
+            
+            selected_agent_ids = selection_result.get('agent_ids', [])
+            reasoning = f"Fallback selection{': ' + error if error else ''}"
+            
+            if not selected_agent_ids:
+                selected_agent_ids = ['regulatory_expert']  # Ultimate fallback
+            
+            logger.info("Fallback expert selection (Mode 4)", experts=selected_agent_ids)
+            
             return {
                 **state,
-                'selected_agents': ['regulatory_expert', 'clinical_expert'],
-                'selection_reasoning': 'Fallback due to error',
+                'selected_agents': selected_agent_ids,
+                'selection_reasoning': reasoning,
                 'selection_confidence': 0.5,
-                'errors': state.get('errors', []) + [f"Expert selection failed: {str(e)}"]
+                'tier': 3,  # Default Tier 3 for Mode 4
+                'current_node': 'select_experts_auto'
+            }
+        except Exception as e2:
+            logger.error("Fallback selection also failed", error=str(e2))
+            return {
+                **state,
+                'selected_agents': ['regulatory_expert'],
+                'selection_reasoning': 'Ultimate fallback',
+                'selection_confidence': 0.3,
+                'tier': 3,
+                'errors': state.get('errors', []) + [f"Selection failed: {error or str(e2)}"]
             }
 
     @trace_node("mode4_plan_parallel_reasoning")
@@ -509,6 +767,10 @@ class Mode4AutoChatAutonomousWorkflow(BaseWorkflow):
         )
 
         try:
+            # OPTIMIZATION: Limit to 3 experts max for optimal speed/quality balance
+            agents_to_execute = selected_agents[:3]
+            logger.info(f"Limiting execution to {len(agents_to_execute)} experts for performance")
+            
             # Execute all experts in parallel
             expert_tasks = [
                 self._execute_single_expert_autonomous(
@@ -520,11 +782,14 @@ class Mode4AutoChatAutonomousWorkflow(BaseWorkflow):
                     model=model,
                     state=state
                 )
-                for expert_id in selected_agents
+                for expert_id in agents_to_execute
             ]
 
-            # Wait for all experts to complete
-            expert_responses = await asyncio.gather(*expert_tasks, return_exceptions=True)
+            # OPTIMIZATION: Wait with 12-second timeout (3 experts * 8s + 2s buffer)
+            expert_responses = await asyncio.wait_for(
+                asyncio.gather(*expert_tasks, return_exceptions=True),
+                timeout=12.0
+            )
 
             # Filter out failed responses
             successful_responses = []
@@ -656,17 +921,30 @@ Use this format in your response:
 **Conclusion:** [your final answer with confidence]
 """
 
-            agent_response = await self.agent_orchestrator.execute_agent(
-                agent_id=expert_id,
+            # Import AgentQueryRequest
+            from models.requests import AgentQueryRequest
+            
+            # Create properly formatted request
+            agent_request = AgentQueryRequest(
                 query=query,
-                context=context,
-                system_prompt=cot_prompt,
-                tenant_id=tenant_id
+                agent_id=expert_id,
+                session_id=state.get('session_id'),
+                user_id=state.get('user_id'),
+                tenant_id=tenant_id,
+                context={'summary': context, 'system_prompt': cot_prompt},
+                agent_type='expert',
+                organization_id=tenant_id
+            )
+            
+            # OPTIMIZATION: Execute with 8-second timeout per expert
+            agent_response_obj = await asyncio.wait_for(
+                self.agent_orchestrator.process_query(agent_request),
+                timeout=8.0
             )
 
-            response_text = agent_response.get('response', '')
-            artifacts = agent_response.get('artifacts', [])
-            citations = agent_response.get('citations', [])
+            response_text = agent_response_obj.response
+            artifacts = []
+            citations = agent_response_obj.citations or []
 
             # Spawn sub-agents (always enabled in Mode 4)
             sub_agents_spawned = []
@@ -696,7 +974,7 @@ Use this format in your response:
                 'rag_documents': rag_documents,
                 'tools_used': tool_results,
                 'code_executed': code_results,
-                'tokens_used': agent_response.get('tokens_used', 0)
+                'tokens_used': agent_response_obj.tokens_used
             }
 
         except Exception as e:

@@ -144,33 +144,51 @@ const WIZARD_STEPS: WizardStep[] = [
   },
 ];
 
-const TIER_OPTIONS = [
+const LEVEL_OPTIONS = [
   {
     value: '1',
-    label: 'Tier 1: Foundational',
-    description: 'High-volume, cost-effective for general queries',
+    label: 'L1: Master',
+    description: 'Orchestrator - Power and strategic coordination',
     icon: Brain,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    models: ['gpt-3.5-turbo', 'CuratedHealth/base_7b'],
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50',
+    models: ['gpt-4', 'claude-3-opus', 'CuratedHealth/meditron70b-qlora-1gpu'],
   },
   {
     value: '2',
-    label: 'Tier 2: Specialist',
-    description: 'Domain-specific expertise and specialized tasks',
+    label: 'L2: Expert',
+    description: 'Domain specialist with deep expertise',
     icon: Sparkles,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
     models: ['gpt-4', 'gpt-4-turbo', 'microsoft/biogpt', 'CuratedHealth/Qwen3-8B-SFT'],
   },
   {
     value: '3',
-    label: 'Tier 3: Ultra-Specialist',
-    description: 'Safety-critical, complex reasoning, highest accuracy',
+    label: 'L3: Specialist',
+    description: 'Sub-expert for focused tasks',
+    icon: Zap,
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
+    models: ['gpt-4', 'gpt-3.5-turbo', 'CuratedHealth/base_7b'],
+  },
+  {
+    value: '4',
+    label: 'L4: Worker',
+    description: 'Task executor for routine operations',
     icon: Zap,
     color: 'text-amber-600',
     bgColor: 'bg-amber-50',
-    models: ['gpt-4', 'claude-3-opus', 'CuratedHealth/meditron70b-qlora-1gpu'],
+    models: ['gpt-3.5-turbo', 'CuratedHealth/base_7b'],
+  },
+  {
+    value: '5',
+    label: 'L5: Tool',
+    description: 'Utility and integration functions',
+    icon: Zap,
+    color: 'text-gray-600',
+    bgColor: 'bg-gray-50',
+    models: ['gpt-3.5-turbo'],
   },
 ];
 
@@ -519,7 +537,7 @@ export function AgentCreationWizard({
   };
 
   // Get recommended models for selected tier
-  const recommendedModels = TIER_OPTIONS.find((t) => t.value === formData.tier)?.models || [];
+  const recommendedModels = LEVEL_OPTIONS.find((t) => t.value === formData.tier)?.models || [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -554,7 +572,7 @@ export function AgentCreationWizard({
 
               <div className="grid gap-4">
                 {templates.map((template) => {
-                  const TierIcon = TIER_OPTIONS.find((t) => t.value === template.tier)?.icon || Brain;
+                  const TierIcon = LEVEL_OPTIONS.find((t) => t.value === template.tier)?.icon || Brain;
 
                   return (
                     <Card
@@ -686,9 +704,9 @@ export function AgentCreationWizard({
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Tier *</Label>
+                  <Label>Level *</Label>
                   <div className="grid gap-3">
-                    {TIER_OPTIONS.map((tier) => {
+                    {LEVEL_OPTIONS.map((tier) => {
                       const Icon = tier.icon;
                       return (
                         <Card

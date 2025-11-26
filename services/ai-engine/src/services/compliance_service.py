@@ -29,6 +29,14 @@ class ComplianceRegime(Enum):
     BOTH = "both"    # Both regulations apply
 
 
+class RiskLevel(Enum):
+    """Risk level classification for compliance"""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
 class ComplianceService:
     """
     HIPAA/GDPR Compliance Service

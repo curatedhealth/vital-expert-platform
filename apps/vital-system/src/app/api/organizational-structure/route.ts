@@ -27,33 +27,34 @@ export async function GET(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Try to get business functions, but handle missing table/columns gracefully
+    // Get business functions from org_functions
     let functions: any[] = [];
     try {
       const { data: functionsData, error: functionsError } = await supabase
-        .from('suite_functions')
-        .select('id, name, description')
+        .from('org_functions')
+        .select('id, name, slug, description')
         .order('name');
 
       if (functionsError) {
         if (functionsError.code === '42P01' || functionsError.code === '42501' || functionsError.code === '42703') {
-          console.warn('[Org Structure API] suite_functions unavailable:', functionsError.code);
+          console.warn('[Org Structure API] org_functions unavailable:', functionsError.code);
         } else {
           throw functionsError;
         }
       } else {
         functions = functionsData || [];
+        console.log('[Org Structure API] Loaded', functions.length, 'functions from org_functions');
       }
     } catch (error) {
-      console.warn('[Org Structure API] suite_functions query failed:', error);
+      console.warn('[Org Structure API] org_functions query failed:', error);
     }
 
-    // Try to get departments, but handle missing table/columns gracefully
+    // Get departments from org_departments
     let departments: any[] = [];
     try {
       const { data: departmentsData, error: departmentsError } = await supabase
         .from('org_departments')
-        .select('id, name, description')
+        .select('id, name, slug, description, function_id')
         .order('name');
 
       if (departmentsError) {
@@ -64,41 +65,45 @@ export async function GET(request: NextRequest) {
         }
       } else {
         departments = departmentsData || [];
+        console.log('[Org Structure API] Loaded', departments.length, 'departments from org_departments');
       }
     } catch (error) {
       console.warn('[Org Structure API] org_departments query failed:', error);
     }
 
-    // Try to get roles, but handle missing table/columns gracefully
+    // Get roles from org_roles (includes both function_id and department_id)
     let roles: any[] = [];
     try {
       const { data: rolesData, error: rolesError } = await supabase
-        .from('organizational_levels')
-        .select('id, name, description, level')
+        .from('org_roles')
+        .select('id, name, slug, description, function_id, department_id, seniority_level, geographic_scope')
         .order('name');
 
       if (rolesError) {
         if (rolesError.code === '42P01' || rolesError.code === '42501' || rolesError.code === '42703') {
-          console.warn('[Org Structure API] organizational_levels unavailable:', rolesError.code);
+          console.warn('[Org Structure API] org_roles unavailable:', rolesError.code);
         } else {
           throw rolesError;
         }
       } else {
         roles = rolesData || [];
+        console.log('[Org Structure API] Loaded', roles.length, 'roles from org_roles');
       }
     } catch (error) {
-      console.warn('[Org Structure API] organizational_levels query failed:', error);
+      console.warn('[Org Structure API] org_roles query failed:', error);
     }
 
+    // Build departmentsByFunction mapping
     const departmentsByFunction: Record<string, any[]> = {};
     departments?.forEach(dept => {
-      if (!dept.business_function_id) return;
-      if (!departmentsByFunction[dept.business_function_id]) {
-        departmentsByFunction[dept.business_function_id] = [];
+      if (!dept.function_id) return;
+      if (!departmentsByFunction[dept.function_id]) {
+        departmentsByFunction[dept.function_id] = [];
       }
-      departmentsByFunction[dept.business_function_id].push(dept);
+      departmentsByFunction[dept.function_id].push(dept);
     });
 
+    // Build rolesByDepartment and rolesByFunction mappings
     const rolesByDepartment: Record<string, any[]> = {};
     const rolesByFunction: Record<string, any[]> = {};
 
@@ -110,11 +115,11 @@ export async function GET(request: NextRequest) {
         rolesByDepartment[role.department_id].push(role);
       }
 
-      if (role.business_function_id) {
-        if (!rolesByFunction[role.business_function_id]) {
-          rolesByFunction[role.business_function_id] = [];
+      if (role.function_id) {
+        if (!rolesByFunction[role.function_id]) {
+          rolesByFunction[role.function_id] = [];
         }
-        rolesByFunction[role.business_function_id].push(role);
+        rolesByFunction[role.function_id].push(role);
       }
     });
 

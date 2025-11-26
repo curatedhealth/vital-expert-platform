@@ -71,7 +71,7 @@ export interface Agent {
   // Business Context
   business_function?: string;
   role?: string;
-  tier?: 1 | 2 | 3;
+  tier?: 1 | 2 | 3 | 4 | 5;
   priority?: number;
   implementation_phase?: 1 | 2 | 3;
   is_custom?: boolean;

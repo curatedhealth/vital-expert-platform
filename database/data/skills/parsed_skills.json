@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Insert instructions below",
+    "slug": "template-skill",
+    "description": "Skill for Insert instructions below",
+    "folder_path": "template-skill"
+  },
+  {
+    "name": "Theme Factory Skill",
+    "slug": "theme-factory",
+    "description": "After a preferred theme is selected: 1. Read the corresponding theme file from the `themes/` directory 2. Apply the specified colors and fonts consistently throughout the deck 3. Ensure proper contrast and readability 4. Maintain the theme's visual identity across all slides",
+    "folder_path": "theme-factory"
+  },
+  {
+    "name": "Algorithmic Art",
+    "slug": "algorithmic-art",
+    "description": "Skill for Algorithmic Art",
+    "folder_path": "algorithmic-art"
+  },
+  {
+    "name": "Internal Comms",
+    "slug": "internal-comms",
+    "description": "Skill for Internal Comms",
+    "folder_path": "internal-comms"
+  },
+  {
+    "name": "Skill Creator",
+    "slug": "skill-creator",
+    "description": "**Iteration workflow:**",
+    "folder_path": "skill-creator"
+  },
+  {
+    "name": "Canvas Design",
+    "slug": "canvas-design",
+    "description": "Skill for Canvas Design",
+    "folder_path": "canvas-design"
+  },
+  {
+    "name": "Slack GIF Creator",
+    "slug": "slack-gif-creator",
+    "description": "## Dependencies",
+    "folder_path": "slack-gif-creator"
+  },
+  {
+    "name": "Web Application Testing",
+    "slug": "webapp-testing",
+    "description": "## Reference Files",
+    "folder_path": "webapp-testing"
+  },
+  {
+    "name": "Frontend Design",
+    "slug": "frontend-design",
+    "description": "Skill for Frontend Design",
+    "folder_path": "frontend-design"
+  },
+  {
+    "name": "MCP Server Development Guide",
+    "slug": "mcp-builder",
+    "description": "- [⚡ TypeScript Implementation Guide](./reference/node_mcp_server.md) - Complete TypeScript guide with: - Project structure - Zod schema patterns - Tool registration with `server.registerTool` - Complete working examples - Quality checklist",
+    "folder_path": "mcp-builder"
+  },
+  {
+    "name": "Anthropic Brand Styling",
+    "slug": "brand-guidelines",
+    "description": "### Color Application",
+    "folder_path": "brand-guidelines"
+  },
+  {
+    "name": "Web Artifacts Builder",
+    "slug": "web-artifacts-builder",
+    "description": "## Reference",
+    "folder_path": "web-artifacts-builder"
+  }
+]

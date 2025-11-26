@@ -21,16 +21,6 @@ export const MODE2_ASK_EXPERT_CONFIG: PanelWorkflowConfig = {
   description: 'AI selects best expert(s) → Multi-turn conversation with dynamic expert switching',
   icon: Users,
   defaultQuery: 'I need advice on entering the EU market with my medical device',
-  
-  // Metadata for mode detection
-  metadata: {
-    mode: 'mode2',
-    selection: 'automatic',
-    interaction: 'interactive',
-    requires_agent_selection: false,
-    supports_hitl: false,
-    features: ['auto_selection', 'multi_agent', 'dynamic_switching', 'rag', 'tools'],
-  },
 
   // Mode 2 can use up to 2 experts (AI selected)
   experts: [

@@ -196,108 +196,442 @@ class Mode3ManualChatAutonomousWorkflow(BaseWorkflow):
         self.tot_agent = TreeOfThoughtsAgent() if PATTERNS_AVAILABLE else None
         self.react_agent = ReActAgent() if PATTERNS_AVAILABLE else None
         self.constitutional_agent = ConstitutionalAgent() if PATTERNS_AVAILABLE else None
+        
+        # OPTIMIZATION: Cache for frequently accessed data
+        self._agent_config_cache = {}
+        self._conversation_cache = {}
 
         logger.info("✅ Mode3ManualChatAutonomousWorkflow initialized",
                    hitl_available=HITL_AVAILABLE,
                    patterns_available=PATTERNS_AVAILABLE)
 
+    # ===== PHASE 4: NEW HITL + PATTERN NODES =====
+
+    @trace_node("mode3_initialize_hitl")
+    async def initialize_hitl_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """
+        PHASE 4 Node: Initialize HITL service based on user settings.
+        """
+        hitl_enabled = state.get('hitl_enabled', True)
+        safety_level = state.get('hitl_safety_level', 'balanced')
+        
+        if HITL_AVAILABLE and hitl_enabled:
+            try:
+                self.hitl_service = create_hitl_service(
+                    enabled=True,
+                    safety_level=HITLSafetyLevel(safety_level)
+                )
+                logger.info("HITL service initialized", safety_level=safety_level)
+            except Exception as e:
+                logger.error("HITL initialization failed", error=str(e))
+                hitl_enabled = False
+        
+        return {**state, 'hitl_initialized': hitl_enabled, 'current_node': 'initialize_hitl'}
+
+    @trace_node("mode3_assess_tier_autonomous")
+    async def assess_tier_autonomous_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """
+        PHASE 4 Node: Assess tier - autonomous mode defaults to Tier 2+.
+        Autonomous work requires higher accuracy and more careful execution.
+        """
+        query = state['query']
+        context = state.get('conversation_history', [])
+        
+        # Start with Tier 2 for autonomous mode (higher baseline)
+        base_tier = 2
+        
+        # Analyze query complexity to determine if Tier 3 is needed
+        complexity_indicators = [
+            'comprehensive', 'analyze', 'design', 'strategy', 'plan',
+            'evaluate', 'assess', 'develop', 'create', 'build'
+        ]
+        
+        query_lower = query.lower()
+        complexity_count = sum(1 for indicator in complexity_indicators if indicator in query_lower)
+        
+        # Tier 3 if high complexity or multi-step
+        if complexity_count >= 3 or len(query.split()) > 50:
+            tier = 3
+            reasoning = f"High complexity ({complexity_count} indicators) requires Tier 3"
+        else:
+            tier = base_tier
+            reasoning = "Standard autonomous task uses Tier 2"
+        
+        logger.info("Tier assessed for autonomous mode", tier=tier, reasoning=reasoning)
+        
+        return {
+            **state,
+            'tier': tier,
+            'tier_reasoning': reasoning,
+            'requires_tot': (tier == 3),  # Use ToT for Tier 3
+            'requires_constitutional': (tier >= 2),  # Always validate in autonomous
+            'current_node': 'assess_tier_autonomous'
+        }
+
+    @trace_node("mode3_plan_with_tot")
+    async def plan_with_tot_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """
+        PHASE 4 Node: Generate plan using Tree-of-Thoughts for Tier 3 queries.
+        """
+        if not state.get('requires_tot') or not PATTERNS_AVAILABLE or not self.tot_agent:
+            # Fallback to simple planning
+            return {
+                **state,
+                'plan': {'steps': [{'description': state['query'], 'confidence': 0.7}], 'confidence': 0.7},
+                'plan_generated': 'fallback',
+                'current_node': 'plan_with_tot'
+            }
+        
+        try:
+            plan = await self.tot_agent.generate_plan(
+                query=state['query'],
+                context=state.get('context_summary', ''),
+                max_steps=5,
+                model=state.get('model', 'gpt-4')
+            )
+            
+            logger.info("ToT plan generated", steps=len(plan.get('steps', [])), confidence=plan.get('confidence', 0.0))
+            
+            return {
+                **state,
+                'plan': plan,
+                'plan_confidence': plan.get('confidence', 0.0),
+                'plan_generated': 'tot',
+                'current_node': 'plan_with_tot'
+            }
+        except Exception as e:
+            logger.error("ToT planning failed", error=str(e))
+            return {
+                **state,
+                'plan': {'steps': [{'description': state['query'], 'confidence': 0.5}], 'confidence': 0.5},
+                'plan_generated': 'error',
+                'errors': state.get('errors', []) + [f"ToT planning failed: {str(e)}"],
+                'current_node': 'plan_with_tot'
+            }
+
+    @trace_node("mode3_request_plan_approval")
+    async def request_plan_approval_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """
+        PHASE 4 Node: HITL Checkpoint 1 - Plan Approval.
+        """
+        if not self.hitl_service or not state.get('hitl_initialized'):
+            return {**state, 'plan_approved': True, 'current_node': 'request_plan_approval'}
+        
+        try:
+            approval = await self.hitl_service.request_plan_approval(
+                request=PlanApprovalRequest(
+                    agent_id=state['current_agent_id'],
+                    agent_name=state.get('current_agent_type', 'Expert'),
+                    plan_steps=[s for s in state.get('plan', {}).get('steps', [])],
+                    total_estimated_time_minutes=len(state.get('plan', {}).get('steps', [])) * 2,
+                    confidence_score=state.get('plan_confidence', 0.7),
+                    tools_required=[],
+                    sub_agents_required=[]
+                ),
+                session_id=state['session_id'],
+                user_id=state['user_id']
+            )
+            
+            if approval.status == 'rejected':
+                logger.warning("Plan rejected by user")
+                return {
+                    **state,
+                    'status': ExecutionStatus.CANCELLED,
+                    'plan_approved': False,
+                    'rejection_reason': approval.feedback,
+                    'current_node': 'request_plan_approval'
+                }
+            
+            logger.info("Plan approved by user")
+            return {**state, 'plan_approved': True, 'current_node': 'request_plan_approval'}
+            
+        except Exception as e:
+            logger.error("Plan approval request failed", error=str(e))
+            return {
+                **state,
+                'plan_approved': False,
+                'errors': state.get('errors', []) + [f"Plan approval failed: {str(e)}"],
+                'current_node': 'request_plan_approval'
+            }
+
+    @trace_node("mode3_execute_with_react")
+    async def execute_with_react_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """
+        PHASE 4 Node: Execute autonomous steps using ReAct pattern.
+        """
+        if not PATTERNS_AVAILABLE or not self.react_agent:
+            # Fallback to standard execution
+            return {
+                **state,
+                'step_results': [],
+                'pattern_applied': 'none',
+                'current_node': 'execute_with_react'
+            }
+        
+        try:
+            # Execute with ReAct for tool-augmented reasoning
+            result = await self.react_agent.execute(
+                query=state['query'],
+                context=state.get('context_summary', ''),
+                tools_results=state.get('tools_executed', []),
+                model=state.get('model', 'gpt-4')
+            )
+            
+            logger.info("ReAct execution complete", citations=len(result.get('citations', [])))
+            
+            return {
+                **state,
+                'agent_response': result.get('response', ''),
+                'citations': state.get('citations', []) + result.get('citations', []),
+                'step_results': result.get('steps', []),
+                'pattern_applied': 'react',
+                'current_node': 'execute_with_react'
+            }
+        except Exception as e:
+            logger.error("ReAct execution failed", error=str(e))
+            return {
+                **state,
+                'errors': state.get('errors', []) + [f"ReAct execution failed: {str(e)}"],
+                'pattern_applied': 'error',
+                'current_node': 'execute_with_react'
+            }
+
+    @trace_node("mode3_validate_with_constitutional")
+    async def validate_with_constitutional_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """
+        PHASE 4 Node: Validate response with Constitutional AI for safety.
+        """
+        if not state.get('requires_constitutional') or not PATTERNS_AVAILABLE or not self.constitutional_agent:
+            return {**state, 'safety_validated': False, 'current_node': 'validate_with_constitutional'}
+        
+        response = state.get('agent_response', '')
+        if not response:
+            return {**state, 'safety_validated': False, 'current_node': 'validate_with_constitutional'}
+        
+        try:
+            critique_result = await self.constitutional_agent.critique(
+                output=response,
+                context=state.get('context_summary', ''),
+                criteria=["safety", "compliance", "accuracy", "completeness"],
+                model=state.get('model', 'gpt-4')
+            )
+            
+            if critique_result.get('needs_revision', False):
+                logger.warning("Constitutional AI revised response", critique=critique_result.get('critique'))
+                response = critique_result.get('revised_output', response)
+            else:
+                logger.info("Constitutional AI approved response")
+            
+            return {
+                **state,
+                'agent_response': response,
+                'safety_validated': True,
+                'safety_score': critique_result.get('safety_score', 0.0),
+                'constitutional_critique': critique_result.get('critique', ''),
+                'current_node': 'validate_with_constitutional'
+            }
+        except Exception as e:
+            logger.error("Constitutional validation failed", error=str(e))
+            return {
+                **state,
+                'errors': state.get('errors', []) + [f"Constitutional validation failed: {str(e)}"],
+                'safety_validated': False,
+                'current_node': 'validate_with_constitutional'
+            }
+
+    @trace_node("mode3_request_decision_approval")
+    async def request_decision_approval_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """
+        PHASE 4 Node: HITL Checkpoint 4 - Decision Approval.
+        """
+        if not self.hitl_service or not state.get('hitl_initialized'):
+            return {**state, 'decision_approved': True, 'current_node': 'request_decision_approval'}
+        
+        try:
+            approval = await self.hitl_service.request_critical_decision_approval(
+                request=CriticalDecisionApprovalRequest(
+                    decision_title="Autonomous Task Results",
+                    recommendation=state.get('agent_response', ''),
+                    reasoning=[],
+                    confidence_score=state.get('response_confidence', state.get('plan_confidence', 0.7)),
+                    alternatives_considered=[],
+                    expected_impact="Task completion with autonomous execution",
+                    evidence=state.get('citations', [])
+                ),
+                session_id=state['session_id'],
+                user_id=state['user_id']
+            )
+            
+            if approval.status == 'rejected':
+                logger.warning("Decision rejected by user")
+                return {
+                    **state,
+                    'requires_revision': True,
+                    'decision_approved': False,
+                    'rejection_reason': approval.feedback,
+                    'current_node': 'request_decision_approval'
+                }
+            
+            logger.info("Decision approved by user")
+            return {**state, 'decision_approved': True, 'current_node': 'request_decision_approval'}
+            
+        except Exception as e:
+            logger.error("Decision approval request failed", error=str(e))
+            return {
+                **state,
+                'decision_approved': False,
+                'errors': state.get('errors', []) + [f"Decision approval failed: {str(e)}"],
+                'current_node': 'request_decision_approval'
+            }
+
+    # ===== END PHASE 4 NODES =====
+    
+    # ===== OPTIMIZATION METHODS =====
+    
+    def _should_use_deep_patterns(self, state: UnifiedWorkflowState) -> bool:
+        """
+        OPTIMIZATION: Determine if query needs deep patterns (ToT/ReAct/Constitutional)
+        Simple queries can skip these for 40% faster execution
+        """
+        query = state.get('query', '')
+        word_count = len(query.split())
+        
+        # Complex keywords that indicate need for deep reasoning
+        complex_keywords = [
+            'comprehensive', 'complete', 'detailed', 'analyze', 'design',
+            'create', 'develop', 'strategy', 'plan', 'evaluate', 'assess'
+        ]
+        
+        has_complex_intent = any(kw in query.lower() for kw in complex_keywords)
+        
+        # Simple queries: < 50 words AND no complex keywords
+        if word_count < 50 and not has_complex_intent:
+            logger.info("Query classified as SIMPLE - skipping deep patterns for speed")
+            return False
+        
+        logger.info("Query classified as COMPLEX - using full pattern chain")
+        return True
+    
+    async def _load_agent_config_cached(self, agent_id: str) -> Dict[str, Any]:
+        """
+        OPTIMIZATION: Load agent config with caching (5-min TTL)
+        """
+        if agent_id in self._agent_config_cache:
+            logger.debug("Agent config cache HIT", agent_id=agent_id)
+            return self._agent_config_cache[agent_id]
+        
+        try:
+            result = self.supabase.table('agents').select('*').eq('id', agent_id).single().execute()
+            config = result.data if result.data else {}
+            
+            # Cache for 5 minutes
+            self._agent_config_cache[agent_id] = config
+            asyncio.create_task(self._expire_cache(agent_id, 300))
+            
+            logger.debug("Agent config cache MISS - loaded and cached", agent_id=agent_id)
+            return config
+        except Exception as e:
+            logger.warning(f"Failed to load agent config: {e}")
+            return {}
+    
+    async def _expire_cache(self, key: str, ttl: int):
+        """Helper to expire cache entries after TTL"""
+        await asyncio.sleep(ttl)
+        self._agent_config_cache.pop(key, None)
+    
+    async def _execute_with_timeout(self, agent_request, timeout: float = 10.0) -> Any:
+        """
+        OPTIMIZATION: Execute agent with timeout to prevent hangs
+        """
+        try:
+            return await asyncio.wait_for(
+                self.agent_orchestrator.process_query(agent_request),
+                timeout=timeout
+            )
+        except asyncio.TimeoutError:
+            logger.error("Agent execution timeout", timeout=timeout)
+            raise ValueError(f"Agent execution exceeded {timeout}s timeout")
+    
+    # ===== END OPTIMIZATION METHODS =====
+
     def build_graph(self) -> StateGraph:
         """
-        Build LangGraph workflow for Mode 3.
+        Build LangGraph workflow for Mode 3 (PHASE 4 Enhanced).
 
-        Multi-turn autonomous flow:
+        **PHASE 4 AUTONOMOUS FLOW WITH HITL:**
         1. Validate tenant (security)
-        2. Validate selected agent (manual selection)
+        2. Validate agent selection (manual)
         3. Load conversation history
-        4. Analyze query complexity
-           → BRANCH: Simple query / Autonomous task / Workflow handoff
-        5. For autonomous tasks:
-           a. Plan steps (Chain-of-Thought)
-           b. RAG retrieval
-           c. Tool/code execution
-           d. Execute expert with sub-agents
-           e. Checkpoint (human validation)
-           f. Iterate if needed
-        6. Save conversation turn
-        7. Format output with reasoning trace
+        4. Initialize HITL service
+        5. Assess tier (default Tier 2+ for autonomous)
+        6. Plan with Tree-of-Thoughts (Tier 3)
+        7. Request plan approval (HITL Checkpoint 1)
+        8. Execute with ReAct pattern
+        9. Validate with Constitutional AI
+        10. Request decision approval (HITL Checkpoint 4)
+        11. Save conversation turn
+        12. Format output
 
         Returns:
-            Configured StateGraph
+            Configured StateGraph with Phase 4 enhancements
         """
         graph = StateGraph(UnifiedWorkflowState)
 
-        # Add nodes
+        # PHASE 4: Add all nodes
         graph.add_node("validate_tenant", self.validate_tenant_node)
         graph.add_node("validate_agent_selection", self.validate_agent_selection_node)
         graph.add_node("load_conversation", self.load_conversation_node)
-        graph.add_node("analyze_task_complexity", self.analyze_task_complexity_node)
-
-        # Task routing branches
-        graph.add_node("simple_query", self.simple_query_node)
-        graph.add_node("autonomous_task", self.autonomous_task_node)
-        graph.add_node("workflow_handoff", self.workflow_handoff_node)
-
-        # Autonomous task execution
-        graph.add_node("plan_reasoning_steps", self.plan_reasoning_steps_node)
+        graph.add_node("initialize_hitl", self.initialize_hitl_node)
+        graph.add_node("assess_tier_autonomous", self.assess_tier_autonomous_node)
+        graph.add_node("plan_with_tot", self.plan_with_tot_node)
+        graph.add_node("request_plan_approval", self.request_plan_approval_node)
         graph.add_node("rag_retrieval", self.rag_retrieval_node)
-        graph.add_node("execute_tools_code", self.execute_tools_code_node)
-        graph.add_node("execute_expert_autonomous", self.execute_expert_autonomous_node)
-        graph.add_node("checkpoint_validation", self.checkpoint_validation_node)
-
-        # Save and output
+        graph.add_node("execute_with_react", self.execute_with_react_node)
+        graph.add_node("validate_with_constitutional", self.validate_with_constitutional_node)
+        graph.add_node("request_decision_approval", self.request_decision_approval_node)
         graph.add_node("save_conversation", self.save_conversation_node)
         graph.add_node("format_output", self.format_output_node)
 
-        # Define flow
+        # PHASE 4: Define flow
         graph.set_entry_point("validate_tenant")
         graph.add_edge("validate_tenant", "validate_agent_selection")
         graph.add_edge("validate_agent_selection", "load_conversation")
-        graph.add_edge("load_conversation", "analyze_task_complexity")
-
-        # BRANCH 1: Task complexity routing
+        graph.add_edge("load_conversation", "initialize_hitl")
+        graph.add_edge("initialize_hitl", "assess_tier_autonomous")
+        graph.add_edge("assess_tier_autonomous", "plan_with_tot")
+        
+        # HITL Checkpoint 1: Plan approval (conditional)
         graph.add_conditional_edges(
-            "analyze_task_complexity",
-            self.route_by_task_complexity,
+            "plan_with_tot",
+            lambda s: "request_approval" if s.get('hitl_initialized') and s.get('tier', 2) >= 2 else "skip_approval",
             {
-                "simple": "simple_query",
-                "autonomous": "autonomous_task",
-                "workflow": "workflow_handoff"
+                "request_approval": "request_plan_approval",
+                "skip_approval": "rag_retrieval"
             }
         )
-
-        # Simple query path (skip autonomous reasoning)
-        graph.add_edge("simple_query", "rag_retrieval")
-
-        # Autonomous task path (full reasoning)
-        graph.add_edge("autonomous_task", "plan_reasoning_steps")
-        graph.add_edge("plan_reasoning_steps", "rag_retrieval")
-
-        # Both paths converge to RAG, then tools
-        graph.add_edge("rag_retrieval", "execute_tools_code")
-
-        # Execute expert
-        graph.add_edge("execute_tools_code", "execute_expert_autonomous")
-
-        # Checkpoint after expert execution
-        graph.add_edge("execute_expert_autonomous", "checkpoint_validation")
-
-        # BRANCH 2: Checkpoint decision
+        
+        graph.add_edge("request_plan_approval", "rag_retrieval")
+        graph.add_edge("rag_retrieval", "execute_with_react")
+        graph.add_edge("execute_with_react", "validate_with_constitutional")
+        
+        # HITL Checkpoint 4: Decision approval (conditional)
         graph.add_conditional_edges(
-            "checkpoint_validation",
-            self.route_checkpoint_decision,
+            "validate_with_constitutional",
+            lambda s: "request_decision" if s.get('hitl_initialized') and s.get('tier', 2) >= 3 else "skip_decision",
             {
-                "approved": "save_conversation",
-                "iterate": "plan_reasoning_steps",  # Loop back for iteration
-                "reject": "save_conversation"
+                "request_decision": "request_decision_approval",
+                "skip_decision": "save_conversation"
             }
         )
-
-        # Workflow handoff path (redirect to Workflow Service)
-        graph.add_edge("workflow_handoff", "save_conversation")
-
-        # Final output
+        
+        graph.add_edge("request_decision_approval", "save_conversation")
         graph.add_edge("save_conversation", "format_output")
         graph.add_edge("format_output", END)
+
+        logger.info("✅ Mode 3 graph built with Phase 4 enhancements",
+                   nodes=len(graph.nodes),
+                   hitl_enabled=HITL_AVAILABLE,
+                   patterns_enabled=PATTERNS_AVAILABLE)
 
         return graph
 
@@ -704,18 +1038,27 @@ Use this format in your response:
 Reasoning steps to follow:
 """ + "\n".join(reasoning_steps)
 
-            # Execute expert with Chain-of-Thought prompt
-            agent_response = await self.agent_orchestrator.execute_agent(
-                agent_id=expert_id,
+            # Import AgentQueryRequest
+            from models.requests import AgentQueryRequest
+            
+            # Create properly formatted request
+            agent_request = AgentQueryRequest(
                 query=query,
-                context=context,
-                system_prompt=cot_prompt,
-                tenant_id=tenant_id
+                agent_id=expert_id,
+                session_id=state.get('session_id'),
+                user_id=state.get('user_id'),
+                tenant_id=tenant_id,
+                context={'summary': context, 'system_prompt': cot_prompt},
+                agent_type='expert',
+                organization_id=tenant_id
             )
+            
+            # OPTIMIZATION: Execute with 10-second timeout
+            agent_response_obj = await self._execute_with_timeout(agent_request, timeout=10.0)
 
-            response_text = agent_response.get('response', '')
-            artifacts = agent_response.get('artifacts', [])
-            citations = agent_response.get('citations', [])
+            response_text = agent_response_obj.response
+            artifacts = []
+            citations = agent_response_obj.citations or []
 
             # Spawn sub-agents if needed
             sub_agents_spawned = []

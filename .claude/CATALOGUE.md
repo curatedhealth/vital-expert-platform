@@ -96,6 +96,7 @@
     │   ├── jtbds/                             Jobs-to-Be-Done framework
     │   ├── workflows/                         Workflow templates
     │   ├── prompts/                           Prompt library
+    │   ├── users/                             User management system ✨ NEW!
     │   └── tools/                             Platform tools
     │
     ├── services/                              🚀 Service Documentation
@@ -432,6 +433,7 @@
 |------------|----------|-------|-------|
 | **Production Agents** | agents/ | 14 agents | Multiple |
 | **Platform Agents** (User-facing) | docs/platform/agents/ | 50+ files | Data Architecture Expert |
+| **User Management System** | docs/platform/users/ | 9 files | Data Architecture Expert |
 | **Personas** | docs/platform/personas/ | Multiple | PRD Architect |
 | **JTBDs** | docs/platform/jtbds/ | Multiple | PRD Architect |
 | **Workflows** | docs/platform/workflows/ | Multiple | LangGraph Workflow Translator |
@@ -500,6 +502,7 @@
 **Data Architecture Expert** owns:
 - Database schemas
 - User-facing VITAL agents documentation
+- User management system documentation
 - Knowledge domains
 - Data architecture
 
@@ -584,7 +587,10 @@
 ## 📝 Common Queries
 
 ### "Where is the database schema?"
-**Answer**: `docs/architecture/data-schema/`
+**Answer**: 
+- **Agent Schema**: `docs/platform/agents/` (489 agents, AgentOS 3.0)
+- **User Schema**: `docs/platform/users/schema/` (14 user tables)
+- **General Schema**: `docs/architecture/data-schema/`
 
 ---
 
@@ -822,3 +828,204 @@ This CATALOGUE represents **enterprise-grade documentation management** designed
 **Version History**:
 - v2.0.0 (Nov 23, 2025) - Complete restructure to reflect .claude/ organization, added governance documents, updated navigation
 - v1.0.0 (Nov 22, 2025) - Initial version (legacy .vital-command-center structure)
+
+---
+
+## 🤖 AgentOS 3.0 - Production-Ready Agent System
+
+**Location**: `docs/platform/agents/`  
+**Version**: 1.0.0  
+**Status**: ✅ Production-Ready (100% Complete)  
+**Last Updated**: November 26, 2025  
+**Total Agents**: 489 fully enriched agents  
+**Maintainer**: AI Engineering Team
+
+### Quick Navigation
+
+| I Need... | Go To... | Description |
+|-----------|----------|-------------|
+| **Overview & Setup** | [README.md](docs/platform/agents/README.md) | Master index, quick start, API examples |
+| **Complete Schema** | [AGENT_SCHEMA_SPEC.md](docs/platform/agents/AGENT_SCHEMA_SPEC.md) | 35+ tables, relationships, full spec |
+| **Quick SQL Reference** | [AGENT_SCHEMA_REFERENCE.md](docs/platform/agents/AGENT_SCHEMA_REFERENCE.md) | Copy-paste queries, troubleshooting |
+| **Visual Architecture** | [AGENT_SCHEMA_ARCHITECTURE.md](docs/platform/agents/AGENT_SCHEMA_ARCHITECTURE.md) | ERD diagrams, relationships |
+| **Enrichment Status** | [AGENT_ENRICHMENT_REPORT.md](docs/platform/agents/AGENT_ENRICHMENT_REPORT.md) | 100% complete verification |
+| **SQL Seeds** | [sql-seeds/](docs/platform/agents/sql-seeds/) | 12 migration/seed files |
+| **Medical Affairs** | [MEDICAL_AFFAIRS_ENRICHMENT_REPORT.md](docs/platform/agents/MEDICAL_AFFAIRS_ENRICHMENT_REPORT.md) | Function-specific docs |
+| **Market Access** | [MARKET_ACCESS_SUMMARY.md](docs/platform/agents/MARKET_ACCESS_SUMMARY.md) | 5-level hierarchy |
+| **Workflows** | [AGENT_WORKFLOW_GUIDE.md](docs/platform/agents/AGENT_WORKFLOW_GUIDE.md) | Agent workflow patterns |
+
+### Key Documentation Files
+
+```
+docs/platform/agents/
+│
+├── 📖 README.md (v1.0.0)                     Master index & navigation
+│
+├── 📐 Schema Documentation
+│   ├── AGENT_SCHEMA_SPEC.md                  Complete technical specification
+│   ├── AGENT_SCHEMA_REFERENCE.md             Quick SQL reference & snippets
+│   └── AGENT_SCHEMA_ARCHITECTURE.md          Visual ERD & architecture
+│
+├── ✅ Enrichment Documentation
+│   ├── AGENT_ENRICHMENT_REPORT.md            Status & verification (100% complete)
+│   ├── AGENT_ENRICHMENT_REFERENCE.md         Quick enrichment reference
+│   └── AGENT_ENRICHMENT_PLAN.md              Master enrichment plan
+│
+├── 🚀 Implementation & Delivery
+│   ├── AGENTOS_3_DELIVERY_REPORT.md          Final delivery summary
+│   └── AGENTOS_3_IMPLEMENTATION_GUIDE.md     Implementation phases
+│
+├── 🏥 Function-Specific Documentation
+│   ├── MEDICAL_AFFAIRS_ENRICHMENT_REPORT.md  Medical Affairs agents
+│   └── MARKET_ACCESS_SUMMARY.md              Market Access completion
+│
+├── 🔄 Workflows
+│   └── AGENT_WORKFLOW_GUIDE.md               Workflow patterns & integration
+│
+└── 💾 sql-seeds/ (12 files)
+    ├── 20251126-alter-agents-system-prompts.sql
+    ├── 20251126-link-agents-to-templates.sql
+    ├── 20251126-assign-agent-capabilities.sql
+    ├── 20251126-assign-agent-skills.sql
+    ├── 20251126-assign-agent-knowledge-domains.sql
+    ├── 20251125-agent-relationships-workflows.sql
+    ├── 20251126-system-prompt-infrastructure.sql
+    ├── 20251126-system-prompt-seed-data.sql
+    ├── 20251126-system-prompt-l2-l3-templates.sql
+    ├── 20251126-system-prompt-l4-l5-templates.sql
+    ├── 20251126-medical-affairs-capabilities.sql
+    └── 20251126-drop-agentos3-tables.sql
+```
+
+### What's Inside
+
+**🎯 5-Level Agent Hierarchy**:
+- **L1 MASTER** (24 agents) - Strategic orchestrators
+- **L2 EXPERT** (110 agents) - Domain specialists
+- **L3 SPECIALIST** (266 agents) - Focused experts
+- **L4 WORKER** (39 agents) - Task executors
+- **L5 TOOL** (50 agents) - Automated functions
+
+**📊 Database Schema (35+ tables)**:
+- Core: `agents`, `agent_levels`, `system_prompt_templates`
+- Relationships: `agent_relationships`, `agent_workflows`
+- Enrichment: `agent_capabilities`, `agent_skills`, `agent_knowledge_domains`
+- Organization: `org_functions`, `org_departments`, `org_roles`
+- Supporting: `capabilities`, `skills`, `knowledge_domains`, `llm_models`
+
+**✅ Complete Enrichment**:
+- ✅ 100% System Prompt Templates (5/5 levels)
+- ✅ 100% Agent Descriptions (489/489 agents)
+- ✅ 100% Capabilities (489/489 agents)
+- ✅ 100% Skills (489/489 agents, 33-56 per agent)
+- ✅ 100% Knowledge Domains (489/489 agents)
+- ✅ 440 Agent Relationships defined
+
+**🏢 Multi-Tenant Support**:
+- **Pharma**: 400+ agents across 8 functions
+- **Digital Health**: 89 agents across 6 functions
+
+### SQL Migration Order
+
+Run these seeds in order for complete setup:
+
+1. **Infrastructure**: `20251126-system-prompt-infrastructure.sql`
+2. **Alter Agents**: `20251126-alter-agents-system-prompts.sql`
+3. **Seed Prompts**: `20251126-system-prompt-seed-data.sql`
+4. **L2/L3 Templates**: `20251126-system-prompt-l2-l3-templates.sql`
+5. **L4/L5 Templates**: `20251126-system-prompt-l4-l5-templates.sql`
+6. **Link Templates**: `20251126-link-agents-to-templates.sql`
+7. **Capabilities**: `20251126-assign-agent-capabilities.sql`
+8. **Skills**: `20251126-assign-agent-skills.sql`
+9. **Knowledge Domains**: `20251126-assign-agent-knowledge-domains.sql`
+10. **Relationships**: `20251125-agent-relationships-workflows.sql`
+
+### Quick Start Queries
+
+```sql
+-- Get all L2 Expert agents in Medical Affairs
+SELECT a.name, a.tagline, a.department_name
+FROM agents a
+JOIN agent_levels al ON a.agent_level_id = al.id
+WHERE al.level_number = 2
+  AND a.function_name = 'Medical Affairs'
+  AND a.status = 'active';
+
+-- Get agent with full profile
+SELECT 
+    a.name, a.tagline,
+    (SELECT COUNT(*) FROM agent_capabilities WHERE agent_id = a.id) as capabilities,
+    (SELECT COUNT(*) FROM agent_skills WHERE agent_id = a.id) as skills
+FROM agents a
+WHERE a.slug = 'your-agent-slug';
+```
+
+### Status & Metrics
+
+- **Status**: ✅ Production-Ready
+- **Completion**: 100%
+- **Total Agents**: 489
+- **Agent Levels**: 5 (L1-L5)
+- **Functions**: 8 (Pharma) + 6 (Digital Health)
+- **Capabilities**: 30+ defined
+- **Skills**: 150+ defined
+- **Knowledge Domains**: 50+ defined
+- **Relationships**: 440 defined
+
+---
+
+**Last Updated**: November 26, 2025  
+**Version**: 1.0.0  
+**Next Review**: December 26, 2025
+
+---
+
+## 📊 User Management System - Documentation Hub
+
+**Location**: `docs/platform/users/`  
+**Version**: 3.0.0  
+**Status**: ✅ Production-Ready (100% Complete)  
+**Last Updated**: November 25, 2025  
+**Maintainer**: Data Architecture Expert
+
+### Quick Navigation
+
+| I Need... | Go To... | Description |
+|-----------|----------|-------------|
+| **Overview** | [README.md](docs/platform/users/README.md) | Start here for navigation |
+| **Quick Reference** | [INDEX.md](docs/platform/users/INDEX.md) | Fast lookup guide |
+| **User Agents Schema** | [USER_AGENTS_SCHEMA.md](docs/platform/users/schema/USER_AGENTS_SCHEMA.md) | 54-column table spec |
+| **Complete User Schema** | [USER_DATA_SCHEMA_COMPLETE.md](docs/platform/users/schema/USER_DATA_SCHEMA_COMPLETE.md) | All 14 user tables |
+| **Database Design** | [DATABASE_NORMALIZATION_GUIDE.md](docs/platform/users/schema/DATABASE_NORMALIZATION_GUIDE.md) | 3NF principles |
+| **API Reference** | [USER_AGENTS_API_REFERENCE.md](docs/platform/users/api/USER_AGENTS_API_REFERENCE.md) | REST API docs |
+| **Getting Started** | [GETTING_STARTED_GUIDE.md](docs/platform/users/guides/GETTING_STARTED_GUIDE.md) | 5-minute setup |
+| **Migration History** | [MIGRATION_HISTORY.md](docs/platform/users/migrations/MIGRATION_HISTORY.md) | v1.0.0 → v3.0.0 |
+| **Test Data** | [USER_MANAGEMENT_TEST_DATA.sql](docs/platform/users/seeds/USER_MANAGEMENT_TEST_DATA.sql) | Sample data |
+
+### What's Inside
+
+**📊 Database Tables (14 tables)**:
+- `user_agents` (54 columns) - User-agent relationships
+- `user_profiles` - User information
+- `user_memory` - AI memory with vectors
+- `user_sessions` - Session analytics
+- `user_favorites`, `user_ratings`, `user_roles`, `llm_usage_logs`, `quota_tracking`, `rate_limit_*`
+
+**✅ Key Features**:
+- 54-column normalized schema (3NF)
+- 23 performance indexes
+- 6 RLS policies
+- 5 helper functions
+- 4 pre-built views
+- Complete API documentation
+- React Query hooks
+- Test data with 5 users
+
+### Status
+
+- **Status**: ✅ Production-Ready
+- **Completion**: 100%
+- **Documentation Files**: 9
+- **Total Tables**: 14
+
+---

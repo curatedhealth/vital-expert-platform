@@ -673,10 +673,36 @@ class Mode4AutoChatAutonomousWorkflow(BaseWorkflow):
             
             selected_agent_ids = selection_result.get('agent_ids', [])
             reasoning = f"Fallback selection{': ' + error if error else ''}"
-            
+
             if not selected_agent_ids:
-                selected_agent_ids = ['regulatory_expert']  # Ultimate fallback
-            
+                # Ultimate fallback: get any active agent from database
+                try:
+                    from services.supabase_client import get_supabase_client
+                    supabase = get_supabase_client()
+                    fallback_agents = await supabase.get_all_agents(tenant_id=tenant_id, status="active", limit=1)
+                    if fallback_agents and len(fallback_agents) > 0:
+                        selected_agent_ids = [fallback_agents[0]['id']]
+                        logger.info("Using first available agent as fallback", agent_id=selected_agent_ids[0])
+                    else:
+                        # If still no agents, return error state
+                        logger.error("No agents available in database")
+                        return {
+                            **state,
+                            'selected_agents': [],
+                            'selection_reasoning': 'No agents available',
+                            'selection_confidence': 0.0,
+                            'errors': state.get('errors', []) + ['No agents available in database']
+                        }
+                except Exception as e3:
+                    logger.error("Fallback agent query failed", error=str(e3))
+                    return {
+                        **state,
+                        'selected_agents': [],
+                        'selection_reasoning': 'Fallback failed',
+                        'selection_confidence': 0.0,
+                        'errors': state.get('errors', []) + [f'Fallback failed: {str(e3)}']
+                    }
+
             logger.info("Fallback expert selection (Mode 4)", experts=selected_agent_ids)
             
             return {
@@ -689,11 +715,12 @@ class Mode4AutoChatAutonomousWorkflow(BaseWorkflow):
             }
         except Exception as e2:
             logger.error("Fallback selection also failed", error=str(e2))
+            # Return empty agents list - will be handled by downstream nodes
             return {
                 **state,
-                'selected_agents': ['regulatory_expert'],
-                'selection_reasoning': 'Ultimate fallback',
-                'selection_confidence': 0.3,
+                'selected_agents': [],
+                'selection_reasoning': 'All selection methods failed',
+                'selection_confidence': 0.0,
                 'tier': 3,
                 'errors': state.get('errors', []) + [f"Selection failed: {error or str(e2)}"]
             }
@@ -852,13 +879,16 @@ class Mode4AutoChatAutonomousWorkflow(BaseWorkflow):
         rag_documents = []
 
         try:
-            rag_results = await self.rag_service.search(
-                query=query,
+            # Use true_hybrid search (Neo4j + Pinecone + Supabase)
+            rag_results = await self.rag_service.query(
+                query_text=query,
                 tenant_id=tenant_id,
                 agent_id=expert_id,
-                max_results=10
+                max_results=10,
+                strategy="true_hybrid",  # Use true hybrid: Neo4j (KG) + Pinecone (vector) + Supabase (relational)
+                similarity_threshold=0.7
             )
-            rag_documents = rag_results.get('documents', [])
+            rag_documents = rag_results.get('sources', []) or rag_results.get('documents', [])
             context = self._create_context_summary(rag_documents)
         except Exception as e:
             logger.error(f"RAG failed for {expert_id}", error=str(e))

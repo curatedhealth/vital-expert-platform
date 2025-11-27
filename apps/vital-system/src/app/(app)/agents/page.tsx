@@ -182,48 +182,84 @@ function AgentsPageContent() {
         let errorText = '';
         
         try {
-          errorText = await response.text();
-          console.log('📄 [Add to Chat] Raw response:', errorText);
-          
-          // Try to parse as JSON
-          if (errorText) {
-            try {
-              errorData = JSON.parse(errorText);
-            } catch (parseError) {
-              console.warn('⚠️ [Add to Chat] Response is not JSON:', errorText);
-              errorData = { error: errorText };
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            errorData = await response.json();
+          } else {
+            errorText = await response.text();
+            console.log('📄 [Add to Chat] Raw response:', errorText);
+            
+            // Try to parse as JSON even if content-type doesn't say so
+            if (errorText) {
+              try {
+                errorData = JSON.parse(errorText);
+              } catch (parseError) {
+                console.warn('⚠️ [Add to Chat] Response is not JSON:', errorText);
+                errorData = { error: errorText, message: errorText };
+              }
             }
           }
         } catch (readError) {
           console.error('❌ [Add to Chat] Failed to read response:', readError);
+          errorData = { 
+            error: 'Failed to read error response',
+            message: `HTTP ${response.status}: ${response.statusText}`,
+          };
         }
 
-        console.error('❌ Failed to add agent to chat:', {
+        // Better error logging with all available information
+        const errorDetails = {
           status: response.status,
           statusText: response.statusText,
-          errorData,
-          errorText,
-        });
+          errorData: errorData || {},
+          errorText: errorText || 'No error text available',
+          errorMessage: errorData?.error || errorData?.message || errorData?.details?.message || errorText || 'Unknown error',
+          errorCode: errorData?.code,
+          requestId: errorData?.requestId,
+        };
+        
+        console.error('❌ Failed to add agent to chat:', errorDetails);
 
         if (response.status === 409) {
           console.log(`ℹ️ Agent "${agent.display_name}" is already in your chat list`);
           alert(`"${agent.display_name}" is already in your chat list.`);
+          return;
+        } else if (response.status === 503) {
+          // Service unavailable - likely missing table or Supabase config
+          const message = errorData?.message || errorData?.error || 'Database service is temporarily unavailable.';
+          console.warn('⚠️ [Add to Chat] Service unavailable:', message);
+          alert(`Service temporarily unavailable:\n\n${message}\n\nThe agent may still be available in your chat list.`);
+          // Still try to navigate - the agent might be available via fallback
+          queryClient.invalidateQueries({ queryKey: ['user-agents', user.id] });
+          router.push('/chat');
+          return;
         } else {
           // Construct user-friendly error message
           let errorMessage = 'Unknown error';
           
-          if (errorData.errors) {
+          if (errorData?.errors && typeof errorData.errors === 'object') {
             // Validation errors object
             errorMessage = Object.entries(errorData.errors)
-              .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+              .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : String(messages)}`)
               .join('\n');
-          } else if (errorData.error) {
+          } else if (errorData?.error) {
             errorMessage = errorData.error;
-          } else if (errorData.message) {
+            if (errorData?.message && errorData.message !== errorData.error) {
+              errorMessage += `\n${errorData.message}`;
+            }
+          } else if (errorData?.message) {
             errorMessage = errorData.message;
           } else if (errorText) {
             errorMessage = errorText.substring(0, 200); // Limit length
+          } else {
+            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
           }
+          
+          console.error('❌ [Add to Chat] Error details:', {
+            status: response.status,
+            errorMessage,
+            errorData,
+          });
           
           alert(`Failed to add agent:\n\n${errorMessage}\n\nStatus: ${response.status} ${response.statusText}`);
         }

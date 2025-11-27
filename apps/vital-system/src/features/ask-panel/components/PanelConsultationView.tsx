@@ -40,12 +40,14 @@ interface PanelConsultationViewProps {
 }
 
 interface AgentMessage {
-  agentId: string;
-  agent: Agent;
+  agentId?: string;
+  agent?: Agent;
   content: string;
   timestamp: Date;
   confidence?: number;
   isStreaming?: boolean;
+  role?: 'expert' | 'moderator' | 'system';
+  title?: string;
 }
 
 interface PanelState {
@@ -56,6 +58,13 @@ interface PanelState {
   consensusReached?: boolean;
   finalRecommendation?: string;
   dissenting?: string[];
+  evidenceSummary?: string;
+  evidenceSources?: Array<{
+    title: string;
+    snippet?: string;
+    citation?: string;
+    year?: string | number;
+  }>;
 }
 
 export function PanelConsultationView({
@@ -105,14 +114,39 @@ export function PanelConsultationView({
 
       const result = await response.json();
 
-      // Transform result to panel state
-      const messages: AgentMessage[] = result.experts.map((expert: any) => ({
+      // Transform result to panel state - include both experts and moderator
+      const expertMessages: AgentMessage[] = result.experts.map((expert: any) => ({
         agentId: expert.agentId,
         agent: configuration.selectedAgents.find(a => a.id === expert.agentId)!,
         content: expert.response,
         timestamp: new Date(),
         confidence: expert.confidence,
+        role: 'expert' as const,
       }));
+
+      // Add moderator messages if present
+      const moderatorMessages: AgentMessage[] = [];
+      if (result.moderator && Array.isArray(result.moderator)) {
+        result.moderator.forEach((modMsg: any) => {
+          moderatorMessages.push({
+            content: modMsg.content,
+            timestamp: modMsg.timestamp ? new Date(modMsg.timestamp) : new Date(),
+            role: 'moderator' as const,
+            title: 'Panel Moderator',
+          });
+        });
+      } else if (result.synthesis) {
+        // Single synthesis message
+        moderatorMessages.push({
+          content: result.synthesis,
+          timestamp: new Date(),
+          role: 'moderator' as const,
+          title: 'Panel Synthesis',
+        });
+      }
+
+      // Combine messages: experts first, then moderator messages
+      const messages: AgentMessage[] = [...expertMessages, ...moderatorMessages];
 
       setPanelState({
         status: result.consensus?.reached ? 'consensus' : 'complete',
@@ -234,100 +268,196 @@ export function PanelConsultationView({
 
           {/* Agent Responses */}
           <AnimatePresence mode="popLayout">
-            {panelState.messages.map((message, idx) => (
-              <motion.div
-                key={`${message.agentId}-${idx}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="p-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"
-              >
-                <div className="flex items-start gap-4">
-                  {/* Agent Avatar */}
-                  <AgentAvatar
-                    avatar={message.agent.avatar_url}
-                    name={message.agent.title}
-                    size="detail"
-                    className="rounded-full flex-shrink-0"
-                  />
-                  
-                  <div className="flex-1 min-w-0">
-                    {/* Agent Header */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
-                          {message.agent.title}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                          {message.agent.category}
+            {panelState.messages.map((message, idx) => {
+              const isModerator = message.role === 'moderator' || !message.agent;
+              
+              return (
+                <motion.div
+                  key={`${message.agentId || 'moderator'}-${idx}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className={`p-6 rounded-xl border ${
+                    isModerator 
+                      ? 'bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-purple-200 dark:border-purple-700' 
+                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Agent/Moderator Avatar */}
+                    {isModerator ? (
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <Sparkles className="w-6 h-6 text-white" />
+                      </div>
+                    ) : (
+                      <AgentAvatar
+                        avatar={message.agent?.avatar_url}
+                        name={message.agent?.title || 'Expert'}
+                        size="detail"
+                        className="rounded-full flex-shrink-0"
+                      />
+                    )}
+                    
+                    <div className="flex-1 min-w-0">
+                      {/* Agent/Moderator Header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h3 className={`font-semibold ${
+                            isModerator 
+                              ? 'text-purple-900 dark:text-purple-100' 
+                              : 'text-gray-900 dark:text-white'
+                          }`}>
+                            {isModerator ? (message.title || 'Panel Moderator') : (message.agent?.title || 'Expert')}
+                          </h3>
+                          <p className={`text-sm capitalize ${
+                            isModerator 
+                              ? 'text-purple-600 dark:text-purple-300' 
+                              : 'text-gray-500 dark:text-gray-400'
+                          }`}>
+                            {isModerator ? 'Panel Synthesis & Summary' : (message.agent?.category || 'Expert')}
+                          </p>
+                        </div>
+                        
+                        {message.confidence && !isModerator && (
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <TrendingUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                            <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                              {(message.confidence * 100).toFixed(0)}% confidence
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Response Content */}
+                      <div className="prose dark:prose-invert max-w-none">
+                        <p className={`leading-relaxed whitespace-pre-wrap ${
+                          isModerator 
+                            ? 'text-purple-800 dark:text-purple-200' 
+                            : 'text-gray-700 dark:text-gray-300'
+                        }`}>
+                          {message.content}
                         </p>
                       </div>
-                      
-                      {message.confidence && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <TrendingUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                            {(message.confidence * 100).toFixed(0)}% confidence
-                          </span>
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Response Content */}
-                    <div className="prose dark:prose-invert max-w-none">
-                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                        {message.content}
-                      </p>
-                    </div>
-
-                    {/* Timestamp */}
-                    <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-500 dark:text-gray-400">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>{message.timestamp.toLocaleTimeString()}</span>
+                      {/* Timestamp */}
+                      <div className={`flex items-center gap-1.5 mt-3 text-xs ${
+                        isModerator 
+                          ? 'text-purple-600 dark:text-purple-400' 
+                          : 'text-gray-500 dark:text-gray-400'
+                      }`}>
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{message.timestamp.toLocaleTimeString()}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
 
-          {/* Consensus Section */}
-          {panelState.consensusReached && panelState.finalRecommendation && (
+          {/* Closure Summary */}
+          {(panelState.status === 'complete' || panelState.status === 'consensus') && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border-2 border-green-200 dark:border-green-700"
+              className="p-6 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-indigo-100 dark:border-indigo-900/40 shadow-sm"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">
+                  {panelState.consensusReached ? (
+                    <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-300" />
+                  ) : (
+                    <FileText className="w-6 h-6 text-indigo-600 dark:text-indigo-200" />
+                  )}
                 </div>
-                
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    Panel Consensus
-                  </h3>
-                  
-                  <p className="text-gray-800 dark:text-gray-200 leading-relaxed mb-4">
-                    {panelState.finalRecommendation}
-                  </p>
-                  
+
+                <div className="flex-1 space-y-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-indigo-500 dark:text-indigo-300 font-semibold">
+                      {panelState.consensusReached ? 'Consensus Achieved' : 'Discussion Summary'}
+                    </p>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      {panelState.consensusReached ? 'Unified Recommendation' : 'Panel Closure'}
+                    </h3>
+                    <p className="text-gray-800 dark:text-gray-100 mt-3 leading-relaxed whitespace-pre-wrap">
+                      {panelState.finalRecommendation?.trim() ||
+                        'The panel completed the discussion, but no summary was generated.'}
+                    </p>
+                  </div>
+
                   {panelState.dissenting && panelState.dissenting.length > 0 && (
-                    <div className="pt-4 border-t border-green-200 dark:border-green-700">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Dissenting Views:
+                    <div className="pt-3 border-t border-indigo-100 dark:border-indigo-900/40">
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-amber-500" />
+                        Dissenting Views
                       </p>
-                      <ul className="space-y-1">
+                      <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
                         {panelState.dissenting.map((view, idx) => (
-                          <li key={idx} className="text-sm text-gray-600 dark:text-gray-400">
-                            • {view}
-                          </li>
+                          <li key={`dissent-${idx}`}>• {view}</li>
                         ))}
                       </ul>
                     </div>
                   )}
+
+                  {panelState.evidenceSummary && (
+                    <div className="pt-3 border-t border-indigo-100 dark:border-indigo-900/40">
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                        <ListChecks className="w-4 h-4 text-purple-500" />
+                        Evidence Highlights
+                      </p>
+                      <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-sans">
+                        {panelState.evidenceSummary}
+                      </pre>
+                      {panelState.evidenceSources && panelState.evidenceSources.length > 0 && (
+                        <ul className="mt-2 space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                          {panelState.evidenceSources.slice(0, 4).map((source, idx) => (
+                            <li key={`source-${idx}`}>
+                              <span className="text-indigo-500">{idx + 1}.</span> {source.title}
+                              {source.year ? ` (${source.year})` : ''}
+                              {source.citation ? ` – ${source.citation}` : ''}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                    <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40">
+                      <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Experts
+                      </p>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {configuration.selectedAgents.length}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40">
+                      <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Rounds
+                      </p>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {panelState.currentRound}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40">
+                      <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Avg Confidence
+                      </p>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {panelState.messages.length
+                          ? `${Math.round(
+                              (panelState.messages.reduce(
+                                (acc, msg) => acc + (msg.confidence ?? 0.75),
+                                0
+                              ) /
+                                panelState.messages.length) *
+                                100
+                            )}%`
+                          : '—'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -368,7 +498,7 @@ export function PanelConsultationView({
       </div>
 
       {/* Follow-up Input */}
-      {panelState.status === 'complete' || panelState.status === 'consensus' && (
+      {(panelState.status === 'complete' || panelState.status === 'consensus') && (
         <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-4">
           <div className="max-w-5xl mx-auto">
             <div className="flex items-center gap-3">

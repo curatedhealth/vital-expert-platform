@@ -477,16 +477,18 @@ class Mode1ManualQueryWorkflow(BaseWorkflow):
                         'current_node': 'rag_retrieval'
                     }
 
-            # Perform RAG retrieval
-            rag_results = await self.rag_service.search(
-                query=query,
+            # Perform RAG retrieval with true_hybrid (Neo4j + Pinecone + Supabase)
+            rag_results = await self.rag_service.query(
+                query_text=query,
                 tenant_id=tenant_id,
                 agent_id=selected_agent_id,
-                domains=selected_domains if selected_domains else None,
-                max_results=max_results
+                domain_ids=selected_domains if selected_domains else None,
+                max_results=max_results,
+                strategy="true_hybrid",  # Use true hybrid: Neo4j (KG) + Pinecone (vector) + Supabase (relational)
+                similarity_threshold=0.7
             )
 
-            documents = rag_results.get('documents', [])
+            documents = rag_results.get('sources', []) or rag_results.get('documents', [])
 
             # Create context summary (first 1M tokens)
             context_summary = self._create_context_summary(documents, max_tokens=1_000_000)

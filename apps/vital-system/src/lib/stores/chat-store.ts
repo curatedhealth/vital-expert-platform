@@ -756,22 +756,28 @@ const _useChatStore = create<ChatStore>()(
 
         try {
           const dbAgents = await agentService.getActiveAgents();
-          const formattedAgents = dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
+          
+          // Always handle the result, even if it's an empty array
+          const formattedAgents = (dbAgents || []).map((agent) => agentService.convertToLegacyFormat(agent));
+          
           set((state) => ({
             agents: formattedAgents,
             // Don't auto-select first agent - keep current selection or null
             selectedAgent: state.selectedAgent || null,
             isLoadingAgents: false,
+            // Only set error if we expected agents but got none (optional check)
+            error: formattedAgents.length === 0 ? null : null, // Always null - empty is valid
           }));
         } catch (error) {
-          console.error('Failed to load agents from database:', error);
+          // This catch should rarely trigger now since getActiveAgents returns [] instead of throwing
+          console.warn('⚠️ loadAgentsFromDatabase: Exception caught (should be rare):', error instanceof Error ? error.message : String(error));
 
-          // Don't fall back to default agents - just show empty state with error
+          // Gracefully handle - empty agents array is valid
           set({
             agents: [],
             selectedAgent: null,
             isLoadingAgents: false,
-            error: 'Failed to load agents from database. Please check your connection and try again.',
+            error: null, // Don't show error - empty agents is a valid state
           });
         }
       },

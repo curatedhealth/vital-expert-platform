@@ -308,18 +308,107 @@ def get_agent_selector_service(
 ) -> AgentSelectorService:
     """
     Get or create agent selector service instance (singleton pattern)
-    
+
     Args:
         supabase_client: Optional Supabase client for dependency injection
-        
+
     Returns:
         AgentSelectorService instance
     """
     global _agent_selector_service
-    
+
     if _agent_selector_service is None:
         _agent_selector_service = AgentSelectorService(
             supabase_client=supabase_client
         )
-    
+
     return _agent_selector_service
+
+
+# Add missing method for Mode 4 compatibility
+async def select_multiple_experts_diverse(
+    self,
+    query: str,
+    max_agents: int = 3,
+    tenant_id: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """
+    Select multiple diverse experts for a query (Mode 4 compatibility).
+
+    This method provides backward compatibility with Mode 4 workflow that expects
+    select_multiple_experts_diverse().
+
+    Args:
+        query: User query to analyze
+        max_agents: Maximum number of agents to select
+        tenant_id: Optional tenant ID for filtering
+
+    Returns:
+        List of selected agent dictionaries with id, name, display_name, tier
+    """
+    try:
+        # Analyze the query
+        analysis = await self.analyze_query(query)
+
+        # If we have supabase_client, fetch actual agents
+        if self.supabase_client:
+            # Get all active agents for tenant
+            agents = await self.supabase_client.get_all_agents(
+                tenant_id=tenant_id,
+                status="active"
+            )
+
+            # Score agents based on query analysis
+            scored_agents = []
+            for agent in agents[:max_agents * 3]:  # Consider 3x candidates
+                # Simple scoring based on domain match
+                score = 0.5  # Base score
+                agent_domains = agent.get("knowledge_domains", [])
+
+                for domain in analysis.domains:
+                    if domain.lower() in [d.lower() for d in agent_domains]:
+                        score += 0.3
+
+                # Tier weighting (higher tier for complex queries)
+                tier = agent.get("tier", 2)
+                if analysis.complexity == "high" and tier == 3:
+                    score += 0.2
+                elif analysis.complexity == "medium" and tier == 2:
+                    score += 0.1
+
+                scored_agents.append({
+                    "agent": agent,
+                    "score": min(score, 1.0)
+                })
+
+            # Sort by score and take top N
+            scored_agents.sort(key=lambda x: x["score"], reverse=True)
+            selected = [sa["agent"] for sa in scored_agents[:max_agents]]
+
+            logger.info(
+                "multiple_experts_selected",
+                query_preview=query[:50],
+                selected_count=len(selected),
+                max_agents=max_agents
+            )
+
+            return selected
+
+        # Fallback: return empty list if no supabase client
+        logger.warning(
+            "multiple_experts_selection_unavailable",
+            reason="no_supabase_client"
+        )
+        return []
+
+    except Exception as e:
+        logger.error(
+            "multiple_experts_selection_failed",
+            error=str(e),
+            query_preview=query[:50]
+        )
+        return []
+
+
+# Monkey-patch the method onto AgentSelectorService class
+AgentSelectorService.select_multiple_experts_diverse = select_multiple_experts_diverse

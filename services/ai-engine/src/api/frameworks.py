@@ -577,7 +577,7 @@ async def execute_langgraph_simple(request: SimpleLangGraphRequest) -> Dict[str,
                 
                 agent_response_text = response.choices[0].message.content
                 
-            agent_responses.append({
+                agent_responses.append({
                     "agent_id": agent["id"],
                     "agent_name": agent["name"],
                     "response": agent_response_text,
@@ -600,10 +600,10 @@ async def execute_langgraph_simple(request: SimpleLangGraphRequest) -> Dict[str,
         successful_responses = [r for r in agent_responses if not r.get("error", False)]
         if successful_responses:
             aggregated = f"Based on consultation with {len(successful_responses)} agent(s):\n\n"
-        aggregated += "\n\n".join([
-            f"**{r['agent_name']}**: {r['response']}"
-                for r in successful_responses
-        ])
+            aggregated += "\n\n".join([
+                f"**{r['agent_name']}**: {r['response']}"
+                    for r in successful_responses
+            ])
         else:
             aggregated = "All agents failed to respond. Please check the error messages above."
 
@@ -914,10 +914,10 @@ Provide detailed, professional responses based on your expertise."""
         successful_responses = [r for r in panel_responses if not r.get("error", False)]
         if successful_responses:
             consensus_summary = f"Panel consensus from {len(successful_responses)} expert(s):\n\n"
-        consensus_summary += "\n\n".join([
-            f"**{r['agent_name']}**: {r['response']}"
-                for r in successful_responses
-        ])
+            consensus_summary += "\n\n".join([
+                f"**{r['agent_name']}**: {r['response']}"
+                    for r in successful_responses
+            ])
         else:
             consensus_summary = "All panel experts failed to respond. Please check the error messages above."
 

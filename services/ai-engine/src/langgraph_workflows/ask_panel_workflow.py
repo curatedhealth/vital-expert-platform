@@ -93,14 +93,14 @@ class AskPanelWorkflow:
                 question=state["question"][:100]
             )
 
-            # Query unified RAG service
+            # Query unified RAG service with true_hybrid (Neo4j + Pinecone + Supabase)
             rag_results = await self.rag_service.query(
                 query_text=state["question"],
-                strategy="hybrid",
+                strategy="true_hybrid",  # Use true hybrid: Neo4j (KG) + Pinecone (vector) + Supabase (relational)
                 max_results=15,
                 similarity_threshold=0.7,
                 tenant_id=state.get("tenant_id"),
-                session_id=state.get("session_id")
+                agent_id=None  # Panel mode doesn't use single agent
             )
 
             documents = rag_results.get("sources", [])

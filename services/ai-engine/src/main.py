@@ -107,6 +107,7 @@ from langgraph_workflows import (
 # Mode workflows for LangGraph execution
 from langgraph_workflows.mode1_interactive_manual import Mode1InteractiveManualWorkflow
 from langgraph_workflows.mode2_interactive_manual_workflow import Mode2InteractiveManualWorkflow
+from langgraph_workflows.mode2_interactive_automatic import Mode1InteractiveAutoWorkflow as Mode2InteractiveAutoWorkflow
 from langgraph_workflows.mode3_manual_chat_autonomous import Mode3ManualChatAutonomousWorkflow
 from langgraph_workflows.mode4_auto_chat_autonomous import Mode4AutoChatAutonomousWorkflow
 # Ask Panel imports
@@ -380,6 +381,7 @@ class Mode3AutonomousAutomaticResponse(BaseModel):
 class Mode4AutonomousManualRequest(BaseModel):
     """Payload for Mode 4 autonomous-manual requests (Automatic-Autonomous)"""
     message: str = Field(..., min_length=1, description="User message")
+    agent_id: Optional[str] = Field(None, description="Optional agent ID (auto-selected if not provided)")
     enable_rag: bool = Field(True, description="Enable RAG retrieval")
     enable_tools: bool = Field(True, description="Enable tool execution")
     selected_rag_domains: Optional[List[str]] = Field(
@@ -1187,15 +1189,13 @@ async def execute_mode2_automatic(
     try:
         logger.info("🚀 [Mode 2] Executing via LangGraph workflow (Automatic agent selection)")
         
-        # Initialize LangGraph workflow - Mode2InteractiveManualWorkflow (Automatic selection)
-        workflow = Mode2InteractiveManualWorkflow(
+        # Initialize LangGraph workflow - Mode2InteractiveAutoWorkflow for Mode 2 (Automatic selection)
+        workflow = Mode2InteractiveAutoWorkflow(
             supabase_client=supabase_client,
-            cache_manager=cache_manager,
+            agent_selector_service=None,  # Will use get_agent_selector_service() internally
             rag_service=unified_rag_service,
             agent_orchestrator=agent_orchestrator,
-            conversation_manager=None,
-            feedback_manager=None,
-            enrichment_service=None
+            conversation_manager=None
         )
         
         # Build and compile the LangGraph graph
@@ -1253,7 +1253,7 @@ async def execute_mode2_automatic(
         
         metadata: Dict[str, Any] = {
             "langgraph_execution": True,
-            "workflow": "Mode1InteractiveAutoWorkflow",
+            "workflow": "Mode2InteractiveAutoWorkflow",
             "nodes_executed": result.get('nodes_executed', []),
             "reasoning_steps": reasoning_steps,
             "request": {

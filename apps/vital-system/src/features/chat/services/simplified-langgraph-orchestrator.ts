@@ -286,9 +286,16 @@ export class SimplifiedLangGraphOrchestrator {
 
   constructor() {
     // Initialize Supabase
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('⚠️ [SimplifiedLangGraphOrchestrator] Supabase configuration missing, some features may be disabled');
+      // Create a minimal client that will fail gracefully when used
+      this.supabase = null as any;
+    } else {
+      this.supabase = createClient(supabaseUrl, supabaseKey);
+    }
 
     // Initialize embeddings
     this.embeddings = new OpenAIEmbeddings({

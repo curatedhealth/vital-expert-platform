@@ -473,16 +473,19 @@ What should we do next? Think step by step and return JSON:
         try:
             if action_type == "rag" and enable_rag and self.rag_service:
                 # Execute RAG retrieval
-                rag_result = await self.rag_service.search(
-                    query=query,
+                # Use true_hybrid search (Neo4j + Pinecone + Supabase)
+                rag_result = await self.rag_service.query(
+                    query_text=query,
                     tenant_id=tenant_id,
                     agent_id=agent_id,
-                    max_results=5
+                    max_results=5,
+                    strategy="true_hybrid",  # Use true hybrid: Neo4j (KG) + Pinecone (vector) + Supabase (relational)
+                    similarity_threshold=0.7
                 )
                 
                 return ActionResult(
                     action_type="rag",
-                    action_description=f"Retrieved {len(rag_result.get('documents', []))} documents",
+                    action_description=f"Retrieved {len(rag_result.get('sources', []) or rag_result.get('documents', []))} documents",
                     result=rag_result,
                     success=True
                 )

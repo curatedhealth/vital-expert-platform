@@ -36,10 +36,11 @@ export class AgentEmbeddingService {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration missing for AgentEmbeddingService');
+      console.warn('⚠️ [AgentEmbeddingService] Supabase configuration missing, some features may be disabled');
+      this.supabase = null as any;
+    } else {
+      this.supabase = createClient(supabaseUrl, supabaseKey);
     }
-
-    this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 
   /**

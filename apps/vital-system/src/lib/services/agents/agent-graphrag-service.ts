@@ -69,25 +69,37 @@ const DEFAULT_GRAPH_CONFIG: Required<GraphTraversalConfig> = {
 };
 
 export class AgentGraphRAGService {
-  private supabase: ReturnType<typeof createClient>;
+  private supabase: ReturnType<typeof createClient> | null;
   private embeddingCache;
   private tracing;
   private logger;
   private circuitBreaker;
+  private supabaseAvailable: boolean;
 
   constructor() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration missing for AgentGraphRAGService');
+      console.warn('⚠️ [AgentGraphRAGService] Supabase configuration missing. Service will operate in degraded mode.');
+      this.supabase = null;
+      this.supabaseAvailable = false;
+    } else {
+      this.supabase = createClient(supabaseUrl, supabaseKey);
+      this.supabaseAvailable = true;
     }
 
-    this.supabase = createClient(supabaseUrl, supabaseKey);
     this.embeddingCache = getEmbeddingCache();
     this.tracing = getTracingService();
     this.logger = createLogger();
     this.circuitBreaker = getSupabaseCircuitBreaker();
+  }
+
+  /**
+   * Check if Supabase is available
+   */
+  private isSupabaseAvailable(): boolean {
+    return this.supabaseAvailable && this.supabase !== null;
   }
 
   /**
@@ -315,8 +327,24 @@ export class AgentGraphRAGService {
   ): Promise<AgentSearchResult[]> {
     const { topK = 10, excludeSelf = true } = options;
 
+    // Check if Supabase is available
+    if (!this.isSupabaseAvailable()) {
+      this.logger.warn('findSimilarAgents_supabase_unavailable', {
+        agentId,
+        message: 'Supabase not available, falling back to vector search only',
+      });
+      // Fallback to vector search only
+      return this.searchAgents({
+        query: agentId,
+        topK: excludeSelf ? topK + 1 : topK,
+        filters: {
+          status: 'active',
+        },
+      });
+    }
+
     // Get the agent
-    const { data: agent, error } = await this.supabase
+    const { data: agent, error } = await this.supabase!
       .from('agents')
       .select('*')
       .eq('id', agentId)
@@ -758,5 +786,29 @@ export function getAgentGraphRAGService(): AgentGraphRAGService {
   return agentGraphRAGServiceInstance;
 }
 
-export const agentGraphRAGService = getAgentGraphRAGService();
+// Lazy-loaded singleton using Proxy to prevent module-load-time instantiation
+let _agentGraphRAGServiceInstance: AgentGraphRAGService | null = null;
+
+export const agentGraphRAGService = new Proxy({} as AgentGraphRAGService, {
+  get(target, prop) {
+    if (!_agentGraphRAGServiceInstance) {
+      try {
+        _agentGraphRAGServiceInstance = new AgentGraphRAGService();
+      } catch (error) {
+        // If initialization fails, create a minimal instance that handles errors gracefully
+        console.warn('⚠️ [AgentGraphRAGService] Failed to initialize, using fallback:', error);
+        // Return a proxy that logs warnings for all method calls
+        return new Proxy({}, {
+          get() {
+            return () => {
+              console.warn('⚠️ [AgentGraphRAGService] Service not available');
+              return Promise.resolve([]);
+            };
+          }
+        });
+      }
+    }
+    return (_agentGraphRAGServiceInstance as any)[prop];
+  }
+});
 

@@ -43,24 +43,56 @@ export function PropertyPanel({ selectedNode, onUpdate, onClose }: PropertyPanel
   const [loadingAgents, setLoadingAgents] = useState(false);
   
   // Check if this is an expert/agent node that needs agent selection
-  const isExpertNode = selectedNode?.type === 'agent' || 
-    selectedNode?.data?.task?.id === 'expert_agent' ||
-    selectedNode?.data?.type === 'agent' ||
-    selectedNode?.data?._original_type === 'agent';
+  // Note: selectedNode is node.data from React Flow, so it has type directly
+  const nodeType = selectedNode?.type;
+  const isExpertNode = nodeType === 'agent' || 
+    selectedNode?.config?.taskId === 'expert_agent' ||
+    selectedNode?.config?._original_type === 'agent';
+  
+  // Debug logging
+  useEffect(() => {
+    if (selectedNode) {
+      console.log('[PropertyPanel] Node selected:', {
+        type: selectedNode.type,
+        nodeType,
+        isExpertNode,
+        config: selectedNode.config,
+      });
+    }
+  }, [selectedNode, nodeType, isExpertNode]);
   
   // Fetch agents when expert node is selected
   useEffect(() => {
     if (isExpertNode && agents.length === 0 && !loadingAgents) {
       setLoadingAgents(true);
+      console.log('[PropertyPanel] Fetching agents for expert node...');
+      
       fetch('/api/agents?status=active')
-        .then(res => res.json())
+        .then(async (res) => {
+          if (!res.ok) {
+            const errorText = await res.text();
+            console.error('[PropertyPanel] Agents API error:', res.status, errorText);
+            throw new Error(`Failed to fetch agents (${res.status}): ${errorText}`);
+          }
+          return res.json();
+        })
         .then(data => {
-          if (data.agents && Array.isArray(data.agents)) {
+          console.log('[PropertyPanel] Agents API response:', data);
+          if (data.success && data.agents && Array.isArray(data.agents)) {
             setAgents(data.agents);
+            console.log(`[PropertyPanel] Loaded ${data.agents.length} agents`);
+          } else if (data.agents && Array.isArray(data.agents)) {
+            // Fallback for older API format
+            setAgents(data.agents);
+            console.log(`[PropertyPanel] Loaded ${data.agents.length} agents (legacy format)`);
+          } else {
+            console.warn('[PropertyPanel] No agents in response:', data);
+            setAgents([]);
           }
         })
         .catch(err => {
-          console.error('Failed to fetch agents:', err);
+          console.error('[PropertyPanel] Failed to fetch agents:', err);
+          setAgents([]);
         })
         .finally(() => {
           setLoadingAgents(false);
@@ -158,33 +190,41 @@ export function PropertyPanel({ selectedNode, onUpdate, onClose }: PropertyPanel
             <div className="space-y-4 mb-4">
               <div className="space-y-2">
                 <Label htmlFor="agentId">Select Expert Agent</Label>
-                <Select
-                  value={config.agentId || ''}
-                  onValueChange={(value) => {
-                    // Update agent ID in config
-                    handleConfigUpdate('agentId', value);
-                    
-                    // Automatically update node label to match selected agent name
-                    const selectedAgent = agents.find(a => a.id === value);
-                    if (selectedAgent) {
-                      const agentName = selectedAgent.display_name || selectedAgent.name;
-                      handleLabelUpdate(agentName);
-                    }
-                  }}
-                  disabled={loadingAgents}
-                >
-                  <SelectTrigger id="agentId">
-                    <SelectValue placeholder={loadingAgents ? "Loading agents..." : "Choose an expert agent..."} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {agents.map((agent) => (
-                      <SelectItem key={agent.id} value={agent.id}>
-                        {agent.display_name || agent.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500">
+                {loadingAgents ? (
+                  <div className="text-sm text-muted-foreground">Loading agents...</div>
+                ) : agents.length === 0 ? (
+                  <div className="text-sm text-destructive">
+                    No agents available. Please check if Supabase is configured and agents exist in the database.
+                  </div>
+                ) : (
+                  <Select
+                    value={config.agentId || ''}
+                    onValueChange={(value) => {
+                      // Update agent ID in config
+                      handleConfigUpdate('agentId', value);
+                      
+                      // Automatically update node label to match selected agent name
+                      const selectedAgent = agents.find(a => a.id === value);
+                      if (selectedAgent) {
+                        const agentName = selectedAgent.display_name || selectedAgent.name;
+                        handleLabelUpdate(agentName);
+                      }
+                    }}
+                    disabled={loadingAgents}
+                  >
+                    <SelectTrigger id="agentId">
+                      <SelectValue placeholder="Choose an expert agent..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {agents.map((agent) => (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          {agent.display_name || agent.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <p className="text-xs text-muted-foreground">
                   {config.agentId 
                     ? `Selected: ${agents.find(a => a.id === config.agentId)?.display_name || agents.find(a => a.id === config.agentId)?.name || config.agentId}`
                     : 'Select a real agent from the database to use in this panel workflow'}

@@ -239,17 +239,32 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
     requestLogger.error(
       'user_agent_api_error',
       error instanceof Error ? error : new Error(String(error)),
       {
         operation: 'add_user_agent',
         duration,
+        errorMessage,
+        errorStack,
       }
     );
 
     const statusCode = getErrorStatusCode(error);
-    const serialized = serializeError(error);
+    let serialized;
+    try {
+      serialized = serializeError(error);
+    } catch (serializeErr) {
+      // Fallback if serialization fails
+      serialized = {
+        error: 'Internal Server Error',
+        message: errorMessage || 'An unexpected error occurred',
+        details: error instanceof Error ? { name: error.name, message: error.message } : { error: String(error) },
+      };
+    }
 
     return NextResponse.json(
       {

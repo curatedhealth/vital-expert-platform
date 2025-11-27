@@ -24,12 +24,18 @@ from langchain_core.documents import Document
 import numpy as np
 
 from services.supabase_client import SupabaseClient
+try:
+    from services.neo4j_client import Neo4jClient
+    NEO4J_AVAILABLE = True
+except ImportError:
+    NEO4J_AVAILABLE = False
+    Neo4jClient = None
 from core.config import get_settings
 
 logger = structlog.get_logger()
 
 class UnifiedRAGService:
-    """Unified RAG service with Pinecone vector search, Supabase metadata, and Redis caching"""
+    """Unified RAG service with Pinecone vector search, Supabase metadata, Neo4j graph search, and Redis caching"""
 
     def __init__(self, supabase_client: SupabaseClient, cache_manager: Optional[CacheManager] = None):
         self.settings = get_settings()
@@ -40,6 +46,7 @@ class UnifiedRAGService:
         self.pinecone: Optional[Pinecone] = None
         self.pinecone_index = None
         self.knowledge_namespace = "domains-knowledge"  # Default namespace
+        self.neo4j_client: Optional[Neo4jClient] = None  # Neo4j client for graph search
         
         # Cache statistics
         self._cache_hits = 0
@@ -215,7 +222,7 @@ class UnifiedRAGService:
             )
 
             # Validate strategy
-            valid_strategies = ["semantic", "hybrid", "agent-optimized", "keyword", "supabase_only"]
+            valid_strategies = ["semantic", "hybrid", "agent-optimized", "keyword", "supabase_only", "graph", "true_hybrid"]
             if strategy not in valid_strategies:
                 raise ValueError(f"Invalid RAG strategy: {strategy}. Must be one of {valid_strategies}")
 
@@ -240,10 +247,18 @@ class UnifiedRAGService:
                 result = await self._supabase_only_search(
                     query_text, domain_ids, filters, max_results
                 )
+            elif strategy == "graph":
+                result = await self._graph_search(
+                    query_text, domain_ids, filters, max_results, agent_id
+                )
+            elif strategy == "true_hybrid":
+                result = await self._true_hybrid_search(
+                    query_text, domain_ids, filters, max_results, similarity_threshold, agent_id
+                )
             else:
-                # Default to hybrid
-                result = await self._hybrid_search(
-                    query_text, domain_ids, filters, max_results, similarity_threshold
+                # Default to true_hybrid (Neo4j + Pinecone + Supabase)
+                result = await self._true_hybrid_search(
+                    query_text, domain_ids, filters, max_results, similarity_threshold, agent_id
                 )
 
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
@@ -798,8 +813,279 @@ class UnifiedRAGService:
             "metadata": doc.metadata,
         }
 
+    async def _graph_search(
+        self,
+        query_text: str,
+        domain_ids: Optional[List[str]],
+        filters: Optional[Dict[str, Any]],
+        max_results: int,
+        agent_id: Optional[str],
+    ) -> Dict[str, Any]:
+        """Graph search using Neo4j knowledge graph"""
+        try:
+            if not self.neo4j_client:
+                logger.warning("⚠️ Neo4j client not available, falling back to hybrid search")
+                return await self._hybrid_search(
+                    query_text, domain_ids, filters, max_results, 0.7
+                )
+
+            # Extract entities and relationships from query using Neo4j
+            # Query Neo4j for related entities, documents, and knowledge paths
+            async with self.neo4j_client.driver.session(database=self.settings.neo4j_database) as session:
+                # Build Cypher query to find relevant knowledge graph paths
+                cypher_query = """
+                MATCH path = (start:Entity)-[*1..3]-(end:Entity)
+                WHERE toLower(start.name) CONTAINS toLower($query) 
+                   OR toLower(end.name) CONTAINS toLower($query)
+                   OR ANY(rel IN relationships(path) WHERE toLower(type(rel)) CONTAINS toLower($query))
+                WITH path, start, end, 
+                     reduce(score = 0, rel IN relationships(path) | score + rel.weight) as path_score
+                ORDER BY path_score DESC
+                LIMIT $max_results
+                RETURN 
+                    start.name as start_entity,
+                    end.name as end_entity,
+                    [rel IN relationships(path) | type(rel)] as relationship_types,
+                    path_score,
+                    [node IN nodes(path) WHERE node:Document | node.id] as document_ids
+                """
+                
+                result = await session.run(
+                    cypher_query,
+                    query=query_text,
+                    max_results=max_results
+                )
+                
+                graph_results = []
+                document_ids = set()
+                
+                async for record in result:
+                    start_entity = record.get("start_entity", "")
+                    end_entity = record.get("end_entity", "")
+                    rel_types = record.get("relationship_types", [])
+                    path_score = record.get("path_score", 0.0)
+                    doc_ids = record.get("document_ids", [])
+                    
+                    document_ids.update(doc_ids)
+                    
+                    graph_results.append({
+                        "start_entity": start_entity,
+                        "end_entity": end_entity,
+                        "relationship_types": rel_types,
+                        "path_score": path_score,
+                        "document_ids": doc_ids,
+                    })
+
+            # Fetch documents from Supabase using document IDs from graph
+            sources = []
+            if document_ids:
+                doc_metadata = await self.supabase.get_documents_metadata(
+                    document_ids=list(document_ids),
+                    domain_ids=domain_ids,
+                    additional_filters=filters,
+                )
+                
+                for doc_id, doc_data in doc_metadata.items():
+                    # Find graph path score for this document
+                    path_score = 0.0
+                    for gr in graph_results:
+                        if doc_id in gr.get("document_ids", []):
+                            path_score = max(path_score, gr.get("path_score", 0.0))
+                    
+                    sources.append(Document(
+                        page_content=doc_data.get("content", ""),
+                        metadata={
+                            **doc_data.get("metadata", {}),
+                            "graph_score": path_score,
+                            "source": "neo4j_graph",
+                        },
+                    ))
+
+            # Sort by graph score
+            sources.sort(
+                key=lambda x: x.metadata.get("graph_score", 0.0),
+                reverse=True
+            )
+            sources = sources[:max_results]
+
+            context = self._generate_context(sources)
+
+            return {
+                "sources": [self._document_to_dict(doc) for doc in sources],
+                "context": context,
+                "metadata": {
+                    "strategy": "graph",
+                    "totalSources": len(sources),
+                    "graph_paths": len(graph_results),
+                },
+            }
+
+        except Exception as e:
+            logger.error("❌ Graph search failed", error=str(e))
+            # Fallback to hybrid search
+            return await self._hybrid_search(
+                query_text, domain_ids, filters, max_results, 0.7
+            )
+
+    async def _true_hybrid_search(
+        self,
+        query_text: str,
+        domain_ids: Optional[List[str]],
+        filters: Optional[Dict[str, Any]],
+        max_results: int,
+        similarity_threshold: float,
+        agent_id: Optional[str],
+    ) -> Dict[str, Any]:
+        """
+        True hybrid search combining Neo4j (KG), Pinecone (vector), and Supabase (relational).
+        
+        This is the most comprehensive search strategy:
+        1. Neo4j: Find knowledge graph paths and entity relationships
+        2. Pinecone: Vector similarity search for semantic matches
+        3. Supabase: Relational metadata filtering and enrichment
+        4. Merge and re-rank all results
+        """
+        try:
+            all_results = []
+            result_sources = {}  # Track sources by document_id to merge
+            
+            # 1. Neo4j Graph Search (if available)
+            if self.neo4j_client:
+                try:
+                    graph_result = await self._graph_search(
+                        query_text, domain_ids, filters, max_results * 2, agent_id
+                    )
+                    for source in graph_result.get("sources", []):
+                        doc_id = source.get("metadata", {}).get("document_id") or source.get("metadata", {}).get("id")
+                        if doc_id:
+                            result_sources[doc_id] = {
+                                **source,
+                                "graph_score": source.get("metadata", {}).get("graph_score", 0.0),
+                                "source_types": ["graph"],
+                            }
+                except Exception as e:
+                    logger.warning("⚠️ Graph search failed in true hybrid", error=str(e))
+
+            # 2. Pinecone Vector Search (if available)
+            if self.pinecone_index:
+                try:
+                    vector_result = await self._semantic_search(
+                        query_text, domain_ids, filters, max_results * 2, similarity_threshold
+                    )
+                    for source in vector_result.get("sources", []):
+                        doc_id = source.get("metadata", {}).get("document_id") or source.get("metadata", {}).get("id")
+                        similarity = source.get("metadata", {}).get("similarity", 0.0)
+                        if doc_id:
+                            if doc_id in result_sources:
+                                # Merge: add vector score and source type
+                                result_sources[doc_id]["vector_score"] = similarity
+                                result_sources[doc_id]["source_types"].append("vector")
+                            else:
+                                result_sources[doc_id] = {
+                                    **source,
+                                    "vector_score": similarity,
+                                    "source_types": ["vector"],
+                                }
+                except Exception as e:
+                    logger.warning("⚠️ Vector search failed in true hybrid", error=str(e))
+
+            # 3. Supabase Relational Search (keyword/full-text)
+            try:
+                keyword_result = await self._keyword_search(
+                    query_text, domain_ids, filters, max_results
+                )
+                for source in keyword_result.get("sources", []):
+                    doc_id = source.get("metadata", {}).get("document_id") or source.get("metadata", {}).get("id")
+                    if doc_id:
+                        if doc_id in result_sources:
+                            # Merge: add keyword source type
+                            result_sources[doc_id]["source_types"].append("keyword")
+                            result_sources[doc_id]["keyword_score"] = 0.8  # Default keyword relevance
+                        else:
+                            result_sources[doc_id] = {
+                                **source,
+                                "keyword_score": 0.8,
+                                "source_types": ["keyword"],
+                            }
+            except Exception as e:
+                logger.warning("⚠️ Keyword search failed in true hybrid", error=str(e))
+
+            # 4. Calculate combined scores and re-rank
+            scored_results = []
+            for doc_id, source in result_sources.items():
+                # Combine scores from all sources
+                graph_score = source.get("graph_score", 0.0) * 0.3  # 30% weight
+                vector_score = source.get("vector_score", 0.0) * 0.5  # 50% weight
+                keyword_score = source.get("keyword_score", 0.0) * 0.2  # 20% weight
+                
+                # Boost for multiple source types (diversity bonus)
+                source_count = len(set(source.get("source_types", [])))
+                diversity_boost = min(source_count * 0.05, 0.15)  # Up to 15% boost
+                
+                combined_score = min(
+                    graph_score + vector_score + keyword_score + diversity_boost,
+                    1.0
+                )
+                
+                # Update metadata with combined score
+                source["metadata"] = {
+                    **source.get("metadata", {}),
+                    "combined_score": combined_score,
+                    "graph_score": source.get("graph_score", 0.0),
+                    "vector_score": source.get("vector_score", 0.0),
+                    "keyword_score": source.get("keyword_score", 0.0),
+                    "source_types": source.get("source_types", []),
+                    "source_count": source_count,
+                }
+                
+                scored_results.append(source)
+
+            # Sort by combined score
+            scored_results.sort(
+                key=lambda x: x.get("metadata", {}).get("combined_score", 0.0),
+                reverse=True
+            )
+
+            # Take top results
+            final_sources = scored_results[:max_results]
+            
+            # Convert to Document format
+            sources = [
+                Document(
+                    page_content=s.get("page_content", ""),
+                    metadata=s.get("metadata", {}),
+                )
+                for s in final_sources
+            ]
+
+            context = self._generate_context(sources)
+
+            return {
+                "sources": [self._document_to_dict(doc) for doc in sources],
+                "context": context,
+                "metadata": {
+                    "strategy": "true_hybrid",
+                    "totalSources": len(sources),
+                    "graph_enabled": self.neo4j_client is not None,
+                    "vector_enabled": self.pinecone_index is not None,
+                    "relational_enabled": True,
+                },
+            }
+
+        except Exception as e:
+            logger.error("❌ True hybrid search failed", error=str(e))
+            # Fallback to regular hybrid search
+            return await self._hybrid_search(
+                query_text, domain_ids, filters, max_results, similarity_threshold
+            )
+
     async def cleanup(self):
         """Cleanup resources"""
+        if self.neo4j_client:
+            try:
+                await self.neo4j_client.close()
+            except Exception as e:
+                logger.warning("⚠️ Error closing Neo4j client", error=str(e))
         logger.info("🧹 Unified RAG service cleanup completed")
     
     async def search(self, query: str, tenant_id: str, agent_id: Optional[str] = None, **kwargs) -> Dict[str, Any]:

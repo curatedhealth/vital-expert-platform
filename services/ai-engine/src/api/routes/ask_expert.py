@@ -1,21 +1,25 @@
 """
-Ask Expert API Endpoint - Phase 4 Complete
-Handles 4-mode routing for Ask Expert service with Evidence-Based Selection and Deep Patterns
+Ask Expert API Endpoint - Unified Workflow
+Handles unified Ask Expert workflow supporting 4 execution modes:
+1. Single Expert (1:1)
+2. Multi-Expert Panel (1:N)
+3. Expert Recommendation
+4. Custom Workflow
+
+Updated to use ask_expert_unified.py workflow
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any, Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 from datetime import datetime
 import structlog
+import json
 
 from api.auth import get_current_user
 from services.supabase_client import get_supabase_client
-from langgraph_workflows.mode1_manual_query import Mode1ManualQueryWorkflow
-from langgraph_workflows.mode2_auto_query import Mode2AutoQueryWorkflow
-from langgraph_workflows.mode3_manual_chat_autonomous import Mode3ManualChatAutonomousWorkflow
-from langgraph_workflows.mode4_auto_chat_autonomous import Mode4AutoChatAutonomousWorkflow
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -23,38 +27,38 @@ router = APIRouter()
 # ========== REQUEST/RESPONSE SCHEMAS ==========
 
 class AskExpertRequest(BaseModel):
-    """Request schema for Ask Expert query"""
-    query: str = Field(..., min_length=1, max_length=5000, description="User's query")
-    tenant_id: UUID = Field(..., description="Tenant ID")
-    session_id: Optional[UUID] = Field(None, description="Session ID for conversation continuity")
-    
-    # Mode Selection Flags
-    is_automatic: bool = Field(False, description="If True, AI selects agents automatically")
-    is_autonomous: bool = Field(False, description="If True, agent works autonomously with deep reasoning")
-    
-    # Manual Mode: User-selected agents
-    selected_agent_ids: Optional[List[UUID]] = Field(None, description="Pre-selected agent IDs (Manual modes only)")
-    
-    # HITL Configuration
-    hitl_enabled: bool = Field(False, description="Enable Human-in-the-Loop approvals")
-    hitl_safety_level: Literal["conservative", "balanced", "minimal"] = Field(
-        "balanced", 
-        description="HITL safety level"
+    """Unified request schema for Ask Expert"""
+    query: str = Field(..., min_length=10, max_length=2000, description="User question")
+    mode: Literal["single_expert", "multi_expert_panel", "expert_recommendation", "custom_workflow"] = Field(
+        default="single_expert",
+        description="Execution mode"
     )
-    
-    # Optional Context
-    context: Optional[Dict[str, Any]] = Field(None, description="Additional context")
-    max_response_tokens: Optional[int] = Field(4000, description="Max tokens for response")
-    
+
+    # Single expert mode
+    expert_id: Optional[str] = Field(None, description="Expert ID for single expert mode")
+
+    # Multi-expert panel mode
+    expert_ids: Optional[List[str]] = Field(None, description="List of expert IDs for panel mode")
+
+    # Custom workflow mode
+    workflow_steps: Optional[List[Dict[str, Any]]] = Field(None, description="Workflow steps for custom mode")
+
+    # Session context
+    tenant_id: UUID = Field(..., description="Tenant ID")
+    session_id: Optional[str] = Field(None, description="Session ID for conversation continuity")
+    user_id: Optional[str] = Field(None, description="User ID (auto-populated from auth)")
+
+    # Options
+    stream: bool = Field(default=False, description="Whether to stream response")
+    conversation_history: List[Dict[str, str]] = Field(default_factory=list, description="Previous conversation messages")
+
     class Config:
         json_schema_extra = {
             "example": {
-                "query": "What are the latest treatment guidelines for Type 2 Diabetes?",
-                "tenant_id": "00000000-0000-0000-0000-000000000001",
-                "is_automatic": True,
-                "is_autonomous": False,
-                "hitl_enabled": True,
-                "hitl_safety_level": "balanced"
+                "query": "What are pediatric dosing considerations?",
+                "mode": "single_expert",
+                "expert_id": "expert_001",
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
             }
         }
 
@@ -184,6 +188,189 @@ async def validate_request(request: AskExpertRequest) -> None:
 
 
 # ========== API ENDPOINTS ==========
+
+# ========== NEW UNIFIED WORKFLOW ENDPOINT ==========
+
+@router.post("/ask-expert/unified", response_model=dict)
+async def ask_expert_unified(
+    request: AskExpertRequest
+) -> dict:
+    """
+    Unified Ask Expert Endpoint - Uses ask_expert_unified.py workflow
+
+    Supports 4 execution modes:
+    - single_expert: Direct consultation with one expert
+    - multi_expert_panel: Parallel consultation with multiple experts + consensus
+    - expert_recommendation: Query analysis + expert matching
+    - custom_workflow: User-defined multi-step execution
+    """
+    start_time = datetime.now()
+    session_id = request.session_id or str(uuid4())
+    user_id = request.user_id
+
+    try:
+        logger.info(
+            "unified_ask_expert_request",
+            mode=request.mode,
+            user_id=user_id,
+            tenant_id=str(request.tenant_id),
+            session_id=session_id
+        )
+
+        # Import unified workflow
+        try:
+            from langgraph_workflows.ask_expert_unified import (
+                ask_expert_graph,
+                WorkflowState,
+                ExecutionMode,
+                create_ask_expert_workflow
+            )
+            from main import (
+                get_supabase_client,
+                get_agent_orchestrator,
+                get_unified_rag_service
+            )
+            from openai import AsyncOpenAI
+            import os
+
+            # Initialize graph if not already done
+            if ask_expert_graph is None:
+                logger.info("initializing_ask_expert_graph")
+
+                # Get service dependencies
+                supabase = await get_supabase_client()
+                agent_service = await get_agent_orchestrator()
+                rag_service = await get_unified_rag_service()
+
+                # Create simple LLM service wrapper
+                class SimpleLLMService:
+                    def __init__(self):
+                        self.client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+                    async def ainvoke(self, prompt: str, model: str = "gpt-4",
+                                    temperature: float = 0.2, max_tokens: int = 4000):
+                        response = await self.client.chat.completions.create(
+                            model=model,
+                            messages=[{"role": "user", "content": prompt}],
+                            temperature=temperature,
+                            max_tokens=max_tokens
+                        )
+                        return response.choices[0].message.content
+
+                llm_service = SimpleLLMService()
+
+                # Create workflow
+                workflow_instance = create_ask_expert_workflow(
+                    supabase_client=supabase,
+                    agent_service=agent_service,
+                    rag_service=rag_service,
+                    llm_service=llm_service
+                )
+                await workflow_instance.initialize()
+                ask_expert_graph = workflow_instance.workflow
+                logger.info("ask_expert_graph_initialized")
+
+        except ImportError as e:
+            logger.error("workflow_not_found", error=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Ask Expert workflow not deployed. Please deploy ask_expert_unified.py"
+            )
+
+        # Map mode string to enum
+        mode_map = {
+            "single_expert": ExecutionMode.SINGLE_EXPERT,
+            "multi_expert_panel": ExecutionMode.MULTI_EXPERT_PANEL,
+            "expert_recommendation": ExecutionMode.EXPERT_RECOMMENDATION,
+            "custom_workflow": ExecutionMode.CUSTOM_WORKFLOW
+        }
+
+        mode = mode_map.get(request.mode, ExecutionMode.SINGLE_EXPERT)
+
+        # Build initial state
+        initial_state = WorkflowState(
+            query=request.query,
+            mode=mode,
+            conversation_history=[],
+            tenant_id=str(request.tenant_id),
+            user_id=user_id
+        )
+
+        # Add mode-specific fields
+        if mode == ExecutionMode.SINGLE_EXPERT:
+            if not request.expert_id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="expert_id required for single_expert mode"
+                )
+            initial_state["expert_id"] = request.expert_id
+
+        elif mode == ExecutionMode.MULTI_EXPERT_PANEL:
+            if not request.expert_ids or len(request.expert_ids) < 2:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="At least 2 expert_ids required for multi_expert_panel mode"
+                )
+            initial_state["expert_ids"] = request.expert_ids
+
+        elif mode == ExecutionMode.CUSTOM_WORKFLOW:
+            if not request.workflow_steps:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="workflow_steps required for custom_workflow mode"
+                )
+            initial_state["workflow_steps"] = request.workflow_steps
+
+        # Execute workflow
+        config = {"configurable": {"thread_id": session_id}}
+        result = await ask_expert_graph.ainvoke(initial_state, config)
+
+        execution_time_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+
+        logger.info(
+            "unified_workflow_completed",
+            mode=request.mode,
+            session_id=session_id,
+            execution_time_ms=execution_time_ms,
+            has_error=bool(result.get("error"))
+        )
+
+        # Format response
+        response = {
+            "success": not bool(result.get("error")),
+            "mode": request.mode,
+            "session_id": session_id,
+            "execution_time_ms": execution_time_ms,
+            "error": result.get("error")
+        }
+
+        # Add mode-specific results
+        if mode == ExecutionMode.SINGLE_EXPERT and result.get("expert_response"):
+            # expert_response is already a dict, not an object
+            response["expert_response"] = result["expert_response"]
+
+        elif mode == ExecutionMode.MULTI_EXPERT_PANEL and result.get("aggregated_response"):
+            # aggregated_response is already a dict with proper structure
+            response["aggregated_response"] = result["aggregated_response"]
+
+        elif mode == ExecutionMode.EXPERT_RECOMMENDATION and result.get("expert_recommendation"):
+            # expert_recommendation is already a dict, not an object
+            response["expert_recommendation"] = result["expert_recommendation"]
+
+        elif mode == ExecutionMode.CUSTOM_WORKFLOW and result.get("step_results"):
+            response["step_results"] = result["step_results"]
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("unified_workflow_failed", error=str(e), mode=request.mode)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unified workflow failed: {str(e)}"
+        )
+
 
 @router.post("/ask-expert/query", response_model=AskExpertResponse)
 async def ask_expert_query(
@@ -332,7 +519,7 @@ async def get_available_modes(
 ) -> AvailableModesResponse:
     """
     Get available Ask Expert modes with descriptions.
-    
+
     Returns all 4 modes with their characteristics.
     """
     modes = [
@@ -381,6 +568,29 @@ async def get_available_modes(
             "use_cases": ["Multi-step research", "Cross-functional analysis", "Critical decisions"]
         }
     ]
-    
+
     return AvailableModesResponse(modes=modes)
+
+
+@router.get("/ask-expert/health")
+async def health_check():
+    """Health check for unified Ask Expert workflow"""
+    try:
+        from langgraph_workflows.ask_expert_unified import ask_expert_graph
+
+        return {
+            "status": "healthy",
+            "workflow": "available",
+            "endpoint": "/ask-expert/unified",
+            "modes": ["single_expert", "multi_expert_panel", "expert_recommendation", "custom_workflow"],
+            "timestamp": datetime.now().isoformat()
+        }
+    except ImportError as e:
+        return {
+            "status": "degraded",
+            "workflow": "not_deployed",
+            "error": str(e),
+            "message": "Please deploy ask_expert_unified.py to enable unified workflow",
+            "timestamp": datetime.now().isoformat()
+        }
 

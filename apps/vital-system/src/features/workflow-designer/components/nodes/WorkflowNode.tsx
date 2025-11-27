@@ -29,6 +29,13 @@ interface WorkflowNodeProps {
 
 export const WorkflowNode = memo(({ data, isConnectable, selected }: WorkflowNodeProps) => {
   const nodeDef = getNodeTypeDefinition(data.type);
+
+  // Defensive: if node type not found, return null or use a fallback
+  if (!nodeDef) {
+    console.warn(`Unknown node type: ${data.type}`);
+    return null;
+  }
+
   const Icon = nodeDef.icon;
 
   const getStatusColor = (status?: string) => {

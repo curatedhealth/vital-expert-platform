@@ -150,6 +150,20 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
     setProgress(0);
     setCurrentAgent(null);
 
+    // Update last_used_at if this is a user custom panel (has UUID format ID)
+    if (panel.id && panel.id.length === 36 && panel.id.includes('-')) {
+      try {
+        await fetch(`/api/user-panels/${panel.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ update_last_used: true }),
+        });
+      } catch (err) {
+        // Silently fail - not critical
+        console.debug('Failed to update last_used_at:', err);
+      }
+    }
+
     try {
       // Build minimal PanelConfiguration compatible with /api/ask-panel/consult
       const configuration = {

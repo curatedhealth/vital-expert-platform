@@ -49,6 +49,7 @@ import {
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
+import { Badge } from "@/components/ui/badge"
 import { createClient } from "@vital/sdk/client"
 import { useSavedPanels } from "@/contexts/ask-panel-context"
 import { useDesigner } from "@/contexts/designer-context"

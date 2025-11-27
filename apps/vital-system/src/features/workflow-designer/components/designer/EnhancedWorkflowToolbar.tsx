@@ -29,6 +29,7 @@ import {
   MoreVertical,
   Settings,
   FileCode,
+  TestTube,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import dynamic from 'next/dynamic';
@@ -56,19 +57,20 @@ interface EnhancedWorkflowToolbarProps {
   onAutoLayout: () => void;
   onSave: () => void;
   onExecute: () => void;
+  onTestWorkflow?: () => void;
   onSettings: () => void;
-  
+
   // State
   canUndo: boolean;
   canRedo: boolean;
   isDirty: boolean;
   isExecuting: boolean;
   hasNodes: boolean;
-  
+
   // Panel workflows
   onLoadPanelWorkflow?: (type: string) => void;
   availablePanelTypes?: string[];
-  
+
   // Advanced features
   nodes?: any[];
   edges?: any[];
@@ -82,6 +84,7 @@ export function EnhancedWorkflowToolbar({
   onAutoLayout,
   onSave,
   onExecute,
+  onTestWorkflow,
   onSettings,
   canUndo,
   canRedo,
@@ -251,6 +254,18 @@ export function EnhancedWorkflowToolbar({
             <Save className="h-4 w-4 mr-1" />
             Save
           </Button>
+          {onTestWorkflow && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onTestWorkflow}
+              disabled={!hasNodes}
+              title="Test workflow with custom inputs"
+            >
+              <TestTube className="h-4 w-4 mr-1" />
+              Test
+            </Button>
+          )}
           <Button
             variant="default"
             size="sm"

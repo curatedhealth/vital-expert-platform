@@ -125,18 +125,33 @@ export async function verifyAgentPermissions(
 
     // Get user profile with role and tenant
     // Note: tenant_id comes from users.organization_id, not profiles table
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
-      .single();
+    let userData: any = null;
+    let userError: any = null;
+    try {
+      const result = await supabase
+        .from('users')
+        .select('organization_id, role')
+        .eq('id', user.id)
+        .single();
+      userData = result.data;
+      userError = result.error;
+    } catch (e) {
+      // Table might not exist, continue with fallback
+      userError = e;
+    }
 
     // Also get role from profiles table as fallback
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
+    let profile: any = null;
+    try {
+      const result = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+      profile = result.data;
+    } catch (e) {
+      // Table might not exist, continue without profile
+    }
 
     // Use users table data if available, otherwise fallback to profiles
     const userRole = userData?.role || profile?.role || 'guest';
@@ -432,7 +447,28 @@ export function withAgentAuth(
     }
 
     // Call the handler with authenticated context
-    return handler(request, context!, params);
+    try {
+      return await handler(request, context!, params);
+    } catch (handlerError) {
+      const logger = createLogger();
+      logger.error(
+        'agent_auth_handler_error',
+        handlerError instanceof Error ? handlerError : new Error(String(handlerError)),
+        {
+          operation: 'withAgentAuth',
+          method: request.method,
+          url: request.url,
+        }
+      );
+
+      return NextResponse.json(
+        {
+          error: 'Internal server error',
+          details: handlerError instanceof Error ? handlerError.message : 'Unknown error',
+        },
+        { status: 500 }
+      );
+    }
   };
 }
 

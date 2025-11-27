@@ -40,42 +40,289 @@ export enum RiskLevel {
   CRITICAL = 'critical'
 }
 
+// ============================================================================
+// Agent Level Types (L1-L5 Hierarchy)
+// ============================================================================
+
+export type AgentLevelNumber = 1 | 2 | 3 | 4 | 5;
+export type AgentLevelCode = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
+export type AgentLevelName = 'MASTER' | 'EXPERT' | 'SPECIALIST' | 'WORKER' | 'TOOL';
+
+export interface AgentLevel {
+  id: string;
+  level_number: AgentLevelNumber;
+  level_code: AgentLevelCode;
+  level_name: AgentLevelName;
+  description?: string;
+}
+
+// ============================================================================
+// Persona & Communication Style Types
+// ============================================================================
+
+export type PersonaArchetypeCode =
+  | 'clinical_expert'
+  | 'regulatory_authority'
+  | 'data_analyst'
+  | 'safety_officer'
+  | 'research_specialist'
+  | 'business_strategist'
+  | 'operations_manager'
+  | 'compliance_guardian'
+  | 'innovation_advisor'
+  | 'patient_advocate';
+
+export interface PersonaArchetype {
+  id: string;
+  archetype_code: PersonaArchetypeCode;
+  archetype_name: string;
+  description?: string;
+  default_tone: string;
+  default_formality: number; // 0-100
+  default_empathy: number; // 0-100
+  default_directness: number; // 0-100
+  typical_functions?: string[];
+  display_order: number;
+  is_active: boolean;
+}
+
+export type CommunicationStyleCode =
+  | 'concise_technical'
+  | 'detailed_technical'
+  | 'concise_accessible'
+  | 'detailed_accessible'
+  | 'balanced'
+  | 'executive_summary'
+  | 'educational'
+  | 'data_driven';
+
+export interface CommunicationStyle {
+  id: string;
+  style_code: CommunicationStyleCode;
+  style_name: string;
+  description?: string;
+  verbosity_level: number; // 0-100
+  technical_level: number; // 0-100
+  structure_preference: 'bullet_points' | 'narrative' | 'tables' | 'balanced';
+  display_order: number;
+  is_active: boolean;
+}
+
+export type ToneModifierCode =
+  | 'urgent'
+  | 'reassuring'
+  | 'educational'
+  | 'analytical'
+  | 'collaborative'
+  | 'advisory'
+  | 'compliance_focused'
+  | 'patient_facing';
+
+export interface ToneModifier {
+  id: string;
+  modifier_code: ToneModifierCode;
+  modifier_name: string;
+  description?: string;
+  formality_adjustment: number; // -50 to +50
+  empathy_adjustment: number; // -50 to +50
+  directness_adjustment: number; // -50 to +50
+  display_order: number;
+  is_active: boolean;
+}
+
+// ============================================================================
+// Success Criteria Types
+// ============================================================================
+
+export interface SuccessCriteriaTemplate {
+  id: string;
+  agent_level: AgentLevelNumber;
+  metric_code: string;
+  metric_name: string;
+  metric_description?: string;
+  default_target: number; // 0-100
+  default_min_acceptable?: number; // 0-100
+  measurement_unit: string;
+  measurement_method?: string;
+  display_order: number;
+  is_required: boolean;
+}
+
+export interface AgentSuccessCriteria {
+  id: string;
+  agent_id: string;
+  metric_code: string;
+  metric_name: string;
+  metric_description?: string;
+  target_value: number; // 0-100 (slider-adjustable)
+  min_acceptable?: number; // 0-100 (slider-adjustable)
+  measurement_unit: string;
+  measurement_method?: string;
+  display_order: number;
+  is_active: boolean;
+}
+
+// ============================================================================
+// Token Budget Types
+// ============================================================================
+
+export interface TokenBudget {
+  min: number;
+  max: number;
+  recommended: number;
+}
+
+// ============================================================================
+// Agent Level Defaults (for UI suggestions)
+// ============================================================================
+
+export interface AgentLevelDefaults {
+  level_number: AgentLevelNumber;
+  level_name: AgentLevelName;
+  level_code: AgentLevelCode;
+  default_model: string;
+  default_temperature: number;
+  default_max_tokens: number;
+  default_context_window: number;
+  default_cost_per_query: number;
+  default_token_budget_min: number;
+  default_token_budget_max: number;
+  default_token_budget_recommended: number;
+  default_can_spawn_l2: boolean;
+  default_can_spawn_l3: boolean;
+  default_can_spawn_l4: boolean;
+  default_can_use_worker_pool: boolean;
+  default_can_escalate_to?: string;
+  description?: string;
+}
+
+// ============================================================================
+// Expertise Level Types
+// ============================================================================
+
+export type ExpertiseLevel = 'entry' | 'mid' | 'senior' | 'expert' | 'thought_leader';
+export type GeographicScope = 'local' | 'regional' | 'national' | 'global';
+export type ResponseFormat = 'bullet_points' | 'narrative' | 'tables' | 'balanced';
+
 // Main Agent interface
 export interface Agent {
   // Core Identity
   id?: string;
   name: string;
-  display_name: string;
+  slug?: string;
+  tagline?: string;
   description: string;
-  avatar?: string;
+  title?: string;
+  avatar_url?: string;
+  avatar_description?: string;
   color?: string;
   version?: string;
 
+  // Agent Level (L1-L5 Hierarchy) - Replaces legacy "tier"
+  agent_level_id?: string;
+  agent_levels?: AgentLevel; // Populated via join
+
   // AI Configuration
-  model: string;
-  system_prompt: string;
+  base_model?: string; // Database column name
+  model?: string; // Alias for compatibility
+  system_prompt?: string;
+  system_prompt_template_id?: string;
+  system_prompt_override?: string;
+  prompt_variables?: Record<string, unknown>;
   temperature?: number;
   max_tokens?: number;
   rag_enabled?: boolean;
   context_window?: number;
   response_format?: 'markdown' | 'json' | 'text' | 'html';
+  cost_per_query?: number;
+
+  // Token Budget (normalized columns)
+  token_budget_min?: number;
+  token_budget_max?: number;
+  token_budget_recommended?: number;
+
+  // Model Evidence (for AI-suggested configuration)
+  model_justification?: string;
+  model_citation?: string;
+
+  // 6-Section Prompt Builder Fields
+  prompt_section_you_are?: string;
+  prompt_section_you_do?: string;
+  prompt_section_you_never?: string;
+  prompt_section_success_criteria?: string;
+  prompt_section_when_unsure?: string;
+  prompt_section_evidence?: string;
+
+  // Agent Hierarchy & Spawning
+  reports_to_agent_id?: string;
+  can_escalate_to?: string;
+  can_spawn_l2?: boolean;
+  can_spawn_l3?: boolean;
+  can_spawn_l4?: boolean;
+  can_use_worker_pool?: boolean;
+
+  // Persona & Communication Style (Foreign Keys)
+  persona_archetype_id?: string;
+  persona_archetype?: PersonaArchetype; // Populated via join
+  communication_style_id?: string;
+  communication_style?: CommunicationStyle; // Populated via join
+
+  // Personality Sliders (0-100 scale) - Cursor-adjustable
+  personality_formality?: number;
+  personality_empathy?: number;
+  personality_directness?: number;
+  personality_detail_orientation?: number;
+  personality_proactivity?: number;
+  personality_risk_tolerance?: number;
+
+  // Communication Sliders (0-100 scale) - Cursor-adjustable
+  comm_verbosity?: number;
+  comm_technical_level?: number;
+  comm_warmth?: number;
+
+  // Response Preferences
+  preferred_response_format?: ResponseFormat;
+  include_citations?: boolean;
+  include_confidence_scores?: boolean;
+  include_limitations?: boolean;
+
+  // Experience & Expertise
+  expertise_level?: ExpertiseLevel;
+  expertise_years?: number;
+  years_of_experience?: number; // Alias
+  geographic_scope?: GeographicScope;
+  industry_specialization?: string;
+
+  // Safety Flags (normalized columns)
+  hipaa_compliant?: boolean;
+  gdpr_compliant?: boolean;
+  audit_trail_enabled?: boolean;
+  data_classification?: DataClassification;
 
   // Capabilities & Knowledge
-  capabilities: string[];
+  capabilities?: string[];
   knowledge_domains?: string[];
-  domain_expertise: DomainExpertise;
+  domain_expertise?: DomainExpertise;
   competency_levels?: Record<string, unknown>;
   knowledge_sources?: Record<string, unknown>;
   tool_configurations?: Record<string, unknown>;
 
-  // Business Context
+  // Organizational Context
+  function_id?: string;
+  function_name?: string;
+  department_id?: string;
+  department_name?: string;
+  role_id?: string;
+  role_name?: string;
   business_function?: string;
   role?: string;
+  persona_id?: string;
+
+  // Legacy Fields (deprecated - use agent_level_id instead)
   tier?: 1 | 2 | 3 | 4 | 5;
   priority?: number;
   implementation_phase?: 1 | 2 | 3;
   is_custom?: boolean;
-  cost_per_query?: number;
   target_users?: string[];
 
   // Validation & Performance
@@ -399,4 +646,516 @@ export const ACCURACY_THRESHOLDS: Record<DomainExpertise, number> = {
   [DomainExpertise.COMMERCIAL]: 0.90,
   [DomainExpertise.ACCESS]: 0.95,
   [DomainExpertise.GENERAL]: 0.80
+};
+
+// ============================================================================
+// Agent Relationship Types
+// ============================================================================
+
+export interface AgentPeerRelationship {
+  agent_id: string;
+  peer_agent_id: string;
+  relationship_type: 'peer' | 'collaborator' | 'advisor';
+  created_at?: Date | string;
+  peer_agent?: Agent; // Populated via join
+}
+
+export interface AgentManagementRelationship {
+  manager_agent_id: string;
+  managed_agent_id: string;
+  delegation_type: 'direct' | 'on_demand' | 'supervised';
+  created_at?: Date | string;
+  managed_agent?: Agent; // Populated via join
+}
+
+export interface AgentToneModifierAssignment {
+  agent_id: string;
+  tone_modifier_id: string;
+  is_default: boolean;
+  context_trigger?: string;
+  tone_modifier?: ToneModifier; // Populated via join
+}
+
+export interface AgentEscalationTrigger {
+  id: string;
+  agent_id: string;
+  trigger_condition: string;
+  trigger_type: 'automatic' | 'manual' | 'conditional';
+  priority: number;
+  display_order: number;
+  is_active: boolean;
+}
+
+export interface AgentRegulatoryJurisdiction {
+  id: string;
+  agent_id: string;
+  jurisdiction_code: string;
+  jurisdiction_name: string;
+  is_primary: boolean;
+}
+
+export interface RegulatoryJurisdiction {
+  jurisdiction_code: string;
+  jurisdiction_name: string;
+  region?: string;
+  display_order: number;
+  is_active: boolean;
+}
+
+// ============================================================================
+// Agent Form State Types (for UI)
+// ============================================================================
+
+/**
+ * Form state for editing agents with comprehensive configuration.
+ * Organized by UI tab structure for the enhanced edit form.
+ */
+export interface AgentEditFormState {
+  // Tab 1: Basic Info
+  name: string;
+  tagline: string;
+  description: string;
+  avatar_url: string;
+  avatar_description: string;
+  version: string;
+
+  // Tab 2: Organization
+  function_id: string;
+  department_id: string;
+  role_id: string;
+
+  // Tab 3: Level & Model (with AI suggestions)
+  agent_level_id: string;
+  base_model: string;
+  temperature: number;
+  max_tokens: number;
+  context_window: number;
+  cost_per_query: number;
+  token_budget_min: number;
+  token_budget_max: number;
+  token_budget_recommended: number;
+  model_justification: string;
+  model_citation: string;
+
+  // Tab 4: Personality & Style
+  persona_archetype_id: string;
+  communication_style_id: string;
+  personality_formality: number;
+  personality_empathy: number;
+  personality_directness: number;
+  personality_detail_orientation: number;
+  personality_proactivity: number;
+  personality_risk_tolerance: number;
+  comm_verbosity: number;
+  comm_technical_level: number;
+  comm_warmth: number;
+
+  // Tab 5: Response Preferences
+  preferred_response_format: ResponseFormat;
+  include_citations: boolean;
+  include_confidence_scores: boolean;
+  include_limitations: boolean;
+
+  // Tab 6: 6-Section Prompt Builder
+  prompt_section_you_are: string;
+  prompt_section_you_do: string;
+  prompt_section_you_never: string;
+  prompt_section_success_criteria: string;
+  prompt_section_when_unsure: string;
+  prompt_section_evidence: string;
+
+  // Tab 7: Hierarchy & Relationships
+  reports_to_agent_id: string;
+  can_escalate_to: string;
+  can_spawn_l2: boolean;
+  can_spawn_l3: boolean;
+  can_spawn_l4: boolean;
+  can_use_worker_pool: boolean;
+
+  // Tab 8: Success Criteria (slider-adjustable)
+  success_criteria: AgentSuccessCriteria[];
+
+  // Tab 9: Safety & Compliance
+  hipaa_compliant: boolean;
+  audit_trail_enabled: boolean;
+  data_classification: DataClassification;
+  expertise_level: ExpertiseLevel;
+  expertise_years: number;
+  geographic_scope: GeographicScope;
+  industry_specialization: string;
+
+  // Tab 10: Capabilities & Skills
+  capabilities: string[];
+  skills: string[];
+  responsibilities: string[];
+
+  // Tab 11: Knowledge & RAG
+  knowledge_domains: string[];
+  rag_enabled: boolean;
+
+  // Tab 12: Tools
+  tools: string[];
+
+  // Status
+  status: AgentStatus;
+  validation_status: ValidationStatus;
+}
+
+/**
+ * Slider configuration for UI controls
+ */
+export interface SliderConfig {
+  field: string;
+  label: string;
+  description?: string;
+  min: number;
+  max: number;
+  step: number;
+  defaultValue: number;
+  leftLabel?: string;
+  rightLabel?: string;
+  showValue?: boolean;
+  category: 'model' | 'personality' | 'communication' | 'success_criteria';
+}
+
+/**
+ * Default slider configurations for agent form
+ */
+export const PERSONALITY_SLIDERS: SliderConfig[] = [
+  {
+    field: 'personality_formality',
+    label: 'Formality',
+    description: 'How formal vs. casual the communication style is',
+    min: 0,
+    max: 100,
+    step: 5,
+    defaultValue: 70,
+    leftLabel: 'Casual',
+    rightLabel: 'Formal',
+    showValue: true,
+    category: 'personality'
+  },
+  {
+    field: 'personality_empathy',
+    label: 'Empathy',
+    description: 'How empathetic and emotionally supportive the agent is',
+    min: 0,
+    max: 100,
+    step: 5,
+    defaultValue: 50,
+    leftLabel: 'Objective',
+    rightLabel: 'Empathetic',
+    showValue: true,
+    category: 'personality'
+  },
+  {
+    field: 'personality_directness',
+    label: 'Directness',
+    description: 'How direct vs. diplomatic the communication is',
+    min: 0,
+    max: 100,
+    step: 5,
+    defaultValue: 70,
+    leftLabel: 'Diplomatic',
+    rightLabel: 'Direct',
+    showValue: true,
+    category: 'personality'
+  },
+  {
+    field: 'personality_detail_orientation',
+    label: 'Detail Orientation',
+    description: 'How much detail is included in responses',
+    min: 0,
+    max: 100,
+    step: 5,
+    defaultValue: 60,
+    leftLabel: 'Concise',
+    rightLabel: 'Detailed',
+    showValue: true,
+    category: 'personality'
+  },
+  {
+    field: 'personality_proactivity',
+    label: 'Proactivity',
+    description: 'How proactive vs. reactive the agent is',
+    min: 0,
+    max: 100,
+    step: 5,
+    defaultValue: 50,
+    leftLabel: 'Reactive',
+    rightLabel: 'Proactive',
+    showValue: true,
+    category: 'personality'
+  },
+  {
+    field: 'personality_risk_tolerance',
+    label: 'Risk Tolerance',
+    description: 'How risk-averse vs. risk-tolerant in recommendations',
+    min: 0,
+    max: 100,
+    step: 5,
+    defaultValue: 30,
+    leftLabel: 'Risk-Averse',
+    rightLabel: 'Risk-Tolerant',
+    showValue: true,
+    category: 'personality'
+  }
+];
+
+export const COMMUNICATION_SLIDERS: SliderConfig[] = [
+  {
+    field: 'comm_verbosity',
+    label: 'Verbosity',
+    description: 'How verbose or concise responses are',
+    min: 0,
+    max: 100,
+    step: 5,
+    defaultValue: 50,
+    leftLabel: 'Concise',
+    rightLabel: 'Verbose',
+    showValue: true,
+    category: 'communication'
+  },
+  {
+    field: 'comm_technical_level',
+    label: 'Technical Level',
+    description: 'How technical vs. accessible the language is',
+    min: 0,
+    max: 100,
+    step: 5,
+    defaultValue: 50,
+    leftLabel: 'Accessible',
+    rightLabel: 'Technical',
+    showValue: true,
+    category: 'communication'
+  },
+  {
+    field: 'comm_warmth',
+    label: 'Warmth',
+    description: 'How warm and friendly vs. professional the tone is',
+    min: 0,
+    max: 100,
+    step: 5,
+    defaultValue: 50,
+    leftLabel: 'Professional',
+    rightLabel: 'Warm',
+    showValue: true,
+    category: 'communication'
+  }
+];
+
+export const MODEL_SLIDERS: SliderConfig[] = [
+  {
+    field: 'temperature',
+    label: 'Temperature',
+    description: 'Controls randomness in responses (lower = more deterministic)',
+    min: 0,
+    max: 2,
+    step: 0.1,
+    defaultValue: 0.4,
+    leftLabel: 'Deterministic',
+    rightLabel: 'Creative',
+    showValue: true,
+    category: 'model'
+  },
+  {
+    field: 'max_tokens',
+    label: 'Max Tokens',
+    description: 'Maximum response length',
+    min: 500,
+    max: 8000,
+    step: 500,
+    defaultValue: 3000,
+    leftLabel: 'Short',
+    rightLabel: 'Long',
+    showValue: true,
+    category: 'model'
+  },
+  {
+    field: 'context_window',
+    label: 'Context Window',
+    description: 'Maximum context the model can use',
+    min: 1000,
+    max: 32000,
+    step: 1000,
+    defaultValue: 8000,
+    leftLabel: 'Small',
+    rightLabel: 'Large',
+    showValue: true,
+    category: 'model'
+  }
+];
+
+export const TOKEN_BUDGET_SLIDERS: SliderConfig[] = [
+  {
+    field: 'token_budget_min',
+    label: 'Minimum Budget',
+    description: 'Minimum token budget for responses',
+    min: 100,
+    max: 3000,
+    step: 100,
+    defaultValue: 1000,
+    leftLabel: '100',
+    rightLabel: '3000',
+    showValue: true,
+    category: 'model'
+  },
+  {
+    field: 'token_budget_max',
+    label: 'Maximum Budget',
+    description: 'Maximum token budget for responses',
+    min: 500,
+    max: 5000,
+    step: 100,
+    defaultValue: 2000,
+    leftLabel: '500',
+    rightLabel: '5000',
+    showValue: true,
+    category: 'model'
+  },
+  {
+    field: 'token_budget_recommended',
+    label: 'Recommended Budget',
+    description: 'Ideal token budget for typical responses',
+    min: 200,
+    max: 4000,
+    step: 100,
+    defaultValue: 1500,
+    leftLabel: '200',
+    rightLabel: '4000',
+    showValue: true,
+    category: 'model'
+  }
+];
+
+// ============================================================================
+// Agent Level Constants
+// ============================================================================
+
+export const AGENT_LEVEL_DEFAULTS: Record<AgentLevelNumber, Partial<AgentLevelDefaults>> = {
+  1: {
+    level_number: 1,
+    level_name: 'MASTER',
+    level_code: 'L1',
+    default_model: 'gpt-4',
+    default_temperature: 0.2,
+    default_max_tokens: 4000,
+    default_context_window: 16000,
+    default_cost_per_query: 0.35,
+    default_token_budget_min: 2000,
+    default_token_budget_max: 2500,
+    default_token_budget_recommended: 2200,
+    default_can_spawn_l2: true,
+    default_can_spawn_l3: true,
+    default_can_spawn_l4: true,
+    default_can_use_worker_pool: true,
+    default_can_escalate_to: 'HITL',
+    description: 'Strategic coordinator agents that orchestrate complex multi-domain tasks'
+  },
+  2: {
+    level_number: 2,
+    level_name: 'EXPERT',
+    level_code: 'L2',
+    default_model: 'gpt-4',
+    default_temperature: 0.4,
+    default_max_tokens: 3000,
+    default_context_window: 8000,
+    default_cost_per_query: 0.12,
+    default_token_budget_min: 1500,
+    default_token_budget_max: 2000,
+    default_token_budget_recommended: 1700,
+    default_can_spawn_l2: false,
+    default_can_spawn_l3: true,
+    default_can_spawn_l4: true,
+    default_can_use_worker_pool: true,
+    default_can_escalate_to: 'L1',
+    description: 'Domain experts providing deep specialized knowledge'
+  },
+  3: {
+    level_number: 3,
+    level_name: 'SPECIALIST',
+    level_code: 'L3',
+    default_model: 'gpt-4-turbo',
+    default_temperature: 0.4,
+    default_max_tokens: 2000,
+    default_context_window: 8000,
+    default_cost_per_query: 0.10,
+    default_token_budget_min: 1000,
+    default_token_budget_max: 1500,
+    default_token_budget_recommended: 1200,
+    default_can_spawn_l2: false,
+    default_can_spawn_l3: false,
+    default_can_spawn_l4: false,
+    default_can_use_worker_pool: true,
+    default_can_escalate_to: 'L2',
+    description: 'Focused task specialists for specific domain work'
+  },
+  4: {
+    level_number: 4,
+    level_name: 'WORKER',
+    level_code: 'L4',
+    default_model: 'gpt-3.5-turbo',
+    default_temperature: 0.6,
+    default_max_tokens: 2000,
+    default_context_window: 4000,
+    default_cost_per_query: 0.015,
+    default_token_budget_min: 300,
+    default_token_budget_max: 500,
+    default_token_budget_recommended: 400,
+    default_can_spawn_l2: false,
+    default_can_spawn_l3: false,
+    default_can_spawn_l4: false,
+    default_can_use_worker_pool: false,
+    default_can_escalate_to: undefined,
+    description: 'Stateless workers for high-volume data tasks'
+  },
+  5: {
+    level_number: 5,
+    level_name: 'TOOL',
+    level_code: 'L5',
+    default_model: 'none',
+    default_temperature: 0,
+    default_max_tokens: 200,
+    default_context_window: 1000,
+    default_cost_per_query: 0.001,
+    default_token_budget_min: 100,
+    default_token_budget_max: 200,
+    default_token_budget_recommended: 150,
+    default_can_spawn_l2: false,
+    default_can_spawn_l3: false,
+    default_can_spawn_l4: false,
+    default_can_use_worker_pool: false,
+    default_can_escalate_to: undefined,
+    description: 'Deterministic tools with no LLM required'
+  }
+};
+
+// ============================================================================
+// Persona Archetype Constants
+// ============================================================================
+
+export const PERSONA_ARCHETYPE_LABELS: Record<PersonaArchetypeCode, string> = {
+  clinical_expert: 'Clinical Expert',
+  regulatory_authority: 'Regulatory Authority',
+  data_analyst: 'Data Analyst',
+  safety_officer: 'Safety Officer',
+  research_specialist: 'Research Specialist',
+  business_strategist: 'Business Strategist',
+  operations_manager: 'Operations Manager',
+  compliance_guardian: 'Compliance Guardian',
+  innovation_advisor: 'Innovation Advisor',
+  patient_advocate: 'Patient Advocate'
+};
+
+export const PERSONA_ARCHETYPE_DESCRIPTIONS: Record<PersonaArchetypeCode, string> = {
+  clinical_expert: 'Medical/pharmaceutical specialists with evidence-focused, compassionate communication',
+  regulatory_authority: 'FDA, EMA, compliance specialists with formal, precise communication',
+  data_analyst: 'Metrics and analytics specialists with data-driven, objective communication',
+  safety_officer: 'Risk and pharmacovigilance specialists with cautious, thorough communication',
+  research_specialist: 'Clinical trials and R&D specialists with scientific, methodical communication',
+  business_strategist: 'Commercial and market access specialists with strategic, ROI-oriented communication',
+  operations_manager: 'Manufacturing and supply chain specialists with process-oriented, practical communication',
+  compliance_guardian: 'Legal and regulatory compliance specialists with risk-averse, policy-focused communication',
+  innovation_advisor: 'Digital health and technology specialists with forward-thinking, solution-oriented communication',
+  patient_advocate: 'Patient engagement specialists with accessible, empathetic, health-literacy focused communication'
 };

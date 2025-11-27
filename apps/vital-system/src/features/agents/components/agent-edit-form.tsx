@@ -61,6 +61,7 @@ interface FormState {
   display_name: string;
   description: string;
   tagline: string;
+  version: string;
 
   // Organization
   function_name: string;
@@ -69,6 +70,7 @@ interface FormState {
 
   // Level & Status
   agent_levels: { level_number: AgentLevelNumber };
+  tier: 1 | 2 | 3;
   status: 'active' | 'inactive' | 'development' | 'testing' | 'deprecated';
 
   // LLM Configuration
@@ -76,6 +78,7 @@ interface FormState {
   temperature: number;
   max_tokens: number;
   context_window: number;
+  token_budget: number;
 
   // Capabilities
   capabilities: string[];

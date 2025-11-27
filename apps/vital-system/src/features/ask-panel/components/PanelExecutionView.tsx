@@ -18,12 +18,19 @@ import {
   Sparkles,
   Clock,
   AlertCircle,
+  ChevronDown,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  __Popover as Popover,
+  __PopoverContent as PopoverContent,
+  __PopoverTrigger as PopoverTrigger,
+} from '@/components/ui/popover';
 import { createClient } from '@vital/sdk/client';
 import { STARTUP_TENANT_ID } from '@/lib/constants/tenant';
 import type { SavedPanel } from '@/contexts/ask-panel-context';
@@ -51,6 +58,7 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
   const [currentAgent, setCurrentAgent] = useState<string | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
 
   const IconComponent = panel.IconComponent || Users;
   const supabase = createClient();
@@ -61,101 +69,166 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
       try {
         setLoading(true);
         
-        // Fetch agents by name from panel.suggestedAgents
-        const { data, error } = await supabase
-          .from('agents')
-          .select('*')
-          .eq('tenant_id', STARTUP_TENANT_ID)
-          .in('name', panel.suggestedAgents);
+        // Always ensure we have all agents from panel.suggestedAgents (should be 10)
+        const allAgentNames = panel.suggestedAgents || [];
+        console.log(`[PanelExecutionView] Loading ${allAgentNames.length} agents for panel:`, panel.name);
+        
+        // Try to fetch agents by name from database
+        let fetchedAgents: Agent[] = [];
+        try {
+          const { data, error } = await supabase
+            .from('agents')
+            .select('*')
+            .eq('tenant_id', STARTUP_TENANT_ID)
+            .in('name', allAgentNames);
 
-        if (error) {
-          console.error('Error fetching agents:', error);
-          // Fallback: create mock agents from names
-          const mockAgents = panel.suggestedAgents.map((name, index) => ({
-            id: `agent-${index}`,
+          if (!error && data) {
+            fetchedAgents = data.map((agent: any) => ({
+              id: agent.id || `agent-${agent.name}`,
+              name: agent.name,
+              description: agent.description || agent.display_name || `Expert agent: ${agent.name}`,
+              category: agent.category || panel.category,
+              specialty: agent.specialty || agent.medical_specialty,
+              expertise: agent.expertise || agent.capabilities || [],
+              status: agent.status || 'active',
+            }));
+            console.log(`[PanelExecutionView] Found ${fetchedAgents.length} agents in database`);
+          }
+        } catch (dbError) {
+          console.warn('[PanelExecutionView] Database query failed, using fallback agents:', dbError);
+        }
+
+        // Create a map of fetched agents by name for quick lookup
+        const fetchedAgentMap = new Map(fetchedAgents.map(a => [a.name, a]));
+        
+        // Build complete list: use fetched agents where available, create fallback for missing ones
+        const completeAgents: Agent[] = allAgentNames.map((name, index) => {
+          const fetched = fetchedAgentMap.get(name);
+          if (fetched) {
+            return fetched;
+          }
+          // Create fallback agent for any missing from database
+          return {
+            id: `fallback-${name}-${index}`,
             name,
-            description: `Expert agent: ${name}`,
+            description: `Expert agent: ${name.replace(/-/g, ' ')}`,
             category: panel.category,
             status: 'active',
-          }));
-          setAgents(mockAgents);
-        } else {
-          // Map fetched agents, filling in missing ones
-          const fetchedAgentNames = data?.map(a => a.name) || [];
-          const missingAgents = panel.suggestedAgents
-            .filter(name => !fetchedAgentNames.includes(name))
-            .map((name, index) => ({
-              id: `fallback-${index}`,
-              name,
-              description: `Expert agent: ${name}`,
-              category: panel.category,
-              status: 'active',
-            }));
-          
-          setAgents([...(data || []), ...missingAgents]);
-        }
+          };
+        });
+
+        console.log(`[PanelExecutionView] Total agents prepared: ${completeAgents.length}`);
+        setAgents(completeAgents);
+        // Select all agents by default
+        setSelectedAgentIds(new Set(completeAgents.map(a => a.id)));
       } catch (error) {
-        console.error('Error loading agents:', error);
-        // Fallback to panel agent names
-        const mockAgents = panel.suggestedAgents.map((name, index) => ({
-          id: `agent-${index}`,
+        console.error('[PanelExecutionView] Error loading agents:', error);
+        // Last resort fallback: create all agents from panel.suggestedAgents
+        const mockAgents = (panel.suggestedAgents || []).map((name, index) => ({
+          id: `agent-${name}-${index}`,
           name,
-          description: `Expert agent: ${name}`,
+          description: `Expert agent: ${name.replace(/-/g, ' ')}`,
           category: panel.category,
           status: 'active',
         }));
         setAgents(mockAgents);
+        setSelectedAgentIds(new Set(mockAgents.map(a => a.id)));
       } finally {
         setLoading(false);
       }
     };
 
     fetchAgents();
-  }, [panel.suggestedAgents, supabase]);
+  }, [panel.suggestedAgents, panel.name, panel.category, supabase]);
 
   const handleRun = async () => {
-    if (!question.trim() || agents.length === 0) return;
+    const activeAgents = agents.filter((a) => selectedAgentIds.has(a.id));
+    if (!question.trim() || activeAgents.length === 0) return;
 
     setIsRunning(true);
     setResults([]);
     setProgress(0);
+    setCurrentAgent(null);
 
-    // Simulate panel execution with real agents
-    const totalAgents = agents.length;
-    
-    for (let i = 0; i < totalAgents; i++) {
-      const agent = agents[i];
-      setCurrentAgent(agent.name);
-      setProgress(((i + 1) / totalAgents) * 100);
-
-      // Simulate agent processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Add mock result
-      setResults(prev => [
-        ...prev,
-        {
-          agentId: agent.id,
-          agentName: agent.name,
-          agentDescription: agent.description,
-          response: `Response from ${agent.name} regarding: "${question}". 
-
-Based on my expertise in ${agent.specialty || agent.category || 'this domain'}, here are my insights:
-
-1. Key considerations for your scenario
-2. Recommended approach based on best practices
-3. Potential risks and mitigation strategies
-4. Next steps for implementation
-
-This analysis takes into account the specific requirements you've outlined.`,
-          timestamp: new Date().toISOString(),
-          confidence: Math.random() * 30 + 70, // 70-100%
-        }
-      ]);
+    // Update last_used_at if this is a user custom panel (has UUID format ID)
+    if (panel.id && panel.id.length === 36 && panel.id.includes('-')) {
+      try {
+        await fetch(`/api/user-panels/${panel.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ update_last_used: true }),
+        });
+      } catch (err) {
+        // Silently fail - not critical
+        console.debug('Failed to update last_used_at:', err);
+      }
     }
 
-    setIsRunning(false);
-    setCurrentAgent(null);
+    try {
+      // Build minimal PanelConfiguration compatible with /api/ask-panel/consult
+      const configuration = {
+        selectedAgents: activeAgents.map((agent) => ({
+          id: agent.id,
+          title: agent.name,
+          description: agent.description || '',
+          category: agent.category || panel.category || 'general',
+        })),
+        mode: panel.mode === 'collaborative' || panel.mode === 'hybrid' ? panel.mode : 'sequential',
+        framework: 'auto' as const,
+        executionMode:
+          panel.mode === 'sequential' ? 'sequential' : ('conversational' as const),
+        userGuidance: 'medium' as const,
+        allowDebate: panel.mode !== 'sequential',
+        maxRounds: 5,
+        requireConsensus: true,
+      };
+
+      const response = await fetch('/api/ask-panel/consult', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question,
+          configuration,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Panel execution failed:', await response.text());
+        throw new Error('Panel execution failed');
+      }
+
+      const result = await response.json();
+
+      // Map real expert responses into local results format
+      if (Array.isArray(result.experts)) {
+        const mapped = result.experts.map((expert: any) => {
+          const agentMeta =
+            activeAgents.find((a) => a.id === expert.agentId) ||
+            activeAgents.find((a) => a.name === expert.agentName) ||
+            activeAgents[0];
+
+          return {
+            agentId: expert.agentId || agentMeta?.id,
+            agentName: expert.agentName || agentMeta?.name,
+            agentDescription: agentMeta?.description || '',
+            response: expert.response || '',
+            timestamp: new Date().toISOString(),
+            confidence:
+              typeof expert.confidence === 'number'
+                ? expert.confidence * 100
+                : 75,
+          };
+        });
+
+        setResults(mapped);
+        setProgress(100);
+      }
+    } catch (error) {
+      console.error('Error running panel:', error);
+    } finally {
+      setIsRunning(false);
+      setCurrentAgent(null);
+    }
   };
 
   if (loading) {
@@ -211,7 +284,7 @@ This analysis takes into account the specific requirements you've outlined.`,
                 Panel Configuration
               </CardTitle>
               <CardDescription>
-                This panel includes {agents.length} expert agents working in {panel.mode} mode
+                Select which agents to activate ({Array.from(selectedAgentIds).length}/{agents.length} selected). This panel includes {agents.length} available expert agents working in {panel.mode} mode.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -226,14 +299,14 @@ This analysis takes into account the specific requirements you've outlined.`,
                   <p className="text-sm text-muted-foreground mb-1">Agents</p>
                   <Badge variant="outline">
                     <Bot className="w-3 h-3 mr-1" />
-                    {agents.length}
+                    {Array.from(selectedAgentIds).length}/{agents.length}
                   </Badge>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Est. Time</p>
                   <Badge variant="outline">
                     <Clock className="w-3 h-3 mr-1" />
-                    ~{agents.length * 2}min
+                    ~{Array.from(selectedAgentIds).length * 2}min
                   </Badge>
                 </div>
                 <div>
@@ -244,19 +317,85 @@ This analysis takes into account the specific requirements you've outlined.`,
                 </div>
               </div>
 
-              {/* Expert Agents - Minimal Agent Cards */}
-              <div>
-                <h3 className="text-sm font-semibold mb-3">Expert Agents</h3>
+              {/* Expert Agents Selector */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">Expert Agents</h3>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs flex items-center gap-1"
+                      >
+                        <Bot className="w-3 h-3" />
+                        Choose experts ({Array.from(selectedAgentIds).length}/{agents.length})
+                        <ChevronDown className="w-3 h-3" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-3 space-y-2">
+                      <p className="text-xs text-muted-foreground mb-1">
+                        Select which experts should participate in this run.
+                      </p>
+                      <div className="max-h-60 overflow-y-auto space-y-1">
+                        {agents.map((agent) => {
+                          const checked = selectedAgentIds.has(agent.id);
+                          return (
+                            <label
+                              key={agent.id}
+                              className="flex items-start gap-2 rounded-md px-2 py-1.5 hover:bg-muted cursor-pointer"
+                            >
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={(value) => {
+                                  setSelectedAgentIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (value) {
+                                      next.add(agent.id);
+                                    } else {
+                                      next.delete(agent.id);
+                                    }
+                                    return next;
+                                  });
+                                }}
+                                className="mt-0.5 h-3.5 w-3.5"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium truncate">
+                                  {agent.name}
+                                </div>
+                                {agent.specialty && (
+                                  <div className="text-[11px] text-muted-foreground truncate">
+                                    {agent.specialty}
+                                  </div>
+                                )}
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Selected agents summary cards */}
                 <div className="grid grid-cols-2 gap-3">
-                  {agents.map((agent) => (
-                    <div
-                      key={agent.id}
-                      className="flex items-center gap-2 p-3 rounded-lg border bg-card hover:border-purple-300 transition-colors"
-                    >
-                      <Bot className="w-4 h-4 text-purple-500 flex-shrink-0" />
-                      <span className="text-sm font-medium truncate">{agent.name}</span>
-                    </div>
-                  ))}
+                  {agents
+                    .filter((agent) => selectedAgentIds.has(agent.id))
+                    .map((agent) => (
+                      <div
+                        key={agent.id}
+                        className="flex items-center gap-2 p-3 rounded-lg border bg-card hover:border-purple-300 transition-colors"
+                      >
+                        <Bot className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                        <span className="text-sm font-medium truncate">{agent.name}</span>
+                      </div>
+                    ))}
+                  {Array.from(selectedAgentIds).length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      No experts selected. Use “Choose experts” to pick who should participate.
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -287,7 +426,7 @@ This analysis takes into account the specific requirements you've outlined.`,
                 </p>
                 <Button
                   onClick={handleRun}
-                  disabled={!question.trim() || isRunning}
+                  disabled={!question.trim() || isRunning || Array.from(selectedAgentIds).length === 0}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                 >
                   {isRunning ? (

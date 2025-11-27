@@ -103,9 +103,16 @@ export class AgentSelectorService {
 
   constructor(options?: { requestId?: string; userId?: string; tenantId?: string }) {
     // Initialize Supabase client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('⚠️ [AgentSelectorService] Supabase configuration missing, some features may be disabled');
+      // Create a minimal client that will fail gracefully when used
+      this.supabase = null as any;
+    } else {
+      this.supabase = createClient(supabaseUrl, supabaseKey);
+    }
 
     // Initialize Pinecone client (optional - for vector search)
     if (process.env.PINECONE_API_KEY) {

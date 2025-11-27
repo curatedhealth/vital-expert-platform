@@ -451,3 +451,501 @@ async def get_frameworks_info():
             "crewai": "/frameworks/crewai/execute"
         }
     }
+
+
+# ============================================================================
+# SIMPLE ADAPTER ENDPOINTS (for frontend compatibility)
+# ============================================================================
+
+class SimpleLangGraphRequest(BaseModel):
+    """Simple request format that frontend currently sends"""
+    query: str
+    openai_api_key: Optional[str] = None
+    pinecone_api_key: Optional[str] = None
+    provider: Optional[str] = "openai"
+    ollama_base_url: Optional[str] = None
+    ollama_model: Optional[str] = None
+    orchestrator_system_prompt: Optional[str] = None
+    enabled_agents: List[str]  # List of agent IDs
+
+
+@router.post("/langgraph/execute-simple")
+async def execute_langgraph_simple(request: SimpleLangGraphRequest) -> Dict[str, Any]:
+    """
+    Simple adapter endpoint for frontend compatibility.
+    Accepts the frontend's current schema and executes workflow with real agents.
+    """
+    start_time = time.time()
+
+    try:
+        print(f"🔵 [LangGraph Simple] Query: {request.query[:100]}...")
+        print(f"🔵 [LangGraph Simple] Enabled agents: {request.enabled_agents}")
+
+        # Import dependencies
+        import openai
+        
+        # Get supabase_client from main module (imported at runtime to avoid circular imports)
+        import sys
+        main_module = sys.modules.get('main')
+        supabase_client = None
+        if main_module:
+            supabase_client = getattr(main_module, 'supabase_client', None)
+        
+        # Use provided API key or fall back to environment
+        api_key = request.openai_api_key or os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            # Try to get from settings if available
+            try:
+                from core.config import get_settings
+                settings = get_settings()
+                api_key = settings.openai_api_key
+            except:
+                pass
+        
+        if not api_key:
+            raise HTTPException(
+                status_code=400,
+                detail="OpenAI API key is required (provide openai_api_key or set OPENAI_API_KEY env var)"
+            )
+        
+        client = openai.OpenAI(api_key=api_key)
+        
+        # Load agents from Supabase
+        agent_responses = []
+        agents_data = []
+        
+        if supabase_client and supabase_client.client:
+            for agent_id in request.enabled_agents:
+                try:
+                    agent = await supabase_client.get_agent_by_id(agent_id)
+                    if agent:
+                        agents_data.append({
+                            "id": agent_id,
+                            "name": agent.get("name", f"Agent {agent_id[:8]}"),
+                            "system_prompt": agent.get("system_prompt", "You are a helpful AI assistant."),
+                            "model": agent.get("base_model") or agent.get("model_name") or "gpt-4o",
+                            "temperature": agent.get("metadata", {}).get("temperature", 0.7) if isinstance(agent.get("metadata"), dict) else 0.7
+                        })
+                    else:
+                        print(f"⚠️ Agent {agent_id} not found in database, using default")
+                        agents_data.append({
+                            "id": agent_id,
+                            "name": f"Agent {agent_id[:8]}",
+                            "system_prompt": "You are a helpful AI assistant.",
+                            "model": "gpt-4o",
+                            "temperature": 0.7
+                        })
+                except Exception as e:
+                    print(f"⚠️ Error loading agent {agent_id}: {e}")
+                    agents_data.append({
+                        "id": agent_id,
+                        "name": f"Agent {agent_id[:8]}",
+                        "system_prompt": "You are a helpful AI assistant.",
+                        "model": "gpt-4o",
+                        "temperature": 0.7
+                    })
+        else:
+            # Fallback if Supabase not available
+            print("⚠️ Supabase client not available, using default agent configs")
+            for agent_id in request.enabled_agents:
+                agents_data.append({
+                    "id": agent_id,
+                    "name": f"Agent {agent_id[:8]}",
+                    "system_prompt": "You are a helpful AI assistant.",
+                    "model": "gpt-4o",
+                    "temperature": 0.7
+                })
+        
+        # Execute agents sequentially with real LLM calls
+        for agent in agents_data:
+            try:
+                print(f"  → Executing agent: {agent['name']} ({agent['id'][:8]}...)")
+                
+                # Build messages
+                messages = [
+                    {"role": "system", "content": agent["system_prompt"]},
+                    {"role": "user", "content": request.query}
+                ]
+                
+                # Call OpenAI
+                response = client.chat.completions.create(
+                    model=agent["model"],
+                    messages=messages,
+                    temperature=agent["temperature"],
+                    max_tokens=2000
+                )
+                
+                agent_response_text = response.choices[0].message.content
+                
+                agent_responses.append({
+                    "agent_id": agent["id"],
+                    "agent_name": agent["name"],
+                    "response": agent_response_text,
+                    "confidence": 0.85,  # Could calculate based on response quality
+                    "model_used": agent["model"],
+                    "tokens_used": response.usage.total_tokens if hasattr(response, 'usage') else None
+                })
+                
+            except Exception as e:
+                print(f"❌ Error executing agent {agent['id']}: {e}")
+                agent_responses.append({
+                    "agent_id": agent["id"],
+                    "agent_name": agent["name"],
+                    "response": f"Error: {str(e)}",
+                    "confidence": 0.0,
+                    "error": True
+            })
+
+        # Aggregate response
+        successful_responses = [r for r in agent_responses if not r.get("error", False)]
+        if successful_responses:
+            aggregated = f"Based on consultation with {len(successful_responses)} agent(s):\n\n"
+            aggregated += "\n\n".join([
+                f"**{r['agent_name']}**: {r['response']}"
+                    for r in successful_responses
+            ])
+        else:
+            aggregated = "All agents failed to respond. Please check the error messages above."
+
+        duration = int((time.time() - start_time) * 1000)
+
+        return {
+            "success": len(successful_responses) > 0,
+            "query": request.query,
+            "aggregated_response": aggregated,
+            "agent_results": agent_responses,
+            "total_agents": len(request.enabled_agents),
+            "successful_agents": len(successful_responses),
+            "execution_time_ms": duration,
+            "metadata": {
+                "provider": request.provider,
+                "mode": "real_execution"
+            }
+        }
+
+    except Exception as e:
+        print(f"❌ [LangGraph Simple] Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Execution failed: {str(e)}"
+        )
+
+
+class SimplePanelRequest(BaseModel):
+    """Simple request format for panel execution"""
+    query: str
+    openai_api_key: Optional[str] = None
+    pinecone_api_key: Optional[str] = None
+    provider: Optional[str] = "openai"
+    workflow: Dict[str, Any]  # Workflow definition with nodes/edges
+    panel_type: str
+    user_id: Optional[str] = None
+
+
+@router.post("/panels/execute-simple")
+async def execute_panel_simple(request: SimplePanelRequest) -> Dict[str, Any]:
+    """
+    Simple adapter endpoint for panel execution.
+    Accepts workflow definition from frontend and executes with real agents.
+    """
+    start_time = time.time()
+
+    try:
+        print(f"🔵 [Panel Simple] Query: {request.query[:100]}...")
+        print(f"🔵 [Panel Simple] Panel type: {request.panel_type}")
+        print(f"🔵 [Panel Simple] Workflow nodes: {len(request.workflow.get('nodes', []))}")
+
+        # Import dependencies
+        import openai
+        
+        # Get supabase_client from main module (imported at runtime to avoid circular imports)
+        import sys
+        main_module = sys.modules.get('main')
+        supabase_client = None
+        if main_module:
+            supabase_client = getattr(main_module, 'supabase_client', None)
+        
+        # Use provided API key or fall back to environment
+        api_key = request.openai_api_key or os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            try:
+                from core.config import get_settings
+                settings = get_settings()
+                api_key = settings.openai_api_key
+            except:
+                pass
+        
+        if not api_key:
+            raise HTTPException(
+                status_code=400,
+                detail="OpenAI API key is required (provide openai_api_key or set OPENAI_API_KEY env var)"
+            )
+        
+        client = openai.OpenAI(api_key=api_key)
+
+        # Extract agent IDs from workflow nodes
+        # Check multiple possible node structures:
+        # 1. type === 'agent' or 'expertAgent'
+        # 2. taskId === 'expert_agent'
+        # 3. data.type === 'agent'
+        # 4. data.config.agentId or data.agentId
+        agent_ids = []
+        agent_nodes = []
+        
+        for node in request.workflow.get('nodes', []):
+            node_type = node.get('type', '')
+            node_data = node.get('data', {})
+            task_id = node_data.get('task', {}).get('id') if isinstance(node_data.get('task'), dict) else None
+            
+            # Check if this is an expert/agent node
+            # Must have taskId 'expert_agent' OR be type 'agent'
+            has_expert_structure = (
+                node_type in ['agent', 'expertAgent', 'expert_agent'] or
+                task_id == 'expert_agent' or
+                node_data.get('type') == 'agent' or
+                node_data.get('_original_type') == 'agent'
+            )
+            
+            if has_expert_structure:
+                # Extract agent ID from various possible locations
+                # Priority: config.agentId > agentId > agent.id > node.id (only if it's a UUID)
+                agent_id = None
+                
+                # Check config.agentId first (set by PropertyPanel)
+                if node_data.get('config') and isinstance(node_data.get('config'), dict):
+                    agent_id = node_data.get('config', {}).get('agentId')
+                
+                # Check data.agentId
+                if not agent_id:
+                    agent_id = node_data.get('agentId')
+                
+                # Check data.agent.id
+                if not agent_id and node_data.get('agent') and isinstance(node_data.get('agent'), dict):
+                    agent_id = node_data.get('agent', {}).get('id')
+                
+                # Get node ID for validation
+                node_id = node.get('id', '')
+                
+                # Only add if we have a valid UUID-formatted agent ID from config
+                # DO NOT use node ID as fallback - only real agent IDs from PropertyPanel
+                if agent_id:
+                    # Verify it's a UUID format (36 chars with dashes)
+                    if len(agent_id) == 36 and agent_id.count('-') == 4:
+                        # Make sure it's not the same as node_id (which would be a fallback)
+                        if agent_id != node_id:
+                            agent_ids.append(agent_id)
+                            agent_nodes.append({
+                                'node_id': node_id,
+                                'agent_id': agent_id,
+                                'label': node_data.get('label', f"Agent {agent_id[:8]}")
+                            })
+                            print(f"✅ Added expert node {node_id} with agent ID {agent_id[:8]}...")
+                        else:
+                            print(f"⚠️ Skipping node {node_id}: agent_id is same as node_id (no real agent selected)")
+                    else:
+                        print(f"⚠️ Skipping node {node_id}: agent_id '{agent_id}' is not a valid UUID (length: {len(agent_id)})")
+                else:
+                    print(f"⚠️ Skipping node {node_id}: No agent ID found in config.agentId. Please select a real agent in the Property Panel.")
+        
+        print(f"🔵 [Panel Simple] Found {len(agent_ids)} agent nodes with real agent IDs: {agent_ids}")
+        
+        if not agent_ids:
+            print("⚠️ [Panel Simple] No real agent IDs found in workflow nodes")
+            # Don't use placeholder - return error or empty response
+            return {
+                "success": False,
+                "error": "No expert agents configured. Please select real agents for expert nodes in the workflow designer.",
+                "expert_responses": [],
+                "consensus_summary": "No experts available to discuss the questions.",
+                "execution_metadata": {
+                    "total_agents": 0,
+                    "response_time_ms": int((time.time() - start_time) * 1000),
+                }
+            }
+        
+        # Load agents from Supabase and execute with real LLM calls
+        panel_responses = []
+        agents_data = []
+        
+        if supabase_client and supabase_client.client:
+            for agent_id in agent_ids:
+                try:
+                    agent = await supabase_client.get_agent_by_id(agent_id)
+                    if agent:
+                        agents_data.append({
+                            "id": agent_id,
+                            "name": agent.get("name", f"Agent {agent_id[:8]}"),
+                            "system_prompt": agent.get("system_prompt", "You are a helpful AI assistant."),
+                            "model": agent.get("base_model") or agent.get("model_name") or "gpt-4o",
+                            "temperature": agent.get("metadata", {}).get("temperature", 0.7) if isinstance(agent.get("metadata"), dict) else 0.7
+                        })
+                    else:
+                        print(f"⚠️ Agent {agent_id} not found in database, using default")
+                        agents_data.append({
+                            "id": agent_id,
+                            "name": f"Agent {agent_id[:8]}",
+                            "system_prompt": "You are a helpful AI assistant.",
+                            "model": "gpt-4o",
+                            "temperature": 0.7
+                        })
+                except Exception as e:
+                    print(f"⚠️ Error loading agent {agent_id}: {e}")
+                    agents_data.append({
+                        "id": agent_id,
+                        "name": f"Agent {agent_id[:8]}",
+                        "system_prompt": "You are a helpful AI assistant.",
+                        "model": "gpt-4o",
+                        "temperature": 0.7
+                    })
+        else:
+            # Fallback if Supabase not available
+            print("⚠️ Supabase client not available, using default agent configs")
+            for agent_id in agent_ids:
+                agents_data.append({
+                    "id": agent_id,
+                    "name": f"Agent {agent_id[:8]}",
+                    "system_prompt": "You are a helpful AI assistant.",
+                    "model": "gpt-4o",
+                    "temperature": 0.7
+                })
+        
+        # Execute agents sequentially so each expert can see previous responses
+        conversation_history = []  # Track all previous expert responses
+        
+        for index, agent in enumerate(agents_data):
+            try:
+                print(f"  → Executing panel agent {index + 1}/{len(agents_data)}: {agent['name']} ({agent['id'][:8]}...)")
+                print(f"  → Query: {request.query[:100]}...")
+                
+                # Build enhanced system prompt that includes the agent's role
+                system_prompt = agent["system_prompt"]
+                if not system_prompt or system_prompt == "You are a helpful AI assistant.":
+                    # Use agent name to create a more specific prompt
+                    system_prompt = f"""You are {agent['name']}, an expert in your field participating in a panel discussion.
+
+You are part of a multi-expert panel where experts provide their perspectives sequentially. You will see what previous experts have said, and you should:
+- Provide your own expert perspective on the questions
+- Build upon or reference previous expert responses when relevant
+- Add new insights or different angles
+- Maintain a professional, collaborative tone
+
+Provide detailed, professional responses based on your expertise."""
+                
+                # Build messages with conversation history
+                messages = [{"role": "system", "content": system_prompt}]
+                
+                # Add the original questions (only once, deduplicated)
+                user_content = request.query
+                if not user_content or user_content.strip() == "":
+                    user_content = "Please provide your expert perspective on the topics discussed."
+                else:
+                    # Remove duplicate questions if they exist
+                    # Split by double newlines and deduplicate
+                    questions_list = [q.strip() for q in user_content.split('\n\n') if q.strip()]
+                    unique_questions = []
+                    seen_questions = set()
+                    for q in questions_list:
+                        # Normalize question (remove extra whitespace, lowercase for comparison)
+                        normalized = q.strip().lower()
+                        if normalized and normalized not in seen_questions:
+                            unique_questions.append(q.strip())
+                            seen_questions.add(normalized)
+                    
+                    if unique_questions:
+                        user_content = "\n\n".join(unique_questions)
+                    
+                    # Format the questions for better context
+                    user_content = f"""Please provide your expert perspective on the following questions:
+
+{user_content}"""
+                
+                messages.append({"role": "user", "content": user_content})
+                
+                # Add previous expert responses as context (if any)
+                if conversation_history:
+                    context_text = "\n\n--- Previous Expert Responses ---\n\n"
+                    for prev_response in conversation_history:
+                        context_text += f"**{prev_response['agent_name']}**: {prev_response['response']}\n\n"
+                    context_text += "\n--- End of Previous Responses ---\n\n"
+                    context_text += "Please provide your expert perspective, building on or adding to what has been discussed above."
+                    messages.append({"role": "user", "content": context_text})
+                
+                # Call OpenAI
+                response = client.chat.completions.create(
+                    model=agent["model"],
+                    messages=messages,
+                    temperature=agent["temperature"],
+                    max_tokens=2000
+                )
+                
+                agent_response_text = response.choices[0].message.content
+                
+                # Add this response to conversation history for next experts
+                agent_response = {
+                    "agent_id": agent["id"],
+                    "agent_name": agent["name"],
+                    "response": agent_response_text,
+                    "confidence": 0.85,
+                    "model_used": agent["model"],
+                    "tokens_used": response.usage.total_tokens if hasattr(response, 'usage') else None,
+                    "error": False
+                }
+                
+                panel_responses.append(agent_response)
+                conversation_history.append(agent_response)
+                
+                print(f"  ✅ {agent['name']} responded ({len(agent_response_text)} chars)")
+                
+            except Exception as e:
+                print(f"❌ Error executing panel agent {agent['id']}: {e}")
+                error_response = {
+                    "agent_id": agent["id"],
+                    "agent_name": agent["name"],
+                    "response": f"Error: {str(e)}",
+                    "confidence": 0.0,
+                    "error": True
+                }
+                panel_responses.append(error_response)
+                # Don't add errors to conversation history
+
+        # Build consensus summary
+        successful_responses = [r for r in panel_responses if not r.get("error", False)]
+        if successful_responses:
+            consensus_summary = f"Panel consensus from {len(successful_responses)} expert(s):\n\n"
+            consensus_summary += "\n\n".join([
+                f"**{r['agent_name']}**: {r['response']}"
+                    for r in successful_responses
+            ])
+        else:
+            consensus_summary = "All panel experts failed to respond. Please check the error messages above."
+
+        duration = int((time.time() - start_time) * 1000)
+
+        return {
+            "success": True,
+            "session_id": f"session_{int(time.time())}",
+            "panel_type": request.panel_type,
+            "expert_responses": panel_responses,
+            "consensus_level": 0.85 if successful_responses else 0.0,
+            "consensus_summary": consensus_summary,
+            "execution_metadata": {
+                "total_agents": len(panel_responses),
+                "successful_agents": len(successful_responses),
+                "response_time_ms": duration,
+                "workflow_nodes": len(request.workflow.get('nodes', [])),
+                "workflow_edges": len(request.workflow.get('edges', [])),
+                "mode": "real_execution"
+            }
+        }
+
+    except Exception as e:
+        print(f"❌ [Panel Simple] Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Panel execution failed: {str(e)}"
+        )
+

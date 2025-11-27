@@ -52,10 +52,13 @@ export class Mode4AutonomousManualHandler {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration missing: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
+      console.warn('⚠️ [Mode4] Supabase configuration missing, some features may be disabled');
+      // Create a minimal client that will fail gracefully when used
+      this.supabase = null as any;
+    } else {
+      this.supabase = createClient(supabaseUrl, supabaseKey);
     }
     
-    this.supabase = createClient(supabaseUrl, supabaseKey);
     this.workflow = createMode4Workflow(this);
   }
 
@@ -890,42 +893,35 @@ export async function* executeMode4(
   const startTime = Date.now();
 
   try {
-    const payload = {
-      agent_id: config.agentId,
-      message: config.message,
-      enable_rag: config.enableRAG !== false,
-      enable_tools: config.enableTools ?? true,
-      selected_rag_domains: config.selectedRagDomains ?? [],
-      requested_tools: config.requestedTools ?? [],
-      temperature: config.temperature ?? 0.7,
-      max_tokens: config.maxTokens ?? 2000,
-      max_iterations: config.maxIterations ?? 10,
-      confidence_threshold: config.confidenceThreshold ?? 0.95,
-      user_id: config.userId,
-      tenant_id: config.tenantId,
+    // Call unified Ask Expert endpoint (Mode 4: single_expert with specific agent)
+    const unifiedPayload = {
+      query: config.message,
+      mode: 'single_expert', // Mode 4: user selects specific agent
+      expert_id: config.agentId, // Required for single_expert mode
+      tenant_id: config.tenantId || DEFAULT_TENANT_ID,
       session_id: config.sessionId,
+      user_id: config.userId,
+      stream: false,
       conversation_history: config.conversationHistory ?? [],
     };
 
     const response = await fetch(
-      `${API_GATEWAY_URL}/api/mode4/autonomous-manual`,
+      `${API_GATEWAY_URL}/v1/ai/ask-expert/unified`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-tenant-id': config.tenantId || DEFAULT_TENANT_ID,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(unifiedPayload),
       }
     );
 
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
-      throw new Error(
-        errorBody.detail ||
-          errorBody.error ||
-          `API Gateway responded with status ${response.status}`
-      );
+      // Extract error message properly to avoid [object Object] display
+      const errorMessage = errorBody.error || errorBody.detail || errorBody.message || `API responded with status ${response.status}`;
+      throw new Error(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
     }
 
     const result =

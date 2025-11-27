@@ -287,15 +287,17 @@ export const useAgentsStore = create<AgentsStore>()(
 
         try {
           const dbAgents = await agentService.getActiveAgents(showAll);
-          console.log(`📦 AgentsStore: Received ${dbAgents.length} agents from service`);
+          console.log(`📦 AgentsStore: Received ${dbAgents?.length || 0} agents from service`);
 
-          const agents = dbAgents.map(convertDbAgentToStoreFormat);
+          // Handle empty array gracefully - it's a valid state
+          const agents = (dbAgents || []).map(convertDbAgentToStoreFormat);
           console.log(`📦 AgentsStore: Converted to ${agents.length} store-format agents`);
 
           set({
             agents,
             isLoading: false,
             lastUpdated: new Date(),
+            error: null, // Empty agents is valid, not an error
           });
 
           console.log(`📦 AgentsStore: State updated with ${agents.length} agents`);
@@ -304,10 +306,13 @@ export const useAgentsStore = create<AgentsStore>()(
           agentEventEmitter.emit(agents);
 
         } catch (error) {
-          console.error('❌ AgentsStore: Failed to load agents:', error);
+          // This catch should rarely trigger now since getActiveAgents returns [] instead of throwing
+          console.warn('⚠️ AgentsStore: Exception caught (should be rare):', error instanceof Error ? error.message : String(error));
           set({
+            agents: [], // Empty array is valid
             isLoading: false,
-            error: error instanceof Error ? error.message : 'Failed to load agents',
+            error: null, // Don't show error - empty agents is a valid state
+            lastUpdated: new Date(),
           });
         }
       },

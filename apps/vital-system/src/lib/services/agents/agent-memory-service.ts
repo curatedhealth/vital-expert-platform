@@ -32,12 +32,20 @@ class AgentMemoryService {
 
   constructor() {
     const config = env.get();
-    this.supabase = createClient(config.NEXT_PUBLIC_SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
+    const url = config.NEXT_PUBLIC_SUPABASE_URL;
+    const key = config.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!url || !key) {
+      console.warn('⚠️ [AgentMemoryService] Supabase configuration missing, some features may be disabled');
+      this.supabase = null as any;
+    } else {
+      this.supabase = createClient(url, key, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      });
+    }
 
     this.logger = new StructuredLogger({
       minLevel: process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG,

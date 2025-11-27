@@ -27,6 +27,10 @@ fi
 # Set PYTHONPATH
 export PYTHONPATH="${AI_ENGINE_DIR}/src:${PYTHONPATH}"
 
+# Fix SSL certificate path for Python 3.9
+export SSL_CERT_FILE=$(python3 -c "import certifi; print(certifi.where())")
+echo "🔒 SSL_CERT_FILE: $SSL_CERT_FILE"
+
 # Set development mode (skip heavy dependencies)
 export SKIP_REDIS_INIT=true
 export SKIP_PINECONE_INIT=true

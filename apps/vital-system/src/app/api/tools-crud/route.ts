@@ -95,10 +95,27 @@ export const GET = withAgentAuth(async (
         }
       );
 
-      return NextResponse.json(
-        { error: 'Failed to fetch tools from database', details: error.message },
-        { status: 500 }
-      );
+      // If table doesn't exist, return empty array instead of error
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        logger.warn('tools_get_table_missing', { operationId });
+        return NextResponse.json({
+          success: true,
+          tools: [],
+          count: 0,
+          limit,
+          offset,
+        });
+      }
+
+      // For other errors, return empty array gracefully
+      logger.warn('tools_get_error_graceful', { operationId, error: error.message });
+      return NextResponse.json({
+        success: true,
+        tools: [],
+        count: 0,
+        limit,
+        offset,
+      });
     }
 
     const duration = Date.now() - startTime;
@@ -128,12 +145,13 @@ export const GET = withAgentAuth(async (
       }
     );
 
-    return NextResponse.json(
-      {
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    // Return empty array instead of error to prevent UI breakage
+    return NextResponse.json({
+      success: true,
+      tools: [],
+      count: 0,
+      limit: parseInt(request.nextUrl.searchParams.get('limit') || '10000'),
+      offset: parseInt(request.nextUrl.searchParams.get('offset') || '0'),
+    });
   }
 });

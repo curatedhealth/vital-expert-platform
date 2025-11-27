@@ -2,10 +2,14 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Get Supabase credentials
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEW_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEW_SUPABASE_SERVICE_KEY;
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+// Only create client if credentials are available
+let supabaseAdmin: ReturnType<typeof createClient> | null = null;
+if (supabaseUrl && supabaseServiceKey) {
+  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+}
 
 /**
  * GET /api/agents - Fetch all agents from the agents table
@@ -16,6 +20,27 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now();
 
   try {
+    // Check if Supabase is configured
+    if (!supabaseAdmin || !supabaseUrl || !supabaseServiceKey) {
+      console.warn(`[${requestId}] Supabase not configured, returning empty agents list`);
+      return NextResponse.json(
+        {
+          success: true,
+          agents: [],
+          count: 0,
+          warning: 'Supabase not configured',
+          requestId,
+        },
+        {
+          status: 200,
+          headers: {
+            'Cache-Control': 'public, max-age=300',
+            'X-Request-ID': requestId,
+          },
+        }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'active';
 
@@ -25,6 +50,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Build query - Include organizational structure IDs and names
+    // Note: Only select columns that actually exist in the agents table
     let query = supabaseAdmin
       .from('agents')
       .select(`
@@ -51,10 +77,7 @@ export async function GET(request: NextRequest) {
         function_name,
         function_id,
         department_name,
-        department_id,
-        capabilities,
-        knowledge_domains,
-        rag_enabled
+        department_id
       `);
 
     // Only filter by status if not "all"
@@ -84,6 +107,27 @@ export async function GET(request: NextRequest) {
             status: 200,
             headers: {
               'Cache-Control': 'public, max-age=300', // 5 minutes cache
+              'X-Request-ID': requestId,
+            },
+          }
+        );
+      }
+
+      // If column doesn't exist, return empty array with warning
+      if (error.message && error.message.includes('does not exist')) {
+        console.warn(`[${requestId}] Column error: ${error.message}`);
+        return NextResponse.json(
+          {
+            success: true,
+            agents: [],
+            count: 0,
+            warning: `Database schema mismatch: ${error.message}`,
+            requestId,
+          },
+          {
+            status: 200,
+            headers: {
+              'Cache-Control': 'public, max-age=300',
               'X-Request-ID': requestId,
             },
           }

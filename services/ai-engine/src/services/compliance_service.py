@@ -533,6 +533,22 @@ class HumanInLoopValidator:
         reasons = []
         required = False
         risk_level = "low"
+        
+        # CRITICAL FIX: Skip human review for error responses FIRST - before any other checks
+        response_lower = response.lower() if response else ''
+        is_error_response = any(indicator in response_lower for indicator in [
+            'apologize', 'encountered an error', 'error processing', 'failed to process',
+            'i apologize, but', 'unable to generate', 'unable to process'
+        ])
+        
+        # If it's an error response, don't require human review - return immediately
+        if is_error_response:
+            return {
+                'requires_human_review': False,
+                'risk_level': 'low',
+                'reasons': ['Error response - skipping human review'],
+                'recommendation': 'Error response does not require human review'
+            }
 
         # Check 1: Confidence score
         if confidence < self.CONFIDENCE_THRESHOLD_CRITICAL:

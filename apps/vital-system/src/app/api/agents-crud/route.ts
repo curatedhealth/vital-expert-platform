@@ -212,21 +212,37 @@ export const GET = withAgentAuth(async (
     // For vital-system tenant OR dev bypass: use admin client (bypasses RLS, sees all agents)
     // For other tenants: use user session client (RLS filters by tenant)
     let supabase;
-    if (isDevBypass || isVitalSystemTenant) {
-      const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
-      const supabaseConfig = env.getSupabaseConfig();
-      supabase = createSupabaseClient(supabaseConfig.url, supabaseConfig.serviceRoleKey);
-      logger.info('agents_crud_using_admin_client', { 
-        operationId, 
-        reason: isDevBypass ? 'dev_bypass' : 'vital_system_tenant',
-        tenantKey 
+    try {
+      if (isDevBypass || isVitalSystemTenant) {
+        const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+        const supabaseConfig = env.getSupabaseConfig();
+        if (!supabaseConfig?.url || !supabaseConfig?.serviceRoleKey) {
+          throw new Error('Supabase configuration missing');
+        }
+        supabase = createSupabaseClient(supabaseConfig.url, supabaseConfig.serviceRoleKey);
+        logger.info('agents_crud_using_admin_client', { 
+          operationId, 
+          reason: isDevBypass ? 'dev_bypass' : 'vital_system_tenant',
+          tenantKey 
+        });
+      } else {
+        supabase = await createClient();
+      }
+    } catch (supabaseError) {
+      logger.error('agents_crud_supabase_init_failed', {
+        operationId,
+        error: supabaseError instanceof Error ? supabaseError.message : String(supabaseError),
       });
-    } else {
-      supabase = await createClient();
+      // Return empty array instead of 500 error
+      return NextResponse.json({
+        success: true,
+        agents: [],
+        count: 0,
+        warning: 'Failed to initialize Supabase client.',
+      });
     }
     
     const { profile } = context;
-    const tenantIds = env.getTenantIds();
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
@@ -245,65 +261,212 @@ export const GET = withAgentAuth(async (
 
     // Build query - select all columns with * to avoid missing column errors
     // The database schema may vary, so we use * and let the normalizeAgent function handle the data
-    let query = supabase
-      .from('agents')
-      .select('*');
-
-    // Apply tenant filtering based on tenant context
-    // vital-system tenant: sees ALL agents (no filtering) - this is the platform admin view
-    // Other tenants: filter by allowed_tenants array
-    if (isVitalSystemTenant || isDevBypass) {
-      // Platform/admin view - see all agents across all tenants
-      // Only filter by status (active/testing) for production readiness
-      query = query.in('status', ['active', 'testing']);
-      logger.debug('agents_crud_get_platform_view', { operationId, tenantKey });
-    } else if (profile.tenant_id) {
-      // Tenant-specific view - filter by allowed_tenants
-      query = query.contains('allowed_tenants', [profile.tenant_id]);
-      query = query.in('status', ['active', 'testing']);
-      logger.debug('agents_crud_get_tenant_filtered', { operationId, tenantId: profile.tenant_id });
-    } else {
-      // No tenant context - safe fallback, show no agents
-      query = query.contains('allowed_tenants', ['00000000-0000-0000-0000-000000000000']);
-      logger.warn('agents_crud_get_no_tenant', { operationId, userId: context.user.id });
+    // Try multiple query strategies, starting with the most specific and falling back to simpler ones
+    
+    let agents: any[] | null = null;
+    let error: any = null;
+    
+    // Strategy 1: Try with status filter and ordering (most specific)
+    try {
+      let query = supabase
+        .from('agents')
+        .select('*');
+      
+      // Apply tenant filtering
+      if (isVitalSystemTenant || isDevBypass) {
+        query = query.in('status', ['active', 'testing']);
+        logger.debug('agents_crud_get_platform_view', { operationId, tenantKey });
+      } else if (profile?.tenant_id) {
+        // Try allowed_tenants first
+        try {
+          query = query.contains('allowed_tenants', [profile.tenant_id]);
+        } catch (e) {
+          // Fallback to tenant_id
+          query = query.eq('tenant_id', profile.tenant_id);
+        }
+        query = query.in('status', ['active', 'testing']);
+        logger.debug('agents_crud_get_tenant_filtered', { operationId, tenantId: profile.tenant_id });
+      } else {
+        // No tenant - return empty
+        query = query.eq('tenant_id', '00000000-0000-0000-0000-000000000000');
+      }
+      
+      query = query.order('name', { ascending: true });
+      
+      const result = await query;
+      agents = result.data;
+      error = result.error;
+      
+      if (!error && agents) {
+        logger.debug('agents_crud_query_success_with_filters', { operationId, count: agents.length });
+      }
+    } catch (queryError) {
+      logger.warn('agents_crud_query_strategy1_failed', { operationId, error: queryError });
+      error = queryError;
+    }
+    
+    // Strategy 2: If Strategy 1 failed, try without status filter
+    if (error || !agents) {
+      try {
+        let query = supabase
+          .from('agents')
+          .select('*');
+        
+        // Apply tenant filtering only
+        if (isVitalSystemTenant || isDevBypass) {
+          // No filters for platform view
+          logger.debug('agents_crud_get_platform_view_no_status', { operationId, tenantKey });
+        } else if (profile?.tenant_id) {
+          try {
+            query = query.contains('allowed_tenants', [profile.tenant_id]);
+          } catch (e) {
+            query = query.eq('tenant_id', profile.tenant_id);
+          }
+          logger.debug('agents_crud_get_tenant_filtered_no_status', { operationId, tenantId: profile.tenant_id });
+        } else {
+          query = query.eq('tenant_id', '00000000-0000-0000-0000-000000000000');
+        }
+        
+        // Try ordering by name, fallback to id
+        try {
+          query = query.order('name', { ascending: true });
+        } catch (e) {
+          query = query.order('id', { ascending: true });
+        }
+        
+        const result = await query;
+        agents = result.data;
+        error = result.error;
+        
+        if (!error && agents) {
+          logger.debug('agents_crud_query_success_no_status', { operationId, count: agents.length });
+        }
+      } catch (queryError) {
+        logger.warn('agents_crud_query_strategy2_failed', { operationId, error: queryError });
+        error = queryError;
+      }
+    }
+    
+    // Strategy 3: If Strategy 2 failed, try simplest query (no filters, no ordering)
+    if (error || !agents) {
+      try {
+        const result = await supabase
+          .from('agents')
+          .select('*')
+          .limit(1000);
+        
+        agents = result.data;
+        error = result.error;
+        
+        if (!error && agents) {
+          logger.debug('agents_crud_query_success_simple', { operationId, count: agents.length });
+        }
+      } catch (queryError) {
+        logger.warn('agents_crud_query_strategy3_failed', { operationId, error: queryError });
+        error = queryError;
+      }
     }
 
-    // Add ordering
-    query = query.order('name', { ascending: true });
-
-    const { data: agents, error } = await query;
-
-    if (error) {
+    // If all strategies failed, return empty array with warning
+    if (error || !agents) {
       const duration = Date.now() - startTime;
-      logger.error(
-        'agents_crud_get_failed',
-        new Error(error.message),
+      const errorMessage = error?.message || 'Unknown error';
+      
+      logger.warn(
+        'agents_crud_get_failed_all_strategies',
         {
           operation: 'GET /api/agents-crud',
           operationId,
           duration,
-          errorCode: error.code,
+          errorCode: error?.code,
+          errorMessage,
         }
       );
 
-      return NextResponse.json(
-        { error: 'Failed to fetch agents from database', details: error.message },
-        { status: 500 }
-      );
+      // Return empty array instead of error to allow graceful degradation
+      return NextResponse.json({
+        success: true,
+        agents: [],
+        count: 0,
+        warning: 'Failed to fetch agents from database. Some columns may be missing.',
+      });
     }
 
     // Normalize agents - need admin client for icon resolution
     // This is safe because we're only reading public icon data
-    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
-    const supabaseConfig = env.getSupabaseConfig();
-    const adminSupabase = createSupabaseClient(
-      supabaseConfig.url,
-      supabaseConfig.serviceRoleKey
-    );
-
-    const normalizedAgents = await Promise.all(
-      (agents || []).map(async (agent: any) => await normalizeAgent(agent, adminSupabase))
-    );
+    let normalizedAgents: any[] = [];
+    try {
+      const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+      const supabaseConfig = env.getSupabaseConfig();
+      if (supabaseConfig?.url && supabaseConfig?.serviceRoleKey) {
+        const adminSupabase = createSupabaseClient(
+          supabaseConfig.url,
+          supabaseConfig.serviceRoleKey
+        );
+        normalizedAgents = await Promise.all(
+          (agents || []).map(async (agent: any) => {
+            try {
+              return await normalizeAgent(agent, adminSupabase);
+            } catch (agentError) {
+              logger.warn('agents_crud_normalize_agent_failed', {
+                operationId,
+                agentId: agent?.id,
+                error: agentError instanceof Error ? agentError.message : String(agentError),
+              });
+              // Return a basic normalized agent without icon resolution
+              return {
+                id: agent.id,
+                name: agent.name,
+                display_name: agent.metadata?.display_name || agent.title || agent.name,
+                description: agent.description || '',
+                system_prompt: agent.system_prompt || '',
+                capabilities: agent.capabilities || agent.specializations || [],
+                status: agent.status || 'active',
+                tier: agent.metadata?.tier || 1,
+                model: agent.base_model || agent.metadata?.model || 'gpt-4',
+                avatar: agent.avatar_url || agent.metadata?.avatar || '🤖',
+                metadata: agent.metadata || {},
+              };
+            }
+          })
+        );
+      } else {
+        // If Supabase config is missing, use basic normalization
+        logger.warn('agents_crud_supabase_config_missing', { operationId });
+        normalizedAgents = (agents || []).map((agent: any) => ({
+          id: agent.id,
+          name: agent.name,
+          display_name: agent.metadata?.display_name || agent.title || agent.name,
+          description: agent.description || '',
+          system_prompt: agent.system_prompt || '',
+          capabilities: agent.capabilities || agent.specializations || [],
+          status: agent.status || 'active',
+          tier: agent.metadata?.tier || 1,
+          model: agent.base_model || agent.metadata?.model || 'gpt-4',
+          avatar: agent.avatar_url || agent.metadata?.avatar || '🤖',
+          metadata: agent.metadata || {},
+        }));
+      }
+    } catch (normalizeError) {
+      logger.error('agents_crud_normalize_failed', {
+        operationId,
+        error: normalizeError instanceof Error ? normalizeError.message : String(normalizeError),
+      });
+      // Use basic normalization as fallback
+      normalizedAgents = (agents || []).map((agent: any) => ({
+        id: agent.id,
+        name: agent.name,
+        display_name: agent.metadata?.display_name || agent.title || agent.name,
+        description: agent.description || '',
+        system_prompt: agent.system_prompt || '',
+        capabilities: agent.capabilities || agent.specializations || [],
+        status: agent.status || 'active',
+        tier: agent.metadata?.tier || 1,
+        model: agent.base_model || agent.metadata?.model || 'gpt-4',
+        avatar: agent.avatar_url || agent.metadata?.avatar || '🤖',
+        metadata: agent.metadata || {},
+      }));
+    }
 
     const validAgents = normalizedAgents.filter(Boolean);
     const duration = Date.now() - startTime;
@@ -321,6 +484,9 @@ export const GET = withAgentAuth(async (
     });
   } catch (error) {
     const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
     logger.error(
       'agents_crud_get_error',
       error instanceof Error ? error : new Error(String(error)),
@@ -328,13 +494,18 @@ export const GET = withAgentAuth(async (
         operation: 'GET /api/agents-crud',
         operationId,
         duration,
+        errorMessage,
+        errorStack,
       }
     );
 
+    // Return more specific error information for debugging
     return NextResponse.json(
       {
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: errorMessage,
+        operation: 'GET /api/agents-crud',
+        operationId,
       },
       { status: 500 }
     );

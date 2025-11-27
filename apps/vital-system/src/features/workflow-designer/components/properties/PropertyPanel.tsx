@@ -6,7 +6,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,12 @@ import { Settings, X, Save } from 'lucide-react';
 import { getNodeTypeDefinition } from '../../constants/node-types';
 import type { WorkflowNode, NodeConfig } from '../../types/workflow';
 
+interface Agent {
+  id: string;
+  name: string;
+  display_name?: string;
+}
+
 interface PropertyPanelProps {
   selectedNode: WorkflowNode | null;
   onUpdate: (nodeId: string, config: Partial<NodeConfig>) => void;
@@ -33,6 +39,67 @@ interface PropertyPanelProps {
 }
 
 export function PropertyPanel({ selectedNode, onUpdate, onClose }: PropertyPanelProps) {
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [loadingAgents, setLoadingAgents] = useState(false);
+  
+  // Check if this is an expert/agent node that needs agent selection
+  // Note: selectedNode is node.data from React Flow, so it has type directly
+  const nodeType = selectedNode?.type;
+  const isExpertNode = nodeType === 'agent' || 
+    selectedNode?.config?.taskId === 'expert_agent' ||
+    selectedNode?.config?._original_type === 'agent';
+  
+  // Debug logging
+  useEffect(() => {
+    if (selectedNode) {
+      console.log('[PropertyPanel] Node selected:', {
+        type: selectedNode.type,
+        nodeType,
+        isExpertNode,
+        config: selectedNode.config,
+      });
+    }
+  }, [selectedNode, nodeType, isExpertNode]);
+  
+  // Fetch agents when expert node is selected
+  useEffect(() => {
+    if (isExpertNode && agents.length === 0 && !loadingAgents) {
+      setLoadingAgents(true);
+      console.log('[PropertyPanel] Fetching agents for expert node...');
+      
+      fetch('/api/agents?status=active')
+        .then(async (res) => {
+          if (!res.ok) {
+            const errorText = await res.text();
+            console.error('[PropertyPanel] Agents API error:', res.status, errorText);
+            throw new Error(`Failed to fetch agents (${res.status}): ${errorText}`);
+          }
+          return res.json();
+        })
+        .then(data => {
+          console.log('[PropertyPanel] Agents API response:', data);
+          if (data.success && data.agents && Array.isArray(data.agents)) {
+            setAgents(data.agents);
+            console.log(`[PropertyPanel] Loaded ${data.agents.length} agents`);
+          } else if (data.agents && Array.isArray(data.agents)) {
+            // Fallback for older API format
+            setAgents(data.agents);
+            console.log(`[PropertyPanel] Loaded ${data.agents.length} agents (legacy format)`);
+          } else {
+            console.warn('[PropertyPanel] No agents in response:', data);
+            setAgents([]);
+          }
+        })
+        .catch(err => {
+          console.error('[PropertyPanel] Failed to fetch agents:', err);
+          setAgents([]);
+        })
+        .finally(() => {
+          setLoadingAgents(false);
+        });
+    }
+  }, [isExpertNode, agents.length, loadingAgents]);
+
   if (!selectedNode) {
     return (
       <Card className="h-full">
@@ -54,8 +121,7 @@ export function PropertyPanel({ selectedNode, onUpdate, onClose }: PropertyPanel
   };
 
   const handleLabelUpdate = (newLabel: string) => {
-    // Update both the label in data and in config
-    const updatedNode = { ...selectedNode, label: newLabel };
+    // Update label - this is stored in node.data.label, not in config
     onUpdate(selectedNode.id, { label: newLabel });
   };
 
@@ -118,6 +184,54 @@ export function PropertyPanel({ selectedNode, onUpdate, onClose }: PropertyPanel
 
         <div className="border-t pt-4">
           <h3 className="font-semibold text-sm mb-3">Type-Specific Configuration</h3>
+
+          {/* Expert/Agent Node - Agent Selection */}
+          {isExpertNode && (
+            <div className="space-y-4 mb-4">
+              <div className="space-y-2">
+                <Label htmlFor="agentId">Select Expert Agent</Label>
+                {loadingAgents ? (
+                  <div className="text-sm text-muted-foreground">Loading agents...</div>
+                ) : agents.length === 0 ? (
+                  <div className="text-sm text-destructive">
+                    No agents available. Please check if Supabase is configured and agents exist in the database.
+                  </div>
+                ) : (
+                  <Select
+                    value={config.agentId || ''}
+                    onValueChange={(value) => {
+                      // Update agent ID in config
+                      handleConfigUpdate('agentId', value);
+                      
+                      // Automatically update node label to match selected agent name
+                      const selectedAgent = agents.find(a => a.id === value);
+                      if (selectedAgent) {
+                        const agentName = selectedAgent.display_name || selectedAgent.name;
+                        handleLabelUpdate(agentName);
+                      }
+                    }}
+                    disabled={loadingAgents}
+                  >
+                    <SelectTrigger id="agentId">
+                      <SelectValue placeholder="Choose an expert agent..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {agents.map((agent) => (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          {agent.display_name || agent.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {config.agentId 
+                    ? `Selected: ${agents.find(a => a.id === config.agentId)?.display_name || agents.find(a => a.id === config.agentId)?.name || config.agentId}`
+                    : 'Select a real agent from the database to use in this panel workflow'}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Agent Properties */}
           {selectedNode.type === 'agent' && (

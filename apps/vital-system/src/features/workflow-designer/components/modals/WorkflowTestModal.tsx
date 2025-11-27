@@ -12,8 +12,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { FileDown, FileText, ChevronDown, User, Users, AlertCircle } from 'lucide-react';
+import { FileDown, FileText, ChevronDown, User, Users, AlertCircle, Sparkles, X, Check } from 'lucide-react';
 import { AIChatbot, ChatMessage } from '@/components/langgraph-gui/AIChatbot';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { Node, Edge } from 'reactflow';
 
 interface WorkflowTestModalProps {
@@ -38,6 +40,16 @@ interface Message {
   content: string;
   timestamp: string;
   level?: 'info' | 'success' | 'error';
+  agentName?: string;
+  agentId?: string;
+  metadata?: {
+    confidence?: number;
+    model_used?: string;
+    tokens_used?: number;
+    error?: boolean;
+  };
+  isConsensus?: boolean;
+  isSummary?: boolean;
 }
 
 interface Agent {
@@ -81,6 +93,14 @@ export function WorkflowTestModal({
   const [modeMetadata, setModeMetadata] = useState<any>(null);
   const [modeConfidence, setModeConfidence] = useState<number>(0);
   const [detectingMode, setDetectingMode] = useState(false);
+  
+  // Question suggestions state - questions for experts to discuss
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const [visibleQuestionsCount, setVisibleQuestionsCount] = useState<number>(2); // Show only 2 initially
+  const [selectedQuestions, setSelectedQuestions] = useState<Set<number>>(new Set());
+  const [selectionOrder, setSelectionOrder] = useState<number[]>([]); // Track order of selection
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [questionError, setQuestionError] = useState<string | null>(null);
   
   // Inspect workflow to detect mode from LangGraph backend
   useEffect(() => {
@@ -190,13 +210,104 @@ export function WorkflowTestModal({
   };
 
   // Convert Message to ChatMessage for AIChatbot
-  const messageToChatMessage = (msg: Message): ChatMessage => ({
+  const messageToChatMessage = (msg: Message): ChatMessage => {
+    const chatMsg: ChatMessage = {
     id: msg.id,
-    role: msg.type === 'user' ? 'user' : msg.type === 'assistant' ? 'ai' : 'log',
+      role: msg.type === 'user' ? 'user' : msg.type === 'assistant' ? 'assistant' : 'log',
     content: msg.content,
     timestamp: msg.timestamp,
     level: msg.level,
-  });
+    };
+    
+    // Add agent/expert information if available
+    if (msg.agentName) {
+      chatMsg.name = msg.agentName;
+      chatMsg.expertId = msg.agentId;
+    }
+    
+    // Mark consensus/summary messages
+    if (msg.isConsensus || msg.isSummary) {
+      chatMsg.name = msg.agentName || (msg.isConsensus ? 'Panel Consensus' : 'Workflow Summary');
+    }
+    
+    return chatMsg;
+  };
+
+  // Generate question suggestions
+  const generateQuestions = useCallback(async () => {
+    if (!apiKeys.openai || loadingQuestions) return;
+    
+    setLoadingQuestions(true);
+    setQuestionError(null);
+    
+    try {
+      const response = await fetch('/api/workflow-test/generate-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nodes,
+          edges,
+          panelType,
+          openai_api_key: apiKeys.openai,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to generate questions: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      if (data.success && data.questions && Array.isArray(data.questions)) {
+        // Append new questions to existing ones (avoid duplicates)
+        setSuggestedQuestions((prev) => {
+          const combined = [...prev, ...data.questions];
+          // Remove duplicates using normalized comparison (case-insensitive, trimmed)
+          const seen = new Set<string>();
+          const unique: string[] = [];
+          for (const q of combined) {
+            const normalized = q.trim().toLowerCase();
+            if (normalized && !seen.has(normalized)) {
+              unique.push(q.trim());
+              seen.add(normalized);
+            }
+          }
+          // Increase visible count if we have more questions than currently visible
+          setVisibleQuestionsCount((prevCount) => {
+            if (unique.length > prevCount) {
+              return Math.max(prevCount, 2);
+            }
+            return prevCount;
+          });
+          return unique;
+        });
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error: any) {
+      console.error('[WorkflowTestModal] Failed to generate questions:', error);
+      setQuestionError(error.message || 'Failed to generate questions');
+    } finally {
+      setLoadingQuestions(false);
+    }
+  }, [nodes, edges, panelType, apiKeys.openai, loadingQuestions]);
+
+  // Auto-generate questions when modal opens
+  useEffect(() => {
+    if (open && nodes.length > 0 && suggestedQuestions.length === 0 && apiKeys.openai && !loadingQuestions) {
+      generateQuestions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]); // Only generate once when modal opens
+
+  // Clear selection when questions change
+  useEffect(() => {
+    setSelectedQuestions(new Set());
+    setSelectionOrder([]);
+    // Reset visible count to 2 when new questions are generated
+    if (suggestedQuestions.length > 0) {
+      setVisibleQuestionsCount(2);
+    }
+  }, [suggestedQuestions.length]); // Only reset when count changes, not content
 
   // Get enabled tasks (nodes connected to workflow)
   const getEnabledTasks = useCallback(() => {
@@ -330,6 +441,7 @@ export function WorkflowTestModal({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            query: userQuery || 'Workflow test execution',
             workflow: workflowDefinition,
             openai_api_key: apiKeys.openai,
             pinecone_api_key: apiKeys.pinecone || '',
@@ -348,19 +460,161 @@ export function WorkflowTestModal({
       setMessages((prev) => prev.filter(msg => msg.id !== loadingMsgId));
 
       if (!response.ok) {
+        let errorMessage = 'Workflow execution failed';
+        try {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Workflow execution failed');
+          errorMessage = errorData.error || errorData.details || errorMessage;
+          // Add hint if Python AI Engine is not available
+          if (response.status === 503 && errorData.hint) {
+            errorMessage += `\n\n💡 ${errorData.hint}`;
+          }
+        } catch (e) {
+          // If JSON parsing fails, try to get text
+          try {
+            const errorText = await response.text();
+            if (errorText) errorMessage = errorText;
+          } catch (textError) {
+            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
       
-      // Add success message with result
+      // Helper function to wait for a delay
+      const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+      
+      // Parse result to show individual expert/agent responses in separate bubbles with sequential delays
+      if (result.expert_responses && Array.isArray(result.expert_responses)) {
+        // Panel workflow - show each expert in their own bubble with 2s delay between each
+        const baseTime = Date.now();
+        const seenAgentIds = new Set<string>();
+        
+        // Filter out duplicates based on agent_id
+        const uniqueExperts = result.expert_responses.filter((expert: any) => {
+          const agentId = expert.agent_id || expert.id;
+          if (seenAgentIds.has(agentId)) {
+            return false; // Skip duplicate
+          }
+          seenAgentIds.add(agentId);
+          return true;
+        });
+        
+        for (let index = 0; index < uniqueExperts.length; index++) {
+          const expert = uniqueExperts[index];
+          const message: Message = {
+            id: `msg-expert-${expert.agent_id || expert.id}-${baseTime}-${index}`,
+            type: 'assistant',
+            content: expert.response || expert.message || 'No response',
+            timestamp: new Date().toLocaleTimeString(),
+            agentName: expert.agent_name || expert.agent_id || `Expert ${index + 1}`,
+            agentId: expert.agent_id || expert.id,
+            metadata: {
+              confidence: expert.confidence,
+              model_used: expert.model_used,
+              tokens_used: expert.tokens_used,
+              error: expert.error,
+            },
+          };
+          
+          // Add message immediately for first one, then wait 2s before next
+          setMessages((prev) => {
+            // Additional deduplication check - ensure message ID doesn't already exist
+            const existingIds = new Set(prev.map(m => m.id));
+            if (existingIds.has(message.id)) {
+              return prev; // Don't add duplicate
+            }
+            return [...prev, message];
+          });
+          
+          // Wait 2 seconds before adding next message (except for the last one)
+          if (index < uniqueExperts.length - 1) {
+            await wait(2000);
+          }
+        }
+        
+        // Add consensus summary after all expert responses (2s after last one)
+        if (result.consensus_summary) {
+          await wait(2000);
+          setMessages((prev) => [...prev, {
+            id: `msg-consensus-${baseTime}`,
+            type: 'assistant',
+            content: result.consensus_summary,
+            timestamp: new Date().toLocaleTimeString(),
+            agentName: 'Panel Consensus',
+            isConsensus: true,
+          }]);
+        }
+      } else if (result.agent_results && Array.isArray(result.agent_results)) {
+        // Regular workflow - show each agent in their own bubble with 2s delay between each
+        const baseTime = Date.now();
+        const seenAgentIds = new Set<string>();
+        
+        // Filter out duplicates based on agent_id
+        const uniqueAgents = result.agent_results.filter((agent: any) => {
+          const agentId = agent.agent_id || agent.id;
+          if (seenAgentIds.has(agentId)) {
+            return false; // Skip duplicate
+          }
+          seenAgentIds.add(agentId);
+          return true;
+        });
+        
+        for (let index = 0; index < uniqueAgents.length; index++) {
+          const agent = uniqueAgents[index];
+          const message: Message = {
+            id: `msg-agent-${agent.agent_id || agent.id}-${baseTime}-${index}`,
+            type: 'assistant',
+            content: agent.response || agent.message || 'No response',
+            timestamp: new Date().toLocaleTimeString(),
+            agentName: agent.agent_name || agent.agent_id || `Agent ${index + 1}`,
+            agentId: agent.agent_id || agent.id,
+            metadata: {
+              confidence: agent.confidence,
+              model_used: agent.model_used,
+              tokens_used: agent.tokens_used,
+              error: agent.error,
+            },
+          };
+          
+          // Add message immediately for first one, then wait 2s before next
+          setMessages((prev) => {
+            // Additional deduplication check - ensure message ID doesn't already exist
+            const existingIds = new Set(prev.map(m => m.id));
+            if (existingIds.has(message.id)) {
+              return prev; // Don't add duplicate
+            }
+            return [...prev, message];
+          });
+          
+          // Wait 2 seconds before adding next message (except for the last one)
+          if (index < uniqueAgents.length - 1) {
+            await wait(2000);
+          }
+        }
+        
+        // Add aggregated response after all agent responses (2s after last one)
+        if (result.aggregated_response) {
+          await wait(2000);
+          setMessages((prev) => [...prev, {
+            id: `msg-aggregated-${baseTime}`,
+            type: 'assistant',
+            content: result.aggregated_response,
+            timestamp: new Date().toLocaleTimeString(),
+            agentName: 'Workflow Summary',
+            isSummary: true,
+          }]);
+        }
+      } else {
+        // Fallback: single message for other result types
       setMessages((prev) => [...prev, {
         id: `msg-result-${Date.now()}`,
         type: 'assistant',
         content: result.answer || result.message || JSON.stringify(result, null, 2),
         timestamp: new Date().toLocaleTimeString(),
       }]);
+      }
 
       // Clear input
       setUserQuery('');
@@ -377,10 +631,18 @@ export function WorkflowTestModal({
           level: 'info',
         }]);
       } else {
+        // Handle network errors (Failed to fetch)
+        let errorMessage = error.message || 'Unknown error occurred';
+        
+        // Check if it's a network/fetch error
+        if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError') || error.name === 'TypeError') {
+          errorMessage = `Cannot connect to the workflow execution service. Please ensure the Python AI Engine is running.`;
+        }
+        
         setMessages((prev) => [...prev, {
           id: `msg-error-${Date.now()}`,
           type: 'log',
-          content: `❌ Execution failed: ${error.message}`,
+          content: `❌ Execution failed: ${errorMessage}`,
           timestamp: new Date().toLocaleTimeString(),
           level: 'error',
         }]);
@@ -432,7 +694,7 @@ export function WorkflowTestModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-6 py-4 border-b shrink-0 space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -555,7 +817,165 @@ export function WorkflowTestModal({
           )}
         </DialogHeader>
 
-        <div className="flex-1 min-h-0">
+        {/* Question Suggestions - Compact and Collapsible */}
+        {suggestedQuestions.length > 0 && (
+          <div className="px-6 py-3 border-b bg-muted/30 flex-shrink-0 max-h-[200px] overflow-y-auto">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-3 w-3 text-primary" />
+                <Label className="text-xs font-medium">
+                  Questions ({suggestedQuestions.length})
+                </Label>
+              </div>
+              <div className="flex gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={generateQuestions}
+                  disabled={loadingQuestions || !apiKeys.openai}
+                  className="h-7 text-xs"
+                >
+                  {loadingQuestions ? (
+                    <>
+                      <div className="h-2.5 w-2.5 border-2 border-primary border-t-transparent rounded-full animate-spin mr-1" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      More
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSuggestedQuestions([]);
+                    setVisibleQuestionsCount(2);
+                  }}
+                  className="h-7 w-7 p-0"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+            {questionError && (
+              <Alert variant="destructive" className="mb-2 py-1">
+                <AlertCircle className="h-3 w-3" />
+                <AlertDescription className="text-xs">{questionError}</AlertDescription>
+              </Alert>
+            )}
+            <div className="space-y-1.5">
+              {suggestedQuestions.slice(0, visibleQuestionsCount).map((question, index) => {
+                const isSelected = selectedQuestions.has(index);
+                return (
+                  <div
+                    key={`question-${index}-${question.slice(0, 20)}`}
+                    className="flex items-start gap-2 p-2 border rounded-md hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-shrink-0">
+                      <Checkbox
+                        id={`question-${index}`}
+                        checked={isSelected}
+                        onCheckedChange={(checked) => {
+                          setSelectedQuestions((prev) => {
+                            const newSet = new Set(prev);
+                            if (checked) {
+                              newSet.add(index);
+                              setSelectionOrder((prevOrder) => [...prevOrder, index]);
+                            } else {
+                              newSet.delete(index);
+                              setSelectionOrder((prevOrder) => prevOrder.filter(i => i !== index));
+                            }
+                            return newSet;
+                          });
+                        }}
+                        className="h-4 w-4"
+                      />
+                      {isSelected && (
+                        <Badge variant="default" className="h-4 w-4 p-0 flex items-center justify-center text-[10px] min-w-[16px]">
+                          {selectionOrder.indexOf(index) + 1}
+                        </Badge>
+                      )}
+                    </div>
+                    <label
+                      htmlFor={`question-${index}`}
+                      className="flex-1 text-xs cursor-pointer leading-relaxed"
+                    >
+                      {question}
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+            {suggestedQuestions.length > visibleQuestionsCount && (
+              <div className="mt-2 pt-2 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setVisibleQuestionsCount(prev => Math.min(prev + 2, suggestedQuestions.length))}
+                  className="w-full h-7 text-xs"
+                >
+                  Show More ({suggestedQuestions.length - visibleQuestionsCount} remaining)
+                </Button>
+              </div>
+            )}
+            {selectedQuestions.size > 0 && (
+              <div className="mt-2 pt-2 border-t">
+                <p className="text-xs text-muted-foreground mb-1.5">
+                  {selectedQuestions.size} selected
+                </p>
+                <div className="flex gap-1.5">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => {
+                      // Use selected questions in workflow execution (in selection order)
+                      // Remove duplicates by using a Set with normalized questions
+                      const selectedQuestionsList = selectionOrder
+                        .map(idx => suggestedQuestions[idx])
+                        .filter(q => q && q.trim().length > 0);
+                      
+                      // Deduplicate questions (case-insensitive, normalized)
+                      const uniqueQuestions: string[] = [];
+                      const seen = new Set<string>();
+                      for (const q of selectedQuestionsList) {
+                        const normalized = q.trim().toLowerCase();
+                        if (!seen.has(normalized)) {
+                          uniqueQuestions.push(q.trim());
+                          seen.add(normalized);
+                        }
+                      }
+                      
+                      const questionsToUse = uniqueQuestions.join('\n\n');
+                      setUserQuery(questionsToUse);
+                      handleExecute();
+                    }}
+                    disabled={isExecuting}
+                    className="h-7 text-xs flex-1"
+                  >
+                    Execute
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedQuestions(new Set());
+                      setSelectionOrder([]);
+                    }}
+                    className="h-7 text-xs"
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Chat Area - Scrollable */}
+        <div className="flex-1 min-h-0 overflow-hidden">
           <AIChatbot
             messages={messages.map(messageToChatMessage)}
             input={userQuery}

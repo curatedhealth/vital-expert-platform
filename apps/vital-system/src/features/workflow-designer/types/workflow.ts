@@ -61,7 +61,7 @@ export interface WorkflowMetadata {
 // NODE TYPES
 // ============================================================================
 
-export type NodeType = 
+export type NodeType =
   | 'start'
   | 'end'
   | 'agent'
@@ -70,7 +70,9 @@ export type NodeType =
   | 'parallel'
   | 'human'
   | 'subgraph'
-  | 'orchestrator';
+  | 'orchestrator'
+  | 'expertAgent'
+  | 'task';
 
 export interface NodeConfig {
   // Agent-specific

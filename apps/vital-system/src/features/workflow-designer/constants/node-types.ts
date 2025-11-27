@@ -13,6 +13,8 @@ import {
   CheckCircle,
   Play,
   Box,
+  Users,
+  ListTodo,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { NodeType } from '../types/workflow';
@@ -157,6 +159,39 @@ export const NODE_TYPE_DEFINITIONS: Record<NodeType, NodeTypeDefinition> = {
     defaultConfig: {
       logic: 'sequential',
       conditions: [],
+    },
+  },
+
+  expertAgent: {
+    type: 'expertAgent',
+    label: 'Expert Agent',
+    description: 'Specialized expert AI agent for panels and multi-expert workflows',
+    icon: Users,
+    color: '#7c3aed',
+    bgColor: '#f3e8ff',
+    borderColor: '#c4b5fd',
+    category: 'agent',
+    defaultConfig: {
+      agentId: '',
+      expertType: 'specialist',
+      model: 'gpt-4',
+      temperature: 0.7,
+    },
+  },
+
+  task: {
+    type: 'task',
+    label: 'Task',
+    description: 'Workflow task or step in a larger workflow',
+    icon: ListTodo,
+    color: '#0891b2',
+    bgColor: '#cffafe',
+    borderColor: '#67e8f9',
+    category: 'flow',
+    defaultConfig: {
+      taskId: '',
+      taskName: '',
+      description: '',
     },
   },
 };

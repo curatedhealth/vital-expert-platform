@@ -86,8 +86,12 @@ class MedicalRAGPipeline:
             # Enhance results with medical context
             enhanced_results = await self._enhance_results_with_medical_context(ranked_results)
 
-            # Generate context summary
-            context_summary = await self._generate_context_summary(enhanced_results)
+            # Generate context summary (returns dict, convert to string)
+            context_summary_dict = await self._generate_context_summary(enhanced_results)
+            # Convert dict to string for RAGSearchResponse
+            context_summary_str = context_summary_dict.get("summary", "No summary available")
+            if context_summary_dict.get("key_themes"):
+                context_summary_str += f" | Key themes: {', '.join(context_summary_dict['key_themes'][:5])}"
 
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
 
@@ -99,7 +103,7 @@ class MedicalRAGPipeline:
             return RAGSearchResponse(
                 query=query,
                 results=enhanced_results,
-                context_summary=context_summary,
+                context_summary=context_summary_str,  # String, not dict
                 total_results=len(search_results),
                 processing_time_ms=processing_time,
                 filters_applied=enhanced_filters,

@@ -18,11 +18,31 @@ import {
   getErrorStatusCode,
 } from '@/lib/errors/agent-errors';
 
-// Get Supabase credentials from environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Helper function to get Supabase admin client
+// Created inside function to ensure env vars are loaded at runtime
+function getSupabaseAdmin() {
+  const supabaseUrl = 
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 
+    process.env.SUPABASE_URL || 
+    process.env.NEW_SUPABASE_URL ||
+    '';
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  const supabaseServiceKey = 
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 
+    process.env.NEW_SUPABASE_SERVICE_KEY ||
+    process.env.SUPABASE_SERVICE_KEY ||
+    '';
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('❌ Supabase credentials missing:', {
+      hasUrl: !!supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey,
+    });
+    return null;
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
 
 /**
  * Generate request ID for tracing
@@ -75,6 +95,23 @@ export async function POST(request: NextRequest) {
       originalAgentId,
       isUserCopy,
     });
+
+    // Get Supabase admin client
+    const supabaseAdmin = getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      requestLogger.warn('supabase_client_unavailable', {
+        message: 'Supabase client not initialized',
+        operation: 'add_user_agent',
+      });
+
+      return NextResponse.json(
+        {
+          error: 'Supabase configuration missing',
+          message: 'Database service unavailable',
+        },
+        { status: 503 }
+      );
+    }
 
     // Try to use the user_agents table, fallback to localStorage simulation if it doesn't exist
     try {
@@ -202,17 +239,32 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
     requestLogger.error(
       'user_agent_api_error',
       error instanceof Error ? error : new Error(String(error)),
       {
         operation: 'add_user_agent',
         duration,
+        errorMessage,
+        errorStack,
       }
     );
 
     const statusCode = getErrorStatusCode(error);
-    const serialized = serializeError(error);
+    let serialized;
+    try {
+      serialized = serializeError(error);
+    } catch (serializeErr) {
+      // Fallback if serialization fails
+      serialized = {
+        error: 'Internal Server Error',
+        message: errorMessage || 'An unexpected error occurred',
+        details: error instanceof Error ? { name: error.name, message: error.message } : { error: String(error) },
+      };
+    }
 
     return NextResponse.json(
       {
@@ -267,6 +319,33 @@ export async function GET(request: NextRequest) {
       operation: 'get_user_agents',
       userId,
     });
+
+    // Get Supabase admin client
+    const supabaseAdmin = getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      requestLogger.warn('supabase_client_unavailable', {
+        message: 'Supabase client not initialized, returning empty array',
+        operation: 'get_user_agents',
+        userId,
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          agents: [],
+          requestId,
+          count: 0,
+          warning: 'Supabase configuration missing',
+        },
+        {
+          status: 200,
+          headers: {
+            'Cache-Control': 'private, max-age=60',
+            'X-Request-ID': requestId,
+          },
+        }
+      );
+    }
 
     // Try to use the user_agents table
     try {
@@ -347,19 +426,34 @@ export async function GET(request: NextRequest) {
       }
 
       if (error) {
+        const dbError = new DatabaseConnectionError('Failed to fetch user agents', {
+          cause: error as Error,
+          context: { userId, code: error.code },
+        });
+
         requestLogger.error(
           'user_agent_get_failed',
-          new DatabaseConnectionError('Failed to fetch user agents', {
-            cause: error as Error,
-            context: { userId, code: error.code },
-          }),
+          dbError,
           { operation: 'get_user_agents', userId }
         );
 
-        throw new DatabaseConnectionError('Failed to fetch user agents', {
-          cause: error as Error,
-          context: { userId },
-        });
+        return NextResponse.json(
+          {
+            success: true,
+            agents: [],
+            requestId,
+            count: 0,
+            warning: 'Failed to load user-specific agents from Supabase. Returning fallback list.',
+            fallback: true,
+          },
+          {
+            status: 200,
+            headers: {
+              'Cache-Control': 'private, max-age=30',
+              'X-Request-ID': requestId,
+            },
+          }
+        );
       }
 
       const duration = Date.now() - startTime;
@@ -525,6 +619,23 @@ export async function DELETE(request: NextRequest) {
       userId,
       agentId,
     });
+
+    // Get Supabase admin client
+    const supabaseAdmin = getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      requestLogger.warn('supabase_client_unavailable', {
+        message: 'Supabase client not initialized',
+        operation: 'delete_user_agent',
+      });
+
+      return NextResponse.json(
+        {
+          error: 'Supabase configuration missing',
+          message: 'Database service unavailable',
+        },
+        { status: 503 }
+      );
+    }
 
     // Try to use the user_agents table, fallback to simulation if it doesn't exist
     try {

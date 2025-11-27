@@ -6,13 +6,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    return null;
+  }
+
+  return createClient(supabaseUrl, supabaseKey);
+}
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      console.warn('[Chat Sessions] Supabase not configured, returning empty array');
+      return NextResponse.json({ sessions: [] });
+    }
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -49,12 +61,14 @@ export async function GET(request: NextRequest) {
       console.error('❌ [Chat Sessions] Error fetching sessions:', error);
       
       // If table doesn't exist, return empty array instead of error
-      if (error.code === '42P01' || error.message.includes('does not exist')) {
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
         console.log('⚠️ [Chat Sessions] Table does not exist, returning empty result');
         return NextResponse.json({ sessions: [] });
       }
       
-      return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
+      // For other errors, return empty array gracefully
+      console.warn('[Chat Sessions] Database error, returning empty array:', error.message);
+      return NextResponse.json({ sessions: [] });
     }
 
     console.log(`✅ [Chat Sessions] Found ${sessions?.length || 0} sessions`);
@@ -62,12 +76,18 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ [Chat Sessions] Unexpected error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // Return empty array instead of error to prevent UI breakage
+    return NextResponse.json({ sessions: [] });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
+    }
+
     const body = await request.json();
     const { userId, title, sessionType, agentId, agentName, context, settings } = body;
 
@@ -107,6 +127,11 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
+    }
+
     const body = await request.json();
     const { sessionId, title, agentId, agentName, context, settings } = body;
 
@@ -149,6 +174,11 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
+    }
+
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');
 

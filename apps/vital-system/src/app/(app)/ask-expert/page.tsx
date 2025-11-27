@@ -62,6 +62,8 @@ import { AdvancedStreamingWindow } from '@/features/ask-expert/components/Advanc
 import { AgentAvatar, Button } from '@vital/ui';
 import { Suggestions, Suggestion } from '@/components/ai/suggestion';
 import { useAgentWithStats } from '@/features/ask-expert/hooks/useAgentWithStats';
+import { WorkflowSelector } from '@/components/ask-expert/WorkflowSelector';
+import { useAgentsStore } from '@/lib/stores/agents-store';
 
 // ============================================================================
 // TYPES
@@ -212,8 +214,36 @@ interface SessionStats {
 
 function AskExpertPageContent() {
   // Get agents and selection from context (loaded by layout sidebar)
-  const { selectedAgents, agents, setSelectedAgents } = useAskExpert();
+  const { selectedAgents, agents, setSelectedAgents, refreshAgents } = useAskExpert();
   const { user } = useAuth();
+  
+  // Also use agents store directly to ensure we have access to all experts
+  const { agents: storeAgents, loadAgents: loadStoreAgents, isLoading: isLoadingStoreAgents } = useAgentsStore();
+  
+  // Load agents from store on mount
+  useEffect(() => {
+    if (storeAgents.length === 0 && !isLoadingStoreAgents) {
+      console.log('🔄 [AskExpert] Loading agents from store...');
+      loadStoreAgents();
+    }
+  }, [loadStoreAgents, storeAgents.length, isLoadingStoreAgents]);
+  
+  // Merge store agents with context agents (prefer store agents as they're more up-to-date)
+  const allAvailableAgents = useMemo(() => {
+    const storeAgentMap = new Map(storeAgents.map(a => [a.id, a]));
+    const contextAgentMap = new Map(agents.map(a => [a.id, a]));
+    
+    // Start with store agents, then add any context agents not in store
+    const merged = [...storeAgents];
+    agents.forEach(contextAgent => {
+      if (!storeAgentMap.has(contextAgent.id)) {
+        merged.push(contextAgent);
+      }
+    });
+    
+    console.log(`📦 [AskExpert] Merged ${merged.length} agents (${storeAgents.length} from store, ${agents.length} from context)`);
+    return merged;
+  }, [storeAgents, agents]);
 
   // Theme hook (global dark/light mode)
   const { theme } = useTheme();
@@ -258,6 +288,8 @@ function AskExpertPageContent() {
   const [allAvailableRagDomains, setAllAvailableRagDomains] = useState<string[]>([]);
   const [loadingTools, setLoadingTools] = useState(false);
   const [loadingRagDomains, setLoadingRagDomains] = useState(false);
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
+  const [selectedWorkflow, setSelectedWorkflow] = useState<any>(null);
   const [streamingMeta, setStreamingMeta] = useState<{
     ragSummary?: NonNullable<Message['metadata']>['ragSummary'];
     toolSummary?: NonNullable<Message['metadata']>['toolSummary'];
@@ -408,10 +440,14 @@ function AskExpertPageContent() {
           const toolNames = (data.tools || []).map((tool: any) => tool.name || tool.slug).filter(Boolean);
           setAllAvailableTools(toolNames);
         } else {
-          console.error('Failed to fetch tools:', response.statusText);
+          // API returns empty array on error, so just log and continue
+          const errorText = await response.text();
+          console.warn('Failed to fetch tools, using empty list:', errorText);
+          setAllAvailableTools([]);
         }
       } catch (error) {
-        console.error('Error fetching tools:', error);
+        console.warn('Error fetching tools, using empty list:', error);
+        setAllAvailableTools([]);
       } finally {
         setLoadingTools(false);
       }
@@ -431,10 +467,14 @@ function AskExpertPageContent() {
           const domainNames = (data.domains || []).map((domain: any) => domain.name).filter(Boolean);
           setAllAvailableRagDomains(domainNames);
         } else {
-          console.error('Failed to fetch RAG domains:', response.statusText);
+          // API returns empty array on error, so just log and continue
+          const errorText = await response.text();
+          console.warn('Failed to fetch RAG domains, using empty list:', errorText);
+          setAllAvailableRagDomains([]);
         }
       } catch (error) {
-        console.error('Error fetching RAG domains:', error);
+        console.warn('Error fetching RAG domains, using empty list:', error);
+        setAllAvailableRagDomains([]);
       } finally {
         setLoadingRagDomains(false);
       }
@@ -443,6 +483,9 @@ function AskExpertPageContent() {
     fetchAllRagDomains();
   }, []);
 
+  // Use merged agents list (from store + context)
+  const effectiveAgents = allAvailableAgents.length > 0 ? allAvailableAgents : agents;
+  
   // Use all available tools from database (not just from selected agents)
   const availableTools = useMemo(() => {
     // Return all tools from database, sorted
@@ -474,7 +517,7 @@ function AskExpertPageContent() {
   if (!selectedAgents.length) {
     return null;
   }
-  const agent = agents.find((a) => a.id === selectedAgents[0]);
+  const agent = effectiveAgents.find((a) => a.id === selectedAgents[0]);
     if (!agent) {
       return null;
     }
@@ -489,7 +532,7 @@ function AskExpertPageContent() {
     avatar: agent.avatar,
     displayName,
   };
-  }, [agents, selectedAgents]);
+  }, [effectiveAgents, selectedAgents]);
 
   const primaryAgentId = selectedAgents.length ? selectedAgents[0] : null;
   const {
@@ -847,46 +890,117 @@ function AskExpertPageContent() {
         enableTools,
       });
       
+      // Build request body
+      const requestBody: any = {
+        mode: mode,
+        agentId: (mode === 'manual' || mode === 'multi-expert') ? agentId : undefined, // For manual and multi-expert modes
+        message: messageContent,
+        conversationHistory: conversationContext.map(m => ({
+          role: m.role,
+          content: m.content
+        })),
+        // Optional settings
+        enableRAG: enableRAG,
+        enableTools: enableTools,
+        requestedTools: enableTools ? selectedTools : undefined,
+        selectedRagDomains: enableRAG ? selectedRagDomains : undefined,
+        model: selectedModel,
+        temperature: 0.7,
+        maxTokens: 2000,
+        userId: user?.id, // For Mode 2 and Mode 3 agent selection
+        // Autonomous mode settings
+        maxIterations: (mode === 'autonomous' || mode === 'multi-expert') ? 10 : undefined,
+        confidenceThreshold: (mode === 'autonomous' || mode === 'multi-expert') ? 0.95 : undefined,
+      };
+
+      // If workflow is selected, include workflow definition
+      if (selectedWorkflowId && selectedWorkflow) {
+        requestBody.workflowId = selectedWorkflowId;
+        requestBody.workflow = selectedWorkflow.workflow_definition;
+        requestBody.workflowFramework = selectedWorkflow.framework;
+        console.log('[AskExpert] Using workflow:', selectedWorkflow.name, 'Framework:', selectedWorkflow.framework);
+      }
+
       const response = await fetch('/api/ask-expert/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: mode,
-          agentId: (mode === 'manual' || mode === 'multi-expert') ? agentId : undefined, // For manual and multi-expert modes
-          message: messageContent,
-          conversationHistory: conversationContext.map(m => ({
-            role: m.role,
-            content: m.content
-          })),
-          // Optional settings
-          enableRAG: enableRAG,
-          enableTools: enableTools,
-          requestedTools: enableTools ? selectedTools : undefined,
-          selectedRagDomains: enableRAG ? selectedRagDomains : undefined,
-          model: selectedModel,
-          temperature: 0.7,
-          maxTokens: 2000,
-          userId: user?.id, // For Mode 2 and Mode 3 agent selection
-          // Autonomous mode settings
-          maxIterations: (mode === 'autonomous' || mode === 'multi-expert') ? 10 : undefined,
-          confidenceThreshold: (mode === 'autonomous' || mode === 'multi-expert') ? 0.95 : undefined,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unknown error');
-        let errorData;
+        const contentType = response.headers.get('content-type') || '';
+        let errorText = '';
+        let errorData: any = {};
+        
         try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          errorData = { message: errorText || `HTTP ${response.status}` };
+          if (contentType.includes('application/json')) {
+            errorData = await response.json();
+          } else {
+            errorText = await response.text();
+            
+            // Check if it's an HTML error page (Next.js error page)
+            if (errorText.includes('<!DOCTYPE html>') || errorText.includes('<html')) {
+              // Try to extract error message from Next.js error page JSON
+              try {
+                const jsonMatch = errorText.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/s);
+                if (jsonMatch && jsonMatch[1]) {
+                  const nextData = JSON.parse(jsonMatch[1]);
+                  const errorMessage = nextData?.props?.pageProps?.err?.message || 
+                                     nextData?.err?.message || 
+                                     'Server error occurred';
+                  errorData = { 
+                    message: errorMessage,
+                    statusCode: nextData?.props?.pageProps?.statusCode || response.status,
+                  };
+                } else {
+                  // Fallback: extract from error message in HTML
+                  const errorMatch = errorText.match(/message["']:\s*["']([^"']+)["']/);
+                  if (errorMatch) {
+                    errorData = { message: errorMatch[1] };
+                  } else {
+                    errorData = { 
+                      message: `Server error (${response.status}): ${response.statusText}`,
+                      html: true,
+                    };
+                  }
+                }
+              } catch (parseError) {
+                errorData = { 
+                  message: `Server error (${response.status}): ${response.statusText}. The server returned an HTML error page.`,
+                  html: true,
+                };
+              }
+            } else {
+              // Try to parse as JSON even if content-type doesn't say so
+              try {
+                errorData = JSON.parse(errorText);
+              } catch {
+                errorData = { message: errorText || `HTTP ${response.status}: ${response.statusText}` };
+              }
+            }
+          }
+        } catch (readError) {
+          console.error('[AskExpert] Failed to read error response:', readError);
+          errorData = { 
+            message: `HTTP ${response.status}: ${response.statusText}`,
+            readError: readError instanceof Error ? readError.message : String(readError),
+          };
         }
+        
+        const errorMessage = errorData?.message || 
+                           errorData?.error || 
+                           errorText || 
+                           `HTTP ${response.status}: ${response.statusText}`;
+        
         console.error('[AskExpert] Response not OK:', {
           status: response.status,
           statusText: response.statusText,
-          error: errorData,
+          contentType,
+          errorData,
+          errorText: errorText.substring(0, 200), // Limit log size
         });
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+        
+        throw new Error(errorMessage);
       }
       
       console.log('[AskExpert] Response OK, starting stream processing');
@@ -1835,6 +1949,32 @@ function AskExpertPageContent() {
               className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 overflow-hidden"
             >
               <div className="p-4 space-y-4">
+                {/* Workflow Selector */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Workflow (Optional)
+                  </label>
+                  <WorkflowSelector
+                    selectedWorkflowId={selectedWorkflowId}
+                    onWorkflowChange={(workflowId) => {
+                      setSelectedWorkflowId(workflowId);
+                      if (workflowId) {
+                        // Fetch workflow details
+                        fetch(`/api/workflows/${workflowId}`)
+                          .then(res => res.json())
+                          .then(data => {
+                            if (data.workflow) {
+                              setSelectedWorkflow(data.workflow);
+                            }
+                          })
+                          .catch(err => console.error('Error fetching workflow:', err));
+                      } else {
+                        setSelectedWorkflow(null);
+                      }
+                    }}
+                  />
+                </div>
+
                 {/* Model Selector */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1855,6 +1995,75 @@ function AskExpertPageContent() {
                       <option value="biogpt">BioGPT Research</option>
                     </optgroup>
                   </select>
+                </div>
+
+                {/* Test Interface - Quick Mode Testing */}
+                <div className="p-3 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg border border-green-200 dark:border-green-700">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-green-600 dark:text-green-400" />
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        Quick Test
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                    Test all 4 modes with sample queries to verify deep agents (5-level hierarchy) and hybrid search (Neo4j + Pinecone + Supabase)
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setIsAutomatic(false);
+                        setIsAutonomous(false);
+                        setInputValue("What are the FDA requirements for IND submission?");
+                        setEnableRAG(true);
+                      }}
+                      className="text-xs h-8"
+                    >
+                      Test Mode 1
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setIsAutomatic(true);
+                        setIsAutonomous(false);
+                        setInputValue("Explain the clinical trial design process");
+                        setEnableRAG(true);
+                      }}
+                      className="text-xs h-8"
+                    >
+                      Test Mode 2
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setIsAutomatic(true);
+                        setIsAutonomous(true);
+                        setInputValue("Analyze the regulatory pathway for a new drug");
+                        setEnableRAG(true);
+                      }}
+                      className="text-xs h-8"
+                    >
+                      Test Mode 3
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setIsAutomatic(false);
+                        setIsAutonomous(true);
+                        setInputValue("Deep analysis of market access strategy");
+                        setEnableRAG(true);
+                      }}
+                      className="text-xs h-8"
+                    >
+                      Test Mode 4
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Mode Selector Grid - Large Quadrant Style */}

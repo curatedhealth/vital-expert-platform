@@ -897,14 +897,17 @@ Would you like to:
         expert_id = state.get('current_agent_id')
 
         try:
-            rag_results = await self.rag_service.search(
-                query=query,
+            # Use true_hybrid search (Neo4j + Pinecone + Supabase)
+            rag_results = await self.rag_service.query(
+                query_text=query,
                 tenant_id=tenant_id,
                 agent_id=expert_id,
-                max_results=10
+                max_results=10,
+                strategy="true_hybrid",  # Use true hybrid: Neo4j (KG) + Pinecone (vector) + Supabase (relational)
+                similarity_threshold=0.7
             )
 
-            documents = rag_results.get('documents', [])
+            documents = rag_results.get('sources', []) or rag_results.get('documents', [])
             context = self._create_context_summary(documents)
 
             logger.info("RAG retrieval completed (Mode 3)", documents=len(documents))

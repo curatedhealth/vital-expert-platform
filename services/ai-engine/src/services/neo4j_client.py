@@ -17,7 +17,16 @@ Performance Targets:
 - Query timeout: 30 seconds
 """
 
-from neo4j import AsyncGraphDatabase, AsyncDriver, AsyncSession
+try:
+    from neo4j import AsyncGraphDatabase, AsyncDriver, AsyncSession
+    NEO4J_AVAILABLE = True
+except ImportError:
+    NEO4J_AVAILABLE = False
+    # Create dummy types for type hints
+    AsyncGraphDatabase = None
+    AsyncDriver = None
+    AsyncSession = None
+
 from typing import List, Dict, Optional, Any
 import structlog
 import time
@@ -38,6 +47,9 @@ class Neo4jClient:
             user: Database username
             password: Database password
         """
+        if not NEO4J_AVAILABLE:
+            raise ImportError("neo4j package is not installed. Install it with: pip install neo4j")
+        
         self.uri = uri
         self.driver: AsyncDriver = AsyncGraphDatabase.driver(
             uri,

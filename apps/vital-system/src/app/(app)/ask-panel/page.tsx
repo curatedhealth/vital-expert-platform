@@ -11,7 +11,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Sparkles,
@@ -50,9 +50,11 @@ import { PageHeader } from '@/components/page-header';
 import { PanelCreationWizard } from '@/features/ask-panel/components/PanelCreationWizard';
 import { PanelConsultationView } from '@/features/ask-panel/components/PanelConsultationView';
 import { PanelExecutionView } from '@/features/ask-panel/components/PanelExecutionView';
+import { CreateCustomPanelDialog } from '@/features/ask-panel/components/CreateCustomPanelDialog';
 import { PANEL_TEMPLATES } from '@/features/ask-panel/constants/panel-templates';
 import type { PanelConfiguration } from '@/features/ask-panel/types/agent';
 import { useSavedPanels, type SavedPanel } from '@/contexts/ask-panel-context';
+import { useSearchParams } from 'next/navigation';
 
 // Map emoji categories to lucide-react icons
 const CATEGORY_ICONS: Record<string, any> = {
@@ -213,16 +215,80 @@ export default function AskPanelPage() {
   const [initialQuery, setInitialQuery] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [templates, setTemplates] = useState<typeof PANEL_TEMPLATES>(PANEL_TEMPLATES);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
   const [selectedPanel, setSelectedPanel] = useState<SavedPanel | null>(null);
   const [showPanelDetails, setShowPanelDetails] = useState(false);
   const [executingPanel, setExecutingPanel] = useState<SavedPanel | null>(null);
 
-  const { addPanel } = useSavedPanels();
+  const { savedPanels, loading: loadingSavedPanels, createCustomPanel } = useSavedPanels();
+  const searchParams = useSearchParams();
+  const initialPanelId = searchParams.get('panelId');
+  const [currentPanelId, setCurrentPanelId] = useState<string | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [selectedTemplateForCustom, setSelectedTemplateForCustom] = useState<typeof PANEL_TEMPLATES[0] | null>(null);
 
   // State for consultation view
   const [showConsultation, setShowConsultation] = useState(false);
   const [consultationConfig, setConsultationConfig] = useState<PanelConfiguration | null>(null);
   const [consultationQuestion, setConsultationQuestion] = useState('');
+
+  // Load panel templates from Supabase-backed API
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        setLoadingTemplates(true);
+        setTemplateError(null);
+
+        const res = await fetch('/api/panels');
+        if (!res.ok) {
+          throw new Error(await res.text());
+        }
+        const json = await res.json();
+
+        if (json.success && Array.isArray(json.panels)) {
+          const mapped = json.panels.map((p: any) => {
+            // Find matching template to get the full suggestedAgents list (should be 10)
+            const templateMatch = PANEL_TEMPLATES.find(t => t.id === p.slug);
+            
+            return {
+              id: p.slug,
+              name: p.name,
+              description: p.description,
+              useCase: p.category,
+              // Always prefer template's suggestedAgents (10 agents) over Supabase data
+              suggestedAgents: templateMatch?.suggestedAgents || p.suggested_agents || [],
+              mode: p.mode || templateMatch?.mode || 'sequential',
+              framework: p.framework || templateMatch?.framework || 'langgraph',
+              defaultSettings: p.default_settings || templateMatch?.defaultSettings || {
+                userGuidance: 'medium',
+                allowDebate: true,
+                maxRounds: 3,
+                requireConsensus: false,
+              },
+              icon: p.metadata?.icon ?? templateMatch?.icon ?? '👥',
+              category: p.category || templateMatch?.category || 'panel',
+              tags: p.metadata?.tags ?? templateMatch?.tags ?? [],
+              popularity: p.metadata?.popularity ?? templateMatch?.popularity ?? 0,
+            };
+          });
+          setTemplates(mapped);
+        } else {
+          // Fallback to local templates
+          setTemplates(PANEL_TEMPLATES);
+        }
+      } catch (e: any) {
+        console.error('[AskPanel] Failed to load templates from Supabase:', e);
+        setTemplateError('Failed to load panel templates from Supabase. Using local defaults.');
+        setTemplates(PANEL_TEMPLATES);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+
+    loadTemplates();
+  }, []);
 
   // Handle panel creation
   function handlePanelCreated(config: PanelConfiguration) {
@@ -259,27 +325,54 @@ export default function AskPanelPage() {
     setShowPanelDetails(true);
   };
 
-  // Handle customize panel - add to sidebar and start wizard
+  // Handle customize panel - open create dialog with template pre-selected
   const handleCustomizePanel = (panel: SavedPanel) => {
-    // Add panel to sidebar
-    addPanel(panel);
-    
-    // Start wizard with panel's description
-    setInitialQuery(panel.description);
-    setShowWizard(true);
+    // Find the template this panel is based on
+    const template = templates.find((t) => t.id === panel.base_panel_slug || panel.id === t.id);
+    if (template) {
+      setSelectedTemplateForCustom(template);
+      setShowCreateDialog(true);
+    } else {
+      // Fallback: open wizard
+      setInitialQuery(panel.description);
+      setShowWizard(true);
+    }
   };
 
-  // Handle run panel - add to sidebar and open execution view
+  // Handle run panel - open execution view
   const handleRunPanel = (panel: SavedPanel) => {
-    // Add panel to sidebar
-    addPanel(panel);
-    
-    // Open execution view
+    // Open execution view directly (no need to save template panels)
     setExecutingPanel(panel);
   };
 
+  // If navigated from sidebar with a specific panelId, auto-open execution view
+  useEffect(() => {
+    // No panel selected in URL
+    if (!initialPanelId) return;
+
+    // If we're already executing this panel, do nothing
+    if (executingPanel && currentPanelId === initialPanelId) return;
+
+    // If we've already auto-opened this panel and user went back, don't re-open
+    if (!executingPanel && currentPanelId === initialPanelId) return;
+
+    const template = templates.find((t) => t.id === initialPanelId);
+    if (!template) return;
+
+    const IconComponent = getCategoryIcon(template.category);
+    const panel: SavedPanel = {
+      ...template,
+      purpose: template.description,
+      IconComponent,
+    };
+
+    // Open execution view directly (no need to save template panels)
+    setExecutingPanel(panel);
+    setCurrentPanelId(initialPanelId);
+  }, [initialPanelId, executingPanel, currentPanelId, templates]);
+
   // Filter templates
-  const filteredTemplates = PANEL_TEMPLATES.filter((template) => {
+  const filteredTemplates = templates.filter((template) => {
     const matchesSearch =
       searchQuery === '' ||
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -292,7 +385,7 @@ export default function AskPanelPage() {
   });
 
   // Get unique categories
-  const categories = ['all', ...Array.from(new Set(PANEL_TEMPLATES.map((t) => t.category)))];
+  const categories = ['all', ...Array.from(new Set(templates.map((t) => t.category)))];
 
   // Show execution view if active
   if (executingPanel) {
@@ -336,6 +429,113 @@ export default function AskPanelPage() {
             </div>
           </div>
 
+      {/* My Custom Panels Section */}
+      {savedPanels.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Users className="w-6 h-6" />
+                My Custom Panels
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {savedPanels.length} custom panel{savedPanels.length !== 1 ? 's' : ''} saved to your account
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                setSelectedTemplateForCustom(null);
+                setShowCreateDialog(true);
+              }}
+              variant="outline"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create New
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {savedPanels.map((panel) => {
+              const IconComponent = getCategoryIcon(panel.category);
+              return (
+                <Card
+                  key={panel.id}
+                  className="hover:shadow-lg transition-shadow cursor-pointer border-purple-200 dark:border-purple-800"
+                  onClick={() => {
+                    setExecutingPanel(panel);
+                  }}
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                          <IconComponent className="w-5 h-5 text-white" />
+                        </div>
+                        <CardTitle className="text-lg">{panel.name}</CardTitle>
+                      </div>
+                      {panel.isBookmarked && (
+                        <Badge variant="secondary" className="text-xs">
+                          ⭐ Favorite
+                        </Badge>
+                      )}
+                    </div>
+                    <CardDescription className="text-sm mb-4 line-clamp-2">
+                      {panel.description || panel.purpose}
+                    </CardDescription>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary" className="capitalize text-xs">
+                        {panel.category}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {panel.mode}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        <Bot className="w-3 h-3 mr-1" />
+                        {panel.selectedAgents?.length || panel.suggestedAgents.length} experts
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        {panel.last_used_at
+                          ? `Last used ${new Date(panel.last_used_at).toLocaleDateString()}`
+                          : `Created ${panel.created_at ? new Date(panel.created_at).toLocaleDateString() : 'recently'}`}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-purple-600 hover:text-purple-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExecutingPanel(panel);
+                        }}
+                      >
+                        Run
+                        <ArrowRight className="w-3 h-3 ml-1" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Template Panels Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Sparkles className="w-6 h-6" />
+              Panel Templates
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Choose a template to create your own custom panel
+            </p>
+          </div>
+        </div>
+
       {/* Tabs Navigation */}
       <Tabs defaultValue="grid" className="w-full">
         <TabsList>
@@ -372,7 +572,10 @@ export default function AskPanelPage() {
                     ))}
                   </select>
                   <Button
-                    onClick={() => setShowWizard(true)}
+                    onClick={() => {
+                      setSelectedTemplateForCustom(null);
+                      setShowCreateDialog(true);
+                    }}
                     className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -598,6 +801,7 @@ export default function AskPanelPage() {
           })}
         </TabsContent>
       </Tabs>
+      </div>
 
       {/* Panel Details Dialog */}
       <PanelDetailsDialog
@@ -616,6 +820,18 @@ export default function AskPanelPage() {
           onCancel={() => setShowWizard(false)}
         />
       )}
+
+      {/* Create Custom Panel Dialog */}
+      <CreateCustomPanelDialog
+        open={showCreateDialog}
+        onOpenChange={(open) => {
+          setShowCreateDialog(open);
+          if (!open) {
+            setSelectedTemplateForCustom(null);
+          }
+        }}
+        baseTemplate={selectedTemplateForCustom || undefined}
+      />
         </div>
       </div>
     </div>

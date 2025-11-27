@@ -198,6 +198,22 @@ class EmbeddingService:
             logger.error("Embedding generation failed", error=str(e))
             raise
     
+    async def embed_query(self, query: str) -> List[float]:
+        """
+        Generate embedding for a query (compatibility method).
+
+        This method provides compatibility with code expecting embed_query().
+        Returns raw embedding vector as list of floats.
+
+        Args:
+            query: Query text to embed
+
+        Returns:
+            List of floats representing the embedding vector
+        """
+        result = await self.embed_text(query, cache_key_prefix="query")
+        return result.embedding
+
     async def embed_texts(
         self,
         texts: List[str],

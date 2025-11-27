@@ -723,13 +723,16 @@ class Mode2AutoQueryWorkflow(BaseWorkflow):
 
         if enable_rag:
             try:
-                rag_results = await self.rag_service.search(
-                    query=query,
+                # Use true_hybrid search (Neo4j + Pinecone + Supabase)
+                rag_results = await self.rag_service.query(
+                    query_text=query,
                     tenant_id=tenant_id,
                     agent_id=expert_id,
-                    max_results=5
+                    max_results=5,
+                    strategy="true_hybrid",  # Use true hybrid: Neo4j (KG) + Pinecone (vector) + Supabase (relational)
+                    similarity_threshold=0.7
                 )
-                rag_documents = rag_results.get('documents', [])
+                rag_documents = rag_results.get('sources', []) or rag_results.get('documents', [])
                 context = self._create_context_summary(rag_documents)
             except Exception as e:
                 logger.error(f"RAG failed for {expert_id}", error=str(e))

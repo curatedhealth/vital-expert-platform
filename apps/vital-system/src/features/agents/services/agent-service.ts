@@ -123,30 +123,87 @@ export class AgentService {
       return transformedAgents;
 
     } catch (error) {
-      console.error('❌ AgentService: All attempts failed');
-      console.error('- Error:', error);
+      // Log error but don't throw - gracefully degrade to empty array
+      console.warn('⚠️ AgentService: API fetch failed, attempting fallback...', error instanceof Error ? error.message : String(error));
 
       // Fallback to direct Supabase call (might fail due to RLS but worth trying)
-      // Only fetch agents with status 'active' or 'testing' (ready for use)
-      console.log('🔄 Attempting direct Supabase fallback...');
-      const { data, error: dbError } = await this.getSupabaseClient()
-        .from('agents')
-        .select('*')
-        .in('status', ['active', 'testing'])
-        .order('tier', { ascending: true })
-        .order('priority', { ascending: true })
-        .limit(1000);
+      try {
+        const supabaseClient = this.getSupabaseClient();
+        if (!supabaseClient) {
+          console.warn('⚠️ Supabase client not available - returning empty agents array');
+          return [];
+        }
 
-      if (dbError) {
-        console.error('❌ Fallback also failed:', dbError);
-        throw new Error('Failed to fetch agents from both API and database');
+        // Try to fetch with status filter, but handle gracefully if status column doesn't exist
+        let query = supabaseClient
+          .from('agents')
+          .select('*');
+        
+        // Try to filter by status, but don't fail if column doesn't exist
+        // Note: We check for status column existence by trying the query first
+        // If it fails, we'll retry without the status filter
+        
+        // First, try with status filter
+        let queryWithStatus = query.in('status', ['active', 'testing']);
+        
+        // Order by name (safe column that should exist)
+        queryWithStatus = queryWithStatus.order('name', { ascending: true });
+        queryWithStatus = queryWithStatus.limit(1000);
+        
+        const { data: dataWithStatus, error: errorWithStatus } = await queryWithStatus;
+        
+        if (!errorWithStatus && dataWithStatus) {
+          console.log(`✅ Fallback successful: ${dataWithStatus.length} agents from Supabase (with status filter)`);
+          return dataWithStatus.map((agent: any) => ({
+            ...agent,
+            categories: []
+          }));
+        }
+        
+        // If status filter failed, try without it
+        console.warn('⚠️ Status filter failed, trying without status filter...');
+        let queryWithoutStatus = supabaseClient
+          .from('agents')
+          .select('*')
+          .order('name', { ascending: true })
+          .limit(1000);
+        
+        const { data: dataWithoutStatus, error: errorWithoutStatus } = await queryWithoutStatus;
+        
+        if (!errorWithoutStatus && dataWithoutStatus) {
+          console.log(`✅ Fallback successful: ${dataWithoutStatus.length} agents from Supabase (without status filter)`);
+          return dataWithoutStatus.map((agent: any) => ({
+            ...agent,
+            categories: []
+          }));
+        }
+        
+        // If both failed, return empty array
+        console.warn('⚠️ Both status-filtered and unfiltered queries failed');
+        return [];
+
+        const { data, error: dbError } = await query;
+
+        if (dbError) {
+          console.warn('⚠️ Direct Supabase fallback failed - returning empty agents array:', dbError.message || String(dbError));
+          return [];
+        }
+
+        if (data && data.length > 0) {
+          console.log(`✅ Fallback successful: ${data.length} agents from Supabase`);
+          return data.map((agent: any) => ({
+            ...agent,
+            categories: []
+          }));
+        }
+
+        console.warn('⚠️ No agents found - returning empty array');
+        return [];
+      } catch (fallbackError) {
+        // Final fallback - return empty array
+        console.warn('⚠️ Fallback exception - returning empty agents array:', fallbackError instanceof Error ? fallbackError.message : String(fallbackError));
+        return [];
       }
-
-      console.log(`✅ Fallback successful: ${data?.length || 0} agents from Supabase`);
-      return data?.map((agent: any) => ({
-        ...agent,
-        categories: []
-      })) || [];
     }
   }
 

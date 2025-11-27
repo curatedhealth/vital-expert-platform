@@ -21,16 +21,20 @@ import type { Database } from './database.types';
 // ENVIRONMENT VALIDATION
 // ============================================================================
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+// In development, warn but don't throw - allow graceful degradation
+// In production, these should be set, but we'll handle it gracefully
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL && !isDevelopment) {
   throw new Error('Missing env: NEXT_PUBLIC_SUPABASE_URL');
 }
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && !isDevelopment) {
   throw new Error('Missing env: NEXT_PUBLIC_SUPABASE_ANON_KEY');
 }
 
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('Missing env: SUPABASE_SERVICE_ROLE_KEY');
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY && !isDevelopment) {
+  console.warn('⚠️ [Supabase Client] SUPABASE_SERVICE_ROLE_KEY is missing. Admin features will be disabled.');
 }
 
 // ============================================================================
@@ -46,9 +50,16 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
  * @returns Supabase client with RLS
  */
 export function createBrowserClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!url || !key) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required for browser client');
+  }
+  
   return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    key,
     {
       auth: {
         persistSession: true,
@@ -73,9 +84,16 @@ export function createBrowserClient() {
  * @returns Supabase client with RLS
  */
 export function createServerClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!url || !key) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required for server client');
+  }
+  
   return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    key,
     {
       auth: {
         persistSession: false,
@@ -98,12 +116,20 @@ export function createServerClient() {
  *
  * NEVER expose service role key to client-side code.
  *
- * @returns Supabase admin client (bypasses RLS)
+ * @returns Supabase admin client (bypasses RLS) or null if config is missing
  */
 export function createAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!url || !key) {
+    console.warn('⚠️ [Supabase Admin Client] Configuration missing, returning null');
+    return null as any; // Return null client that will fail gracefully
+  }
+  
   return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    url,
+    key,
     {
       auth: {
         persistSession: false,
@@ -121,15 +147,45 @@ export function createAdminClient() {
  * Default server client (with RLS)
  *
  * Use this for most server-side operations.
+ * Lazy-loaded to prevent module-load-time errors.
  */
-export const supabase = createServerClient();
+let _supabaseInstance: ReturnType<typeof createServerClient> | null = null;
+export const supabase = new Proxy({} as ReturnType<typeof createServerClient>, {
+  get(target, prop) {
+    if (!_supabaseInstance) {
+      try {
+        _supabaseInstance = createServerClient();
+      } catch (error) {
+        console.warn('⚠️ [Supabase] Failed to create server client:', error);
+        return () => {
+          throw new Error('Supabase client not available');
+        };
+      }
+    }
+    return (_supabaseInstance as any)[prop];
+  }
+});
 
 /**
  * Admin client (bypasses RLS)
  *
  * ⚠️ Use with caution! Only for privileged operations.
+ * Lazy-loaded to prevent module-load-time errors.
  */
-export const supabaseAdmin = createAdminClient();
+let _supabaseAdminInstance: ReturnType<typeof createAdminClient> | null = null;
+export const supabaseAdmin = new Proxy({} as ReturnType<typeof createAdminClient>, {
+  get(target, prop) {
+    if (!_supabaseAdminInstance) {
+      _supabaseAdminInstance = createAdminClient();
+      if (!_supabaseAdminInstance) {
+        return () => {
+          throw new Error('Supabase admin client not available - SUPABASE_SERVICE_ROLE_KEY is missing');
+        };
+      }
+    }
+    return (_supabaseAdminInstance as any)[prop];
+  }
+});
 
 // ============================================================================
 // UTILITY FUNCTIONS

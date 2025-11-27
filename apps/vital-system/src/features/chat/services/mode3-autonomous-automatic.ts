@@ -897,19 +897,30 @@ export async function* executeMode3(config: Mode3Config): AsyncGenerator<Autonom
       conversation_history: config.conversationHistory ?? [],
     };
 
-    // Call via API Gateway to comply with Golden Rule (Python services via gateway)
-    const response = await fetch(`${API_GATEWAY_URL}/api/mode3/autonomous-automatic`, {
+    // Call unified Ask Expert endpoint (Mode 3: expert_recommendation)
+    const unifiedPayload = {
+      query: config.message,
+      mode: 'expert_recommendation', // Mode 3: automatic agent selection
+      tenant_id: config.tenantId || DEFAULT_TENANT_ID,
+      session_id: config.sessionId,
+      user_id: config.userId,
+      stream: false,
+      conversation_history: config.conversationHistory ?? [],
+    };
+
+    const response = await fetch(`${API_GATEWAY_URL}/v1/ai/ask-expert/unified`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-tenant-id': config.tenantId || DEFAULT_TENANT_ID,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(unifiedPayload),
     });
 
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
-      throw new Error(errorBody.detail || errorBody.error || `API Gateway responded with status ${response.status}`);
+      const errorMessage = errorBody.error || errorBody.detail || errorBody.message || `API responded with status ${response.status}`;
+      throw new Error(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
     }
 
     const result = (await response.json()) as Mode3AutonomousAutomaticApiResponse;

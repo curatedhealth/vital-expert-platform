@@ -48,6 +48,11 @@ interface OrchestrateRequest {
   
   // LangGraph integration (NEW)
   useLangGraph?: boolean; // Enable LangGraph workflow orchestration
+
+  // Workflow integration (NEW)
+  workflowId?: string; // ID of the workflow to use
+  workflow?: any; // Workflow definition (nodes, edges, etc.)
+  workflowFramework?: string; // Framework used by the workflow (langgraph, autogen, crewai)
 }
 
 export async function POST(request: NextRequest) {
@@ -84,6 +89,78 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          // Check if workflow is provided - use workflow execution
+          if (body.workflowId && body.workflow) {
+            console.log('🎯 [Orchestrate] Using workflow execution:', body.workflowId, 'Framework:', body.workflowFramework);
+            
+            try {
+              // Route to workflow execution endpoint based on framework
+              const workflowEndpoint = body.workflowFramework === 'langgraph' 
+                ? '/api/langgraph-gui/execute'
+                : body.workflowFramework === 'autogen'
+                ? '/api/frameworks/autogen/execute'
+                : body.workflowFramework === 'crewai'
+                ? '/api/frameworks/crewai/execute'
+                : '/api/langgraph-gui/execute'; // Default to langgraph
+
+              // Forward request to workflow execution endpoint
+              const workflowResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}${workflowEndpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  workflow: body.workflow,
+                  query: body.message,
+                  conversationHistory: body.conversationHistory,
+                  enableRAG: body.enableRAG,
+                  enableTools: body.enableTools,
+                  model: body.model,
+                  temperature: body.temperature,
+                  maxTokens: body.maxTokens,
+                }),
+              });
+
+              if (!workflowResponse.ok) {
+                throw new Error(`Workflow execution failed: ${workflowResponse.statusText}`);
+              }
+
+              // Stream the workflow response
+              const reader = workflowResponse.body?.getReader();
+              const decoder = new TextDecoder();
+
+              if (reader) {
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+
+                  const chunk = decoder.decode(value, { stream: true });
+                  const lines = chunk.split('\n');
+
+                  for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                      const data = line.slice(6);
+                      controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+                    }
+                  }
+                }
+              }
+
+              controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
+              controller.close();
+              return;
+
+            } catch (workflowError) {
+              console.error('❌ [Orchestrate] Workflow execution error:', workflowError);
+              const errorEvent = {
+                type: 'error',
+                message: workflowError instanceof Error ? workflowError.message : 'Workflow execution failed',
+                timestamp: new Date().toISOString()
+              };
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+              controller.close();
+              return;
+            }
+          }
+
           // Check if LangGraph integration is enabled
           if (body.useLangGraph) {
             console.log('🎯 [Orchestrate] Using LangGraph workflow orchestration');
@@ -273,27 +350,25 @@ export async function POST(request: NextRequest) {
             }
 
             case 'autonomous': {
-              // MODE 3: Autonomous-Automatic
-              console.log('🎯 [Orchestrate] Routing to Mode 3: Autonomous-Automatic');
+              // MODE 3: Autonomous-Automatic -> Use Mode 2 (automatic agent selection)
+              console.log('🎯 [Orchestrate] Routing to Mode 2 (automatic) for autonomous mode');
 
-              const mode3Stream = await executeMode3({
+              const mode2Stream = await executeMode2({
                 message: body.message,
                 conversationHistory: body.conversationHistory,
-                enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
+                enableRAG: body.enableRAG !== false,
                 enableTools: body.enableTools ?? true,
                 model: body.model,
                 temperature: body.temperature ?? 0.7,
                 maxTokens: body.maxTokens ?? 2000,
                 userId: body.userId || user?.id,
                 tenantId,
-                sessionId,
-                maxIterations: body.maxIterations ?? 10,
-                confidenceThreshold: body.confidenceThreshold ?? 0.95
+                sessionId
               });
 
-              // Stream autonomous chunks
+              // Stream chunks
               try {
-                for await (const chunk of mode3Stream) {
+                for await (const chunk of mode2Stream) {
                   if (controller.desiredSize === null) {
                     console.log('⚠️ [Orchestrate] Controller closed, stopping Mode 3 stream');
                     break;
@@ -334,48 +409,36 @@ export async function POST(request: NextRequest) {
                 return;
               }
 
-              console.log('🎯 [Orchestrate] Routing to Mode 4: Autonomous-Manual');
+              console.log('🎯 [Orchestrate] Routing to Mode 1 (manual) for multi-expert mode');
 
               try {
-                const mode4Stream = await executeMode4({
+                const mode1Stream = await executeMode1({
                   agentId: body.agentId,
                   message: body.message,
                   conversationHistory: body.conversationHistory,
-                enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
-                enableTools: body.enableTools ?? true,
-                model: body.model,
-                temperature: body.temperature ?? 0.7,
-                maxTokens: body.maxTokens ?? 2000,
-                maxIterations: body.maxIterations ?? 10,
-                confidenceThreshold: body.confidenceThreshold ?? 0.95
-              });
+                  enableRAG: body.enableRAG !== false,
+                  enableTools: body.enableTools ?? true,
+                  model: body.model,
+                  temperature: body.temperature ?? 0.7,
+                  maxTokens: body.maxTokens ?? 2000,
+                  tenantId,
+                  sessionId,
+                  userId: body.userId || user?.id
+                });
 
-                // Stream autonomous chunks
+                // Stream chunks (Mode 1 yields strings, not objects)
                 try {
-                  for await (const chunk of mode4Stream) {
+                  for await (const chunk of mode1Stream) {
                     if (controller.desiredSize === null) {
                       console.log('⚠️ [Orchestrate] Controller closed, stopping Mode 4 stream');
                       break;
                     }
-                    
-                    // If chunk is an error, forward it directly
-                    if (chunk.type === 'error') {
-                      const errorEvent = {
-                        type: 'error',
-                        message: chunk.content || 'Error during Mode 4 execution',
-                        content: chunk.content || 'Error during Mode 4 execution',
-                        metadata: chunk.metadata,
-                        timestamp: chunk.timestamp || new Date().toISOString()
-                      };
-                      controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
-                      break; // Stop streaming on error
-                    }
-                    
+
+                    // Mode 1 yields strings, wrap them in event format
                     const event = {
-                      type: chunk.type,
-                      content: chunk.content,
-                      metadata: chunk.metadata,
-                      timestamp: chunk.timestamp
+                      type: 'chunk',
+                      content: chunk,
+                      timestamp: new Date().toISOString()
                     };
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
                   }

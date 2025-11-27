@@ -23,18 +23,18 @@ const envSchema = z.object({
   // Supabase Configuration
   NEXT_PUBLIC_SUPABASE_URL: z.string().url({
     message: 'NEXT_PUBLIC_SUPABASE_URL must be a valid URL',
-  }),
+  }).optional(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, {
     message: 'NEXT_PUBLIC_SUPABASE_ANON_KEY is required',
-  }),
+  }).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, {
     message: 'SUPABASE_SERVICE_ROLE_KEY is required (server-side only)',
-  }),
+  }).optional(),
 
   // OpenAI Configuration
   OPENAI_API_KEY: z.string().min(1, {
     message: 'OPENAI_API_KEY is required',
-  }),
+  }).optional(),
 
   // Pinecone Configuration
   PINECONE_API_KEY: z.string().min(1, {
@@ -93,16 +93,19 @@ class EnvironmentConfig {
   private constructor() {
     try {
       // Parse and validate environment variables
-      this.config = envSchema.parse(process.env);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
+      // Use safeParse to avoid throwing errors
+      const result = envSchema.safeParse(process.env);
+      
+      if (!result.success) {
+        const isDevelopment = process.env.NODE_ENV === 'development';
+        
         // Create detailed error message
-        const missingVars = error.errors
+        const missingVars = result.error.errors
           .filter((e) => e.code === 'invalid_type' && e.received === 'undefined')
           .map((e) => e.path.join('.'))
           .join(', ');
 
-        const invalidVars = error.errors
+        const invalidVars = result.error.errors
           .filter((e) => e.code !== 'invalid_type' || e.received !== 'undefined')
           .map((e) => `${e.path.join('.')}: ${e.message}`)
           .join(', ');
@@ -123,8 +126,43 @@ class EnvironmentConfig {
         errorMessage +=
           'See docs/environment-setup.md for configuration details.\n';
 
-        throw new Error(errorMessage);
+        // In development, use partial config with defaults
+        // In production, throw error
+        if (isDevelopment) {
+          console.warn('⚠️ [EnvironmentConfig] Validation failed, using partial config:', errorMessage);
+          // Use partial config with defaults for missing values
+          this.config = {
+            ...process.env,
+            NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+            NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+            SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+            OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+            PINECONE_API_KEY: process.env.PINECONE_API_KEY || undefined,
+            PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT || undefined,
+            PINECONE_INDEX_NAME: process.env.PINECONE_INDEX_NAME || undefined,
+            ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || undefined,
+            NEXT_PUBLIC_PLATFORM_TENANT_ID: process.env.NEXT_PUBLIC_PLATFORM_TENANT_ID || '00000000-0000-0000-0000-000000000001',
+            NEXT_PUBLIC_STARTUP_TENANT_ID: process.env.NEXT_PUBLIC_STARTUP_TENANT_ID || undefined,
+            NODE_ENV: (process.env.NODE_ENV as 'development' | 'test' | 'production') || 'development',
+            NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || undefined,
+            REDIS_URL: process.env.REDIS_URL || undefined,
+            LANGFUSE_API_KEY: process.env.LANGFUSE_API_KEY || undefined,
+            LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY || undefined,
+            LANGFUSE_HOST: process.env.LANGFUSE_HOST || undefined,
+          } as EnvConfig;
+        } else {
+          // In production, fail fast
+          throw new Error(errorMessage);
+        }
+      } else {
+        this.config = result.data;
       }
+    } catch (error) {
+      // If it's not a ZodError, re-throw
+      if (error instanceof Error && !error.message.includes('Environment Configuration Error')) {
+        throw error;
+      }
+      // If we already handled it above, this shouldn't happen, but just in case
       throw error;
     }
   }
@@ -184,16 +222,25 @@ class EnvironmentConfig {
 
   /**
    * Get Supabase configuration
+   * Returns null if configuration is incomplete
    */
   public getSupabaseConfig(): {
     url: string;
     anonKey: string;
     serviceRoleKey: string;
-  } {
+  } | null {
+    const url = this.config.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = this.config.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    // Check if both required values are present and non-empty
+    if (!url || !anonKey || url.trim() === '' || anonKey.trim() === '') {
+      return null;
+    }
+    
     return {
-      url: this.config.NEXT_PUBLIC_SUPABASE_URL,
-      anonKey: this.config.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      serviceRoleKey: this.config.SUPABASE_SERVICE_ROLE_KEY,
+      url: url.trim(),
+      anonKey: anonKey.trim(),
+      serviceRoleKey: (this.config.SUPABASE_SERVICE_ROLE_KEY || '').trim(),
     };
   }
 
@@ -247,25 +294,60 @@ class EnvironmentConfig {
   }
 }
 
-// Export singleton instance
-export const env = EnvironmentConfig.getInstance();
+// Export singleton instance with lazy initialization
+let _envInstance: EnvironmentConfig | null = null;
 
-// Validate on module load (server-side only)
+export const env = new Proxy({} as EnvironmentConfig, {
+  get(target, prop) {
+    if (!_envInstance) {
+      try {
+        _envInstance = EnvironmentConfig.getInstance();
+      } catch (error) {
+        // If initialization fails, create a minimal instance
+        console.warn('⚠️ [EnvironmentConfig] Failed to initialize, using fallback:', error);
+        // Return a proxy that provides safe defaults
+        return new Proxy({}, {
+          get() {
+            return () => {
+              console.warn('⚠️ [EnvironmentConfig] Service not available');
+              return null;
+            };
+          }
+        });
+      }
+    }
+    return (_envInstance as any)[prop];
+  }
+});
+
+// Validate on module load (server-side only) - but don't throw
 if (typeof window === 'undefined') {
   try {
-    // Force validation
-    env.get();
-    if (env.isDevelopment()) {
-      console.log('✅ Environment variables validated successfully');
+    // Force validation (but it won't throw in development)
+    const instance = EnvironmentConfig.getInstance();
+    const config = instance.get();
+    if (config.NODE_ENV === 'development') {
+      // Check if critical vars are missing
+      const missing = [];
+      if (!config.NEXT_PUBLIC_SUPABASE_URL) missing.push('NEXT_PUBLIC_SUPABASE_URL');
+      if (!config.NEXT_PUBLIC_SUPABASE_ANON_KEY) missing.push('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+      if (!config.SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+      if (!config.OPENAI_API_KEY) missing.push('OPENAI_API_KEY');
+      
+      if (missing.length === 0) {
+        console.log('✅ Environment variables validated successfully');
+      } else {
+        console.warn(`⚠️ Missing environment variables: ${missing.join(', ')}. Some features may not work.`);
+      }
     }
   } catch (error) {
     // In production, fail fast
-    if (env.isProduction()) {
-      console.error(error);
+    if (process.env.NODE_ENV === 'production') {
+      console.error('❌ [EnvironmentConfig] Production validation failed:', error);
       throw error;
     }
     // In development, warn but don't fail
-    console.warn('⚠️ Environment validation warning:', error);
+    console.warn('⚠️ [EnvironmentConfig] Development validation warning:', error);
   }
 }
 

@@ -763,9 +763,10 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           .eq('status', 'active');
 
         if (capError) {
-          console.error('[Agent Creator] Supabase error:', capError);
+          // Log as warning since this is expected - capabilities table might not exist
+          console.warn('[Agent Creator] Capabilities table not available:', capError.message || String(capError));
           // Don't throw - continue loading organizational data even if capabilities fail
-          console.warn('[Agent Creator] Continuing without capabilities...');
+          console.log('[Agent Creator] Continuing without capabilities - using empty array');
         }
 
         console.log('[Agent Creator] Capabilities loaded:', capabilities?.length || 0);
@@ -2774,8 +2775,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                       <option value="">
                         {loadingMedicalData ? 'Loading...' : 'Select Business Function'}
                       </option>
-                      {businessFunctions.map(bf => (
-                        <option key={bf.id} value={bf.id}>
+                      {businessFunctions.map((bf, index) => (
+                        <option key={bf.id ? `bf-${bf.id}` : `bf-${index}-${bf.name || index}`} value={bf.id}>
                           {bf.name || bf.department_name}
                         </option>
                       ))}
@@ -2798,8 +2799,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           ? 'No departments available'
                           : 'Select Department'}
                       </option>
-                      {availableDepartments.map(dept => (
-                        <option key={dept.id} value={dept.id}>
+                      {availableDepartments.map((dept, index) => (
+                        <option key={dept.id ? `dept-${dept.id}` : `dept-${index}-${dept.name || dept.department_name || index}`} value={dept.id}>
                           {dept.name || dept.department_name}
                         </option>
                       ))}
@@ -2824,8 +2825,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           ? 'No roles available'
                           : 'Select Role'}
                       </option>
-                      {availableRoles.map(role => (
-                        <option key={role.id} value={role.id}>
+                      {availableRoles.map((role, index) => (
+                        <option key={role.id ? `role-${role.id}` : `role-${index}-${role.name || role.role_name || index}`} value={role.id}>
                           {role.name || role.role_name}
                         </option>
                       ))}
@@ -3385,8 +3386,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                       <option value="">
                         {loadingMedicalData ? 'Loading...' : `Select Business Function (${businessFunctions.length} available)`}
                       </option>
-                      {businessFunctions.map(bf => (
-                        <option key={bf.id} value={bf.id}>
+                      {businessFunctions.map((bf, index) => (
+                        <option key={bf.id ? `bf-${bf.id}` : `bf-${index}-${bf.name || index}`} value={bf.id}>
                           {bf.name || bf.department_name}
                         </option>
                       ))}
@@ -3416,8 +3417,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           ? 'Not available'
                           : 'Select Department...'}
                       </option>
-                      {availableDepartments.map(dept => (
-                        <option key={dept.id} value={dept.id}>
+                      {availableDepartments.map((dept, index) => (
+                        <option key={dept.id ? `dept-${dept.id}` : `dept-${index}-${dept.name || dept.department_name || index}`} value={dept.id}>
                           {dept.name || dept.department_name}
                         </option>
                       ))}
@@ -3445,8 +3446,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                       ) : healthcareRoles.length > 0 ? (
                         // Database data available - show filtered roles or message
                         availableRoles.length > 0 ? (
-                          availableRoles.map(role => (
-                            <option key={role.id} value={role.id}>
+                          availableRoles.map((role, index) => (
+                            <option key={role.id ? `role-${role.id}` : `role-${index}-${role.name || role.role_name || index}`} value={role.id}>
                               {role.name || role.role_name}
                               {role.level ? ` - ${role.level}` : ''}
                             </option>

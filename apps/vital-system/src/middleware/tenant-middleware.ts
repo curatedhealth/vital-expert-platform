@@ -110,27 +110,13 @@ export async function tenantMiddleware(
     }
   }
 
-  // 3. HEADER DETECTION (third priority)
-  // Allow clients to override with x-tenant-id header
-  if (tenantId === PLATFORM_TENANT_ID) {
-    const headerTenantId = request.headers.get('x-tenant-id');
-    if (headerTenantId && headerTenantId !== PLATFORM_TENANT_ID) {
-      tenantId = headerTenantId;
-      detectionMethod = 'header';
-      console.log(`[Tenant Middleware] Detected tenant from header: ${tenantId}`);
-    }
-  }
+  // 3. REMOVED: Header detection (security vulnerability - client-controllable)
+  // Previously allowed x-tenant-id header - REMOVED for security
+  // Clients should NOT be able to override tenant selection
 
-  // 4. COOKIE DETECTION (fourth priority)
-  // Check for tenant_id cookie
-  if (tenantId === PLATFORM_TENANT_ID) {
-    const cookieTenantId = request.cookies.get('tenant_id')?.value;
-    if (cookieTenantId && cookieTenantId !== PLATFORM_TENANT_ID) {
-      tenantId = cookieTenantId;
-      detectionMethod = 'cookie';
-      console.log(`[Tenant Middleware] Detected tenant from cookie: ${tenantId}`);
-    }
-  }
+  // 4. REMOVED: Cookie detection for tenant_id (security vulnerability)
+  // Previously allowed tenant_id cookie - REMOVED for security
+  // Only server-determined tenant (subdomain or user profile) is trusted
 
   // 5. FALLBACK to Platform Tenant (default)
   if (!tenantId || tenantId === PLATFORM_TENANT_ID) {
@@ -150,21 +136,23 @@ export async function tenantMiddleware(
   newResponse.headers.set('x-tenant-key', tenantKey);
   newResponse.headers.set('x-tenant-detection-method', detectionMethod);
 
-  // Set tenant ID cookie (for persistence across requests, backward compatibility)
+  // Set tenant ID cookie (for server-side context only - NOT used for tenant selection)
+  // SECURITY: This cookie is informational only. Tenant is determined by subdomain/user profile.
   newResponse.cookies.set('tenant_id', tenantId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 30, // 30 days
+    secure: true, // ALWAYS secure (use HTTPS proxy in dev)
+    sameSite: 'strict', // CHANGED from 'lax' - prevent CSRF
+    maxAge: 60 * 15, // CHANGED from 30 days to 15 minutes - HIPAA auto-logoff
     path: '/',
   });
 
-  // Set tenant_key cookie (for subdomain-based tenant context provider)
+  // Set tenant_key cookie (for client-side display only - NOT for security decisions)
+  // SECURITY: Client can read this for UI purposes, but cannot change tenant via this cookie
   newResponse.cookies.set('vital-tenant-key', tenantKey, {
-    httpOnly: false, // Allow client-side JavaScript to read
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 30, // 30 days
+    httpOnly: false, // Client can read for display purposes only
+    secure: true, // ALWAYS secure
+    sameSite: 'strict', // CHANGED from 'lax' - prevent CSRF
+    maxAge: 60 * 15, // CHANGED from 30 days to 15 minutes
     path: '/',
   });
 

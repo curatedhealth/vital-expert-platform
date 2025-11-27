@@ -45,3 +45,4 @@ WHERE schemaname = 'public'
 AND tablename IN ('agents', 'conversations', 'messages')
 ORDER BY tablename;
 
+

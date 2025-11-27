@@ -207,3 +207,4 @@ SELECT
     '✅ RLS policies applied successfully!' as status,
     'Check the table above to see which tables have tenant isolation' as note;
 
+

@@ -266,3 +266,4 @@ SELECT * FROM agents;
 **Last Updated:** 2025-11-26  
 **Support:** See full documentation in `.claude/docs/`
 
+

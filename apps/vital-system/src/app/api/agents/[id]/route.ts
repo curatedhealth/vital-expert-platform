@@ -5,21 +5,30 @@ import { env } from '@/config/environment';
 import { createLogger } from '@/lib/services/observability/structured-logger';
 import { z } from 'zod';
 
-// Validation schema for agent updates
+// Helper to validate optional UUID (allows empty string, null, undefined, or valid UUID)
+const optionalUuid = z.string()
+  .transform(val => val === '' ? null : val) // Transform empty string to null
+  .nullable()
+  .optional()
+  .refine(val => val === null || val === undefined || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val), {
+    message: 'Invalid uuid'
+  });
+
+// Validation schema for agent updates - permissive to allow form flexibility
 const updateAgentSchema = z.object({
-  display_name: z.string().min(1).max(255).optional(),
-  description: z.string().max(1000).optional(),
-  system_prompt: z.string().min(1).optional(),
-  capabilities: z.array(z.string()).optional(),
-  knowledge_domains: z.array(z.string()).optional(),
-  metadata: z.record(z.any()).optional(),
-  avatar: z.string().optional(),
-  function_id: z.string().uuid().optional(),
-  function_name: z.string().optional(),
-  department_id: z.string().uuid().optional(),
-  department_name: z.string().optional(),
-  role_id: z.string().uuid().optional(),
-  role_name: z.string().optional(),
+  display_name: z.string().max(255).optional().nullable(),
+  description: z.string().optional().nullable(), // Removed max limit - some agents have long descriptions
+  system_prompt: z.string().optional().nullable(), // Allow empty system prompt
+  capabilities: z.array(z.string()).optional().nullable(),
+  knowledge_domains: z.array(z.string()).optional().nullable(),
+  metadata: z.record(z.any()).optional().nullable(),
+  avatar: z.string().optional().nullable(),
+  function_id: optionalUuid,
+  function_name: z.string().optional().nullable(),
+  department_id: optionalUuid,
+  department_name: z.string().optional().nullable(),
+  role_id: optionalUuid,
+  role_name: z.string().optional().nullable(),
 }).passthrough(); // Allow additional fields
 
 export const PUT = withAgentAuth(async (
@@ -115,25 +124,97 @@ export const PUT = withAgentAuth(async (
       updatePayload.role_name = validatedData.role_name;
     }
 
-    // Handle other direct column updates
-    const metadataOnlyFields = ['display_name', 'avatar'];
-    const orgFields = ['function_id', 'function_name', 'department_id', 'department_name', 'role_id', 'role_name'];
-    Object.keys(validatedData).forEach((key) => {
-      if (!metadataOnlyFields.includes(key) && !orgFields.includes(key) && key !== 'metadata') {
-        updatePayload[key] = validatedData[key];
+    // Define valid database columns (based on actual agents table schema)
+    const validDbColumns = new Set([
+      'name', 'slug', 'tagline', 'description', 'title',
+      'role_id', 'function_id', 'department_id',
+      'function_name', 'department_name', 'role_name',
+      'expertise_level', 'years_of_experience',
+      'avatar_url', 'avatar_description',
+      'system_prompt', 'base_model', 'temperature', 'max_tokens',
+      'communication_style', 'status', 'validation_status',
+      'metadata', 'persona_id', 'agent_level_id',
+      'documentation_path', 'documentation_url',
+      'system_prompt_template_id', 'system_prompt_override', 'prompt_variables',
+      'is_private_to_user', 'is_public', 'is_shared',
+      'context_window', 'cost_per_query',
+      'token_budget_min', 'token_budget_max', 'token_budget_recommended',
+      'hipaa_compliant', 'audit_trail_enabled',
+      'personality_type_id',
+    ]);
+
+    // Fields to store in metadata (not direct DB columns)
+    const metadataOnlyFields = new Set([
+      'display_name', 'avatar', 'id',
+      'capabilities', 'knowledge_domains', 'tier', 'priority',
+      'rag_enabled', 'implementation_phase', 'is_custom', 'is_library_agent',
+      'color', 'model', // model gets mapped to base_model
+      // Personality & communication sliders (store in metadata)
+      'personality_type', 'personality_formality', 'personality_empathy',
+      'personality_directness', 'personality_detail_orientation',
+      'personality_proactivity', 'personality_risk_tolerance',
+      'comm_verbosity', 'comm_technical_level', 'comm_warmth',
+      // Other form fields
+      'prompt_starters', 'tools', 'skills', 'model_justification', 'model_citation',
+      'success_criteria', 'escalation_protocol', 'integration_endpoints',
+      'example_interactions', 'data_sources', 'compliance_requirements',
+    ]);
+
+    // Field mappings (form field name -> DB column name)
+    const fieldMappings: Record<string, string> = {
+      'model': 'base_model',
+      'avatar': 'avatar_url', // Also store in metadata for backwards compat
+    };
+
+    // Process all validated fields
+    const extraMetadata: Record<string, any> = {};
+
+    Object.entries(validatedData).forEach(([key, value]) => {
+      if (value === undefined) return;
+      if (key === 'metadata') return; // Handle separately
+
+      // Check if it's a metadata-only field
+      if (metadataOnlyFields.has(key)) {
+        extraMetadata[key] = value;
+        return;
+      }
+
+      // Check if it needs to be mapped to a different column name
+      const mappedKey = fieldMappings[key] || key;
+
+      // Only include if it's a valid DB column
+      if (validDbColumns.has(mappedKey)) {
+        updatePayload[mappedKey] = value;
+      } else {
+        // Unknown field - store in metadata
+        extraMetadata[key] = value;
       }
     });
 
-    // Handle metadata updates (merge)
-    if (validatedData.metadata) {
-      updatePayload.metadata = {
-        ...(currentAgent.metadata || {}),
-        ...validatedData.metadata,
-      };
+    // Handle model -> base_model mapping explicitly (since 'model' is common)
+    if ('model' in validatedData && validatedData.model) {
+      updatePayload.base_model = validatedData.model;
     }
+
+    // Handle metadata updates (merge all: current, user-provided, and extra fields)
+    updatePayload.metadata = {
+      ...(currentAgent.metadata || {}),
+      ...(validatedData.metadata || {}),
+      ...extraMetadata,
+    };
 
     // Ensure updated_at is set
     updatePayload.updated_at = new Date().toISOString();
+
+    // Log the final payload for debugging
+    logger.debug('agent_put_payload_prepared', {
+      operation: 'PUT /api/agents/[id]',
+      operationId,
+      agentId: id,
+      payloadFields: Object.keys(updatePayload),
+      metadataFields: Object.keys(updatePayload.metadata || {}),
+      extraMetadataFields: Object.keys(extraMetadata),
+    });
     
     logger.debug('agent_put_updating', {
       operation: 'PUT /api/agents/[id]',

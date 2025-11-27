@@ -9,42 +9,90 @@
 ## 📚 **Documentation Index**
 
 ### **🎯 Start Here**
-- **`MULTI_LEVEL_PRIVACY_GUIDE.md`** ⭐ **MAIN GUIDE** - Complete 4-level privacy system
+- **`DUAL_MECHANISM_RLS_GUIDE.md`** ⭐ **NEW - Agent Fetching Guide** - How dual-mechanism RLS works
+- **`MULTI_LEVEL_PRIVACY_GUIDE.md`** - Complete 4-level privacy system
 - **`RLS_DEPLOYMENT_GUIDE.md`** - Deployment instructions
 - **`MULTI_TENANT_STRATEGY.md`** - Multi-tenant sharing strategy
 - **`MIGRATION_HISTORY.md`** - Complete migration log and verification
+
+### **🔒 Security Documentation**
+- **`CRITICAL-SECURITY-FIXES-COMPLETE.md`** ✅ - All 5 critical fixes + Phase 2 migration
+- **`SECURITY_DEFINER_VIEWS_STATUS.md`** 🔴 **NEW** - 39 views audit & remediation tracking
 
 ### **🗄️ SQL Migrations**
 - **`migrations/001_rls_tenant_context.sql`** ✅ DEPLOYED - Tenant context functions
 - **`migrations/005_rls_smart_policies.sql`** ✅ DEPLOYED - Smart RLS policies
 - **`migrations/007_rls_multi_level_privacy.sql`** ✅ DEPLOYED - 4-level privacy
+- **`migrations/20251126_009_critical_enable_rls_on_policy_tables.sql`** ✅ DEPLOYED - Critical P0 fix
+- **`migrations/20251126_010_phase2_migrate_agents_data.sql`** ✅ DEPLOYED - Data migration + dual-mechanism RLS
+- **`migrations/audit_security_definer_views_cloud.sql`** ✅ COMPLETE - Security audit
 
 ---
 
 ## 🔐 **Privacy System Overview**
 
-### **4-Level Privacy Hierarchy:**
+### **Dual-Mechanism RLS Architecture (Current Production):**
+
+VITAL uses a **3-level hierarchy** with **dual ownership dimensions**:
+
+```
+VITAL Platform
+  │
+  ├── Industry Tenant: Pharmaceuticals
+  │     ├── Organization: PharmaCo (customer)
+  │     │     └── Custom Agents (owner_organization_id = PharmaCo)
+  │     │     └── Platform Agents (owner_organization_id = VITAL, tenant_id = Pharma)
+  │     │
+  │     └── Organization: BioTech Inc (customer)
+  │           └── Custom Agents (owner_organization_id = BioTech)
+  │           └── Platform Agents (owner_organization_id = VITAL, tenant_id = Pharma)
+  │
+  └── Industry Tenant: Digital Health
+        └── Organizations...
+```
+
+**Key Concept:**
+- `owner_organization_id`: **WHO OWNS IT** (VITAL for platform, customer for custom)
+- `tenant_id`: **WHICH INDUSTRY** (Pharma, Digital Health, Consulting, etc.)
+- Users see: (1) Their org's custom agents OR (2) VITAL's platform agents in their industry
+
+**See**: `DUAL_MECHANISM_RLS_GUIDE.md` for complete explanation
+
+---
+
+### **Legacy 4-Level Privacy Hierarchy (Partial Implementation):**
 
 ```
 1. 👤 User-Private      → Only creator sees it
    ↓
-2. 🏢 Tenant-Shared     → All users in tenant see it
+2. 🏢 Organization      → All users in organization see it (ACTIVE)
    ↓
-3. 🤝 Multi-Tenant      → Specific tenants see it
+3. 🤝 Tenant-Shared     → All orgs in industry see it (ACTIVE via dual-mechanism)
    ↓
-4. 🌍 Public            → Everyone sees it (VITAL system agents)
+4. 🌍 Public            → Reserved for future global agents
 ```
+
+**Current State:**
+- ✅ Organization isolation (Mechanism 1) - ACTIVE
+- ✅ Tenant sharing (Mechanism 2) - ACTIVE
+- 📋 User-private agents - Schema ready, not yet used
+- 📋 Public agents - Reserved for future
 
 ---
 
-## 📊 **Access Control Matrix**
+## 📊 **Access Control Matrix (Updated)**
 
-| Agent Type | Creator | Same Tenant | Other Tenant | All Tenants |
-|------------|---------|-------------|--------------|-------------|
-| **User-Private** | ✅ | ❌ | ❌ | ❌ |
-| **Tenant-Shared** | ✅ | ✅ | ❌ | ❌ |
-| **Multi-Tenant** | ✅ | ✅ | ✅ (granted) | ❌ |
-| **Public** | ✅ | ✅ | ✅ | ✅ |
+| Agent Type | Owner Org | Tenant ID | PharmaCo Sees? | BioTech Sees? | HealthTech Sees? |
+|------------|-----------|-----------|----------------|---------------|------------------|
+| **PharmaCo Custom** | PharmaCo | Pharma | ✅ | ❌ | ❌ |
+| **Platform (Pharma)** | VITAL | Pharma | ✅ | ✅ | ❌ |
+| **Platform (DH)** | VITAL | Digital Health | ❌ | ❌ | ✅ |
+| **BioTech Custom** | BioTech | Pharma | ❌ | ✅ | ❌ |
+
+**Current Production State:**
+- All 1,138 agents: `owner_organization_id = VITAL`, `tenant_id = Pharma`
+- Pharma customers see all 1,138
+- Digital Health customers see 0 (no agents allocated yet)
 
 ---
 
@@ -213,23 +261,35 @@ Step-by-step deployment:
 
 ## 🎯 **Production Checklist**
 
-### **Deployed:**
-- ✅ RLS functions (`set_tenant_context`, `get_current_tenant_id`, etc)
-- ✅ RLS policies on agents table
-- ✅ Multi-level privacy flags
+### **Deployed (Updated 2025-11-26):**
+- ✅ RLS functions (`set_tenant_context`, `get_current_tenant_id`)
+- ✅ Organization context functions (`set_organization_context`, `get_current_organization_context`)
+- ✅ RLS policies on agents table (dual-mechanism)
+- ✅ RLS policies on workflows table
+- ✅ RLS policies on prompts table
+- ✅ RLS enabled on knowledge_domains, tenants, users (P0 critical fix)
+- ✅ Multi-level privacy flags (schema ready)
 - ✅ Agent sharing junction table
 - ✅ Helper functions
+- ✅ Phase 2 data migration complete (1,138 agents)
 
 ### **Backend TODO:**
-- 📋 Update middleware to set user context
-- 📋 Pass `x-user-id` header from frontend
-- 📋 Extract user_id from JWT token
+- 📋 Update middleware to use `set_organization_context()` instead of `set_tenant_context()`
+- 📋 Extract organization_id from JWT token
+- 📋 Pass organization context on every request
+
+### **Security Definer Views (In Progress):**
+- ✅ Audit complete (39 views identified)
+- ⏳ Fix P1 user-facing views (4 views - this week)
+- 📋 Assess P2 complete-data views (3 views - next week)
+- 📋 Review medium-risk views (7 views)
+- 📋 Classify remaining views (25 views)
 
 ### **Optional Enhancements:**
-- 🔮 Apply RLS to conversations table (if has tenant_id)
-- 🔮 Apply RLS to messages table
+- 🔮 Create Digital Health platform agents
+- 🔮 Add audit logging for agent access
+- 🔮 Implement bulk agent allocation tools
 - 🔮 Add RLS to analytics tables
-- 🔮 Implement audit logging
 
 ---
 

@@ -182,3 +182,4 @@ See `ENV_VARIABLES_SETUP_GUIDE.md` for:
 **🎯 Quick Tip:** Start with just the minimum required variables above, then add optional ones as needed!
 
 
+

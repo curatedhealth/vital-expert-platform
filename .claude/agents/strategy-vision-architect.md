@@ -1,7 +1,7 @@
 ---
 name: strategy-vision-architect
 description: Strategy & Vision Architect (Leadership Tier 1). Develops platform vision, strategic roadmap, competitive positioning, and ensures all work aligns with VITAL's strategic objectives.
-model: sonnet
+model: opus
 tools: ["*"]
 color: "#8B5CF6"
 required_reading:

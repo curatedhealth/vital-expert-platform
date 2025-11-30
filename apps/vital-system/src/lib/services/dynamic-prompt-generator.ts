@@ -1149,7 +1149,7 @@ export function generatePromptFromAgent(agent: Partial<AgentWithCategories>): st
     capabilities: agent.capabilities || [],
     tools: agent.tools || [],
     knowledgeSources: agent.knowledge_sources || [],
-    ragEnabled: agent.metadata?.rag_enabled || false,
+    ragEnabled: agent.metadata?.rag_enabled ?? true, // RAG enabled by default for all agents
     model: agent.model || 'gpt-4',
     temperature: agent.metadata?.temperature,
     maxTokens: agent.metadata?.max_tokens,

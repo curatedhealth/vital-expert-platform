@@ -1,9 +1,25 @@
 # 🎯 VITAL Agent Team - Coordination Guide
 
-**Version**: 2.0
+**Version**: 3.0
 **Created**: 2025-11-16
-**Updated**: 2025-11-21
-**Purpose**: Show how to leverage the 8-agent team to create gold-standard documentation with proper data schema and file organization
+**Updated**: 2025-11-29
+**Purpose**: Show how to leverage the multi-agent team to create gold-standard documentation with proper data schema and file organization
+
+---
+
+## 🚨 CRITICAL: CANONICAL PROJECT DIRECTORY
+
+**ALL work MUST be performed in:**
+```
+/Users/hichamnaim/Downloads/Cursor/VITAL path/
+```
+
+**NEVER work in `/Users/hichamnaim/Downloads/Cursor/VITAL/`** - this is an archived directory containing outdated code.
+
+Before performing ANY file operation:
+1. Verify your path contains "VITAL path" (with space)
+2. NEVER create, edit, or read files from the "/VITAL/" directory (without space)
+3. If uncertain, always use the full canonical path
 
 ---
 

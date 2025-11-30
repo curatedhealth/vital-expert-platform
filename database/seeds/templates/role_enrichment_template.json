@@ -1,0 +1,447 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Role Enrichment Template",
+  "description": "Template for enriching pharmaceutical/biotech organizational roles with comprehensive metadata",
+  "version": "1.0.0",
+  "last_updated": "2025-11-22",
+
+  "instructions": {
+    "purpose": "Fill this template for each role you want to enrich. You can create multiple roles in a single JSON file as an array.",
+    "required_fields": ["unique_id", "role_name", "seniority_level", "function_area"],
+    "optional_but_recommended": ["description", "required_skills", "regulatory_oversight", "typical_deliverables"],
+    "data_collection_tips": [
+      "Interview 2-3 people currently in this role",
+      "Review job descriptions and competency frameworks",
+      "Consult with HR and department heads",
+      "Reference industry standards (e.g., AIPM, PMI for pharma roles)"
+    ]
+  },
+
+  "example_role": {
+    "comment": "This is a complete example. Copy this structure for each new role.",
+
+    "basic_info": {
+      "unique_id": "ROLE-MA-MSL-001",
+      "role_name": "Medical Science Liaison",
+      "role_title": "Medical Science Liaison (MSL)",
+      "seniority_level": "Senior",
+      "function_area": "Medical Affairs",
+      "department_name": "Field Medical",
+      "is_active": true,
+      "description": "Serves as a scientific expert and trusted advisor to key opinion leaders, providing balanced, evidence-based information on therapeutic areas and clinical data."
+    },
+
+    "hierarchy_and_reporting": {
+      "reports_to_unique_id": "ROLE-MA-DIR-001",
+      "reports_to_role_name": "Director, Medical Affairs",
+      "typical_direct_reports": 0,
+      "typical_dotted_line_reports": 0
+    },
+
+    "experience_and_qualifications": {
+      "years_experience_min": 3,
+      "years_experience_max": 8,
+      "required_education": "PharmD, PhD, or MD required",
+      "required_skills": [
+        "Scientific communication",
+        "Clinical data interpretation",
+        "KOL relationship management",
+        "Presentation skills",
+        "Medical writing"
+      ],
+      "required_certifications": [
+        "Advanced degree (PharmD/PhD/MD)",
+        "State medical license (if applicable)",
+        "Board certification in therapeutic area (preferred)"
+      ],
+      "preferred_background": "3-5 years clinical practice or clinical research experience"
+    },
+
+    "pharmaceutical_specific": {
+      "role_type": "Field-based Medical",
+      "regulatory_oversight": "FDA regulations, PhRMA Code, EFPIA Code",
+      "gxp_critical": true,
+      "gxp_types": ["GCP", "GVP"],
+      "patient_facing": false,
+      "hcp_facing": true,
+      "safety_critical": true,
+      "clinical_trial_phases": ["Phase 2", "Phase 3", "Phase 4"],
+      "drug_lifecycle_stages": ["Clinical Development", "Commercialization", "Post-Marketing"],
+      "therapeutic_areas": [
+        "Oncology",
+        "Immunology",
+        "Cardiovascular"
+      ],
+      "regulatory_frameworks": [
+        {
+          "framework_name": "FDA 21 CFR Part 312",
+          "proficiency_level": "Advanced",
+          "applies_to_role": true
+        },
+        {
+          "framework_name": "ICH GCP E6",
+          "proficiency_level": "Expert",
+          "applies_to_role": true
+        },
+        {
+          "framework_name": "PhRMA Code on Interactions with HCPs",
+          "proficiency_level": "Expert",
+          "applies_to_role": true
+        }
+      ]
+    },
+
+    "work_environment": {
+      "travel_requirement_pct": 60,
+      "remote_eligible": true,
+      "oncall_required": false,
+      "typical_work_schedule": "Flexible with travel",
+      "physical_requirements": "Ability to travel extensively",
+      "work_location_type": "Field-based (home office + travel)"
+    },
+
+    "career_development": {
+      "job_family": "Medical Affairs",
+      "career_level": "P3",
+      "typical_time_in_role_months": 24,
+      "advancement_potential": "High",
+      "is_entry_point": false,
+      "succession_planning_priority": "Medium",
+      "career_path_progression": [
+        {
+          "from_role": "Clinical Research Associate",
+          "typical_years": 3
+        },
+        {
+          "to_role": "Senior MSL",
+          "typical_years": 2
+        },
+        {
+          "to_role": "MSL Manager",
+          "typical_years": 3
+        }
+      ]
+    },
+
+    "compensation": {
+      "salary_band_min": 140000,
+      "salary_band_max": 180000,
+      "salary_currency": "USD",
+      "compensation_notes": "Plus 15-20% bonus, stock options, car allowance"
+    },
+
+    "responsibilities_and_deliverables": {
+      "key_responsibilities": [
+        "Build and maintain relationships with key opinion leaders",
+        "Provide scientific and clinical information in response to unsolicited requests",
+        "Identify and report insights from the field",
+        "Support investigator-initiated trials",
+        "Deliver scientific presentations at medical congresses"
+      ],
+      "typical_deliverables": [
+        {
+          "deliverable_name": "KOL Engagement Plans",
+          "frequency": "Quarterly",
+          "time_allocation_pct": 25
+        },
+        {
+          "deliverable_name": "Field Insights Reports",
+          "frequency": "Monthly",
+          "time_allocation_pct": 15
+        },
+        {
+          "deliverable_name": "Scientific Presentations",
+          "frequency": "As needed",
+          "time_allocation_pct": 20
+        }
+      ]
+    },
+
+    "competencies_and_skills": {
+      "clinical_competencies": [
+        {
+          "competency_name": "Clinical Trial Design",
+          "proficiency_level": "Advanced",
+          "years_to_develop": 3
+        },
+        {
+          "competency_name": "Pharmacovigilance",
+          "proficiency_level": "Intermediate",
+          "years_to_develop": 2
+        },
+        {
+          "competency_name": "Medical Writing",
+          "proficiency_level": "Advanced",
+          "years_to_develop": 2
+        }
+      ],
+      "soft_skills": [
+        "Relationship building",
+        "Scientific communication",
+        "Emotional intelligence",
+        "Active listening"
+      ],
+      "technical_skills": [
+        "Literature review and analysis",
+        "Statistical interpretation",
+        "Database management (Veeva, IQVIA)",
+        "CRM systems"
+      ]
+    },
+
+    "decision_authority": {
+      "approval_types": [
+        {
+          "approval_name": "Scientific material review",
+          "approval_level": "Recommend",
+          "monetary_limit": 0,
+          "requires_escalation": true
+        },
+        {
+          "approval_name": "Travel and expenses",
+          "approval_level": "Approve",
+          "monetary_limit": 5000,
+          "requires_escalation": false
+        }
+      ]
+    },
+
+    "training_requirements": {
+      "gxp_training": [
+        {
+          "training_name": "GCP Fundamentals",
+          "frequency": "Annual",
+          "is_mandatory": true,
+          "estimated_hours": 8
+        },
+        {
+          "training_name": "Pharmacovigilance and Adverse Event Reporting",
+          "frequency": "Annual",
+          "is_mandatory": true,
+          "estimated_hours": 4
+        }
+      ],
+      "role_specific_training": [
+        {
+          "training_name": "MSL Academy Certification",
+          "frequency": "One-time",
+          "is_mandatory": true,
+          "estimated_hours": 40
+        },
+        {
+          "training_name": "Therapeutic Area Deep Dive",
+          "frequency": "Quarterly",
+          "is_mandatory": true,
+          "estimated_hours": 16
+        }
+      ]
+    },
+
+    "kpis_and_metrics": {
+      "role_kpis": [
+        {
+          "kpi_name": "Number of Tier 1 KOL interactions",
+          "target_value": "120 per year",
+          "measurement_frequency": "Monthly",
+          "data_source": "Veeva CRM"
+        },
+        {
+          "kpi_name": "Field insights submitted",
+          "target_value": "24 per year",
+          "measurement_frequency": "Monthly",
+          "data_source": "Medical Insights Platform"
+        },
+        {
+          "kpi_name": "Scientific presentation quality score",
+          "target_value": "4.5/5.0",
+          "measurement_frequency": "Quarterly",
+          "data_source": "Peer evaluations"
+        }
+      ]
+    },
+
+    "workflows_and_processes": {
+      "participates_in_processes": [
+        {
+          "process_name": "Medical Review of Promotional Materials",
+          "raci_role": "Consulted",
+          "time_allocation_pct": 5
+        },
+        {
+          "process_name": "Adverse Event Reporting",
+          "raci_role": "Responsible",
+          "time_allocation_pct": 10
+        },
+        {
+          "process_name": "Investigator-Initiated Study Review",
+          "raci_role": "Informed",
+          "time_allocation_pct": 5
+        }
+      ],
+      "daily_activities": [
+        {
+          "activity_name": "KOL meetings and engagement",
+          "time_allocation_pct": 40,
+          "frequency": "Daily"
+        },
+        {
+          "activity_name": "Email and administrative tasks",
+          "time_allocation_pct": 15,
+          "frequency": "Daily"
+        },
+        {
+          "activity_name": "Literature review and scientific updates",
+          "time_allocation_pct": 15,
+          "frequency": "Daily"
+        },
+        {
+          "activity_name": "Internal meetings and collaboration",
+          "time_allocation_pct": 20,
+          "frequency": "Weekly"
+        },
+        {
+          "activity_name": "Travel",
+          "time_allocation_pct": 10,
+          "frequency": "Weekly"
+        }
+      ]
+    },
+
+    "systems_and_tools": {
+      "required_systems": [
+        {
+          "system_name": "Veeva CRM",
+          "proficiency_required": "Advanced",
+          "usage_frequency": "Daily"
+        },
+        {
+          "system_name": "Medical Insights Platform",
+          "proficiency_required": "Intermediate",
+          "usage_frequency": "Weekly"
+        },
+        {
+          "system_name": "Clinical Trial Management System",
+          "proficiency_required": "Basic",
+          "usage_frequency": "Monthly"
+        }
+      ]
+    },
+
+    "stakeholder_interactions": {
+      "internal_stakeholders": [
+        {
+          "stakeholder_type": "Clinical Development",
+          "interaction_frequency": "Monthly",
+          "interaction_type": "Collaborative"
+        },
+        {
+          "stakeholder_type": "Regulatory Affairs",
+          "interaction_frequency": "Quarterly",
+          "interaction_type": "Informational"
+        },
+        {
+          "stakeholder_type": "Commercial Marketing",
+          "interaction_frequency": "Monthly",
+          "interaction_type": "Firewall (limited interaction)"
+        }
+      ],
+      "external_stakeholders": [
+        {
+          "stakeholder_type": "Key Opinion Leaders",
+          "interaction_frequency": "Weekly",
+          "interaction_type": "Scientific Exchange"
+        },
+        {
+          "stakeholder_type": "Healthcare Providers",
+          "interaction_frequency": "Daily",
+          "interaction_type": "Educational"
+        }
+      ]
+    },
+
+    "goals_challenges_motivations": {
+      "typical_goals": [
+        "Establish thought leader relationships in assigned territory",
+        "Provide timely scientific support to HCPs",
+        "Generate actionable medical insights",
+        "Maintain scientific credibility and expertise"
+      ],
+      "common_challenges": [
+        "Balancing travel demands with work-life integration",
+        "Staying current with rapidly evolving clinical data",
+        "Navigating compliance requirements in HCP interactions",
+        "Managing diverse stakeholder expectations"
+      ],
+      "key_motivations": [
+        "Impact on patient outcomes through scientific education",
+        "Intellectual stimulation and continuous learning",
+        "Building meaningful relationships with thought leaders",
+        "Being at the forefront of medical innovation"
+      ]
+    },
+
+    "metadata": {
+      "data_quality_score": 0.95,
+      "last_validated": "2025-11-22",
+      "validated_by": "Medical Affairs Leadership",
+      "source": "Job analysis + incumbent interviews",
+      "notes": "Based on 3 MSL interviews and MAPS curriculum",
+      "custom_fields": {
+        "maps_certified": true,
+        "publication_authorship_allowed": true,
+        "speaker_bureau_eligible": false
+      }
+    }
+  },
+
+  "your_roles": [
+    {
+      "comment": "Copy the example_role structure above and fill in your data here",
+      "basic_info": {
+        "unique_id": "",
+        "role_name": "",
+        "role_title": "",
+        "seniority_level": "",
+        "function_area": "",
+        "department_name": "",
+        "is_active": true,
+        "description": ""
+      }
+    }
+  ],
+
+  "field_definitions": {
+    "seniority_level_options": ["Executive", "Senior", "Mid", "Junior", "Entry"],
+    "role_type_options": [
+      "Field-based Medical",
+      "Clinical Operations",
+      "Regulatory Affairs",
+      "Clinical Development",
+      "Medical Information",
+      "Pharmacovigilance",
+      "Medical Writing",
+      "Clinical Research",
+      "Market Access",
+      "HEOR",
+      "Corporate Medical",
+      "Laboratory/R&D",
+      "Quality Assurance",
+      "Quality Control"
+    ],
+    "gxp_types": ["GCP", "GLP", "GMP", "GVP", "GDP"],
+    "clinical_trial_phases": ["Phase 1", "Phase 2", "Phase 3", "Phase 4"],
+    "drug_lifecycle_stages": [
+      "Discovery",
+      "Preclinical",
+      "Clinical Development",
+      "Regulatory Submission",
+      "Commercialization",
+      "Post-Marketing",
+      "Lifecycle Management"
+    ],
+    "proficiency_levels": ["Basic", "Intermediate", "Advanced", "Expert"],
+    "raci_roles": ["Responsible", "Accountable", "Consulted", "Informed"],
+    "approval_levels": ["Recommend", "Approve", "Final Approval"],
+    "training_frequency": ["One-time", "Annual", "Biannual", "Quarterly", "Monthly", "As Needed"]
+  }
+}

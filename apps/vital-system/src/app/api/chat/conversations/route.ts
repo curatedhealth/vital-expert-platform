@@ -171,15 +171,22 @@ export async function POST(request: NextRequest) {
     });
     
     // Try to create conversation in database
+    // Use existing schema: context (JSONB) and metadata (JSONB) columns
+    // agent_id and tenant_id are stored in metadata, not as direct columns
+    const now = new Date().toISOString();
     const { data: conversation, error } = await supabase
       .from('conversations')
       .insert({
         title: title || 'New Conversation',
         user_id: user_id,
-        agent_id: agent_id || null,
-        tenant_id: finalTenantId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        context: { messages: [] },
+        metadata: {
+          agent_id: agent_id || null,
+          tenant_id: finalTenantId,
+          is_pinned: false
+        },
+        created_at: now,
+        updated_at: now
       })
       .select()
       .single();

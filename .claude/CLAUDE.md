@@ -1,5 +1,38 @@
 # Claude AI Assistant Rules
 
+## 🚨 CRITICAL: CANONICAL PROJECT DIRECTORY (MANDATORY)
+
+**THE ONLY VALID PROJECT DIRECTORY IS:**
+```
+/Users/hichamnaim/Downloads/Cursor/VITAL path/
+```
+
+### NEVER Work In These Directories:
+- ❌ `/Users/hichamnaim/Downloads/Cursor/VITAL/` (ARCHIVED - DO NOT USE)
+- ❌ Any other `VITAL` directory without the space in the name
+
+### Why This Matters:
+- All code, documentation, and configuration has been consolidated into `VITAL path`
+- The `VITAL` directory (without space) contains outdated/archived code
+- Working in the wrong directory causes fragmentation and lost work
+
+### Before ANY Operation:
+1. **Verify your working directory** is `VITAL path` (with space)
+2. **Never create files** in `/Users/hichamnaim/Downloads/Cursor/VITAL/`
+3. **Never edit files** in `/Users/hichamnaim/Downloads/Cursor/VITAL/`
+4. If asked to work on VITAL, **always use `VITAL path`**
+
+### Key Paths (All in VITAL path):
+| Component | Path |
+|-----------|------|
+| AI Engine | `services/ai-engine/src/` |
+| Database | `database/` |
+| Claude Docs | `.claude/` |
+| Apps | `apps/` |
+| Documentation | `docs/` |
+
+---
+
 ## 🔴 CRITICAL: Evidence-Based Operation (MANDATORY)
 
 **READ FIRST**: `.vital-docs/EVIDENCE_BASED_RULES.md`

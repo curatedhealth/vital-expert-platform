@@ -24,11 +24,30 @@ import operator
 # =============================================================================
 
 class WorkflowMode(str, Enum):
-    """Workflow execution modes"""
-    MODE_1_MANUAL = "mode1_manual"  # User selects specific agent
-    MODE_2_AUTOMATIC = "mode2_automatic"  # System selects agent
-    MODE_3_AUTONOMOUS = "mode3_autonomous"  # Multi-agent collaboration
-    MODE_4_STREAMING = "mode4_streaming"  # Streaming responses
+    """
+    Workflow execution modes (PRD v1.2.1 compliant naming)
+
+    Mode naming convention:
+    - First part: Selection method (manual = user selects, auto = system selects)
+    - Second part: Execution style (selection = interactive, autonomous = agentic)
+    """
+    # Mode 1: User manually selects agent, interactive execution
+    MANUAL_SELECTION = "manual_selection"
+
+    # Mode 2: System auto-selects best agent, interactive execution
+    AUTO_SELECTION = "auto_selection"
+
+    # Mode 3: User selects agent(s), autonomous multi-agent execution
+    MANUAL_AUTONOMOUS = "manual_autonomous"
+
+    # Mode 4: System selects, autonomous execution with streaming
+    AUTO_AUTONOMOUS = "auto_autonomous"
+
+    # Legacy aliases for backward compatibility (will be deprecated)
+    MODE_1_MANUAL = "manual_selection"
+    MODE_2_AUTOMATIC = "auto_selection"
+    MODE_3_AUTONOMOUS = "manual_autonomous"
+    MODE_4_STREAMING = "auto_autonomous"
     
 
 class AgentType(str, Enum):
@@ -357,9 +376,17 @@ class UnifiedWorkflowState(TypedDict):
     context_summary: NotRequired[Dict[str, Any]]
     
     # =========================================================================
+    # AGENT PREFERENCES (Citation style, formatting, etc.)
+    # =========================================================================
+
+    # Citation preferences (flows from agent metadata to tools)
+    citation_style: NotRequired[str]  # apa, ama, chicago, harvard, vancouver, icmje, mla
+    include_citations: NotRequired[bool]  # Whether to include citations in responses
+
+    # =========================================================================
     # GRAPHRAG STATE (PHASE 4: HYBRID SEARCH WITH EVIDENCE CHAINS)
     # =========================================================================
-    
+
     # GraphRAG configuration
     rag_profile_id: NotRequired[Optional[str]]  # RAG profile to use
     graphrag_enabled: NotRequired[bool]  # Whether GraphRAG was executed
@@ -514,6 +541,10 @@ def create_initial_state(
         max_results=kwargs.get('max_results', 5),
         temperature=kwargs.get('temperature', 0.1),
         max_tokens=kwargs.get('max_tokens', 4000),
+
+        # Agent preferences (citation style, etc.)
+        citation_style=kwargs.get('citation_style', 'apa'),
+        include_citations=kwargs.get('include_citations', True),
     )
 
 

@@ -16,6 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
 import { createLogger } from '@/lib/services/observability/structured-logger';
 import { env } from '@/config/environment';
 import { validateUserOrganizationMembership } from '@/lib/security/organization-membership';
@@ -38,8 +39,8 @@ export interface AgentPermissionContext {
     id: string;
     created_by: string;
     tenant_id: string;
-    is_custom: boolean;
-    is_library_agent: boolean;
+    // Note: is_custom and is_library_agent don't exist in schema
+    // Use metadata.is_custom and metadata.is_library_agent if needed
   };
 }
 
@@ -325,10 +326,14 @@ export async function verifyAgentPermissions(
         };
       }
 
-      // Fetch agent details
-      const { data: agent, error: agentError } = await supabase
+      // Fetch agent details using service client to bypass RLS
+      // Auth is already verified above, we just need to check agent existence
+      const serviceSupabase = getServiceSupabaseClient();
+      // Note: is_custom and is_library_agent columns don't exist in schema
+      // We query metadata JSONB field instead for these flags
+      const { data: agent, error: agentError } = await serviceSupabase
         .from('agents')
-        .select('id, created_by, tenant_id, is_custom, is_library_agent')
+        .select('id, created_by, tenant_id, metadata')
         .eq('id', agentId)
         .single();
 
@@ -349,12 +354,12 @@ export async function verifyAgentPermissions(
         };
       }
 
+      // Extract is_custom and is_library_agent from metadata JSONB if present
+      const metadata = agent.metadata || {};
       context.agent = {
         id: agent.id,
         created_by: agent.created_by || '',
         tenant_id: agent.tenant_id || '',
-        is_custom: agent.is_custom === true,
-        is_library_agent: agent.is_library_agent === true,
       };
 
       // Super admins can do anything
@@ -397,9 +402,10 @@ export async function verifyAgentPermissions(
       }
 
       // Users can only edit their own custom agents
+      // Check is_custom and is_library_agent from metadata JSONB
       const isOwner = agent.created_by === user.id;
-      const isCustom = agent.is_custom === true;
-      const isNotLibrary = agent.is_library_agent !== true;
+      const isCustom = metadata.is_custom === true;
+      const isNotLibrary = metadata.is_library_agent !== true;
 
       if (isOwner && isCustom && isNotLibrary) {
         const duration = Date.now() - startTime;

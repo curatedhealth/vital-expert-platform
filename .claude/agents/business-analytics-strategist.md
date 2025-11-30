@@ -1,7 +1,7 @@
 ---
 name: business-analytics-strategist
 description: Business & Analytics Strategist. Translates business needs into measurable requirements, creates ROI models, defines KPIs, and ensures all platform work delivers quantifiable business value.
-model: sonnet
+model: opus
 tools: ["*"]
 color: "#F59E0B"
 required_reading:

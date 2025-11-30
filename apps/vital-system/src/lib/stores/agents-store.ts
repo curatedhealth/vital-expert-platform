@@ -208,7 +208,7 @@ const convertDbAgentToStoreFormat = (dbAgent: DbAgent | any): Agent => {
     avatar: avatarValue, // Use API-resolved avatar URL/path
     color: dbAgent.color || metadata.color || '#6366f1',
     capabilities: Array.isArray(dbAgent.capabilities) ? dbAgent.capabilities as string[] : [],
-    rag_enabled: dbAgent.rag_enabled ?? metadata.rag_enabled ?? false,
+    rag_enabled: dbAgent.rag_enabled ?? metadata.rag_enabled ?? true, // RAG enabled by default for all agents
     temperature: dbAgent.temperature ?? metadata.temperature ?? 0.7,
     max_tokens: dbAgent.max_tokens ?? metadata.max_tokens ?? 2000,
     is_custom: dbAgent.is_custom ?? metadata.is_custom ?? false,
@@ -716,7 +716,7 @@ export const useAgentsStore = create<AgentsStore>()(
                 avatar: incoming.avatar ?? '🤖',
                 color: incoming.color ?? '#6366f1',
                 capabilities: incoming.capabilities ?? [],
-                rag_enabled: incoming.rag_enabled ?? false,
+                rag_enabled: incoming.rag_enabled ?? true, // RAG enabled by default for all agents
                 temperature: incoming.temperature ?? 0.7,
                 max_tokens: incoming.max_tokens ?? 2000,
                 is_custom: incoming.is_custom ?? false,

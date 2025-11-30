@@ -166,6 +166,10 @@ class GraphRAGRequest(BaseModel):
     min_score: Optional[float] = Field(None, ge=0.0, le=1.0)
     include_graph_evidence: bool = True
     include_citations: bool = True
+    citation_style: str = Field(
+        default="apa",
+        description="Citation format style: apa, ama, chicago, harvard, vancouver, icmje, mla"
+    )
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 

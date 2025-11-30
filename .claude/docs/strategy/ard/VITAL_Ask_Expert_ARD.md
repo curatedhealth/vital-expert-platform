@@ -1,16 +1,60 @@
 # VITAL Ask Expert Services - Architecture Requirements Document (ARD)
-**Version:** 1.1
-**Date:** November 23, 2025
-**Status:** Gold Standard - Production Best Practices Enhanced
-**Architecture Pattern:** Event-Driven Microservices with AI Orchestration
+**Version:** 1.2
+**Date:** November 27, 2025
+**Status:** Gold Standard - GraphRAG & Deep Agents Enhanced
+**Architecture Pattern:** Event-Driven Microservices with AI Orchestration + GraphRAG
 
 ---
 
 ## Executive Summary
 
-The VITAL Ask Expert architecture implements a sophisticated multi-agent AI system using LangGraph for orchestration, supporting four distinct interaction modes through a scalable, multi-tenant platform. The architecture prioritizes real-time performance, healthcare compliance, and elastic scaling while maintaining complete data isolation between tenants.
+The VITAL Ask Expert architecture implements a sophisticated multi-agent AI system using **LangGraph for orchestration** and a **3-method hybrid GraphRAG** for intelligent agent selection, supporting four distinct interaction modes (Interactive/Autonomous × Manual/Auto) through a scalable, multi-tenant platform. The architecture prioritizes real-time performance, healthcare compliance, and elastic scaling while maintaining complete data isolation between tenants.
 
-Core architectural principles include event-driven communication, stateless services, comprehensive observability, and defense-in-depth security. The system handles 10,000+ concurrent conversations across 136+ specialized healthcare AI agents with sub-second response times.
+Core architectural principles include event-driven communication, stateless services, comprehensive observability, and defense-in-depth security. The system handles 10,000+ concurrent conversations across **489 enriched healthcare AI agents** organized in a **5-level hierarchy** with sub-second response times.
+
+### What's New in v1.2
+- **3-Method Hybrid Agent Selection**: PostgreSQL (30%) + Pinecone (50%) + Neo4j GraphRAG (20%)
+- **RRF Fusion**: Reciprocal Rank Fusion for combining ranking methods
+- **5-Level Agent Hierarchy**: Platform → Domain → Tier 1 → Tier 2 → Tier 3
+- **Deep Agents Integration**: LangChain middleware with TodoList, Filesystem, SubAgent tools
+- **Neo4j Graph Schema**: Agent relationships (ORCHESTRATES, DELEGATES_TO, COLLABORATES_WITH)
+- **Evidence-Based Scoring**: Capability and skill proficiency tracking per agent
+- **2-Toggle Mode System**: Interactive/Autonomous × Manual/Auto matrix
+
+### Phase 1 Implementation Scope (December 2025)
+
+⚠️ **LAUNCH AUDIT**: Phase 1 deploys a subset of v1.2 architecture. Full v1.2 in Phase 2.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              PHASE 1 vs PHASE 2+ ARCHITECTURE                    │
+└─────────────────────────────────────────────────────────────────┘
+
+                     PHASE 1 (Dec 2025)      PHASE 2+ (Q1 2026)
+                     ─────────────────       ──────────────────
+DATA LAYER
+├─ PostgreSQL        ✅ Full-text search     ✅ Same
+├─ Pinecone          ✅ Semantic search      ✅ Same
+├─ Neo4j             ❌ Not deployed         ✅ GraphRAG
+└─ Redis             ✅ Caching              ✅ + RRF cache
+
+AGENT SELECTION
+├─ Method            Pinecone only           3-method hybrid
+├─ Ranking           Cosine similarity       RRF Fusion
+└─ Weights           100% semantic           30/50/20 weighted
+
+AGENT CAPABILITIES
+├─ Count             136+ active             489 enriched
+├─ Hierarchy         Flat (by domain)        5-level hierarchy
+├─ Tools             Basic (search, cite)    Deep Agents full
+└─ Evidence          Static scores           Dynamic learning
+
+PERFORMANCE (API Latency)
+├─ Mode 1            <500ms (actual: 475ms)  <500ms
+├─ Mode 2            <400ms (actual: 335ms)  <400ms
+├─ Mode 3            <2s (actual: 1.95s)     <2s
+└─ Mode 4            <5s (actual: 4.67s)     <5s
+```
 
 ### Architecture Updates (v1.1)
 - **HITL Integration**: Human-in-the-Loop checkpoints for regulated workflows (mandatory per 2025 best practices)
@@ -25,8 +69,8 @@ Core architectural principles include event-driven communication, stateless serv
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     VITAL ASK EXPERT ARCHITECTURE                   │
-│                  Multi-Tenant AI Orchestration Platform             │
+│                     VITAL ASK EXPERT ARCHITECTURE v1.2              │
+│          Multi-Tenant AI Orchestration Platform + GraphRAG          │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -49,23 +93,38 @@ Core architectural principles include event-driven communication, stateless serv
 │  ┌─────────────────────────────────────────────────────────────┐   │
 │  │                    LangGraph StateGraph                     │   │
 │  │  ┌──────────────┐  ┌──────────────┐                       │   │
-│  │  │    MODE 1    │  │    MODE 2    │   Query Modes         │   │
-│  │  │Manual Select │  │ Auto Select  │   (One-Shot)          │   │
+│  │  │    MODE 1    │  │    MODE 2    │  Interactive Modes    │   │
+│  │  │Interactive + │  │Interactive + │  (Conversation)       │   │
+│  │  │   Manual     │  │   Auto       │                       │   │
 │  │  └──────────────┘  └──────────────┘                       │   │
 │  │                                                             │   │
 │  │  ┌──────────────┐  ┌──────────────┐                       │   │
-│  │  │    MODE 3    │  │    MODE 4    │   Chat Modes          │   │
-│  │  │Manual + Auto │  │ Auto + Auto  │   (Multi-turn +       │   │
-│  │  │   Reasoning  │  │   Reasoning  │    Autonomous)        │   │
+│  │  │    MODE 3    │  │    MODE 4    │  Autonomous Modes     │   │
+│  │  │Autonomous +  │  │Autonomous +  │  (Goal-Driven +       │   │
+│  │  │   Manual     │  │    Auto      │   Deep Agents)        │   │
 │  │  └──────────────┘  └──────────────┘                       │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
+│  └─────────────────────────────────────────────────────────────┘   │
 │                                                                     │
 │  ┌─────────────────────────────────────────────────────────────┐   │
-│  │                    Agent Management                         │   │
-│  │  • Agent Registry (136+ agents)                            │   │
-│  │  • Agent Selector (Semantic/Manual)                        │   │
-│  │  • Autonomous Reasoning Engine                             │   │
-│  │  • Checkpoint System                                       │   │
+│  │                 Hybrid Agent Selection (v1.2)               │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │   │
+│  │  │ PostgreSQL   │  │   Pinecone   │  │ Neo4j Graph  │     │   │
+│  │  │  Full-Text   │  │   Semantic   │  │   RAG        │     │   │
+│  │  │    (30%)     │  │    (50%)     │  │   (20%)      │     │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘     │   │
+│  │                         │                                   │   │
+│  │                   ┌─────┴─────┐                             │   │
+│  │                   │ RRF Fusion │                            │   │
+│  │                   └───────────┘                             │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                    Agent Management (489 agents)            │   │
+│  │  • 5-Level Hierarchy (Platform→Domain→T1→T2→T3)            │   │
+│  │  • Agent Registry with 6 Core Fields                       │   │
+│  │  • Deep Agents Middleware (LangChain)                      │   │
+│  │  • HITL Checkpoint System                                  │   │
+│  │  • Evidence-Based Scoring                                  │   │
 │  └─────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘
                                     │
@@ -76,7 +135,7 @@ Core architectural principles include event-driven communication, stateless serv
 │  │   Service    │  │   Service    │  │   Service    │             │
 │  └──────────────┘  └──────────────┘  └──────────────┘             │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐             │
-│  │   Tenant     │  │   Session    │  │   Tools      │             │
+│  │   Tenant     │  │   Session    │  │ Deep Agent   │             │
 │  │   Service    │  │   Service    │  │   Service    │             │
 │  └──────────────┘  └──────────────┘  └──────────────┘             │
 └─────────────────────────────────────────────────────────────────────┘
@@ -89,14 +148,24 @@ Core architectural principles include event-driven communication, stateless serv
 │  │  • Conversations       │  │  • Embeddings         │           │
 │  │  • Agent Registry      │  │  • Semantic Search    │           │
 │  │  • Checkpoints         │  │  • Agent Matching     │           │
+│  │  • Full-Text Search    │  │  • Capability Vectors │           │
 │  └────────────────────────┘  └────────────────────────┘           │
 │                                                                     │
 │  ┌────────────────────────┐  ┌────────────────────────┐           │
-│  │     Redis Cache        │  │    Object Storage      │           │
-│  │  • Session State       │  │  • Documents (S3)      │           │
-│  │  • Rate Limiting       │  │  • Conversation Logs   │           │
-│  │  • Feature Flags       │  │  • Agent Artifacts     │           │
+│  │     Neo4j Graph        │  │     Redis Cache        │           │
+│  │  • Agent Relationships │  │  • Session State       │           │
+│  │  • GraphRAG Queries    │  │  • Rate Limiting       │           │
+│  │  • Capability Graph    │  │  • Feature Flags       │           │
+│  │  • Expertise Paths     │  │  • RRF Score Cache     │           │
 │  └────────────────────────┘  └────────────────────────┘           │
+│                                                                     │
+│  ┌────────────────────────┐                                        │
+│  │    Object Storage      │                                        │
+│  │  • Documents (S3)      │                                        │
+│  │  • Conversation Logs   │                                        │
+│  │  • Agent Artifacts     │                                        │
+│  │  • Generated Reports   │                                        │
+│  └────────────────────────┘                                        │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -684,13 +753,512 @@ class ExpertSelector:
         
         # Sort by score
         scores.sort(key=lambda x: x[1], reverse=True)
-        
+
         return [expert for expert, _ in scores]
 ```
 
 ---
 
-### 5. Performance Optimization
+### 5. 3-Method Hybrid Agent Selection (New in v1.2)
+
+The hybrid agent selection system combines three retrieval methods with RRF (Reciprocal Rank Fusion) to achieve optimal expert matching. This architecture ensures both semantic understanding and graph-based relationship discovery.
+
+#### Architecture Overview
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 3-METHOD HYBRID AGENT SELECTION                 │
+│              PostgreSQL + Pinecone + Neo4j GraphRAG             │
+└─────────────────────────────────────────────────────────────────┘
+
+User Query: "FDA pathway for AI-powered diagnostic with biomarkers"
+                            │
+            ┌───────────────┼───────────────┐
+            ▼               ▼               ▼
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│  PostgreSQL   │  │   Pinecone    │  │   Neo4j       │
+│  Full-Text    │  │   Semantic    │  │   GraphRAG    │
+│   (30%)       │  │    (50%)      │  │    (20%)      │
+└───────┬───────┘  └───────┬───────┘  └───────┬───────┘
+        │                  │                  │
+        ▼                  ▼                  ▼
+   Ranked List       Ranked List        Ranked List
+        │                  │                  │
+        └──────────────────┼──────────────────┘
+                           ▼
+                ┌─────────────────────┐
+                │    RRF FUSION       │
+                │  Score = Σ 1/(k+r)  │
+                │  k=60, weighted     │
+                └──────────┬──────────┘
+                           ▼
+                ┌─────────────────────┐
+                │  Evidence Boost     │
+                │  +0.1 per 10 pts    │
+                └──────────┬──────────┘
+                           ▼
+                    Final Rankings
+```
+
+#### Method 1: PostgreSQL Full-Text Search (30%)
+```python
+class PostgreSQLAgentSearch:
+    """Full-text search on agent descriptions and capabilities"""
+
+    async def search(self, query: str, top_k: int = 20) -> List[ScoredAgent]:
+        # Use PostgreSQL's tsvector/tsquery for full-text search
+        results = await self.db.execute("""
+            SELECT
+                a.agent_id,
+                a.display_name,
+                a.tier,
+                ts_rank_cd(
+                    to_tsvector('english',
+                        a.description || ' ' ||
+                        array_to_string(a.capabilities, ' ') || ' ' ||
+                        array_to_string(a.expertise_areas, ' ')
+                    ),
+                    plainto_tsquery('english', $1)
+                ) as rank
+            FROM agents a
+            WHERE to_tsvector('english',
+                a.description || ' ' ||
+                array_to_string(a.capabilities, ' ') || ' ' ||
+                array_to_string(a.expertise_areas, ' ')
+            ) @@ plainto_tsquery('english', $1)
+            AND a.status = 'active'
+            ORDER BY rank DESC
+            LIMIT $2
+        """, query, top_k)
+
+        return [
+            ScoredAgent(
+                agent_id=r['agent_id'],
+                score=r['rank'],
+                method='postgresql',
+                tier=r['tier']
+            )
+            for r in results
+        ]
+```
+
+#### Method 2: Pinecone Semantic Search (50%)
+```python
+class PineconeAgentSearch:
+    """Semantic vector search on agent embeddings"""
+
+    def __init__(self):
+        self.index = pinecone.Index("vital-agents")
+        self.embedding_model = "text-embedding-3-small"
+
+    async def search(self, query: str, top_k: int = 20) -> List[ScoredAgent]:
+        # Generate query embedding
+        query_embedding = await self.get_embedding(query)
+
+        # Search Pinecone
+        results = self.index.query(
+            vector=query_embedding,
+            top_k=top_k,
+            include_metadata=True,
+            filter={
+                "status": "active"
+            }
+        )
+
+        return [
+            ScoredAgent(
+                agent_id=r['id'],
+                score=r['score'],
+                method='pinecone',
+                tier=r['metadata']['tier'],
+                capabilities=r['metadata'].get('capabilities', [])
+            )
+            for r in results['matches']
+        ]
+
+    async def get_embedding(self, text: str) -> List[float]:
+        response = await openai.embeddings.create(
+            model=self.embedding_model,
+            input=text
+        )
+        return response.data[0].embedding
+```
+
+#### Method 3: Neo4j GraphRAG (20%)
+```python
+class Neo4jGraphRAGSearch:
+    """Graph-based relationship traversal for agent discovery"""
+
+    def __init__(self):
+        self.driver = neo4j.GraphDatabase.driver(NEO4J_URI)
+
+    async def search(self, query: str, top_k: int = 20) -> List[ScoredAgent]:
+        # Extract entities and capabilities from query
+        entities = await self.extract_entities(query)
+
+        # Graph traversal query
+        cypher = """
+        // Find agents matching capabilities
+        MATCH (a:Agent)-[:HAS_CAPABILITY]->(c:Capability)
+        WHERE c.name IN $capabilities
+
+        // Traverse collaboration relationships
+        OPTIONAL MATCH (a)-[:COLLABORATES_WITH]->(collaborator:Agent)
+        OPTIONAL MATCH (a)-[:ORCHESTRATES]->(subordinate:Agent)
+        OPTIONAL MATCH (a)-[:DELEGATES_TO]->(delegate:Agent)
+
+        // Calculate relationship score
+        WITH a,
+             COUNT(DISTINCT c) as capability_matches,
+             COUNT(DISTINCT collaborator) as collaboration_score,
+             COLLECT(DISTINCT subordinate.agent_id) as subordinates
+
+        // Apply scoring formula
+        RETURN a.agent_id as agent_id,
+               a.display_name as display_name,
+               a.tier as tier,
+               (capability_matches * 0.6 +
+                collaboration_score * 0.2 +
+                SIZE(subordinates) * 0.2) as score
+        ORDER BY score DESC
+        LIMIT $top_k
+        """
+
+        async with self.driver.session() as session:
+            result = await session.run(
+                cypher,
+                capabilities=entities['capabilities'],
+                top_k=top_k
+            )
+
+            return [
+                ScoredAgent(
+                    agent_id=r['agent_id'],
+                    score=r['score'],
+                    method='neo4j',
+                    tier=r['tier']
+                )
+                async for r in result
+            ]
+```
+
+#### RRF Fusion Implementation
+```python
+class RRFFusion:
+    """Reciprocal Rank Fusion for combining ranking methods"""
+
+    def __init__(
+        self,
+        k: int = 60,
+        weights: Dict[str, float] = None
+    ):
+        self.k = k
+        self.weights = weights or {
+            'postgresql': 0.30,
+            'pinecone': 0.50,
+            'neo4j': 0.20
+        }
+
+    def fuse(
+        self,
+        rankings: Dict[str, List[ScoredAgent]],
+        evidence_scores: Dict[str, int]
+    ) -> List[ScoredAgent]:
+        """
+        Combine rankings using RRF with evidence boost.
+
+        RRF Formula: score(d) = Σ (weight_i / (k + rank_i(d)))
+        """
+        fused_scores = defaultdict(float)
+        agent_data = {}
+
+        for method, agents in rankings.items():
+            weight = self.weights.get(method, 0)
+
+            for rank, agent in enumerate(agents, start=1):
+                # RRF score contribution
+                rrf_score = weight / (self.k + rank)
+                fused_scores[agent.agent_id] += rrf_score
+
+                # Store agent data (use highest tier seen)
+                if agent.agent_id not in agent_data:
+                    agent_data[agent.agent_id] = agent
+
+        # Apply evidence-based boost
+        for agent_id, base_score in fused_scores.items():
+            evidence_score = evidence_scores.get(agent_id, 0)
+            # Boost: +0.1 for every 10 evidence points (max +1.0)
+            evidence_boost = min(evidence_score / 100, 1.0)
+            fused_scores[agent_id] = base_score * (1 + evidence_boost)
+
+        # Sort and return
+        sorted_agents = sorted(
+            fused_scores.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        return [
+            ScoredAgent(
+                agent_id=agent_id,
+                score=score,
+                method='rrf_fusion',
+                tier=agent_data[agent_id].tier
+            )
+            for agent_id, score in sorted_agents
+        ]
+```
+
+#### Neo4j Graph Schema
+```cypher
+// Agent Nodes
+CREATE (a:Agent {
+    agent_id: STRING,
+    display_name: STRING,
+    tier: STRING,           // 'platform', 'domain', 'tier1', 'tier2', 'tier3'
+    evidence_score: INTEGER,
+    status: STRING
+})
+
+// Capability Nodes
+CREATE (c:Capability {
+    capability_id: STRING,
+    name: STRING,
+    category: STRING
+})
+
+// Relationships
+CREATE (a:Agent)-[:HAS_CAPABILITY {proficiency: FLOAT}]->(c:Capability)
+CREATE (a:Agent)-[:ORCHESTRATES {priority: INTEGER}]->(sub:Agent)
+CREATE (a:Agent)-[:DELEGATES_TO {task_type: STRING}]->(del:Agent)
+CREATE (a:Agent)-[:COLLABORATES_WITH {frequency: FLOAT}]->(col:Agent)
+CREATE (a:Agent)-[:SPECIALIZES_IN]->(d:Domain)
+
+// Indexes
+CREATE INDEX agent_id_idx FOR (a:Agent) ON (a.agent_id)
+CREATE INDEX capability_name_idx FOR (c:Capability) ON (c.name)
+CREATE INDEX agent_tier_idx FOR (a:Agent) ON (a.tier)
+```
+
+---
+
+### 6. Deep Agents Integration (New in v1.2)
+
+Integration with LangChain Deep Agents for autonomous mode capabilities (Modes 3 & 4).
+
+#### Deep Agent Architecture
+```python
+from langchain.agents import AgentExecutor
+from langchain_core.tools import tool
+
+class DeepAgentMiddleware:
+    """LangChain Deep Agents integration for autonomous workflows"""
+
+    def __init__(self, agent: Expert):
+        self.agent = agent
+        self.tools = self._initialize_tools()
+        self.sub_agents = {}
+
+    def _initialize_tools(self) -> List[BaseTool]:
+        """Initialize Deep Agent tools based on agent tier"""
+
+        base_tools = [
+            self.create_todo_list_tool(),
+            self.create_filesystem_tool(),
+            self.create_research_tool()
+        ]
+
+        # Tier 1+ agents can spawn sub-agents
+        if self.agent.tier in ['platform', 'domain', 'tier1']:
+            base_tools.append(self.create_sub_agent_tool())
+
+        # Add domain-specific tools
+        base_tools.extend(self.agent.domain_tools)
+
+        return base_tools
+
+    @tool
+    def create_todo_list_tool(self):
+        """Create and manage task lists for autonomous workflows"""
+
+        async def todo_list(
+            action: str,
+            task: str = None,
+            status: str = None
+        ) -> str:
+            if action == "add":
+                return await self.task_manager.add_task(task)
+            elif action == "complete":
+                return await self.task_manager.complete_task(task)
+            elif action == "list":
+                return await self.task_manager.list_tasks()
+
+        return StructuredTool.from_function(
+            func=todo_list,
+            name="todo_list",
+            description="Manage task lists: add, complete, or list tasks"
+        )
+
+    @tool
+    def create_sub_agent_tool(self):
+        """Spawn specialized sub-agents for delegated tasks"""
+
+        async def spawn_sub_agent(
+            task_description: str,
+            required_capabilities: List[str],
+            delegation_type: str = "parallel"
+        ) -> SubAgentResult:
+            # Select appropriate sub-agent using GraphRAG
+            sub_agent = await self.select_sub_agent(
+                capabilities=required_capabilities,
+                parent_agent=self.agent
+            )
+
+            # Create HITL checkpoint for sub-agent spawning
+            if self.agent.tier == 'tier1':
+                checkpoint = await self.create_checkpoint(
+                    type="sub_agent_spawn",
+                    content={
+                        "parent": self.agent.agent_id,
+                        "sub_agent": sub_agent.agent_id,
+                        "task": task_description
+                    }
+                )
+                await self.wait_for_approval(checkpoint)
+
+            # Execute sub-agent
+            result = await sub_agent.execute(task_description)
+
+            return SubAgentResult(
+                agent_id=sub_agent.agent_id,
+                result=result,
+                artifacts=result.artifacts
+            )
+
+        return StructuredTool.from_function(
+            func=spawn_sub_agent,
+            name="spawn_sub_agent",
+            description="Spawn a specialized sub-agent for delegated tasks"
+        )
+
+class DeepAgentExecutor:
+    """Execute Deep Agent workflows with LangGraph integration"""
+
+    def __init__(self, agent: Expert, mode: str):
+        self.agent = agent
+        self.mode = mode
+        self.middleware = DeepAgentMiddleware(agent)
+
+    async def execute_autonomous_workflow(
+        self,
+        goal: str,
+        context: Dict
+    ) -> WorkflowResult:
+        """Execute goal-driven autonomous workflow"""
+
+        # Create planning agent
+        planner = PlanningAgent(
+            llm=self.agent.llm,
+            tools=self.middleware.tools
+        )
+
+        # Generate execution plan
+        plan = await planner.create_plan(goal, context)
+
+        # Execute plan with HITL checkpoints
+        results = []
+        for step in plan.steps:
+            # Execute step
+            step_result = await self.execute_step(step)
+            results.append(step_result)
+
+            # HITL checkpoint at critical steps
+            if step.requires_approval:
+                checkpoint = await self.create_checkpoint(
+                    type="step_completion",
+                    content={
+                        "step": step.description,
+                        "result": step_result.summary,
+                        "next_step": plan.get_next(step)
+                    }
+                )
+
+                approval = await self.wait_for_approval(checkpoint)
+                if not approval.approved:
+                    # Re-plan based on feedback
+                    plan = await planner.revise_plan(
+                        goal,
+                        context,
+                        feedback=approval.feedback
+                    )
+
+        # Generate artifacts
+        artifacts = await self.generate_artifacts(results, goal)
+
+        return WorkflowResult(
+            goal=goal,
+            steps_completed=len(results),
+            artifacts=artifacts,
+            final_response=await self.synthesize_response(results)
+        )
+```
+
+#### Artifact Generation System
+```python
+class ArtifactGenerator:
+    """Generate documents, reports, and deliverables"""
+
+    ARTIFACT_TYPES = {
+        'document': ['word', 'pdf', 'markdown'],
+        'template': ['protocol', 'checklist', 'form'],
+        'analysis': ['report', 'summary', 'comparison'],
+        'visual': ['diagram', 'flowchart', 'timeline']
+    }
+
+    async def generate(
+        self,
+        artifact_type: str,
+        content: Dict,
+        format: str = 'markdown'
+    ) -> Artifact:
+        """Generate artifact based on type and content"""
+
+        if artifact_type == 'protocol':
+            return await self.generate_protocol(content)
+        elif artifact_type == 'report':
+            return await self.generate_report(content)
+        elif artifact_type == 'timeline':
+            return await self.generate_timeline(content)
+        # ... other artifact types
+
+    async def generate_protocol(self, content: Dict) -> Artifact:
+        """Generate clinical trial protocol document"""
+
+        template = await self.load_template('clinical_protocol')
+
+        filled = template.format(
+            study_title=content.get('title'),
+            phase=content.get('phase'),
+            objectives=content.get('objectives'),
+            endpoints=content.get('endpoints'),
+            population=content.get('population'),
+            procedures=content.get('procedures')
+        )
+
+        return Artifact(
+            type='protocol',
+            format='markdown',
+            content=filled,
+            metadata={
+                'generated_at': datetime.now(),
+                'agent_id': self.agent.agent_id,
+                'version': '1.0'
+            }
+        )
+```
+
+---
+
+### 7. Performance Optimization
 
 #### Response Caching Strategy
 ```python
@@ -1295,10 +1863,25 @@ spec:
 
 ---
 
-**Document Status:** Complete - Production Best Practices Enhanced
-**Architecture Pattern:** 4-Mode System with Autonomous Reasoning + HITL
+**Document Status:** Complete - GraphRAG & Deep Agents Enhanced
+**Architecture Pattern:** 4-Mode System with Hybrid GraphRAG Selection + Deep Agents + HITL
 **Next Review:** Q1 2026
 **Change Log:**
 - v1.0 (Nov 17, 2025): Initial ARD
 - v1.1 (Nov 23, 2025): Added production best practices, HITL integration, observability patterns
-**Next Review:** Q1 2026
+- v1.2 (Nov 27, 2025): Major enhancement release:
+  - Added 3-method hybrid agent selection (PostgreSQL 30% + Pinecone 50% + Neo4j GraphRAG 20%)
+  - Added RRF (Reciprocal Rank Fusion) implementation with evidence boost
+  - Added Neo4j graph schema for agent relationships
+  - Added Deep Agents integration (LangChain middleware with TodoList, Filesystem, SubAgent)
+  - Added artifact generation system
+  - Updated mode terminology to Interactive/Autonomous × Manual/Auto
+  - Updated agent count from 136+ to 489 enriched agents
+  - Added 5-level hierarchy support in architecture
+  - Added evidence-based scoring in selection algorithm
+- v1.2.1 (Nov 27, 2025): Launch audit reconciliation:
+  - Added Phase 1 vs Phase 2+ implementation scope table
+  - Clarified what deploys in Phase 1 (Pinecone only, 136+ agents)
+  - Documented actual performance metrics from testing
+  - Reconciled with launch documentation (GO_NO_GO_FRAMEWORK, PHASE1_LAUNCH_PLAN)
+**Owner:** VITAL Architecture Team

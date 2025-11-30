@@ -59,18 +59,28 @@ class WebSearchTool(BaseTool):
         try:
             query = tool_input.data if isinstance(tool_input.data, str) else str(tool_input.data)
             max_results = tool_input.context.get('max_results', 5)
-            
+            citation_style = tool_input.context.get('citation_style', 'apa')
+            include_citations = tool_input.context.get('include_citations', True)
+
             result = await self.search(
                 query=query,
                 max_results=max_results
             )
-            
+
+            # Apply citation formatting if enabled
+            if include_citations and result.get('results'):
+                result['results'] = self.format_results_with_citations(
+                    result['results'],
+                    citation_style=citation_style
+                )
+
             return ToolOutput(
                 success=True,
                 data=result,
                 metadata={
                     "query": query,
                     "results_count": len(result.get('results', [])),
+                    "citation_style": citation_style if include_citations else None,
                     "tool": self.name
                 }
             )
@@ -168,14 +178,14 @@ class WebSearchTool(BaseTool):
                 query=query[:50],
                 results_count=len(results)
             )
-            
+
             return {
                 "results": results,
                 "query": query,
                 "total_results": len(results),
                 "answer": data.get("answer"),  # Tavily's AI-generated answer
             }
-            
+
         except asyncio.TimeoutError:
             logger.error("Web search timeout", query=query)
             return {
@@ -192,6 +202,28 @@ class WebSearchTool(BaseTool):
                 "total_results": 0,
                 "error": str(e)
             }
+
+    def format_results_with_citations(
+        self,
+        results: List[Dict[str, Any]],
+        citation_style: str = "apa"
+    ) -> List[Dict[str, Any]]:
+        """
+        Add formatted citations to search results.
+
+        Args:
+            results: List of search result dicts
+            citation_style: Citation style (apa, ama, chicago, harvard, vancouver, icmje, mla)
+
+        Returns:
+            Results with 'citation' field added
+        """
+        try:
+            from graphrag.citation_enricher import format_web_citations
+            return format_web_citations(results, citation_style)
+        except ImportError:
+            logger.warning("Citation enricher not available, returning results without citations")
+            return results
 
 
 class WebScraperTool(BaseTool):

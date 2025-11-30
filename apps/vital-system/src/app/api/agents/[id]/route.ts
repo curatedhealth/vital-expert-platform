@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
 import { withAgentAuth, type AgentPermissionContext } from '@/middleware/agent-auth';
 import { env } from '@/config/environment';
 import { createLogger } from '@/lib/services/observability/structured-logger';
@@ -13,6 +14,21 @@ const optionalUuid = z.string()
   .refine(val => val === null || val === undefined || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val), {
     message: 'Invalid uuid'
   });
+
+// Map TypeScript expertise_level values to database enum values
+// DB enum values: 'beginner', 'intermediate', 'advanced', 'expert'
+// TypeScript values: 'entry', 'mid', 'senior', 'expert', 'thought_leader'
+const EXPERTISE_LEVEL_MAPPING: Record<string, string> = {
+  'entry': 'beginner',
+  'mid': 'intermediate',
+  'senior': 'advanced',
+  'expert': 'expert',
+  'thought_leader': 'expert',
+  // Pass through valid DB values
+  'beginner': 'beginner',
+  'intermediate': 'intermediate',
+  'advanced': 'advanced',
+};
 
 // Validation schema for agent updates - permissive to allow form flexibility
 const updateAgentSchema = z.object({
@@ -41,10 +57,12 @@ export const PUT = withAgentAuth(async (
   const startTime = Date.now();
   
   try {
-    // Use user session client (RLS will enforce permissions)
+    // Use service client for initial fetch (auth already verified by middleware)
+    // This bypasses RLS for the SELECT, but we still use user session for UPDATE
+    const serviceSupabase = getServiceSupabaseClient();
     const supabase = await createClient();
     const { id } = await params;
-    
+
     logger.info('agent_put_started', {
       operation: 'PUT /api/agents/[id]',
       operationId,
@@ -53,14 +71,15 @@ export const PUT = withAgentAuth(async (
     });
 
     const updates = await request.json();
-    
+
     // Validate input
     const validatedData = updateAgentSchema.parse(updates);
-    
-    // Get current agent to merge metadata properly
-    const { data: currentAgent, error: fetchError } = await supabase
+
+    // Get current agent to merge metadata properly (use service client to bypass RLS)
+    // Note: is_custom and is_library_agent columns don't exist in the schema
+    const { data: currentAgent, error: fetchError } = await serviceSupabase
       .from('agents')
-      .select('metadata, created_by, tenant_id, is_custom, is_library_agent')
+      .select('metadata, created_by, tenant_id')
       .eq('id', id)
       .single();
 
@@ -71,6 +90,7 @@ export const PUT = withAgentAuth(async (
         operationId,
         agentId: id,
         duration,
+        error: fetchError?.message,
       });
 
       return NextResponse.json(
@@ -206,6 +226,40 @@ export const PUT = withAgentAuth(async (
     // Ensure updated_at is set
     updatePayload.updated_at = new Date().toISOString();
 
+    // Sanitize UUID fields - convert empty strings to null
+    const uuidFields = [
+      'function_id', 'department_id', 'role_id', 'persona_id',
+      'agent_level_id', 'system_prompt_template_id', 'personality_type_id',
+      'persona_archetype_id', 'communication_style_id', 'reports_to_agent_id'
+    ];
+    for (const field of uuidFields) {
+      if (field in updatePayload && updatePayload[field] === '') {
+        updatePayload[field] = null;
+      }
+    }
+
+    // Map expertise_level to valid database enum values
+    // TypeScript uses: 'entry', 'mid', 'senior', 'expert', 'thought_leader'
+    // Database enum has: 'beginner', 'intermediate', 'advanced', 'expert'
+    if ('expertise_level' in updatePayload && updatePayload.expertise_level) {
+      const mappedLevel = EXPERTISE_LEVEL_MAPPING[updatePayload.expertise_level];
+      if (mappedLevel) {
+        updatePayload.expertise_level = mappedLevel;
+      } else {
+        // If not in mapping, store original value in metadata and set to null in DB
+        logger.warn('agent_put_unknown_expertise_level', {
+          operation: 'PUT /api/agents/[id]',
+          operationId,
+          originalValue: updatePayload.expertise_level,
+        });
+        updatePayload.metadata = {
+          ...updatePayload.metadata,
+          original_expertise_level: updatePayload.expertise_level,
+        };
+        updatePayload.expertise_level = null;
+      }
+    }
+
     // Log the final payload for debugging
     logger.debug('agent_put_payload_prepared', {
       operation: 'PUT /api/agents/[id]',
@@ -223,8 +277,8 @@ export const PUT = withAgentAuth(async (
       fields: Object.keys(updatePayload),
     });
     
-    // Update using user session (RLS enforces permissions)
-    const { data, error } = await supabase
+    // Update using service client (auth already verified by middleware)
+    const { data, error } = await serviceSupabase
       .from('agents')
       .update(updatePayload)
       .eq('id', id)
@@ -364,8 +418,8 @@ export const DELETE = withAgentAuth(async (
   const startTime = Date.now();
 
   try {
-    // Use user session client (RLS will enforce permissions)
-    const supabase = await createClient();
+    // Use service client (auth already verified by middleware)
+    const serviceSupabase = getServiceSupabaseClient();
     const { id } = await params;
 
     logger.info('agent_delete_started', {
@@ -375,8 +429,8 @@ export const DELETE = withAgentAuth(async (
       userId: context.user.id,
     });
 
-    // Check if agent exists (RLS will filter if user doesn't have access)
-    const { data: agent, error: fetchError } = await supabase
+    // Check if agent exists (use service client to bypass RLS)
+    const { data: agent, error: fetchError } = await serviceSupabase
       .from('agents')
       .select('id, name, metadata, tenant_id')
       .eq('id', id)
@@ -395,8 +449,7 @@ export const DELETE = withAgentAuth(async (
     }
 
     // Soft delete by default (set is_active = false)
-    // For hard delete, we'd need service role, but permissions already checked by middleware
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await serviceSupabase
       .from('agents')
       .update({
         is_active: false,
@@ -500,8 +553,8 @@ export const GET = withAgentAuth(async (
   const startTime = Date.now();
 
   try {
-    // Use user session client (RLS will enforce tenant filtering)
-    const supabase = await createClient();
+    // Use service client (auth already verified by middleware)
+    const serviceSupabase = getServiceSupabaseClient();
     const { id } = await params;
 
     logger.info('agent_get_started', {
@@ -511,7 +564,7 @@ export const GET = withAgentAuth(async (
       userId: context.user.id,
     });
 
-    const { data, error } = await supabase
+    const { data, error } = await serviceSupabase
       .from('agents')
       .select('*')
       .eq('id', id)

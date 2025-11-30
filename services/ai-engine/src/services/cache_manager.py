@@ -129,23 +129,24 @@ class CacheManager:
             logger.error("Cache get failed", key=key[:32], error=str(e))
             return None
     
-    async def set(self, key: str, value: Any, ttl: int = 3600):
+    async def set(self, key: str, value: Any, ttl: int = 3600, tenant_id: Optional[str] = None):
         """
         Set cached value with TTL.
-        
+
         Args:
             key: Cache key
             value: Value to cache (must be JSON-serializable)
             ttl: Time to live in seconds (default: 1 hour)
+            tenant_id: Optional tenant ID for logging/metrics (key should already contain tenant isolation)
         """
         if not self.enabled or not self.redis:
             return
-        
+
         try:
             serialized = json.dumps(value)
             await self.redis.setex(key, ttl, serialized)
-            logger.debug("Cache set", key=key[:32], ttl=ttl)
-            
+            logger.debug("Cache set", key=key[:32], ttl=ttl, tenant_id=tenant_id[:8] if tenant_id else None)
+
         except Exception as e:
             logger.error("Cache set failed", key=key[:32], error=str(e))
     

@@ -1,10 +1,27 @@
 # 🎯 VITAL Agent Team - Coordination Guide
 
-**Version**: 1.0
+**Version**: 3.0
 **Created**: 2025-11-16
-**Purpose**: Show how to leverage the 8-agent team to create gold-standard documentation
+**Updated**: 2025-11-29
+**Purpose**: Show how to leverage the multi-agent team to create gold-standard documentation
+
+> **NOTE**: The primary version of this guide is at `.claude/docs/coordination/AGENT_COORDINATION_GUIDE.md`
 
 ---
+
+## 🚨 CRITICAL: CANONICAL PROJECT DIRECTORY
+
+**ALL work MUST be performed in:**
+```
+/Users/hichamnaim/Downloads/Cursor/VITAL path/
+```
+
+**NEVER work in `/Users/hichamnaim/Downloads/Cursor/VITAL/`** - this is an archived directory.
+
+---
+
+## 🤖 Leadership Agents (Opus 4.5)
+vital-platform-orchestrator, strategy-vision-architect, prd-architect, system-architecture-architect, business-analytics-strategist, documentation-qa-lead, implementation-compliance-qa-agent, launch-strategy-agent
 
 ## 📋 Table of Contents
 

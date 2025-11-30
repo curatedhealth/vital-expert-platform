@@ -101,7 +101,12 @@ vital-platform/
 - ✅ 136+ Healthcare AI Agents
 - ✅ Multi-tenant architecture with RLS security
 - ✅ LangGraph workflows with checkpointing
-- ✅ RAG pipeline with hybrid search
+- ✅ **GraphRAG v2.0** - Multi-modal hybrid search (Vector + Keyword + Graph)
+  - 11 configurable RAG strategies (Regulatory, Clinical, Startup, etc.)
+  - 8 agent-specific RAG profiles with tailored Knowledge Graph views
+  - 5 chunking strategies (Standard, Granular, Contextual, Semantic, Hybrid)
+  - A/B testing evaluation harness with Precision@K, MRR, NDCG metrics
+  - Source authority boosting & Cohere neural reranking
 - ✅ Real-time streaming responses
 - ✅ Comprehensive monitoring (LangFuse)
 - ✅ Production-ready deployment scripts
@@ -122,10 +127,13 @@ vital-platform/
 ### Backend
 - **AI Engine**: Python 3.11 + FastAPI + LangChain + LangGraph
 - **Observability**: LangFuse (LLM monitoring & tracing)
-- **Vector DB**: Pinecone + pgvector (Supabase)
+- **Vector DB**: Pinecone (3072-dim embeddings) + pgvector (Supabase)
+- **Graph DB**: Neo4j Aura (Knowledge Graph traversal)
+- **Keyword Search**: Elasticsearch (BM25 exact-match)
 - **Cache**: Redis (with connection pooling)
 - **Database**: Supabase (PostgreSQL with RLS)
-- **AI Models**: OpenAI GPT-4, GPT-3.5-turbo
+- **AI Models**: OpenAI GPT-4, GPT-3.5-turbo, text-embedding-3-large
+- **Reranking**: Cohere rerank-v3
 
 ### Infrastructure
 - **Build System**: Turborepo

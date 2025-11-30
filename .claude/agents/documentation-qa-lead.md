@@ -1,7 +1,7 @@
 ---
 name: documentation-qa-lead
 description: Documentation & QA Lead. Ensures all VITAL Platform documentation meets gold-standard quality through comprehensive review, consistency checking, and executive-level polish.
-model: sonnet
+model: opus
 tools: ["*"]
 color: "#3B82F6"
 required_reading:

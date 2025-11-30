@@ -1872,11 +1872,45 @@ function AskExpertPageContent() {
       });
     };
 
-    const handleOpenChatEvent = (event: Event) => {
+    const handleOpenChatEvent = async (event: Event) => {
       const detail = (event as CustomEvent<{ sessionId?: string; title?: string }>).detail;
       if (detail?.sessionId) {
         const exists = conversations.some((conv) => conv.id === detail.sessionId);
         if (!exists) {
+          // Fetch conversation data from database
+          try {
+            const response = await fetch(`/api/ask-expert?conversationId=${encodeURIComponent(detail.sessionId)}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.conversation) {
+                // Extract messages from context
+                const contextMessages = data.conversation.context?.messages || [];
+                const loadedMessages: Message[] = contextMessages.map((msg: { role: string; content: string }, idx: number) => ({
+                  id: `${detail.sessionId}-msg-${idx}`,
+                  role: msg.role === 'user' ? 'user' : 'assistant',
+                  content: msg.content,
+                  timestamp: Date.now(),
+                }));
+
+                // Add to local conversations state with loaded messages
+                const newConv: Conversation = {
+                  id: detail.sessionId,
+                  title: data.conversation.title || detail.title || 'Conversation',
+                  messages: loadedMessages,
+                  createdAt: new Date(data.conversation.created_at).getTime(),
+                  updatedAt: new Date(data.conversation.updated_at || data.conversation.created_at).getTime(),
+                  isPinned: false,
+                };
+                setConversations(prev => [newConv, ...prev.filter(c => c.id !== detail.sessionId)]);
+                setActiveConversationId(detail.sessionId);
+                setMessages(loadedMessages);
+                return;
+              }
+            }
+          } catch (error) {
+            console.error('Failed to load conversation:', error);
+          }
+          // Fallback: create new empty conversation
           handleNewConversation({ id: detail.sessionId, title: detail.title || 'Conversation' });
         } else {
           handleConversationSelect(detail.sessionId);

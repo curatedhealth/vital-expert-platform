@@ -30,10 +30,10 @@ fi
 
 echo "✅ Environment variables loaded"
 echo "✅ PYTHONPATH: $PYTHONPATH"
-echo "✅ PORT: ${PORT:-8080}"
+echo "✅ PORT: ${PORT:-8000}"
 echo ""
-echo "🚀 Starting uvicorn on port ${PORT:-8080}..."
+echo "🚀 Starting uvicorn on port ${PORT:-8000}..."
 echo ""
 
 # Start uvicorn
-python3 -m uvicorn src.api.main:app --reload --host 0.0.0.0 --port ${PORT:-8080}
+python3 -m uvicorn src.api.main:app --reload --host 0.0.0.0 --port ${PORT:-8000}

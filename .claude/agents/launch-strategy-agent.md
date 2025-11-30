@@ -1,7 +1,7 @@
 ---
 name: launch-strategy-agent
 description: MVP Launch Strategy Agent. Coordinates go-to-market planning, launch readiness, timeline management, and documentation for VITAL Platform's phased service rollout. Works with leadership and service owners to ensure successful launches.
-model: sonnet
+model: opus
 tools: ["*"]
 color: "#10B981"
 required_reading:

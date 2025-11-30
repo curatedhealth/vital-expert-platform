@@ -77,7 +77,7 @@ function AgentsPageContent() {
       avatar: agent.avatar || '🤖',
       color: agent.color || 'text-market-purple',
       capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
-      ragEnabled: agent.rag_enabled || false,
+      ragEnabled: agent.rag_enabled ?? true, // RAG enabled by default for all agents
       temperature: agent.temperature || 0.7,
       maxTokens: agent.max_tokens || 2000,
       isCustom: agent.is_custom || false,
@@ -147,7 +147,7 @@ function AgentsPageContent() {
           avatar: agent.avatar || '',
           color: agent.color || 'text-market-purple',
           capabilities: agent.capabilities || [],
-          rag_enabled: agent.ragEnabled || false,
+          rag_enabled: agent.ragEnabled ?? true, // RAG enabled by default for all agents
           temperature: agent.temperature || 0.7,
           max_tokens: agent.maxTokens || 2000,
           knowledge_domains: agent.knowledgeDomains || [],
@@ -499,7 +499,7 @@ function AgentsPageContent() {
               avatar: agent.avatar || '🤖',
               color: agent.color || 'text-market-purple',
               capabilities: agent.capabilities || [],
-              rag_enabled: agent.ragEnabled || false,
+              rag_enabled: agent.ragEnabled ?? true, // RAG enabled by default for all agents
               temperature: agent.temperature || 0.7,
               max_tokens: agent.maxTokens || 2000,
               knowledge_domains: agent.knowledgeDomains || [],

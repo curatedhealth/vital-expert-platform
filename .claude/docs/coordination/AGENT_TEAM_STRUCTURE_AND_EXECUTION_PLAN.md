@@ -1,9 +1,49 @@
 # 🤖 VITAL Platform - Multi-Agent Team Structure & Execution Plan
 
-**Version**: 1.0
+**Version**: 2.0
 **Created**: 2025-11-16
+**Updated**: 2025-11-29
 **Purpose**: Coordinate specialized agents to develop gold-standard documentation
 **Status**: 🚀 Active Development
+
+---
+
+## 🚨 CRITICAL: CANONICAL PROJECT DIRECTORY
+
+**ALL work MUST be performed in:**
+```
+/Users/hichamnaim/Downloads/Cursor/VITAL path/
+```
+
+**NEVER work in `/Users/hichamnaim/Downloads/Cursor/VITAL/`** - this is an archived directory containing outdated code.
+
+---
+
+## 🤖 AGENT MODEL ASSIGNMENTS (Updated 2025-11-29)
+
+### Leadership Tier Agents - Opus 4.5
+
+| Agent | Model | Role |
+|-------|-------|------|
+| `vital-platform-orchestrator` | **opus** | Platform Coordinator |
+| `strategy-vision-architect` | **opus** | Strategy Lead |
+| `prd-architect` | **opus** | Product Requirements Lead |
+| `system-architecture-architect` | **opus** | Architecture Lead |
+| `business-analytics-strategist` | **opus** | Business Strategy Lead |
+| `documentation-qa-lead` | **opus** | Documentation Lead |
+| `implementation-compliance-qa-agent` | **opus** | QA Gatekeeper |
+| `launch-strategy-agent` | **opus** | Launch Coordinator |
+
+### Specialist Tier Agents - Sonnet
+
+| Agent | Model | Role |
+|-------|-------|------|
+| `data-architecture-expert` | sonnet | Database Architecture |
+| `sql-supabase-specialist` | sonnet | SQL Operations |
+| `vital-data-strategist` | sonnet | Data Strategy |
+| `frontend-ui-architect` | sonnet | Frontend UI |
+| `python-ai-ml-engineer` | sonnet | AI/ML Backend |
+| `langgraph-workflow-translator` | sonnet | Workflow Translation |
 
 ---
 

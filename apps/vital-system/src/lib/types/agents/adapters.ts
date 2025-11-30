@@ -30,7 +30,7 @@ export function sharedAgentToAgent(agent: SharedAgent): Agent {
     avatar: agent.avatar || '🤖',
     color: agent.color || '#3B82F6',
     capabilities: agent.capabilities || [],
-    rag_enabled: agent.rag_enabled ?? false,
+    rag_enabled: agent.rag_enabled ?? true, // RAG enabled by default for all agents
     knowledge_domains: agent.knowledge_domains,
     user_id: agent.created_by,
     is_custom: agent.is_custom,
@@ -162,7 +162,7 @@ export function normalizeToAgent(input: any): Agent {
       avatar: agent.avatar || '🤖',
       color: agent.color || '#3B82F6',
       capabilities: agent.capabilities || [],
-      rag_enabled: agent.rag_enabled ?? false,
+      rag_enabled: agent.rag_enabled ?? true, // RAG enabled by default for all agents
       knowledge_domains: agent.knowledge_domains,
       status: 'active',
       tier: agent.tier || 1,

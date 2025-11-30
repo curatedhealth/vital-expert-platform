@@ -28,6 +28,7 @@ Quick navigation for all VITAL Platform documentation.
 - [Ask Panel Service](services/ask-panel/) - Multi-expert consultation
 - [Ask Committee Service](services/ask-committee/) - Deliberation & consensus
 - [BYOAI Orchestration](services/byoai-orchestration/) - Custom workflows
+- [GraphRAG v2.0 Knowledge Capabilities](services/VITAL_KNOWLEDGE_CAPABILITIES.md) - Multi-modal RAG system
 
 ### Architecture
 - [Database Schemas](architecture/data-schema/) - 383 files
@@ -136,6 +137,7 @@ Quick navigation for all VITAL Platform documentation.
 ---
 
 ## 🆕 Recently Added
+- **GraphRAG v2.0 Knowledge Capabilities** - Multi-modal RAG with 11 strategies
 - Workflow Designer Guide
 - Agent Coordination Guide
 - SQL/Supabase Specialist Guide

@@ -28,6 +28,7 @@
 | **JTBDs** | [docs/platform/jtbds/](docs/platform/jtbds/) | PRD Architect |
 | **Workflows** | [docs/platform/workflows/](docs/platform/workflows/) | LangGraph Workflow Translator |
 | **Services Documentation** | [docs/services/](docs/services/) | Service-specific agents |
+| **Knowledge Capabilities (GraphRAG)** | [docs/services/VITAL_KNOWLEDGE_CAPABILITIES.md](docs/services/VITAL_KNOWLEDGE_CAPABILITIES.md) | Python AI/ML Engineer |
 | **Technical Architecture** | [docs/architecture/](docs/architecture/) | System Architecture Architect |
 | **Operations & DevOps** | [docs/operations/](docs/operations/) | Operations teams |
 | **Testing & QA** | [docs/testing/](docs/testing/) | Documentation QA Lead |
@@ -449,6 +450,7 @@
 | **Ask Panel** | docs/services/ask-panel/ | ✅ 90% Complete | Ask Panel Service Agent |
 | **Ask Committee** | docs/services/ask-committee/ | ⏳ Planned Q3 2026 | PRD Architect |
 | **BYOAI Orchestration** | docs/services/byoai/ | ⏳ In Progress | BYOAI Orchestration Service Agent |
+| **GraphRAG v2.0** | docs/services/VITAL_KNOWLEDGE_CAPABILITIES.md | ✅ Complete | Python AI/ML Engineer |
 
 ---
 

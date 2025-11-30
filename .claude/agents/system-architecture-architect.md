@@ -1,7 +1,7 @@
 ---
 name: system-architecture-architect
 description: System Architecture Architect (ARD Master). Designs system architecture, creates Architecture Decision Records (ADRs), defines service-oriented architecture patterns, and owns the gold-standard ARD document.
-model: sonnet
+model: opus
 tools: ["*"]
 color: "#3B82F6"
 required_reading:

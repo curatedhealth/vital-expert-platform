@@ -1,8 +1,8 @@
 # VITAL Platform - Comprehensive Guide for AI Assistants
 
-**Version**: 2.1  
-**Last Updated**: 2025-11-22  
-**Purpose**: Master reference for all AI assistants working on VITAL Platform  
+**Version**: 2.2
+**Last Updated**: 2025-11-28
+**Purpose**: Master reference for all AI assistants working on VITAL Platform
 **Scope**: Rules, architecture, agents, workflows, and standards
 
 ---
@@ -155,15 +155,17 @@ Cost Reduction: 90-94%          ROI: 5-10x (Year 1-3)
 
 #### Databases
 - **Primary**: PostgreSQL 15 (Supabase)
-- **Vector Search**: Pinecone
-- **Graph Database**: Neo4j (planned)
+- **Vector Search**: Pinecone (3072-dim embeddings)
+- **Graph Database**: Neo4j Aura (Active)
+- **Keyword Search**: Elasticsearch (BM25)
 - **Caching**: Redis 7.x
 
 #### AI/ML
 - **LLM Providers**: Anthropic (Claude 3.5 Sonnet), OpenAI (GPT-4)
 - **Orchestration**: LangGraph state machines
-- **RAG**: Hybrid search (PostgreSQL + Pinecone)
-- **Embeddings**: text-embedding-ada-002
+- **RAG**: GraphRAG v2.0 - Multi-modal hybrid search (Vector + Keyword + Graph)
+- **Embeddings**: text-embedding-3-large (3072 dimensions)
+- **Reranking**: Cohere rerank-v3
 
 #### Infrastructure
 - **Hosting**: Vercel (Frontend), Railway (Backend)
@@ -277,11 +279,15 @@ Cost Reduction: 90-94%          ROI: 5-10x (Year 1-3)
 
 **Key Features**:
 - 136+ specialized agents (Tier 1, 2, 3)
-- GraphRAG hybrid search (PostgreSQL + Pinecone)
+- GraphRAG v2.0 multi-modal search (Vector + Keyword + Graph)
+- 11 configurable RAG strategies (Regulatory, Clinical, Startup, etc.)
+- 8 agent-specific RAG profiles with tailored KG views
+- 5 chunking strategies (Standard, Granular, Contextual, Semantic, Hybrid)
+- A/B testing evaluation harness with Precision@K, MRR, NDCG metrics
 - Real-time streaming responses
 - Multi-turn conversations
-- Confidence scoring
-- Source citations
+- Source authority boosting
+- Cohere neural reranking
 
 **Documentation**: `.claude/vital-expert-docs/04-services/ask-expert/`
 
@@ -983,8 +989,8 @@ PORT=3001 npm run dev
 
 ### 2026 Q1-Q2
 - ✅ Ask Expert (all 4 modes) - Complete
+- ✅ GraphRAG v2.0 - Complete (11 strategies, 8 agent profiles, A/B testing)
 - 🚧 Ask Panel - In Development
-- 🚧 Enhanced GraphRAG
 - 🚧 Performance optimization
 
 ### 2026 Q3-Q4

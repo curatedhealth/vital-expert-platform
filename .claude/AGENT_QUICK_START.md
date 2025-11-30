@@ -1,9 +1,28 @@
 # Agent Quick Start Guide
 
-**Version**: 1.0.0
-**Date**: November 23, 2025
+**Version**: 2.0.0
+**Date**: November 29, 2025
 **Status**: Active
 **Purpose**: Essential checklist for all agents before starting any task
+
+---
+
+## 🚨 CRITICAL: CANONICAL PROJECT DIRECTORY (READ FIRST!)
+
+**THE ONLY VALID PROJECT DIRECTORY IS:**
+```
+/Users/hichamnaim/Downloads/Cursor/VITAL path/
+```
+
+### NEVER Work In These Directories:
+- ❌ `/Users/hichamnaim/Downloads/Cursor/VITAL/` (ARCHIVED - DO NOT USE)
+- ❌ Any other `VITAL` directory without the space in the name
+
+### Before ANY Operation:
+1. **Verify your working directory** is `VITAL path` (with space)
+2. **Never create files** in `/Users/hichamnaim/Downloads/Cursor/VITAL/`
+3. **Never edit files** in `/Users/hichamnaim/Downloads/Cursor/VITAL/`
+4. If asked to work on VITAL, **always use `VITAL path`**
 
 ---
 

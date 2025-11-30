@@ -419,6 +419,100 @@ class UnifiedAgentLoader:
 
 
 # =======================
+# CITATION PREFERENCES
+# =======================
+
+class CitationPreferences(BaseModel):
+    """
+    Agent citation preferences extracted from metadata.
+
+    Used to pass citation formatting preferences from agent settings
+    to workflow state and tools.
+    """
+    citation_style: str = Field(
+        default="apa",
+        description="Citation style: apa, ama, chicago, harvard, vancouver, icmje, mla"
+    )
+    include_citations: bool = Field(
+        default=True,
+        description="Whether to include citations in responses"
+    )
+
+    @classmethod
+    def from_metadata(cls, metadata: Dict[str, Any]) -> "CitationPreferences":
+        """
+        Extract citation preferences from agent metadata JSONB.
+
+        Args:
+            metadata: Agent metadata dictionary
+
+        Returns:
+            CitationPreferences with values from metadata or defaults
+        """
+        return cls(
+            citation_style=metadata.get("citation_style", "apa"),
+            include_citations=metadata.get("include_citations", True)
+        )
+
+
+async def get_agent_citation_preferences(
+    supabase: SupabaseClient,
+    agent_id: str
+) -> CitationPreferences:
+    """
+    Fetch citation preferences for an agent from database.
+
+    This is a lightweight query that only fetches the metadata field,
+    avoiding the overhead of loading the full agent profile.
+
+    Args:
+        supabase: Supabase client
+        agent_id: Agent UUID
+
+    Returns:
+        CitationPreferences with agent's settings or defaults
+
+    Example:
+        >>> prefs = await get_agent_citation_preferences(supabase, agent_id)
+        >>> initial_state = create_initial_state(
+        ...     citation_style=prefs.citation_style,
+        ...     include_citations=prefs.include_citations,
+        ...     ...
+        ... )
+    """
+    try:
+        response = supabase.table("agents") \
+            .select("metadata") \
+            .eq("id", agent_id) \
+            .single() \
+            .execute()
+
+        if response.data:
+            metadata = response.data.get("metadata") or {}
+            prefs = CitationPreferences.from_metadata(metadata)
+            logger.info(
+                "agent_citation_prefs_loaded",
+                agent_id=agent_id,
+                citation_style=prefs.citation_style,
+                include_citations=prefs.include_citations
+            )
+            return prefs
+
+        # Agent not found, return defaults
+        logger.warning("agent_citation_prefs_not_found", agent_id=agent_id)
+        return CitationPreferences()
+
+    except Exception as e:
+        logger.error(
+            "agent_citation_prefs_error",
+            agent_id=agent_id,
+            error=str(e)
+        )
+        # Return defaults on error
+        return CitationPreferences()
+
+
+# =======================
 # EXAMPLE USAGE
 # =======================
 

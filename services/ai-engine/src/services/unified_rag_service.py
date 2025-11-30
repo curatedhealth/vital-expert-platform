@@ -30,6 +30,13 @@ try:
 except ImportError:
     NEO4J_AVAILABLE = False
     Neo4jClient = None
+try:
+    from services.evidence_scoring_service import get_evidence_scoring_service, EvidenceScoringService
+    EVIDENCE_SCORING_AVAILABLE = True
+except ImportError:
+    EVIDENCE_SCORING_AVAILABLE = False
+    get_evidence_scoring_service = None
+    EvidenceScoringService = None
 from core.config import get_settings
 
 logger = structlog.get_logger()
@@ -45,7 +52,8 @@ class UnifiedRAGService:
         self.embedding_service = None  # Unified embedding service interface
         self.pinecone: Optional[Pinecone] = None
         self.pinecone_index = None
-        self.knowledge_namespace = "domains-knowledge"  # Default namespace
+        self.knowledge_namespace = "KD-general"  # Default namespace (updated to KD-* convention)
+        self.default_kd_namespaces = ["KD-general", "KD-best-practices"]  # Fallback namespaces
         self.neo4j_client: Optional[Neo4jClient] = None  # Neo4j client for graph search
         
         # Cache statistics
@@ -263,6 +271,37 @@ class UnifiedRAGService:
 
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
 
+            # Apply evidence scoring if available (Phase 5)
+            evidence_analytics = None
+            if EVIDENCE_SCORING_AVAILABLE and result.get("sources"):
+                try:
+                    evidence_service = get_evidence_scoring_service()
+                    # Convert sources to chunk format for scoring
+                    chunks = [
+                        {
+                            "id": s.get("id", str(i)),
+                            "text": s.get("content", s.get("text", "")),
+                            "metadata": s.get("metadata", {})
+                        }
+                        for i, s in enumerate(result.get("sources", []))
+                    ]
+                    scored, evidence_analytics = evidence_service.score_evidence_batch(
+                        chunks=chunks,
+                        query=query_text,
+                        min_confidence=0.0  # Include all for now, filter in response
+                    )
+                    # Enrich sources with evidence scores
+                    for i, source in enumerate(result.get("sources", [])):
+                        if i < len(scored):
+                            source["evidence_score"] = scored[i].to_dict()
+                    logger.debug(
+                        "evidence_scoring_applied",
+                        sources_scored=len(scored),
+                        avg_confidence=evidence_analytics.get("avg_confidence", 0)
+                    )
+                except Exception as e:
+                    logger.warning("evidence_scoring_failed", error=str(e))
+
             # Add metadata
             final_result = {
                 **result,
@@ -272,6 +311,7 @@ class UnifiedRAGService:
                     "responseTime": processing_time,
                     "cached": False,
                     "cacheHit": False,
+                    "evidence_analytics": evidence_analytics,
                 }
             }
 
@@ -499,8 +539,75 @@ class UnifiedRAGService:
         similarity_threshold: float,
         agent_id: Optional[str],
     ) -> Dict[str, Any]:
-        """Agent-optimized search with relevance boosting"""
+        """
+        Agent-optimized search using configured Knowledge Domain namespaces.
+
+        If agent has knowledge_namespaces configured in metadata, search only those.
+        Otherwise, fall back to hybrid search with domain preferences.
+        """
         try:
+            # Get agent's configured KD namespaces
+            agent_namespaces = await self._get_agent_knowledge_namespaces(agent_id) if agent_id else None
+
+            # If agent has KD namespaces configured, use multi-namespace search
+            if agent_namespaces and len(agent_namespaces) > 0:
+                logger.info(
+                    "agent_optimized_using_kd_namespaces",
+                    agent_id=agent_id,
+                    namespaces=agent_namespaces
+                )
+
+                # Generate query embedding
+                query_embedding = await self._generate_embedding(query_text)
+
+                # Build Pinecone filter
+                pinecone_filter = self._build_pinecone_filter(domain_ids, filters)
+
+                # Search across agent's configured namespaces
+                sources = await self._multi_namespace_vector_search(
+                    query_embedding=query_embedding,
+                    namespaces=agent_namespaces,
+                    top_k=max_results * 2,  # Get more for re-ranking
+                    filter_dict=pinecone_filter,
+                    min_score=similarity_threshold * 0.8  # Lower threshold for initial search
+                )
+
+                # Apply agent-specific boosting
+                source_dicts = [self._document_to_dict(doc) for doc in sources]
+                boosted_sources = await self._boost_for_agent(
+                    source_dicts, agent_id, query_text
+                )
+
+                # Sort by boosted score
+                boosted_sources.sort(
+                    key=lambda x: x.get("metadata", {}).get("boosted_score", 0),
+                    reverse=True
+                )
+
+                context = self._generate_context([
+                    Document(page_content=s["page_content"], metadata=s["metadata"])
+                    for s in boosted_sources[:max_results]
+                ])
+
+                return {
+                    "sources": boosted_sources[:max_results],
+                    "context": context,
+                    "metadata": {
+                        "strategy": "agent-optimized",
+                        "totalSources": len(boosted_sources[:max_results]),
+                        "agent_id": agent_id,
+                        "kd_namespaces_used": agent_namespaces,
+                        "namespaces_count": len(agent_namespaces),
+                    },
+                }
+
+            # Fallback: No KD namespaces configured, use domain-based search
+            logger.info(
+                "agent_optimized_fallback_to_hybrid",
+                agent_id=agent_id,
+                reason="no_kd_namespaces_configured"
+            )
+
             # Get agent domain preferences from Supabase
             agent_domains = await self._get_agent_domains(agent_id) if agent_id else None
             if agent_domains:
@@ -535,6 +642,8 @@ class UnifiedRAGService:
                     "strategy": "agent-optimized",
                     "totalSources": len(boosted_sources[:max_results]),
                     "agent_id": agent_id,
+                    "kd_namespaces_used": None,
+                    "fallback": "hybrid_search",
                 },
             }
 
@@ -759,6 +868,123 @@ class UnifiedRAGService:
         except Exception as e:
             logger.warning("⚠️ Failed to get agent domains", error=str(e))
             return None
+
+    async def _get_agent_knowledge_namespaces(self, agent_id: str) -> Optional[List[str]]:
+        """
+        Get configured Knowledge Domain namespaces for an agent.
+
+        These namespaces are stored in agent.metadata.knowledge_namespaces
+        and correspond to Pinecone KD-* namespaces.
+
+        Args:
+            agent_id: Agent UUID
+
+        Returns:
+            List of KD-* namespace strings or None if not configured
+        """
+        try:
+            agent = await self.supabase.get_agent_by_id(agent_id)
+            if agent:
+                metadata = agent.get("metadata") or {}
+                namespaces = metadata.get("knowledge_namespaces", [])
+                if namespaces and isinstance(namespaces, list) and len(namespaces) > 0:
+                    logger.info(
+                        "agent_knowledge_namespaces_found",
+                        agent_id=agent_id,
+                        namespaces=namespaces
+                    )
+                    return namespaces
+            return None
+        except Exception as e:
+            logger.warning("⚠️ Failed to get agent knowledge namespaces", error=str(e))
+            return None
+
+    async def _multi_namespace_vector_search(
+        self,
+        query_embedding: List[float],
+        namespaces: List[str],
+        top_k: int = 10,
+        filter_dict: Optional[Dict] = None,
+        min_score: float = 0.0
+    ) -> List[Document]:
+        """
+        Search across multiple Pinecone namespaces and merge results.
+
+        Pinecone doesn't support querying multiple namespaces in a single call,
+        so we query each namespace and merge results by score.
+
+        Args:
+            query_embedding: Query vector
+            namespaces: List of KD-* namespaces to search
+            top_k: Results per namespace (will be merged and re-ranked)
+            filter_dict: Optional metadata filters
+            min_score: Minimum similarity score threshold
+
+        Returns:
+            Merged and sorted list of Documents from all namespaces
+        """
+        if not self.pinecone_index or not namespaces:
+            return []
+
+        all_results = []
+
+        # Query each namespace
+        for namespace in namespaces:
+            try:
+                search_response = self.pinecone_index.query(
+                    namespace=namespace,
+                    vector=query_embedding,
+                    top_k=top_k,
+                    include_metadata=True,
+                    filter=filter_dict if filter_dict else None,
+                )
+
+                for match in search_response.matches or []:
+                    if match.score >= min_score:
+                        all_results.append({
+                            "score": match.score,
+                            "namespace": namespace,
+                            "doc": Document(
+                                page_content=match.metadata.get("content", match.metadata.get("text", "")) if isinstance(match.metadata, dict) else "",
+                                metadata={
+                                    "id": match.metadata.get("chunk_id") if isinstance(match.metadata, dict) else None,
+                                    "document_id": match.metadata.get("document_id", match.metadata.get("doc_id")) if isinstance(match.metadata, dict) else None,
+                                    "title": match.metadata.get("source_title", match.metadata.get("title")) if isinstance(match.metadata, dict) else None,
+                                    "domain": match.metadata.get("domain") if isinstance(match.metadata, dict) else None,
+                                    "similarity": match.score,
+                                    "namespace": namespace,
+                                    **(match.metadata if isinstance(match.metadata, dict) else {}),
+                                },
+                            )
+                        })
+
+            except Exception as e:
+                logger.warning(
+                    "namespace_search_failed",
+                    namespace=namespace,
+                    error=str(e)
+                )
+                continue
+
+        # Sort by score and deduplicate by document_id
+        all_results.sort(key=lambda x: x["score"], reverse=True)
+
+        seen_ids = set()
+        unique_results = []
+        for result in all_results:
+            doc_id = result["doc"].metadata.get("document_id")
+            if doc_id not in seen_ids:
+                seen_ids.add(doc_id)
+                unique_results.append(result["doc"])
+
+        logger.info(
+            "multi_namespace_search_complete",
+            namespaces_searched=len(namespaces),
+            total_results=len(all_results),
+            unique_results=len(unique_results)
+        )
+
+        return unique_results[:top_k]
 
     async def _boost_for_agent(
         self,

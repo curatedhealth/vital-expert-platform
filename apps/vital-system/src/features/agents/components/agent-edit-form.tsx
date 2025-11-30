@@ -126,7 +126,7 @@ export const AgentEditForm: React.FC<AgentEditFormProps> = ({
     knowledge_domains: [],
     system_prompt: '',
     cost_per_query: 0,
-    rag_enabled: false,
+    rag_enabled: true, // RAG enabled by default for all agents
   });
 
   // Sync form state with agent prop
@@ -152,7 +152,7 @@ export const AgentEditForm: React.FC<AgentEditFormProps> = ({
         knowledge_domains: Array.isArray(agent.knowledge_domains) ? agent.knowledge_domains : [],
         system_prompt: agent.system_prompt || '',
         cost_per_query: agent.cost_per_query || 0,
-        rag_enabled: agent.rag_enabled || false,
+        rag_enabled: agent.rag_enabled ?? true, // RAG enabled by default for all agents
       });
     }
   }, [agent]);

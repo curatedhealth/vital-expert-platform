@@ -2,9 +2,20 @@
 
 **Gold Standard Navigation - Structured Index**
 
-**Version**: 2.0.0
-**Last Updated**: 2025-11-25
+**Version**: 3.0.0
+**Last Updated**: 2025-11-29
 **Purpose**: Hierarchical navigation of all documentation
+
+---
+
+## 🚨 CRITICAL: CANONICAL PROJECT DIRECTORY
+
+**ALL work MUST be performed in:**
+```
+/Users/hichamnaim/Downloads/Cursor/VITAL path/
+```
+
+**NEVER work in `/Users/hichamnaim/Downloads/Cursor/VITAL/`** - this is an archived directory.
 
 ---
 
@@ -43,28 +54,41 @@
 
 ---
 
-## 01-TEAM - Agents, Rules, Coordination
+## 01-TEAM - Claude Code Development Agents
 
-### Agents
-**14 Development Agents**:
-1. Strategy & Vision Architect (Master Orchestrator)
-2. PRD Architect
-3. System Architecture Architect
-4. Data Architecture Expert
-5. Frontend UI Architect
-6. Python AI/ML Engineer
-7. TypeScript/React Specialist
-8. SQL/Supabase Specialist
-9. Business & Analytics Strategist
-10. Documentation & QA Lead
-11. Product Launch Strategist
-12. Knowledge & Learning Architect
-13. Healthcare Domain Expert
-14. Implementation Compliance & QA Agent ⭐ (Librarian)
+### Agent Model Tiers (Updated 2025-11-29)
+
+**Leadership Tier (Opus 4.5)** - 8 agents for strategic decisions:
+| Agent | Role |
+|-------|------|
+| `vital-platform-orchestrator` | Platform Coordinator |
+| `strategy-vision-architect` | Strategy Lead |
+| `prd-architect` | Product Requirements Lead |
+| `system-architecture-architect` | Architecture Lead |
+| `business-analytics-strategist` | Business Strategy Lead |
+| `documentation-qa-lead` | Documentation Lead |
+| `implementation-compliance-qa-agent` | QA Gatekeeper (Librarian) |
+| `launch-strategy-agent` | Launch Coordinator |
+
+**Specialist Tier (Sonnet)** - 30 agents for tactical execution:
+- `data-architecture-expert` - Database Architecture
+- `sql-supabase-specialist` - SQL Operations
+- `vital-data-strategist` - Data Strategy
+- `frontend-ui-architect` - Frontend UI
+- `python-ai-ml-engineer` - AI/ML Backend
+- `langgraph-workflow-translator` - Workflow Translation
+- `ux-ui-architect` - UX/UI Design
+- `visual-design-brand-strategist` - Brand & Design
+- `ask-expert-service-agent` - Ask Expert Service
+- `ask-panel-service-agent` - Ask Panel Service
+- `byoai-orchestration-service-agent` - BYOAI Service
+- And 19 more specialized agents...
+
+**Total: 38 Claude Code Development Agents**
 
 **Key Files**:
-- Agent specifications (one file per agent)
-- Agent index.md templates
+- Agent specifications: `.claude/agents/*.md`
+- Coordination guide: `docs/coordination/AGENT_COORDINATION_GUIDE.md`
 
 ### Coordination
 - Agent Coordination Guide

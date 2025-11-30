@@ -422,3 +422,6 @@ LEFT JOIN user_memory um ON um.user_id = ua.user_id;
 **Version:** 3.0 (Normalized & Complete)
 
 
+
+
+

@@ -1,10 +1,42 @@
 # AI Agent Implementation Guide
 ## VITAL Platform - Agent Coordination & Documentation
 
-**Last Updated**: November 21, 2024  
-**Version**: 2.0  
-**Status**: Production Ready  
+**Last Updated**: November 29, 2025
+**Version**: 3.0
+**Status**: Production Ready
 **Audience**: AI Agents & Developers
+
+---
+
+## 🚨 CRITICAL: CANONICAL PROJECT DIRECTORY
+
+**ALL work MUST be performed in:**
+```
+/Users/hichamnaim/Downloads/Cursor/VITAL path/
+```
+
+**NEVER work in `/Users/hichamnaim/Downloads/Cursor/VITAL/`** - this is an archived directory containing outdated code.
+
+---
+
+## 🤖 AGENT MODEL ASSIGNMENTS (Updated 2025-11-29)
+
+### Leadership Tier - Opus 4.5 Model
+These agents handle strategic decisions and complex reasoning:
+
+| Agent | File | Model |
+|-------|------|-------|
+| vital-platform-orchestrator | `.claude/agents/vital-platform-orchestrator.md` | **opus** |
+| strategy-vision-architect | `.claude/agents/strategy-vision-architect.md` | **opus** |
+| prd-architect | `.claude/agents/prd-architect.md` | **opus** |
+| system-architecture-architect | `.claude/agents/system-architecture-architect.md` | **opus** |
+| business-analytics-strategist | `.claude/agents/business-analytics-strategist.md` | **opus** |
+| documentation-qa-lead | `.claude/agents/documentation-qa-lead.md` | **opus** |
+| implementation-compliance-qa-agent | `.claude/agents/implementation-compliance-qa-agent.md` | **opus** |
+| launch-strategy-agent | `.claude/agents/launch-strategy-agent.md` | **opus** |
+
+### Specialist Tier - Sonnet Model
+All other agents use Sonnet for cost-effective execution.
 
 ---
 

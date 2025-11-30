@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
           avatar_url: agentData.avatar || '🤖',
           color: agentData.color || '#3B82F6',
           capabilities: agentData.capabilities || [],
-          rag_enabled: agentData.rag_enabled ?? false,
+          rag_enabled: agentData.rag_enabled ?? true, // RAG enabled by default for all agents
           temperature: agentData.temperature ?? 0.7,
           max_tokens: agentData.max_tokens ?? 2000,
           is_custom: agentData.is_custom ?? true,

@@ -42,25 +42,26 @@ class VectorDBClient:
         provider: Literal["pinecone", "pgvector"] = "pinecone",
         api_key: Optional[str] = None,
         environment: Optional[str] = None,
-        index_name: str = "vital-medical"
+        index_name: Optional[str] = None
     ):
         """
         Initialize vector database client
-        
+
         Args:
             provider: Vector DB provider ("pinecone" or "pgvector")
             api_key: API key for cloud provider
             environment: Environment for cloud provider
-            index_name: Index/table name
+            index_name: Index/table name (defaults to PINECONE_INDEX_NAME from settings)
         """
         self.provider = provider
-        self.index_name = index_name
         self._client = None
         self._index = None
-        
+
         # Load credentials from settings
         self.api_key = api_key or getattr(settings, 'pinecone_api_key', None)
         self.environment = environment or getattr(settings, 'pinecone_environment', None)
+        # Use index name from settings if not provided
+        self.index_name = index_name or getattr(settings, 'pinecone_index_name', 'vital-knowledge')
         
         logger.info(
             "vector_db_client_initialized",
@@ -78,35 +79,41 @@ class VectorDBClient:
             raise ValueError(f"Unsupported provider: {self.provider}")
     
     async def _connect_pinecone(self):
-        """Connect to Pinecone"""
+        """Connect to Pinecone (SDK 8.x compatible)"""
         try:
-            import pinecone
-            
-            pinecone.init(
-                api_key=self.api_key,
-                environment=self.environment
-            )
-            
-            # Get or create index
-            if self.index_name not in pinecone.list_indexes():
+            from pinecone import Pinecone
+
+            # Initialize Pinecone client (SDK 8.x pattern)
+            self._client = Pinecone(api_key=self.api_key)
+
+            # Get list of existing indexes
+            existing_indexes = [idx.name for idx in self._client.list_indexes()]
+
+            if self.index_name not in existing_indexes:
                 logger.warning(
                     "pinecone_index_not_found",
-                    index_name=self.index_name
+                    index_name=self.index_name,
+                    available_indexes=existing_indexes
                 )
                 # Note: In production, indexes should be pre-created
                 raise ValueError(f"Pinecone index '{self.index_name}' not found")
-            
-            self._index = pinecone.Index(self.index_name)
-            
+
+            # Get the index
+            self._index = self._client.Index(self.index_name)
+
+            # Get index stats
+            stats = self._index.describe_index_stats()
+
             logger.info(
                 "pinecone_connected",
                 index_name=self.index_name,
-                dimension=self._index.describe_index_stats().get('dimension')
+                dimension=stats.get('dimension'),
+                total_vector_count=stats.get('total_vector_count', 0)
             )
-            
+
         except ImportError:
             logger.error("pinecone_library_not_installed")
-            raise ImportError("Install pinecone-client: pip install pinecone-client")
+            raise ImportError("Install pinecone: pip install pinecone")
         except Exception as e:
             logger.error("pinecone_connection_failed", error=str(e))
             raise

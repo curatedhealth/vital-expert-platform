@@ -18,6 +18,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  Database,
+  X,
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
@@ -80,6 +82,14 @@ interface Agent {
   tenant_id?: string;
 }
 
+interface KDNamespace {
+  namespace: string;
+  name: string;
+  description: string;
+  category: string;
+  icon?: string;
+}
+
 interface AgentStats {
   total: number;
   active: number;
@@ -103,7 +113,10 @@ export function AgentManagement() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  
+
+  // KD Namespaces state
+  const [kdNamespaces, setKdNamespaces] = useState<KDNamespace[]>([]);
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -116,13 +129,27 @@ export function AgentManagement() {
     is_active: true,
     capabilities: [] as string[],
     expertise: [] as string[],
+    knowledge_namespaces: [] as string[],
   });
 
   const supabase = createClient();
 
   useEffect(() => {
     loadAgents();
+    loadKdNamespaces();
   }, []);
+
+  const loadKdNamespaces = async () => {
+    try {
+      const response = await fetch('/api/kd-namespaces');
+      if (response.ok) {
+        const data = await response.json();
+        setKdNamespaces(data.namespaces || []);
+      }
+    } catch (error) {
+      console.error('Error loading KD namespaces:', error);
+    }
+  };
 
   useEffect(() => {
     filterAgents();
@@ -192,15 +219,19 @@ export function AgentManagement() {
 
   const handleCreateAgent = async () => {
     try {
+      // Extract knowledge_namespaces from formData for metadata
+      const { knowledge_namespaces, ...agentData } = formData;
+
       const { data, error } = await supabase
         .from('agents')
         .insert([
           {
-            ...formData,
+            ...agentData,
             tenant_id: STARTUP_TENANT_ID,
             slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
             metadata: {
               status: 'draft',
+              knowledge_namespaces: knowledge_namespaces,
             },
           },
         ])
@@ -222,9 +253,21 @@ export function AgentManagement() {
     if (!selectedAgent) return;
 
     try {
+      // Extract knowledge_namespaces from formData for metadata
+      const { knowledge_namespaces, ...agentData } = formData;
+
+      // Merge with existing metadata, updating knowledge_namespaces
+      const updatedMetadata = {
+        ...selectedAgent.metadata,
+        knowledge_namespaces: knowledge_namespaces,
+      };
+
       const { error } = await supabase
         .from('agents')
-        .update(formData)
+        .update({
+          ...agentData,
+          metadata: updatedMetadata,
+        })
         .eq('id', selectedAgent.id);
 
       if (error) throw error;
@@ -322,6 +365,7 @@ export function AgentManagement() {
       is_active: agent.is_active ?? true,
       capabilities: agent.capabilities || [],
       expertise: agent.expertise || [],
+      knowledge_namespaces: agent.metadata?.knowledge_namespaces || [],
     });
     setShowEditDialog(true);
   };
@@ -343,7 +387,37 @@ export function AgentManagement() {
       is_active: true,
       capabilities: [],
       expertise: [],
+      knowledge_namespaces: [],
     });
+  };
+
+  // Helper to toggle namespace selection
+  const toggleNamespace = (namespace: string) => {
+    setFormData(prev => ({
+      ...prev,
+      knowledge_namespaces: prev.knowledge_namespaces.includes(namespace)
+        ? prev.knowledge_namespaces.filter(ns => ns !== namespace)
+        : [...prev.knowledge_namespaces, namespace]
+    }));
+  };
+
+  // Group namespaces by category for display
+  const groupedNamespaces = kdNamespaces.reduce((acc, ns) => {
+    if (!acc[ns.category]) {
+      acc[ns.category] = [];
+    }
+    acc[ns.category].push(ns);
+    return acc;
+  }, {} as Record<string, KDNamespace[]>);
+
+  const categoryLabels: Record<string, string> = {
+    regulatory: 'Regulatory',
+    digital_health: 'Digital Health',
+    clinical: 'Clinical',
+    medical_affairs: 'Medical Affairs',
+    heor: 'HEOR',
+    safety: 'Safety',
+    general: 'General',
   };
 
   const getStatusBadge = (agent: Agent) => {
@@ -643,6 +717,60 @@ export function AgentManagement() {
               />
               <label className="text-sm font-medium">Active</label>
             </div>
+
+            {/* Knowledge Domain Selection */}
+            <div>
+              <label className="text-sm font-medium flex items-center gap-2 mb-2">
+                <Database className="h-4 w-4" />
+                Knowledge Domains
+              </label>
+              <p className="text-xs text-muted-foreground mb-3">
+                Select which knowledge domains this agent can access for RAG retrieval
+              </p>
+
+              {/* Selected namespaces display */}
+              {formData.knowledge_namespaces.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {formData.knowledge_namespaces.map((ns) => {
+                    const nsInfo = kdNamespaces.find(k => k.namespace === ns);
+                    return (
+                      <Badge
+                        key={ns}
+                        variant="secondary"
+                        className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => toggleNamespace(ns)}
+                      >
+                        {nsInfo?.icon} {nsInfo?.name || ns}
+                        <X className="h-3 w-3 ml-1" />
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Namespace selection by category */}
+              <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-3">
+                {Object.entries(groupedNamespaces).map(([category, namespaces]) => (
+                  <div key={category}>
+                    <div className="text-xs font-semibold text-muted-foreground mb-1">
+                      {categoryLabels[category] || category}
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {namespaces.map((ns) => (
+                        <Badge
+                          key={ns.namespace}
+                          variant={formData.knowledge_namespaces.includes(ns.namespace) ? "default" : "outline"}
+                          className="cursor-pointer text-xs"
+                          onClick={() => toggleNamespace(ns.namespace)}
+                        >
+                          {ns.icon} {ns.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowCreateDialog(false); resetForm(); }}>
@@ -741,6 +869,60 @@ export function AgentManagement() {
                 onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
               />
               <label className="text-sm font-medium">Active</label>
+            </div>
+
+            {/* Knowledge Domain Selection */}
+            <div>
+              <label className="text-sm font-medium flex items-center gap-2 mb-2">
+                <Database className="h-4 w-4" />
+                Knowledge Domains
+              </label>
+              <p className="text-xs text-muted-foreground mb-3">
+                Select which knowledge domains this agent can access for RAG retrieval
+              </p>
+
+              {/* Selected namespaces display */}
+              {formData.knowledge_namespaces.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {formData.knowledge_namespaces.map((ns) => {
+                    const nsInfo = kdNamespaces.find(k => k.namespace === ns);
+                    return (
+                      <Badge
+                        key={ns}
+                        variant="secondary"
+                        className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => toggleNamespace(ns)}
+                      >
+                        {nsInfo?.icon} {nsInfo?.name || ns}
+                        <X className="h-3 w-3 ml-1" />
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Namespace selection by category */}
+              <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-3">
+                {Object.entries(groupedNamespaces).map(([category, namespaces]) => (
+                  <div key={category}>
+                    <div className="text-xs font-semibold text-muted-foreground mb-1">
+                      {categoryLabels[category] || category}
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {namespaces.map((ns) => (
+                        <Badge
+                          key={ns.namespace}
+                          variant={formData.knowledge_namespaces.includes(ns.namespace) ? "default" : "outline"}
+                          className="cursor-pointer text-xs"
+                          onClick={() => toggleNamespace(ns.namespace)}
+                        >
+                          {ns.icon} {ns.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>

@@ -7,8 +7,15 @@ const rateLimit = require('express-rate-limit');
 const axios = require('axios');
 const redis = require('redis');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const { tenantMiddleware } = require('./middleware/tenant');
-require('dotenv').config();
+const { userContextMiddleware } = require('./middleware/user-context');
+
+// Load environment variables from root .env file
+// Navigate from services/api-gateway/src/ up to project root
+const rootDir = path.resolve(__dirname, '..', '..', '..');
+require('dotenv').config({ path: path.join(rootDir, '.env') });
+require('dotenv').config({ path: path.join(rootDir, '.env.local'), override: true });
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -50,7 +57,7 @@ app.use(cors({
     : ['http://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id', 'x-user-id'],
 }));
 
 // Compression
@@ -65,6 +72,10 @@ app.use(cookieParser());
 
 // Tenant context middleware (MUST be after body parsing, before routes)
 app.use(tenantMiddleware);
+
+// User context middleware (MUST be after tenant middleware for RLS)
+// Sets user context for database RLS policies
+app.use(userContextMiddleware);
 
 // Logging
 if (NODE_ENV === 'production') {

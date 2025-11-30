@@ -1,9 +1,28 @@
 # 🤖 VITAL Platform - Multi-Agent Team Structure & Execution Plan
 
-**Version**: 1.0
+**Version**: 2.0
 **Created**: 2025-11-16
+**Updated**: 2025-11-29
 **Purpose**: Coordinate specialized agents to develop gold-standard documentation
 **Status**: 🚀 Active Development
+
+> **NOTE**: The primary version of this guide is at `.claude/docs/coordination/AGENT_TEAM_STRUCTURE_AND_EXECUTION_PLAN.md`
+
+---
+
+## 🚨 CRITICAL: CANONICAL PROJECT DIRECTORY
+
+**ALL work MUST be performed in:**
+```
+/Users/hichamnaim/Downloads/Cursor/VITAL path/
+```
+
+**NEVER work in `/Users/hichamnaim/Downloads/Cursor/VITAL/`** - this is an archived directory.
+
+---
+
+## 🤖 Leadership Agents (Opus 4.5)
+vital-platform-orchestrator, strategy-vision-architect, prd-architect, system-architecture-architect, business-analytics-strategist, documentation-qa-lead, implementation-compliance-qa-agent, launch-strategy-agent
 
 ---
 

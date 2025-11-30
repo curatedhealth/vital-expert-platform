@@ -357,7 +357,7 @@ const _useChatStore = create<ChatStore>()(
                 role: msg.role,
                 content: msg.content
               })),
-              ragEnabled: selectedAgent?.ragEnabled || false,
+              ragEnabled: selectedAgent?.ragEnabled ?? true, // RAG enabled by default for all agents
               automaticRouting: useAutomaticRouting, // Enable intelligent agent routing for automatic mode
               useIntelligentRouting: useAutomaticRouting
             })

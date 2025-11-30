@@ -1,7 +1,18 @@
 # VITAL Platform - Directory Structure
 
-**Last Updated**: November 23, 2025
-**Version**: 4.0 - Clean Documentation Structure
+**Last Updated**: November 29, 2025
+**Version**: 5.0 - Updated Agent Structure
+
+---
+
+## 🚨 CRITICAL: CANONICAL PROJECT DIRECTORY
+
+**ALL work MUST be performed in:**
+```
+/Users/hichamnaim/Downloads/Cursor/VITAL path/
+```
+
+**NEVER work in `/Users/hichamnaim/Downloads/Cursor/VITAL/`** - this is an archived directory.
 
 ---
 
@@ -12,32 +23,40 @@ VITAL-platform/
 │
 ├── .claude/                     ← 🎛️ Claude Code Command Center (SINGLE SOURCE OF TRUTH)
 │   ├── README.md                ← Command Center overview
-│   ├── INDEX.md                 ← Master navigation (deprecated - use docs/INDEX.md)
+│   ├── INDEX.md                 ← Master navigation
 │   ├── STRUCTURE.md             ← This file
 │   ├── CATALOGUE.md             ← Complete catalog
-│   ├── MASTER_DOCUMENTATION_INDEX.md (deprecated)
-│   ├── CONSOLIDATION_COMPLETE.md ← Migration history
+│   ├── AGENT_QUICK_START.md     ← Quick start for agents
 │   │
 │   ├── CLAUDE.md                ← Claude operational rules
 │   ├── VITAL.md                 ← VITAL Platform standards
 │   ├── EVIDENCE_BASED_RULES.md  ← Evidence-based operation policy
 │   ├── settings.local.json      ← Claude Code settings
 │   │
-│   ├── agents/                  ← 🤖 14 Production Agents
+│   ├── agents/                  ← 🤖 38 Claude Code Development Agents
+│   │   │
+│   │   │ # LEADERSHIP TIER (Opus 4.5) - 8 agents
+│   │   ├── vital-platform-orchestrator.md    ← Platform Coordinator
+│   │   ├── strategy-vision-architect.md      ← Strategy Lead
+│   │   ├── prd-architect.md                  ← Product Requirements Lead
+│   │   ├── system-architecture-architect.md  ← Architecture Lead
+│   │   ├── business-analytics-strategist.md  ← Business Strategy Lead
+│   │   ├── documentation-qa-lead.md          ← Documentation Lead
+│   │   ├── implementation-compliance-qa-agent.md ← QA Gatekeeper
+│   │   ├── launch-strategy-agent.md          ← Launch Coordinator
+│   │   │
+│   │   │ # SPECIALIST TIER (Sonnet) - 30 agents
+│   │   ├── data-architecture-expert.md
+│   │   ├── sql-supabase-specialist.md
+│   │   ├── vital-data-strategist.md
+│   │   ├── frontend-ui-architect.md
+│   │   ├── python-ai-ml-engineer.md
+│   │   ├── langgraph-workflow-translator.md
+│   │   ├── ux-ui-architect.md
 │   │   ├── ask-expert-service-agent.md
 │   │   ├── ask-panel-service-agent.md
-│   │   ├── business-analytics-strategist.md
 │   │   ├── byoai-orchestration-service-agent.md
-│   │   ├── data-architecture-expert.md
-│   │   ├── documentation-qa-lead.md
-│   │   ├── frontend-ui-architect.md
-│   │   ├── implementation-compliance-qa-agent.md
-│   │   ├── langgraph-workflow-translator.md
-│   │   ├── prd-architect.md
-│   │   ├── python-ai-ml-engineer.md
-│   │   ├── sql-supabase-specialist.md
-│   │   ├── strategy-vision-architect.md
-│   │   └── system-architecture-architect.md
+│   │   └── ... (19 more specialist agents)
 │   │
 │   └── docs/                    ← 📚 DOCUMENTATION (SINGLE SOURCE OF TRUTH)
 │       ├── README.md            ← Documentation overview (START HERE)

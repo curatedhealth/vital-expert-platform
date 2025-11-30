@@ -818,11 +818,11 @@ export class Mode3AutonomousAutomaticHandler {
 /**
  * Execute Mode 3: Autonomous-Automatic
  */
-// Use API Gateway URL for compliance with Golden Rule (Python services via gateway)
+// Port Architecture: Next.js (3000) -> API Gateway (4000) -> AI Engine (8000)
 const API_GATEWAY_URL =
   process.env.API_GATEWAY_URL ||
   process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
-  'http://localhost:3001'; // Default to API Gateway (proper flow)
+  'http://localhost:4000'; // Default to API Gateway port
 
 const DEFAULT_TENANT_ID =
   process.env.API_GATEWAY_TENANT_ID ||

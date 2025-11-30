@@ -5,11 +5,15 @@ Medical AI Agent Orchestration with LangChain
 
 import os
 import sys
+from pathlib import Path
 from typing import Any
 from dotenv import load_dotenv
 
-# Load environment variables FIRST before any other imports
-load_dotenv()
+# Load environment variables from root .env file FIRST before any other imports
+# Navigate from services/ai-engine/src/ up to project root
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
+load_dotenv(ROOT_DIR / ".env")
+load_dotenv(ROOT_DIR / ".env.local", override=True)  # .env.local overrides .env
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Request
@@ -98,6 +102,7 @@ from services.agent_selector_service import (
 )
 from services.cache_manager import CacheManager, initialize_cache_manager, get_cache_manager
 from services.tool_registry_service import ToolRegistryService, initialize_tool_registry, get_tool_registry
+from services.unified_agent_loader import get_agent_citation_preferences
 from langgraph_workflows import (
     initialize_checkpoint_manager,
     initialize_observability,
@@ -898,6 +903,19 @@ except Exception as e:
     import traceback
     logger.error(traceback.format_exc())
 
+# Include HITL routes (Human-in-the-Loop approval endpoints)
+try:
+    from api.routes.hitl import router as hitl_router
+    app.include_router(hitl_router, prefix="/api", tags=["hitl"])
+    logger.info("✅ HITL routes registered (approvals, websocket)")
+except ImportError as e:
+    logger.warning(f"⚠️  Could not import HITL router: {e}")
+    logger.warning("   Continuing without HITL endpoints")
+except Exception as e:
+    logger.error(f"❌ Unexpected error loading HITL router: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
+
 # Dependency to get services
 async def get_agent_orchestrator() -> AgentOrchestrator:
     if not agent_orchestrator:
@@ -1089,6 +1107,10 @@ async def execute_mode1_manual(
         
         # Create initial state for the workflow
         request_id = str(uuid.uuid4())
+
+        # Fetch agent citation preferences from metadata
+        citation_prefs = await get_agent_citation_preferences(supabase_client, request.agent_id)
+
         initial_state = create_initial_state(
             tenant_id=tenant_id,
             mode=WorkflowMode.MODE_1_MANUAL,
@@ -1103,7 +1125,9 @@ async def execute_mode1_manual(
             temperature=request.temperature,
             max_tokens=request.max_tokens,
             user_id=request.user_id,
-            session_id=request.session_id
+            session_id=request.session_id,
+            citation_style=citation_prefs.citation_style,
+            include_citations=citation_prefs.include_citations
         )
         
         # Execute workflow with LangGraph using compiled graph
@@ -1206,6 +1230,9 @@ async def execute_mode2_automatic(
         
         # Create initial state for the workflow
         request_id = str(uuid.uuid4())
+
+        # Mode 2 uses auto-selection, so defaults are used initially
+        # Agent-specific citation preferences will be applied after agent selection
         initial_state = create_initial_state(
             tenant_id=tenant_id,
             mode=WorkflowMode.MODE_2_AUTOMATIC,
@@ -1215,7 +1242,9 @@ async def execute_mode2_automatic(
             enable_tools=request.enable_tools,
             model=request.model or "gpt-4",
             user_id=request.user_id,
-            session_id=request.session_id
+            session_id=request.session_id,
+            citation_style="apa",  # Default for auto-selection mode
+            include_citations=True
         )
         
         # Execute workflow with LangGraph using compiled graph
@@ -1331,6 +1360,10 @@ async def execute_mode3_autonomous_automatic(
         
         # Create initial state for the workflow
         request_id = str(uuid.uuid4())
+
+        # Fetch agent citation preferences from metadata
+        citation_prefs = await get_agent_citation_preferences(supabase_client, request.agent_id)
+
         initial_state = create_initial_state(
             tenant_id=tenant_id,
             mode=WorkflowMode.MODE_3_AUTONOMOUS,
@@ -1341,7 +1374,9 @@ async def execute_mode3_autonomous_automatic(
             enable_tools=request.enable_tools,
             model=request.model or "gpt-4",
             user_id=request.user_id,
-            session_id=request.session_id
+            session_id=request.session_id,
+            citation_style=citation_prefs.citation_style,
+            include_citations=citation_prefs.include_citations
         )
         
         # Execute workflow with LangGraph using compiled graph
@@ -1466,6 +1501,9 @@ async def execute_mode4_autonomous_manual(
         
         # Create initial state for the workflow
         request_id = str(uuid.uuid4())
+
+        # Mode 4 uses auto-selection, so defaults are used initially
+        # Agent-specific citation preferences will be applied after agent selection
         initial_state = create_initial_state(
             tenant_id=tenant_id,
             mode=WorkflowMode.MODE_4_STREAMING,
@@ -1475,7 +1513,9 @@ async def execute_mode4_autonomous_manual(
             enable_tools=request.enable_tools,
             model=request.model or "gpt-4",
             user_id=request.user_id,
-            session_id=request.session_id
+            session_id=request.session_id,
+            citation_style="apa",  # Default for auto-selection mode
+            include_citations=True
         )
         
         # Execute workflow with LangGraph using compiled graph

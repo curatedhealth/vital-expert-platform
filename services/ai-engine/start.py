@@ -5,10 +5,22 @@ Reads PORT from environment variable and starts FastAPI server
 """
 import os
 import sys
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables, preferring the monorepo root .env and then
+# overriding with any service-specific values from services/ai-engine/.env.
+script_dir = os.path.dirname(os.path.abspath(__file__))
+root_env_path = Path(script_dir).parent.parent / ".env"
+service_env_path = Path(script_dir) / ".env"
+
+# 1) Load root .env if it exists (shared secrets like OPENAI_API_KEY, SUPABASE_URL, etc.)
+if root_env_path.exists():
+    load_dotenv(dotenv_path=root_env_path, override=False)
+
+# 2) Load service-local .env if it exists (can override root for this service only)
+if service_env_path.exists():
+    load_dotenv(dotenv_path=service_env_path, override=True)
 
 # Fix SSL certificate paths for Python 3.9 (override any shell environment)
 # This fixes the Supabase initialization FileNotFoundError

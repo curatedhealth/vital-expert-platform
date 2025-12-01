@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import { agentService, type Agent as DbAgent } from '@/features/agents/services/agent-service';
+import { agentApi } from '@/features/agents/services/agent-api';
+import type { Agent as ApiAgent } from '@/features/agents/types/agent.types';
 
 export interface Agent {
   id: string;
@@ -227,9 +229,12 @@ const convertDbAgentToStoreFormat = (dbAgent: DbAgent | any): Agent => {
     created_at: dbAgent.created_at || new Date().toISOString(),
     updated_at: dbAgent.updated_at || new Date().toISOString(),
     recentFeedback: [],
-    // Preserve metadata for any additional fields
-    metadata: dbAgent.metadata || metadata,
-  };
+    // Preserve metadata for any additional fields including slug
+    metadata: {
+      ...(dbAgent.metadata || metadata),
+      slug: (dbAgent as any).slug || metadata.slug || null, // Preserve slug for agent matching
+    },
+  } as any; // Cast to any to allow slug property
 
   console.log(`🔄 Converted agent "${converted.display_name}" (${converted.name}): tier=${converted.tier}, status=${converted.status}, avatar=${converted.avatar}`);
   return converted;
@@ -279,25 +284,80 @@ export const useAgentsStore = create<AgentsStore>()(
       lastUpdated: null,
 
       // Load agents from database
+      // Always loads all agents (active, testing, development) for the current tenant
       // Set showAll=true to load all agents across all tenants (admin only)
-      // Set showAll=false to load only current tenant's agents (default)
       loadAgents: async (showAll: boolean = false) => {
         console.log(`📦 AgentsStore: loadAgents(showAll=${showAll}) called`);
         set({ isLoading: true, error: null });
 
         try {
-          const dbAgents = await agentService.getActiveAgents(showAll);
-          console.log(`📦 AgentsStore: Received ${dbAgents?.length || 0} agents from service`);
+          // Use agentApi (same as panel view) - includes agent_levels join and proper RLS
+          // Always load all agents including dev/testing (status: 'all')
+          const apiAgents = await agentApi.getAgents({ 
+            status: 'all', // Load all statuses: active, testing, development, etc.
+            includeLevels: true 
+          });
+          console.log(`📦 AgentsStore: Received ${apiAgents?.length || 0} agents from agentApi`);
 
-          // Handle empty array gracefully - it's a valid state
-          const agents = (dbAgents || []).map(convertDbAgentToStoreFormat);
+          // Convert API Agent format to store Agent format using existing converter
+          // The converter expects DbAgent format, so we adapt ApiAgent to match
+          const agents = (apiAgents || []).map((apiAgent: ApiAgent) => {
+            // Adapt ApiAgent to DbAgent-like format for the converter
+            const adaptedAgent = {
+              id: apiAgent.id || '',
+              name: apiAgent.name,
+              slug: (apiAgent as any).slug || null, // Include slug for matching
+              display_name: apiAgent.display_name || apiAgent.name,
+              description: apiAgent.description || '',
+              system_prompt: apiAgent.system_prompt || '',
+              model: apiAgent.base_model || apiAgent.model || 'gpt-4o-mini',
+              avatar: apiAgent.avatar_url || '',
+              color: apiAgent.color || '',
+              capabilities: apiAgent.capabilities || [],
+              rag_enabled: apiAgent.rag_enabled || false,
+              temperature: apiAgent.temperature || 0.7,
+              max_tokens: apiAgent.max_tokens || 2000,
+              is_custom: false,
+              status: (apiAgent.status as 'development' | 'testing' | 'active' | 'deprecated') || 'active',
+              tier: apiAgent.agent_levels?.level_number || 2,
+              priority: 1,
+              implementation_phase: 1,
+              knowledge_domains: apiAgent.knowledge_domains || [],
+              business_function: null,
+              department: null,
+              role: null,
+              organizational_role: null,
+              business_function_id: apiAgent.function_id || null,
+              department_id: apiAgent.department_id || null,
+              role_id: apiAgent.role_id || null,
+              function_id: apiAgent.function_id || null,
+              metadata: {
+                display_name: apiAgent.display_name || apiAgent.name,
+                model: apiAgent.base_model || apiAgent.model,
+                avatar: apiAgent.avatar_url,
+                color: apiAgent.color,
+                temperature: apiAgent.temperature,
+                max_tokens: apiAgent.max_tokens,
+                rag_enabled: apiAgent.rag_enabled,
+                tier: apiAgent.agent_levels?.level_number || 2,
+                status: apiAgent.status,
+                knowledge_domains: apiAgent.knowledge_domains,
+                domain_expertise: apiAgent.domain_expertise,
+                slug: (apiAgent as any).slug || null, // Preserve slug in metadata
+              },
+            } as any;
+            
+            // Use the existing converter
+            return convertDbAgentToStoreFormat(adaptedAgent);
+          });
+
           console.log(`📦 AgentsStore: Converted to ${agents.length} store-format agents`);
 
           set({
             agents,
             isLoading: false,
             lastUpdated: new Date(),
-            error: null, // Empty agents is valid, not an error
+            error: null,
           });
 
           console.log(`📦 AgentsStore: State updated with ${agents.length} agents`);
@@ -306,12 +366,11 @@ export const useAgentsStore = create<AgentsStore>()(
           agentEventEmitter.emit(agents);
 
         } catch (error) {
-          // This catch should rarely trigger now since getActiveAgents returns [] instead of throwing
-          console.warn('⚠️ AgentsStore: Exception caught (should be rare):', error instanceof Error ? error.message : String(error));
+          console.warn('⚠️ AgentsStore: Exception caught:', error instanceof Error ? error.message : String(error));
           set({
-            agents: [], // Empty array is valid
+            agents: [],
             isLoading: false,
-            error: null, // Don't show error - empty agents is a valid state
+            error: null,
             lastUpdated: new Date(),
           });
         }

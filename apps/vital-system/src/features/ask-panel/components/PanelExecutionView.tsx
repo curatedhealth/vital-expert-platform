@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowLeft,
   Play,
@@ -26,6 +26,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
+import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui';
+import { agentApi } from '@/features/agents/services/agent-api';
+import type { Agent as ApiAgent } from '@/features/agents/types/agent.types';
+import type { Agent as StoreAgent } from '@/lib/stores/agents-store';
+import { useAgentsStore } from '@/lib/stores/agents-store';
 import {
   __Popover as Popover,
   __PopoverContent as PopoverContent,
@@ -38,16 +43,6 @@ import { StreamingPanelConsultation } from '@/components/ask-panel/StreamingPane
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
-interface Agent {
-  id: string;
-  name: string;
-  description: string;
-  category?: string;
-  specialty?: string;
-  expertise?: string[];
-  status?: string;
-}
-
 interface PanelExecutionViewProps {
   panel: SavedPanel;
   onBack: () => void;
@@ -59,95 +54,221 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
   const [results, setResults] = useState<any[]>([]);
   const [progress, setProgress] = useState(0);
   const [currentAgent, setCurrentAgent] = useState<string | null>(null);
-  const [agents, setAgents] = useState<Agent[]>([]);
+  const [agents, setAgents] = useState<StoreAgent[]>([]);
+  const [allAvailableAgents, setAllAvailableAgents] = useState<StoreAgent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingAllAgents, setLoadingAllAgents] = useState(false);
   const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
   const [useStreaming, setUseStreaming] = useState(true); // Enable streaming by default
   const [showStreamingView, setShowStreamingView] = useState(false);
+  const [showAllAgents, setShowAllAgents] = useState(false);
+
+  // Use agents from store (same as agent view)
+  const { agents: storeAgents, loadAgents: loadStoreAgents } = useAgentsStore();
 
   const IconComponent = panel.IconComponent || Users;
-  const supabase = createClient();
 
-  // Fetch real agents from database
+  // Load agents from store (same as agent view) - ensures we use the same data source
   useEffect(() => {
-    const fetchAgents = async () => {
+    const loadAgents = async () => {
       try {
-        setLoading(true);
-        
-        // Always ensure we have all agents from panel.suggestedAgents (should be 10)
-        const allAgentNames = panel.suggestedAgents || [];
-        console.log(`[PanelExecutionView] Loading ${allAgentNames.length} agents for panel:`, panel.name);
-        
-        // Try to fetch agents by name from database
-        let fetchedAgents: Agent[] = [];
-        try {
-          const { data, error } = await supabase
-            .from('agents')
-            .select('*')
-            .eq('tenant_id', STARTUP_TENANT_ID)
-            .in('name', allAgentNames);
-
-          if (!error && data) {
-            fetchedAgents = data.map((agent: any) => ({
-              id: agent.id || `agent-${agent.name}`,
-              name: agent.name,
-              description: agent.description || agent.display_name || `Expert agent: ${agent.name}`,
-              category: agent.category || panel.category,
-              specialty: agent.specialty || agent.medical_specialty,
-              expertise: agent.expertise || agent.capabilities || [],
-              status: agent.status || 'active',
-            }));
-            console.log(`[PanelExecutionView] Found ${fetchedAgents.length} agents in database`);
-          }
-        } catch (dbError) {
-          console.warn('[PanelExecutionView] Database query failed, using fallback agents:', dbError);
+        setLoadingAllAgents(true);
+        // Load agents into store if not already loaded
+        if (storeAgents.length === 0) {
+          await loadStoreAgents(false);
+          // After loading, storeAgents will be updated by the store, triggering this effect again
+          return;
         }
-
-        // Create a map of fetched agents by name for quick lookup
-        const fetchedAgentMap = new Map(fetchedAgents.map(a => [a.name, a]));
-        
-        // Build complete list: use fetched agents where available, create fallback for missing ones
-        const completeAgents: Agent[] = allAgentNames.map((name, index) => {
-          const fetched = fetchedAgentMap.get(name);
-          if (fetched) {
-            return fetched;
-          }
-          // Create fallback agent for any missing from database
-          return {
-            id: `fallback-${name}-${index}`,
-            name,
-            description: `Expert agent: ${name.replace(/-/g, ' ')}`,
-            category: panel.category,
-            status: 'active',
-          };
-        });
-
-        console.log(`[PanelExecutionView] Total agents prepared: ${completeAgents.length}`);
-        setAgents(completeAgents);
-        // Select all agents by default
-        setSelectedAgentIds(new Set(completeAgents.map(a => a.id)));
+        // Use agents from store (already in correct format for EnhancedAgentCard)
+        // Always sync with storeAgents whenever it changes
+        setAllAvailableAgents([...storeAgents]); // Create new array reference to ensure React detects the change
+        console.log(`[PanelExecutionView] Loaded ${storeAgents.length} agents from store`);
       } catch (error) {
-        console.error('[PanelExecutionView] Error loading agents:', error);
-        // Last resort fallback: create all agents from panel.suggestedAgents
-        const mockAgents = (panel.suggestedAgents || []).map((name, index) => ({
-          id: `agent-${name}-${index}`,
-          name,
-          description: `Expert agent: ${name.replace(/-/g, ' ')}`,
-          category: panel.category,
-          status: 'active',
-        }));
-        setAgents(mockAgents);
-        setSelectedAgentIds(new Set(mockAgents.map(a => a.id)));
+        console.error('[PanelExecutionView] Error loading agents from store:', error);
+        setAllAvailableAgents([]);
       } finally {
-        setLoading(false);
+        setLoadingAllAgents(false);
       }
     };
 
-    fetchAgents();
-  }, [panel.suggestedAgents, panel.name, panel.category, supabase]);
+    loadAgents();
+  }, [storeAgents.length, loadStoreAgents]); // Keep length dependency but ensure we sync whenever it changes
+
+  // Helper function to normalize strings for matching (remove special chars, lowercase)
+  const normalizeForMatch = useCallback((str: string): string => {
+    return (str || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '') // Remove all non-alphanumeric
+      .trim();
+  }, []);
+
+  // Helper function to convert display name to slug format (e.g., "FDA Regulatory Strategist" -> "fdaregulatorystrategist")
+  const displayNameToSlug = useCallback((displayName: string): string => {
+    return (displayName || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '') // Remove all non-alphanumeric
+      .trim();
+  }, []);
+
+  // Filter panel's suggested agents from store agents
+  useEffect(() => {
+    try {
+      setLoading(true);
+      
+      // Always ensure we have all agents from panel.suggestedAgents (should be 10)
+      const allAgentNames = panel.suggestedAgents || [];
+      console.log(`[PanelExecutionView] Filtering ${allAgentNames.length} suggested agents for panel:`, panel.name);
+      console.log(`[PanelExecutionView] Suggested agent slugs:`, allAgentNames);
+      console.log(`[PanelExecutionView] Total store agents available:`, storeAgents.length);
+
+      // Filter store agents to only panel-suggested agents by name, display_name, or slug
+      // Panel suggestedAgents can be slugs (e.g., "fda-regulatory-strategist") or names
+      const fetchedAgents = storeAgents.filter(agent => {
+        const agentName = (agent.name || '').trim();
+        const agentDisplayName = (agent.display_name || '').trim();
+        const agentSlug = ((agent as any).slug || '').trim();
+        
+        // Normalize all agent identifiers
+        const normalizedName = normalizeForMatch(agentName);
+        const normalizedDisplayName = normalizeForMatch(agentDisplayName);
+        const normalizedSlug = normalizeForMatch(agentSlug);
+        
+        return allAgentNames.some(suggestedName => {
+          const normalizedSuggested = normalizeForMatch(suggestedName);
+          
+          // Exact matches (case-insensitive)
+          if (
+            suggestedName.toLowerCase() === agentName.toLowerCase() ||
+            suggestedName.toLowerCase() === agentDisplayName.toLowerCase() ||
+            suggestedName.toLowerCase() === agentSlug.toLowerCase()
+          ) {
+            return true;
+          }
+          
+          // Normalized matches (handles hyphens, spaces, underscores)
+          if (
+            normalizedSuggested === normalizedName ||
+            normalizedSuggested === normalizedDisplayName ||
+            normalizedSuggested === normalizedSlug
+          ) {
+            return true;
+          }
+          
+          // Partial matches (e.g., "biostatistician-digital-health" matches "Biostatistician Digital Health")
+          // Check if all words in suggested name appear in agent name/display_name
+          const suggestedWords = normalizedSuggested.match(/[a-z]+/g) || [];
+          if (suggestedWords.length > 0) {
+            const agentText = `${normalizedName} ${normalizedDisplayName}`;
+            if (suggestedWords.every(word => word.length > 2 && agentText.includes(word))) {
+              return true;
+            }
+          }
+          
+          // Also try matching by converting display name to slug format
+          // e.g., "FDA Regulatory Strategist" -> "fdaregulatorystrategist" matches "fda-regulatory-strategist"
+          const agentDisplaySlug = displayNameToSlug(agentDisplayName);
+          if (normalizedSuggested === agentDisplaySlug) {
+            return true;
+          }
+          
+          return false;
+        });
+      });
+
+      // Filter out any invalid IDs
+      const realAgents = fetchedAgents.filter(agent => 
+        agent.id && !agent.id.startsWith('fallback-') && !agent.id.startsWith('agent-')
+      );
+
+      if (realAgents.length === 0) {
+        console.warn(
+          `[PanelExecutionView] No real agents found in database for panel "${panel.name}". ` +
+          `Expected agents: ${allAgentNames.join(', ')}. ` +
+          `Please ensure these agents exist in the 'agents' table.`
+        );
+      } else {
+        // Calculate missing agents using the same matching logic as the filter
+        const missingAgents = allAgentNames.filter(suggestedName => {
+          return !realAgents.some(agent => {
+            const agentName = (agent.name || '').trim();
+            const agentDisplayName = (agent.display_name || '').trim();
+            const agentSlug = ((agent as any).slug || '').trim();
+            
+            const normalizedSuggested = normalizeForMatch(suggestedName);
+            const normalizedName = normalizeForMatch(agentName);
+            const normalizedDisplayName = normalizeForMatch(agentDisplayName);
+            const normalizedSlug = normalizeForMatch(agentSlug);
+            
+            // Exact matches (case-insensitive)
+            if (
+              suggestedName.toLowerCase() === agentName.toLowerCase() ||
+              suggestedName.toLowerCase() === agentDisplayName.toLowerCase() ||
+              suggestedName.toLowerCase() === agentSlug.toLowerCase()
+            ) {
+              return true;
+            }
+            
+            // Normalized matches (handles hyphens, spaces, underscores)
+            if (
+              normalizedSuggested === normalizedName ||
+              normalizedSuggested === normalizedDisplayName ||
+              normalizedSuggested === normalizedSlug
+            ) {
+              return true;
+            }
+            
+            // Partial matches (e.g., "biostatistician-digital-health" matches "Biostatistician Digital Health")
+            const suggestedWords = normalizedSuggested.match(/[a-z]+/g) || [];
+            if (suggestedWords.length > 0) {
+              const agentText = `${normalizedName} ${normalizedDisplayName}`;
+              if (suggestedWords.every(word => word.length > 2 && agentText.includes(word))) {
+                return true;
+              }
+            }
+            
+            // Also try matching by converting display name to slug format
+            const agentDisplaySlug = displayNameToSlug(agentDisplayName);
+            if (normalizedSuggested === agentDisplaySlug) {
+              return true;
+            }
+            
+            return false;
+          });
+        });
+        
+        console.log(
+          `[PanelExecutionView] Found ${realAgents.length} real agents out of ${allAgentNames.length} expected. ` +
+          (missingAgents.length > 0 ? `Missing: ${missingAgents.join(', ')}` : 'All expected agents found!')
+        );
+      }
+
+      setAgents(realAgents);
+      // Select all real agents by default
+      setSelectedAgentIds(new Set(realAgents.map(a => a.id)));
+      
+      // Log matched agents for debugging
+      if (realAgents.length > 0) {
+        console.log(`[PanelExecutionView] Matched agents:`, realAgents.map(a => ({
+          id: a.id,
+          name: a.name,
+          display_name: a.display_name,
+          slug: (a as any).slug
+        })));
+      }
+    } catch (error) {
+      console.error('[PanelExecutionView] Error filtering agents:', error);
+      setAgents([]);
+      setSelectedAgentIds(new Set());
+    } finally {
+      setLoading(false);
+    }
+  }, [panel.suggestedAgents, panel.name, panel.category, storeAgents, normalizeForMatch, displayNameToSlug]);
 
   const handleRun = async () => {
-    const activeAgents = agents.filter((a) => selectedAgentIds.has(a.id));
+    // Get all selected agents from the full list, not just panel's suggested ones
+    // Fallback to storeAgents if allAvailableAgents is empty (handles race condition)
+    const agentsSource = allAvailableAgents.length > 0 ? allAvailableAgents : storeAgents;
+    const activeAgents = agentsSource.filter((a) => selectedAgentIds.has(a.id));
     if (!question.trim() || activeAgents.length === 0) return;
 
     // If streaming is enabled, show streaming view instead
@@ -255,7 +376,88 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
 
   // Show streaming view if user clicked run with streaming enabled
   if (showStreamingView) {
-    const activeAgents = agents.filter((a) => selectedAgentIds.has(a.id));
+    // Filter out any fallback IDs before sending to backend (safety check)
+    // Use allAvailableAgents, not just panel-suggested agents
+    // Fallback to storeAgents if allAvailableAgents is empty (handles race condition)
+    const agentsSource = allAvailableAgents.length > 0 ? allAvailableAgents : storeAgents;
+    const activeAgents = agentsSource.filter((a) => {
+      const isSelected = selectedAgentIds.has(a.id);
+      const isRealAgent = a.id && !a.id.startsWith('fallback-') && !a.id.startsWith('agent-');
+      return isSelected && isRealAgent;
+    });
+
+    // Validate we have at least one real agent
+    if (activeAgents.length === 0) {
+      return (
+        <div className="h-full flex flex-col bg-background">
+          <div className="border-b px-6 py-4">
+            <div className="container mx-auto">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setShowStreamingView(false);
+                    setResults([]);
+                  }}
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <IconComponent className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold">{panel.name}</h1>
+                    <p className="text-sm text-muted-foreground">Configuration Error</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 overflow-auto">
+            <div className="container mx-auto p-6">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6">
+                <h2 className="text-lg font-semibold text-destructive mb-2">No Valid Agents Selected</h2>
+                <p className="text-muted-foreground mb-4">
+                  No valid agents were selected. Please select at least 2 agents from the available agents list.
+                </p>
+                {selectedAgentIds.size > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium mb-2">Selected agent IDs:</p>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground text-sm">
+                      {Array.from(selectedAgentIds).map((id) => (
+                        <li key={id}>{id}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {allAvailableAgents.length === 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm text-muted-foreground mb-2">
+                      No agents found in database. Please create agents first.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Expected panel agents: {(panel.suggestedAgents || []).join(', ')}
+                    </p>
+                  </div>
+                )}
+                <Button
+                  className="mt-4"
+                  onClick={() => {
+                    setShowStreamingView(false);
+                    setResults([]);
+                  }}
+                >
+                  Go Back
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="h-full flex flex-col bg-background">
         {/* Header with back button */}
@@ -350,7 +552,7 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
                 Panel Configuration
               </CardTitle>
               <CardDescription>
-                Select which agents to activate ({Array.from(selectedAgentIds).length}/{agents.length} selected). This panel includes {agents.length} available expert agents working in {panel.mode} mode.
+                Select which agents to activate ({Array.from(selectedAgentIds).length} selected). {allAvailableAgents.length > 0 ? `${allAvailableAgents.length} total agents available` : `${agents.length} panel-suggested agents`} working in {panel.mode} mode.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -395,76 +597,241 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
                         className="text-xs flex items-center gap-1"
                       >
                         <Bot className="w-3 h-3" />
-                        Choose experts ({Array.from(selectedAgentIds).length}/{agents.length})
+                        Choose experts ({Array.from(selectedAgentIds).length}/{allAvailableAgents.length || agents.length})
                         <ChevronDown className="w-3 h-3" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-64 p-3 space-y-2">
+                    <PopoverContent className="w-80 p-3 space-y-2">
                       <p className="text-xs text-muted-foreground mb-1">
-                        Select which experts should participate in this run.
+                        Select which experts should participate in this run. Showing {allAvailableAgents.length} available agents.
                       </p>
-                      <div className="max-h-60 overflow-y-auto space-y-1">
-                        {agents.map((agent) => {
-                          const checked = selectedAgentIds.has(agent.id);
-                          return (
-                            <label
-                              key={agent.id}
-                              className="flex items-start gap-2 rounded-md px-2 py-1.5 hover:bg-muted cursor-pointer"
-                            >
-                              <Checkbox
-                                checked={checked}
-                                onCheckedChange={(value) => {
-                                  setSelectedAgentIds((prev) => {
-                                    const next = new Set(prev);
-                                    if (value) {
-                                      next.add(agent.id);
-                                    } else {
-                                      next.delete(agent.id);
-                                    }
-                                    return next;
-                                  });
-                                }}
-                                className="mt-0.5 h-3.5 w-3.5"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium truncate">
-                                  {agent.name}
-                                </div>
-                                {agent.specialty && (
-                                  <div className="text-[11px] text-muted-foreground truncate">
-                                    {agent.specialty}
+                      {loadingAllAgents ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                          <span className="ml-2 text-xs text-muted-foreground">Loading...</span>
+                        </div>
+                      ) : (
+                        <div className="max-h-60 overflow-y-auto space-y-1">
+                          {allAvailableAgents.map((agent) => {
+                            const checked = selectedAgentIds.has(agent.id);
+                            const agentSlug = (agent as any).slug || '';
+                            // Helper to normalize for matching
+                            const normalizeForMatch = (str: string): string => {
+                              return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+                            };
+                            
+                            const isPanelSuggested = panel.suggestedAgents?.some(suggestedName => {
+                              const normalizedSuggested = normalizeForMatch(suggestedName);
+                              const normalizedName = normalizeForMatch(agent.name || '');
+                              const normalizedDisplayName = normalizeForMatch(agent.display_name || '');
+                              const normalizedSlug = normalizeForMatch(agentSlug);
+                              
+                              return (
+                                normalizedSuggested === normalizedName ||
+                                normalizedSuggested === normalizedDisplayName ||
+                                normalizedSuggested === normalizedSlug ||
+                                suggestedName.toLowerCase() === agent.name?.toLowerCase() ||
+                                suggestedName.toLowerCase() === agent.display_name?.toLowerCase() ||
+                                suggestedName.toLowerCase() === agentSlug.toLowerCase()
+                              );
+                            });
+                            return (
+                              <label
+                                key={agent.id}
+                                className="flex items-start gap-2 rounded-md px-2 py-1.5 hover:bg-muted cursor-pointer"
+                              >
+                                <Checkbox
+                                  checked={checked}
+                                  onCheckedChange={(value) => {
+                                    setSelectedAgentIds((prev) => {
+                                      const next = new Set(prev);
+                                      if (value) {
+                                        next.add(agent.id);
+                                      } else {
+                                        next.delete(agent.id);
+                                      }
+                                      return next;
+                                    });
+                                  }}
+                                  className="mt-0.5 h-3.5 w-3.5"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="text-xs font-medium truncate">
+                                      {agent.name}
+                                    </div>
+                                    {isPanelSuggested && (
+                                      <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                        Panel
+                                      </Badge>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
+                                  {agent.specialty && (
+                                    <div className="text-[11px] text-muted-foreground truncate">
+                                      {agent.specialty}
+                                    </div>
+                                  )}
+                                </div>
+                              </label>
+                            );
+                          })}
+                          {allAvailableAgents.length === 0 && (
+                            <p className="text-xs text-muted-foreground text-center py-4">
+                              No agents available. Please create agents in the database first.
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </PopoverContent>
                   </Popover>
                 </div>
 
                 {/* Selected agents summary cards */}
-                <div className="grid grid-cols-2 gap-3">
-                  {agents
+                <AgentCardGrid columns={4} className="gap-3">
+                  {allAvailableAgents
                     .filter((agent) => selectedAgentIds.has(agent.id))
                     .map((agent) => (
-                      <div
+                      <EnhancedAgentCard
                         key={agent.id}
-                        className="flex items-center gap-2 p-3 rounded-lg border bg-card hover:border-purple-300 transition-colors"
-                      >
-                        <Bot className="w-4 h-4 text-purple-500 flex-shrink-0" />
-                        <span className="text-sm font-medium truncate">{agent.name}</span>
-                      </div>
+                        agent={agent}
+                        isSelected={true}
+                        onClick={() => {
+                          setSelectedAgentIds((prev) => {
+                            const next = new Set(prev);
+                            next.delete(agent.id);
+                            return next;
+                          });
+                        }}
+                        showLevel={true}
+                        showLevelName={true}
+                        size="sm"
+                      />
                     ))}
-                  {Array.from(selectedAgentIds).length === 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      No experts selected. Use “Choose experts” to pick who should participate.
-                    </p>
-                  )}
-                </div>
+                </AgentCardGrid>
+                {Array.from(selectedAgentIds).length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    No experts selected. Use "Choose experts" or "Show All Agents" to pick who should participate.
+                  </p>
+                )}
               </div>
             </CardContent>
+          </Card>
+
+          {/* All Available Agents Section */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bot className="w-5 h-5" />
+                    All Available Real Agents
+                  </CardTitle>
+                  <CardDescription>
+                    Browse and select from all {allAvailableAgents.length} real agents available in your database
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAllAgents(!showAllAgents)}
+                >
+                  {showAllAgents ? 'Hide' : 'Show'} All Agents
+                </Button>
+              </div>
+            </CardHeader>
+            {showAllAgents && (
+              <CardContent>
+                {loadingAllAgents ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">Loading agents...</span>
+                  </div>
+                ) : allAvailableAgents.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No agents found in database. Please create agents first.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {allAvailableAgents.length} total agents available
+                      </span>
+                      <Badge variant="secondary">
+                        {allAvailableAgents.filter(a => selectedAgentIds.has(a.id)).length} selected
+                      </Badge>
+                    </div>
+                    <div className="max-h-[600px] overflow-y-auto">
+                      <AgentCardGrid columns={3} className="gap-4">
+                        {allAvailableAgents.map((agent) => {
+                          const isSelected = selectedAgentIds.has(agent.id);
+                          const agentSlug = (agent as any).slug || '';
+                          
+                          // Helper to normalize for matching
+                          const normalizeForMatch = (str: string): string => {
+                            return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+                          };
+                          
+                          const isPanelSuggested = panel.suggestedAgents?.some(suggestedName => {
+                            const normalizedSuggested = normalizeForMatch(suggestedName);
+                            const normalizedName = normalizeForMatch(agent.name || '');
+                            const normalizedDisplayName = normalizeForMatch(agent.display_name || '');
+                            const normalizedSlug = normalizeForMatch(agentSlug);
+                            
+                            return (
+                              normalizedSuggested === normalizedName ||
+                              normalizedSuggested === normalizedDisplayName ||
+                              normalizedSuggested === normalizedSlug ||
+                              suggestedName.toLowerCase() === agent.name?.toLowerCase() ||
+                              suggestedName.toLowerCase() === agent.display_name?.toLowerCase() ||
+                              suggestedName.toLowerCase() === agentSlug.toLowerCase()
+                            );
+                          });
+                          return (
+                            <div key={agent.id} className="relative">
+                              <EnhancedAgentCard
+                                agent={agent}
+                                isSelected={isSelected}
+                                onClick={() => {
+                                  setSelectedAgentIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (isSelected) {
+                                      next.delete(agent.id);
+                                    } else {
+                                      next.add(agent.id);
+                                    }
+                                    return next;
+                                  });
+                                }}
+                                showLevel={true}
+                                showLevelName={true}
+                                size="md"
+                              />
+                              {isPanelSuggested && (
+                                <Badge 
+                                  variant="outline" 
+                                  className="absolute top-2 right-2 text-xs z-10 bg-white dark:bg-gray-800"
+                                >
+                                  Panel
+                                </Badge>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </AgentCardGrid>
+                    </div>
+                    {allAvailableAgents.length > 0 && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs text-muted-foreground">
+                          💡 Tip: Select at least 2 agents to run a panel consultation. 
+                          Agents marked with "Panel" are suggested for this panel type.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            )}
           </Card>
 
           {/* Input Section */}

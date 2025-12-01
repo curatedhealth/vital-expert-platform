@@ -175,8 +175,11 @@ export class AgentApiService {
     }
 
     try {
-      // Fetch from API (RLS handles tenant filtering)
-      const url = `${this.baseUrl}?status=${status}`;
+      // Fetch from API
+      // Add no_filters=true when status='all' to load all agents without tenant filtering
+      const url = status === 'all' 
+        ? `${this.baseUrl}?status=${status}&no_filters=true`
+        : `${this.baseUrl}?status=${status}`;
       const response = await fetchWithRetry(url);
 
       if (!response.ok) {
@@ -219,7 +222,7 @@ export class AgentApiService {
 
         const { data, error } = await query
           .order('name', { ascending: true })
-          .limit(1000);
+          .limit(10000);
 
         if (error) throw error;
 

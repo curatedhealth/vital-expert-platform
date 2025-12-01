@@ -306,57 +306,13 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
         log.info('Using session-based profile (database profile not found)');
       }
 
-      // Fetch organization from users table
-      const debugEnabled = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_AUTH_DEBUG === 'true';
-      if (debugEnabled) {
-        console.debug('🏢 [Auth Debug] Fetching organization for user:', userId);
-      }
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('organization_id')
-        .eq('id', userId)
-        .single();
-
-      if (debugEnabled) {
-        console.debug('🏢 [Auth Debug] User data from users table:', {
-          organizationId: userData?.organization_id,
-          error: userError?.message
-        });
-      }
-
-      if (!userError && userData?.organization_id) {
-        // Fetch organization separately
-        const { data: orgData, error: orgError } = await supabase
-          .from('organizations')
-          .select('id, name, slug, tenant_type, tenant_key, is_active')
-          .eq('id', userData.organization_id)
-          .single();
-
-        if (debugEnabled) {
-          console.debug('🏢 [Auth Debug] Organization data:', {
-            org: orgData,
-            error: orgError?.message
-          });
-        }
-
-        if (!orgError && orgData) {
-          setOrganization(orgData as Organization);
-          if (debugEnabled) {
-            console.debug('✅ [Auth Debug] Organization set:', orgData.name, 'Type:', orgData.tenant_type);
-          }
-          log.info('Organization loaded:', orgData.name, 'Type:', orgData.tenant_type);
-        } else {
-          if (debugEnabled) {
-            console.debug('❌ [Auth Debug] Failed to load organization:', orgError?.message);
-          }
-          log.warn('Organization not found:', orgError?.message);
-        }
-      } else {
-        if (debugEnabled) {
-          console.debug('⚠️  [Auth Debug] No organization_id found for user or error:', userError?.message);
-        }
-        log.warn('No organization_id found for user');
-      }
+      // NOTE: For panel testing and simplified local development, we skip
+      // organization lookups from the `users` table entirely. This avoids
+      // hitting strict RLS on `public.users` and allows the app to function
+      // without a configured organization_id.
+      //
+      // If you later need full multi-tenant org support, you can re‑enable
+      // the organization fetch with a dedicated feature flag.
     } catch (error) {
       log.warn('Profile/Organization database fetch failed, using session data');
       // Keep using the fallback profile

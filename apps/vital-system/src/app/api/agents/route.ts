@@ -43,10 +43,19 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'active';
+    const tenantId = searchParams.get('tenant_id');
+    const noFilters = searchParams.get('no_filters') === 'true'; // Allow bypassing all filters
+
+    // Default tenant ID if not provided (only use if no_filters is false)
+    const DEFAULT_TENANT_ID = 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
+    const effectiveTenantId = tenantId || DEFAULT_TENANT_ID;
 
     console.log(`[${requestId}] Fetching agents from Supabase`, {
       url: supabaseUrl,
       status,
+      tenant_id: effectiveTenantId,
+      no_filters: noFilters,
+      filtering_by_tenant: !noFilters && (!!tenantId || true),
     });
 
     // Build query - Include organizational structure IDs and names
@@ -77,17 +86,79 @@ export async function GET(request: NextRequest) {
         function_name,
         function_id,
         department_name,
-        department_id
+        department_id,
+        tenant_id
       `);
 
-    // Only filter by status if not "all"
-    if (status !== 'all') {
-      query = query.eq('status', status);
+    // Only apply filters if no_filters is not set
+    if (!noFilters) {
+      // Filter by tenant_id (use default if not provided)
+      // Note: Using service role key should bypass RLS, but we filter explicitly for consistency
+      query = query.eq('tenant_id', effectiveTenantId);
+
+      // Only filter by status if not "all"
+      if (status !== 'all') {
+        query = query.eq('status', status);
+      }
+    } else {
+      // When no_filters=true, only apply status filter if explicitly requested and not "all"
+      if (status && status !== 'all') {
+        query = query.eq('status', status);
+      }
     }
 
     query = query.order('name', { ascending: true });
 
-    const { data, error } = await query;
+    let { data, error } = await query;
+
+    // If we got 0 results and we're filtering by default tenant (and no_filters is not set), try without tenant filter
+    // This handles cases where agents might have NULL or different tenant_id
+    if ((!data || data.length === 0) && !noFilters && !tenantId && effectiveTenantId === DEFAULT_TENANT_ID) {
+      console.log(`[${requestId}] No agents found with tenant_id=${effectiveTenantId}, trying without tenant filter`);
+      
+      // Retry query without tenant_id filter
+      let fallbackQuery = supabaseAdmin
+        .from('agents')
+        .select(`
+          id,
+          name,
+          slug,
+          description,
+          tagline,
+          title,
+          expertise_level,
+          avatar_url,
+          avatar_description,
+          system_prompt,
+          base_model,
+          temperature,
+          max_tokens,
+          communication_style,
+          status,
+          metadata,
+          created_at,
+          updated_at,
+          role_name,
+          role_id,
+          function_name,
+          function_id,
+          department_name,
+          department_id,
+          tenant_id
+        `);
+
+      if (status !== 'all') {
+        fallbackQuery = fallbackQuery.eq('status', status);
+      }
+
+      const fallbackResult = await fallbackQuery.order('name', { ascending: true });
+      
+      if (fallbackResult.data && fallbackResult.data.length > 0) {
+        console.log(`[${requestId}] Found ${fallbackResult.data.length} agents without tenant filter`);
+        data = fallbackResult.data;
+        error = fallbackResult.error;
+      }
+    }
 
     if (error) {
       console.error(`[${requestId}] Failed to fetch agents:`, error);

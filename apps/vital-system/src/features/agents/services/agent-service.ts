@@ -148,7 +148,7 @@ export class AgentService {
         
         // Order by name (safe column that should exist)
         queryWithStatus = queryWithStatus.order('name', { ascending: true });
-        queryWithStatus = queryWithStatus.limit(1000);
+        queryWithStatus = queryWithStatus.limit(10000);
         
         const { data: dataWithStatus, error: errorWithStatus } = await queryWithStatus;
         
@@ -166,7 +166,7 @@ export class AgentService {
           .from('agents')
           .select('*')
           .order('name', { ascending: true })
-          .limit(1000);
+          .limit(10000);
         
         const { data: dataWithoutStatus, error: errorWithoutStatus } = await queryWithoutStatus;
         

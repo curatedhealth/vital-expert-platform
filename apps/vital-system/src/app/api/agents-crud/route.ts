@@ -353,7 +353,7 @@ export const GET = withAgentAuth(async (
         const result = await supabase
           .from('agents')
           .select('*')
-          .limit(1000);
+          .limit(10000);
         
         agents = result.data;
         error = result.error;

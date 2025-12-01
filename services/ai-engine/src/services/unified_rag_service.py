@@ -61,7 +61,12 @@ class UnifiedRAGService:
         self._cache_misses = 0
 
     async def initialize(self):
-        """Initialize RAG service components"""
+        """Initialize RAG service components.
+
+        On local/dev setups we treat initialization failures as non-fatal so
+        that workflows can still run without RAG (they will simply have no
+        retrieved documents and an empty context).
+        """
         try:
             # Use embedding service factory to auto-detect provider
             self.embedding_service = EmbeddingServiceFactory.create_from_config()
@@ -103,8 +108,13 @@ class UnifiedRAGService:
             logger.info("✅ Unified RAG service initialized", caching_enabled=self.cache_manager is not None and self.cache_manager.enabled)
 
         except Exception as e:
+            # Log the error but do NOT raise – allow workflows to continue in
+            # degraded mode with no RAG results.
             logger.error("❌ Failed to initialize Unified RAG service", error=str(e))
-            raise
+            self.embedding_service = None
+            self.embeddings = None
+            self.pinecone = None
+            self.pinecone_index = None
 
     def _generate_cache_key(
         self,

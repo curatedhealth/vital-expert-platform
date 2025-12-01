@@ -75,12 +75,17 @@ export interface Mode2State {
 }
 
 export interface Mode2StreamChunk {
-  type: 'agent_selection' | 'selection_reason' | 'chunk' | 'done';
+  type: 'agent_selection' | 'selection_reason' | 'chunk' | 'done' | 'thought' | 'action';
   content?: string;
   selectedAgent?: Agent;
   selectionReason?: string;
   confidence?: number;
   timestamp?: string;
+  metadata?: {
+    confidence?: number;
+    breakdown?: Record<string, unknown>;
+    mode?: string;
+  };
 }
 
 // ============================================================================
@@ -549,6 +554,15 @@ interface Mode2AutomaticApiResponse {
   citations: Array<Record<string, unknown>>;
   metadata: Record<string, unknown>;
   processing_time_ms: number;
+  // Reasoning steps from hybrid agent selection (Neo4j + Pinecone + Postgres)
+  reasoning?: Array<{
+    step: string;
+    action: string;
+    result: string;
+    confidence?: number;
+    breakdown?: Record<string, unknown>;
+    mode?: string;
+  }>;
   agent_selection: {
     selected_agent_id: string;
     selected_agent_name: string;
@@ -591,7 +605,7 @@ export async function* executeMode2(config: Mode2Config): AsyncGenerator<Mode2St
     const payload = {
       message: config.message,
       enable_rag: config.enableRAG !== false,
-      enable_tools: config.enableTools ?? false,
+      enable_tools: config.enableTools !== false, // Tools enabled by default
       selected_rag_domains: config.selectedRagDomains ?? [],
       requested_tools: config.requestedTools ?? [],
       temperature: config.temperature ?? 0.7,
@@ -637,6 +651,23 @@ export async function* executeMode2(config: Mode2Config): AsyncGenerator<Mode2St
         selectionReason: `Selected via ${result.agent_selection.selection_method}`,
         timestamp: new Date().toISOString(),
       };
+    }
+
+    // Stream reasoning steps from hybrid agent selection (Neo4j + Pinecone + Postgres)
+    if (result.reasoning && Array.isArray(result.reasoning) && result.reasoning.length > 0) {
+      for (const step of result.reasoning) {
+        // Format each reasoning step for display
+        const reasoningContent = step.breakdown
+          ? `${step.action}\n${step.result}\n\nScores: ${JSON.stringify(step.breakdown, null, 2)}`
+          : `${step.action}: ${step.result}`;
+
+        yield {
+          type: 'thought' as const,
+          content: reasoningContent,
+          confidence: step.confidence,
+          timestamp: new Date().toISOString(),
+        } as Mode2StreamChunk;
+      }
     }
 
     // Emit RAG sources if available

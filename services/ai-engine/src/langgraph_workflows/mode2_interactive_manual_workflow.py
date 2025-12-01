@@ -119,7 +119,7 @@ class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegra
         self.supabase = supabase_client
         self.cache_manager = cache_manager or CacheManager()
         self.rag_service = rag_service or UnifiedRAGService(supabase_client)
-        self.agent_orchestrator = agent_orchestrator or AgentOrchestrator()
+        self.agent_orchestrator = agent_orchestrator or AgentOrchestrator(supabase_client, self.rag_service)
         
         # Enhanced services
         self.conversation_manager = conversation_manager or EnhancedConversationManager(

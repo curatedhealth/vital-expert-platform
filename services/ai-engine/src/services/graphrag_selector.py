@@ -55,16 +55,24 @@ class GraphRAGSelector:
 
     def __init__(
         self,
-        embedding_service: Optional[EmbeddingService] = None
+        embedding_service: Optional[EmbeddingService] = None,
+        supabase_client = None
     ):
-        """Initialize GraphRAG selector with required services."""
+        """Initialize GraphRAG selector with required services.
+
+        Args:
+            embedding_service: Optional embedding service instance
+            supabase_client: Optional pre-initialized Supabase client (recommended)
+                           If not provided, lazy initialization will be attempted
+        """
         self.embedding_service = embedding_service or EmbeddingService()
-        self.supabase = None  # Lazy initialization
+        self.supabase = supabase_client  # Use provided client or None for lazy init
         self.neo4j = None  # Lazy initialization
 
     def _get_supabase(self):
         """Lazy load Supabase client."""
         if self.supabase is None:
+            logger.warning("GraphRAGSelector using lazy Supabase init - consider passing client explicitly")
             self.supabase = get_supabase_client()
         return self.supabase
 
@@ -614,18 +622,40 @@ class GraphRAGSelector:
 _graphrag_selector: Optional[GraphRAGSelector] = None
 
 
-def get_graphrag_selector() -> GraphRAGSelector:
-    """Get GraphRAG selector instance (dependency injection)."""
+def get_graphrag_selector(supabase_client=None) -> GraphRAGSelector:
+    """Get GraphRAG selector instance (dependency injection).
+
+    Args:
+        supabase_client: Optional pre-initialized Supabase client.
+                        If provided and singleton doesn't exist, creates one with this client.
+                        If singleton already exists, the existing instance is returned
+                        (regardless of supabase_client parameter).
+
+    Returns:
+        GraphRAGSelector instance
+    """
     global _graphrag_selector
     if _graphrag_selector is None:
-        _graphrag_selector = GraphRAGSelector()
+        _graphrag_selector = GraphRAGSelector(supabase_client=supabase_client)
     return _graphrag_selector
 
 
 def initialize_graphrag_selector(
-    embedding_service: Optional[EmbeddingService] = None
+    embedding_service: Optional[EmbeddingService] = None,
+    supabase_client=None
 ) -> GraphRAGSelector:
-    """Initialize GraphRAG selector singleton."""
+    """Initialize GraphRAG selector singleton.
+
+    Args:
+        embedding_service: Optional embedding service instance
+        supabase_client: Optional pre-initialized Supabase client (recommended)
+
+    Returns:
+        GraphRAGSelector instance
+    """
     global _graphrag_selector
-    _graphrag_selector = GraphRAGSelector(embedding_service)
+    _graphrag_selector = GraphRAGSelector(
+        embedding_service=embedding_service,
+        supabase_client=supabase_client
+    )
     return _graphrag_selector

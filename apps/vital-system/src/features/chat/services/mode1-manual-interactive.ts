@@ -39,6 +39,13 @@ interface Mode1ManualApiResponse {
   citations: Array<Record<string, unknown>>;
   metadata: Record<string, unknown>;
   processing_time_ms: number;
+  // Optional reasoning from Python backend (RAG retrieval steps, tool usage, etc.)
+  reasoning?: Array<{
+    step: string;
+    action: string;
+    result: string;
+    confidence?: number;
+  }>;
 }
 
 // Use API Gateway URL for compliance with Golden Rule (Python services via gateway)
@@ -117,7 +124,7 @@ export class Mode1ManualInteractiveHandler {
         agent_id: config.agentId,
         message: config.message,
         enable_rag: config.enableRAG !== false,
-        enable_tools: config.enableTools ?? false,
+        enable_tools: config.enableTools !== false, // Tools enabled by default
         selected_rag_domains: config.selectedRagDomains ?? [],
         requested_tools: config.requestedTools ?? [],
         temperature: config.temperature,

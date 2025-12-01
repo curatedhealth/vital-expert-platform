@@ -29,50 +29,70 @@ Pharmaceutical companies face unique challenges:
 
 ---
 
-## 2. The 8-Layer Semantic Core
+## 2. The 8-Layer Enterprise Ontology (L0-L7)
 
-The VITAL ontology is organized into 8 conceptual layers:
+The VITAL ontology is organized into 8 hierarchical layers representing the complete enterprise structure:
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│ L8: CHANGE LAYER                                                │
-│     Transformation initiatives, adoption metrics                │
-├─────────────────────────────────────────────────────────────────┤
-│ L7: VALUE LAYER                                                 │
-│     KPIs, outcomes, business impact metrics                     │
-├─────────────────────────────────────────────────────────────────┤
-│ L5-L6: EXECUTION LAYER                                          │
-│     Workflows, templates, standard operating procedures         │
-├─────────────────────────────────────────────────────────────────┤
-│ L4: CAPABILITY LAYER                                            │
-│     Skills, competencies, expertise definitions                 │
-├─────────────────────────────────────────────────────────────────┤
-│ L3: RESPONSIBILITY LAYER (JTBD)                                 │
-│     Jobs-to-be-done, tasks, deliverables                       │
-├─────────────────────────────────────────────────────────────────┤
-│ L2: PERSONA LAYER                                               │
-│     User archetypes with behavioral characteristics             │
-├─────────────────────────────────────────────────────────────────┤
-│ L1: ORGANIZATIONAL LAYER                                        │
-│     Functions → Departments → Roles                             │
-├─────────────────────────────────────────────────────────────────┤
-│ L0: DOMAIN LAYER                                                │
-│     Therapeutic areas, regulations, technology domains          │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ L7: AI AGENTS LAYER                                        [972 agents]     │
+│     Expert AI agents mapped to roles via agent_roles junction              │
+│     • 2,245 agent-role mappings                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L6: JTBD-ROLE MAPPINGS                                    [3,451 mappings] │
+│     Jobs linked to roles via jtbd_roles junction table                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L5: JOBS-TO-BE-DONE (JTBD)                                [526 JTBDs]      │
+│     Universal job definitions with ODI format                              │
+│     job_statement, desired_outcome, success_criteria                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L4: PERSONAS LAYER                                        [1,798 personas] │
+│     MECE archetypes: AUTOMATOR | ORCHESTRATOR | LEARNER | SKEPTIC          │
+│     Behavioral deltas on top of role baselines                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L3: ROLES LAYER                                           [949 roles]      │
+│     Job titles with responsibilities, tools, competencies                  │
+│     org_roles table with seniority_level, leadership_level                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L2: DEPARTMENTS LAYER                                     [149 departments]│
+│     Functional sub-units within business functions                         │
+│     org_departments table                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L1: FUNCTIONS LAYER                                       [27 functions]   │
+│     Top-level business functions (Medical Affairs, Commercial, etc.)       │
+│     org_functions table                                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L0: TENANTS LAYER                                         [12 tenants]     │
+│     Multi-tenant isolation, enterprise customers                           │
+│     tenants table with RLS policies                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+### Layer Summary (Current State - 2025-11-30)
+
+| Layer | Entity | Count | Primary Table | Key Junction Tables |
+|-------|--------|-------|---------------|---------------------|
+| L0 | Tenants | 12 | `tenants` | `tenant_agents`, `function_tenants` |
+| L1 | Functions | 27 | `org_functions` | `function_tenants` |
+| L2 | Departments | 149 | `org_departments` | `department_tenants` |
+| L3 | Roles | 949 | `org_roles` | `role_tenants`, `role_tools` |
+| L4 | Personas | 1,798 | `personas` | `persona_tenants` |
+| L5 | JTBDs | 526 | `jtbd` | `jtbd_kpis`, `jtbd_pain_points` |
+| L6 | JTBD-Roles | 3,451 | `jtbd_roles` | - |
+| L7 | Agents | 972 | `agents` | `agent_roles` (2,245) |
 
 ---
 
-## 3. Organizational Structure (L1)
+## 3. Organizational Structure (L1-L3)
 
 ### 3.1 Three-Tier Hierarchy
 
 ```
-FUNCTION (26)
+FUNCTION (27)                    [L1: org_functions]
     │
-    ├── DEPARTMENT (136)
+    ├── DEPARTMENT (149)         [L2: org_departments]
     │       │
-    │       └── ROLE (858)
+    │       └── ROLE (949)       [L3: org_roles]
     │
     └── Example:
         Medical Affairs (Function)
@@ -88,7 +108,7 @@ FUNCTION (26)
                     └── Publications Manager (Role)
 ```
 
-### 3.2 Functions (26 Total)
+### 3.2 Functions (27 Total)
 
 The platform models a complete pharmaceutical organization:
 
@@ -118,7 +138,7 @@ Each role has rich metadata enabling precise matching:
 
 ---
 
-## 4. Persona Framework (L2)
+## 4. Persona Framework (L4)
 
 ### 4.1 The MECE Archetype Model
 
@@ -188,7 +208,7 @@ Persona:
 
 ---
 
-## 5. AI Agents
+## 5. AI Agents (L7)
 
 ### 5.1 Agent Architecture
 
@@ -247,7 +267,7 @@ Role: Medical Science Liaison - Oncology
 
 ---
 
-## 6. Knowledge Domains (L0)
+## 6. Knowledge Domains
 
 ### 6.1 Domain Taxonomy
 
@@ -277,9 +297,24 @@ This separation enables:
 
 ---
 
-## 7. Workflow Intelligence (L5-L6)
+## 7. Jobs-To-Be-Done & Workflows (L5-L6)
 
-### 7.1 Agentic Workflow
+### 7.1 JTBD Framework (L5)
+
+Jobs-To-Be-Done (JTBD) capture what users are trying to accomplish, independent of how they do it. The VITAL platform stores 526 JTBDs in ODI (Outcome-Driven Innovation) format:
+
+- **Job Statement**: The core task the user needs to accomplish
+- **Desired Outcome**: What success looks like
+- **Success Criteria**: Measurable outcomes
+
+### 7.2 JTBD-Role Mappings (L6)
+
+The `jtbd_roles` junction table links JTBDs to roles with 3,451 mappings, enabling:
+- Role-appropriate task suggestions
+- Workload analysis across positions
+- Skills gap identification
+
+### 7.3 Agentic Workflow
 
 The platform doesn't just answer questions—it executes intelligent workflows:
 
@@ -299,7 +334,7 @@ The platform doesn't just answer questions—it executes intelligent workflows:
 └────────────────────────────────────────────────────────────────┘
 ```
 
-### 7.2 Persona-Aware Responses
+### 7.4 Persona-Aware Responses
 
 The same query generates different responses based on user archetype:
 
@@ -335,15 +370,19 @@ The same query generates different responses based on user archetype:
 
 ## 9. Data Model Summary
 
-### 9.1 Entity Counts
+### 9.1 Entity Counts (Current State - 2025-11-30)
 
-| Entity | Count | Calculation |
-|--------|-------|-------------|
-| Functions | 26 | Pharma org structure |
-| Departments | 136 | ~5 per function |
-| Roles | 858 | ~6 per department |
-| Personas | 3,432 | 858 × 4 archetypes |
-| Agents | 1,138+ | ~1.3 per role |
+| Layer | Entity | Count | Table/Relationship |
+|-------|--------|-------|-------------------|
+| L0 | Tenants | 12 | `tenants` |
+| L1 | Functions | 27 | `org_functions` |
+| L2 | Departments | 149 | `org_departments` |
+| L3 | Roles | 949 | `org_roles` |
+| L4 | Personas | 1,798 | `personas` (4 archetypes × role) |
+| L5 | JTBDs | 526 | `jtbd` |
+| L6 | JTBD-Role Mappings | 3,451 | `jtbd_roles` |
+| L7 | Agents | 972 | `agents` (active) |
+| L7 | Agent-Role Mappings | 2,245 | `agent_roles` |
 
 ### 9.2 Relationship Rules
 

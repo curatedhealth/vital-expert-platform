@@ -816,13 +816,32 @@ export class Mode3AutonomousAutomaticHandler {
 // ============================================================================
 
 /**
- * Execute Mode 3: Autonomous-Automatic
+ * Execute Mode 3: Autonomous-Automatic (Auto Selection + Agentic Reasoning)
+ *
+ * GOLDEN RULE MATRIX - Mode 3:
+ *   | Manual Selection | Auto Selection |
+ *   | (User picks)     | (System picks) |
+ *   +------------------+----------------+
+ *   | Mode 1           | Mode 2         | ← Conversational
+ *   +------------------+----------------+
+ *   | Mode 3           | Mode 4         | ← Agentic (CoT+ToT+ReAct)
+ *
+ * Mode 3 = Manual Selection + Agentic (user picks expert, system uses advanced reasoning)
+ * Mode 4 = Auto Selection + Agentic (system picks expert + uses advanced reasoning)
+ *
+ * Agentic capabilities:
+ * - Chain-of-Thought (CoT): Step-by-step reasoning
+ * - Tree-of-Thought (ToT): Explore multiple reasoning paths
+ * - ReAct: Reasoning + Acting with tools
+ * - Planning: Break down complex goals into sub-tasks
+ * - Goal Loop: Iterate until objective is achieved
  */
-// Port Architecture: Next.js (3000) -> API Gateway (4000) -> AI Engine (8000)
-const API_GATEWAY_URL =
-  process.env.API_GATEWAY_URL ||
-  process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
-  'http://localhost:4000'; // Default to API Gateway port
+// Port Architecture: Next.js (3000) -> AI Engine (8000) directly for Mode 3/4
+// Mode 3/4 bypass API Gateway and call AI Engine directly for agentic workflows
+const AI_ENGINE_URL =
+  process.env.PYTHON_AI_ENGINE_URL ||
+  process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL ||
+  'http://localhost:8000'; // Default to AI Engine port for agentic modes
 
 const DEFAULT_TENANT_ID =
   process.env.API_GATEWAY_TENANT_ID ||
@@ -897,24 +916,34 @@ export async function* executeMode3(config: Mode3Config): AsyncGenerator<Autonom
       conversation_history: config.conversationHistory ?? [],
     };
 
-    // Call unified Ask Expert endpoint (Mode 3: expert_recommendation)
-    const unifiedPayload = {
+    // Call AI Engine Mode 3 endpoint directly (bypasses API Gateway for agentic workflows)
+    // Mode 3 = Auto Selection + Agentic (system picks expert + CoT/ToT/ReAct reasoning)
+    const agenticPayload = {
       query: config.message,
-      mode: 'expert_recommendation', // Mode 3: automatic agent selection
+      mode: 'autonomous_automatic', // Mode 3: automatic agent selection + agentic reasoning
       tenant_id: config.tenantId || DEFAULT_TENANT_ID,
       session_id: config.sessionId,
       user_id: config.userId,
       stream: false,
       conversation_history: config.conversationHistory ?? [],
+      // Agentic configuration
+      enable_rag: config.enableRAG !== false,
+      enable_tools: config.enableTools ?? true,
+      selected_rag_domains: config.selectedRagDomains ?? [],
+      requested_tools: config.requestedTools ?? [],
+      temperature: config.temperature ?? 0.7,
+      max_tokens: config.maxTokens ?? 2000,
+      max_iterations: config.maxIterations ?? 10,
+      confidence_threshold: config.confidenceThreshold ?? 0.95,
     };
 
-    const response = await fetch(`${API_GATEWAY_URL}/v1/ai/ask-expert/unified`, {
+    const response = await fetch(`${AI_ENGINE_URL}/api/mode3/autonomous-automatic`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-tenant-id': config.tenantId || DEFAULT_TENANT_ID,
       },
-      body: JSON.stringify(unifiedPayload),
+      body: JSON.stringify(agenticPayload),
     });
 
     if (!response.ok) {

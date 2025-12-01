@@ -269,31 +269,126 @@ Provide a clear, comprehensive answer."""
             'content': f"Analysis of: {data}"
         }
 
+    async def execute(
+        self,
+        query: str,
+        context: str = "",
+        tools_results: List[Dict] = None,
+        model: str = "gpt-4"
+    ) -> Dict[str, Any]:
+        """
+        Execute complete ReAct workflow - wrapper method for Mode 3/4 integration.
+
+        This method provides the `execute()` interface that Mode 3/4 workflows expect.
+        It runs the full ReAct loop: Reason → Act → Observe → Finalize
+
+        Args:
+            query: User query to process
+            context: Additional context (RAG results, conversation history)
+            tools_results: Results from tool executions
+            model: LLM model to use
+
+        Returns:
+            Dict with response, citations, steps, and confidence
+        """
+        try:
+            # Initialize state
+            state: AgentState = {
+                'query': query,
+                'messages': [{'role': 'user', 'content': query}],
+                'reasoning': [],
+                'tool_calls': [],
+                'tool_results': tools_results or [],
+                'response': '',
+                'confidence': 0.0,
+                'metadata': {
+                    'context': context,
+                    'model': model
+                },
+                'next_node': 'reason',
+                'loop_count': 0,
+                'error': None
+            }
+
+            # Execute ReAct loop
+            iteration = 0
+            max_iterations = self.max_iterations
+
+            while iteration < max_iterations:
+                # Reason
+                state = await self.reason(state)
+
+                if state.get('error') or state.get('next_node') == 'finalize':
+                    break
+
+                # Act
+                if state.get('next_node') == 'act':
+                    state = await self.act(state)
+
+                iteration += 1
+
+            # Finalize
+            state = await self.finalize(state)
+
+            # Extract citations from tool results
+            citations = []
+            for tool_result in state.get('tool_results', []):
+                if 'source' in tool_result:
+                    citations.append({
+                        'source': tool_result.get('source'),
+                        'content': str(tool_result.get('content', ''))[:200]
+                    })
+
+            logger.info(
+                "react_workflow_complete",
+                iterations=iteration,
+                confidence=state.get('confidence', 0.0)
+            )
+
+            return {
+                'response': state.get('response', ''),
+                'citations': citations,
+                'steps': state.get('reasoning', []),
+                'confidence': state.get('confidence', 0.0),
+                'iterations': iteration,
+                'tool_calls': state.get('tool_calls', [])
+            }
+
+        except Exception as e:
+            logger.error("react_workflow_failed", error=str(e))
+            return {
+                'response': f"ReAct execution encountered an error: {str(e)}",
+                'citations': [],
+                'steps': [],
+                'confidence': 0.0,
+                'error': str(e)
+            }
+
 
 def create_react_graph(agent: ReActAgent) -> StateGraph:
     """
     Create ReAct LangGraph workflow
-    
+
     Args:
         agent: ReActAgent instance
-        
+
     Returns:
         Compiled StateGraph
     """
     graph = StateGraph(AgentState)
-    
+
     # Add nodes
     graph.add_node("reason", agent.reason)
     graph.add_node("act", agent.act)
     graph.add_node("finalize", agent.finalize)
-    
+
     # Add edges
     graph.set_entry_point("reason")
-    
+
     # Conditional routing from reason
     def should_continue(state: AgentState) -> str:
         return state.get('next_node', 'finalize')
-    
+
     graph.add_conditional_edges(
         "reason",
         should_continue,
@@ -302,12 +397,12 @@ def create_react_graph(agent: ReActAgent) -> StateGraph:
             "finalize": "finalize"
         }
     )
-    
+
     # Loop back from act to reason
     graph.add_edge("act", "reason")
-    
+
     # End after finalize
     graph.add_edge("finalize", END)
-    
+
     return graph.compile()
 

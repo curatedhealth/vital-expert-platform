@@ -99,7 +99,8 @@ class AgentSelectorService:
         self.openai_client = openai_client or OpenAI(api_key=self.settings.openai_api_key)
         self.supabase_client = supabase_client
         self.use_graphrag = use_graphrag
-        self.graphrag_selector = graphrag_selector or (get_graphrag_selector() if use_graphrag else None)
+        # Pass supabase_client to GraphRAGSelector to ensure it has a properly initialized DB client
+        self.graphrag_selector = graphrag_selector or (get_graphrag_selector(supabase_client=supabase_client) if use_graphrag else None)
         
     async def analyze_query(
         self,

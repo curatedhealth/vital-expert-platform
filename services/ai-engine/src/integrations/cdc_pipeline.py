@@ -185,13 +185,14 @@ class Neo4jCDCHandler:
         # Build property SET clause
         props = self._build_properties(event.record, mapping)
 
-        # Create node
+        # Create node - exclude 'id' from record to avoid duplicate parameter
+        params = {k: v for k, v in event.record.items() if k != 'id'}
         query = f"""
         MERGE (n:{label} {{id: $id}})
         SET {props}
         SET n.updated_at = datetime()
         """
-        session.run(query, id=record_id, **event.record)
+        session.run(query, id=record_id, **params)
 
         # Create relationships
         self._create_relationships(session, event.record, mapping, label)
@@ -204,12 +205,14 @@ class Neo4jCDCHandler:
 
         props = self._build_properties(event.record, mapping)
 
+        # Exclude 'id' from record to avoid duplicate parameter
+        params = {k: v for k, v in event.record.items() if k != 'id'}
         query = f"""
         MATCH (n:{label} {{id: $id}})
         SET {props}
         SET n.updated_at = datetime()
         """
-        session.run(query, id=record_id, **event.record)
+        session.run(query, id=record_id, **params)
 
         # Update relationships (delete old, create new)
         self._update_relationships(session, event.record, mapping, label)

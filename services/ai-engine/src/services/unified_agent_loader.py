@@ -80,6 +80,15 @@ class AgentProfile(BaseModel):
     is_custom: bool = Field(default=False, description="User-created agent?")
     created_by: Optional[str] = Field(None, description="User ID who created agent")
 
+    # Agent Hierarchy & Spawning (5-Level Deep Architecture)
+    agent_level_id: Optional[str] = Field(None, description="Agent level UUID (L1-L5)")
+    reports_to_agent_id: Optional[str] = Field(None, description="Parent agent UUID in hierarchy")
+    can_escalate_to: Optional[str] = Field(None, description="Agent to escalate to when unsure")
+    can_spawn_l2: bool = Field(default=False, description="Can spawn Level 2 Expert agents")
+    can_spawn_l3: bool = Field(default=False, description="Can spawn Level 3 Specialist agents")
+    can_spawn_l4: bool = Field(default=False, description="Can spawn Level 4 Worker agents")
+    can_use_worker_pool: bool = Field(default=False, description="Can use shared worker pool")
+
     # Additional Metadata
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
     created_at: Optional[datetime] = None
@@ -163,7 +172,13 @@ class UnifiedAgentLoader:
                     avatar_url,
                     color_scheme,
                     created_at,
-                    updated_at
+                    updated_at,
+                    agent_level_id,
+                    reports_to_agent_id,
+                    can_escalate_to,
+                    can_spawn_l2,
+                    can_spawn_l3,
+                    can_spawn_l4
                 """) \
                 .eq("id", agent_id) \
                 .in_("status", ["active", "testing"]) \
@@ -384,7 +399,15 @@ class UnifiedAgentLoader:
             created_by=metadata.get("created_by"),
             metadata=metadata,
             created_at=agent_data.get("created_at"),
-            updated_at=agent_data.get("updated_at")
+            updated_at=agent_data.get("updated_at"),
+            # Agent Hierarchy & Spawning (5-Level Deep Architecture)
+            agent_level_id=agent_data.get("agent_level_id"),
+            reports_to_agent_id=agent_data.get("reports_to_agent_id"),
+            can_escalate_to=agent_data.get("can_escalate_to"),
+            can_spawn_l2=agent_data.get("can_spawn_l2", False),
+            can_spawn_l3=agent_data.get("can_spawn_l3", False),
+            can_spawn_l4=agent_data.get("can_spawn_l4", False),
+            can_use_worker_pool=metadata.get("can_use_worker_pool", False),
         )
 
     def _create_fallback_agent(self) -> AgentProfile:

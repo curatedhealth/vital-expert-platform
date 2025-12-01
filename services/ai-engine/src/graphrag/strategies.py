@@ -449,6 +449,24 @@ def get_strategy_registry() -> StrategyRegistry:
 # Strategy Utilities
 # ============================================================================
 
+def get_strategy(strategy_type: RAGStrategyType) -> RAGStrategy:
+    """
+    Convenience function to get a strategy by type.
+
+    This is a shorthand for:
+        registry = get_strategy_registry()
+        strategy = registry.get_strategy(strategy_type)
+
+    Args:
+        strategy_type: The RAGStrategyType enum value
+
+    Returns:
+        RAGStrategy configuration
+    """
+    registry = get_strategy_registry()
+    return registry.get_strategy(strategy_type)
+
+
 def get_strategy_comparison_matrix() -> Dict[str, Dict]:
     """
     Generate a comparison matrix of all strategies

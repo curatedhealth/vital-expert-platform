@@ -126,6 +126,34 @@ app.get('/', (req, res) => {
       'POST /api/mode2/automatic',
       'POST /api/mode3/autonomous-automatic',
       'POST /api/mode4/autonomous-manual',
+      'POST /api/broker/query',
+      'GET /api/broker/health',
+      'GET /api/broker/agents/:id',
+      'GET /api/broker/roles/:id/agents',
+      'GET /api/broker/roles/:id/jtbds',
+      'GET /api/broker/agents/search',
+      'GET /api/value/dashboard',
+      'GET /api/value/jtbd/:id/roi',
+      'GET /api/value/role/:id/roi',
+      'GET /api/value/categories',
+      'GET /api/value/categories/:code/insights',
+      'GET /api/value/drivers',
+      'GET /api/value/drivers/:code/insights',
+      'GET /api/value/health',
+      // Value Investigator (AI Companion)
+      'POST /api/value-investigator/query',
+      'POST /api/value-investigator/analyze-jtbd/:id',
+      'POST /api/value-investigator/analyze-role/:id',
+      'GET /api/value-investigator/suggestions',
+      'GET /api/value-investigator/health',
+      // Ontology Investigator (Enterprise Ontology AI Companion)
+      'POST /api/ontology-investigator/query',
+      'POST /api/ontology-investigator/gap-analysis',
+      'POST /api/ontology-investigator/opportunities',
+      'GET /api/ontology-investigator/persona-insights',
+      'GET /api/ontology-investigator/hierarchy',
+      'GET /api/ontology-investigator/suggestions',
+      'GET /api/ontology-investigator/health',
       'ALL /api/langgraph-gui/*',
     ],
     frontend: 'http://localhost:3000',
@@ -1199,6 +1227,656 @@ app.get('/api/agents/:id/stats', async (req, res) => {
           recentFeedback: [],
         },
       });
+    }
+  }
+});
+
+// ============================================================================
+// INTELLIGENCE BROKER ROUTES
+// Unified query interface combining PostgreSQL, Pinecone, and Neo4j
+// ============================================================================
+
+/**
+ * POST /api/broker/query
+ * Intelligence Broker unified query - routes to Python ai-engine
+ */
+app.post('/api/broker/query', async (req, res) => {
+  try {
+    const { query, service_mode, agent_id, role_id, persona_id, include_ontology, include_agents, include_jtbds, top_k } = req.body;
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+
+    if (!query) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'query is required',
+      });
+    }
+
+    console.log(`[Gateway] Intelligence Broker query - Tenant: ${tenantId}, Mode: ${service_mode || 'ask_expert'}`);
+
+    // Forward to Python AI Engine GraphRAG router
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/v1/graphrag/broker/query`,
+      {
+        query,
+        service_mode: service_mode || 'ask_expert',
+        agent_id,
+        role_id,
+        persona_id,
+        tenant_id: tenantId,
+        include_ontology: include_ontology !== false,
+        include_agents: include_agents !== false,
+        include_jtbds: include_jtbds || false,
+        top_k: top_k || 10,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 60000, // 60 seconds for broker queries
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Intelligence Broker query error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * GET /api/broker/health
+ * Intelligence Broker health check
+ */
+app.get('/api/broker/health', async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/graphrag/broker/health`,
+      { timeout: 10000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Intelligence Broker health error:', error.message);
+    res.status(503).json({
+      status: 'unhealthy',
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/broker/agents/:id
+ * Get agent details via Intelligence Broker
+ */
+app.get('/api/broker/agents/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/graphrag/broker/agents/${id}`,
+      { timeout: 10000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Broker get agent error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/broker/roles/:id/agents
+ * Get agents for a role via Intelligence Broker
+ */
+app.get('/api/broker/roles/:id/agents', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { top_k = 10 } = req.query;
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/graphrag/broker/roles/${id}/agents`,
+      {
+        params: { top_k: parseInt(top_k, 10) },
+        timeout: 10000,
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Broker get agents for role error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/broker/roles/:id/jtbds
+ * Get JTBDs for a role via Intelligence Broker
+ */
+app.get('/api/broker/roles/:id/jtbds', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { top_k = 20 } = req.query;
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/graphrag/broker/roles/${id}/jtbds`,
+      {
+        params: { top_k: parseInt(top_k, 10) },
+        timeout: 10000,
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Broker get JTBDs for role error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/broker/agents/search
+ * Full-text agent search via Intelligence Broker
+ */
+app.get('/api/broker/agents/search', async (req, res) => {
+  try {
+    const { q, top_k = 10 } = req.query;
+    if (!q) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'Query parameter q is required',
+      });
+    }
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/graphrag/broker/agents/search`,
+      {
+        params: { q, top_k: parseInt(top_k, 10) },
+        timeout: 15000,
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Broker agent search error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+// =============================================================================
+// VALUE FRAMEWORK ROUTES
+// ROI Calculator, Value Insights, and Dashboard
+// =============================================================================
+
+/**
+ * GET /api/value/dashboard
+ * Get value dashboard with aggregated metrics
+ */
+app.get('/api/value/dashboard', async (req, res) => {
+  try {
+    const { tenant_id } = req.query;
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/value/dashboard`,
+      {
+        params: tenant_id ? { tenant_id } : {},
+        timeout: 30000,
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Value dashboard error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/value/jtbd/:id/roi
+ * Calculate ROI for a specific JTBD
+ */
+app.get('/api/value/jtbd/:id/roi', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/value/jtbd/${id}/roi`,
+      { timeout: 15000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] JTBD ROI error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/value/role/:id/roi
+ * Calculate aggregated ROI for a role
+ */
+app.get('/api/value/role/:id/roi', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/value/role/${id}/roi`,
+      { timeout: 15000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Role ROI error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/value/categories
+ * List all value categories
+ */
+app.get('/api/value/categories', async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/value/categories`,
+      { timeout: 10000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Value categories error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/value/categories/:code/insights
+ * Get detailed insights for a value category
+ */
+app.get('/api/value/categories/:code/insights', async (req, res) => {
+  try {
+    const { code } = req.params;
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/value/categories/${code}/insights`,
+      { timeout: 15000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Category insights error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/value/drivers
+ * List all value drivers
+ */
+app.get('/api/value/drivers', async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/value/drivers`,
+      { timeout: 10000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Value drivers error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/value/drivers/:code/insights
+ * Get detailed insights for a value driver
+ */
+app.get('/api/value/drivers/:code/insights', async (req, res) => {
+  try {
+    const { code } = req.params;
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/value/drivers/${code}/insights`,
+      { timeout: 15000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Driver insights error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/value/health
+ * Value Framework health check
+ */
+app.get('/api/value/health', async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/value/health`,
+      { timeout: 10000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Value health error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+// ============================================================================
+// VALUE INVESTIGATOR ROUTES (AI-Powered Value Analysis Companion)
+// ============================================================================
+
+/**
+ * POST /api/value-investigator/query
+ * Ask the Value Investigator a question about value analysis
+ */
+app.post('/api/value-investigator/query', async (req, res) => {
+  try {
+    console.log('[Gateway] Value Investigator query:', req.body?.query?.substring(0, 100));
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/v1/value-investigator/query`,
+      req.body,
+      {
+        timeout: 120000, // 2 minutes for complex reasoning
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Value Investigator query error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * POST /api/value-investigator/analyze-jtbd/:id
+ * Analyze value for a specific JTBD
+ */
+app.post('/api/value-investigator/analyze-jtbd/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tenant_id } = req.query;
+    console.log(`[Gateway] Value Investigator analyzing JTBD: ${id}`);
+    const url = tenant_id
+      ? `${AI_ENGINE_URL}/v1/value-investigator/analyze-jtbd/${id}?tenant_id=${tenant_id}`
+      : `${AI_ENGINE_URL}/v1/value-investigator/analyze-jtbd/${id}`;
+    const response = await axios.post(url, {}, { timeout: 120000 });
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Value Investigator JTBD analysis error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * POST /api/value-investigator/analyze-role/:id
+ * Analyze aggregated value for a role
+ */
+app.post('/api/value-investigator/analyze-role/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tenant_id } = req.query;
+    console.log(`[Gateway] Value Investigator analyzing Role: ${id}`);
+    const url = tenant_id
+      ? `${AI_ENGINE_URL}/v1/value-investigator/analyze-role/${id}?tenant_id=${tenant_id}`
+      : `${AI_ENGINE_URL}/v1/value-investigator/analyze-role/${id}`;
+    const response = await axios.post(url, {}, { timeout: 120000 });
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Value Investigator Role analysis error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/value-investigator/suggestions
+ * Get suggested questions for the Value Investigator
+ */
+app.get('/api/value-investigator/suggestions', async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/value-investigator/suggestions`,
+      { timeout: 10000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Value Investigator suggestions error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/value-investigator/health
+ * Health check for Value Investigator service
+ */
+app.get('/api/value-investigator/health', async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/value-investigator/health`,
+      { timeout: 10000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Value Investigator health error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+// ============================================================================
+// ONTOLOGY INVESTIGATOR ROUTES (AI-Powered Enterprise Ontology Analysis)
+// ============================================================================
+
+/**
+ * POST /api/ontology-investigator/query
+ * Ask the Ontology Investigator a question about the enterprise ontology
+ */
+app.post('/api/ontology-investigator/query', async (req, res) => {
+  try {
+    console.log('[Gateway] Ontology Investigator query:', req.body?.query?.substring(0, 100));
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/v1/ontology-investigator/query`,
+      req.body,
+      {
+        timeout: 120000, // 2 minutes for complex reasoning
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Ontology Investigator query error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * POST /api/ontology-investigator/gap-analysis
+ * Analyze AI coverage gaps across the organization
+ */
+app.post('/api/ontology-investigator/gap-analysis', async (req, res) => {
+  try {
+    const { function_id } = req.query;
+    console.log(`[Gateway] Ontology Investigator gap analysis - Function: ${function_id || 'all'}`);
+    const url = function_id
+      ? `${AI_ENGINE_URL}/v1/ontology-investigator/gap-analysis?function_id=${function_id}`
+      : `${AI_ENGINE_URL}/v1/ontology-investigator/gap-analysis`;
+    const response = await axios.post(url, {}, { timeout: 60000 });
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Ontology Investigator gap analysis error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * POST /api/ontology-investigator/opportunities
+ * Score roles by AI transformation opportunity
+ */
+app.post('/api/ontology-investigator/opportunities', async (req, res) => {
+  try {
+    const { function_id, limit = 50 } = req.query;
+    console.log(`[Gateway] Ontology Investigator opportunities - Function: ${function_id || 'all'}, Limit: ${limit}`);
+    let url = `${AI_ENGINE_URL}/v1/ontology-investigator/opportunities?limit=${limit}`;
+    if (function_id) url += `&function_id=${function_id}`;
+    const response = await axios.post(url, {}, { timeout: 60000 });
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Ontology Investigator opportunities error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/ontology-investigator/persona-insights
+ * Analyze persona distribution by archetype
+ */
+app.get('/api/ontology-investigator/persona-insights', async (req, res) => {
+  try {
+    console.log('[Gateway] Ontology Investigator persona insights');
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/ontology-investigator/persona-insights`,
+      { timeout: 30000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Ontology Investigator persona insights error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/ontology-investigator/hierarchy
+ * Get full ontology hierarchy with counts for all 8 layers (L0-L7)
+ */
+app.get('/api/ontology-investigator/hierarchy', async (req, res) => {
+  try {
+    const { tenant_id } = req.query;
+    console.log(`[Gateway] Ontology Investigator hierarchy - Tenant: ${tenant_id || 'all'}`);
+    const url = tenant_id
+      ? `${AI_ENGINE_URL}/v1/ontology-investigator/hierarchy?tenant_id=${tenant_id}`
+      : `${AI_ENGINE_URL}/v1/ontology-investigator/hierarchy`;
+    const response = await axios.get(url, { timeout: 30000 });
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Ontology Investigator hierarchy error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/ontology-investigator/suggestions
+ * Get suggested questions for the Ontology Investigator
+ */
+app.get('/api/ontology-investigator/suggestions', async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/ontology-investigator/suggestions`,
+      { timeout: 10000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Ontology Investigator suggestions error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/ontology-investigator/health
+ * Health check for Ontology Investigator service
+ */
+app.get('/api/ontology-investigator/health', async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/ontology-investigator/health`,
+      { timeout: 10000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Ontology Investigator health error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
     }
   }
 });

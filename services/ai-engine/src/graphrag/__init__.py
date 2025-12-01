@@ -64,6 +64,7 @@ from .strategies import (
     ChunkStrategy,
     ChunkConfig,
     RerankModel,
+    get_strategy,
     get_strategy_registry,
     get_strategy_comparison_matrix
 )
@@ -90,6 +91,16 @@ from .evaluation import (
     ABTestResult,
     get_evaluation_harness,
     get_sample_evaluation_queries
+)
+from .intelligence_broker import (
+    IntelligenceBroker,
+    BrokerQuery,
+    BrokerResponse,
+    ServiceMode,
+    QueryComplexity,
+    OntologyContext,
+    get_intelligence_broker,
+    broker_query
 )
 
 __all__ = [
@@ -128,6 +139,7 @@ __all__ = [
     'ChunkStrategy',
     'ChunkConfig',
     'RerankModel',
+    'get_strategy',
     'get_strategy_registry',
     'get_strategy_comparison_matrix',
 
@@ -153,8 +165,18 @@ __all__ = [
     'StrategyEvaluationSummary',
     'ABTestResult',
     'get_evaluation_harness',
-    'get_sample_evaluation_queries'
+    'get_sample_evaluation_queries',
+
+    # Intelligence Broker (Unified Query Interface)
+    'IntelligenceBroker',
+    'BrokerQuery',
+    'BrokerResponse',
+    'ServiceMode',
+    'QueryComplexity',
+    'OntologyContext',
+    'get_intelligence_broker',
+    'broker_query'
 ]
 
-__version__ = '2.0.0'
+__version__ = '2.1.0'  # Updated for Intelligence Broker
 

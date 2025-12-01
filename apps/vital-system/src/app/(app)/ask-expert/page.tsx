@@ -62,7 +62,6 @@ import { AdvancedStreamingWindow } from '@/features/ask-expert/components/Advanc
 import { AgentAvatar, Button } from '@vital/ui';
 import { Suggestions, Suggestion } from '@/components/ai/suggestion';
 import { useAgentWithStats } from '@/features/ask-expert/hooks/useAgentWithStats';
-import { WorkflowSelector } from '@/components/ask-expert/WorkflowSelector';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 
 // ============================================================================
@@ -269,13 +268,12 @@ function AskExpertPageContent() {
   const [isStreamingReasoning, setIsStreamingReasoning] = useState(false);
   const [recentReasoning, setRecentReasoning] = useState<string[]>([]);
   const [recentReasoningTimestamp, setRecentReasoningTimestamp] = useState<number | null>(null);
-  const [selectedModel, setSelectedModel] = useState('gpt-4');
 
   // Simple toggles (like Claude.ai)
   // Default: Both OFF → Mode 1: Manual Interactive
   const [isAutomatic, setIsAutomatic] = useState(false);
   const [isAutonomous, setIsAutonomous] = useState(false);
-  const [enableRAG, setEnableRAG] = useState(false); // RAG disabled by default - user must enable
+  const [enableRAG, setEnableRAG] = useState(true); // RAG enabled by default - all modes should use knowledge base
   const [enableTools, setEnableTools] = useState(false); // Tools disabled by default - user must enable
   const [hasManualToolsToggle, setHasManualToolsToggle] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -288,8 +286,6 @@ function AskExpertPageContent() {
   const [allAvailableRagDomains, setAllAvailableRagDomains] = useState<string[]>([]);
   const [loadingTools, setLoadingTools] = useState(false);
   const [loadingRagDomains, setLoadingRagDomains] = useState(false);
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
-  const [selectedWorkflow, setSelectedWorkflow] = useState<any>(null);
   const [streamingMeta, setStreamingMeta] = useState<{
     ragSummary?: NonNullable<Message['metadata']>['ragSummary'];
     toolSummary?: NonNullable<Message['metadata']>['toolSummary'];
@@ -819,22 +815,29 @@ function AskExpertPageContent() {
     const conversationContext = conversationOverride ?? messages;
 
     // Determine mode based on UI toggles (Mode 1-4 system)
+    // GOLDEN RULE MATRIX:
+    //                  | Manual Selection | Auto Selection  |
+    //                  | (User picks)     | (System picks)  |
+    // -----------------+------------------+-----------------+
+    // Conversational   | Mode 1           | Mode 2          |
+    // -----------------+------------------+-----------------+
+    // Agentic (CoT)    | Mode 3           | Mode 4          |
     let mode: 'manual' | 'automatic' | 'autonomous' | 'multi-expert' = 'manual';
 
     if (isAutonomous && isAutomatic) {
-      mode = 'autonomous'; // Mode 3: Autonomous-Automatic (orchestrator selects agent + autonomous reasoning)
+      mode = 'autonomous'; // Mode 4: Agentic + Auto Selection (system picks agent + autonomous reasoning)
     } else if (isAutonomous && !isAutomatic) {
-      mode = 'multi-expert'; // Mode 4: Autonomous-Manual (user selects agent + autonomous reasoning)
+      mode = 'multi-expert'; // Mode 3: Agentic + Manual Selection (user picks agent + autonomous reasoning)
     } else if (!isAutonomous && isAutomatic) {
-      mode = 'automatic'; // Mode 2: Automatic Agent Selection (orchestrator selects agent)
+      mode = 'automatic'; // Mode 2: Conversational + Auto Selection (system picks agent)
     } else {
-      mode = 'manual'; // Mode 1: Manual Interactive (user selects agent)
+      mode = 'manual'; // Mode 1: Conversational + Manual Selection (user picks agent)
     }
 
-    // For Mode 1 and Mode 4, we need a single selected agent
+    // For Mode 1 and Mode 3 (Manual Selection modes), we need a single selected agent
     const agentId = selectedAgents.length > 0 ? selectedAgents[0] : undefined;
 
-    // Check if Mode 1 or Mode 4 requires an agent but none is selected
+    // Check if Mode 1 or Mode 3 requires an agent but none is selected
     if ((mode === 'manual' || mode === 'multi-expert') && !agentId) {
       console.log('❌ [Mode Check] No agent selected for mode:', mode, 'selectedAgents:', selectedAgents);
       const errorMessage: Message = {
@@ -891,6 +894,10 @@ function AskExpertPageContent() {
       });
       
       // Build request body
+      // Mode 2 (automatic) and Mode 3 (autonomous) always require RAG for agent selection and knowledge retrieval
+      // They also need tools enabled for web search capability
+      const shouldEnableRAG = mode === 'automatic' || mode === 'autonomous' ? true : enableRAG;
+      const shouldEnableTools = mode === 'automatic' || mode === 'autonomous' ? true : enableTools;
       const requestBody: any = {
         mode: mode,
         agentId: (mode === 'manual' || mode === 'multi-expert') ? agentId : undefined, // For manual and multi-expert modes
@@ -899,11 +906,11 @@ function AskExpertPageContent() {
           role: m.role,
           content: m.content
         })),
-        // Optional settings
-        enableRAG: enableRAG,
-        enableTools: enableTools,
-        requestedTools: enableTools ? selectedTools : undefined,
-        selectedRagDomains: enableRAG ? selectedRagDomains : undefined,
+        // Optional settings - RAG and Tools are always enabled for automatic/autonomous modes
+        enableRAG: shouldEnableRAG,
+        enableTools: shouldEnableTools,
+        requestedTools: shouldEnableTools ? (selectedTools.length > 0 ? selectedTools : ['web_search', 'calculator']) : undefined,
+        selectedRagDomains: shouldEnableRAG ? selectedRagDomains : undefined,
         model: selectedModel,
         temperature: 0.7,
         maxTokens: 2000,
@@ -912,14 +919,6 @@ function AskExpertPageContent() {
         maxIterations: (mode === 'autonomous' || mode === 'multi-expert') ? 10 : undefined,
         confidenceThreshold: (mode === 'autonomous' || mode === 'multi-expert') ? 0.95 : undefined,
       };
-
-      // If workflow is selected, include workflow definition
-      if (selectedWorkflowId && selectedWorkflow) {
-        requestBody.workflowId = selectedWorkflowId;
-        requestBody.workflow = selectedWorkflow.workflow_definition;
-        requestBody.workflowFramework = selectedWorkflow.framework;
-        console.log('[AskExpert] Using workflow:', selectedWorkflow.name, 'Framework:', selectedWorkflow.framework);
-      }
 
       const response = await fetch('/api/ask-expert/orchestrate', {
         method: 'POST',
@@ -1632,9 +1631,11 @@ function AskExpertPageContent() {
         });
       }
 
-      // Debug: Log message creation for Mode 3
-      console.group('📝 [Mode 3 Debug] Creating Assistant Message');
-      console.log('Mode:', mode);
+      // Debug: Log message creation with actual mode
+      // Golden Rule: 'autonomous' = Mode 4 (Agentic + Auto), 'multi-expert' = Mode 3 (Agentic + Manual)
+      const modeNumber = mode === 'manual' ? 1 : mode === 'automatic' ? 2 : mode === 'autonomous' ? 4 : 3;
+      console.group(`📝 [Mode ${modeNumber} Debug] Creating Assistant Message`);
+      console.log('Mode:', mode, `(Mode ${modeNumber})`);
       console.log('Content length:', fullResponse.length);
       console.log('Content preview:', fullResponse.substring(0, 100));
       console.log('Selected agent:', selectedAgent);
@@ -1648,9 +1649,9 @@ function AskExpertPageContent() {
 
       setMessages(prev => {
         const updated = [...prev, assistantMessage];
-        console.log('📊 [Mode 3 Debug] Messages array updated. Total messages:', updated.length);
-        console.log('📊 [Mode 3 Debug] Last message role:', updated[updated.length - 1].role);
-        console.log('📊 [Mode 3 Debug] Last message agent:', updated[updated.length - 1].selectedAgent);
+        console.log(`📊 [Mode ${modeNumber} Debug] Messages array updated. Total messages:`, updated.length);
+        console.log(`📊 [Mode ${modeNumber} Debug] Last message role:`, updated[updated.length - 1].role);
+        console.log(`📊 [Mode ${modeNumber} Debug] Last message agent:`, updated[updated.length - 1].selectedAgent);
         return updated;
       });
       const branchReasoning = activeBranch?.reasoning;
@@ -1983,123 +1984,6 @@ function AskExpertPageContent() {
               className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 overflow-hidden"
             >
               <div className="p-4 space-y-4">
-                {/* Workflow Selector */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Workflow (Optional)
-                  </label>
-                  <WorkflowSelector
-                    selectedWorkflowId={selectedWorkflowId}
-                    onWorkflowChange={(workflowId) => {
-                      setSelectedWorkflowId(workflowId);
-                      if (workflowId) {
-                        // Fetch workflow details
-                        fetch(`/api/workflows/${workflowId}`)
-                          .then(res => res.json())
-                          .then(data => {
-                            if (data.workflow) {
-                              setSelectedWorkflow(data.workflow);
-                            }
-                          })
-                          .catch(err => console.error('Error fetching workflow:', err));
-                      } else {
-                        setSelectedWorkflow(null);
-                      }
-                    }}
-                  />
-                </div>
-
-                {/* Model Selector */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Model
-                  </label>
-                  <select
-                    value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <optgroup label="OpenAI">
-                      <option value="gpt-4">GPT-4 Turbo</option>
-                      <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                    </optgroup>
-                    <optgroup label="Medical AI">
-                      <option value="llama-medical">Llama 3.2 Medical (3B)</option>
-                      <option value="llama-clinical">Llama 3.2 Clinical (1B)</option>
-                      <option value="biogpt">BioGPT Research</option>
-                    </optgroup>
-                  </select>
-                </div>
-
-                {/* Test Interface - Quick Mode Testing */}
-                <div className="p-3 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg border border-green-200 dark:border-green-700">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-green-600 dark:text-green-400" />
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                        Quick Test
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                    Test all 4 modes with sample queries to verify deep agents (5-level hierarchy) and hybrid search (Neo4j + Pinecone + Supabase)
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setIsAutomatic(false);
-                        setIsAutonomous(false);
-                        setInputValue("What are the FDA requirements for IND submission?");
-                        setEnableRAG(true);
-                      }}
-                      className="text-xs h-8"
-                    >
-                      Test Mode 1
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setIsAutomatic(true);
-                        setIsAutonomous(false);
-                        setInputValue("Explain the clinical trial design process");
-                        setEnableRAG(true);
-                      }}
-                      className="text-xs h-8"
-                    >
-                      Test Mode 2
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setIsAutomatic(true);
-                        setIsAutonomous(true);
-                        setInputValue("Analyze the regulatory pathway for a new drug");
-                        setEnableRAG(true);
-                      }}
-                      className="text-xs h-8"
-                    >
-                      Test Mode 3
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setIsAutomatic(false);
-                        setIsAutonomous(true);
-                        setInputValue("Deep analysis of market access strategy");
-                        setEnableRAG(true);
-                      }}
-                      className="text-xs h-8"
-                    >
-                      Test Mode 4
-                    </Button>
-                  </div>
-                </div>
-
                 {/* Mode Selector Grid - Large Quadrant Style */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-3">

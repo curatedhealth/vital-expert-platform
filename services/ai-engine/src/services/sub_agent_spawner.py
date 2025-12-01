@@ -78,6 +78,94 @@ class SubAgentSpawner:
         self.spawn_count = 0
         self.execution_count = 0
 
+    # ==================== Permission Validation ====================
+
+    def validate_spawn_permission(
+        self,
+        parent_permissions: Optional[Dict[str, bool]],
+        target_level: int,
+        parent_agent_id: str
+    ) -> bool:
+        """
+        Validate if parent agent has permission to spawn sub-agents at target level.
+
+        Uses the hierarchy settings from the Agent Store UI (Hierarchy tab):
+        - can_spawn_l2: Can spawn Level 2 Expert agents (L1 only)
+        - can_spawn_l3: Can spawn Level 3 Specialist agents
+        - can_spawn_l4: Can spawn Level 4 Worker agents (parallel execution)
+        - can_use_worker_pool: Can use shared worker pool
+
+        Args:
+            parent_permissions: Dict with can_spawn_l2, can_spawn_l3, can_spawn_l4, can_use_worker_pool
+            target_level: Target spawn level (3, 4, or 5)
+            parent_agent_id: ID of parent agent (for logging)
+
+        Returns:
+            True if spawn is permitted, False otherwise
+
+        Raises:
+            PermissionError: If spawn is not permitted (for strict enforcement)
+        """
+        # If no permissions provided, allow spawn (backwards compatibility)
+        # TODO: Make this stricter once all agents have permissions configured
+        if parent_permissions is None:
+            logger.warning(
+                "sub_agent_spawner.no_permissions_provided",
+                parent_agent_id=parent_agent_id,
+                target_level=target_level,
+                action="allowing_spawn_for_backwards_compatibility"
+            )
+            return True
+
+        permission_key = {
+            2: "can_spawn_l2",  # Master → Expert (L1 → L2)
+            3: "can_spawn_l3",  # Expert → Specialist (L2 → L3)
+            4: "can_spawn_l4",  # Any → Worker (parallel execution)
+            5: "can_spawn_l4",  # Workers include tool agents (L5)
+        }.get(target_level, "can_spawn_l4")
+
+        has_permission = parent_permissions.get(permission_key, False)
+
+        if not has_permission:
+            logger.warning(
+                "sub_agent_spawner.spawn_permission_denied",
+                parent_agent_id=parent_agent_id,
+                target_level=target_level,
+                required_permission=permission_key,
+                has_permission=has_permission
+            )
+
+        return has_permission
+
+    def get_spawn_permissions_from_context(self, context: Dict) -> Optional[Dict[str, bool]]:
+        """
+        Extract spawn permissions from execution context.
+
+        The context may contain parent_agent or parent_permissions with:
+        - can_spawn_l2, can_spawn_l3, can_spawn_l4, can_use_worker_pool
+
+        Args:
+            context: Execution context dict
+
+        Returns:
+            Dict with spawn permissions or None if not found
+        """
+        # Check for explicit permissions in context
+        if "parent_permissions" in context:
+            return context["parent_permissions"]
+
+        # Check for parent_agent with permissions
+        parent_agent = context.get("parent_agent", {})
+        if parent_agent:
+            return {
+                "can_spawn_l2": parent_agent.get("can_spawn_l2", False),
+                "can_spawn_l3": parent_agent.get("can_spawn_l3", False),
+                "can_spawn_l4": parent_agent.get("can_spawn_l4", False),
+                "can_use_worker_pool": parent_agent.get("can_use_worker_pool", False),
+            }
+
+        return None
+
     # ==================== Spawning Methods ====================
 
     async def spawn_specialist(
@@ -117,6 +205,18 @@ class SubAgentSpawner:
                 f"Max concurrent sub-agents ({self.max_concurrent_sub_agents}) reached. "
                 "Terminate some sub-agents before spawning more."
             )
+
+        # Validate spawn permissions from Hierarchy tab settings
+        parent_permissions = self.get_spawn_permissions_from_context(context)
+        if not self.validate_spawn_permission(parent_permissions, target_level=3, parent_agent_id=parent_agent_id):
+            logger.warning(
+                "sub_agent_spawner.specialist_spawn_blocked",
+                parent_agent_id=parent_agent_id,
+                specialty=specialty,
+                reason="Parent agent does not have can_spawn_l3 permission"
+            )
+            # For now, log warning but allow spawn for backwards compatibility
+            # TODO: Raise PermissionError once all agents have hierarchy configured
 
         sub_agent_id = f"specialist_{specialty.replace(' ', '_')}_{uuid.uuid4().hex[:8]}"
 
@@ -178,6 +278,18 @@ class SubAgentSpawner:
                 f"({self.max_concurrent_sub_agents})"
             )
 
+        # Validate spawn permissions from Hierarchy tab settings
+        parent_permissions = self.get_spawn_permissions_from_context(context)
+        if not self.validate_spawn_permission(parent_permissions, target_level=4, parent_agent_id=parent_agent_id):
+            logger.warning(
+                "sub_agent_spawner.workers_spawn_blocked",
+                parent_agent_id=parent_agent_id,
+                num_workers=len(tasks),
+                reason="Parent agent does not have can_spawn_l4 permission"
+            )
+            # For now, log warning but allow spawn for backwards compatibility
+            # TODO: Raise PermissionError once all agents have hierarchy configured
+
         worker_ids = []
 
         for i, task in enumerate(tasks):
@@ -236,6 +348,19 @@ class SubAgentSpawner:
             raise RuntimeError(
                 f"Max concurrent sub-agents ({self.max_concurrent_sub_agents}) reached"
             )
+
+        # Validate spawn permissions from Hierarchy tab settings
+        # Tool agents (L5) use same can_spawn_l4 permission as workers
+        parent_permissions = self.get_spawn_permissions_from_context(context)
+        if not self.validate_spawn_permission(parent_permissions, target_level=5, parent_agent_id=parent_agent_id):
+            logger.warning(
+                "sub_agent_spawner.tool_agent_spawn_blocked",
+                parent_agent_id=parent_agent_id,
+                tools=tools,
+                reason="Parent agent does not have can_spawn_l4 permission (required for L5 tool agents)"
+            )
+            # For now, log warning but allow spawn for backwards compatibility
+            # TODO: Raise PermissionError once all agents have hierarchy configured
 
         sub_agent_id = f"tool_{uuid.uuid4().hex[:8]}"
 

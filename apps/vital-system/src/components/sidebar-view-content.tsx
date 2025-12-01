@@ -925,6 +925,265 @@ export function SidebarPersonasContent() {
   )
 }
 
+export function SidebarValueContent() {
+  const [ontologyStats, setOntologyStats] = useState({
+    functions: 0,
+    roles: 0,
+    personas: 0,
+    agents: 0,
+    coverage: 0,
+  });
+  const [selectedFunction, setSelectedFunction] = useState<string>('all');
+  const [functions, setFunctions] = useState<Array<{ id: string; name: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOntologyData = async () => {
+      try {
+        setLoading(true);
+        // Fetch hierarchy data for stats
+        const res = await fetch('/api/ontology-investigator/hierarchy');
+        if (res.ok) {
+          const data = await res.json();
+          // Map response - summary has aggregated counts, layers has detailed data
+          setOntologyStats({
+            functions: data.summary?.total_functions || data.layers?.L1_functions?.count || 0,
+            roles: data.summary?.total_roles || data.layers?.L3_roles?.count || 0,
+            personas: data.summary?.total_personas || data.layers?.L4_personas?.count || 0,
+            agents: data.summary?.total_agents || data.layers?.L7_agents?.count || 0,
+            coverage: data.summary?.coverage_percentage || 0,
+          });
+
+          // Extract function names for filter - API returns functions array
+          if (data.functions && Array.isArray(data.functions)) {
+            setFunctions(data.functions.map((f: any) => ({
+              id: f.id || f.slug || '',
+              name: f.name || 'Unknown'
+            })));
+          } else if (data.layers?.L1_functions?.data) {
+            // Fallback to layers data if functions not directly in response
+            setFunctions(data.layers.L1_functions.data.map((f: any) => ({
+              id: f.id || f.slug || '',
+              name: f.name || 'Unknown'
+            })));
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching ontology stats:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOntologyData();
+  }, []);
+
+  // Dispatch filter change event
+  const handleFunctionFilter = (funcId: string) => {
+    setSelectedFunction(funcId);
+    window.dispatchEvent(new CustomEvent('value-filter-change', {
+      detail: { function: funcId }
+    }));
+  };
+
+  return (
+    <>
+      {/* Quick Stats */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <BarChart className="h-3.5 w-3.5" />
+                Quick Stats
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <div className="px-3 py-2 space-y-3">
+                {loading ? (
+                  <div className="text-sm text-muted-foreground">Loading stats...</div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 bg-blue-50 rounded-lg text-center">
+                        <p className="text-lg font-bold text-blue-700">{ontologyStats.functions}</p>
+                        <p className="text-xs text-blue-600">Functions</p>
+                      </div>
+                      <div className="p-2 bg-green-50 rounded-lg text-center">
+                        <p className="text-lg font-bold text-green-700">{ontologyStats.roles}</p>
+                        <p className="text-xs text-green-600">Roles</p>
+                      </div>
+                      <div className="p-2 bg-purple-50 rounded-lg text-center">
+                        <p className="text-lg font-bold text-purple-700">{ontologyStats.personas}</p>
+                        <p className="text-xs text-purple-600">Personas</p>
+                      </div>
+                      <div className="p-2 bg-orange-50 rounded-lg text-center">
+                        <p className="text-lg font-bold text-orange-700">{ontologyStats.agents}</p>
+                        <p className="text-xs text-orange-600">AI Agents</p>
+                      </div>
+                    </div>
+                    {/* Coverage Bar */}
+                    <div className="pt-2">
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-muted-foreground">AI Coverage</span>
+                        <span className="font-medium">{ontologyStats.coverage.toFixed(0)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all"
+                          style={{ width: `${ontologyStats.coverage}%` }}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Filter by Function */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Building2 className="h-3.5 w-3.5" />
+                Filter by Function
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => handleFunctionFilter('all')}
+                    isActive={selectedFunction === 'all'}
+                  >
+                    <LayersIcon className="h-4 w-4" />
+                    <span>All Functions</span>
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      {ontologyStats.functions}
+                    </Badge>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {functions.slice(0, 8).map((func) => (
+                  <SidebarMenuItem key={func.id}>
+                    <SidebarMenuButton
+                      onClick={() => handleFunctionFilter(func.id)}
+                      isActive={selectedFunction === func.id}
+                    >
+                      <Building2 className="h-4 w-4" />
+                      <span className="truncate">{func.name}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* AI Companion Suggestions */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Wand2 className="h-3.5 w-3.5" />
+                AI Suggestions
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <div className="px-3 py-2 space-y-2">
+                <p className="text-xs text-muted-foreground mb-2">
+                  Ask the AI Companion about:
+                </p>
+                {[
+                  { text: 'What roles need AI agents?', icon: Target },
+                  { text: 'Show coverage gaps by function', icon: Shield },
+                  { text: 'Top AI transformation opportunities', icon: TrendingUp },
+                  { text: 'How are personas distributed?', icon: Users },
+                ].map((suggestion, idx) => {
+                  const Icon = suggestion.icon;
+                  return (
+                    <button
+                      key={idx}
+                      className="w-full text-left p-2 text-xs bg-muted/50 rounded-md hover:bg-muted transition-colors flex items-center gap-2"
+                      onClick={() => {
+                        window.dispatchEvent(new CustomEvent('value-ai-suggestion', {
+                          detail: { question: suggestion.text }
+                        }));
+                      }}
+                    >
+                      <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>{suggestion.text}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Quick Actions */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Zap className="h-3.5 w-3.5" />
+                Quick Actions
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/agents/create">
+                      <Bot className="h-4 w-4" />
+                      <span>Create AI Agent</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/admin?view=personas">
+                      <Users className="h-4 w-4" />
+                      <span>Manage Personas</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/admin?view=roles">
+                      <Shield className="h-4 w-4" />
+                      <span>Manage Roles</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+    </>
+  )
+}
+
 export function SidebarAdminContent() {
   const router = useRouter()
   const searchParams = useSearchParams()

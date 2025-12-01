@@ -271,6 +271,49 @@ services/ai-engine/src/models/
 
 ---
 
+## 💬 **Conversation History & Session Management** (Nov 30, 2024)
+
+### **Problem Solved**
+- Sessions in sidebar showed generic "Ask Expert" instead of conversation topics
+- Clicking sessions didn't load conversation history
+- No persistence of conversation messages to database
+
+### **Implementation Summary**
+
+#### **1. Title Generation** ✅
+- Auto-generates title from first 50 characters of user's first message
+- Truncates at word boundary to avoid mid-word cuts
+- Location: `apps/vital-system/src/app/api/ask-expert/route.ts`
+
+#### **2. Conversation Persistence** ✅
+- `saveConversation()` now upserts to `conversations` table
+- Messages stored in `context.messages` JSONB field
+- Also maintains backward compatibility with `chat_messages` table
+- Title generated only for NEW conversations
+
+#### **3. API `conversationId` Parameter** ✅
+- GET `/api/ask-expert?conversationId=<uuid>` returns single conversation
+- Returns full `context.messages` array for session restoration
+- Includes agent info for display
+
+#### **4. Sidebar-to-Page Communication** ✅
+- CustomEvent pattern: `ask-expert:open-chat`
+- Sidebar dispatches event on click
+- Page listens and fetches full conversation
+
+### **Files Modified**
+| File | Change |
+|------|--------|
+| `apps/vital-system/src/app/api/ask-expert/route.ts` | Added conversationId param, title generation, upsert |
+| `apps/vital-system/src/contexts/ask-expert-context.tsx` | Added `title` to interface |
+| `apps/vital-system/src/components/sidebar-ask-expert.tsx` | Event dispatch, title display |
+| `apps/vital-system/src/app/(app)/ask-expert/page.tsx` | Event listener, session restoration |
+
+### **Documentation**
+- Full implementation details: `CONVERSATION_HISTORY_IMPLEMENTATION.md`
+
+---
+
 ## 🎯 **Next Steps**
 
 ### **Immediate (Required for full privacy):**
@@ -326,6 +369,7 @@ services/ai-engine/src/models/
 **Report Generated:** 2025-11-26  
 **System Status:** 🟢 Production-Ready  
 **All Critical Features:** ✅ Operational
+
 
 
 

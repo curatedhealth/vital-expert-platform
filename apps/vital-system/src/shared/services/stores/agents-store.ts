@@ -130,7 +130,7 @@ const convertDbAgentToStoreFormat = (dbAgent: DbAgent): Agent => {
     avatar: dbAgent.avatar || '',
     color: dbAgent.color || '#6366f1',
     capabilities: Array.isArray(dbAgent.capabilities) ? dbAgent.capabilities as string[] : [],
-    rag_enabled: dbAgent.rag_enabled ?? false,
+    rag_enabled: dbAgent.rag_enabled ?? true, // RAG enabled by default for all agents
     temperature: dbAgent.temperature ?? 0.7,
     max_tokens: dbAgent.max_tokens ?? 2000,
     is_custom: dbAgent.is_custom ?? false,

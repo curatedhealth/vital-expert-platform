@@ -18,6 +18,8 @@ from .search.graph_search import get_graph_search
 from .search.fusion import get_hybrid_fusion
 from .evidence_builder import get_evidence_builder
 from .reranker import get_reranker_service
+from .source_authority_booster import get_source_authority_booster
+from .citation_enricher import get_citation_enricher, CitationStyle
 
 logger = structlog.get_logger()
 
@@ -128,7 +130,7 @@ class GraphRAGService:
             
             # Step 5: Hybrid fusion
             fusion_weights = profile.get_fusion_weights()
-            
+
             fused_chunks = self.hybrid_fusion.fuse(
                 vector_results=vector_results,
                 keyword_results=keyword_results,
@@ -136,7 +138,26 @@ class GraphRAGService:
                 weights=fusion_weights,
                 top_k=top_k
             )
-            
+
+            # Step 5.5: Apply source authority boosting
+            # Boosts results from authoritative sources (FDA, NEJM) and document types (peer_review, guideline)
+            try:
+                from services.database_service import get_supabase_client
+                supabase_client = await get_supabase_client()
+                authority_booster = await get_source_authority_booster(supabase_client)
+                fused_chunks = await authority_booster.boost_results(fused_chunks)
+                logger.info(
+                    "authority_boost_step_complete",
+                    agent_id=str(request.agent_id),
+                    chunk_count=len(fused_chunks)
+                )
+            except Exception as boost_error:
+                logger.warning(
+                    "authority_boost_skipped",
+                    agent_id=str(request.agent_id),
+                    error=str(boost_error)
+                )
+
             # Step 6: Optional reranking
             rerank_applied = False
             if profile.rerank_enabled and profile.rerank_model:
@@ -146,14 +167,46 @@ class GraphRAGService:
                     chunks=fused_chunks,
                     top_k=top_k
                 )
-                
+
                 if rerank_applied:
                     logger.info(
                         "reranking_applied",
                         agent_id=str(request.agent_id),
                         model=profile.rerank_model
                     )
-            
+
+            # Step 6.5: Enrich citations from Supabase
+            # Fetches source, document type, publication date for proper citations
+            if request.include_citations and fused_chunks:
+                try:
+                    citation_enricher = await get_citation_enricher()
+                    doc_ids = [chunk.metadata.get('doc_id') for chunk in fused_chunks if chunk.metadata.get('doc_id')]
+                    citation_data = await citation_enricher.enrich_citations(doc_ids)
+
+                    # Update chunk sources with enriched citation data
+                    # Convert citation style string to enum
+                    citation_style = CitationStyle.from_string(request.citation_style)
+
+                    for chunk in fused_chunks:
+                        doc_id = chunk.metadata.get('doc_id')
+                        if doc_id and doc_id in citation_data:
+                            cd = citation_data[doc_id]
+                            chunk.source.url = cd.to_url()
+                            chunk.source.citation = cd.format_citation(style=citation_style)
+                            chunk.source.title = cd.title  # Update with full title
+
+                    logger.info(
+                        "citations_enriched",
+                        agent_id=str(request.agent_id),
+                        enriched_count=len(citation_data)
+                    )
+                except Exception as enrich_error:
+                    logger.warning(
+                        "citation_enrichment_skipped",
+                        agent_id=str(request.agent_id),
+                        error=str(enrich_error)
+                    )
+
             # Step 7: Build evidence and citations
             evidence_builder = get_evidence_builder(
                 max_tokens=profile.context_window_tokens

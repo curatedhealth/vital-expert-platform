@@ -350,35 +350,41 @@ export async function POST(request: NextRequest) {
             }
 
             case 'autonomous': {
-              // MODE 3: Autonomous-Automatic -> Use Mode 2 (automatic agent selection)
-              console.log('🎯 [Orchestrate] Routing to Mode 2 (automatic) for autonomous mode');
+              // MODE 4: Agentic + Auto Selection (system picks agent + autonomous reasoning)
+              // Golden Rule: 'autonomous' = Mode 4 (Agentic + Auto)
+              console.log('🎯 [Orchestrate] Routing to Mode 4: Agentic + Auto Selection');
 
-              const mode2Stream = await executeMode2({
-                message: body.message,
-                conversationHistory: body.conversationHistory,
-                enableRAG: body.enableRAG !== false,
-                enableTools: body.enableTools ?? true,
-                model: body.model,
-                temperature: body.temperature ?? 0.7,
-                maxTokens: body.maxTokens ?? 2000,
-                userId: body.userId || user?.id,
-                tenantId,
-                sessionId
-              });
-
-              // Stream chunks
               try {
-                for await (const chunk of mode2Stream) {
+                const mode3Stream = executeMode3({
+                  message: body.message,
+                  conversationHistory: body.conversationHistory,
+                  enableRAG: body.enableRAG !== false,
+                  enableTools: body.enableTools ?? true,
+                  requestedTools: body.requestedTools,
+                  selectedRagDomains: body.selectedRagDomains,
+                  model: body.model,
+                  temperature: body.temperature ?? 0.7,
+                  maxTokens: body.maxTokens ?? 2000,
+                  maxIterations: body.maxIterations ?? 10,
+                  confidenceThreshold: body.confidenceThreshold ?? 0.95,
+                  userId: body.userId || user?.id,
+                  tenantId,
+                  sessionId
+                });
+
+                // Stream chunks (Mode 4 uses executeMode3 which yields AutonomousStreamChunk objects)
+                for await (const chunk of mode3Stream) {
                   if (controller.desiredSize === null) {
-                    console.log('⚠️ [Orchestrate] Controller closed, stopping Mode 3 stream');
+                    console.log('⚠️ [Orchestrate] Controller closed, stopping Mode 4 stream');
                     break;
                   }
-                  
+
                   const event = {
-                    type: chunk.type,
+                    type: chunk.type || 'chunk',
                     content: chunk.content,
                     metadata: chunk.metadata,
-                    timestamp: chunk.timestamp
+                    sources: chunk.sources,
+                    timestamp: chunk.timestamp || new Date().toISOString()
                   };
                   controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
                 }
@@ -387,21 +393,29 @@ export async function POST(request: NextRequest) {
                   controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
                 }
               } catch (error) {
-                console.error('❌ [Orchestrate] Error streaming Mode 3:', error);
+                console.error('❌ [Orchestrate] Error executing Mode 4:', error);
                 if (controller.desiredSize !== null) {
-                  controller.enqueue(encoder.encode(`data: {"error":"${error instanceof Error ? error.message : 'Unknown error'}"}\n\n`));
+                  const errorMessage = error instanceof Error ? error.message : 'Unknown error during Mode 4 execution';
+                  const errorEvent = {
+                    type: 'error',
+                    message: errorMessage,
+                    content: errorMessage,
+                    timestamp: new Date().toISOString()
+                  };
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
                 }
               }
               break;
             }
 
             case 'multi-expert': {
-              // MODE 4: Autonomous-Manual
+              // MODE 3: Agentic + Manual Selection (user picks agent + autonomous reasoning)
+              // Golden Rule: 'multi-expert' = Mode 3 (Agentic + Manual)
               if (!body.agentId) {
                 const errorEvent = {
                   type: 'error',
-                  message: 'Agent ID required for multi-expert mode',
-                  content: 'Agent ID required for multi-expert mode',
+                  message: 'Agent ID required for Mode 3 (Agentic + Manual)',
+                  content: 'Agent ID required for Mode 3 (Agentic + Manual)',
                   timestamp: new Date().toISOString()
                 };
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
@@ -409,36 +423,42 @@ export async function POST(request: NextRequest) {
                 return;
               }
 
-              console.log('🎯 [Orchestrate] Routing to Mode 1 (manual) for multi-expert mode');
+              console.log('🎯 [Orchestrate] Routing to Mode 3: Agentic + Manual Selection (user-selected agent)');
 
               try {
-                const mode1Stream = await executeMode1({
+                const mode4Stream = executeMode4({
                   agentId: body.agentId,
                   message: body.message,
                   conversationHistory: body.conversationHistory,
                   enableRAG: body.enableRAG !== false,
-                  enableTools: body.enableTools ?? true,
+                  enableTools: body.enableTools !== false, // Tools enabled by default
+                  requestedTools: body.requestedTools,
+                  selectedRagDomains: body.selectedRagDomains,
                   model: body.model,
                   temperature: body.temperature ?? 0.7,
                   maxTokens: body.maxTokens ?? 2000,
+                  maxIterations: body.maxIterations ?? 10,
+                  confidenceThreshold: body.confidenceThreshold ?? 0.95,
                   tenantId,
                   sessionId,
                   userId: body.userId || user?.id
                 });
 
-                // Stream chunks (Mode 1 yields strings, not objects)
+                // Stream chunks (Mode 3 uses executeMode4 which yields AutonomousStreamChunk objects)
                 try {
-                  for await (const chunk of mode1Stream) {
+                  for await (const chunk of mode4Stream) {
                     if (controller.desiredSize === null) {
-                      console.log('⚠️ [Orchestrate] Controller closed, stopping Mode 4 stream');
+                      console.log('⚠️ [Orchestrate] Controller closed, stopping Mode 3 stream');
                       break;
                     }
 
-                    // Mode 1 yields strings, wrap them in event format
+                    // Mode 3 yields objects with type, content, metadata
                     const event = {
-                      type: 'chunk',
-                      content: chunk,
-                      timestamp: new Date().toISOString()
+                      type: chunk.type || 'chunk',
+                      content: chunk.content,
+                      metadata: chunk.metadata,
+                      sources: chunk.sources,
+                      timestamp: chunk.timestamp || new Date().toISOString()
                     };
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
                   }
@@ -447,9 +467,9 @@ export async function POST(request: NextRequest) {
                     controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
                   }
                 } catch (streamError) {
-                  console.error('❌ [Orchestrate] Error streaming Mode 4:', streamError);
+                  console.error('❌ [Orchestrate] Error streaming Mode 3:', streamError);
                   if (controller.desiredSize !== null) {
-                    const errorMessage = streamError instanceof Error ? streamError.message : 'Unknown error during Mode 4 streaming';
+                    const errorMessage = streamError instanceof Error ? streamError.message : 'Unknown error during Mode 3 streaming';
                     const errorEvent = {
                       type: 'error',
                       message: errorMessage,
@@ -460,9 +480,9 @@ export async function POST(request: NextRequest) {
                   }
                 }
               } catch (mode4Error) {
-                console.error('❌ [Orchestrate] Error executing Mode 4:', mode4Error);
+                console.error('❌ [Orchestrate] Error executing Mode 3:', mode4Error);
                 if (controller.desiredSize !== null) {
-                  const errorMessage = mode4Error instanceof Error ? mode4Error.message : 'Unknown error during Mode 4 execution';
+                  const errorMessage = mode4Error instanceof Error ? mode4Error.message : 'Unknown error during Mode 3 execution';
                   const errorEvent = {
                     type: 'error',
                     message: errorMessage,

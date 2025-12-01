@@ -1,9 +1,85 @@
 # VITAL Platform - Comprehensive Guide for AI Assistants
 
-**Version**: 2.1  
-**Last Updated**: 2025-11-22  
-**Purpose**: Master reference for all AI assistants working on VITAL Platform  
+**Version**: 2.2
+**Last Updated**: 2025-11-26
+**Purpose**: Master reference for all AI assistants working on VITAL Platform
 **Scope**: Rules, architecture, agents, workflows, and standards
+
+---
+
+## 🔴 CRITICAL: Platform Positioning & Regulatory Classification
+
+### What VITAL Expert IS:
+
+**A business operations and strategic intelligence platform** that provides healthcare organizations with AI-powered expertise for:
+
+- ✅ Strategic planning and decision support
+- ✅ Regulatory pathway development (not submission)
+- ✅ Clinical trial design consultation (not execution)
+- ✅ Market access strategy (not implementation)
+- ✅ Innovation methodology and frameworks
+- ✅ Institutional knowledge management
+- ✅ Business process automation
+
+### What VITAL Expert IS NOT:
+
+- ❌ **NOT** a medical device or Software as Medical Device (SaMD)
+- ❌ **NOT** a clinical decision support system (CDSS)
+- ❌ **NOT** providing medical advice to patients or clinicians
+- ❌ **NOT** delivering healthcare services
+- ❌ **NOT** making clinical determinations or diagnoses
+- ❌ **NOT** a telemedicine or care delivery platform
+- ❌ **NOT** subject to FDA medical device regulations
+
+### Regulatory Classification:
+
+| Category | Classification |
+|----------|----------------|
+| **Product Type** | Business Software / Enterprise SaaS |
+| **FDA Status** | Not applicable - business operations software |
+| **EU MDR** | Not applicable - not a medical device |
+
+### Global Compliance Framework:
+
+| Region | Regulation | Applicability |
+|--------|------------|---------------|
+| **Global** | SOC 2 Type II, ISO 27001 | All deployments |
+| **US** | HIPAA | Only if PHI uploaded (requires BAA) |
+| **EU/EEA** | GDPR | EU customer data, EU-based users |
+| **UK** | UK GDPR | UK customer data post-Brexit |
+| **Brazil** | LGPD | Brazilian customer data |
+| **Canada** | PIPEDA | Canadian customer data |
+| **China** | PIPL | Chinese customer data (if applicable) |
+| **Japan** | APPI | Japanese customer data |
+| **Australia** | Privacy Act | Australian customer data |
+
+### Industry-Specific Compliance (As Applicable):
+
+| Domain | Regulations |
+|--------|-------------|
+| **Pharmaceutical** | 21 CFR Part 11, GxP, ICH guidelines |
+| **Financial** | SOX (if publicly traded client) |
+| **Clinical Trials** | GCP, local ethics requirements |
+| **Market Access** | Sunshine Act, anti-kickback compliance |
+
+### Domain Clarification:
+
+When agents mention "clinical" in the VITAL context, this refers to:
+- ✅ Clinical trial **business operations** (site management, enrollment forecasting)
+- ✅ Clinical development **strategy** (pathway planning, feasibility)
+- ✅ Clinical data **analysis for business decisions** (market sizing, competitive intelligence)
+- ❌ NOT clinical care delivery
+- ❌ NOT patient treatment decisions
+- ❌ NOT diagnostic or therapeutic recommendations
+
+### Required Disclaimers for All Agents:
+
+Every agent must include appropriate disclaimers:
+```
+"VITAL provides strategic business intelligence for healthcare organizations.
+This is not medical advice. Clinical decisions should be made by qualified
+healthcare professionals based on patient-specific circumstances."
+```
 
 ---
 
@@ -413,7 +489,7 @@ Tier 3 (Ultra-Specialist):
 - Max tokens: 4000
 - Context window: 16000
 - Accuracy target: >95%
-- Use case: Safety-critical, complex reasoning, medical diagnosis
+- Use case: Business-critical decisions, complex reasoning, regulatory strategy
 
 Tier 2 (Specialist):
 - Models: GPT-4 ($0.12/query), GPT-4-Turbo ($0.10/query)
@@ -432,24 +508,29 @@ Tier 1 (Foundational):
 - Use case: High-volume, foundational queries, escalates to specialists
 ```
 
-### Safety-Critical Agent Requirements
+### Business-Critical Agent Requirements
 
-**For agents handling clinical decisions, dosing, drug interactions, or patient safety:**
+**For agents handling high-stakes business decisions, regulatory strategy, or compliance-sensitive operations:**
 
 1. **MUST use Tier-3 models** (GPT-4 or Claude-3-Opus)
-   - NO EXCEPTIONS - patient safety is non-negotiable
-   - Examples: Dosing Calculator, Drug Interaction Checker, Pediatric Dosing Specialist
+   - NO EXCEPTIONS - business accuracy is non-negotiable for strategic decisions
+   - Examples: Regulatory Strategy Advisor, Market Access Analyst, Clinical Trial Design Consultant
 
 2. **MUST have EVIDENCE REQUIREMENTS section** in system_prompt
-   - Always cite clinical sources
-   - Use evidence hierarchy (Level 1A > 1B > 2A > 2B > 3)
+   - Always cite domain-appropriate authoritative sources:
+     * Regulatory agents: FDA guidance, EMA guidelines, ICH standards
+     * Compliance agents: Legal statutes, industry regulations, audit standards
+     * Market Access agents: Payer policies, HTA reports, pricing data
+     * Clinical Operations agents: Protocol standards, GCP guidelines, site data
+     * Commercial agents: Market research, competitive intelligence, sales data
+   - Use evidence hierarchy appropriate to domain (Level 1A > 1B > 2A > 2B > 3)
    - Acknowledge uncertainty explicitly
-   - Never make medical recommendations without supporting evidence
+   - Never make recommendations without supporting domain evidence
 
-3. **MUST have safety flags enabled**
-   - hipaa_compliant: true
+3. **MUST have appropriate flags enabled**
    - audit_trail_enabled: true
-   - data_classification: "confidential"
+   - data_classification: "confidential" (for business-sensitive data)
+   - hipaa_compliant: true (only if handling PHI for strategic analysis)
 
 ### System Prompt Structure (6-Section Framework)
 
@@ -460,9 +541,9 @@ Tier 1 (Foundational):
 3. **YOU NEVER:** [3-5 safety-critical boundaries with rationale]
 4. **SUCCESS CRITERIA:** [Measurable performance targets]
 5. **WHEN UNSURE:** [Escalation protocol with confidence thresholds]
-6. **EVIDENCE REQUIREMENTS:** [For medical/regulated agents - MANDATORY]
-   - What sources to cite
-   - Evidence level hierarchy
+6. **EVIDENCE REQUIREMENTS:** [For all domain-specific agents - MANDATORY]
+   - What domain-appropriate sources to cite (regulatory, legal, market, clinical ops, etc.)
+   - Evidence level hierarchy for the domain
    - When to acknowledge uncertainty
    - Confidence score requirements
 
@@ -711,22 +792,50 @@ echo "✅ All checks passed!"
 - **Session**: JWT stored in httpOnly cookie
 - **Authorization**: RLS policies enforce tenant isolation
 
-### HIPAA Compliance
+### Global Data Protection Compliance
 
-**For medical/clinical agents:**
+**Note**: VITAL is a business operations platform with global compliance capabilities configured per client and region.
+
+#### US Compliance (HIPAA - When Applicable)
+**HIPAA applies only when clients upload PHI for strategic analysis:**
+- BAA (Business Associate Agreement) required
 - All data encrypted at rest and in transit
 - Audit trails for all operations
 - No PHI in logs or error messages
 - Access controls via RLS policies
-- Data retention policies enforced
+
+#### EU/EEA Compliance (GDPR)
+**For EU customer data and EU-based users:**
+- Data Processing Agreement (DPA) required
+- Right to erasure (data deletion on request)
+- Data portability support
+- Privacy by design principles
+- Data minimization practices
+- Lawful basis for processing documented
+- Cross-border transfer mechanisms (SCCs, adequacy decisions)
+
+#### Other Regional Compliance
+| Region | Key Requirements |
+|--------|------------------|
+| **UK (UK GDPR)** | Similar to GDPR, UK-specific DPA |
+| **Brazil (LGPD)** | Consent management, DPO appointment |
+| **Canada (PIPEDA)** | Consent, access rights, retention limits |
+| **Japan (APPI)** | Cross-border transfer rules, purpose limitation |
+| **Australia (Privacy Act)** | APP compliance, breach notification |
+
+#### Default Security (All Deployments)
+- SOC 2 Type II controls
+- ISO 27001 aligned practices
+- Business-sensitive data treated as confidential
+- Encryption at rest and in transit
 
 ### Data Classification
 
 ```
 Public:         Marketing content, agent descriptions
 Internal:       Agent configurations, templates
-Confidential:   Customer data, conversations
-Regulated:      Medical data, clinical information (HIPAA)
+Confidential:   Customer data, conversations, business strategies
+Regulated:      PHI (US, requires BAA), Personal Data (EU/GDPR, requires DPA)
 ```
 
 ---

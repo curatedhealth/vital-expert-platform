@@ -1,5 +1,5 @@
 #!/bin/bash
-# Start VITAL AI Engine Backend (Port 8080)
+# Start VITAL AI Engine Backend (Port 8000)
 
 cd "/Users/hichamnaim/Downloads/Cursor/VITAL path/services/ai-engine"
 
@@ -12,6 +12,6 @@ if [ -f .env.local ]; then
 fi
 
 # Start uvicorn
-python3 -m uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8080
+python3 -m uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 
 

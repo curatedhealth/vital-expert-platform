@@ -445,6 +445,10 @@ export class AgentService {
     updates: Database['public']['Tables']['agents']['Update']
   ): Promise<AgentWithCategories> {
     try {
+      console.log('🔄 AgentService.updateAgent: Starting update');
+      console.log('- Agent ID:', id);
+      console.log('- Update fields:', Object.keys(updates));
+
       // Use API route to bypass RLS issues
       const response = await fetch(`/api/agents/${id}`, {
         method: 'PUT',
@@ -454,16 +458,24 @@ export class AgentService {
         body: JSON.stringify(updates),
       });
 
+      console.log('📡 AgentService.updateAgent: Response received');
+      console.log('- Status:', response.status);
+      console.log('- OK:', response.ok);
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
         console.error('❌ AgentService.updateAgent: API error');
         console.error('- Status:', response.status);
         console.error('- Error data:', errorData);
 
-        throw new Error(errorData.error || 'Failed to update agent');
+        throw new Error(errorData.error || `Failed to update agent (HTTP ${response.status})`);
       }
 
       const result = await response.json();
+      console.log('✅ AgentService.updateAgent: Success');
+      console.log('- Result success:', result.success);
+      console.log('- Agent ID returned:', result.agent?.id);
+
       // Transform the result to include categories
       return {
         ...result.agent,
@@ -472,7 +484,8 @@ export class AgentService {
 
     } catch (error) {
       console.error('❌ AgentService.updateAgent: Request error');
-      console.error('- Error:', error);
+      console.error('- Error type:', error?.constructor?.name);
+      console.error('- Error message:', error instanceof Error ? error.message : String(error));
 
       // Provide more specific error message
       let errorMessage = 'Failed to update agent';

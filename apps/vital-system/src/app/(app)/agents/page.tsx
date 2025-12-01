@@ -13,6 +13,8 @@ import { AgentsOverview } from '@/features/agents/components/agents-overview';
 import { AgentsTable } from '@/features/agents/components/agents-table';
 import { KnowledgeGraphVisualization } from '@/features/agents/components/knowledge-graph-view';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
+import { AgentEditFormEnhanced } from '@/features/agents/components/agent-edit-form-enhanced';
+import { agentService } from '@/features/agents/services/agent-service';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
 import { type Agent } from '@/lib/stores/chat-store';
@@ -29,6 +31,7 @@ function AgentsPageContent() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [editingAgent, setEditingAgent] = useState<AgentsStoreAgent | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEnhancedEditModal, setShowEnhancedEditModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'grid' | 'list' | 'table' | 'graph'>('overview');
 
   const handleTabChange = (value: string) => {
@@ -74,7 +77,7 @@ function AgentsPageContent() {
       avatar: agent.avatar || '🤖',
       color: agent.color || 'text-market-purple',
       capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
-      ragEnabled: agent.rag_enabled || false,
+      ragEnabled: agent.rag_enabled ?? true, // RAG enabled by default for all agents
       temperature: agent.temperature || 0.7,
       maxTokens: agent.max_tokens || 2000,
       isCustom: agent.is_custom || false,
@@ -95,34 +98,101 @@ function AgentsPageContent() {
     setSelectedAgent(chatStoreAgent);
   };
 
-  const handleEditAgent = (agent: Agent) => {
-    // Convert chat-store Agent to agents-store Agent format
-    const agentForEditing: AgentsStoreAgent = {
-      id: agent.id,
-      name: agent.name,
-      display_name: agent.name,
-      description: agent.description,
-      system_prompt: agent.systemPrompt || '',
-      model: agent.model || 'gpt-4',
-      avatar: agent.avatar || '🤖',
-      color: agent.color || 'text-market-purple',
-      capabilities: agent.capabilities || [],
-      rag_enabled: agent.ragEnabled || false,
-      temperature: agent.temperature || 0.7,
-      max_tokens: agent.maxTokens || 2000,
-      knowledge_domains: agent.knowledgeDomains || [],
-      business_function: agent.businessFunction || '',
-      role: agent.role || '',
-      status: 'active',
-      tier: 1,
-      priority: 1,
-      implementation_phase: 1,
-      is_custom: agent.isCustom || false,
-    };
+  const handleEditAgent = async (agent: Agent) => {
+    // Fetch full agent data from Supabase to pre-fill all form fields
+    // The chat-store Agent has limited fields, so we need the complete data
+    console.log('🔍 [Edit] Fetching full agent data for:', agent.id);
 
-    setEditingAgent(agentForEditing);
-    setShowCreateModal(true);
-    setSelectedAgent(null); // Close the details modal
+    try {
+      // First try to get from store (already loaded)
+      const { getAgentById } = useAgentsStore.getState();
+      let fullAgent = getAgentById(agent.id);
+
+      if (fullAgent) {
+        console.log('✅ [Edit] Found agent in store with full data');
+      } else {
+        // Fallback: fetch directly from API
+        console.log('🔄 [Edit] Agent not in store, fetching from API...');
+        const response = await fetch(`/api/agents/${agent.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          fullAgent = data.agent || data;
+          console.log('✅ [Edit] Fetched full agent from API');
+        }
+      }
+
+      if (fullAgent) {
+        // Use the full agent data - no lossy conversion needed
+        setEditingAgent(fullAgent as AgentsStoreAgent);
+        console.log('📝 [Edit] Setting editingAgent with full data:', {
+          id: fullAgent.id,
+          name: fullAgent.name,
+          hasTagline: !!fullAgent.tagline,
+          hasAvatarUrl: !!fullAgent.avatar_url,
+          hasFunctionId: !!fullAgent.function_id,
+          hasDepartmentId: !!fullAgent.department_id,
+          hasRoleId: !!fullAgent.role_id,
+          hasSystemPrompt: !!fullAgent.system_prompt,
+        });
+      } else {
+        // Fallback to minimal conversion if all else fails
+        console.warn('⚠️ [Edit] Could not fetch full agent, using minimal data');
+        const agentForEditing: AgentsStoreAgent = {
+          id: agent.id,
+          name: agent.name,
+          display_name: agent.name,
+          description: agent.description,
+          system_prompt: agent.systemPrompt || '',
+          model: agent.model || 'gpt-4',
+          avatar: agent.avatar || '',
+          color: agent.color || 'text-market-purple',
+          capabilities: agent.capabilities || [],
+          rag_enabled: agent.ragEnabled ?? true, // RAG enabled by default for all agents
+          temperature: agent.temperature || 0.7,
+          max_tokens: agent.maxTokens || 2000,
+          knowledge_domains: agent.knowledgeDomains || [],
+          business_function: agent.businessFunction || '',
+          role: agent.role || '',
+          status: 'active',
+          tier: agent.tier || 1,
+          priority: 1,
+          implementation_phase: 1,
+          is_custom: agent.isCustom || false,
+        };
+        setEditingAgent(agentForEditing);
+      }
+
+      setShowEnhancedEditModal(true);
+      setSelectedAgent(null); // Close the details modal
+    } catch (error) {
+      console.error('❌ [Edit] Error fetching full agent data:', error);
+      // Show error to user
+      alert('Failed to load agent data for editing. Please try again.');
+    }
+  };
+
+  // Handle saving agent updates from the enhanced edit form
+  const handleSaveAgentFromEnhanced = async (updates: Partial<AgentsStoreAgent>) => {
+    if (!editingAgent) {
+      console.error('[AgentsPage] No editing agent set');
+      throw new Error('No agent selected for editing');
+    }
+    try {
+      console.log('[AgentsPage] Saving agent updates:', {
+        agentId: editingAgent.id,
+        agentName: editingAgent.name,
+        updateFields: Object.keys(updates),
+      });
+      await agentService.updateAgent(editingAgent.id, updates);
+      console.log('[AgentsPage] Agent saved successfully');
+      setShowEnhancedEditModal(false);
+      setEditingAgent(null);
+      // Reload agents to reflect changes
+      window.location.reload();
+    } catch (error) {
+      console.error('[AgentsPage] Failed to save agent:', error);
+      throw error;
+    }
   };
 
   const handleAddAgentToChat = async (agent: AgentsStoreAgent) => {
@@ -429,7 +499,7 @@ function AgentsPageContent() {
               avatar: agent.avatar || '🤖',
               color: agent.color || 'text-market-purple',
               capabilities: agent.capabilities || [],
-              rag_enabled: agent.ragEnabled || false,
+              rag_enabled: agent.ragEnabled ?? true, // RAG enabled by default for all agents
               temperature: agent.temperature || 0.7,
               max_tokens: agent.maxTokens || 2000,
               knowledge_domains: agent.knowledgeDomains || [],
@@ -465,6 +535,19 @@ function AgentsPageContent() {
           editingAgent={editingAgent as any}
         />
       )}
+
+      {/* Enhanced Agent Edit Modal - 9 tabs with comprehensive configuration */}
+      <AgentEditFormEnhanced
+        agent={editingAgent as any}
+        open={showEnhancedEditModal}
+        onOpenChange={(open) => {
+          setShowEnhancedEditModal(open);
+          if (!open) {
+            setEditingAgent(null);
+          }
+        }}
+        onSave={handleSaveAgentFromEnhanced}
+      />
         </div>
       </div>
     </div>

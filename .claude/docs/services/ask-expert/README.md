@@ -1,7 +1,7 @@
 # Ask Expert System - Documentation Index
 
-**Last Updated:** 2025-11-26  
-**Status:** ✅ Production-Ready  
+**Last Updated:** 2025-11-30
+**Status:** ✅ Production-Ready
 **Version:** 2.0 (LangGraph 1.0+ / LangChain 0.3.x)
 
 ---
@@ -11,6 +11,7 @@
 ### **📋 Implementation & Status**
 - **`IMPLEMENTATION_STATUS.md`** ⭐ **START HERE** - Current system status, all 4 modes
 - **`IMPLEMENTATION_SUMMARY.md`** - Complete implementation details
+- **`CONVERSATION_HISTORY_IMPLEMENTATION.md`** - Session persistence, title generation, sidebar features
 - **`BUG_FIXES_REPORT.md`** - Critical bug fixes applied
 - **`TEST_REPORT.md`** - Test results and validation
 - **`QUICK_REFERENCE.md`** - Developer quick reference card
@@ -81,6 +82,9 @@ Read: `MODE3_OPTIMIZATIONS.py`, `MODE4_OPTIMIZATIONS.py` (15 min)
 - ✅ Sub-agent spawning
 - ✅ Citation tracking
 - ✅ Confidence scoring
+- ✅ **Conversation history persistence** (Nov 30)
+- ✅ **Auto-generated conversation titles** (Nov 30)
+- ✅ **Session restoration from sidebar** (Nov 30)
 
 ---
 
@@ -113,11 +117,13 @@ Read: `MODE3_OPTIMIZATIONS.py`, `MODE4_OPTIMIZATIONS.py` (15 min)
 - ✅ RAG namespace callable (fixed)
 - ✅ RLS functions missing (deployed)
 - ✅ Mode 3 performance (15% improvement)
+- ✅ **Conversation history not persisting** (Nov 30)
+- ✅ **Sidebar showing "Ask Expert" instead of topic** (Nov 30)
+- ✅ **Session restoration not working** (Nov 30)
 
 ### **In Progress:**
 - ⚠️ Mode 4 agent selector (returns too many agents)
 - ⚠️ Empty responses in some cases (agent orchestrator)
-- ⚠️ Conversation caching (planned)
 
 ---
 
@@ -131,6 +137,6 @@ For questions or issues:
 
 ---
 
-**System Status:** 🟢 Production-Ready  
-**Last Major Update:** 2025-11-26  
+**System Status:** 🟢 Production-Ready
+**Last Major Update:** 2025-11-30
 **Maintainer:** AI Engine Team

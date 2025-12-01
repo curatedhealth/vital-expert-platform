@@ -1,27 +1,66 @@
 """
-Mode 1: Interactive-Automatic Workflow
+Mode 2: Conversational + Auto Agent Selection
 
-Multi-turn conversation with automatic expert selection.
-System selects the best expert for each user message dynamically.
+ARCHITECTURE:
+┌─────────────────────────────────────────────────────────────────────┐
+│                    4-MODE ARCHITECTURE MATRIX                       │
+├─────────────────────┬───────────────────┬───────────────────────────┤
+│                     │ MANUAL SELECTION  │ AUTO SELECTION            │
+├─────────────────────┼───────────────────┼───────────────────────────┤
+│ CONVERSATIONAL      │ Mode 1            │ ★ MODE 2 (THIS)           │
+│ (Chat/Interactive)  │ User picks agent  │ System picks agent        │
+├─────────────────────┼───────────────────┼───────────────────────────┤
+│ AGENTIC             │ Mode 3            │ Mode 4                    │
+│ (ReAct/CoT/Goals)   │ User picks agent  │ System picks agent        │
+└─────────────────────┴───────────────────┴───────────────────────────┘
 
-Features:
+5-LEVEL DEEP AGENT HIERARCHY (Bi-directional):
+┌─────────────────────────────────────────────────────────────────────┐
+│ HUMAN ←─── L1→Human (escalation when confidence < threshold)       │
+│   ↓                                                                 │
+│ L1: MASTER AGENTS (Orchestrators)                                   │
+│   ├── Delegation: L1→L2 (route to experts)                         │
+│   └── Escalation: L2→L1 (complexity exceeded)                      │
+│                                                                     │
+│ L2: EXPERT AGENTS (AUTO-SELECTED via Hybrid RRF from 1000+ Store)  │
+│   ├── Delegation: L2→L3 (spawn specialists)                        │
+│   └── Escalation: L3→L2 (task exceeds specialization)              │
+│                                                                     │
+│ L3: SPECIALIST AGENTS (Spawned on-demand)                          │
+│   ├── Delegation: L3→L4 (parallel workers)                         │
+│   └── Escalation: L4→L3 (resource limits)                          │
+│                                                                     │
+│ L4: WORKER AGENTS (Parallel task executors)                        │
+│   ├── Delegation: L4→L5 (tool execution)                           │
+│   └── Escalation: L5→L4 (tool failures)                            │
+│                                                                     │
+│ L5: TOOL AGENTS (RAG, PubMed, APIs, Web Search)                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+GOLDEN RULES COMPLIANCE:
+- ✅ Uses LangGraph StateGraph (Golden Rule #1)
+- ✅ Caching at every stage (Golden Rule #2)
+- ✅ Tenant isolation enforced (Golden Rule #3)
+- ✅ RAG/Tools enforcement (Golden Rule #4)
+- ✅ Feedback-driven learning (Golden Rule #5)
+
+FEATURES:
+- Conversational chat-style interaction (like ChatGPT)
+- AUTOMATIC expert selection via Hybrid RRF (Postgres+Pinecone+Neo4j)
 - Multi-turn conversation with history
-- Automatic expert selection per turn
-- Can switch experts between messages
+- Can switch experts between messages dynamically
 - RAG enabled/disabled based on frontend toggle
 - Tools enabled/disabled based on frontend toggle
 - LLM model selection from frontend
-- Caching at every stage (Golden Rule #2)
-- Tenant isolation (Golden Rule #3)
 - Streaming support
 
-Frontend Mapping:
-- isAutomatic: false
-- isAutonomous: false
-- No agent pre-selected (selectedAgents=[])
+FRONTEND MAPPING:
+- isAutomatic: true (system auto-selects agent)
+- isAutonomous: false (conversational, not goal-driven)
+- selectedAgents: [] (system selects dynamically)
 
 Usage:
-    >>> workflow = Mode1InteractiveAutoWorkflow()
+    >>> workflow = Mode2InteractiveAutoWorkflow()
     >>> await workflow.initialize()
     >>> result = await workflow.execute(
     ...     tenant_id="550e8400-e29b-41d4-a716-446655440000",
@@ -57,32 +96,72 @@ from services.agent_selector_service import get_agent_selector_service
 from services.unified_rag_service import UnifiedRAGService
 from services.agent_orchestrator import AgentOrchestrator
 
+# Deep Agent Architecture imports (5-level hierarchy support)
+try:
+    from services.sub_agent_spawner import SubAgentSpawner
+    SUB_AGENT_AVAILABLE = True
+except ImportError:
+    SUB_AGENT_AVAILABLE = False
+    SubAgentSpawner = None
+
+try:
+    from services.evidence_based_selector import get_evidence_based_selector, AgentTier
+    EVIDENCE_BASED_AVAILABLE = True
+except ImportError:
+    EVIDENCE_BASED_AVAILABLE = False
+    get_evidence_based_selector = None
+    AgentTier = None
+
 logger = structlog.get_logger()
 
 
 class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrationMixin):
     """
-    Mode 1: Interactive-Automatic Workflow + Tool Chaining + Long-Term Memory
-    
+    Mode 2: Interactive-Automatic Workflow + Tool Chaining + Long-Term Memory + Deep Agent Architecture
+
+    5-Level Deep Agent Hierarchy:
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │ Level 1 (L1): MASTER ORCHESTRATOR                                   │
+    │   └─ Coordinates overall workflow, routes to experts               │
+    │                                                                     │
+    │ Level 2 (L2): EXPERT AGENTS (Selected via Hybrid RRF)             │
+    │   └─ Domain specialists (Regulatory, Clinical, Commercial)         │
+    │                                                                     │
+    │ Level 3 (L3): SPECIALIST AGENTS (Spawned on-demand)               │
+    │   └─ Deep expertise in sub-domains (FDA IND, Clinical Trials)      │
+    │                                                                     │
+    │ Level 4 (L4): WORKER AGENTS (Task executors)                       │
+    │   └─ Execute specific tasks (document analysis, calculations)      │
+    │                                                                     │
+    │ Level 5 (L5): TOOL AGENTS (External integrations)                  │
+    │   └─ RAG, Web Search, Database queries, APIs                       │
+    └─────────────────────────────────────────────────────────────────────┘
+
     Golden Rules Compliance:
     - ✅ Uses LangGraph StateGraph (Golden Rule #1)
     - ✅ Caching integrated at all nodes (Golden Rule #2)
     - ✅ Tenant validation enforced (Golden Rule #3)
     - ✅ Tool chaining for comprehensive queries (Golden Rule #4)
     - ✅ Feedback-driven learning with long-term memory (Golden Rule #5)
-    
+
+    NEW in Phase 3 (Deep Agent Architecture):
+    - ✅ SubAgentSpawner for L3/L4/L5 agent creation
+    - ✅ EvidenceBasedSelector for tier-based routing (Tier 1/2/3)
+    - ✅ Hybrid RRF agent selection (Postgres+Pinecone+Neo4j)
+    - ✅ On-demand specialist spawning for complex queries
+
     NEW in Phase 2:
     - ✅ Long-term memory across sessions
     - ✅ Semantic memory recall
     - ✅ Personalized responses based on past interactions
     - ✅ User preference learning
-    
+
     NEW in Phase 1.1:
     - ✅ Tool chaining capability via ToolChainMixin
     - ✅ Multi-step research in single interaction
     - ✅ 50% cost reduction on complex queries
     - ✅ Intelligent chain decision logic
-    
+
     Frontend Features Supported:
     - ✅ Multi-turn conversation
     - ✅ Automatic expert selection
@@ -120,7 +199,7 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
         self.supabase = supabase_client
         self.agent_selector = agent_selector_service or get_agent_selector_service()
         self.rag_service = rag_service or UnifiedRAGService(supabase_client)
-        self.agent_orchestrator = agent_orchestrator or AgentOrchestrator()
+        self.agent_orchestrator = agent_orchestrator or AgentOrchestrator(supabase_client, self.rag_service)
         self.conversation_manager = conversation_manager or ConversationManager(supabase_client)
         
         # Initialize cache manager (used in nodes) - optional, can be None
@@ -132,11 +211,20 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
         
         # NEW: Tool chaining (Phase 1.1) - Initialize from mixin
         self.init_tool_chaining(self.rag_service)
-        
+
         # NEW: Long-term memory (Phase 2) - Initialize from mixin
         self.init_memory_integration(supabase_client)
-        
-        logger.info("✅ Mode1InteractiveAutoWorkflow initialized with tool chaining + long-term memory")
+
+        # NEW: Deep Agent Architecture (Phase 3) - SubAgentSpawner + EvidenceBasedSelector
+        self.sub_agent_spawner = SubAgentSpawner() if SUB_AGENT_AVAILABLE else None
+        self.evidence_selector = get_evidence_based_selector() if EVIDENCE_BASED_AVAILABLE else None
+
+        if self.sub_agent_spawner:
+            logger.info("✅ SubAgentSpawner initialized for 5-level deep agent hierarchy")
+        if self.evidence_selector:
+            logger.info("✅ EvidenceBasedSelector initialized for tier-based routing")
+
+        logger.info("✅ Mode2InteractiveAutoWorkflow initialized with tool chaining + long-term memory + deep agent architecture")
     
     def build_graph(self) -> StateGraph:
         """
@@ -386,79 +474,180 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
                 'errors': state.get('errors', []) + [f"Query analysis failed: {str(e)}"]
             }
     
-    @trace_node("mode1_select_expert")
+    @trace_node("mode2_select_expert_hybrid")
     async def select_expert_automatic_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
-        Node: Automatically select best expert.
-        
+        Node: Automatically select best expert using HYBRID 3-method search.
+
+        Uses weighted Reciprocal Rank Fusion (RRF) combining:
+        - PostgreSQL full-text search (30% weight) - Supabase
+        - Pinecone vector search (50% weight) - Semantic similarity
+        - Neo4j graph traversal (20% weight) - Relationship-based
+
         Golden Rule #2: Cache expert selection decision
         """
         tenant_id = state['tenant_id']
         query = state['query']
         conversation_history = state.get('conversation_history', [])
-        
+
         try:
             # Check cache first (Golden Rule #2)
-            cache_key = f"expert_selection:{hash(query)}"
+            cache_key = f"hybrid_expert_selection:{hash(query)}:{tenant_id}"
             if self.cache_manager and self.cache_manager.enabled:
                 cached_selection = await self.cache_manager.get(cache_key)
                 if cached_selection:
-                    logger.info("✅ Expert selection cache hit", cache_key=cache_key[:32])
+                    logger.info("✅ Hybrid expert selection cache hit", cache_key=cache_key[:32])
                     return {
                         **state,
                         'selected_agents': state.get('selected_agents', []) + [cached_selection['agent_id']],
+                        'selected_agent_id': cached_selection['agent_id'],
+                        'selected_agent_name': cached_selection.get('agent_name', 'Cached Expert'),
                         'selection_reasoning': cached_selection['reasoning'],
                         'selection_confidence': cached_selection['confidence'],
+                        'selection_method': cached_selection.get('method', 'cached'),
+                        'selection_breakdown': cached_selection.get('breakdown', {}),
                         'cache_hits': state.get('cache_hits', 0) + 1,
+                        'reasoning_steps': state.get('reasoning_steps', []) + [{
+                            'step': 'agent_selection',
+                            'action': 'Cache hit - using previously selected expert',
+                            'result': cached_selection['agent_id'],
+                            'confidence': cached_selection['confidence']
+                        }],
                         'current_node': 'select_expert'
                     }
-            
-            # Call agent selector service
-            analysis_result = await self.agent_selector.analyze_query(query)
-            
-            # Select agent based on analysis
-            # For now, use a default agent selection logic
-            # TODO: Implement proper agent selection based on analysis_result
-            selected_agent_id = 'regulatory_expert'  # Default fallback
-            reasoning = f"Query analyzed: {analysis_result.intent if hasattr(analysis_result, 'intent') else 'general'}"
-            confidence = analysis_result.confidence if hasattr(analysis_result, 'confidence') else 0.5
-            
+
+            # Use HYBRID agent selection (Neo4j + Pinecone + Postgres)
+            logger.info(
+                "🔍 Starting hybrid agent selection (Mode 2)",
+                query_preview=query[:100],
+                tenant_id=tenant_id[:8] if tenant_id else 'unknown'
+            )
+
+            selected_agents = await self.agent_selector.select_agents_hybrid(
+                query=query,
+                tenant_id=tenant_id,
+                mode="mode2",
+                max_agents=1,  # Mode 2 selects single best expert
+                min_confidence=0.60
+            )
+
+            if selected_agents and len(selected_agents) > 0:
+                # Use the top-ranked agent from hybrid selection
+                best_agent = selected_agents[0]
+                selected_agent_id = best_agent.get('id', best_agent.get('agent_id', ''))
+                agent_name = best_agent.get('name', best_agent.get('display_name', 'Selected Expert'))
+                fused_score = best_agent.get('fused_score', 0.85)
+                confidence_data = best_agent.get('confidence', {})
+
+                # Build detailed reasoning with method breakdown
+                methods_found = confidence_data.get('methods_found', 1) if isinstance(confidence_data, dict) else 1
+                breakdown = confidence_data.get('breakdown', {}) if isinstance(confidence_data, dict) else {}
+
+                reasoning_parts = [
+                    f"Selected '{agent_name}' using hybrid 3-method search.",
+                    f"Combined score: {fused_score:.2%}",
+                ]
+                if breakdown:
+                    if 'postgres' in breakdown:
+                        reasoning_parts.append(f"PostgreSQL: {breakdown['postgres']:.1f}%")
+                    if 'pinecone' in breakdown:
+                        reasoning_parts.append(f"Pinecone: {breakdown['pinecone']:.1f}%")
+                    if 'neo4j' in breakdown:
+                        reasoning_parts.append(f"Neo4j: {breakdown['neo4j']:.1f}%")
+
+                reasoning = " | ".join(reasoning_parts)
+                confidence = min(fused_score, 0.99)  # Cap at 99%
+
+                logger.info(
+                    "✅ Hybrid expert selection completed (Mode 2)",
+                    agent_id=selected_agent_id,
+                    agent_name=agent_name,
+                    fused_score=fused_score,
+                    methods_found=methods_found,
+                    breakdown=breakdown
+                )
+            else:
+                # Fallback: Use query analysis to determine domain and select generic expert
+                logger.warning("⚠️ Hybrid selection returned no agents, using fallback")
+                analysis_result = await self.agent_selector.analyze_query(query)
+
+                # Map domains to fallback agents
+                domain_agent_map = {
+                    'cardiology': 'cardiology_expert',
+                    'oncology': 'oncology_expert',
+                    'neurology': 'neurology_expert',
+                    'regulatory': 'regulatory_expert',
+                    'research': 'research_expert',
+                    'clinical': 'clinical_expert',
+                }
+
+                selected_agent_id = 'general_medical_expert'
+                agent_name = 'General Medical Expert'
+                if hasattr(analysis_result, 'domains') and analysis_result.domains:
+                    for domain in analysis_result.domains:
+                        if domain.lower() in domain_agent_map:
+                            selected_agent_id = domain_agent_map[domain.lower()]
+                            agent_name = f"{domain.title()} Expert"
+                            break
+
+                reasoning = f"Fallback selection based on query analysis. Intent: {getattr(analysis_result, 'intent', 'general')}, Domains: {getattr(analysis_result, 'domains', [])}"
+                confidence = getattr(analysis_result, 'confidence', 0.6)
+                breakdown = {'fallback': 100}
+
             # Cache selection (Golden Rule #2)
             if self.cache_manager and self.cache_manager.enabled:
                 await self.cache_manager.set(
                     cache_key,
                     {
                         'agent_id': selected_agent_id,
+                        'agent_name': agent_name,
                         'reasoning': reasoning,
-                        'confidence': confidence
+                        'confidence': confidence,
+                        'method': 'hybrid_rrf',
+                        'breakdown': breakdown
                     },
-                    ttl=3600,  # 1 hour
+                    ttl=1800,  # 30 minutes (shorter than before since hybrid is more accurate)
                     tenant_id=tenant_id
                 )
-            
-            logger.info(
-                "Expert selected automatically",
-                agent_id=selected_agent_id,
-                confidence=confidence
-            )
-            
+
             return {
                 **state,
                 'selected_agents': state.get('selected_agents', []) + [selected_agent_id],
+                'selected_agent_id': selected_agent_id,
+                'selected_agent_name': agent_name,
                 'selection_reasoning': reasoning,
                 'selection_confidence': confidence,
+                'selection_method': 'hybrid_rrf',
+                'selection_breakdown': breakdown,
+                'candidate_count': len(selected_agents) if selected_agents else 0,
+                'reasoning_steps': state.get('reasoning_steps', []) + [{
+                    'step': 'agent_selection',
+                    'action': 'Hybrid 3-method search (Postgres + Pinecone + Neo4j)',
+                    'result': f"Selected {agent_name} ({selected_agent_id})",
+                    'confidence': confidence,
+                    'breakdown': breakdown
+                }],
                 'current_node': 'select_expert'
             }
-            
+
         except Exception as e:
-            logger.error("Expert selection failed", error=str(e))
-            # Fallback to default expert
+            logger.error("Hybrid expert selection failed", error=str(e), exc_info=True)
+            # Fallback to generic expert with error context
             return {
                 **state,
-                'selected_agents': state.get('selected_agents', []) + ['regulatory_expert'],
-                'selection_reasoning': 'Fallback to default expert due to error',
+                'selected_agents': state.get('selected_agents', []) + ['general_medical_expert'],
+                'selected_agent_id': 'general_medical_expert',
+                'selected_agent_name': 'General Medical Expert',
+                'selection_reasoning': f'Fallback to general expert due to error: {str(e)[:100]}',
                 'selection_confidence': 0.5,
-                'errors': state.get('errors', []) + [f"Expert selection failed: {str(e)}"]
+                'selection_method': 'fallback',
+                'reasoning_steps': state.get('reasoning_steps', []) + [{
+                    'step': 'agent_selection',
+                    'action': 'Fallback due to hybrid selection error',
+                    'result': 'general_medical_expert',
+                    'error': str(e)[:200]
+                }],
+                'errors': state.get('errors', []) + [f"Hybrid expert selection failed: {str(e)}"]
             }
     
     @trace_node("mode1_rag_retrieval")
@@ -765,12 +954,49 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
                 tokens_used = response.usage.total_tokens if hasattr(response, 'usage') else 0
             
             logger.info(
-                "Agent executed successfully (Mode 1)",
+                "Agent executed successfully (Mode 2)",
                 agent_id=selected_agent,
                 tokens_used=tokens_used,
                 confidence=confidence
             )
-            
+
+            # NEW: Deep Agent Architecture - Spawn sub-agents for complex queries
+            sub_agent_results = []
+            if self.sub_agent_spawner and self._requires_sub_agents(query, confidence):
+                logger.info("🔀 Query requires deeper analysis - spawning specialist sub-agents")
+                try:
+                    # Spawn a specialist agent for detailed analysis (L3)
+                    specialist_result = await self.sub_agent_spawner.spawn_specialist(
+                        parent_agent_id=selected_agent,
+                        task=f"Provide detailed analysis for: {query[:200]}",
+                        specialty=f"Deep analysis for {state.get('selected_agent_name', 'Expert')}",
+                        context={
+                            'query': query,
+                            'tenant_id': tenant_id,
+                            'initial_response': response_text[:500],
+                            'confidence': confidence
+                        }
+                    )
+                    if specialist_result:
+                        sub_agent_results.append({
+                            'type': 'specialist',
+                            'agent_id': specialist_result.get('agent_id'),
+                            'result': specialist_result.get('result', ''),
+                            'confidence': specialist_result.get('confidence', 0.8)
+                        })
+                        # Enhance response with specialist insights
+                        if specialist_result.get('result'):
+                            response_text = f"{response_text}\n\n**Additional Expert Analysis:**\n{specialist_result.get('result', '')}"
+                            confidence = (confidence + specialist_result.get('confidence', 0.8)) / 2
+
+                    logger.info(
+                        "✅ Sub-agent spawning completed",
+                        sub_agents_spawned=len(sub_agent_results),
+                        enhanced_confidence=confidence
+                    )
+                except Exception as spawn_error:
+                    logger.warning(f"Sub-agent spawning failed (non-critical): {spawn_error}")
+
             return {
                 **state,
                 'agent_response': response_text,
@@ -778,6 +1004,8 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
                 'citations': citations,
                 'tokens_used': tokens_used,
                 'model_used': model,
+                'sub_agents_used': sub_agent_results,
+                'deep_agent_hierarchy_used': len(sub_agent_results) > 0,
                 'current_node': 'execute_agent'
             }
             
@@ -935,12 +1163,51 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
         """Create summary of retrieved RAG documents"""
         if not documents:
             return ""
-        
+
         context_parts = []
         for i, doc in enumerate(documents[:5], 1):  # Top 5 documents
             content = doc.get('content', '')
             source = doc.get('source', 'Unknown')
             context_parts.append(f"[{i}] {content[:500]}... (Source: {source})")
-        
+
         return "\n\n".join(context_parts)
+
+    def _requires_sub_agents(self, query: str, confidence: float) -> bool:
+        """
+        Determine if a query requires spawning sub-agents for deeper analysis.
+
+        Criteria for spawning sub-agents:
+        1. Query length > 100 characters (complex questions)
+        2. Confidence < 0.75 (uncertain responses need verification)
+        3. Query contains complexity indicators
+
+        Args:
+            query: The user's query
+            confidence: Initial response confidence
+
+        Returns:
+            True if sub-agents should be spawned
+        """
+        # Complexity indicators that suggest need for deeper analysis
+        complexity_indicators = [
+            'compare', 'contrast', 'analyze', 'evaluate', 'comprehensive',
+            'detailed', 'explain in depth', 'multi-step', 'complex',
+            'regulatory', 'compliance', 'clinical trial', 'drug interaction',
+            'adverse event', 'safety signal', 'risk assessment'
+        ]
+
+        query_lower = query.lower()
+
+        # Check for complexity indicators
+        has_complexity = any(indicator in query_lower for indicator in complexity_indicators)
+
+        # Spawn sub-agents if:
+        # 1. Query is long and complex, OR
+        # 2. Confidence is low, OR
+        # 3. Query contains complexity indicators
+        return (
+            (len(query) > 100 and has_complexity) or
+            confidence < 0.75 or
+            (has_complexity and len(query) > 50)
+        )
 

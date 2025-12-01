@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 
 from core.config import get_settings
 from services.supabase_client import SupabaseClient
+from services.graphrag_selector import GraphRAGSelector, get_graphrag_selector
 
 logger = structlog.get_logger()
 settings = get_settings()
@@ -81,18 +82,25 @@ class AgentSelectorService:
     def __init__(
         self,
         openai_client: Optional[OpenAI] = None,
-        supabase_client: Optional[SupabaseClient] = None
+        supabase_client: Optional[SupabaseClient] = None,
+        graphrag_selector: Optional[GraphRAGSelector] = None,
+        use_graphrag: bool = True
     ):
         """
         Initialize agent selector service
-        
+
         Args:
             openai_client: OpenAI client instance (for dependency injection)
             supabase_client: Supabase client instance (for dependency injection)
+            graphrag_selector: GraphRAG selector for 3-method hybrid selection
+            use_graphrag: Enable GraphRAG hybrid selection (default True)
         """
         self.settings = get_settings()
         self.openai_client = openai_client or OpenAI(api_key=self.settings.openai_api_key)
         self.supabase_client = supabase_client
+        self.use_graphrag = use_graphrag
+        # Pass supabase_client to GraphRAGSelector to ensure it has a properly initialized DB client
+        self.graphrag_selector = graphrag_selector or (get_graphrag_selector(supabase_client=supabase_client) if use_graphrag else None)
         
     async def analyze_query(
         self,
@@ -295,6 +303,183 @@ Be precise with domain classification and keyword extraction."""
             correlation_id=correlation_id
         )
 
+    async def select_agents_hybrid(
+        self,
+        query: str,
+        tenant_id: str,
+        mode: str = "mode2",
+        max_agents: int = 3,
+        min_confidence: float = 0.70,
+        correlation_id: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Select agents using GraphRAG 3-method hybrid search.
+
+        This is the primary agent selection method that uses:
+        - PostgreSQL full-text search (30% weight)
+        - Pinecone vector search (50% weight)
+        - Neo4j graph traversal (20% weight)
+
+        Combined using weighted Reciprocal Rank Fusion (RRF).
+
+        Args:
+            query: User query text
+            tenant_id: Tenant identifier for multi-tenant isolation
+            mode: Ask Expert mode (mode1-mode4)
+            max_agents: Maximum number of agents to return
+            min_confidence: Minimum confidence threshold
+            correlation_id: Optional correlation ID for tracing
+
+        Returns:
+            List of selected agents with confidence scores
+        """
+        logger.info(
+            "hybrid_agent_selection_started",
+            query_preview=query[:100],
+            tenant_id=tenant_id,
+            mode=mode,
+            max_agents=max_agents,
+            use_graphrag=self.use_graphrag,
+            correlation_id=correlation_id
+        )
+
+        # Use GraphRAG if enabled and available
+        if self.use_graphrag and self.graphrag_selector:
+            try:
+                agents = await self.graphrag_selector.select_agents(
+                    query=query,
+                    tenant_id=tenant_id,
+                    mode=mode,
+                    max_agents=max_agents,
+                    min_confidence=min_confidence
+                )
+
+                logger.info(
+                    "hybrid_agent_selection_completed",
+                    method="graphrag",
+                    agents_selected=len(agents),
+                    correlation_id=correlation_id
+                )
+
+                return agents
+
+            except Exception as e:
+                logger.error(
+                    "graphrag_selection_failed_fallback",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                    correlation_id=correlation_id
+                )
+                # Fall through to legacy method
+
+        # Fallback to legacy embedding-based selection
+        return await self._select_agents_legacy(
+            query=query,
+            tenant_id=tenant_id,
+            max_agents=max_agents,
+            correlation_id=correlation_id
+        )
+
+    async def _select_agents_legacy(
+        self,
+        query: str,
+        tenant_id: str,
+        max_agents: int = 3,
+        correlation_id: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Legacy agent selection using query analysis and simple scoring.
+        Used as fallback when GraphRAG is unavailable.
+        """
+        # Analyze the query
+        analysis = await self.analyze_query(query, correlation_id)
+
+        if not self.supabase_client:
+            logger.warning(
+                "legacy_selection_unavailable",
+                reason="no_supabase_client",
+                correlation_id=correlation_id
+            )
+            return []
+
+        # Get active agents for tenant
+        agents = await self.supabase_client.get_all_agents(
+            tenant_id=tenant_id,
+            status="active"
+        )
+
+        # Score agents based on query analysis
+        scored_agents = []
+        for agent in agents[:max_agents * 3]:
+            score = 0.5  # Base score
+            agent_domains = agent.get("knowledge_domains", [])
+
+            # Domain match scoring
+            for domain in analysis.domains:
+                if domain.lower() in [d.lower() for d in agent_domains]:
+                    score += 0.3
+
+            # Tier weighting
+            tier = agent.get("tier", 2)
+            if analysis.complexity == "high" and tier == 3:
+                score += 0.2
+            elif analysis.complexity == "medium" and tier == 2:
+                score += 0.1
+
+            scored_agents.append({
+                **agent,
+                "fused_score": min(score, 1.0),
+                "confidence": {
+                    "overall": min(score * 100, 95),
+                    "methods_found": 1,
+                    "breakdown": {"legacy": score * 100}
+                }
+            })
+
+        # Sort by score and return top-k
+        scored_agents.sort(key=lambda x: x["fused_score"], reverse=True)
+
+        logger.info(
+            "legacy_agent_selection_completed",
+            agents_selected=len(scored_agents[:max_agents]),
+            correlation_id=correlation_id
+        )
+
+        return scored_agents[:max_agents]
+
+    async def select_multiple_experts_diverse(
+        self,
+        query: str,
+        max_agents: int = 3,
+        tenant_id: Optional[str] = None,
+        mode: str = "mode4"
+    ) -> List[Dict[str, Any]]:
+        """
+        Select multiple diverse experts for a query (Mode 4 compatibility).
+
+        Uses GraphRAG hybrid selection if available, otherwise falls back
+        to legacy selection.
+
+        Args:
+            query: User query to analyze
+            max_agents: Maximum number of agents to select
+            tenant_id: Optional tenant ID for filtering
+            mode: Ask Expert mode (default mode4)
+
+        Returns:
+            List of selected agent dictionaries
+        """
+        if not tenant_id:
+            tenant_id = self.settings.default_tenant_id if hasattr(self.settings, 'default_tenant_id') else "platform"
+
+        return await self.select_agents_hybrid(
+            query=query,
+            tenant_id=tenant_id,
+            mode=mode,
+            max_agents=max_agents,
+            min_confidence=0.60  # Lower threshold for Mode 4 diversity
+        )
+
 
 # ============================================================================
 # SERVICE FACTORY
@@ -323,92 +508,3 @@ def get_agent_selector_service(
         )
 
     return _agent_selector_service
-
-
-# Add missing method for Mode 4 compatibility
-async def select_multiple_experts_diverse(
-    self,
-    query: str,
-    max_agents: int = 3,
-    tenant_id: Optional[str] = None
-) -> List[Dict[str, Any]]:
-    """
-    Select multiple diverse experts for a query (Mode 4 compatibility).
-
-    This method provides backward compatibility with Mode 4 workflow that expects
-    select_multiple_experts_diverse().
-
-    Args:
-        query: User query to analyze
-        max_agents: Maximum number of agents to select
-        tenant_id: Optional tenant ID for filtering
-
-    Returns:
-        List of selected agent dictionaries with id, name, display_name, tier
-    """
-    try:
-        # Analyze the query
-        analysis = await self.analyze_query(query)
-
-        # If we have supabase_client, fetch actual agents
-        if self.supabase_client:
-            # Get all active agents for tenant
-            agents = await self.supabase_client.get_all_agents(
-                tenant_id=tenant_id,
-                status="active"
-            )
-
-            # Score agents based on query analysis
-            scored_agents = []
-            for agent in agents[:max_agents * 3]:  # Consider 3x candidates
-                # Simple scoring based on domain match
-                score = 0.5  # Base score
-                agent_domains = agent.get("knowledge_domains", [])
-
-                for domain in analysis.domains:
-                    if domain.lower() in [d.lower() for d in agent_domains]:
-                        score += 0.3
-
-                # Tier weighting (higher tier for complex queries)
-                tier = agent.get("tier", 2)
-                if analysis.complexity == "high" and tier == 3:
-                    score += 0.2
-                elif analysis.complexity == "medium" and tier == 2:
-                    score += 0.1
-
-                scored_agents.append({
-                    "agent": agent,
-                    "score": min(score, 1.0)
-                })
-
-            # Sort by score and take top N
-            scored_agents.sort(key=lambda x: x["score"], reverse=True)
-            selected = [sa["agent"] for sa in scored_agents[:max_agents]]
-
-            logger.info(
-                "multiple_experts_selected",
-                query_preview=query[:50],
-                selected_count=len(selected),
-                max_agents=max_agents
-            )
-
-            return selected
-
-        # Fallback: return empty list if no supabase client
-        logger.warning(
-            "multiple_experts_selection_unavailable",
-            reason="no_supabase_client"
-        )
-        return []
-
-    except Exception as e:
-        logger.error(
-            "multiple_experts_selection_failed",
-            error=str(e),
-            query_preview=query[:50]
-        )
-        return []
-
-
-# Monkey-patch the method onto AgentSelectorService class
-AgentSelectorService.select_multiple_experts_diverse = select_multiple_experts_diverse

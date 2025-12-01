@@ -23,7 +23,7 @@ import structlog
 import uuid
 
 from services.supabase_client import SupabaseClient
-from services.medical_rag import MedicalRAGPipeline
+from services.unified_rag_service import UnifiedRAGService
 from core.config import get_settings, AGENT_TYPES, PHARMA_PROTOCOL, VERIFY_PROTOCOL
 from models.requests import (
     AgentQueryRequest,
@@ -44,10 +44,10 @@ logger = structlog.get_logger()
 class AgentOrchestrator:
     """Orchestrates medical AI agents with enhanced capabilities"""
 
-    def __init__(self, supabase_client: SupabaseClient, rag_pipeline: MedicalRAGPipeline):
+    def __init__(self, supabase_client: SupabaseClient, rag_service: Optional[UnifiedRAGService] = None):
         self.settings = get_settings()
         self.supabase = supabase_client
-        self.rag = rag_pipeline
+        self.rag = rag_service or UnifiedRAGService(supabase_client)
         self.active_agents: Dict[str, Any] = {}
         self.llm = None
         self.agent_classes = {

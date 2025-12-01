@@ -551,6 +551,8 @@ export const POST = withAgentAuth(async (
     }
 
     // Prepare payload with proper ownership
+    // Note: is_custom does NOT exist as a direct column in the agents table
+    // It should ONLY be stored in metadata JSONB field
     const { id: _unusedId, display_name, is_custom, ...rest } = agentData;
     const payload = {
       ...rest,
@@ -558,10 +560,10 @@ export const POST = withAgentAuth(async (
       // Set ownership fields
       created_by: user.id,
       tenant_id: profile.tenant_id,
-      is_custom: is_custom !== false, // Default to true for user-created agents
+      // is_custom is stored in metadata, NOT as a direct column (column doesn't exist)
       metadata: {
         display_name: display_name || agentData.name,
-        is_custom: is_custom !== false,
+        is_custom: is_custom !== false, // Store in metadata only
         ...rest.metadata,
       },
     };

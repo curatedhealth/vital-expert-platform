@@ -296,6 +296,101 @@ Return only the numeric score."""
             'result': f"Executed: {step['action']}"
         }
 
+    async def generate_plan(
+        self,
+        query: str,
+        context: str = "",
+        max_steps: int = None,
+        model: str = "gpt-4"
+    ) -> Dict[str, Any]:
+        """
+        Generate a comprehensive plan using Tree-of-Thoughts - wrapper for Mode 3/4 integration.
+
+        This method provides the `generate_plan()` interface that Mode 3/4 workflows expect.
+        It runs the full ToT pipeline: Generate → Evaluate → Select → Execute
+
+        Args:
+            query: User query to plan for
+            context: Additional context (RAG results, conversation history)
+            max_steps: Optional override for tree depth (max plan steps)
+            model: LLM model to use for thought generation/evaluation
+
+        Returns:
+            Dict with plan_steps, best_path, confidence, and execution_results
+        """
+        try:
+            # Override max_depth and model if provided
+            if max_steps:
+                self.max_depth = max_steps
+            if model:
+                self.model = model
+
+            # Initialize state
+            state: PlanState = {
+                'original_query': query,
+                'thought_tree': {},
+                'current_thought_id': 'root',
+                'metadata': {
+                    'context': context
+                },
+                'best_path': [],
+                'plan_steps': [],
+                'execution_results': [],
+                'evaluated_thoughts': [],
+                'error': None
+            }
+
+            # Execute full ToT pipeline
+            # Step 1: Generate diverse thought branches
+            state = await self.generate_thoughts(state)
+            if state.get('error'):
+                raise Exception(state['error'])
+
+            # Step 2: Evaluate each thought branch
+            state = await self.evaluate_thoughts(state)
+            if state.get('error'):
+                raise Exception(state['error'])
+
+            # Step 3: Select best path through thought tree
+            state = await self.select_best_path(state)
+            if state.get('error'):
+                raise Exception(state['error'])
+
+            # Step 4: Execute the selected plan
+            state = await self.execute_plan(state)
+
+            # Calculate confidence from best thought score
+            best_score = 0.0
+            if state.get('evaluated_thoughts'):
+                best_score = state['evaluated_thoughts'][0].get('score', 0.0)
+
+            logger.info(
+                "tot_plan_complete",
+                query=query[:50],
+                path_length=len(state.get('best_path', [])),
+                confidence=best_score
+            )
+
+            return {
+                'steps': state.get('plan_steps', []),  # Mode 3/4 expects 'steps' key
+                'best_path': state.get('best_path', []),
+                'thought_tree': state.get('thought_tree', {}),
+                'execution_results': state.get('execution_results', []),
+                'confidence': best_score,
+                'evaluated_thoughts': state.get('evaluated_thoughts', [])
+            }
+
+        except Exception as e:
+            logger.error("tot_plan_failed", error=str(e))
+            return {
+                'steps': [],  # Mode 3/4 expects 'steps' key
+                'best_path': [],
+                'thought_tree': {},
+                'execution_results': [],
+                'confidence': 0.0,
+                'error': str(e)
+            }
+
 
 def create_tot_graph(agent: TreeOfThoughtsAgent) -> StateGraph:
     """

@@ -22,11 +22,46 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
   onModeChange
 }) => {
   // Determine current mode
+  // GOLDEN RULE MATRIX:
+  //                  | Manual Selection | Auto Selection  |
+  //                  | (User picks)     | (System picks)  |
+  // -----------------+------------------+-----------------+
+  // Conversational   | Mode 1           | Mode 2          |
+  // -----------------+------------------+-----------------+
+  // Agentic          | Mode 3           | Mode 4          |
+  // (CoT+ToT+ReAct)  |                  |                 |
+  //
+  // Agentic Modes (3 & 4) include:
+  // - Chain-of-Thought (CoT): Step-by-step reasoning
+  // - Tree-of-Thought (ToT): Explore multiple reasoning paths
+  // - ReAct: Reasoning + Acting with tools
+  // - Planning: Break down complex goals into sub-tasks
+  // - Goal Loop: Iterate until objective is achieved
   const getCurrentMode = () => {
-    if (!isAutomatic && !isAutonomous) return { name: 'Manual-Interactive', color: 'blue' };
-    if (isAutomatic && !isAutonomous) return { name: 'Auto-Interactive', color: 'green' };
-    if (!isAutomatic && isAutonomous) return { name: 'Manual-Autonomous', color: 'orange' };
-    return { name: 'Auto-Autonomous', color: 'purple' };
+    if (!isAutomatic && !isAutonomous) return {
+      name: 'Mode 1: Manual-Conversational',
+      number: 1,
+      color: 'blue',
+      description: 'Direct Q&A with your selected expert'
+    };
+    if (isAutomatic && !isAutonomous) return {
+      name: 'Mode 2: Auto-Conversational',
+      number: 2,
+      color: 'green',
+      description: 'AI selects the best expert for your query'
+    };
+    if (!isAutomatic && isAutonomous) return {
+      name: 'Mode 3: Manual-Agentic',
+      number: 3,
+      color: 'orange',
+      description: 'Your expert uses CoT + ToT + ReAct reasoning until goal achieved'
+    };
+    return {
+      name: 'Mode 4: Auto-Agentic',
+      number: 4,
+      color: 'purple',
+      description: 'AI picks expert + uses CoT + ToT + ReAct reasoning until goal achieved'
+    };
   };
 
   const currentMode = getCurrentMode();
@@ -102,4 +137,9 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
     </Card>
   );
 };
+
+
+
+
+
 

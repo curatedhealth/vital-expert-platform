@@ -25,6 +25,7 @@ import {
   SidebarAdminContent,
   SidebarPersonasContent,
   SidebarDesignerContent,
+  SidebarValueContent,
 } from "@/components/sidebar-view-content"
 
 export function AppSidebar({
@@ -88,6 +89,9 @@ export function AppSidebar({
     }
     if (pathname.startsWith("/personas")) {
       return <SidebarPersonasContent />
+    }
+    if (pathname.startsWith("/value")) {
+      return <SidebarValueContent />
     }
     return <SidebarDashboardContent />
   }

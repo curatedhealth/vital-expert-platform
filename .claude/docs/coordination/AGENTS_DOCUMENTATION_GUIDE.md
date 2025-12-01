@@ -1,8 +1,28 @@
 # Agent Documentation Guide - Navigate the Gold Standard
 
 **Purpose**: Help all VITAL development agents find the right documentation quickly
-**Audience**: All 14 development agents + Claude Code assistant
-**Last Updated**: 2025-11-22
+**Audience**: All 38 development agents + Claude Code assistant
+**Last Updated**: 2025-11-29
+**Version**: 2.0
+
+---
+
+## 🚨 CRITICAL: CANONICAL PROJECT DIRECTORY
+
+**ALL work MUST be performed in:**
+```
+/Users/hichamnaim/Downloads/Cursor/VITAL path/
+```
+
+**NEVER work in `/Users/hichamnaim/Downloads/Cursor/VITAL/`** - this is an archived directory.
+
+---
+
+## 🤖 Agent Model Tiers (Updated 2025-11-29)
+
+**Leadership Tier (Opus 4.5)**: vital-platform-orchestrator, strategy-vision-architect, prd-architect, system-architecture-architect, business-analytics-strategist, documentation-qa-lead, implementation-compliance-qa-agent, launch-strategy-agent
+
+**Specialist Tier (Sonnet)**: All other agents
 
 ---
 

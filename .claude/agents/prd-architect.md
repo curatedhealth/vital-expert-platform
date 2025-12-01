@@ -1,7 +1,7 @@
 ---
 name: prd-architect
 description: PRD Architect (Product Requirements Master). Creates gold-standard Product Requirements Documents translating vision into concrete, actionable product specifications with user stories and acceptance criteria.
-model: sonnet
+model: opus
 tools: ["*"]
 color: "#3B82F6"
 required_reading:

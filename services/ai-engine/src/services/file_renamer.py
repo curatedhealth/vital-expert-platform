@@ -110,7 +110,7 @@ class FileRenamer:
         
         # Otherwise, format as TitleCase
         formatted = self._sanitize(source)
-        return ''.join(word.capitalize() for word in re.split(r'[\s-_]+', formatted))
+        return ''.join(word.capitalize() for word in re.split(r'[\s_-]+', formatted))
 
     def _format_type(self, doc_type: str) -> str:
         """Format document type"""
@@ -119,7 +119,7 @@ class FileRenamer:
         formatted = formatted.strip()
         
         # Format as CamelCase
-        formatted = ''.join(word.capitalize() for word in re.split(r'[\s-_]+', formatted))
+        formatted = ''.join(word.capitalize() for word in re.split(r'[\s_-]+', formatted))
         
         # Truncate if too long
         max_len = self.config['max_length']['type']

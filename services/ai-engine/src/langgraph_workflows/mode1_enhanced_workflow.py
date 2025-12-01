@@ -1,33 +1,64 @@
 """
-Mode 1 Enhanced: Interactive-Automatic Workflow with Feedback & Memory
+Mode 1: Conversational + Manual Agent Selection
 
-This is the GOLD STANDARD Mode 1 workflow integrating:
-- Feedback collection (Golden Rule #5)
-- Semantic memory (Golden Rule #5)
-- Knowledge enrichment (Golden Rule #4)
-- Multi-branching (14+ paths)
-- RAG/Tools enforcement (Golden Rule #4)
-- Confidence calculation
-- Agent-specific configuration
+ARCHITECTURE:
+┌─────────────────────────────────────────────────────────────────────┐
+│                    4-MODE ARCHITECTURE MATRIX                       │
+├─────────────────────┬───────────────────┬───────────────────────────┤
+│                     │ MANUAL SELECTION  │ AUTO SELECTION            │
+├─────────────────────┼───────────────────┼───────────────────────────┤
+│ CONVERSATIONAL      │ ★ MODE 1 (THIS)   │ Mode 2                    │
+│ (Chat/Interactive)  │ User picks agent  │ System picks agent        │
+├─────────────────────┼───────────────────┼───────────────────────────┤
+│ AGENTIC             │ Mode 3            │ Mode 4                    │
+│ (ReAct/CoT/Goals)   │ User picks agent  │ System picks agent        │
+└─────────────────────┴───────────────────┴───────────────────────────┘
 
-Golden Rules Compliance:
+5-LEVEL DEEP AGENT HIERARCHY (Bi-directional):
+┌─────────────────────────────────────────────────────────────────────┐
+│ HUMAN ←─── L1→Human (escalation when confidence < threshold)       │
+│   ↓                                                                 │
+│ L1: MASTER AGENTS (Orchestrators)                                   │
+│   ├── Delegation: L1→L2 (route to experts)                         │
+│   └── Escalation: L2→L1 (complexity exceeded)                      │
+│                                                                     │
+│ L2: EXPERT AGENTS (User-selected from 1000+ Agent Store)           │
+│   ├── Delegation: L2→L3 (spawn specialists)                        │
+│   └── Escalation: L3→L2 (task exceeds specialization)              │
+│                                                                     │
+│ L3: SPECIALIST AGENTS (Spawned on-demand)                          │
+│   ├── Delegation: L3→L4 (parallel workers)                         │
+│   └── Escalation: L4→L3 (resource limits)                          │
+│                                                                     │
+│ L4: WORKER AGENTS (Parallel task executors)                        │
+│   ├── Delegation: L4→L5 (tool execution)                           │
+│   └── Escalation: L5→L4 (tool failures)                            │
+│                                                                     │
+│ L5: TOOL AGENTS (RAG, PubMed, APIs, Web Search)                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+GOLDEN RULES COMPLIANCE:
 ✅ #1: Uses LangGraph StateGraph
 ✅ #2: Caching at all nodes
 ✅ #3: Tenant isolation enforced
 ✅ #4: RAG/Tools enforced, tool outputs captured
 ✅ #5: Feedback-driven improvement, memory-enhanced context
 
-Features:
+FEATURES:
+- Conversational chat-style interaction (like ChatGPT)
+- User manually selects expert from Agent Store
 - Multi-turn conversation with full memory
-- Automatic expert selection (ML-powered)
 - Semantic memory extraction and retrieval
-- Automatic knowledge capture from tools
-- Confidence calculation
-- Implicit & explicit feedback collection
-- Knowledge base enrichment
+- Knowledge capture from tools
+- Confidence calculation with escalation triggers
 - RAG/Tools enable/disable toggles
 - LLM model selection
 - Streaming support
+
+FRONTEND MAPPING:
+- isAutomatic: false (manual agent selection)
+- isAutonomous: false (conversational, not goal-driven)
+- selectedAgents: [agent_id] (user pre-selects agent)
 
 Usage:
     >>> workflow = Mode1EnhancedWorkflow()
@@ -35,6 +66,7 @@ Usage:
     >>> result = await workflow.execute(
     ...     tenant_id="550e8400-e29b-41d4-a716-446655440000",
     ...     query="What are FDA IND requirements?",
+    ...     agent_id="expert_agent_uuid",  # User-selected
     ...     session_id="session_123",
     ...     model="gpt-4",
     ...     enable_rag=True,
@@ -113,7 +145,7 @@ class Mode1EnhancedWorkflow(BaseWorkflow):
             cache_manager=self.cache_manager
         )
         self.rag_service = rag_service or UnifiedRAGService(supabase_client)
-        self.agent_orchestrator = agent_orchestrator or AgentOrchestrator()
+        self.agent_orchestrator = agent_orchestrator or AgentOrchestrator(supabase_client, self.rag_service)
         
         # Enhanced services
         self.conversation_manager = conversation_manager or EnhancedConversationManager(

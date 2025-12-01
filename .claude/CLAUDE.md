@@ -1,5 +1,38 @@
 # Claude AI Assistant Rules
 
+## 🚨 CRITICAL: CANONICAL PROJECT DIRECTORY (MANDATORY)
+
+**THE ONLY VALID PROJECT DIRECTORY IS:**
+```
+/Users/hichamnaim/Downloads/Cursor/VITAL path/
+```
+
+### NEVER Work In These Directories:
+- ❌ `/Users/hichamnaim/Downloads/Cursor/VITAL/` (ARCHIVED - DO NOT USE)
+- ❌ Any other `VITAL` directory without the space in the name
+
+### Why This Matters:
+- All code, documentation, and configuration has been consolidated into `VITAL path`
+- The `VITAL` directory (without space) contains outdated/archived code
+- Working in the wrong directory causes fragmentation and lost work
+
+### Before ANY Operation:
+1. **Verify your working directory** is `VITAL path` (with space)
+2. **Never create files** in `/Users/hichamnaim/Downloads/Cursor/VITAL/`
+3. **Never edit files** in `/Users/hichamnaim/Downloads/Cursor/VITAL/`
+4. If asked to work on VITAL, **always use `VITAL path`**
+
+### Key Paths (All in VITAL path):
+| Component | Path |
+|-----------|------|
+| AI Engine | `services/ai-engine/src/` |
+| Database | `database/` |
+| Claude Docs | `.claude/` |
+| Apps | `apps/` |
+| Documentation | `docs/` |
+
+---
+
 ## 🔴 CRITICAL: Evidence-Based Operation (MANDATORY)
 
 **READ FIRST**: `.vital-docs/EVIDENCE_BASED_RULES.md`
@@ -167,7 +200,7 @@ Do you want me to proceed with this operation?
    - Max tokens: 4000
    - Context window: 16000
    - Accuracy target: >95%
-   - Use case: Safety-critical, complex reasoning, regulatory compliance, medical diagnosis
+   - Use case: Business-critical decisions, complex reasoning, regulatory strategy, compliance-sensitive operations
 
    Tier 2 (Specialist):
    - Models: GPT-4 ($0.12/query), GPT-4-Turbo ($0.10/query), CuratedHealth/Qwen3-8B-SFT-20250917123923 ($0.06/query), OR BioGPT ($0.08/query)
@@ -183,26 +216,31 @@ Do you want me to proceed with this operation?
    - Max tokens: 2000
    - Context window: 4000
    - Accuracy target: 85-90%
-   - Use case: High-volume, foundational queries, medical triage, escalates to specialists
+   - Use case: High-volume, foundational queries, query routing, escalates to specialists
    ```
 
-### Safety-Critical Agent Requirements
-**For agents handling clinical decisions, dosing, drug interactions, or patient safety:**
+### Business-Critical Agent Requirements
+**For agents handling high-stakes business decisions, regulatory strategy, or compliance-sensitive operations:**
 
 1. **MUST use Tier-3 models** (GPT-4 or Claude-3-Opus)
-   - NO EXCEPTIONS - patient safety is non-negotiable
-   - Examples: Dosing Calculator, Drug Interaction Checker, Pediatric Dosing Specialist
+   - NO EXCEPTIONS - business accuracy is non-negotiable for strategic decisions
+   - Examples: Regulatory Strategy Advisor, Market Access Analyst, Clinical Trial Design Consultant
 
 2. **MUST have EVIDENCE REQUIREMENTS section** in system_prompt
-   - Always cite clinical sources
-   - Use evidence hierarchy (Level 1A > 1B > 2A > 2B > 3)
+   - Always cite domain-appropriate authoritative sources:
+     * Regulatory agents: FDA guidance, EMA guidelines, ICH standards
+     * Compliance agents: Legal statutes, industry regulations, audit standards
+     * Market Access agents: Payer policies, HTA reports, pricing data
+     * Clinical Operations agents: Protocol standards, GCP guidelines, site data
+     * Commercial agents: Market research, competitive intelligence, sales data
+   - Use evidence hierarchy appropriate to domain (Level 1A > 1B > 2A > 2B > 3)
    - Acknowledge uncertainty explicitly
-   - Never make medical recommendations without supporting evidence
+   - Never make recommendations without supporting domain evidence
 
-3. **MUST have safety flags enabled**
-   - hipaa_compliant: true
+3. **MUST have appropriate flags enabled**
    - audit_trail_enabled: true
-   - data_classification: "confidential"
+   - data_classification: "confidential" (for business-sensitive data)
+   - hipaa_compliant: true (only if handling PHI for strategic analysis)
 
 ### System Prompt Structure (6-Section Framework)
 **All agent system prompts MUST include:**
@@ -212,9 +250,9 @@ Do you want me to proceed with this operation?
 3. **YOU NEVER:** [3-5 safety-critical boundaries with rationale]
 4. **SUCCESS CRITERIA:** [Measurable performance targets]
 5. **WHEN UNSURE:** [Escalation protocol with confidence thresholds]
-6. **EVIDENCE REQUIREMENTS:** [For medical/regulated agents - MANDATORY]
-   - What sources to cite
-   - Evidence level hierarchy
+6. **EVIDENCE REQUIREMENTS:** [For all domain-specific agents - MANDATORY]
+   - What domain-appropriate sources to cite (regulatory, legal, market, clinical ops, etc.)
+   - Evidence level hierarchy for the domain
    - When to acknowledge uncertainty
    - Confidence score requirements
 
@@ -252,7 +290,7 @@ Before creating or updating an agent, verify:
 - ❌ Using GPT-4 for Tier-1 foundational tasks (15x more expensive than GPT-3.5-Turbo)
 - ❌ Using gpt-4o-mini for Tier-3 ultra-specialists (wrong model tier)
 - ❌ Skipping model_citation (required for all agents)
-- ❌ Missing EVIDENCE REQUIREMENTS for medical/clinical agents
+- ❌ Missing EVIDENCE REQUIREMENTS for business-critical/regulated agents
 - ❌ Creating agents without system prompts following the 6-section framework
 - ❌ Activating agents that haven't been validated
 

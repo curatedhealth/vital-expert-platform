@@ -11,8 +11,10 @@ import {
   Users,
   Settings,
   Target,
-  Zap
+  Zap,
+  Settings2,
 } from 'lucide-react';
+import { ResponsePreferencesPanel, type ResponsePreferences } from './response-preferences-panel';
 import { useState } from 'react';
 
 import { Agent } from '@/lib/stores/chat-store';
@@ -71,6 +73,8 @@ interface EnhancedChatInputProps {
   maxLength?: number;
   showContextualPrompts?: boolean;
   onQuickPromptSelect?: (prompt: string) => void;
+  showResponsePreferences?: boolean;
+  onResponsePreferencesChange?: (preferences: ResponsePreferences) => void;
 }
 
 export function EnhancedChatInput({
@@ -97,6 +101,8 @@ export function EnhancedChatInput({
   maxLength = 4000,
   showContextualPrompts = true,
   onQuickPromptSelect,
+  showResponsePreferences = true,
+  onResponsePreferencesChange,
 }: EnhancedChatInputProps) {
   const [internalValue, setInternalValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -855,6 +861,14 @@ export function EnhancedChatInput({
                 <Mic className="h-4 w-4" />
               )}
             </Button>
+
+            {/* Response Preferences */}
+            {showResponsePreferences && (
+              <ResponsePreferencesPanel
+                compact
+                onPreferencesChange={onResponsePreferencesChange}
+              />
+            )}
 
             {/* Model Selector */}
             <PromptInputModelSelector />

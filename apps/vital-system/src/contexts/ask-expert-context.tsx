@@ -40,6 +40,7 @@ export interface Agent {
 
 export interface AskExpertSession {
   sessionId: string;
+  title?: string;
   agent?: {
     name?: string;
     description?: string;
@@ -392,6 +393,7 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       const fetchedSessions: AskExpertSession[] = (data.sessions || []).map((session: any) => ({
         sessionId: session.sessionId,
+        title: session.title,
         agent: session.agent
           ? {
               name: session.agent.name,

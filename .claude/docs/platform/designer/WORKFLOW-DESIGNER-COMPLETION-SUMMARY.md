@@ -432,3 +432,4 @@ apps/vital-system/src/features/workflow-designer/README.md  # NEW: Feature docs
 *This summary was automatically generated on November 23, 2024*
 
 
+

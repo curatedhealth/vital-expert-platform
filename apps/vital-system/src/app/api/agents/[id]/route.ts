@@ -1,25 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
 import { withAgentAuth, type AgentPermissionContext } from '@/middleware/agent-auth';
 import { env } from '@/config/environment';
 import { createLogger } from '@/lib/services/observability/structured-logger';
 import { z } from 'zod';
 
-// Validation schema for agent updates
+// Helper to validate optional UUID (allows empty string, null, undefined, or valid UUID)
+const optionalUuid = z.string()
+  .transform(val => val === '' ? null : val) // Transform empty string to null
+  .nullable()
+  .optional()
+  .refine(val => val === null || val === undefined || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val), {
+    message: 'Invalid uuid'
+  });
+
+// Map TypeScript expertise_level values to database enum values
+// DB enum values: 'beginner', 'intermediate', 'advanced', 'expert'
+// TypeScript values: 'entry', 'mid', 'senior', 'expert', 'thought_leader'
+const EXPERTISE_LEVEL_MAPPING: Record<string, string> = {
+  'entry': 'beginner',
+  'mid': 'intermediate',
+  'senior': 'advanced',
+  'expert': 'expert',
+  'thought_leader': 'expert',
+  // Pass through valid DB values
+  'beginner': 'beginner',
+  'intermediate': 'intermediate',
+  'advanced': 'advanced',
+};
+
+// Validation schema for agent updates - permissive to allow form flexibility
 const updateAgentSchema = z.object({
-  display_name: z.string().min(1).max(255).optional(),
-  description: z.string().max(1000).optional(),
-  system_prompt: z.string().min(1).optional(),
-  capabilities: z.array(z.string()).optional(),
-  knowledge_domains: z.array(z.string()).optional(),
-  metadata: z.record(z.any()).optional(),
-  avatar: z.string().optional(),
-  function_id: z.string().uuid().optional(),
-  function_name: z.string().optional(),
-  department_id: z.string().uuid().optional(),
-  department_name: z.string().optional(),
-  role_id: z.string().uuid().optional(),
-  role_name: z.string().optional(),
+  display_name: z.string().max(255).optional().nullable(),
+  description: z.string().optional().nullable(), // Removed max limit - some agents have long descriptions
+  system_prompt: z.string().optional().nullable(), // Allow empty system prompt
+  capabilities: z.array(z.string()).optional().nullable(),
+  knowledge_domains: z.array(z.string()).optional().nullable(),
+  metadata: z.record(z.any()).optional().nullable(),
+  avatar: z.string().optional().nullable(),
+  function_id: optionalUuid,
+  function_name: z.string().optional().nullable(),
+  department_id: optionalUuid,
+  department_name: z.string().optional().nullable(),
+  role_id: optionalUuid,
+  role_name: z.string().optional().nullable(),
 }).passthrough(); // Allow additional fields
 
 export const PUT = withAgentAuth(async (
@@ -32,10 +57,12 @@ export const PUT = withAgentAuth(async (
   const startTime = Date.now();
   
   try {
-    // Use user session client (RLS will enforce permissions)
+    // Use service client for initial fetch (auth already verified by middleware)
+    // This bypasses RLS for the SELECT, but we still use user session for UPDATE
+    const serviceSupabase = getServiceSupabaseClient();
     const supabase = await createClient();
     const { id } = await params;
-    
+
     logger.info('agent_put_started', {
       operation: 'PUT /api/agents/[id]',
       operationId,
@@ -44,14 +71,15 @@ export const PUT = withAgentAuth(async (
     });
 
     const updates = await request.json();
-    
+
     // Validate input
     const validatedData = updateAgentSchema.parse(updates);
-    
-    // Get current agent to merge metadata properly
-    const { data: currentAgent, error: fetchError } = await supabase
+
+    // Get current agent to merge metadata properly (use service client to bypass RLS)
+    // Note: is_custom and is_library_agent columns don't exist in the schema
+    const { data: currentAgent, error: fetchError } = await serviceSupabase
       .from('agents')
-      .select('metadata, created_by, tenant_id, is_custom, is_library_agent')
+      .select('metadata, created_by, tenant_id')
       .eq('id', id)
       .single();
 
@@ -62,6 +90,7 @@ export const PUT = withAgentAuth(async (
         operationId,
         agentId: id,
         duration,
+        error: fetchError?.message,
       });
 
       return NextResponse.json(
@@ -115,25 +144,131 @@ export const PUT = withAgentAuth(async (
       updatePayload.role_name = validatedData.role_name;
     }
 
-    // Handle other direct column updates
-    const metadataOnlyFields = ['display_name', 'avatar'];
-    const orgFields = ['function_id', 'function_name', 'department_id', 'department_name', 'role_id', 'role_name'];
-    Object.keys(validatedData).forEach((key) => {
-      if (!metadataOnlyFields.includes(key) && !orgFields.includes(key) && key !== 'metadata') {
-        updatePayload[key] = validatedData[key];
+    // Define valid database columns (based on actual agents table schema)
+    const validDbColumns = new Set([
+      'name', 'slug', 'tagline', 'description', 'title',
+      'role_id', 'function_id', 'department_id',
+      'function_name', 'department_name', 'role_name',
+      'expertise_level', 'years_of_experience',
+      'avatar_url', 'avatar_description',
+      'system_prompt', 'base_model', 'temperature', 'max_tokens',
+      'communication_style', 'status', 'validation_status',
+      'metadata', 'persona_id', 'agent_level_id',
+      'documentation_path', 'documentation_url',
+      'system_prompt_template_id', 'system_prompt_override', 'prompt_variables',
+      'is_private_to_user', 'is_public', 'is_shared',
+      'context_window', 'cost_per_query',
+      'token_budget_min', 'token_budget_max', 'token_budget_recommended',
+      'hipaa_compliant', 'audit_trail_enabled',
+      'personality_type_id',
+    ]);
+
+    // Fields to store in metadata (not direct DB columns)
+    const metadataOnlyFields = new Set([
+      'display_name', 'avatar', 'id',
+      'capabilities', 'knowledge_domains', 'tier', 'priority',
+      'rag_enabled', 'implementation_phase', 'is_custom', 'is_library_agent',
+      'color', 'model', // model gets mapped to base_model
+      // Personality & communication sliders (store in metadata)
+      'personality_type', 'personality_formality', 'personality_empathy',
+      'personality_directness', 'personality_detail_orientation',
+      'personality_proactivity', 'personality_risk_tolerance',
+      'comm_verbosity', 'comm_technical_level', 'comm_warmth',
+      // Other form fields
+      'prompt_starters', 'tools', 'skills', 'model_justification', 'model_citation',
+      'success_criteria', 'escalation_protocol', 'integration_endpoints',
+      'example_interactions', 'data_sources', 'compliance_requirements',
+    ]);
+
+    // Field mappings (form field name -> DB column name)
+    const fieldMappings: Record<string, string> = {
+      'model': 'base_model',
+      'avatar': 'avatar_url', // Also store in metadata for backwards compat
+    };
+
+    // Process all validated fields
+    const extraMetadata: Record<string, any> = {};
+
+    Object.entries(validatedData).forEach(([key, value]) => {
+      if (value === undefined) return;
+      if (key === 'metadata') return; // Handle separately
+
+      // Check if it's a metadata-only field
+      if (metadataOnlyFields.has(key)) {
+        extraMetadata[key] = value;
+        return;
+      }
+
+      // Check if it needs to be mapped to a different column name
+      const mappedKey = fieldMappings[key] || key;
+
+      // Only include if it's a valid DB column
+      if (validDbColumns.has(mappedKey)) {
+        updatePayload[mappedKey] = value;
+      } else {
+        // Unknown field - store in metadata
+        extraMetadata[key] = value;
       }
     });
 
-    // Handle metadata updates (merge)
-    if (validatedData.metadata) {
-      updatePayload.metadata = {
-        ...(currentAgent.metadata || {}),
-        ...validatedData.metadata,
-      };
+    // Handle model -> base_model mapping explicitly (since 'model' is common)
+    if ('model' in validatedData && validatedData.model) {
+      updatePayload.base_model = validatedData.model;
     }
+
+    // Handle metadata updates (merge all: current, user-provided, and extra fields)
+    updatePayload.metadata = {
+      ...(currentAgent.metadata || {}),
+      ...(validatedData.metadata || {}),
+      ...extraMetadata,
+    };
 
     // Ensure updated_at is set
     updatePayload.updated_at = new Date().toISOString();
+
+    // Sanitize UUID fields - convert empty strings to null
+    const uuidFields = [
+      'function_id', 'department_id', 'role_id', 'persona_id',
+      'agent_level_id', 'system_prompt_template_id', 'personality_type_id',
+      'persona_archetype_id', 'communication_style_id', 'reports_to_agent_id'
+    ];
+    for (const field of uuidFields) {
+      if (field in updatePayload && updatePayload[field] === '') {
+        updatePayload[field] = null;
+      }
+    }
+
+    // Map expertise_level to valid database enum values
+    // TypeScript uses: 'entry', 'mid', 'senior', 'expert', 'thought_leader'
+    // Database enum has: 'beginner', 'intermediate', 'advanced', 'expert'
+    if ('expertise_level' in updatePayload && updatePayload.expertise_level) {
+      const mappedLevel = EXPERTISE_LEVEL_MAPPING[updatePayload.expertise_level];
+      if (mappedLevel) {
+        updatePayload.expertise_level = mappedLevel;
+      } else {
+        // If not in mapping, store original value in metadata and set to null in DB
+        logger.warn('agent_put_unknown_expertise_level', {
+          operation: 'PUT /api/agents/[id]',
+          operationId,
+          originalValue: updatePayload.expertise_level,
+        });
+        updatePayload.metadata = {
+          ...updatePayload.metadata,
+          original_expertise_level: updatePayload.expertise_level,
+        };
+        updatePayload.expertise_level = null;
+      }
+    }
+
+    // Log the final payload for debugging
+    logger.debug('agent_put_payload_prepared', {
+      operation: 'PUT /api/agents/[id]',
+      operationId,
+      agentId: id,
+      payloadFields: Object.keys(updatePayload),
+      metadataFields: Object.keys(updatePayload.metadata || {}),
+      extraMetadataFields: Object.keys(extraMetadata),
+    });
     
     logger.debug('agent_put_updating', {
       operation: 'PUT /api/agents/[id]',
@@ -142,8 +277,8 @@ export const PUT = withAgentAuth(async (
       fields: Object.keys(updatePayload),
     });
     
-    // Update using user session (RLS enforces permissions)
-    const { data, error } = await supabase
+    // Update using service client (auth already verified by middleware)
+    const { data, error } = await serviceSupabase
       .from('agents')
       .update(updatePayload)
       .eq('id', id)
@@ -283,8 +418,8 @@ export const DELETE = withAgentAuth(async (
   const startTime = Date.now();
 
   try {
-    // Use user session client (RLS will enforce permissions)
-    const supabase = await createClient();
+    // Use service client (auth already verified by middleware)
+    const serviceSupabase = getServiceSupabaseClient();
     const { id } = await params;
 
     logger.info('agent_delete_started', {
@@ -294,8 +429,8 @@ export const DELETE = withAgentAuth(async (
       userId: context.user.id,
     });
 
-    // Check if agent exists (RLS will filter if user doesn't have access)
-    const { data: agent, error: fetchError } = await supabase
+    // Check if agent exists (use service client to bypass RLS)
+    const { data: agent, error: fetchError } = await serviceSupabase
       .from('agents')
       .select('id, name, metadata, tenant_id')
       .eq('id', id)
@@ -314,8 +449,7 @@ export const DELETE = withAgentAuth(async (
     }
 
     // Soft delete by default (set is_active = false)
-    // For hard delete, we'd need service role, but permissions already checked by middleware
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await serviceSupabase
       .from('agents')
       .update({
         is_active: false,
@@ -419,8 +553,8 @@ export const GET = withAgentAuth(async (
   const startTime = Date.now();
 
   try {
-    // Use user session client (RLS will enforce tenant filtering)
-    const supabase = await createClient();
+    // Use service client (auth already verified by middleware)
+    const serviceSupabase = getServiceSupabaseClient();
     const { id } = await params;
 
     logger.info('agent_get_started', {
@@ -430,7 +564,7 @@ export const GET = withAgentAuth(async (
       userId: context.user.id,
     });
 
-    const { data, error } = await supabase
+    const { data, error } = await serviceSupabase
       .from('agents')
       .select('*')
       .eq('id', id)

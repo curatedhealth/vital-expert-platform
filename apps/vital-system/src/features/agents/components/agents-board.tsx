@@ -23,6 +23,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui';
 import { DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
+import { AgentEditFormEnhanced } from './agent-edit-form-enhanced';
+import { agentService } from '../services/agent-service';
 import { useUserRole } from '@/hooks/useUserRole';
 import type { AgentWithCategories } from '@/lib/agents/agent-service';
 import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
@@ -183,6 +185,7 @@ export function AgentsBoard({
   const selectedRole = externalFilters?.selectedRole ?? 'all';
   const viewMode = externalViewMode ?? 'grid';
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [savedAgents, setSavedAgents] = useState<Set<string>>(new Set());
   const [dbBusinessFunctions, setDbBusinessFunctions] = useState<HealthcareBusinessFunction[]>([]);
@@ -256,7 +259,20 @@ export function AgentsBoard({
 
   const handleEditAgent = (agent: Agent) => {
     setEditingAgent(agent);
-    setShowCreateModal(true);
+    setShowEditModal(true);
+  };
+
+  const handleSaveAgent = async (updates: Partial<Agent>) => {
+    if (!editingAgent) return;
+    try {
+      await agentService.updateAgent(editingAgent.id, updates);
+      setShowEditModal(false);
+      setEditingAgent(null);
+      loadAgents(false);
+    } catch (error) {
+      console.error('Failed to save agent:', error);
+      throw error;
+    }
   };
 
   const handleDeleteAgent = (agent: Agent) => {
@@ -875,26 +891,34 @@ export function AgentsBoard({
         </Card>
       )}
 
-      {/* Agent Creator Modal */}
+      {/* Agent Creator Modal (for creating new agents) */}
       {showCreateModal && (
         <AgentCreator
           isOpen={showCreateModal}
           onClose={() => {
             setShowCreateModal(false);
-            setEditingAgent(null);
           }}
           onSave={() => {
             setShowCreateModal(false);
-            setEditingAgent(null);
-            // Reload agents from database to show the newly created/edited agent
+            // Reload agents from database to show the newly created agent
             loadAgents(false);
           }}
-          editingAgent={editingAgent ? {
-            ...editingAgent,
-            categories: []
-          } as unknown as AgentWithCategories : null}
+          editingAgent={null}
         />
       )}
+
+      {/* Enhanced Agent Edit Modal (for editing existing agents) */}
+      <AgentEditFormEnhanced
+        agent={editingAgent}
+        open={showEditModal}
+        onOpenChange={(open) => {
+          setShowEditModal(open);
+          if (!open) {
+            setEditingAgent(null);
+          }
+        }}
+        onSave={handleSaveAgent}
+      />
     </div>
   );
 }

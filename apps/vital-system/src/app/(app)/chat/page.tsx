@@ -223,7 +223,7 @@ export default function ChatPage() {
             avatar: '🤖',
             color: '#3B82F6',
             capabilities: [],
-            rag_enabled: false,
+            rag_enabled: true, // RAG enabled by default for all agents
             status: 'active',
             tier: 3,
             priority: 1,
@@ -576,7 +576,7 @@ export default function ChatPage() {
           avatar: agent.avatar || '🤖',
           color: agent.color || '#3B82F6',
           capabilities: agent.capabilities || [],
-          rag_enabled: agent.ragEnabled || false,
+          rag_enabled: agent.ragEnabled ?? true, // RAG enabled by default for all agents
           temperature: agent.temperature || 0.7,
           max_tokens: agent.maxTokens || 2000,
           is_custom: agent.isCustom || false,

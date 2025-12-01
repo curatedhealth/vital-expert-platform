@@ -1,7 +1,7 @@
 ---
 name: implementation-compliance-qa-agent
 description: Implementation Compliance & QA Agent. Serves as quality gatekeeper and project librarian, ensuring all code matches PRD/ARD specifications and maintaining CATALOGUE.md master navigation system.
-model: sonnet
+model: opus
 tools: ["*"]
 color: "#EF4444"
 required_reading:

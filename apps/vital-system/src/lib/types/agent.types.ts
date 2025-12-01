@@ -173,7 +173,7 @@ export function agentToChatAgent(agent: Agent): ChatAgent {
     avatar: agent.avatar,
     color: agent.color,
     capabilities: agent.capabilities || [],
-    ragEnabled: agent.rag_enabled || false,
+    ragEnabled: agent.rag_enabled ?? true, // RAG enabled by default for all agents
     temperature: agent.temperature,
     maxTokens: agent.max_tokens,
     isCustom: agent.is_custom,
@@ -204,7 +204,7 @@ export function chatAgentToAgent(chatAgent: ChatAgent): Partial<Agent> {
     avatar: chatAgent.avatar,
     color: chatAgent.color,
     capabilities: chatAgent.capabilities || [],
-    rag_enabled: chatAgent.ragEnabled || false,
+    rag_enabled: chatAgent.ragEnabled ?? true, // RAG enabled by default for all agents
     temperature: chatAgent.temperature,
     max_tokens: chatAgent.maxTokens,
     is_custom: chatAgent.isCustom,
@@ -277,7 +277,7 @@ export function normalizeAgent(agent: Partial<Agent>): Agent {
     avatar: agent.avatar || '🤖',
     color: agent.color || '#3B82F6',
     capabilities: agent.capabilities || [],
-    rag_enabled: agent.rag_enabled ?? false,
+    rag_enabled: agent.rag_enabled ?? true, // RAG enabled by default for all agents
     status: agent.status || 'development',
     tier: agent.tier ?? 1,
     priority: agent.priority ?? 1,

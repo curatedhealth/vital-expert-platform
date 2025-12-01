@@ -171,7 +171,7 @@ class AgentService {
       avatar: agent.avatar || '🤖',
       color: agent.color || '#6366f1',
       capabilities: agent.capabilities || [],
-      ragEnabled: agent.rag_enabled || false,
+      ragEnabled: agent.rag_enabled ?? true, // RAG enabled by default for all agents
       temperature: agent.temperature || 0.7,
       maxTokens: agent.max_tokens || 2000,
       isCustom: agent.is_custom || false,

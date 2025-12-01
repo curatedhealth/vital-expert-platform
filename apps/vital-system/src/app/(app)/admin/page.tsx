@@ -90,6 +90,16 @@ const ExecutiveDashboard = dynamic(
   { ssr: false }
 );
 
+const HITLReviewPanel = dynamic(
+  () => import('@/components/admin/HITLReviewPanel').then(mod => ({ default: mod.HITLReviewPanel })),
+  { ssr: false }
+);
+
+const AgentStoreBrowser = dynamic(
+  () => import('@/components/admin/AgentStoreBrowser').then(mod => ({ default: mod.AgentStoreBrowser })),
+  { ssr: false }
+);
+
 function LoadingView() {
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -229,7 +239,24 @@ export default function AdminPage() {
             <PersonasManagement />
           </div>
         );
-      
+
+      case 'hitl-review':
+        return (
+          <div className="container mx-auto py-8">
+            <HITLReviewPanel
+              tenantId="00000000-0000-0000-0000-000000000001"
+              userId="admin"
+            />
+          </div>
+        );
+
+      case 'agent-store':
+        return (
+          <div className="container mx-auto py-8">
+            <AgentStoreBrowser />
+          </div>
+        );
+
       default:
         // Unknown view - show overview
         return (

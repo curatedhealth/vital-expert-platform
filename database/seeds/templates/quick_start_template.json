@@ -1,0 +1,185 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Role Enrichment Quick Start Template",
+  "description": "Simplified template to get started quickly with the most important role data",
+  "version": "1.0.0",
+  "instructions": {
+    "purpose": "If the full template is overwhelming, start here with just the essentials",
+    "what_youll_get": "A minimally viable enriched role with the most important metadata",
+    "estimated_time": "15-20 minutes per role",
+    "next_step": "Once comfortable, migrate to the full role_enrichment_template.json"
+  },
+
+  "roles": [
+    {
+      "comment": "EXAMPLE: Medical Science Liaison - Delete this and add your own roles below",
+
+      "unique_id": "ROLE-MA-MSL-001",
+      "role_name": "Medical Science Liaison",
+      "seniority_level": "Senior",
+      "function_area": "Medical Affairs",
+      "department_name": "Field Medical",
+
+      "description": "Serves as a scientific expert and trusted advisor to key opinion leaders, providing balanced, evidence-based information on therapeutic areas and clinical data.",
+
+      "years_experience_min": 3,
+      "years_experience_max": 8,
+
+      "top_5_skills": [
+        "Scientific communication",
+        "Clinical data interpretation",
+        "KOL relationship management",
+        "Presentation skills",
+        "Medical writing"
+      ],
+
+      "top_3_responsibilities": [
+        "Build and maintain relationships with key opinion leaders",
+        "Provide scientific and clinical information in response to unsolicited requests",
+        "Identify and report insights from the field"
+      ],
+
+      "pharmaceutical_context": {
+        "gxp_critical": true,
+        "gxp_types": ["GCP", "GVP"],
+        "patient_facing": false,
+        "hcp_facing": true,
+        "therapeutic_areas": ["Oncology", "Immunology"]
+      },
+
+      "work_details": {
+        "travel_requirement_pct": 60,
+        "remote_eligible": true,
+        "typical_work_location": "Field-based (home office + travel)"
+      },
+
+      "top_3_kpis": [
+        "Number of Tier 1 KOL interactions (target: 120/year)",
+        "Field insights submitted (target: 24/year)",
+        "Scientific presentation quality score (target: 4.5/5.0)"
+      ],
+
+      "reports_to": "Director, Medical Affairs",
+
+      "career_progression": {
+        "typical_time_in_role_months": 24,
+        "next_role_options": ["Senior MSL", "MSL Manager", "Medical Director"]
+      }
+    },
+
+    {
+      "comment": "YOUR ROLE #1 - Fill in below",
+
+      "unique_id": "",
+      "role_name": "",
+      "seniority_level": "",
+      "function_area": "",
+      "department_name": "",
+
+      "description": "",
+
+      "years_experience_min": null,
+      "years_experience_max": null,
+
+      "top_5_skills": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+
+      "top_3_responsibilities": [
+        "",
+        "",
+        ""
+      ],
+
+      "pharmaceutical_context": {
+        "gxp_critical": false,
+        "gxp_types": [],
+        "patient_facing": false,
+        "hcp_facing": false,
+        "therapeutic_areas": []
+      },
+
+      "work_details": {
+        "travel_requirement_pct": 0,
+        "remote_eligible": false,
+        "typical_work_location": ""
+      },
+
+      "top_3_kpis": [
+        "",
+        "",
+        ""
+      ],
+
+      "reports_to": "",
+
+      "career_progression": {
+        "typical_time_in_role_months": null,
+        "next_role_options": []
+      }
+    }
+  ],
+
+  "field_help": {
+    "unique_id": {
+      "description": "Unique identifier for this role",
+      "format": "ROLE-{FUNCTION_CODE}-{DEPT_CODE}-{NUMBER}",
+      "examples": ["ROLE-MA-MSL-001", "ROLE-RD-CRA-001", "ROLE-RA-DIR-001"]
+    },
+    "seniority_level": {
+      "options": ["Executive", "Senior", "Mid", "Junior", "Entry"],
+      "definitions": {
+        "Executive": "C-suite, VP, SVP (10+ years experience)",
+        "Senior": "Director, Senior Manager (7-10 years)",
+        "Mid": "Manager, Lead (3-7 years)",
+        "Junior": "Specialist, Associate (1-3 years)",
+        "Entry": "Coordinator, Assistant (0-1 years)"
+      }
+    },
+    "function_area": {
+      "common_values": [
+        "Medical Affairs",
+        "Clinical Development",
+        "Regulatory Affairs",
+        "Pharmacovigilance",
+        "Market Access",
+        "HEOR",
+        "Quality Assurance",
+        "Quality Control",
+        "Manufacturing",
+        "Research & Development"
+      ]
+    },
+    "gxp_types": {
+      "options": {
+        "GCP": "Good Clinical Practice (clinical trials)",
+        "GLP": "Good Laboratory Practice (preclinical testing)",
+        "GMP": "Good Manufacturing Practice (drug manufacturing)",
+        "GVP": "Good Pharmacovigilance Practice (drug safety)",
+        "GDP": "Good Distribution Practice (supply chain)"
+      }
+    },
+    "travel_requirement_pct": {
+      "description": "Percentage of time spent traveling",
+      "ranges": {
+        "0-10": "Minimal/occasional",
+        "10-25": "Low",
+        "25-50": "Moderate",
+        "50-75": "High",
+        "75-100": "Extensive"
+      }
+    }
+  },
+
+  "workflow": {
+    "step_1": "Start by filling out 3-5 roles you know well",
+    "step_2": "For each role, spend ~15 minutes completing all fields",
+    "step_3": "Review with someone currently in that role for validation",
+    "step_4": "Once you have 5+ roles, share the completed file",
+    "step_5": "Optionally expand to full template for more detailed roles"
+  }
+}

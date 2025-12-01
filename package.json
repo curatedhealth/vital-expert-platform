@@ -16,10 +16,8 @@
     "clean": "pnpm -r clean",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "compliance:langchain": "node scripts/check-langchain-imports.js",
-    "db:migrate": "cd apps/vital-system && pnpm db:migrate",
-    "db:status": "cd apps/vital-system && pnpm db:status",
-    "db:setup": "cd apps/vital-system && pnpm db:setup",
-    "healthcare:check": "cd apps/vital-system && pnpm healthcare:check",
+    "db:migrate": "cd apps/vital-system && pnpm migrate",
+    "db:status": "cd apps/vital-system && pnpm migrate:status",
     "pre-commit": "pnpm lint && pnpm type-check && pnpm compliance:langchain",
     "pre-deploy": "pnpm build && pnpm test && pnpm compliance:langchain"
   },

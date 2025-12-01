@@ -76,7 +76,7 @@ class FeedbackRequest(BaseModel):
     # Metadata
     response_time_ms: Optional[int] = Field(None, description="Response time")
     confidence_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Confidence score")
-    rag_enabled: bool = Field(False, description="Was RAG enabled")
+    rag_enabled: bool = Field(True, description="Was RAG enabled")  # RAG enabled by default for all agents
     tools_enabled: bool = Field(False, description="Were tools enabled")
     model_used: Optional[str] = Field(None, description="Model used")
     

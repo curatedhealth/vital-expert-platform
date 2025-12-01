@@ -8,3 +8,5 @@ export * from './chat-sidebar';
 export * from './nav-ai-agents';
 export * from './nav-ask-expert';
 export * from './nav-rag-categories';
+export * from './enhanced-chat-input';
+export * from './response-preferences-panel';

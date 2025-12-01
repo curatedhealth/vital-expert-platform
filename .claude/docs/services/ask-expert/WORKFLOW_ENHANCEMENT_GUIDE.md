@@ -798,4 +798,186 @@ CREATE INDEX idx_user_consent_tenant ON user_consent(tenant_id);
 **Document Status:** ✅ READY FOR IMPLEMENTATION
 **Estimated Implementation Time:** 6-8 hours per workflow
 **Priority:** HIGH (Compliance & Safety)
-**Version:** 1.0
+**Version:** 1.1
+
+---
+
+## 📝 Citation Integration (NEW - November 2025)
+
+### Overview
+
+All 4 Ask Expert modes now support **agent-specific citation preferences** that flow through the entire LangGraph workflow. Citations are formatted according to the agent's configured style preference (stored in agent metadata).
+
+### Supported Citation Styles
+
+| Style | Use Case | Example |
+|-------|----------|---------|
+| **APA** | Academic, general scientific | Smith, J. (2024). *Title*. Journal, 1(2), 10-20. |
+| **AMA** | Medical journals | Smith J. Title. *Journal*. 2024;1(2):10-20. |
+| **Vancouver** | Biomedical (numbered) | 1. Smith J. Title. Journal. 2024;1(2):10-20. |
+| **ICMJE** | Medical manuscripts | Smith J. Title. Journal. 2024 Jan;1(2):10-20. |
+| **Chicago** | Humanities, social sciences | Smith, John. "Title." *Journal* 1, no. 2 (2024): 10-20. |
+| **Harvard** | UK academic standard | Smith, J. (2024) 'Title', *Journal*, 1(2), pp. 10-20. |
+| **MLA** | Literature, arts | Smith, John. "Title." *Journal*, vol. 1, no. 2, 2024, pp. 10-20. |
+
+### Data Flow Architecture
+
+```
+Agent Settings (DB)     API Endpoint           Workflow State         Tool Context
+     ↓                       ↓                      ↓                      ↓
+agents.metadata  →  get_agent_citation_  →  citation_style    →  format_results_
+ └─ citation_style    preferences()        include_citations      with_citations()
+ └─ include_citations
+```
+
+### Implementation Details
+
+#### 1. Agent Metadata Schema
+
+Citation preferences are stored in the `agents.metadata` JSONB field:
+
+```json
+{
+  "citation_style": "apa",
+  "include_citations": true,
+  "other_preferences": "..."
+}
+```
+
+#### 2. CitationPreferences Model
+
+Located in `services/unified_agent_loader.py`:
+
+```python
+class CitationPreferences(BaseModel):
+    """Agent citation preferences extracted from metadata."""
+    citation_style: str = Field(default="apa")
+    include_citations: bool = Field(default=True)
+
+    @classmethod
+    def from_metadata(cls, metadata: Dict[str, Any]) -> "CitationPreferences":
+        return cls(
+            citation_style=metadata.get("citation_style", "apa"),
+            include_citations=metadata.get("include_citations", True)
+        )
+```
+
+#### 3. Mode-Specific Integration
+
+| Mode | Agent Selection | Citation Handling |
+|------|-----------------|-------------------|
+| **Mode 1** | Manual | Fetch from `agents.metadata` via `get_agent_citation_preferences()` |
+| **Mode 2** | Auto-selection | Defaults: `apa`, `True` (applied after selection) |
+| **Mode 3** | Manual | Fetch from `agents.metadata` via `get_agent_citation_preferences()` |
+| **Mode 4** | Auto-selection | Defaults: `apa`, `True` (applied after selection) |
+
+#### 4. LangGraph State Integration
+
+The workflow state schema includes citation fields:
+
+```python
+class UnifiedWorkflowState(TypedDict):
+    # ... existing fields ...
+    citation_style: str       # Citation format preference
+    include_citations: bool   # Whether to include citations
+```
+
+#### 5. Tool Chain Integration
+
+Tools receive citation preferences via `chain_context`:
+
+```python
+# In tool_chain_executor.py
+chain_context = {
+    "citation_style": state.get("citation_style", "apa"),
+    "include_citations": state.get("include_citations", True),
+    # ... other context
+}
+```
+
+### Key Files Modified
+
+| File | Changes |
+|------|---------|
+| `services/unified_agent_loader.py` | Added `CitationPreferences` class & `get_agent_citation_preferences()` |
+| `langgraph_workflows/state_schemas.py` | Added `citation_style`, `include_citations` to state |
+| `langgraph_workflows/tool_chain_executor.py` | Passes citation prefs via `chain_context` |
+| `main.py` | All 4 modes updated to include citation params |
+| `tools/web_tools.py` | `format_results_with_citations()` method |
+| `graphrag/citation_enricher.py` | Multi-style citation formatting |
+
+### GraphRAG Citation Enrichment
+
+The GraphRAG service enriches citations by:
+
+1. **Fetching source metadata** from `knowledge_documents` table
+2. **Building CitationData** with author, title, journal, DOI, publication date
+3. **Formatting** according to the requested citation style
+4. **Attaching** formatted citations to RAG context chunks
+
+```python
+# In graphrag/service.py
+if request.include_citations and fused_chunks:
+    citation_enricher = await get_citation_enricher()
+    citation_style = CitationStyle.from_string(request.citation_style)
+
+    for chunk in fused_chunks:
+        doc_id = chunk.metadata.get('doc_id')
+        if doc_id and doc_id in citation_data:
+            cd = citation_data[doc_id]
+            chunk.source.citation = cd.format_citation(style=citation_style)
+```
+
+### Web Search Citation Formatting
+
+Web search results can also be formatted with citations:
+
+```python
+# In tools/web_tools.py
+def format_results_with_citations(
+    self,
+    results: List[Dict[str, Any]],
+    citation_style: str = "apa"
+) -> List[Dict[str, Any]]:
+    from graphrag.citation_enricher import format_web_citations
+    return format_web_citations(results, citation_style)
+```
+
+### Testing Citations
+
+```bash
+# Test Mode 1 with an agent that has AMA citation style
+curl -X POST http://localhost:8000/v2/ask-expert/mode1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent_id": "your-agent-id",
+    "message": "What are the latest FDA guidelines for 510k submissions?",
+    "enable_rag": true
+  }'
+
+# Verify response includes formatted citations matching agent preference
+```
+
+### Configuring Agent Citation Preferences
+
+Update agent metadata via Supabase:
+
+```sql
+UPDATE agents
+SET metadata = jsonb_set(
+    COALESCE(metadata, '{}'),
+    '{citation_style}',
+    '"ama"'  -- or 'apa', 'vancouver', 'icmje', 'chicago', 'harvard', 'mla'
+)
+WHERE id = 'your-agent-id';
+
+UPDATE agents
+SET metadata = jsonb_set(
+    COALESCE(metadata, '{}'),
+    '{include_citations}',
+    'true'
+)
+WHERE id = 'your-agent-id';
+```
+
+---

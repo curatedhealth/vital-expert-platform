@@ -650,29 +650,33 @@ async def get_prompt_library(
 async def upload_knowledge(
     title: str,
     content: str,
-    source_type: str,
-    tenant_id: str,
+    source_type: str = Query("document", description="Type: guidance, policy, document, etc."),
+    domain: str = Query(None, description="Knowledge domain (e.g., regulatory_affairs)"),
+    source_name: str = Query(None, description="Source name"),
+    source_url: str = Query(None, description="Source URL"),
     agent_ids: Optional[List[str]] = None,
     metadata: Optional[dict] = None,
     supabase: Client = Depends(get_supabase)
 ):
     """
     Upload knowledge to the knowledge base
-    
+
+    Uses knowledge_documents table (existing schema)
     Can optionally link to specific agents
     """
     try:
-        # Insert into knowledge_base
+        # Insert into knowledge_documents (matches existing DB schema)
         knowledge_data = {
             "title": title,
             "content": content,
-            "source_type": source_type,
-            "tenant_id": tenant_id,
+            "document_type": source_type,  # Maps to document_type column
+            "domain": domain,
+            "source_name": source_name,
+            "source_url": source_url,
             "metadata": metadata or {},
-            "created_at": datetime.utcnow().isoformat()
         }
-        
-        result = supabase.table('knowledge_base').insert(knowledge_data).execute()
+
+        result = supabase.table('knowledge_documents').insert(knowledge_data).execute()
         knowledge_id = result.data[0]['id'] if result.data else None
         
         # Link to agents if specified
@@ -701,14 +705,15 @@ async def upload_knowledge(
 @router.get("/knowledge/search")
 async def search_knowledge(
     query: str = Query(..., description="Search query"),
-    tenant_id: Optional[str] = Query(None),
+    domain: Optional[str] = Query(None, description="Filter by domain"),
     agent_id: Optional[str] = Query(None, description="Filter by agent"),
     limit: int = Query(10, ge=1, le=100),
     supabase: Client = Depends(get_supabase)
 ):
     """
-    Search knowledge base
-    
+    Search knowledge base documents
+
+    Uses knowledge_documents table (existing schema)
     Optionally filter by agent to get agent-specific knowledge
     """
     try:
@@ -718,11 +723,11 @@ async def search_knowledge(
                 .select('knowledge_id')\
                 .eq('agent_id', agent_id)\
                 .execute()
-            
+
             knowledge_ids = [link['knowledge_id'] for link in links.data] if links.data else []
-            
+
             if knowledge_ids:
-                result = supabase.table('knowledge_base')\
+                result = supabase.table('knowledge_documents')\
                     .select('*')\
                     .in_('id', knowledge_ids)\
                     .ilike('content', f'%{query}%')\
@@ -731,12 +736,18 @@ async def search_knowledge(
             else:
                 result = type('obj', (object,), {'data': []})()
         else:
-            # Search all knowledge
-            kb_query = supabase.table('knowledge_base').select('*').ilike('content', f'%{query}%')
-            
-            if tenant_id:
-                kb_query = kb_query.eq('tenant_id', tenant_id)
-            
+            # Search all knowledge documents (search in title, domain, and content)
+            # Use or_ filter to search across multiple fields
+            kb_query = supabase.table('knowledge_documents').select('*')
+
+            # Search in title OR domain OR content using or_ filter
+            kb_query = kb_query.or_(
+                f"title.ilike.%{query}%,domain.ilike.%{query}%,content.ilike.%{query}%"
+            )
+
+            if domain:
+                kb_query = kb_query.eq('domain', domain)
+
             kb_query = kb_query.limit(limit)
             result = kb_query.execute()
         

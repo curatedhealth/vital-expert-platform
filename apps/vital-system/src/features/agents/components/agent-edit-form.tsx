@@ -61,6 +61,7 @@ interface FormState {
   display_name: string;
   description: string;
   tagline: string;
+  version: string;
 
   // Organization
   function_name: string;
@@ -69,6 +70,7 @@ interface FormState {
 
   // Level & Status
   agent_levels: { level_number: AgentLevelNumber };
+  tier: 1 | 2 | 3;
   status: 'active' | 'inactive' | 'development' | 'testing' | 'deprecated';
 
   // LLM Configuration
@@ -76,6 +78,7 @@ interface FormState {
   temperature: number;
   max_tokens: number;
   context_window: number;
+  token_budget: number;
 
   // Capabilities
   capabilities: string[];
@@ -123,7 +126,7 @@ export const AgentEditForm: React.FC<AgentEditFormProps> = ({
     knowledge_domains: [],
     system_prompt: '',
     cost_per_query: 0,
-    rag_enabled: false,
+    rag_enabled: true, // RAG enabled by default for all agents
   });
 
   // Sync form state with agent prop
@@ -149,7 +152,7 @@ export const AgentEditForm: React.FC<AgentEditFormProps> = ({
         knowledge_domains: Array.isArray(agent.knowledge_domains) ? agent.knowledge_domains : [],
         system_prompt: agent.system_prompt || '',
         cost_per_query: agent.cost_per_query || 0,
-        rag_enabled: agent.rag_enabled || false,
+        rag_enabled: agent.rag_enabled ?? true, // RAG enabled by default for all agents
       });
     }
   }, [agent]);

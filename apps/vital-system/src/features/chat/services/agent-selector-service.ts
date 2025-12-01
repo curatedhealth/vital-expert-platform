@@ -34,7 +34,8 @@ import { getEmbeddingCache } from '@/lib/services/cache/embedding-cache';
 import { getTracingService } from '@/lib/services/observability/tracing';
 import { getAgentMetricsService } from '@/lib/services/observability/agent-metrics-service';
 
-const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
+// Port Architecture: Next.js (3000) -> API Gateway (4000) -> AI Engine (8000)
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:4000';
 const DEFAULT_TENANT_ID =
   process.env.API_GATEWAY_TENANT_ID ||
   process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID ||

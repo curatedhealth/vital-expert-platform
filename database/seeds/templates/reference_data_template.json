@@ -1,0 +1,497 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Role Reference Data Template",
+  "description": "Master data tables that roles will reference (competencies, certifications, KPIs, etc.)",
+  "version": "1.0.0",
+  "last_updated": "2025-11-22",
+
+  "instructions": {
+    "purpose": "This file contains the master/reference data that multiple roles will share. Fill this out FIRST before filling out individual role templates.",
+    "workflow": [
+      "1. Fill out this reference data template with your organizational standards",
+      "2. Then use the unique IDs from this file in your role_enrichment_template.json",
+      "3. This ensures consistency across all roles"
+    ],
+    "tips": [
+      "Start with data you already have (e.g., existing competency frameworks)",
+      "Consult HR, L&D, and Compliance teams for official lists",
+      "Include industry-standard frameworks (ICH, FDA, etc.)",
+      "You can always add more items later"
+    ]
+  },
+
+  "skills": {
+    "description": "Master list of skills that can be assigned to roles",
+    "example": {
+      "unique_id": "SKILL-001",
+      "name": "Clinical Data Interpretation",
+      "category": "Clinical",
+      "description": "Ability to analyze and interpret clinical trial data, including efficacy and safety endpoints",
+      "proficiency_levels_available": ["Basic", "Intermediate", "Advanced", "Expert"],
+      "is_pharma_specific": true
+    },
+    "your_data": [
+      {
+        "unique_id": "SKILL-001",
+        "name": "Scientific Communication",
+        "category": "Communication",
+        "description": "Ability to communicate complex scientific concepts to diverse audiences",
+        "proficiency_levels_available": ["Basic", "Intermediate", "Advanced", "Expert"],
+        "is_pharma_specific": true
+      },
+      {
+        "unique_id": "SKILL-002",
+        "name": "Statistical Analysis",
+        "category": "Technical",
+        "description": "Proficiency in statistical methods and interpretation",
+        "proficiency_levels_available": ["Basic", "Intermediate", "Advanced", "Expert"],
+        "is_pharma_specific": false
+      }
+    ]
+  },
+
+  "certifications": {
+    "description": "Professional certifications and licenses required or preferred for roles",
+    "example": {
+      "unique_id": "CERT-001",
+      "name": "Board Certification in Pharmacotherapy (BCPS)",
+      "issuing_organization": "Board of Pharmacy Specialties",
+      "certification_type": "Professional Certification",
+      "validity_period_months": 84,
+      "renewal_required": true,
+      "cost_usd": 600,
+      "study_hours_required": 100
+    },
+    "your_data": [
+      {
+        "unique_id": "CERT-001",
+        "name": "PharmD",
+        "issuing_organization": "Accredited Pharmacy School",
+        "certification_type": "Academic Degree",
+        "validity_period_months": null,
+        "renewal_required": false,
+        "cost_usd": null,
+        "study_hours_required": null
+      },
+      {
+        "unique_id": "CERT-002",
+        "name": "RAC (Regulatory Affairs Certification)",
+        "issuing_organization": "RAPS",
+        "certification_type": "Professional Certification",
+        "validity_period_months": 36,
+        "renewal_required": true,
+        "cost_usd": 1200,
+        "study_hours_required": 200
+      }
+    ]
+  },
+
+  "competencies": {
+    "description": "Clinical and professional competencies required for pharmaceutical roles",
+    "example": {
+      "unique_id": "COMP-001",
+      "name": "Pharmacovigilance",
+      "category": "Safety & Compliance",
+      "description": "Knowledge and application of drug safety monitoring and adverse event reporting",
+      "behavioral_indicators": [
+        "Recognizes and reports adverse events promptly",
+        "Understands causality assessment",
+        "Maintains safety databases accurately"
+      ],
+      "assessment_method": "Written exam + case studies",
+      "is_regulatory_required": true
+    },
+    "your_data": [
+      {
+        "unique_id": "COMP-001",
+        "name": "Clinical Trial Design",
+        "category": "Clinical Research",
+        "description": "Ability to design, implement, and oversee clinical trials",
+        "behavioral_indicators": [
+          "Develops appropriate study protocols",
+          "Selects suitable endpoints and statistical methods",
+          "Ensures patient safety and data integrity"
+        ],
+        "assessment_method": "Protocol review + practical exam",
+        "is_regulatory_required": true
+      }
+    ]
+  },
+
+  "kpis": {
+    "description": "Key Performance Indicators that can be assigned to roles",
+    "example": {
+      "unique_id": "KPI-001",
+      "name": "Clinical Trial Enrollment Rate",
+      "category": "Clinical Operations",
+      "description": "Percentage of planned enrollment achieved within timeline",
+      "measurement_unit": "percentage",
+      "target_value_typical": "100",
+      "measurement_frequency": "Monthly",
+      "data_source": "CTMS (Clinical Trial Management System)",
+      "calculation_method": "(Actual enrollments / Planned enrollments) * 100"
+    },
+    "your_data": [
+      {
+        "unique_id": "KPI-001",
+        "name": "KOL Interaction Quality Score",
+        "category": "Medical Affairs",
+        "description": "Quality rating of interactions with key opinion leaders",
+        "measurement_unit": "score (1-5)",
+        "target_value_typical": "4.5",
+        "measurement_frequency": "Quarterly",
+        "data_source": "Veeva CRM + Peer Reviews",
+        "calculation_method": "Average of peer-reviewed interaction quality assessments"
+      }
+    ]
+  },
+
+  "training_programs": {
+    "description": "Required training programs for pharmaceutical roles",
+    "example": {
+      "unique_id": "TRAIN-001",
+      "name": "GCP Fundamentals",
+      "category": "GxP Training",
+      "description": "Introduction to Good Clinical Practice principles per ICH E6",
+      "duration_hours": 8,
+      "frequency": "Annual",
+      "is_mandatory": true,
+      "training_provider": "Internal L&D",
+      "compliance_requirement": "FDA 21 CFR Part 312",
+      "assessment_required": true,
+      "passing_score": 80
+    },
+    "your_data": [
+      {
+        "unique_id": "TRAIN-001",
+        "name": "GCP Fundamentals",
+        "category": "GxP Training",
+        "description": "Good Clinical Practice training per ICH E6",
+        "duration_hours": 8,
+        "frequency": "Annual",
+        "is_mandatory": true,
+        "training_provider": "Internal L&D",
+        "compliance_requirement": "FDA 21 CFR Part 312",
+        "assessment_required": true,
+        "passing_score": 80
+      }
+    ]
+  },
+
+  "regulatory_requirements": {
+    "description": "Regulatory frameworks and requirements applicable to pharmaceutical roles",
+    "example": {
+      "unique_id": "REG-001",
+      "name": "FDA 21 CFR Part 11",
+      "category": "Electronic Records",
+      "description": "Electronic records and electronic signatures requirements",
+      "issuing_authority": "FDA",
+      "geographic_scope": "United States",
+      "applies_to_functions": ["Clinical Development", "Regulatory Affairs", "Quality Assurance"],
+      "training_required": true,
+      "audit_frequency": "Annual"
+    },
+    "your_data": [
+      {
+        "unique_id": "REG-001",
+        "name": "ICH GCP E6",
+        "category": "Clinical Trials",
+        "description": "Good Clinical Practice guidelines",
+        "issuing_authority": "ICH",
+        "geographic_scope": "Global",
+        "applies_to_functions": ["Clinical Development", "Medical Affairs", "Clinical Research"],
+        "training_required": true,
+        "audit_frequency": "As needed"
+      }
+    ]
+  },
+
+  "systems": {
+    "description": "Software systems and tools used by pharmaceutical roles",
+    "example": {
+      "unique_id": "SYS-001",
+      "name": "Veeva CRM",
+      "category": "Customer Relationship Management",
+      "description": "CRM system for tracking healthcare provider interactions",
+      "vendor": "Veeva Systems",
+      "is_validated": true,
+      "requires_21_cfr_part_11": true,
+      "training_required": true,
+      "user_license_cost_annual": 1200
+    },
+    "your_data": [
+      {
+        "unique_id": "SYS-001",
+        "name": "Veeva CRM",
+        "category": "CRM",
+        "description": "Customer relationship management for life sciences",
+        "vendor": "Veeva Systems",
+        "is_validated": true,
+        "requires_21_cfr_part_11": true,
+        "training_required": true,
+        "user_license_cost_annual": 1200
+      }
+    ]
+  },
+
+  "deliverables": {
+    "description": "Work products and deliverables produced by roles",
+    "example": {
+      "unique_id": "DELIV-001",
+      "name": "Clinical Study Report",
+      "category": "Clinical Documentation",
+      "description": "Comprehensive report of clinical trial results per ICH E3",
+      "typical_frequency": "Per study",
+      "average_time_to_complete_days": 90,
+      "requires_review": true,
+      "requires_approval": true,
+      "approving_functions": ["Medical Affairs", "Regulatory Affairs", "Biostatistics"]
+    },
+    "your_data": [
+      {
+        "unique_id": "DELIV-001",
+        "name": "Medical Information Response Letter",
+        "category": "Medical Communications",
+        "description": "Written response to unsolicited medical information request",
+        "typical_frequency": "As needed",
+        "average_time_to_complete_days": 3,
+        "requires_review": true,
+        "requires_approval": true,
+        "approving_functions": ["Medical Affairs", "Regulatory Affairs"]
+      }
+    ]
+  },
+
+  "therapeutic_areas": {
+    "description": "Disease areas and therapeutic specialties",
+    "example": {
+      "unique_id": "TA-001",
+      "name": "Oncology",
+      "category": "Therapeutic Area",
+      "description": "Cancer treatment and research",
+      "icd10_codes": ["C00-C97"],
+      "typical_trial_phases": ["Phase 1", "Phase 2", "Phase 3"],
+      "regulatory_complexity": "High",
+      "patient_population_size": "Large"
+    },
+    "your_data": [
+      {
+        "unique_id": "TA-001",
+        "name": "Oncology",
+        "category": "Therapeutic Area",
+        "description": "Cancer treatment and research",
+        "icd10_codes": ["C00-C97"],
+        "typical_trial_phases": ["Phase 1", "Phase 2", "Phase 3"],
+        "regulatory_complexity": "High",
+        "patient_population_size": "Large"
+      },
+      {
+        "unique_id": "TA-002",
+        "name": "Immunology",
+        "category": "Therapeutic Area",
+        "description": "Immune system disorders and treatments",
+        "icd10_codes": ["D50-D89", "M00-M99"],
+        "typical_trial_phases": ["Phase 2", "Phase 3"],
+        "regulatory_complexity": "Medium-High",
+        "patient_population_size": "Medium"
+      }
+    ]
+  },
+
+  "stakeholder_types": {
+    "description": "Types of stakeholders that roles interact with",
+    "example": {
+      "unique_id": "STAKE-001",
+      "name": "Key Opinion Leader (KOL)",
+      "category": "External Healthcare Professional",
+      "description": "Recognized expert and thought leader in therapeutic area",
+      "typical_interaction_methods": ["In-person meetings", "Advisory boards", "Congresses"],
+      "compliance_considerations": "Sunshine Act reporting, Fair Market Value",
+      "documentation_required": true
+    },
+    "your_data": [
+      {
+        "unique_id": "STAKE-001",
+        "name": "Healthcare Provider (HCP)",
+        "category": "External",
+        "description": "Physician or other prescribing healthcare professional",
+        "typical_interaction_methods": ["Office visits", "Phone calls", "Email"],
+        "compliance_considerations": "PhRMA Code, Sunshine Act",
+        "documentation_required": true
+      }
+    ]
+  },
+
+  "career_paths": {
+    "description": "Defined career progression paths within the organization",
+    "example": {
+      "unique_id": "PATH-001",
+      "name": "Medical Affairs Individual Contributor Track",
+      "category": "Medical Affairs",
+      "description": "Career progression for MSL and medical roles without management",
+      "levels": [
+        {
+          "level_name": "MSL I",
+          "typical_years": 2,
+          "key_milestones": "Establish KOL relationships, master therapeutic area"
+        },
+        {
+          "level_name": "MSL II",
+          "typical_years": 3,
+          "key_milestones": "Lead insights generation, mentor MSL I"
+        },
+        {
+          "level_name": "Senior MSL",
+          "typical_years": 3,
+          "key_milestones": "Strategic KOL partnerships, thought leadership"
+        }
+      ]
+    },
+    "your_data": [
+      {
+        "unique_id": "PATH-001",
+        "name": "Clinical Development Track",
+        "category": "Clinical Operations",
+        "description": "Career path for clinical research professionals",
+        "levels": [
+          {
+            "level_name": "Clinical Research Associate",
+            "typical_years": 2,
+            "key_milestones": "Site monitoring, protocol adherence"
+          },
+          {
+            "level_name": "Senior CRA",
+            "typical_years": 3,
+            "key_milestones": "Complex site management, mentor junior CRAs"
+          },
+          {
+            "level_name": "Clinical Trial Manager",
+            "typical_years": 4,
+            "key_milestones": "Full study management, team leadership"
+          }
+        ]
+      }
+    ]
+  },
+
+  "approval_types": {
+    "description": "Types of approvals and decision authority",
+    "example": {
+      "unique_id": "APPR-001",
+      "name": "Budget Approval",
+      "category": "Financial",
+      "description": "Authority to approve budget expenditures",
+      "requires_documentation": true,
+      "audit_trail_required": true,
+      "typical_monetary_limits_by_level": {
+        "Junior": 1000,
+        "Mid": 5000,
+        "Senior": 25000,
+        "Executive": 100000
+      }
+    },
+    "your_data": [
+      {
+        "unique_id": "APPR-001",
+        "name": "Protocol Amendment Approval",
+        "category": "Clinical",
+        "description": "Authority to approve changes to clinical trial protocols",
+        "requires_documentation": true,
+        "audit_trail_required": true,
+        "typical_monetary_limits_by_level": {}
+      }
+    ]
+  },
+
+  "process_definitions": {
+    "description": "Key business processes that roles participate in",
+    "example": {
+      "unique_id": "PROC-001",
+      "name": "Adverse Event Reporting",
+      "category": "Safety",
+      "description": "Process for identifying, documenting, and reporting adverse events",
+      "owner_function": "Pharmacovigilance",
+      "regulatory_requirement": "FDA 21 CFR Part 312.32",
+      "sla_hours": 24,
+      "steps": [
+        "Event identification",
+        "Initial assessment",
+        "Documentation in safety database",
+        "Causality assessment",
+        "Regulatory reporting"
+      ]
+    },
+    "your_data": [
+      {
+        "unique_id": "PROC-001",
+        "name": "Medical Review Process",
+        "category": "Medical Affairs",
+        "description": "Review and approval of medical and promotional materials",
+        "owner_function": "Medical Affairs",
+        "regulatory_requirement": "FDA promotional guidelines",
+        "sla_hours": 72,
+        "steps": [
+          "Material submission",
+          "Medical review",
+          "Regulatory review",
+          "Legal review",
+          "Final approval"
+        ]
+      }
+    ]
+  },
+
+  "workflow_activities": {
+    "description": "Common daily/weekly activities that roles perform",
+    "example": {
+      "unique_id": "ACT-001",
+      "name": "Site Monitoring Visit",
+      "category": "Clinical Operations",
+      "description": "On-site review of clinical trial conduct and data",
+      "typical_duration_hours": 8,
+      "frequency": "Monthly per site",
+      "requires_travel": true,
+      "requires_training": true,
+      "deliverable": "Site visit report"
+    },
+    "your_data": [
+      {
+        "unique_id": "ACT-001",
+        "name": "KOL Engagement Meeting",
+        "category": "Medical Affairs",
+        "description": "Scientific discussion with key opinion leader",
+        "typical_duration_hours": 2,
+        "frequency": "Weekly",
+        "requires_travel": true,
+        "requires_training": true,
+        "deliverable": "Interaction record in Veeva"
+      }
+    ]
+  },
+
+  "summary": {
+    "total_categories": 13,
+    "recommended_minimum_items": {
+      "skills": 20,
+      "certifications": 10,
+      "competencies": 15,
+      "kpis": 10,
+      "training_programs": 8,
+      "regulatory_requirements": 12,
+      "systems": 8,
+      "deliverables": 15,
+      "therapeutic_areas": 10,
+      "stakeholder_types": 8,
+      "career_paths": 5,
+      "approval_types": 8,
+      "process_definitions": 10,
+      "workflow_activities": 15
+    },
+    "next_steps": [
+      "Review and complete each section with your organizational data",
+      "Validate with subject matter experts (HR, L&D, Compliance, Medical Affairs)",
+      "Share completed template back for SQL generation",
+      "Plan phased rollout starting with highest-priority reference data"
+    ]
+  }
+}

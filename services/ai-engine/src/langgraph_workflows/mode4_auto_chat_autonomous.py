@@ -1,9 +1,76 @@
 """
-Mode 4: Automatic-Autonomous (AI Selection + Autonomous Deep Work)
+Mode 4: Agentic + Auto Agent Selection (ReAct/CoT with Goal-Driven Execution)
 
-AI selects best expert(s), agents perform autonomous deep work with long-term planning.
+ARCHITECTURE:
+┌─────────────────────────────────────────────────────────────────────┐
+│                    4-MODE ARCHITECTURE MATRIX                       │
+├─────────────────────┬───────────────────┬───────────────────────────┤
+│                     │ MANUAL SELECTION  │ AUTO SELECTION            │
+├─────────────────────┼───────────────────┼───────────────────────────┤
+│ CONVERSATIONAL      │ Mode 1            │ Mode 2                    │
+│ (Chat/Interactive)  │ User picks agent  │ System picks agent        │
+├─────────────────────┼───────────────────┼───────────────────────────┤
+│ AGENTIC             │ Mode 3            │ ★ MODE 4 (THIS)           │
+│ (ReAct/CoT/Goals)   │ User picks agent  │ System picks agent        │
+└─────────────────────┴───────────────────┴───────────────────────────┘
 
-**PHASE 4 ENHANCEMENTS:**
+★ MODE 4 = MOST POWERFUL: Full autonomy + intelligent agent selection
+  - System auto-selects best expert via Evidence-Based Selector (8-factor scoring)
+  - Goal-driven execution with multi-step planning
+  - Autonomous deep work similar to Deep Research / AutoGPT
+
+5-LEVEL DEEP AGENT HIERARCHY (Bi-directional):
+┌─────────────────────────────────────────────────────────────────────┐
+│ L1: MASTER ORCHESTRATOR (Query Analysis, Routing, Coordination)     │
+│     ↓ delegates to...                                               │
+│ L2: EXPERT AGENTS (AUTO-SELECTED via Evidence-Based Hybrid RRF)     │
+│     ↓ spawns...          ↑ escalates to L1                          │
+│ L3: SPECIALIST AGENTS (Domain-specific execution)                   │
+│     ↓ spawns...          ↑ escalates to L2                          │
+│ L4: WORKER AGENTS (Parallel task execution)                         │
+│     ↓ uses...            ↑ escalates to L3                          │
+│ L5: TOOL AGENTS (RAG, Web Search, Code Exec, Database)             │
+│                          ↑ reports results to L4                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+DELEGATION FLOW (Top-Down):
+- L1 → L2: Master delegates complex goals to auto-selected expert
+- L2 → L3: Expert spawns specialist for sub-tasks
+- L3 → L4: Specialist spawns workers for parallel execution
+- L4 → L5: Workers invoke tools (RAG, search, code, database)
+
+ESCALATION FLOW (Bottom-Up):
+- L5 → L4: Tool returns results to worker
+- L4 → L3: Worker escalates if beyond capability
+- L3 → L2: Specialist escalates complex decisions to expert
+- L2 → L1: Expert escalates strategic decisions to master
+- L1 → Human: Master escalates for HITL approval (safety-critical)
+
+AGENTIC PATTERNS (Similar to Deep Research / AutoGPT):
+- ✅ ReAct: Reasoning + Acting with observation loops
+- ✅ Chain-of-Thought: Explicit step-by-step reasoning
+- ✅ Tree-of-Thoughts: Multiple reasoning paths explored (ToT)
+- ✅ Constitutional AI: Safety validation at each step
+- ✅ Goal-Driven: Plans, executes, evaluates toward objective
+- ✅ Self-Reflection: Agents evaluate and improve their own outputs
+
+EVIDENCE-BASED AGENT SELECTION (Auto-Selection Engine):
+┌─────────────────────────────────────────────────────────────────────┐
+│ 8-Factor Hybrid Scoring (GraphRAG + Multi-factor):                  │
+│ 1. Semantic Match (embeddings)         5. Success Rate History      │
+│ 2. Domain Expertise Alignment          6. User Preference Learning  │
+│ 3. Capability Matching                 7. Load Balancing            │
+│ 4. Tier Appropriateness (1-3)          8. Cost Optimization         │
+└─────────────────────────────────────────────────────────────────────┘
+
+HITL APPROVAL CHECKPOINTS (Human-in-the-Loop):
+1. Plan Approval - Before executing multi-step autonomous plan
+2. Tool Approval - Before executing external tools (web, database)
+3. Sub-Agent Approval - Before spawning specialists/workers
+4. Critical Decision Approval - High-stakes regulatory/safety decisions
+5. Final Review - Before delivering autonomous response
+
+PHASE 4 ENHANCEMENTS:
 - ✅ Evidence-Based Agent Selection (GraphRAG + Multi-factor scoring)
 - ✅ HITL System (5 checkpoints, 3 safety levels)
 - ✅ Tree-of-Thoughts planning
@@ -13,13 +80,12 @@ AI selects best expert(s), agents perform autonomous deep work with long-term pl
 
 PRD Specification:
 - Interaction: AUTONOMOUS (Deep work, long-term planning)
-- Selection: AUTOMATIC (AI selects best expert(s))
-- Response Time: 90-180 seconds
+- Selection: AUTOMATIC (System selects best expert via Evidence-Based Selector)
+- Response Time: 90-180 seconds (complex autonomous tasks)
 - Experts: 1-3 experts automatically selected
 - Deep Agent Support: Experts spawn specialists and workers
 - Tools: RAG, Web Search, Code Execution, Database Tools
 - Context: Persistent conversation history, 1M+ tokens
-- **NEW**: Evidence-Based Selection, GraphRAG, HITL approvals, Full patterns
 
 Golden Rules Compliance:
 - ✅ LangGraph StateGraph (Golden Rule #1)
@@ -29,16 +95,15 @@ Golden Rules Compliance:
 - ✅ Evidence-based responses (Golden Rule #5)
 
 Use Cases:
-- "Conduct comprehensive FDA regulatory analysis" → System picks expert, deep work
-- "Design multi-phase clinical trial strategy" → Automatic selection, autonomous planning
+- "Conduct comprehensive FDA regulatory analysis" → System auto-selects expert, deep work
+- "Design multi-phase clinical trial strategy" → Auto-selection + autonomous planning
 - "Complete competitive intelligence analysis with recommendations" → Full orchestration
 
-Frontend Mapping:
-- isAutomatic: true (AI selects expert(s))
-- isMultiTurn: true (chat mode)
-- isAutonomous: true (deep work with planning)
-- hitlEnabled: true (user approval at checkpoints)
-- selectedAgents: [] (AI selects dynamically)
+FRONTEND MAPPING:
+- isAutomatic: true (system auto-selects agent via Evidence-Based Selector)
+- isAutonomous: true (agentic, goal-driven with ReAct/CoT/ToT)
+- selectedAgents: [] (system selects dynamically based on query)
+- hitlEnabled: true (user approval at critical checkpoints)
 """
 
 import asyncio
@@ -114,50 +179,37 @@ logger = structlog.get_logger()
 
 class Mode4AutoChatAutonomousWorkflow(BaseWorkflow):
     """
-    Mode 4: Automatic-Autonomous (AI Selection + Autonomous Deep Work)
+    Mode 4: Agentic + Auto Agent Selection (ReAct/CoT with Goal-Driven Execution)
 
-    **PHASE 4 ENHANCEMENTS:**
-    - Evidence-Based Agent Selection with GraphRAG
-    - HITL System with 5 approval checkpoints
-    - Tree-of-Thoughts for planning
-    - Full pattern chain (ToT → ReAct → Constitutional)
-    - Default Tier 3 (highest accuracy for automatic + autonomous)
+    ★ MOST POWERFUL MODE: Full autonomy + intelligent agent selection
 
-    Golden Rules Compliance:
-    - ✅ Uses LangGraph StateGraph (Golden Rule #1)
-    - ✅ Caching integrated at all nodes (Golden Rule #2)
-    - ✅ Tenant validation enforced (Golden Rule #3)
-    - ✅ RAG/Tools enabled by default (Golden Rule #4)
-    - ✅ Evidence-based responses (Golden Rule #5)
+    Architecture Matrix Position:
+    - Row: AGENTIC (ReAct/CoT/Goals) - goal-driven autonomous execution
+    - Column: AUTO SELECTION - system auto-selects best expert
 
-    Deep Agent Architecture:
-    Level 0: Master Orchestrator (Analyzes, routes, coordinates)
-    Level 1: Master Agents (Domain heads)
-    Level 2: Expert Agents (Auto-selected by Evidence-Based Selector) ← AI SELECTS HERE
-    Level 3: Specialist Agents (Spawned during execution)
-    Level 4: Worker Agents (Spawned for parallel tasks)
-    Level 5: Tool Agents (Code execution, searches, databases)
+    5-Level Deep Agent Hierarchy (Bi-directional):
+    - L1: Master Orchestrator (Query Analysis, Routing, Coordination)
+    - L2: Expert Agents (AUTO-SELECTED via Evidence-Based Hybrid RRF)
+    - L3: Specialist Agents (Domain-specific execution)
+    - L4: Worker Agents (Parallel task execution)
+    - L5: Tool Agents (RAG, Web Search, Code Exec, Database)
 
-    Autonomous Capabilities:
-    - ✅ Evidence-Based agent selection (8-factor scoring)
-    - ✅ GraphRAG integration for agent search
-    - ✅ Tree-of-Thoughts planning (multiple reasoning paths)
-    - ✅ ReAct execution (reasoning + acting with tools)
-    - ✅ Constitutional AI safety validation
-    - ✅ HITL approval at critical checkpoints
-    - ✅ Multi-step task execution
-    - ✅ Sub-agent spawning with approval
-    - ✅ Tool execution with approval
-    - ✅ Default Tier 3 (highest accuracy)
+    Flow Patterns:
+    - Delegation (Top-Down): L1→L2→L3→L4→L5
+    - Escalation (Bottom-Up): L5→L4→L3→L2→L1→Human (HITL)
 
-    Features:
-    - ✅ AI selects best expert(s) from 319+ catalog
-    - ✅ Multi-turn conversation with full history
-    - ✅ Autonomous multi-step execution with approval gates
-    - ✅ Tree-of-Thoughts planning
-    - ✅ Full pattern chain for Tier 3
-    - ✅ HITL checkpoints (plan, tools, sub-agents, decisions)
-    - ✅ Default Tier 3 (highest accuracy for autonomous work)
+    Agentic Patterns: ReAct, CoT, ToT, Constitutional AI, Self-Reflection
+
+    Evidence-Based Agent Selection (8-Factor Hybrid Scoring):
+    Semantic Match, Domain Expertise, Capability Matching, Tier Appropriateness,
+    Success Rate History, User Preference, Load Balancing, Cost Optimization
+
+    HITL Checkpoints: Plan, Tool, Sub-Agent, Critical Decision, Final Review
+
+    Frontend Mapping:
+    - isAutomatic: true (system auto-selects agent)
+    - isAutonomous: true (agentic, goal-driven)
+    - selectedAgents: [] (system selects dynamically)
     """
 
     def __init__(
@@ -603,126 +655,262 @@ class Mode4AutoChatAutonomousWorkflow(BaseWorkflow):
     @trace_node("mode4_select_experts_auto")
     async def select_experts_auto_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
-        PHASE 4 Node: Automatically select best expert(s) using Evidence-Based Selector.
-        (Enhanced from original with Evidence-Based Selection from Mode 2)
-        """
-        if not self.evidence_selector:
-            logger.warning("Evidence-Based Selector not available, falling back to basic selection")
-            # Fallback to existing logic
-            return await self._fallback_select_experts(state)
+        PHASE 4 Node: Automatically select best expert(s) using HYBRID 3-method search.
 
+        Uses weighted Reciprocal Rank Fusion (RRF) combining:
+        - PostgreSQL full-text search (30% weight) - Supabase
+        - Pinecone vector search (50% weight) - Semantic similarity
+        - Neo4j graph traversal (20% weight) - Relationship-based
+
+        Falls back to Evidence-Based Selector if available, then to hybrid agent selection.
+        """
         tenant_id = state['tenant_id']
         query = state['query']
-        max_agents = state.get('recommended_expert_count', 1)  # Default 1 for autonomous
+        max_agents = state.get('recommended_expert_count', 3)  # Mode 4 can select 1-3 experts
 
+        # PRIMARY: Use HYBRID agent selection (Neo4j + Pinecone + Postgres)
+        # This is the user-requested approach for Mode 4
         try:
-            selection_result = await self.evidence_selector.select_for_service(
-                service=VitalService.ASK_EXPERT,
+            selected_agents = await self.agent_selector.select_agents_hybrid(
                 query=query,
-                context={
-                    'mode': 'auto_autonomous',
-                    'conversation_history': state.get('messages', []),
-                    'requires_deep_work': True
-                },
                 tenant_id=tenant_id,
-                max_agents=max_agents
+                mode="mode4",
+                max_agents=max_agents,
+                min_confidence=0.55  # Slightly lower threshold for multi-expert panel
             )
 
-            selected_agent_ids = [agent.id for agent in selection_result.agents]
-            reasoning = selection_result.assessment.get('reasoning', 'Agents selected by Evidence-Based Selector.')
-            confidence = selection_result.assessment.get('confidence', 0.0)
-            tier = selection_result.tier
+            if selected_agents and len(selected_agents) > 0:
+                # Extract agent details from hybrid selection results
+                selected_agent_ids = []
+                agent_names = []
+                avg_confidence = 0.0
+                breakdown = {}
 
-            logger.info(
-                "Experts selected automatically by Evidence-Based Selector (Mode 4)",
-                expert_count=len(selected_agent_ids),
-                experts=selected_agent_ids,
-                confidence=confidence,
-                tier=tier
-            )
+                for agent in selected_agents:
+                    agent_id = agent.get('id', agent.get('agent_id', ''))
+                    agent_name = agent.get('name', agent.get('display_name', 'Expert'))
+                    selected_agent_ids.append(agent_id)
+                    agent_names.append(agent_name)
+                    avg_confidence += agent.get('fused_score', 0.7)
 
-            return {
-                **state,
-                'selected_agents': selected_agent_ids,
-                'selection_reasoning': reasoning,
-                'selection_confidence': confidence,
-                'tier': max(tier, 3),  # Mode 4 defaults to Tier 3
-                'requires_tot': True,  # Always use ToT for Mode 4
-                'requires_constitutional': True,  # Always validate for Mode 4
-                'current_node': 'select_experts_auto'
-            }
+                    # Capture breakdown from first agent
+                    if not breakdown:
+                        breakdown = {
+                            'postgres_score': agent.get('postgres_score', 0),
+                            'pinecone_score': agent.get('pinecone_score', 0),
+                            'neo4j_score': agent.get('neo4j_score', 0),
+                            'fused_score': agent.get('fused_score', 0)
+                        }
+
+                avg_confidence = avg_confidence / len(selected_agents) if selected_agents else 0.7
+
+                reasoning = f"Selected {len(selected_agent_ids)} expert(s) using HYBRID 3-method weighted scoring: " + \
+                           f"Postgres (30%): {breakdown.get('postgres_score', 0):.2f}, " + \
+                           f"Pinecone (50%): {breakdown.get('pinecone_score', 0):.2f}, " + \
+                           f"Neo4j (20%): {breakdown.get('neo4j_score', 0):.2f}. " + \
+                           f"Experts: {', '.join(agent_names)}"
+
+                logger.info(
+                    "Experts selected using HYBRID 3-method search (Mode 4)",
+                    expert_count=len(selected_agent_ids),
+                    experts=selected_agent_ids,
+                    confidence=avg_confidence,
+                    method="hybrid_rrf"
+                )
+
+                return {
+                    **state,
+                    'selected_agents': selected_agent_ids,
+                    'selected_agent_names': agent_names,
+                    'selection_reasoning': reasoning,
+                    'selection_confidence': avg_confidence,
+                    'selection_method': 'hybrid_rrf',
+                    'selection_breakdown': breakdown,
+                    'tier': 3,  # Mode 4 always defaults to Tier 3
+                    'requires_tot': True,  # Always use ToT for Mode 4
+                    'requires_constitutional': True,  # Always validate for Mode 4
+                    'current_node': 'select_experts_auto',
+                    'reasoning_steps': state.get('reasoning_steps', []) + [{
+                        'step': 'agent_selection',
+                        'action': 'Hybrid 3-method search (Postgres + Pinecone + Neo4j)',
+                        'result': f"Selected {len(selected_agent_ids)} experts: {', '.join(agent_names)}",
+                        'confidence': avg_confidence,
+                        'breakdown': breakdown,
+                        'mode': 'mode4'
+                    }],
+                }
 
         except Exception as e:
-            logger.error("Evidence-Based Expert selection failed (Mode 4)", error=str(e))
-            return await self._fallback_select_experts(state, error=str(e))
+            logger.warning(f"Hybrid agent selection failed, trying fallback: {str(e)}")
+
+        # FALLBACK: Try Evidence-Based Selector if available
+        if self.evidence_selector:
+            try:
+                selection_result = await self.evidence_selector.select_for_service(
+                    service=VitalService.ASK_EXPERT,
+                    query=query,
+                    context={
+                        'mode': 'auto_autonomous',
+                        'conversation_history': state.get('messages', []),
+                        'requires_deep_work': True
+                    },
+                    tenant_id=tenant_id,
+                    max_agents=max_agents
+                )
+
+                selected_agent_ids = [agent.id for agent in selection_result.agents]
+                agent_names = [agent.agent_name for agent in selection_result.agents]
+                reasoning = selection_result.assessment.get('reasoning', 'Agents selected by Evidence-Based Selector (hybrid internally).')
+                confidence = selection_result.assessment.get('confidence', 0.0)
+                tier = selection_result.tier
+
+                logger.info(
+                    "Experts selected by Evidence-Based Selector (Mode 4)",
+                    expert_count=len(selected_agent_ids),
+                    experts=selected_agent_ids,
+                    confidence=confidence,
+                    tier=tier
+                )
+
+                return {
+                    **state,
+                    'selected_agents': selected_agent_ids,
+                    'selected_agent_names': agent_names,
+                    'selection_reasoning': reasoning,
+                    'selection_confidence': confidence,
+                    'selection_method': 'evidence_based',
+                    'tier': max(tier, 3),  # Mode 4 defaults to Tier 3
+                    'requires_tot': True,
+                    'requires_constitutional': True,
+                    'current_node': 'select_experts_auto',
+                    'reasoning_steps': state.get('reasoning_steps', []) + [{
+                        'step': 'agent_selection',
+                        'action': 'Evidence-Based Selection (uses hybrid search internally)',
+                        'result': f"Selected {len(selected_agent_ids)} experts: {', '.join(agent_names)}",
+                        'confidence': confidence,
+                        'mode': 'mode4'
+                    }],
+                }
+
+            except Exception as e:
+                logger.error("Evidence-Based Expert selection failed (Mode 4)", error=str(e))
+
+        # FINAL FALLBACK: Use fallback method with hybrid selection
+        return await self._fallback_select_experts(state, error="Primary and secondary selection methods failed")
 
     async def _fallback_select_experts(self, state: UnifiedWorkflowState, error: str = None) -> UnifiedWorkflowState:
-        """Fallback selection using basic AgentSelectorService"""
+        """
+        Fallback selection using HYBRID agent selection (Neo4j + Pinecone + Postgres).
+
+        This fallback still uses the hybrid 3-method approach as requested by user.
+        Only if hybrid fails, it falls back to database query.
+        """
         tenant_id = state['tenant_id']
         query = state['query']
-        max_agents = state.get('recommended_expert_count', 1)
-        
+        max_agents = state.get('recommended_expert_count', 3)
+
         try:
-            # Use basic selector
-            selection_result = await self.agent_selector.select_multiple_experts_diverse(
+            # Still try HYBRID selection in fallback - user requirement
+            selected_agents = await self.agent_selector.select_agents_hybrid(
                 query=query,
-                domains=state.get('detected_domains', []),
-                expert_count=max_agents,
-                tenant_id=tenant_id
+                tenant_id=tenant_id,
+                mode="mode4_fallback",
+                max_agents=max_agents,
+                min_confidence=0.40  # Lower threshold for fallback
             )
-            
-            selected_agent_ids = selection_result.get('agent_ids', [])
-            reasoning = f"Fallback selection{': ' + error if error else ''}"
 
-            if not selected_agent_ids:
-                # Ultimate fallback: get any active agent from database
-                try:
-                    from services.supabase_client import get_supabase_client
-                    supabase = get_supabase_client()
-                    fallback_agents = await supabase.get_all_agents(tenant_id=tenant_id, status="active", limit=1)
-                    if fallback_agents and len(fallback_agents) > 0:
-                        selected_agent_ids = [fallback_agents[0]['id']]
-                        logger.info("Using first available agent as fallback", agent_id=selected_agent_ids[0])
-                    else:
-                        # If still no agents, return error state
-                        logger.error("No agents available in database")
-                        return {
-                            **state,
-                            'selected_agents': [],
-                            'selection_reasoning': 'No agents available',
-                            'selection_confidence': 0.0,
-                            'errors': state.get('errors', []) + ['No agents available in database']
-                        }
-                except Exception as e3:
-                    logger.error("Fallback agent query failed", error=str(e3))
-                    return {
-                        **state,
-                        'selected_agents': [],
-                        'selection_reasoning': 'Fallback failed',
-                        'selection_confidence': 0.0,
-                        'errors': state.get('errors', []) + [f'Fallback failed: {str(e3)}']
-                    }
+            if selected_agents and len(selected_agents) > 0:
+                selected_agent_ids = [agent.get('id', agent.get('agent_id', '')) for agent in selected_agents]
+                agent_names = [agent.get('name', agent.get('display_name', 'Expert')) for agent in selected_agents]
+                avg_confidence = sum(agent.get('fused_score', 0.5) for agent in selected_agents) / len(selected_agents)
 
-            logger.info("Fallback expert selection (Mode 4)", experts=selected_agent_ids)
-            
-            return {
-                **state,
-                'selected_agents': selected_agent_ids,
-                'selection_reasoning': reasoning,
-                'selection_confidence': 0.5,
-                'tier': 3,  # Default Tier 3 for Mode 4
-                'current_node': 'select_experts_auto'
-            }
+                reasoning = f"Fallback HYBRID selection (lower threshold): {', '.join(agent_names)}"
+                if error:
+                    reasoning = f"{reasoning}. Original error: {error}"
+
+                logger.info("Fallback HYBRID expert selection (Mode 4)", experts=selected_agent_ids)
+
+                return {
+                    **state,
+                    'selected_agents': selected_agent_ids,
+                    'selected_agent_names': agent_names,
+                    'selection_reasoning': reasoning,
+                    'selection_confidence': avg_confidence,
+                    'selection_method': 'hybrid_rrf_fallback',
+                    'tier': 3,  # Default Tier 3 for Mode 4
+                    'current_node': 'select_experts_auto',
+                    'reasoning_steps': state.get('reasoning_steps', []) + [{
+                        'step': 'agent_selection_fallback',
+                        'action': 'Hybrid 3-method search (fallback with lower threshold)',
+                        'result': f"Selected {len(selected_agent_ids)} experts: {', '.join(agent_names)}",
+                        'confidence': avg_confidence,
+                        'mode': 'mode4'
+                    }],
+                }
         except Exception as e2:
-            logger.error("Fallback selection also failed", error=str(e2))
-            # Return empty agents list - will be handled by downstream nodes
+            logger.warning(f"Hybrid fallback also failed: {str(e2)}")
+
+        # ULTIMATE FALLBACK: Get any active agent from database
+        try:
+            from services.supabase_client import get_supabase_client
+            supabase = get_supabase_client()
+            fallback_agents = await supabase.get_all_agents(tenant_id=tenant_id, status="active", limit=3)
+
+            if fallback_agents and len(fallback_agents) > 0:
+                selected_agent_ids = [agent['id'] for agent in fallback_agents]
+                agent_names = [agent.get('name', agent.get('display_name', 'Expert')) for agent in fallback_agents]
+
+                logger.info("Using database agents as ultimate fallback (Mode 4)", agent_ids=selected_agent_ids)
+
+                return {
+                    **state,
+                    'selected_agents': selected_agent_ids,
+                    'selected_agent_names': agent_names,
+                    'selection_reasoning': f"Database fallback: {', '.join(agent_names)}. Original error: {error}",
+                    'selection_confidence': 0.4,
+                    'selection_method': 'database_fallback',
+                    'tier': 3,
+                    'current_node': 'select_experts_auto',
+                    'reasoning_steps': state.get('reasoning_steps', []) + [{
+                        'step': 'agent_selection_ultimate_fallback',
+                        'action': 'Database query (all methods failed)',
+                        'result': f"Selected {len(selected_agent_ids)} available agents",
+                        'confidence': 0.4,
+                        'mode': 'mode4'
+                    }],
+                }
+            else:
+                logger.error("No agents available in database")
+                return {
+                    **state,
+                    'selected_agents': [],
+                    'selection_reasoning': 'No agents available',
+                    'selection_confidence': 0.0,
+                    'errors': state.get('errors', []) + ['No agents available in database'],
+                    'reasoning_steps': state.get('reasoning_steps', []) + [{
+                        'step': 'agent_selection_failed',
+                        'action': 'All selection methods failed',
+                        'result': 'No agents available',
+                        'confidence': 0.0,
+                        'mode': 'mode4'
+                    }],
+                }
+        except Exception as e3:
+            logger.error("Ultimate fallback agent query failed", error=str(e3))
             return {
                 **state,
                 'selected_agents': [],
-                'selection_reasoning': 'All selection methods failed',
+                'selection_reasoning': f'All selection methods failed: {str(e3)}',
                 'selection_confidence': 0.0,
                 'tier': 3,
-                'errors': state.get('errors', []) + [f"Selection failed: {error or str(e2)}"]
+                'errors': state.get('errors', []) + [f"Selection failed: {error or str(e3)}"],
+                'reasoning_steps': state.get('reasoning_steps', []) + [{
+                    'step': 'agent_selection_error',
+                    'action': 'All selection methods failed with error',
+                    'result': str(e3),
+                    'confidence': 0.0,
+                    'mode': 'mode4'
+                }],
             }
 
     @trace_node("mode4_plan_parallel_reasoning")

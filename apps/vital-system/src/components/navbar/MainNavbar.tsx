@@ -23,7 +23,8 @@ import {
   Command as CommandIcon,
   FileText,
   Zap,
-  Palette
+  Palette,
+  Layers
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -321,6 +322,20 @@ export function MainNavbar() {
               </Link>
             </NavigationMenuItem>
 
+            {/* Value - Standalone (Enterprise Ontology) */}
+            <NavigationMenuItem>
+              <Link
+                href="/value"
+                className={cn(
+                  navigationMenuTriggerStyle(),
+                  isPathActive('/value') && 'bg-accent text-accent-foreground'
+                )}
+              >
+                <Layers className="mr-2 h-4 w-4" />
+                Value
+              </Link>
+            </NavigationMenuItem>
+
             {/* Admin - Standalone */}
             <NavigationMenuItem>
               <Link
@@ -576,6 +591,10 @@ export function MainNavbar() {
             <CommandItem onSelect={() => handleCommandSelect(() => router.push('/dashboard'))}>
               <LayoutDashboard className="mr-2 h-4 w-4" />
               <span>Dashboard</span>
+            </CommandItem>
+            <CommandItem onSelect={() => handleCommandSelect(() => router.push('/value'))}>
+              <Layers className="mr-2 h-4 w-4" />
+              <span>Value & Ontology</span>
             </CommandItem>
             <CommandItem onSelect={() => handleCommandSelect(() => router.push('/admin'))}>
               <Shield className="mr-2 h-4 w-4" />

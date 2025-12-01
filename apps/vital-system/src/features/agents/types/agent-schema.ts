@@ -110,7 +110,7 @@ export function convertToClientAgent(agent: StoreAgent): ClientAgent {
     domain_expertise: agent.domain_expertise,
     status,
     is_custom: agent.is_custom ?? false,
-    rag_enabled: agent.rag_enabled ?? false,
+    rag_enabled: agent.rag_enabled ?? true, // RAG enabled by default for all agents
     business_function: agent.business_function,
     department: agent.department,
     role: agent.role,

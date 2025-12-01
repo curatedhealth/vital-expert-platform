@@ -1,26 +1,71 @@
 # VITAL Ask Expert Services - Product Requirements Document (PRD)
-**Version:** 1.1
-**Date:** November 23, 2025
-**Status:** Gold Standard - Market Intelligence Enhanced
+**Version:** 1.2
+**Date:** November 27, 2025
+**Status:** Gold Standard - GraphRAG & 5-Level Hierarchy Enhanced
 **Service Tier:** Ask Expert ($2,000/month base + usage)
 
 ---
 
 ## Executive Summary
 
-VITAL Ask Expert is a sophisticated AI-powered healthcare consultation service that provides instant access to 136+ specialized healthcare expert agents. The service operates through a 2x2 matrix of interaction modes, delivering regulatory guidance, clinical expertise, and strategic insights for pharmaceutical companies, medical device manufacturers, and digital health innovators.
+VITAL Ask Expert is a sophisticated AI-powered healthcare consultation service that provides instant access to **489 enriched specialized healthcare expert agents** organized in a **5-level hierarchy**. The service operates through a **2-toggle system** creating **4 distinct modes** (Interactive/Autonomous × Manual/Auto), delivering regulatory guidance, clinical expertise, and strategic insights for pharmaceutical companies, medical device manufacturers, and digital health innovators.
 
 The service replaces traditional consulting costs of $3-5M annually with an AI-powered solution starting at $24,000/year, achieving 91% faster decision-making with 95% accuracy. The platform addresses a rapidly expanding market opportunity, with healthcare AI projected to grow from $39.25B in 2025 to $504.17B by 2032 (44% CAGR), and pharmaceutical companies increasing AI investment 6x to $25B by 2030.
 
-### Market Context (New in v1.1)
+### What's New in v1.2
+- **489 Enriched Agents**: Up from 136+, each with 6 core standardized fields
+- **5-Level Agent Hierarchy**: Platform → Domain → Tier 1 → Tier 2 → Tier 3
+- **3-Method Hybrid Agent Selection**: PostgreSQL (30%) + Pinecone (50%) + Neo4j GraphRAG (20%)
+- **2-Toggle Mode System**: Simplified Interactive/Autonomous × Manual/Auto matrix
+- **Evidence-Based Scoring**: Capability and skill proficiency tracking per agent
+
+### Phase 1 Launch Scope (December 2025)
+
+⚠️ **IMPORTANT**: Phase 1 launches with a subset of v1.2 capabilities. Full v1.2 features deploy in Phase 2.
+
+| Capability | Phase 1 (Dec 2025) | Phase 2+ (Q1 2026) |
+|------------|--------------------|--------------------|
+| **Agent Count** | 136+ active agents | 489 enriched agents |
+| **Agent Selection** | Pinecone semantic only | 3-method hybrid GraphRAG |
+| **Modes** | All 4 modes functional | All 4 modes + enhanced |
+| **Neo4j GraphRAG** | Not deployed | Full integration |
+| **Deep Agents** | Basic tools | TodoList, Filesystem, SubAgent |
+| **Evidence Scoring** | Static | Dynamic with learning |
+
+### Response Time Clarification
+
+Two distinct metrics are tracked for response performance:
+
+| Metric | Definition | Phase 1 Targets |
+|--------|------------|-----------------|
+| **API Latency** | Time to first token | Mode 1-2: <500ms, Mode 3-4: <5s |
+| **Workflow Time** | Complete reasoning + synthesis | Mode 1: 15-25s, Mode 4: 35-55s |
+
+- **API Latency**: Measured from request received to first response token
+- **Workflow Time**: Measured from query submission to complete synthesized response
+- Phase 1 actual performance: Mode 1: 475ms, Mode 2: 335ms, Mode 3: 1.95s, Mode 4: 4.67s (API latency)
+
+### Market Context (v1.1)
 - **Medical Affairs Focus**: 40% of pharma AI investment targets medical affairs functions
-- **Competitive Advantage**: Only platform with 136+ healthcare-specific agents and multi-agent orchestration
+- **Competitive Advantage**: Only platform with 489 healthcare-specific agents and multi-agent orchestration
 - **Pricing Evolution**: Market shifting to hybrid outcome-based models (base + usage + success)
 - **Production Requirements**: HITL (Human-in-the-Loop) now essential for regulated healthcare deployments
 
 ---
 
 ## Service Mode Architecture
+
+### 2-Toggle System (Updated v1.2)
+
+The Ask Expert service uses a **2-toggle system** that creates **4 distinct modes** through a simple 2x2 matrix, inspired by modern AI assistants like ChatGPT, Claude, and Gemini.
+
+**Toggle 1 - Autonomous Toggle** (Off/On):
+- **OFF** = Interactive (back-and-forth conversation)
+- **ON** = Autonomous (goal-driven execution with HITL checkpoints)
+
+**Toggle 2 - Automatic Toggle** (Off/On):
+- **OFF** = Manual (you choose the expert)
+- **ON** = Automatic (AI selects best expert(s) via GraphRAG hybrid selection)
 
 ### Core 2x2 Matrix
 
@@ -33,21 +78,22 @@ The service replaces traditional consulting costs of $3-5M annually with an AI-p
                     MANUAL Selection     │  AUTO Selection
                     (You Choose Expert)  │  (AI Selects Experts)
                                         │
-QUERY         ┌────────────────────────┼────────────────────────┐
-(One-Shot)    │       MODE 1           │       MODE 2           │
-              │   Manual Selection     │   Auto Selection       │
-              │   Choose your expert   │   AI finds best        │
-              │   ⏱ 20-30 sec         │   ⏱ 30-45 sec         │
-              │   👤 1 expert          │   👥 3 experts         │
+INTERACTIVE   ┌────────────────────────┼────────────────────────┐
+(Conversation)│       MODE 1           │       MODE 2           │
+              │ Interactive + Manual   │ Interactive + Auto     │
+              │ "Focused Expert        │ "Smart Expert          │
+              │  Conversation"         │  Discussion"           │
+              │ ⏱ 15-25 sec           │ ⏱ 25-40 sec           │
+              │ 👤 1 expert            │ 👥 2 experts           │
               └────────────────────────┼────────────────────────┘
                                         │
-CHAT          ┌────────────────────────┼────────────────────────┐
-(Multi-turn   │       MODE 3           │       MODE 4           │
-Conversation) │ Manual + Autonomous    │  Auto + Autonomous     │
-              │ You select agent +     │  AI selects best +     │
-              │ autonomous reasoning   │  autonomous reasoning  │
-              │ ⏱ 60-90 sec           │   ⏱ 45-60 sec         │
-              │ 👤 1 expert            │   👥 2 experts         │
+AUTONOMOUS    ┌────────────────────────┼────────────────────────┐
+(Goal-Driven) │       MODE 3           │       MODE 4           │
+              │ Autonomous + Manual    │ Autonomous + Auto      │
+              │ "Expert-Driven         │ "AI Collaborative      │
+              │  Workflow"             │  Workflow"             │
+              │ ⏱ 45-75 sec           │ ⏱ 35-55 sec           │
+              │ 👤 1 expert + tools    │ 👥 4 experts + tools   │
               └────────────────────────┼────────────────────────┘
 ```
 
@@ -55,198 +101,248 @@ Conversation) │ Manual + Autonomous    │  Auto + Autonomous     │
 
 ## Product Features by Mode
 
-### MODE 1: Manual Selection (Query Mode)
-**Purpose:** Choose your specific expert for precise answers
+### MODE 1: Interactive + Manual
+**"Focused Expert Conversation"**
+**Toggles:** Autonomous=OFF, Automatic=OFF
 
 #### User Experience
 - User browses expert catalog or searches by specialty
-- Selects one specific expert from 136+ agents
-- Submits question to chosen expert
+- Selects one specific expert from **489 enriched agents**
+- Engages in multi-turn conversation with context retention
 - Receives expert-specific perspective and recommendations
-- Response time: 20-30 seconds
+- Response time: 15-25 seconds
 
 #### Key Features
-- **Expert Browser:** Searchable catalog with specialties and credentials
-- **Expert Profiles:** Detailed backgrounds, expertise areas, response styles
-- **Targeted Expertise:** Get perspective from specific domain expert
+- **Expert Browser:** Searchable catalog with 5-level hierarchy
+- **Expert Profiles:** 6 standardized fields including capabilities and evidence scores
+- **Deep Contextual Understanding:** Full conversation memory
 - **Consistent Voice:** Maintains expert's unique perspective and approach
 - **Quick Access:** Bookmark favorite experts for repeated consultations
 
 #### Use Cases
-- "Ask Dr. Sarah Mitchell (FDA 510k Expert) about my device classification"
+- "I want to discuss my 510(k) strategy with the FDA Regulatory Expert"
 - "Get Dr. James Chen's (De Novo Expert) opinion on novel device pathway"
 - "Consult Dr. Klaus Weber (EU MDR Expert) about CE marking requirements"
 
 #### Performance Requirements
-- Response time: 20-30 seconds
-- Single expert focus
+- Response time: 15-25 seconds (P50), 20-30s (P95)
+- Single expert focus with reasoning chains
 - Expert availability: 100%
 
 ---
 
-### MODE 2: Auto Selection (Query Mode)
-**Purpose:** Get instant answers from multiple experts automatically
+### MODE 2: Interactive + Automatic
+**"Smart Expert Discussion"**
+**Toggles:** Autonomous=OFF, Automatic=ON
 
 #### User Experience
 - User submits question without selecting experts
-- AI analyzes query and identifies relevant domains
-- System automatically selects 3 best-matched experts
+- **3-Method Hybrid GraphRAG** analyzes query and identifies relevant domains
+- System automatically selects 2 best-matched experts via RRF fusion
 - Synthesizes multi-perspective response
-- Response time: 30-45 seconds
+- Response time: 25-40 seconds
 
 #### Key Features
-- **Intelligent Expert Matching:** Semantic analysis to find best experts
-- **Multi-Expert Synthesis:** Combines insights from 3 relevant agents
-- **Comprehensive Coverage:** Gets regulatory, clinical, and business perspectives
+- **Hybrid Expert Matching:** PostgreSQL (30%) + Pinecone (50%) + Neo4j GraphRAG (20%)
+- **RRF Fusion:** Reciprocal Rank Fusion combines all ranking methods
+- **Multi-Expert Synthesis:** Combines insights from 2 relevant agents
 - **Evidence-Based:** Includes citations from authoritative sources
-- **Balanced Viewpoints:** Presents consensus and differing expert opinions
+- **Dynamic Expert Switching:** AI can bring in additional expertise as needed
 
 #### Use Cases
 - "What's the best FDA pathway for my AI-powered diagnostic tool?"
-- "How should I design my clinical trial for maximum success?"
+- "I need advice on entering the EU market with my medical device"
 - "What are the regulatory and reimbursement considerations for my device?"
 
 #### Performance Requirements
-- Response time: 30-45 seconds
-- 3 experts consulted
+- Response time: 25-40 seconds (P50), 45s (P95)
+- 2 experts consulted via hybrid selection
 - Automatic expert selection accuracy: >90%
 
 ---
 
-### MODE 3: Manual + Autonomous (Chat Mode)
-**Purpose:** Multi-turn conversation with chosen expert and autonomous reasoning
+### MODE 3: Autonomous + Manual
+**"Expert-Driven Workflow"**
+**Toggles:** Autonomous=ON, Automatic=OFF
 
 #### User Experience
-- User selects specific expert for extended dialogue
-- Engages in multi-turn conversation with context retention
-- Expert provides autonomous reasoning with checkpoint validation
+- User selects specific expert and defines a **goal** to accomplish
+- Expert executes multi-step autonomous workflow with **tool usage**
+- **HITL checkpoints** for human approval at critical decision points
 - Maintains consistent expert perspective throughout
-- Response time: 60-90 seconds per interaction
+- Response time: 45-75 seconds per workflow step
 
 #### Key Features
-- **Persistent Context:** Full conversation memory and history
-- **Autonomous Reasoning:** Expert thinks through complex problems step-by-step
+- **Goal-Driven Execution:** Expert works toward defined objective
+- **Deep Agent Tools:** TodoList, Filesystem, SubAgent spawning (LangChain integration)
 - **Checkpoint System:** Human validation at critical decision points
-- **Deep Specialization:** Focused expertise without expert switching
-- **Iterative Refinement:** Expert learns from feedback and adjusts approach
+- **Research & Analysis:** Searches relevant databases and literature
+- **Iterative Refinement:** Expert adjusts based on human feedback
 
-#### Conversation Capabilities
-- **Chain-of-Thought Reasoning:** Expert breaks down complex problems
-- **Evidence Gathering:** Searches relevant databases and literature
-- **Hypothesis Testing:** Evaluates different approaches
-- **Strategic Planning:** Develops comprehensive action plans
-- **Risk Assessment:** Identifies potential issues and mitigations
+#### Deep Agent Capabilities
+- **Planning Agent:** Breaks goals into actionable subtasks
+- **Tool Integration:** Access to research, analysis, and generation tools
+- **Sub-Agent Spawning:** Creates specialized sub-agents for specific tasks
+- **Evidence Gathering:** Searches PubMed, FDA databases, ClinicalTrials.gov
+- **Artifact Generation:** Creates documents, reports, protocols
 
 #### Use Cases
-- "Work with FDA expert to develop complete 510(k) submission strategy"
+- "I need the Clinical Trials Expert to create a Phase II study protocol"
 - "Collaborate with clinical expert on trial protocol optimization"
 - "Deep dive with reimbursement expert on payer negotiation approach"
 
 #### Performance Requirements
-- Response time: 60-90 seconds
-- 1 expert with deep reasoning
+- Response time: 45-75 seconds per step (P50), 90s (P95)
+- 1 expert with deep reasoning + tool access
 - Context retention: Full session
 - Checkpoint processing: <5 seconds
 
 ---
 
-### MODE 4: Auto + Autonomous (Chat Mode)
-**Purpose:** AI-orchestrated multi-expert conversation with autonomous reasoning
+### MODE 4: Autonomous + Automatic
+**"AI Collaborative Workflow"**
+**Toggles:** Autonomous=ON, Automatic=ON
 
 #### User Experience
-- User describes goal or complex challenge
-- AI automatically selects and coordinates best experts
-- Multiple experts collaborate with autonomous reasoning
-- Seamless handoffs between specialists as topics evolve
-- Response time: 45-60 seconds per interaction
+- User describes complex goal requiring multi-disciplinary expertise
+- **3-Method Hybrid GraphRAG** assembles optimal expert team (up to 4)
+- Multiple experts collaborate with autonomous reasoning and tool usage
+- **LangGraph Supervisor** coordinates parallel execution and handoffs
+- Response time: 35-55 seconds per workflow step
 
 #### Key Features
-- **Dynamic Expert Orchestra:** AI brings in right experts at right time
-- **Multi-Expert Collaboration:** 2+ experts work together on problem
-- **Autonomous Problem Solving:** Each expert contributes deep reasoning
-- **Checkpoint Validation:** Human approval at critical junctures
-- **Comprehensive Solutions:** Addresses all aspects of complex challenges
+- **Dynamic Expert Assembly:** GraphRAG selects best team via hybrid scoring
+- **Supervisor Pattern:** Central orchestrator manages multi-agent coordination
+- **Deep Agent Collaboration:** Each expert has TodoList, Filesystem, SubAgent tools
+- **HITL Checkpoints:** Human approval at critical junctures
+- **Comprehensive Deliverables:** Documents, protocols, strategies as artifacts
 
 #### Orchestration Pattern
 ```
-User: "Create complete FDA submission strategy for AI diagnostic"
-→ AI: [FDA Expert + Clinical Expert activated]
-→ FDA Expert: "Analyzing regulatory pathway options..."
-→ Clinical Expert: "Evaluating validation requirements..."
-→ AI: [Reimbursement Expert joins for market access]
-→ All Experts: Synthesized comprehensive strategy
+User: "Create complete FDA 510(k) submission package for my device"
+→ AI: [GraphRAG selects FDA Expert + Clinical Expert + QA Expert + Regulatory Writer]
+→ Supervisor: "Coordinating parallel analysis..."
+→ FDA Expert: "Analyzing regulatory pathway options..." [uses research tools]
+→ Clinical Expert: "Evaluating validation requirements..." [spawns sub-agent]
+→ QA Expert: "Reviewing design controls..."
+→ Supervisor: [HITL checkpoint for strategy approval]
+→ Regulatory Writer: "Generating submission documents..." [artifact creation]
+→ All Experts: Synthesized comprehensive package with artifacts
 ```
 
 #### Advanced Capabilities
-- **Parallel Processing:** Multiple experts analyze simultaneously
-- **Consensus Building:** Experts debate and reach agreement
-- **Gap Identification:** AI identifies missing expertise and adds experts
-- **Risk Mitigation:** Experts identify and address potential issues
-- **Implementation Planning:** Creates actionable roadmaps
+- **Parallel Processing:** LangGraph enables concurrent expert execution
+- **Consensus Building:** Weighted voting with confidence scores
+- **Graph-Based Routing:** Neo4j relationships (ORCHESTRATES, DELEGATES_TO, COLLABORATES_WITH)
+- **Artifact System:** Generate documents, templates, protocols, diagrams
+- **Implementation Roadmap:** Gantt chart visualization with milestones
 
 #### Use Cases
+- "Create a complete FDA 510(k) submission package for my device"
 - "Develop end-to-end go-to-market strategy for novel medical device"
-- "Create comprehensive regulatory and clinical validation plan"
 - "Design multi-jurisdictional approval strategy (FDA + EMA + Health Canada)"
 
 #### Performance Requirements
-- Response time: 45-60 seconds
-- 2+ experts coordinated
+- Response time: 35-55 seconds per step (P50), 75s (P95)
+- Up to 4 experts coordinated via Supervisor
 - Expert handoff: <2 seconds
-- Parallel processing: Supported
+- Parallel processing: LangGraph StateGraph enabled
 
 ---
 
 ## Expert Agent Catalog
 
-### Total Agent Count: 136+ Specialists
+### Total Agent Count: 489 Enriched Specialists (v1.2)
+
+#### 5-Level Agent Hierarchy
+```
+PLATFORM LEVEL (4 agents)
+├─ Global Orchestrators
+├─ Cross-Domain Coordinators
+│
+DOMAIN LEVEL (15 agents)
+├─ Domain Masters per Vertical
+├─ Capability Coordinators
+│
+TIER 1 - STRATEGIC (25 agents)
+├─ Senior Specialists
+├─ Decision Makers
+│
+TIER 2 - TACTICAL (85 agents)
+├─ Implementation Experts
+├─ Process Specialists
+│
+TIER 3 - OPERATIONAL (360 agents)
+├─ Task Executors
+├─ Specialized Workers
+└─ Research Assistants
+```
+
+#### 6 Core Fields Per Agent (Enrichment Standard)
+| Field | Description |
+|-------|-------------|
+| `capabilities` | Primary skills and competencies |
+| `expertise_areas` | Domain-specific knowledge areas |
+| `tool_access` | Available tools (research, generation, analysis) |
+| `evidence_score` | Historical accuracy and citation quality (0-100) |
+| `skill_proficiency` | Proficiency levels per skill |
+| `relationship_graph` | Neo4j relationships to other agents |
 
 #### Domain Distribution
-- **Regulatory Affairs:** 25 agents
-- **Clinical Development:** 20 agents
-- **Quality & Compliance:** 18 agents
-- **Technical/Engineering:** 20 agents
-- **Market Access:** 15 agents
-- **Business Strategy:** 15 agents
-- **Medical Affairs:** 13 agents
-- **Legal & IP:** 10 agents
+- **Regulatory Affairs:** 65 agents (FDA, EMA, PMDA, Health Canada)
+- **Clinical Development:** 55 agents
+- **Quality & Compliance:** 48 agents
+- **Technical/Engineering:** 52 agents
+- **Market Access:** 45 agents
+- **Business Strategy:** 42 agents
+- **Medical Affairs:** 38 agents
+- **Digital Health:** 45 agents
+- **Manufacturing:** 52 agents
+- **Legal & IP:** 47 agents
 
 ### Featured Expert Agents
 
 #### Regulatory Specialists
-| Agent ID | Name | Specialty | Expertise |
-|----------|------|-----------|-----------|
-| `fda-510k-expert` | Dr. Sarah Mitchell | FDA 510(k) | Predicate analysis, substantial equivalence |
-| `fda-de-novo` | Dr. James Chen | De Novo Classification | Novel devices, special controls |
-| `ema-mdr-expert` | Dr. Klaus Weber | EU MDR | CE marking, notified bodies |
-| `fda-ai-ml` | Dr. Emily Park | FDA AI/ML | SaMD, continuous learning, PCCP |
-| `combination-products` | Dr. Michael Brown | Combination Products | Drug-device, biologics-device |
+| Agent ID | Name | Tier | Expertise | Evidence Score |
+|----------|------|------|-----------|----------------|
+| `fda-510k-expert` | Dr. Sarah Mitchell | T1 | Predicate analysis, substantial equivalence | 96 |
+| `fda-de-novo` | Dr. James Chen | T1 | Novel devices, special controls | 94 |
+| `ema-mdr-expert` | Dr. Klaus Weber | T1 | CE marking, notified bodies | 93 |
+| `fda-ai-ml` | Dr. Emily Park | T1 | SaMD, continuous learning, PCCP | 95 |
+| `combination-products` | Dr. Michael Brown | T2 | Drug-device, biologics-device | 91 |
 
 #### Clinical Experts
-| Agent ID | Name | Specialty | Expertise |
-|----------|------|-----------|-----------|
-| `trial-design` | Dr. Lisa Anderson | Clinical Trial Design | Protocols, endpoints, sample size |
-| `biostatistics` | Dr. Robert Chen | Biostatistics | Power calculations, statistical plans |
-| `patient-safety` | Dr. Maria Rodriguez | Safety Monitoring | Adverse events, risk management |
-| `real-world-evidence` | Dr. David Kim | RWE Studies | Registry design, outcomes research |
+| Agent ID | Name | Tier | Expertise | Evidence Score |
+|----------|------|------|-----------|----------------|
+| `trial-design` | Dr. Lisa Anderson | T1 | Protocols, endpoints, sample size | 95 |
+| `biostatistics` | Dr. Robert Chen | T1 | Power calculations, statistical plans | 97 |
+| `patient-safety` | Dr. Maria Rodriguez | T2 | Adverse events, risk management | 92 |
+| `real-world-evidence` | Dr. David Kim | T2 | Registry design, outcomes research | 90 |
 
-#### Sub-Agent Architecture
+#### Deep Agent Architecture (LangChain Integration)
 
-Each primary agent can spawn specialized sub-agents for deep expertise:
+Each agent has access to Deep Agent capabilities:
 
 ```
-FDA 510(k) Expert
-├─ Predicate Identification Sub-Agent
-├─ Testing Requirements Sub-Agent
-├─ Substantial Equivalence Sub-Agent
-└─ FDA Response Strategy Sub-Agent
-
-Clinical Trial Expert
-├─ Protocol Development Sub-Agent
-├─ Site Selection Sub-Agent
-├─ Patient Recruitment Sub-Agent
-└─ Data Management Sub-Agent
+FDA 510(k) Expert (Tier 1)
+├─ Tools: [TodoList, Filesystem, ResearchDB, SubAgent]
+├─ Sub-Agents:
+│   ├─ Predicate Identification Agent (T3)
+│   ├─ Testing Requirements Agent (T3)
+│   ├─ Substantial Equivalence Agent (T2)
+│   └─ FDA Response Strategy Agent (T2)
+├─ Relationships:
+│   ├─ ORCHESTRATES → [T2, T3 sub-agents]
+│   ├─ COLLABORATES_WITH → [Clinical Trial Expert, QA Expert]
+│   └─ DELEGATES_TO → [Document Writer, Research Assistant]
 ```
+
+#### Neo4j Relationship Types
+- `HAS_CAPABILITY` - Agent to capability mapping
+- `ORCHESTRATES` - Higher tier managing lower tier
+- `DELEGATES_TO` - Task delegation relationship
+- `COLLABORATES_WITH` - Peer collaboration
+- `SPECIALIZES_IN` - Domain expertise
 
 ---
 
@@ -442,11 +538,55 @@ Clinical Trial Expert
    - Market Position: Platform provider
 
 ### VITAL's Competitive Advantages
-- **Only platform with 136+ healthcare-specific agents** (competitors <20)
-- **Advanced multi-agent orchestration via LangGraph** (unique capability)
-- **Evidence-based responses mandatory** (builds healthcare trust)
+- **Only platform with 489 healthcare-specific agents** in 5-level hierarchy (competitors <50)
+- **3-Method Hybrid GraphRAG Agent Selection** (PostgreSQL + Pinecone + Neo4j)
+- **Advanced multi-agent orchestration via LangGraph Supervisor** (unique capability)
+- **Evidence-based scoring per agent** (0-100 evidence scores build trust)
+- **Deep Agent Integration** (LangChain tools: TodoList, Filesystem, SubAgent)
 - **BYOAI integration** (leverage existing AI investments)
 - **Medical affairs specialization** (40% of pharma AI spend)
+
+### 3-Method Hybrid Agent Selection (New in v1.2)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    HYBRID AGENT SELECTION                        │
+│             PostgreSQL + Pinecone + Neo4j GraphRAG              │
+└─────────────────────────────────────────────────────────────────┘
+
+Query: "What FDA pathway for AI diagnostic with novel biomarker?"
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  METHOD 1: PostgreSQL (30% weight)                              │
+│  - Full-text search on agent descriptions                       │
+│  - Keyword matching: "FDA", "AI", "diagnostic", "biomarker"     │
+│  - Result: [fda-ai-ml, fda-510k-expert, biomarker-expert]      │
+└─────────────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  METHOD 2: Pinecone (50% weight)                                │
+│  - Semantic vector similarity                                   │
+│  - Query embedding → cosine similarity                          │
+│  - Result: [fda-ai-ml, samd-expert, clinical-validation]       │
+└─────────────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  METHOD 3: Neo4j GraphRAG (20% weight)                          │
+│  - Relationship traversal: HAS_CAPABILITY, COLLABORATES_WITH   │
+│  - Graph-based expertise discovery                              │
+│  - Result: [fda-ai-ml, clinical-trial-expert, regulatory-writer]│
+└─────────────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  RRF FUSION (Reciprocal Rank Fusion)                            │
+│  - Combines all three rankings with configured weights          │
+│  - Evidence-based score boost applied                           │
+│  - Final Selection: [fda-ai-ml (T1), samd-expert (T2)]         │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -496,9 +636,25 @@ Clinical Trial Expert
 
 ---
 
-**Document Status:** Complete - Market Intelligence Enhanced
+**Document Status:** Complete - GraphRAG & 5-Level Hierarchy Enhanced
 **Next Review:** Q1 2026
 **Change Log:**
 - v1.0 (Nov 17, 2025): Initial PRD
 - v1.1 (Nov 23, 2025): Added market intelligence, competitive analysis, updated pricing model
+- v1.2 (Nov 27, 2025): Major enhancement release:
+  - Updated agent count from 136+ to 489 enriched agents
+  - Added 5-level agent hierarchy (Platform→Domain→Tier 1→Tier 2→Tier 3)
+  - Added 3-method hybrid GraphRAG agent selection (PostgreSQL 30% + Pinecone 50% + Neo4j 20%)
+  - Updated mode terminology to Interactive/Autonomous × Manual/Auto (2-toggle system)
+  - Added 6 core fields per agent (enrichment standard)
+  - Added Deep Agent integration (LangChain tools: TodoList, Filesystem, SubAgent)
+  - Added evidence-based scoring per agent
+  - Updated response times to reflect autonomous workflow complexity
+  - Added Neo4j relationship types for agent graph
+  - Added RRF (Reciprocal Rank Fusion) for hybrid selection
+- v1.2.1 (Nov 27, 2025): Launch audit reconciliation:
+  - Added Phase 1 vs Phase 2+ scope clarification table
+  - Clarified response time metrics (API latency vs workflow time)
+  - Reconciled agent count discrepancy with launch docs (136+ Phase 1 vs 489 Phase 2)
+  - Aligned terminology with launch documentation
 **Owner:** VITAL Product Team

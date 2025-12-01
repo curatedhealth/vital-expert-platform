@@ -1,43 +1,82 @@
 """
-Mode 3: Manual-Autonomous (Manual Selection + Autonomous Execution with Deep Work)
+Mode 3: Agentic + Manual Agent Selection (ReAct/CoT with Goal-Driven Execution)
 
-User selects expert, agent performs autonomous deep work with long-term planning.
+ARCHITECTURE:
+┌─────────────────────────────────────────────────────────────────────┐
+│                    4-MODE ARCHITECTURE MATRIX                       │
+├─────────────────────┬───────────────────┬───────────────────────────┤
+│                     │ MANUAL SELECTION  │ AUTO SELECTION            │
+├─────────────────────┼───────────────────┼───────────────────────────┤
+│ CONVERSATIONAL      │ Mode 1            │ Mode 2                    │
+│ (Chat/Interactive)  │ User picks agent  │ System picks agent        │
+├─────────────────────┼───────────────────┼───────────────────────────┤
+│ AGENTIC             │ ★ MODE 3 (THIS)   │ Mode 4                    │
+│ (ReAct/CoT/Goals)   │ User picks agent  │ System picks agent        │
+└─────────────────────┴───────────────────┴───────────────────────────┘
 
-**PHASE 4 ENHANCEMENTS:**
-- ✅ HITL System (5 checkpoints, 3 safety levels)
-- ✅ Tree-of-Thoughts planning
-- ✅ Full pattern chain (ToT → ReAct → Constitutional)
-- ✅ Default Tier 2+ (autonomous mode requires higher accuracy)
-- ✅ Multi-step execution with approval gates
+5-LEVEL DEEP AGENT HIERARCHY (Bi-directional):
+┌─────────────────────────────────────────────────────────────────────┐
+│ HUMAN ←─── L1→Human (HITL approval at 5 checkpoints)               │
+│   ↓                                                                 │
+│ L1: MASTER AGENTS (Autonomous Task Coordinator)                    │
+│   ├── Delegation: L1→L2 (route to user-selected expert)           │
+│   └── Escalation: L2→L1 (cross-domain, complexity exceeded)        │
+│                                                                     │
+│ L2: EXPERT AGENTS (USER-SELECTED from 1000+ Agent Store)           │
+│   ├── Delegation: L2→L3 (spawn specialists during execution)       │
+│   └── Escalation: L3→L2 (task exceeds specialization)              │
+│                                                                     │
+│ L3: SPECIALIST AGENTS (Spawned on-demand with approval)            │
+│   ├── Delegation: L3→L4 (parallel workers for tasks)              │
+│   └── Escalation: L4→L3 (resource limits)                          │
+│                                                                     │
+│ L4: WORKER AGENTS (Parallel task executors)                        │
+│   ├── Delegation: L4→L5 (tool execution with approval)            │
+│   └── Escalation: L5→L4 (tool failures)                            │
+│                                                                     │
+│ L5: TOOL AGENTS (RAG, Web Search, Code Execution, Database)        │
+└─────────────────────────────────────────────────────────────────────┘
 
-PRD Specification:
-- Interaction: AUTONOMOUS (Deep work, long-term planning)
-- Selection: MANUAL (User chooses expert)
-- Response Time: 60-120 seconds
-- Experts: 1 selected expert + sub-agents
-- Deep Agent Support: Expert spawns specialists and workers
-- Tools: RAG, Web Search, Code Execution, Database Tools
-- Context: Persistent conversation history, 1M+ tokens
-- **NEW**: HITL approval checkpoints, ToT planning, Full safety validation
+AGENTIC PATTERNS (Similar to Deep Research / AutoGPT):
+- ✅ ReAct: Reasoning + Acting with observation loops
+- ✅ Chain-of-Thought: Explicit step-by-step reasoning
+- ✅ Tree-of-Thoughts: Multiple reasoning paths explored
+- ✅ Constitutional AI: Safety validation at each step
+- ✅ Goal-Driven: Plans, executes, evaluates toward objective
 
-Golden Rules Compliance:
+GOLDEN RULES COMPLIANCE:
 - ✅ LangGraph StateGraph (Golden Rule #1)
 - ✅ Caching at all nodes (Golden Rule #2)
 - ✅ Tenant isolation enforced (Golden Rule #3)
 - ✅ RAG/Tools enforcement (Golden Rule #4)
 - ✅ Evidence-based responses (Golden Rule #5)
 
+HITL APPROVAL CHECKPOINTS:
+1. Plan Approval - Before executing multi-step plan
+2. Tool Approval - Before executing external tools
+3. Sub-Agent Approval - Before spawning specialists
+4. Critical Decision Approval - High-stakes decisions
+5. Final Review - Before delivering response
+
+FEATURES:
+- Agentic goal-driven execution (like AutoGPT/Deep Research)
+- User manually selects expert from Agent Store
+- ReAct/CoT reasoning with planning
+- Multi-step execution with approval gates
+- Sub-agent spawning with approval
+- Default Tier 2+ (higher accuracy for autonomous)
+- Response Time: 60-120 seconds
+
+FRONTEND MAPPING:
+- isAutomatic: false (manual agent selection)
+- isAutonomous: true (agentic, goal-driven)
+- hitlEnabled: true (user approval at checkpoints)
+- selectedAgents: [agent_id] (user pre-selects agent)
+
 Use Cases:
 - "Design complete 510(k) submission strategy" → Plan approval, multi-step execution
 - "Analyze clinical trial data and provide recommendations" → Tool approval, code execution
 - "Create comprehensive FMEA for medical device" → Sub-agent approval, structured task
-
-Frontend Mapping:
-- isAutomatic: false (manual selection)
-- isMultiTurn: true (chat mode)
-- isAutonomous: true (deep work with planning)
-- hitlEnabled: true (user approval at checkpoints)
-- selectedAgents: [agent_id] (pre-selected by user)
 """
 
 import asyncio
@@ -1106,12 +1145,38 @@ Reasoning steps to follow:
             }
 
         except Exception as e:
-            logger.error("Expert execution failed (Mode 3)", error=str(e))
+            import traceback
+            error_trace = traceback.format_exc()
+            logger.error(
+                "Expert execution failed (Mode 3)",
+                error=str(e),
+                error_type=type(e).__name__,
+                expert_id=expert_id,
+                traceback=error_trace
+            )
+
+            # Provide a more informative error message based on error type
+            error_type = type(e).__name__
+            if "timeout" in str(e).lower() or "TimeoutError" in error_type:
+                user_message = "The expert agent took too long to respond. Please try again or simplify your question."
+            elif "connection" in str(e).lower() or "connect" in str(e).lower():
+                user_message = "Unable to connect to the AI service. Please try again in a moment."
+            elif "rate limit" in str(e).lower() or "429" in str(e):
+                user_message = "The AI service is currently busy. Please wait a moment and try again."
+            else:
+                user_message = f"I encountered an issue processing your request. Error: {error_type}"
+
             return {
                 **state,
-                'agent_response': 'I apologize, but I encountered an error processing your request.',
+                'agent_response': user_message,
                 'response_confidence': 0.0,
-                'errors': state.get('errors', []) + [f"Expert execution failed: {str(e)}"]
+                'reasoning_trace': state.get('reasoning_trace', []) + [{
+                    'step': 'error',
+                    'action': 'Error handling',
+                    'result': f"Expert execution failed: {str(e)[:200]}"
+                }],
+                'errors': state.get('errors', []) + [f"Expert execution failed ({error_type}): {str(e)}"],
+                'current_node': 'execute_expert_autonomous'
             }
 
     async def checkpoint_validation_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
@@ -1274,7 +1339,11 @@ Reasoning steps to follow:
             'tools_used': len(state.get('tools_executed', [])),
             'code_executed': len(state.get('code_executed', [])),
             'status': ExecutionStatus.COMPLETED,
-            'current_node': 'format_output'
+            'current_node': 'format_output',
+            # Agent metadata for API response (required by main.py endpoint)
+            'selected_agent_id': state.get('current_agent_id'),
+            'selected_agent_name': state.get('current_agent_type', 'Unknown Agent'),
+            'selection_confidence': state.get('agent_selection_confidence', 0.85),
         }
 
     # =========================================================================

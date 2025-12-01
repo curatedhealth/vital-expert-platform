@@ -490,6 +490,57 @@ async function saveConversation(
   assistantMessage: string
 ) {
   try {
+    // Generate a title from the first user message (first 50 chars, clean up)
+    const generateTitle = (message: string): string => {
+      // Remove extra whitespace and truncate
+      const cleaned = message.replace(/\s+/g, ' ').trim();
+      if (cleaned.length <= 50) return cleaned;
+      // Truncate at word boundary if possible
+      const truncated = cleaned.substring(0, 50);
+      const lastSpace = truncated.lastIndexOf(' ');
+      return lastSpace > 30 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
+    };
+
+    // Check if conversation exists
+    const { data: existing } = await supabase
+      .from('conversations')
+      .select('id, context')
+      .eq('id', sessionId)
+      .single();
+
+    const newMessages = [
+      { role: 'user', content: userMessage },
+      { role: 'assistant', content: assistantMessage },
+    ];
+
+    if (existing) {
+      // Update existing conversation - append messages to context
+      const existingMessages = existing.context?.messages || [];
+      const updatedMessages = [...existingMessages, ...newMessages];
+
+      await supabase
+        .from('conversations')
+        .update({
+          context: { messages: updatedMessages },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', sessionId);
+    } else {
+      // Create new conversation with title from first message
+      const title = generateTitle(userMessage);
+
+      await supabase.from('conversations').insert({
+        id: sessionId,
+        user_id: userId,
+        title: title,
+        metadata: { agent_id: agentId },
+        context: { messages: newMessages },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+
+    // Also save to chat_messages for backwards compatibility
     await supabase.from('chat_messages').insert([
       {
         session_id: sessionId,
@@ -543,6 +594,52 @@ export async function GET(request: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const conversationId = searchParams.get('conversationId');
+
+    // If conversationId is provided, fetch that single conversation
+    if (conversationId) {
+      try {
+        const { data: conversation, error } = await supabase
+          .from('conversations')
+          .select('id, title, metadata, context, created_at, updated_at')
+          .eq('id', conversationId)
+          .single();
+
+        if (error) {
+          console.error('[Ask Expert API] Failed to fetch conversation:', error);
+          return NextResponse.json(
+            { error: 'Conversation not found', success: false },
+            { status: 404 }
+          );
+        }
+
+        // Fetch agent details if present in metadata
+        let agent = null;
+        const agentId = conversation?.metadata?.agent_id;
+        if (agentId) {
+          const { data: agentData } = await supabase
+            .from('agents')
+            .select('id, name, display_name, description, avatar_url')
+            .eq('id', agentId)
+            .single();
+          agent = agentData;
+        }
+
+        return NextResponse.json({
+          success: true,
+          conversation: {
+            ...conversation,
+            agent
+          }
+        });
+      } catch (err: any) {
+        console.error('[Ask Expert API] Error fetching conversation:', err);
+        return NextResponse.json(
+          { error: 'Failed to fetch conversation', success: false },
+          { status: 500 }
+        );
+      }
+    }
 
     if (!userId) {
       return NextResponse.json(
@@ -551,21 +648,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user's Ask Expert sessions
-    // ⚡ RESILIENCE: Use separate queries to handle NULL agent_id
-    // The agents!inner() join fails when messages don't have agent_id (which is common)
-    let messages: any[] = [];
+    // Get user's Ask Expert sessions from CONVERSATIONS table
+    // ⚡ FIX: Query 'conversations' table, not 'chat_messages' (which was empty!)
+    let conversations: any[] = [];
     try {
       const { data, error } = await supabase
-        .from('chat_messages')
-        .select('session_id, agent_id, agent_name, created_at')
+        .from('conversations')
+        .select('id, title, metadata, context, created_at, updated_at')
         .eq('user_id', userId)
-        .eq('role', 'user')
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) {
-        console.error('[Ask Expert API] Failed to fetch sessions:', error);
+        console.error('[Ask Expert API] Failed to fetch conversations:', error);
         // If table doesn't exist, return empty array
         if (error.code === '42P01') {
           return NextResponse.json({ success: true, sessions: [] });
@@ -574,19 +669,24 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ success: true, sessions: [] });
       }
 
-      messages = data || [];
+      conversations = data || [];
+      console.log(`[Ask Expert API] Found ${conversations.length} conversations for user ${userId}`);
     } catch (queryError: any) {
       console.error('[Ask Expert API] Query error:', queryError);
       // Return empty sessions on any error (graceful degradation)
       return NextResponse.json({ success: true, sessions: [] });
     }
 
-    if (!messages || messages.length === 0) {
+    if (!conversations || conversations.length === 0) {
       return NextResponse.json({ success: true, sessions: [] });
     }
 
-    // Get unique agent IDs (filter out nulls)
-    const agentIds = [...new Set(messages.map((m: any) => m.agent_id).filter(Boolean))];
+    // Get unique agent IDs from metadata (filter out nulls)
+    const agentIds = [...new Set(
+      conversations
+        .map((c: any) => c.metadata?.agent_id)
+        .filter(Boolean)
+    )];
 
     // Fetch agent details if we have agent IDs
     let agentMap = new Map();
@@ -594,7 +694,7 @@ export async function GET(request: NextRequest) {
       try {
         const { data: agents, error: agentError } = await supabase
           .from('agents')
-          .select('id, name, description, avatar_url')
+          .select('id, name, display_name, description, avatar_url')
           .in('id', agentIds);
 
         if (!agentError && agents) {
@@ -611,30 +711,32 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Group by session
-    const sessionMap = new Map();
-    messages.forEach((msg: any) => {
-      if (!sessionMap.has(msg.session_id)) {
-        // Get agent details from map or use agent_name from message
-        const agent = msg.agent_id ? agentMap.get(msg.agent_id) : null;
-        
-        sessionMap.set(msg.session_id, {
-          sessionId: msg.session_id,
-          agent: agent || {
-            name: msg.agent_name || 'Ask Expert',
-            description: null,
-            avatar_url: null,
-          },
-          lastMessage: msg.created_at,
-          messageCount: 0,
-        });
-      }
-      sessionMap.get(msg.session_id).messageCount++;
+    // Transform conversations to sessions format
+    const sessions = conversations.map((conv: any) => {
+      const agentId = conv.metadata?.agent_id;
+      const agent = agentId ? agentMap.get(agentId) : null;
+      const messagesArray = conv.context?.messages || [];
+
+      return {
+        sessionId: conv.id, // Use conversation ID as session ID
+        conversationId: conv.id,
+        title: conv.title || 'New Consultation',
+        agent: agent || {
+          name: 'Ask Expert',
+          display_name: 'Ask Expert',
+          description: null,
+          avatar_url: null,
+        },
+        lastMessage: conv.updated_at || conv.created_at,
+        messageCount: messagesArray.length,
+        isPinned: conv.metadata?.is_pinned || false,
+        mode: conv.metadata?.mode || 'mode1',
+      };
     });
 
     return NextResponse.json({
       success: true,
-      sessions: Array.from(sessionMap.values()),
+      sessions,
     });
   } catch (error: any) {
     console.error('[Ask Expert API] Unexpected error:', error);

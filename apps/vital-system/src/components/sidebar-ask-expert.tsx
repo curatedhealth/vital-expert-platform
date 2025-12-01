@@ -418,7 +418,13 @@ export function SidebarAskExpert() {
         <div className="group/session relative">
           <SidebarMenuButton
             data-active={isActive}
-            onClick={() => setActiveSessionId(session.sessionId)}
+            onClick={() => {
+              setActiveSessionId(session.sessionId);
+              // Dispatch event to notify page to load this conversation
+              window.dispatchEvent(new CustomEvent('ask-expert:open-chat', {
+                detail: { sessionId: session.sessionId, conversationId: session.sessionId }
+              }));
+            }}
             className={cn(
               "group relative w-full rounded-lg transition-all duration-200",
               isPinned && "bg-gradient-to-r from-yellow-50/80 to-yellow-50/40 dark:from-yellow-900/20 dark:to-yellow-900/10 border-l-2 border-l-yellow-500 shadow-sm",
@@ -450,7 +456,7 @@ export function SidebarAskExpert() {
                     "text-sm truncate transition-colors duration-200",
                     isActive ? "font-semibold text-primary" : "font-medium group-hover:text-foreground"
                   )}>
-                    {session.agent?.name || "Consultation"}
+                    {session.title || session.agent?.name || "Consultation"}
                   </span>
                 </div>
                 <span className="text-xs text-muted-foreground">

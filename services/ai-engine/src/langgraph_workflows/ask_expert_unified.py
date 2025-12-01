@@ -28,11 +28,66 @@ logger = structlog.get_logger()
 # ============================================================================
 
 class ExecutionMode(str, Enum):
-    """Supported execution modes"""
-    SINGLE_EXPERT = "single_expert"
-    MULTI_EXPERT_PANEL = "multi_expert_panel"
-    EXPERT_RECOMMENDATION = "expert_recommendation"
-    CUSTOM_WORKFLOW = "custom_workflow"
+    """
+    Supported execution modes (PRD v1.2.1 compliant)
+
+    Mode mapping:
+    - manual_selection (PRD Mode 1): User manually selects expert, interactive
+    - auto_selection (PRD Mode 2): System auto-selects expert, interactive
+    - manual_autonomous (PRD Mode 3): User selects expert(s), autonomous multi-agent
+    - auto_autonomous (PRD Mode 4): System selects, autonomous execution
+
+    Also supports legacy names for backward compatibility.
+    """
+    # PRD-compliant names (primary)
+    MANUAL_SELECTION = "manual_selection"       # Mode 1
+    AUTO_SELECTION = "auto_selection"           # Mode 2
+    MANUAL_AUTONOMOUS = "manual_autonomous"     # Mode 3
+    AUTO_AUTONOMOUS = "auto_autonomous"         # Mode 4
+
+    # Internal names (legacy - will be deprecated)
+    SINGLE_EXPERT = "single_expert"             # → manual_selection
+    MULTI_EXPERT_PANEL = "multi_expert_panel"   # → manual_autonomous
+    EXPERT_RECOMMENDATION = "expert_recommendation"  # → auto_selection
+    CUSTOM_WORKFLOW = "custom_workflow"         # → auto_autonomous
+
+
+# Mode normalization mapping (API input → internal mode)
+MODE_NORMALIZATION_MAP = {
+    # PRD-compliant modes
+    "manual_selection": ExecutionMode.MANUAL_SELECTION,
+    "auto_selection": ExecutionMode.AUTO_SELECTION,
+    "manual_autonomous": ExecutionMode.MANUAL_AUTONOMOUS,
+    "auto_autonomous": ExecutionMode.AUTO_AUTONOMOUS,
+
+    # Legacy mode names (backward compatibility)
+    "single_expert": ExecutionMode.MANUAL_SELECTION,
+    "multi_expert_panel": ExecutionMode.MANUAL_AUTONOMOUS,
+    "expert_recommendation": ExecutionMode.AUTO_SELECTION,
+    "custom_workflow": ExecutionMode.AUTO_AUTONOMOUS,
+
+    # Shorthand aliases
+    "mode1": ExecutionMode.MANUAL_SELECTION,
+    "mode2": ExecutionMode.AUTO_SELECTION,
+    "mode3": ExecutionMode.MANUAL_AUTONOMOUS,
+    "mode4": ExecutionMode.AUTO_AUTONOMOUS,
+}
+
+
+def normalize_mode(mode_input: str) -> ExecutionMode:
+    """
+    Normalize mode string to ExecutionMode enum.
+
+    Supports PRD-compliant names, legacy names, and shorthand aliases.
+
+    Args:
+        mode_input: Mode string from API request
+
+    Returns:
+        Normalized ExecutionMode enum value
+    """
+    mode_lower = mode_input.lower().strip()
+    return MODE_NORMALIZATION_MAP.get(mode_lower, ExecutionMode.MANUAL_SELECTION)
 
 
 class ExpertTier(int, Enum):
@@ -143,11 +198,17 @@ class AskExpertUnifiedWorkflow:
         # Set entry point
         workflow.set_entry_point("analyze_query")
 
-        # Add conditional routing based on mode
+        # Add conditional routing based on mode (PRD-compliant)
         workflow.add_conditional_edges(
             "analyze_query",
             self.route_by_mode,
             {
+                # PRD-compliant modes (primary)
+                ExecutionMode.MANUAL_SELECTION: "retrieve_knowledge",    # Mode 1
+                ExecutionMode.AUTO_SELECTION: "recommend_experts",       # Mode 2
+                ExecutionMode.MANUAL_AUTONOMOUS: "retrieve_knowledge",   # Mode 3
+                ExecutionMode.AUTO_AUTONOMOUS: "execute_workflow_step",  # Mode 4
+                # Legacy modes (backward compatibility - same routing)
                 ExecutionMode.SINGLE_EXPERT: "retrieve_knowledge",
                 ExecutionMode.MULTI_EXPERT_PANEL: "retrieve_knowledge",
                 ExecutionMode.EXPERT_RECOMMENDATION: "recommend_experts",
@@ -681,20 +742,29 @@ class AskExpertUnifiedWorkflow:
     # ========================================================================
 
     def route_by_mode(self, state: WorkflowState) -> str:
-        """Route to appropriate node based on execution mode"""
+        """
+        Route to appropriate node based on execution mode (PRD-compliant)
+
+        Supports both PRD-compliant mode names and legacy names.
+        """
         if state.get("error"):
             return "error"
 
         mode = state.get("mode")
 
-        if mode == ExecutionMode.SINGLE_EXPERT:
-            return ExecutionMode.SINGLE_EXPERT
-        elif mode == ExecutionMode.MULTI_EXPERT_PANEL:
-            return ExecutionMode.MULTI_EXPERT_PANEL
-        elif mode == ExecutionMode.EXPERT_RECOMMENDATION:
-            return ExecutionMode.EXPERT_RECOMMENDATION
-        elif mode == ExecutionMode.CUSTOM_WORKFLOW:
-            return ExecutionMode.CUSTOM_WORKFLOW
+        # Normalize mode if it's a string
+        if isinstance(mode, str):
+            mode = normalize_mode(mode)
+
+        # PRD-compliant mode routing
+        if mode in (ExecutionMode.MANUAL_SELECTION, ExecutionMode.SINGLE_EXPERT):
+            return ExecutionMode.MANUAL_SELECTION  # Mode 1
+        elif mode in (ExecutionMode.AUTO_SELECTION, ExecutionMode.EXPERT_RECOMMENDATION):
+            return ExecutionMode.AUTO_SELECTION    # Mode 2
+        elif mode in (ExecutionMode.MANUAL_AUTONOMOUS, ExecutionMode.MULTI_EXPERT_PANEL):
+            return ExecutionMode.MANUAL_AUTONOMOUS  # Mode 3
+        elif mode in (ExecutionMode.AUTO_AUTONOMOUS, ExecutionMode.CUSTOM_WORKFLOW):
+            return ExecutionMode.AUTO_AUTONOMOUS    # Mode 4
         else:
             return "error"
 

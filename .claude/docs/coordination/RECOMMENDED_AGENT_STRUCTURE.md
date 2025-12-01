@@ -1,9 +1,43 @@
 # 🎯 Recommended Agent Structure for VITAL Platform
 
-**Version**: 1.0
+**Version**: 2.0
 **Created**: 2025-11-16
+**Updated**: 2025-11-29
 **Purpose**: Practical recommendations for specialized agents
-**Status**: 📋 Recommendations
+**Status**: 📋 Active
+
+---
+
+## 🚨 CRITICAL: CANONICAL PROJECT DIRECTORY
+
+**ALL work MUST be performed in:**
+```
+/Users/hichamnaim/Downloads/Cursor/VITAL path/
+```
+
+**NEVER work in `/Users/hichamnaim/Downloads/Cursor/VITAL/`** - this is an archived directory.
+
+---
+
+## 🤖 MODEL TIER STRATEGY (Updated 2025-11-29)
+
+### Leadership Agents → Opus 4.5
+Leadership agents handle strategic decisions, complex reasoning, and cross-functional coordination:
+
+| Agent | Model | Why Opus? |
+|-------|-------|-----------|
+| `vital-platform-orchestrator` | **opus** | Central coordinator, complex delegation |
+| `strategy-vision-architect` | **opus** | Strategic vision, competitive analysis |
+| `prd-architect` | **opus** | Product requirements, user stories |
+| `system-architecture-architect` | **opus** | System design, ADRs |
+| `business-analytics-strategist` | **opus** | ROI models, KPIs |
+| `documentation-qa-lead` | **opus** | Quality gatekeeper |
+| `implementation-compliance-qa-agent` | **opus** | Compliance verification |
+| `launch-strategy-agent` | **opus** | Launch coordination |
+
+### Specialist Agents → Sonnet
+Specialists focus on tactical execution within their domain:
+- All other agents use `sonnet` for cost-effective execution
 
 ---
 

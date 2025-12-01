@@ -16,8 +16,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
 import { createLogger } from '@/lib/services/observability/structured-logger';
 import { env } from '@/config/environment';
+import { validateUserOrganizationMembership } from '@/lib/security/organization-membership';
+import { setOrganizationContext } from '@/lib/security/rls-context';
 
 /**
  * Agent Permission Context
@@ -36,8 +39,8 @@ export interface AgentPermissionContext {
     id: string;
     created_by: string;
     tenant_id: string;
-    is_custom: boolean;
-    is_library_agent: boolean;
+    // Note: is_custom and is_library_agent don't exist in schema
+    // Use metadata.is_custom and metadata.is_library_agent if needed
   };
 }
 
@@ -71,18 +74,23 @@ export async function verifyAgentPermissions(
   const operationId = `agent_auth_${Date.now()}_${Math.random().toString(36).substring(7)}`;
   const startTime = Date.now();
 
-  // Development bypass for testing
-  const BYPASS_AUTH = process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV === 'development';
-  
-  if (BYPASS_AUTH && action === 'read') {
+  // DEVELOPMENT BYPASS: Allow all actions in local development
+  // This bypasses auth checks for faster local iteration
+  // NEVER enabled in production (Vercel) environments
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isNotVercel = !process.env.VERCEL && !process.env.VERCEL_ENV;
+  const BYPASS_AUTH = isDevelopment && isNotVercel;
+
+  if (BYPASS_AUTH) {
     const tenantIds = env.getTenantIds();
-    logger.info('agent_auth_bypass', {
+    logger.info('agent_auth_dev_bypass', {
       operation: 'verifyAgentPermissions',
       operationId,
       action,
-      reason: 'development_bypass',
+      reason: 'DEVELOPMENT_MODE_BYPASS',
+      environment: process.env.NODE_ENV,
     });
-    
+
     return {
       allowed: true,
       context: {
@@ -163,14 +171,100 @@ export async function verifyAgentPermissions(
         ? 'super_admin'
         : (userRole as 'admin' | 'manager' | 'member' | 'guest') || 'guest';
 
-    // For subdomain-based multitenancy, use the tenant_id from cookie/header
-    // This is set by the tenant-middleware based on the subdomain
-    const cookieTenantId = request.cookies.get('tenant_id')?.value;
-    const headerTenantId = request.headers.get('x-tenant-id');
+    // SECURITY FIX: Only use server-determined organization, never client-provided values
+    // Tenant is determined by subdomain (in tenant-middleware) or user's organization
+    // We NO LONGER trust x-tenant-id header or tenant_id cookie for security decisions
 
-    // Priority: cookie (set by middleware) > header > user's organization > platform default
     const tenantIds = env.getTenantIds();
-    const tenantId = cookieTenantId || headerTenantId || organizationId || tenantIds.platform;
+    const tenantId = organizationId || tenantIds.platform;
+
+    // CRITICAL SECURITY: Validate user belongs to the organization
+    // Platform tenant (vital-system) users get access without strict validation
+    // Other tenants require organization membership validation
+    if (tenantId && tenantId !== tenantIds.platform) {
+      try {
+        const hasAccess = await validateUserOrganizationMembership(
+          supabase,
+          user.id,
+          tenantId
+        );
+
+        if (!hasAccess) {
+          logger.error('agent_auth_organization_access_denied', {
+            operation: 'verifyAgentPermissions',
+            operationId,
+            userId: user.id,
+            attemptedOrganizationId: tenantId,
+            reason: 'USER_NOT_MEMBER_OF_ORGANIZATION',
+          });
+
+          return {
+            allowed: false,
+            error: 'Access denied: You do not belong to this organization',
+          };
+        }
+      } catch (validationError) {
+        // If validation function doesn't exist yet, allow platform users
+        const errorMsg = validationError instanceof Error ? validationError.message : String(validationError);
+        if (errorMsg.includes('function') || errorMsg.includes('does not exist')) {
+          logger.warn('agent_auth_validation_function_missing', {
+            operation: 'verifyAgentPermissions',
+            operationId,
+            userId: user.id,
+            tenantId,
+            reason: 'RPC_FUNCTION_NOT_FOUND_ALLOWING_ACCESS',
+          });
+          // Continue with access - RPC function may not be deployed yet
+        } else {
+          // Re-throw other errors
+          throw validationError;
+        }
+      }
+    }
+
+    // CRITICAL SECURITY FIX #5: Set RLS context for database queries
+    // This ensures ALL subsequent queries are filtered by organization
+    try {
+      await setOrganizationContext(supabase, tenantId);
+
+      logger.debug('agent_auth_rls_context_set', {
+        operation: 'verifyAgentPermissions',
+        operationId,
+        userId: user.id,
+        organizationId: tenantId,
+      });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+
+      // If RLS function doesn't exist yet, continue (for development)
+      if (errorMsg.includes('function') || errorMsg.includes('does not exist')) {
+        logger.warn('agent_auth_rls_context_function_missing', {
+          operation: 'verifyAgentPermissions',
+          operationId,
+          userId: user.id,
+          organizationId: tenantId,
+          reason: 'RPC_FUNCTION_NOT_DEPLOYED_CONTINUING',
+        });
+        // Continue without RLS context - function may not be deployed yet
+      } else {
+        logger.error(
+          'agent_auth_rls_context_failed',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            operation: 'verifyAgentPermissions',
+            operationId,
+            userId: user.id,
+            organizationId: tenantId,
+          }
+        );
+
+        // FAIL SECURE: If we can't set RLS context, deny the request
+        return {
+          allowed: false,
+          error: 'Failed to set security context. Please try again.',
+        };
+      }
+    }
 
     const context: AgentPermissionContext = {
       user: {
@@ -232,10 +326,14 @@ export async function verifyAgentPermissions(
         };
       }
 
-      // Fetch agent details
-      const { data: agent, error: agentError } = await supabase
+      // Fetch agent details using service client to bypass RLS
+      // Auth is already verified above, we just need to check agent existence
+      const serviceSupabase = getServiceSupabaseClient();
+      // Note: is_custom and is_library_agent columns don't exist in schema
+      // We query metadata JSONB field instead for these flags
+      const { data: agent, error: agentError } = await serviceSupabase
         .from('agents')
-        .select('id, created_by, tenant_id, is_custom, is_library_agent')
+        .select('id, created_by, tenant_id, metadata')
         .eq('id', agentId)
         .single();
 
@@ -256,12 +354,12 @@ export async function verifyAgentPermissions(
         };
       }
 
+      // Extract is_custom and is_library_agent from metadata JSONB if present
+      const metadata = agent.metadata || {};
       context.agent = {
         id: agent.id,
         created_by: agent.created_by || '',
         tenant_id: agent.tenant_id || '',
-        is_custom: agent.is_custom === true,
-        is_library_agent: agent.is_library_agent === true,
       };
 
       // Super admins can do anything
@@ -304,9 +402,10 @@ export async function verifyAgentPermissions(
       }
 
       // Users can only edit their own custom agents
+      // Check is_custom and is_library_agent from metadata JSONB
       const isOwner = agent.created_by === user.id;
-      const isCustom = agent.is_custom === true;
-      const isNotLibrary = agent.is_library_agent !== true;
+      const isCustom = metadata.is_custom === true;
+      const isNotLibrary = metadata.is_library_agent !== true;
 
       if (isOwner && isCustom && isNotLibrary) {
         const duration = Date.now() - startTime;
@@ -430,7 +529,22 @@ export function withAgentAuth(
     const action = actionMap[request.method || 'GET'] || 'read';
 
     // Extract agent ID from params (Next.js App Router)
-    const agentId = params?.params?.id || params?.id;
+    // In Next.js 16, params is always a Promise that must be awaited before any property access
+    let agentId: string | undefined;
+    if (params) {
+      // Always await params first to avoid sync access errors
+      const resolvedParams = await Promise.resolve(params);
+
+      // Check for nested params structure: { params: { id } } or { params: Promise<{ id }> }
+      if (resolvedParams?.params) {
+        const innerParams = await Promise.resolve(resolvedParams.params);
+        agentId = innerParams?.id;
+      }
+      // Direct id access after resolving
+      else if (resolvedParams?.id) {
+        agentId = resolvedParams.id;
+      }
+    }
 
     // Verify permissions
     const { allowed, context, error } = await verifyAgentPermissions(

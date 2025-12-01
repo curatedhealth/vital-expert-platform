@@ -347,7 +347,7 @@ export class UserAgentsService implements IUserAgentsService {
       avatar: agentData.avatar || agentData.metadata?.avatar || '🤖',
       color: agentData.color || agentData.metadata?.color || '#3B82F6',
       capabilities: Array.isArray(agentData.capabilities) ? agentData.capabilities : [],
-      rag_enabled: agentData.rag_enabled ?? false,
+      rag_enabled: agentData.rag_enabled ?? true, // RAG enabled by default for all agents
       knowledge_domains: Array.isArray(agentData.knowledge_domains) ? agentData.knowledge_domains : undefined,
       status: agentData.status || agentData.metadata?.status || 'active',
       tier: agentData.tier || agentData.metadata?.tier || 3,

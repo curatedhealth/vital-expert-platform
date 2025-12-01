@@ -98,15 +98,17 @@ export class ConversationsService {
     });
 
     try {
+      // Use 'conversations' table (not 'user_conversations')
+      // Schema: id, session_id, user_id, title, context (JSONB), metadata (JSONB), created_at, updated_at
       const { data, error } = await this.supabase
-        .from('user_conversations')
+        .from('conversations')
         .select('*')
         .eq('user_id', userId)
         .order('updated_at', { ascending: false });
 
       if (error) {
         // If table doesn't exist, return empty array (graceful degradation)
-        if (error.code === '42P01') {
+        if (error.code === '42P01' || error.code === 'PGRST204') {
           this.logger.warn('conversations_table_not_found', {
             operationId,
             userId,
@@ -121,16 +123,18 @@ export class ConversationsService {
         });
       }
 
-      const conversations: Conversation[] = (data || []).map((record: ConversationRecord) => ({
+      // Map from database schema to Conversation interface
+      // Messages stored in context.messages, extra fields in metadata
+      const conversations: Conversation[] = (data || []).map((record: any) => ({
         id: record.id,
         title: record.title,
-        messages: record.messages || [],
+        messages: record.context?.messages || [],
         createdAt: new Date(record.created_at).getTime(),
         updatedAt: new Date(record.updated_at).getTime(),
-        isPinned: record.is_pinned || false,
+        isPinned: record.metadata?.is_pinned || false,
         userId: record.user_id,
-        agentId: record.agent_id,
-        mode: record.mode,
+        agentId: record.metadata?.agent_id || null,
+        mode: record.metadata?.mode || null,
       }));
 
       const duration = Date.now() - startTime;
@@ -173,16 +177,20 @@ export class ConversationsService {
 
     try {
       const now = new Date().toISOString();
-      
+
+      // Use 'conversations' table with adapted schema
+      // Store messages in context.messages, extra fields in metadata
       const { data, error } = await this.supabase
-        .from('user_conversations')
+        .from('conversations')
         .insert({
           user_id: userId,
           title: conversation.title || 'New Conversation',
-          messages: conversation.messages || [],
-          agent_id: conversation.agentId || null,
-          mode: conversation.mode || null,
-          is_pinned: conversation.isPinned || false,
+          context: { messages: conversation.messages || [] },
+          metadata: {
+            agent_id: conversation.agentId || null,
+            mode: conversation.mode || null,
+            is_pinned: conversation.isPinned || false,
+          },
           created_at: now,
           updated_at: now,
         })
@@ -190,14 +198,16 @@ export class ConversationsService {
         .single();
 
       if (error) {
-        if (error.code === '42P01') {
-          // Table doesn't exist - simulate success with in-memory fallback
+        if (error.code === '42P01' || error.code === 'PGRST204' || error.code === 'PGRST205') {
+          // Table doesn't exist or column missing - simulate success with in-memory fallback
           this.logger.warn('conversations_table_not_found', {
             operationId,
             userId,
             fallback: 'in_memory',
+            errorCode: error.code,
+            errorMessage: error.message,
           });
-          
+
           // Return a mock conversation (will be lost on refresh, but app won't crash)
           return {
             id: `temp_${Date.now()}`,
@@ -229,13 +239,13 @@ export class ConversationsService {
       return {
         id: data.id,
         title: data.title,
-        messages: data.messages || [],
+        messages: data.context?.messages || [],
         createdAt: new Date(data.created_at).getTime(),
         updatedAt: new Date(data.updated_at).getTime(),
-        isPinned: data.is_pinned || false,
+        isPinned: data.metadata?.is_pinned || false,
         userId: data.user_id,
-        agentId: data.agent_id,
-        mode: data.mode,
+        agentId: data.metadata?.agent_id || null,
+        mode: data.metadata?.mode || null,
       };
     } catch (error) {
       this.logger.error(
@@ -268,18 +278,40 @@ export class ConversationsService {
     });
 
     try {
+      // First, get the current record to merge metadata
+      const { data: currentData } = await this.supabase
+        .from('conversations')
+        .select('context, metadata')
+        .eq('id', conversationId)
+        .eq('user_id', userId)
+        .single();
+
       const updateData: any = {
         updated_at: new Date().toISOString(),
       };
 
       if (updates.title !== undefined) updateData.title = updates.title;
-      if (updates.messages !== undefined) updateData.messages = updates.messages;
-      if (updates.isPinned !== undefined) updateData.is_pinned = updates.isPinned;
-      if (updates.agentId !== undefined) updateData.agent_id = updates.agentId;
-      if (updates.mode !== undefined) updateData.mode = updates.mode;
+
+      // Store messages in context.messages
+      if (updates.messages !== undefined) {
+        updateData.context = {
+          ...(currentData?.context || {}),
+          messages: updates.messages,
+        };
+      }
+
+      // Store extra fields in metadata
+      if (updates.isPinned !== undefined || updates.agentId !== undefined || updates.mode !== undefined) {
+        updateData.metadata = {
+          ...(currentData?.metadata || {}),
+          ...(updates.isPinned !== undefined && { is_pinned: updates.isPinned }),
+          ...(updates.agentId !== undefined && { agent_id: updates.agentId }),
+          ...(updates.mode !== undefined && { mode: updates.mode }),
+        };
+      }
 
       const { data, error } = await this.supabase
-        .from('user_conversations')
+        .from('conversations')
         .update(updateData)
         .eq('id', conversationId)
         .eq('user_id', userId) // Security: ensure user owns this conversation
@@ -287,7 +319,7 @@ export class ConversationsService {
         .single();
 
       if (error) {
-        if (error.code === '42P01') {
+        if (error.code === '42P01' || error.code === 'PGRST204') {
           // Table doesn't exist - return success (fallback to in-memory)
           this.logger.warn('conversations_table_not_found', {
             operationId,
@@ -318,13 +350,13 @@ export class ConversationsService {
       return {
         id: data.id,
         title: data.title,
-        messages: data.messages || [],
+        messages: data.context?.messages || [],
         createdAt: new Date(data.created_at).getTime(),
         updatedAt: new Date(data.updated_at).getTime(),
-        isPinned: data.is_pinned || false,
+        isPinned: data.metadata?.is_pinned || false,
         userId: data.user_id,
-        agentId: data.agent_id,
-        mode: data.mode,
+        agentId: data.metadata?.agent_id || null,
+        mode: data.metadata?.mode || null,
       };
     } catch (error) {
       this.logger.error(
@@ -354,13 +386,13 @@ export class ConversationsService {
 
     try {
       const { error } = await this.supabase
-        .from('user_conversations')
+        .from('conversations')
         .delete()
         .eq('id', conversationId)
         .eq('user_id', userId); // Security: ensure user owns this conversation
 
       if (error) {
-        if (error.code === '42P01') {
+        if (error.code === '42P01' || error.code === 'PGRST204') {
           // Table doesn't exist - log but don't fail
           this.logger.warn('conversations_table_not_found', {
             operationId,
@@ -443,26 +475,28 @@ export class ConversationsService {
       let errors = 0;
       const errorDetails: string[] = [];
 
-      // Batch insert conversations
+      // Batch insert conversations - using 'conversations' table with adapted schema
       const conversationsToCreate = conversations.map((conv) => ({
         user_id: userId,
         title: conv.title || 'New Conversation',
-        messages: conv.messages || [],
-        agent_id: conv.agentId || null,
-        mode: conv.mode || null,
-        is_pinned: conv.isPinned || false,
+        context: { messages: conv.messages || [] },
+        metadata: {
+          agent_id: conv.agentId || null,
+          mode: conv.mode || null,
+          is_pinned: conv.isPinned || false,
+        },
         created_at: new Date(conv.createdAt || Date.now()).toISOString(),
         updated_at: new Date(conv.updatedAt || Date.now()).toISOString(),
       }));
 
       // Try to insert all at once
       const { data, error } = await this.supabase
-        .from('user_conversations')
+        .from('conversations')
         .insert(conversationsToCreate)
         .select();
 
       if (error) {
-        if (error.code === '42P01') {
+        if (error.code === '42P01' || error.code === 'PGRST204') {
           // Table doesn't exist - can't migrate
           this.logger.warn('conversations_migration_table_not_found', {
             operationId,
@@ -473,7 +507,7 @@ export class ConversationsService {
             success: false,
             migrated: 0,
             errors: conversations.length,
-            errorDetails: ['Table user_conversations does not exist. Please run migration.'],
+            errorDetails: ['Conversations table does not exist. Please run migration.'],
           };
         }
 

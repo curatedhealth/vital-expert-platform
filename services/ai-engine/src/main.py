@@ -5,11 +5,15 @@ Medical AI Agent Orchestration with LangChain
 
 import os
 import sys
+from pathlib import Path
 from typing import Any
 from dotenv import load_dotenv
 
-# Load environment variables FIRST before any other imports
-load_dotenv()
+# Load environment variables from root .env file FIRST before any other imports
+# Navigate from services/ai-engine/src/ up to project root
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
+load_dotenv(ROOT_DIR / ".env")
+load_dotenv(ROOT_DIR / ".env.local", override=True)  # .env.local overrides .env
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Request
@@ -98,6 +102,7 @@ from services.agent_selector_service import (
 )
 from services.cache_manager import CacheManager, initialize_cache_manager, get_cache_manager
 from services.tool_registry_service import ToolRegistryService, initialize_tool_registry, get_tool_registry
+from services.unified_agent_loader import get_agent_citation_preferences
 from langgraph_workflows import (
     initialize_checkpoint_manager,
     initialize_observability,
@@ -300,8 +305,8 @@ class Mode2AutomaticResponse(BaseModel):
     )
 
 
-class Mode3AutonomousAutomaticRequest(BaseModel):
-    """Payload for Mode 3 autonomous-automatic requests (Manual-Autonomous)"""
+class Mode3AutonomousManualRequest(BaseModel):
+    """Payload for Mode 3 autonomous-manual requests (Manual Selection + Autonomous Execution)"""
     agent_id: str = Field(..., description="Selected expert agent ID (user chooses)")
     message: str = Field(..., min_length=1, description="User message")
     enable_rag: bool = Field(True, description="Enable RAG retrieval")
@@ -360,8 +365,8 @@ class Mode3AutonomousAutomaticRequest(BaseModel):
     )
 
 
-class Mode3AutonomousAutomaticResponse(BaseModel):
-    """Response payload for Mode 3 autonomous-automatic requests"""
+class Mode3AutonomousManualResponse(BaseModel):
+    """Response payload for Mode 3 autonomous-manual requests (Manual Selection + Autonomous Execution)"""
     agent_id: str = Field(..., description="Selected agent ID")
     content: str = Field(..., description="Generated response content")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
@@ -378,8 +383,8 @@ class Mode3AutonomousAutomaticResponse(BaseModel):
     )
 
 
-class Mode4AutonomousManualRequest(BaseModel):
-    """Payload for Mode 4 autonomous-manual requests (Automatic-Autonomous)"""
+class Mode4AutonomousAutomaticRequest(BaseModel):
+    """Payload for Mode 4 autonomous-automatic requests (Automatic Selection + Autonomous Execution)"""
     message: str = Field(..., min_length=1, description="User message")
     agent_id: Optional[str] = Field(None, description="Optional agent ID (auto-selected if not provided)")
     enable_rag: bool = Field(True, description="Enable RAG retrieval")
@@ -438,8 +443,8 @@ class Mode4AutonomousManualRequest(BaseModel):
     )
 
 
-class Mode4AutonomousManualResponse(BaseModel):
-    """Response payload for Mode 4 autonomous-manual requests"""
+class Mode4AutonomousAutomaticResponse(BaseModel):
+    """Response payload for Mode 4 autonomous-automatic requests (Automatic Selection + Autonomous Execution)"""
     agent_id: Optional[str] = Field(None, description="Primary agent that produced the response (optional for multi-agent)")
     selected_agents: Optional[List[str]] = Field(default_factory=list, description="All agents that contributed")
     content: str = Field(..., description="Generated response content")
@@ -600,8 +605,8 @@ async def initialize_services_background():
         metadata_processing_service = None
 
     try:
-        if supabase_client and rag_pipeline:
-            agent_orchestrator = AgentOrchestrator(supabase_client, rag_pipeline)
+        if supabase_client:
+            agent_orchestrator = AgentOrchestrator(supabase_client, unified_rag_service)
             await asyncio.wait_for(agent_orchestrator.initialize(), timeout=5.0)
             logger.info("✅ Agent orchestrator initialized")
     except asyncio.TimeoutError:
@@ -906,6 +911,58 @@ except Exception as e:
     import traceback
     logger.error(traceback.format_exc())
 
+# Include HITL routes (Human-in-the-Loop approval endpoints)
+try:
+    from api.routes.hitl import router as hitl_router
+    app.include_router(hitl_router, prefix="/api", tags=["hitl"])
+    logger.info("✅ HITL routes registered (approvals, websocket)")
+except ImportError as e:
+    logger.warning(f"⚠️  Could not import HITL router: {e}")
+    logger.warning("   Continuing without HITL endpoints")
+except Exception as e:
+    logger.error(f"❌ Unexpected error loading HITL router: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
+
+# Include Value Framework routes (ROI Calculator, Value Insights)
+try:
+    from api.routes.value_framework import router as value_router
+    app.include_router(value_router, prefix="", tags=["value-framework"])
+    logger.info("✅ Value Framework routes registered (ROI calculator, value insights)")
+except ImportError as e:
+    logger.warning(f"⚠️  Could not import Value Framework router: {e}")
+    logger.warning("   Continuing without value framework endpoints")
+except Exception as e:
+    logger.error(f"❌ Unexpected error loading Value Framework router: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
+
+# Include Value Investigator routes (AI-powered value analysis companion)
+try:
+    from api.routes.value_investigator import router as value_investigator_router
+    app.include_router(value_investigator_router, prefix="", tags=["value-investigator"])
+    logger.info("✅ Value Investigator routes registered (AI companion for value analysis)")
+except ImportError as e:
+    logger.warning(f"⚠️  Could not import Value Investigator router: {e}")
+    logger.warning("   Continuing without value investigator endpoints")
+except Exception as e:
+    logger.error(f"❌ Unexpected error loading Value Investigator router: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
+
+# Include Ontology Investigator routes (AI-powered enterprise ontology analysis)
+try:
+    from api.routes.ontology_investigator import router as ontology_investigator_router
+    app.include_router(ontology_investigator_router, prefix="", tags=["ontology-investigator"])
+    logger.info("✅ Ontology Investigator routes registered (AI companion for enterprise ontology analysis)")
+except ImportError as e:
+    logger.warning(f"⚠️  Could not import Ontology Investigator router: {e}")
+    logger.warning("   Continuing without ontology investigator endpoints")
+except Exception as e:
+    logger.error(f"❌ Unexpected error loading Ontology Investigator router: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
+
 # Dependency to get services
 async def get_agent_orchestrator() -> AgentOrchestrator:
     if not agent_orchestrator:
@@ -1097,6 +1154,10 @@ async def execute_mode1_manual(
         
         # Create initial state for the workflow
         request_id = str(uuid.uuid4())
+
+        # Fetch agent citation preferences from metadata
+        citation_prefs = await get_agent_citation_preferences(supabase_client, request.agent_id)
+
         initial_state = create_initial_state(
             tenant_id=tenant_id,
             mode=WorkflowMode.MODE_1_MANUAL,
@@ -1111,7 +1172,9 @@ async def execute_mode1_manual(
             temperature=request.temperature,
             max_tokens=request.max_tokens,
             user_id=request.user_id,
-            session_id=request.session_id
+            session_id=request.session_id,
+            citation_style=citation_prefs.citation_style,
+            include_citations=citation_prefs.include_citations
         )
         
         # Execute workflow with LangGraph using compiled graph
@@ -1214,6 +1277,9 @@ async def execute_mode2_automatic(
         
         # Create initial state for the workflow
         request_id = str(uuid.uuid4())
+
+        # Mode 2 uses auto-selection, so defaults are used initially
+        # Agent-specific citation preferences will be applied after agent selection
         initial_state = create_initial_state(
             tenant_id=tenant_id,
             mode=WorkflowMode.MODE_2_AUTOMATIC,
@@ -1223,7 +1289,9 @@ async def execute_mode2_automatic(
             enable_tools=request.enable_tools,
             model=request.model or "gpt-4",
             user_id=request.user_id,
-            session_id=request.session_id
+            session_id=request.session_id,
+            citation_style="apa",  # Default for auto-selection mode
+            include_citations=True
         )
         
         # Execute workflow with LangGraph using compiled graph
@@ -1301,14 +1369,14 @@ async def execute_mode2_automatic(
         logger.error("❌ Mode 2 LangGraph execution failed", error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail=f"Mode 2 execution failed: {str(exc)}")
 
-# Mode 3: Autonomous-Automatic
-@app.post("/api/mode3/autonomous-automatic", response_model=Mode3AutonomousAutomaticResponse)
-async def execute_mode3_autonomous_automatic(
-    request: Mode3AutonomousAutomaticRequest,
+# Mode 3: Autonomous-Manual (Manual Selection + Autonomous Execution)
+@app.post("/api/mode3/autonomous-manual", response_model=Mode3AutonomousManualResponse)
+async def execute_mode3_autonomous_manual(
+    request: Mode3AutonomousManualRequest,
     tenant_id: str = Depends(get_tenant_id)
 ):
-    """Execute Mode 3 autonomous-automatic workflow via LangGraph"""
-    REQUEST_COUNT.labels(method="POST", endpoint="/api/mode3/autonomous-automatic").inc()
+    """Execute Mode 3 autonomous-manual workflow via LangGraph (Manual Selection + Autonomous Execution)"""
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/mode3/autonomous-manual").inc()
 
     # Allow execution without Supabase for development
     if supabase_client:
@@ -1339,6 +1407,10 @@ async def execute_mode3_autonomous_automatic(
         
         # Create initial state for the workflow
         request_id = str(uuid.uuid4())
+
+        # Fetch agent citation preferences from metadata
+        citation_prefs = await get_agent_citation_preferences(supabase_client, request.agent_id)
+
         initial_state = create_initial_state(
             tenant_id=tenant_id,
             mode=WorkflowMode.MODE_3_AUTONOMOUS,
@@ -1349,7 +1421,9 @@ async def execute_mode3_autonomous_automatic(
             enable_tools=request.enable_tools,
             model=request.model or "gpt-4",
             user_id=request.user_id,
-            session_id=request.session_id
+            session_id=request.session_id,
+            citation_style=citation_prefs.citation_style,
+            include_citations=citation_prefs.include_citations
         )
         
         # Execute workflow with LangGraph using compiled graph
@@ -1415,7 +1489,7 @@ async def execute_mode3_autonomous_automatic(
             confidence=confidence
         )
         
-        return Mode3AutonomousAutomaticResponse(
+        return Mode3AutonomousManualResponse(
             agent_id=selected_agent_id,
             content=content,
             confidence=confidence,
@@ -1433,14 +1507,14 @@ async def execute_mode3_autonomous_automatic(
         logger.error("❌ Mode 3 LangGraph execution failed", error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail=f"Mode 3 execution failed: {str(exc)}")
 
-# Mode 4: Autonomous-Manual
-@app.post("/api/mode4/autonomous-manual", response_model=Mode4AutonomousManualResponse)
-async def execute_mode4_autonomous_manual(
-    request: Mode4AutonomousManualRequest,
+# Mode 4: Autonomous-Automatic (Automatic Selection + Autonomous Execution)
+@app.post("/api/mode4/autonomous-automatic", response_model=Mode4AutonomousAutomaticResponse)
+async def execute_mode4_autonomous_automatic(
+    request: Mode4AutonomousAutomaticRequest,
     tenant_id: str = Depends(get_tenant_id)
 ):
-    """Execute Mode 4 autonomous-manual workflow via LangGraph"""
-    REQUEST_COUNT.labels(method="POST", endpoint="/api/mode4/autonomous-manual").inc()
+    """Execute Mode 4 autonomous-automatic workflow via LangGraph (Automatic Selection + Autonomous Execution)"""
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/mode4/autonomous-automatic").inc()
 
     # Allow execution without Supabase for development
     if supabase_client:
@@ -1474,6 +1548,9 @@ async def execute_mode4_autonomous_manual(
         
         # Create initial state for the workflow
         request_id = str(uuid.uuid4())
+
+        # Mode 4 uses auto-selection, so defaults are used initially
+        # Agent-specific citation preferences will be applied after agent selection
         initial_state = create_initial_state(
             tenant_id=tenant_id,
             mode=WorkflowMode.MODE_4_STREAMING,
@@ -1483,7 +1560,9 @@ async def execute_mode4_autonomous_manual(
             enable_tools=request.enable_tools,
             model=request.model or "gpt-4",
             user_id=request.user_id,
-            session_id=request.session_id
+            session_id=request.session_id,
+            citation_style="apa",  # Default for auto-selection mode
+            include_citations=True
         )
         
         # Execute workflow with LangGraph using compiled graph
@@ -1522,7 +1601,7 @@ async def execute_mode4_autonomous_manual(
         
         metadata: Dict[str, Any] = {
             "langgraph_execution": True,
-            "workflow": "Mode4AutonomousManualWorkflow",
+            "workflow": "Mode4AutonomousAutomaticWorkflow",
             "nodes_executed": result.get('nodes_executed', []),
             "request": {
                 "enable_rag": request.enable_rag,
@@ -1541,7 +1620,7 @@ async def execute_mode4_autonomous_manual(
             confidence=confidence
         )
         
-        return Mode4AutonomousManualResponse(
+        return Mode4AutonomousAutomaticResponse(
             agent_id=result.get('selected_agents', [None])[0] if result.get('selected_agents') else None,  # First selected agent
             selected_agents=result.get('selected_agents', []),  # All selected agents
             content=content,

@@ -212,33 +212,43 @@ const sizeClasses = {
   card: 'w-[50px] h-[50px]'
 };
 
-export function AgentAvatar({ 
-  agent, 
-  avatar: avatarProp, 
-  name: nameProp, 
-  size = 'md', 
-  className, 
-  level, 
-  businessFunction 
+export function AgentAvatar({
+  agent,
+  avatar: avatarProp,
+  name: nameProp,
+  size = 'md',
+  className,
+  level,
+  businessFunction
 }: AgentAvatarProps) {
   // Get identifier for consistent avatar selection
   const name = agent?.name || nameProp || 'Agent';
   const identifier = agent?.id || agent?.name || name;
-  
+
   // Determine agent level
   const agentLevel = level || (agent as any)?.tier || (agent as any)?.agent_levels?.level_number;
-  
+
   // Get business function from props or agent object
   const agentBusinessFunction = businessFunction || (agent as any)?.business_function || (agent as any)?.function_name;
-  
-  // ALWAYS use VITAL avatars
+
+  // Check if agent has a stored avatar_url (from Supabase storage)
+  const storedAvatarUrl = (agent as any)?.avatar_url || avatarProp;
+
+  // Determine avatar source
   let avatar: string;
-  
-  if (agentLevel === 1) {
-    // Level 1 (Master): Use super agent avatars
+
+  // Priority 1: Use stored Supabase URL if it's an SVG from our system
+  if (storedAvatarUrl && (
+    storedAvatarUrl.includes('supabase.co/storage') ||
+    storedAvatarUrl.includes('/assets/vital/') ||
+    storedAvatarUrl.includes('vital_avatar_')
+  )) {
+    avatar = storedAvatarUrl;
+  } else if (agentLevel === 1) {
+    // Priority 2: Level 1 (Master): Use super agent avatars
     avatar = getSuperAgentAvatar(identifier);
   } else {
-    // ALL other agents: Use VITAL avatars based on business function
+    // Priority 3: ALL other agents: Use VITAL avatars based on business function
     avatar = getVitalAvatar(agentLevel, agentBusinessFunction, identifier);
   }
 

@@ -371,3 +371,8 @@ WHERE table_schema = 'public'
     AND table_name = 'user_agents'
 ORDER BY ordinal_position;
 
+
+
+
+
+

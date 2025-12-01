@@ -498,8 +498,11 @@ Return the JSON plan:"""
             List of StepResult objects
         """
         # Initialize chain context with task
+        # Ensure citation preferences are available to all tools
         chain_context = {
             'initial': task,
+            'citation_style': context.get('citation_style', 'apa'),
+            'include_citations': context.get('include_citations', True),
             **context
         }
         

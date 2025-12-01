@@ -10,6 +10,17 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Fix SSL certificate paths for Python 3.9 (override any shell environment)
+# This fixes the Supabase initialization FileNotFoundError
+try:
+    import certifi
+    ssl_cert_path = certifi.where()
+    os.environ['SSL_CERT_FILE'] = ssl_cert_path
+    os.environ['REQUESTS_CA_BUNDLE'] = ssl_cert_path
+    print(f"🔐 SSL certificates configured: {ssl_cert_path}", flush=True)
+except ImportError:
+    print("⚠️  certifi not installed, SSL may not work correctly", flush=True)
+
 # Critical: Ensure output is unbuffered so logs appear immediately
 os.environ['PYTHONUNBUFFERED'] = '1'
 sys.stdout.reconfigure(line_buffering=True)

@@ -34,6 +34,9 @@ import {
 import { createClient } from '@vital/sdk/client';
 import { STARTUP_TENANT_ID } from '@/lib/constants/tenant';
 import type { SavedPanel } from '@/contexts/ask-panel-context';
+import { StreamingPanelConsultation } from '@/components/ask-panel/StreamingPanelConsultation';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface Agent {
   id: string;
@@ -59,6 +62,8 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
+  const [useStreaming, setUseStreaming] = useState(true); // Enable streaming by default
+  const [showStreamingView, setShowStreamingView] = useState(false);
 
   const IconComponent = panel.IconComponent || Users;
   const supabase = createClient();
@@ -144,6 +149,12 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
   const handleRun = async () => {
     const activeAgents = agents.filter((a) => selectedAgentIds.has(a.id));
     if (!question.trim() || activeAgents.length === 0) return;
+
+    // If streaming is enabled, show streaming view instead
+    if (useStreaming) {
+      setShowStreamingView(true);
+      return;
+    }
 
     setIsRunning(true);
     setResults([]);
@@ -237,6 +248,61 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
         <div className="text-center space-y-4">
           <Loader2 className="w-16 h-16 animate-spin mx-auto text-primary" />
           <p className="text-muted-foreground">Loading panel agents...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show streaming view if user clicked run with streaming enabled
+  if (showStreamingView) {
+    const activeAgents = agents.filter((a) => selectedAgentIds.has(a.id));
+    return (
+      <div className="h-full flex flex-col bg-background">
+        {/* Header with back button */}
+        <div className="border-b px-6 py-4">
+          <div className="container mx-auto">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setShowStreamingView(false);
+                  setResults([]);
+                }}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <IconComponent className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">{panel.name}</h1>
+                  <p className="text-sm text-muted-foreground">Real-time Streaming</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Streaming Consultation View */}
+        <div className="flex-1 overflow-auto">
+          <div className="container mx-auto p-6">
+            <StreamingPanelConsultation
+              question={question}
+              panelId={panel.id}
+              expertIds={activeAgents.map(a => a.id)}
+              tenantId={STARTUP_TENANT_ID}
+              enableDebate={true}
+              maxRounds={3}
+              onComplete={(messages) => {
+                console.log('✅ Panel consultation completed', messages);
+              }}
+              onError={(error) => {
+                console.error('❌ Panel consultation error:', error);
+              }}
+            />
+          </div>
         </div>
       </div>
     );
@@ -421,9 +487,22 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
                 disabled={isRunning}
               />
               <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  {question.length} characters
-                </p>
+                <div className="flex items-center gap-4">
+                  <p className="text-xs text-muted-foreground">
+                    {question.length} characters
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="streaming-mode"
+                      checked={useStreaming}
+                      onCheckedChange={setUseStreaming}
+                      disabled={isRunning}
+                    />
+                    <Label htmlFor="streaming-mode" className="text-xs text-muted-foreground cursor-pointer">
+                      {useStreaming ? '⚡ Real-time Streaming' : '📦 Batch Mode'}
+                    </Label>
+                  </div>
+                </div>
                 <Button
                   onClick={handleRun}
                   disabled={!question.trim() || isRunning || Array.from(selectedAgentIds).length === 0}

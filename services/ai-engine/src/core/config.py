@@ -106,7 +106,7 @@ class Settings(BaseSettings):
 
     model_config = {
         "extra": "ignore",  # Pydantic v2 syntax - allow extra fields
-        "env_file": ".env",
+        "env_file": os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"),
         "case_sensitive": False
     }
 

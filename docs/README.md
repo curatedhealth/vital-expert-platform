@@ -7,10 +7,12 @@ Welcome to the VITAL Platform documentation. This directory contains comprehensi
 ```
 docs/
 ├── README.md                       # This file - documentation index
-├── guides/                         # Step-by-step guides
-│   └── WORKFLOW-DESIGNER-GUIDE.md  # Workflow Designer usage guide
-├── specs/                          # Feature specifications
-└── integrations/                   # Integration documentation
+├── phases/                         # Phase documentation (PHASE_*.md files)
+├── migrations/                     # Database migration docs (MIGRATION_*.md, DATABASE_*.md)
+├── guides/                         # Setup and how-to guides (GUIDE.md, SETUP.md, QUICK_*.md)
+├── deployment/                     # Deployment documentation
+├── testing/                        # Test reports and verification docs
+└── infrastructure/                 # Architecture, status, and system docs
 ```
 
 ## 🚀 Quick Start
@@ -19,52 +21,76 @@ docs/
 - **[Workflow Designer Guide](./guides/WORKFLOW-DESIGNER-GUIDE.md)** - Learn how to use the visual workflow builder
 
 ### For Developers
-- **[Root README](../README.md)** - Project overview and setup
-- **[Documentation Convention](../DOCUMENTATION_CONVENTION.md)** - Documentation naming standards
-- **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute (if exists)
+- **[Claude Instructions](../.claude/CLAUDE.md)** - AI assistant rules and guidelines
+- **[System Architecture](./infrastructure/SERVICE_ARCHITECTURE.md)** - System architecture overview
+- **[Documentation Convention](./infrastructure/DOCUMENTATION_CONVENTION.md)** - Documentation naming standards
 
 ## 📖 Available Documentation
 
+### Phases
+
+Project phase documentation and progress tracking:
+
+| Phase | Location |
+|-------|----------|
+| Phase 0 - Data Loading | [phases/PHASE_0_*.md](./phases/) |
+| Phase 1 - GraphRAG | [phases/PHASE_1_*.md](./phases/) |
+| Phase 2 - Backend Integration | [phases/PHASE_2_*.md](./phases/) |
+| Phase 3 - Deployment | [phases/PHASE_3_*.md](./phases/) |
+| Phase 5 - Production | [phases/PHASE_5_*.md](./phases/) |
+
+### Migrations
+
+Database migrations and schema updates:
+
+| Category | Location |
+|----------|----------|
+| Migration Guides | [migrations/MIGRATION_*.md](./migrations/) |
+| Database Docs | [migrations/DATABASE_*.md](./migrations/) |
+| Schema Changes | [migrations/SCHEMA_*.md](./migrations/) |
+| SQL Scripts | [.vital-docs/vital-expert-docs/10-data-schema/](../.vital-docs/vital-expert-docs/10-data-schema/) |
+
 ### Guides
 
-Detailed step-by-step guides for using VITAL Platform features:
+Setup and how-to guides:
 
-| Guide | Description |
-|-------|-------------|
-| [Workflow Designer Guide](./guides/WORKFLOW-DESIGNER-GUIDE.md) | Complete guide to using the visual workflow designer |
+| Guide | Location |
+|-------|----------|
+| Quick Start Guides | [guides/QUICK_*.md](./guides/) |
+| Setup Guides | [guides/*SETUP*.md](./guides/) |
+| Environment Setup | [guides/ENV_*.md](./guides/) |
+| Integration Guides | [guides/INTEGRATION_*.md](./guides/) |
+| Workflow Designer | [guides/WORKFLOW-DESIGNER-GUIDE.md](./guides/) |
 
-**Coming Soon:**
-- Getting Started Guide
-- Agent Setup Guide
-- Deployment Guide
-- Testing Guide
+### Deployment
 
-### Specifications
+Deployment guides and production documentation:
 
-Technical specifications for platform features:
+| Document | Location |
+|----------|----------|
+| Deployment Guides | [deployment/*DEPLOYMENT*.md](./deployment/) |
+| Infrastructure | [deployment/*INFRASTRUCTURE*.md](./deployment/) |
 
-**Coming Soon:**
-- Mode 1 Enhanced Specification
-- Agent Selection Specification
-- Workflow Execution Specification
+### Testing
 
-### Integrations
+Test results, verification reports, and QA documentation:
 
-Documentation for external integrations:
+| Category | Location |
+|----------|----------|
+| Test Reports | [testing/*TEST*.md](./testing/) |
+| Verification Results | [testing/VERIFICATION_*.md](./testing/) |
+| Audit Reports | [testing/*AUDIT*.md](./testing/) |
 
-**Coming Soon:**
-- LangGraph Integration
-- Supabase Integration
-- OpenAI Integration
+### Infrastructure
 
-### Reference
+System architecture, status reports, and platform documentation:
 
-API and technical reference documentation:
-
-**Coming Soon:**
-- API Reference
-- Database Schema Reference
-- Architecture Overview
+| Category | Location |
+|----------|----------|
+| Architecture | [infrastructure/*ARCHITECTURE*.md](./infrastructure/) |
+| Status Reports | [infrastructure/*STATUS*.md](./infrastructure/) |
+| Completion Summaries | [infrastructure/*COMPLETE*.md](./infrastructure/) |
+| System Docs | [infrastructure/VITAL*.md](./infrastructure/) |
 
 ## 🔍 Finding Documentation
 
@@ -159,10 +185,12 @@ Before submitting documentation:
 
 | Category | Status | Count |
 |----------|--------|-------|
-| Guides | 🟡 In Progress | 1 |
-| Specifications | 🔴 Not Started | 0 |
-| Integrations | 🔴 Not Started | 0 |
-| Reference | 🔴 Not Started | 0 |
+| Phases | 🟢 Complete | 20+ |
+| Migrations | 🟢 Complete | 18+ |
+| Guides | 🟢 Complete | 18+ |
+| Deployment | 🟡 In Progress | 2+ |
+| Testing | 🟢 Complete | 12+ |
+| Infrastructure | 🟢 Complete | 30+ |
 
 **Legend**: 🟢 Complete | 🟡 In Progress | 🔴 Not Started
 
@@ -178,13 +206,14 @@ Before submitting documentation:
 
 | Date | Update |
 |------|--------|
+| 2025-11-28 | Organized all .md and .sql files into structured docs/ folders |
 | 2024-11-23 | Created documentation structure and naming convention |
 | 2024-11-23 | Moved Workflow Designer guide to standard location |
 | 2024-11-23 | Renamed inconsistent documentation files |
 
 ---
 
-**Last Updated**: 2024-11-23  
+**Last Updated**: 2025-11-28
 **Maintained By**: VITAL Platform Team
 
 For questions about documentation, contact the development team.

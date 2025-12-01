@@ -34,9 +34,12 @@ class SupabaseClient:
             if not self.settings.supabase_url or not self.settings.supabase_service_role_key:
                 logger.warning("⚠️ SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set - skipping initialization")
                 return  # Gracefully skip if not configured
-            
+
+            logger.info(f"🔍 DEBUG: Attempting to initialize Supabase with URL: {self.settings.supabase_url[:50]}...")
+
             # Initialize Supabase client (REST API)
             try:
+                logger.info("🔍 DEBUG: About to call create_client...")
                 self.client = create_client(
                     self.settings.supabase_url,
                     self.settings.supabase_service_role_key
@@ -54,6 +57,9 @@ class SupabaseClient:
                     )
                 else:
                     raise
+            except FileNotFoundError as e:
+                logger.error(f"❌ FileNotFoundError in create_client: {e}", exc_info=True)
+                raise
 
             # Optional: Initialize direct database connection for vector operations
             # Only if DATABASE_URL is provided and valid
@@ -86,8 +92,15 @@ class SupabaseClient:
 
             logger.info("✅ Supabase client initialized successfully")
 
+        except FileNotFoundError as e:
+            import traceback
+            logger.error(f"❌ FileNotFoundError during Supabase initialization: {e}")
+            logger.error(f"Full traceback:\n{traceback.format_exc()}")
+            raise
         except Exception as e:
-            logger.error("❌ Failed to initialize Supabase client", error=str(e))
+            import traceback
+            logger.error(f"❌ Failed to initialize Supabase client: {type(e).__name__}: {e}")
+            logger.error(f"Full traceback:\n{traceback.format_exc()}")
             raise
 
     async def _ensure_vector_index(self):
@@ -722,8 +735,14 @@ _supabase_client: Optional[SupabaseClient] = None
 def get_supabase_client() -> SupabaseClient:
     """Get or create Supabase client singleton"""
     global _supabase_client
-    
+
     if _supabase_client is None:
         _supabase_client = SupabaseClient()
-    
+
     return _supabase_client
+
+
+def set_supabase_client(client: SupabaseClient) -> None:
+    """Set the Supabase client singleton (used during app initialization)"""
+    global _supabase_client
+    _supabase_client = client

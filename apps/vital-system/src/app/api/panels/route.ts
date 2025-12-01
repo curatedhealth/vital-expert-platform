@@ -1,119 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
-import { PANEL_TEMPLATES } from '@/features/ask-panel/constants/panel-templates';
+/**
+ * Panels Templates API (Stub)
+ *
+ * This endpoint exists primarily to satisfy frontend fetches from
+ * `/app/(app)/ask-panel/page.tsx` and to avoid noisy HTML 404 errors
+ * being logged in the browser console during local development.
+ *
+ * In production this can be extended to load panel templates from
+ * Supabase, but for now it simply signals `success: false` so the
+ * UI falls back to the local `PANEL_TEMPLATES` constant.
+ */
 
-export async function GET(_req: NextRequest) {
-  try {
-    // Try to get Supabase client, but fall back to hardcoded templates if not configured
-    let supabase;
-    try {
-      supabase = getServiceSupabaseClient();
-    } catch (configError: any) {
-      // Supabase not configured - return hardcoded templates
-      console.warn('[Panels API] Supabase not configured, using hardcoded templates:', configError.message);
-      return NextResponse.json({
-        success: true,
-        panels: PANEL_TEMPLATES.map(template => ({
-          slug: template.id,
-          name: template.name,
-          description: template.description,
-          category: template.category,
-          mode: template.mode,
-          framework: template.framework,
-          suggested_agents: template.suggestedAgents,
-          default_settings: template.defaultSettings,
-          metadata: {
-            icon: template.icon,
-            tags: template.tags,
-            popularity: template.popularity,
-          },
-        })),
-        fallback: true,
-      });
-    }
+import { NextResponse } from 'next/server';
 
-    // Try to fetch from Supabase
-    const { data, error } = await supabase
-      .from('panels')
-      .select('*')
-      .order('name', { ascending: true });
-
-    if (error) {
-      console.warn('[Panels API] Supabase query error, falling back to hardcoded templates:', error);
-      // Fall back to hardcoded templates on query error
-      return NextResponse.json({
-        success: true,
-        panels: PANEL_TEMPLATES.map(template => ({
-          slug: template.id,
-          name: template.name,
-          description: template.description,
-          category: template.category,
-          mode: template.mode,
-          framework: template.framework,
-          suggested_agents: template.suggestedAgents,
-          default_settings: template.defaultSettings,
-          metadata: {
-            icon: template.icon,
-            tags: template.tags,
-            popularity: template.popularity,
-          },
-        })),
-        fallback: true,
-      });
-    }
-
-    // Return Supabase data if available, otherwise fall back
-    if (data && data.length > 0) {
-      return NextResponse.json({
-        success: true,
-        panels: data,
-        fallback: false,
-      });
-    }
-
-    // No data in Supabase, use hardcoded templates
-    return NextResponse.json({
-      success: true,
-      panels: PANEL_TEMPLATES.map(template => ({
-        slug: template.id,
-        name: template.name,
-        description: template.description,
-        category: template.category,
-        mode: template.mode,
-        framework: template.framework,
-        suggested_agents: template.suggestedAgents,
-        default_settings: template.defaultSettings,
-        metadata: {
-          icon: template.icon,
-          tags: template.tags,
-          popularity: template.popularity,
-        },
-      })),
-      fallback: true,
-    });
-  } catch (err: any) {
-    console.error('[Panels API] Unexpected error, using hardcoded templates:', err);
-    // Last resort: return hardcoded templates
-    return NextResponse.json({
-      success: true,
-      panels: PANEL_TEMPLATES.map(template => ({
-        slug: template.id,
-        name: template.name,
-        description: template.description,
-        category: template.category,
-        mode: template.mode,
-        framework: template.framework,
-        suggested_agents: template.suggestedAgents,
-        default_settings: template.defaultSettings,
-        metadata: {
-          icon: template.icon,
-          tags: template.tags,
-          popularity: template.popularity,
-        },
-      })),
-      fallback: true,
-    });
-  }
+export async function GET() {
+  return NextResponse.json({
+    success: false,
+    panels: [],
+    message:
+      'Remote panel templates not configured; falling back to local PANEL_TEMPLATES.',
+  });
 }
 
 

@@ -281,18 +281,6 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
   // Background profile fetch - doesn't block login
   const fetchUserProfileInBackground = async (userId: string, fallbackProfile: UserProfile) => {
     try {
-      // Optional DB lookups can be disabled entirely if you don't need
-      // per-organization tenancy or profile records in Supabase.
-      // When NEXT_PUBLIC_ENABLE_AUTH_DB_LOOKUPS is not 'true', we skip
-      // hitting the 'profiles', 'users' and 'organizations' tables and
-      // just use the session-based profile for all users.
-      if (process.env.NEXT_PUBLIC_ENABLE_AUTH_DB_LOOKUPS !== 'true') {
-        if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_AUTH_DEBUG === 'true') {
-          console.debug('🛑 [Auth Debug] Skipping profile/organization DB lookups (flag disabled)');
-        }
-        return;
-      }
-
       const { data, error } = await supabase
         .from('profiles')
         .select('*')

@@ -243,22 +243,35 @@ def select_best_huggingface_model(query: str, analysis_type: str) -> List[tuple]
 # DATABASE QUERIES
 # =============================================================================
 
+
+def _sync_query(supabase, table_name: str, select_cols: str, filters: Optional[Dict] = None, limit: Optional[int] = None):
+    """Execute a synchronous Supabase query (runs in thread pool when called with asyncio.to_thread)"""
+    query = supabase.table(table_name).select(select_cols)
+    if filters:
+        for key, value in filters.items():
+            query = query.eq(key, value)
+    if limit:
+        query = query.limit(limit)
+    return query.execute()
+
+
 async def get_ontology_stats(tenant_id: Optional[str] = None) -> Dict[str, Any]:
     """Get comprehensive ontology statistics"""
     try:
         supabase = get_supabase_client()
 
-        # Get counts for each layer - use only columns that exist in schema
-        functions = await supabase.table("org_functions").select("id, name, slug").execute()
-        departments = await supabase.table("org_departments").select("id, name, function_id").execute()
-        roles = await supabase.table("org_roles").select("id, name, slug, department_id, function_id, seniority_level").execute()
-        personas = await supabase.table("personas").select("id, persona_type, source_role_id, function_area").execute()
-        jtbds = await supabase.table("jtbd").select("id, name, job_type").execute()
-        agents = await supabase.table("agents").select("id, name, status").eq("status", "active").execute()
+        # Run queries in thread pool to avoid blocking the event loop
+        # Supabase Python client is synchronous, so we use asyncio.to_thread
+        functions = await asyncio.to_thread(_sync_query, supabase, "org_functions", "id, name, slug")
+        departments = await asyncio.to_thread(_sync_query, supabase, "org_departments", "id, name, function_id")
+        roles = await asyncio.to_thread(_sync_query, supabase, "org_roles", "id, name, slug, department_id, function_id, seniority_level")
+        personas = await asyncio.to_thread(_sync_query, supabase, "personas", "id, persona_type, source_role_id, function_area")
+        jtbds = await asyncio.to_thread(_sync_query, supabase, "jtbd", "id, name, job_type")
+        agents = await asyncio.to_thread(_sync_query, supabase, "agents", "id, name, status", {"status": "active"})
 
         # Get junction table counts
-        jtbd_roles = await supabase.table("jtbd_roles").select("id").execute()
-        agent_roles = await supabase.table("agent_roles").select("id").execute()
+        jtbd_roles = await asyncio.to_thread(_sync_query, supabase, "jtbd_roles", "id")
+        agent_roles = await asyncio.to_thread(_sync_query, supabase, "agent_roles", "id")
 
         # Build function lookup for enriching data
         function_lookup = {f["id"]: f["name"] for f in functions.data}
@@ -310,11 +323,11 @@ async def get_gap_analysis(function_id: Optional[str] = None) -> Dict[str, Any]:
     try:
         supabase = get_supabase_client()
 
-        # Get all base data - use only columns that exist
-        all_roles = await supabase.table("org_roles").select("id, name, slug, function_id, department_id, seniority_level").execute()
-        functions = await supabase.table("org_functions").select("id, name").execute()
-        departments = await supabase.table("org_departments").select("id, name, function_id").execute()
-        agent_roles = await supabase.table("agent_roles").select("role_id").execute()
+        # Get all base data - use asyncio.to_thread for sync Supabase client
+        all_roles = await asyncio.to_thread(_sync_query, supabase, "org_roles", "id, name, slug, function_id, department_id, seniority_level")
+        functions = await asyncio.to_thread(_sync_query, supabase, "org_functions", "id, name")
+        departments = await asyncio.to_thread(_sync_query, supabase, "org_departments", "id, name, function_id")
+        agent_roles = await asyncio.to_thread(_sync_query, supabase, "agent_roles", "role_id")
 
         # Build lookups
         function_lookup = {f["id"]: f["name"] for f in functions.data}
@@ -382,8 +395,8 @@ async def get_persona_distribution() -> Dict[str, Any]:
     try:
         supabase = get_supabase_client()
 
-        # Use correct column name: source_role_id instead of role_id
-        personas = await supabase.table("personas").select("id, persona_type, source_role_id, function_area").execute()
+        # Use asyncio.to_thread for sync Supabase client
+        personas = await asyncio.to_thread(_sync_query, supabase, "personas", "id, persona_type, source_role_id, function_area")
 
         # Count by archetype
         archetype_counts = {"AUTOMATOR": 0, "ORCHESTRATOR": 0, "LEARNER": 0, "SKEPTIC": 0, "OTHER": 0}
@@ -432,27 +445,21 @@ async def get_opportunity_scores(function_id: Optional[str] = None) -> List[Dict
     try:
         supabase = get_supabase_client()
 
-        # Get roles with correct columns
-        query = supabase.table("org_roles").select(
-            "id, name, slug, function_id, department_id, seniority_level, "
-            "travel_percentage_min, travel_percentage_max"
-        )
-
-        if function_id:
-            query = query.eq("function_id", function_id)
-
-        roles = await query.limit(200).execute()
+        # Get roles with correct columns - use asyncio.to_thread for sync Supabase client
+        role_cols = "id, name, slug, function_id, department_id, seniority_level, travel_percentage_min, travel_percentage_max"
+        role_filters = {"function_id": function_id} if function_id else None
+        roles = await asyncio.to_thread(_sync_query, supabase, "org_roles", role_cols, role_filters, 200)
 
         # Get functions and departments for enrichment
-        functions = await supabase.table("org_functions").select("id, name").execute()
-        departments = await supabase.table("org_departments").select("id, name, function_id").execute()
+        functions = await asyncio.to_thread(_sync_query, supabase, "org_functions", "id, name")
+        departments = await asyncio.to_thread(_sync_query, supabase, "org_departments", "id, name, function_id")
 
         # Build lookups
         function_lookup = {f["id"]: f["name"] for f in functions.data}
         dept_lookup = {d["id"]: {"name": d["name"], "function_id": d.get("function_id")} for d in departments.data}
 
         # Get agent coverage
-        agent_roles = await supabase.table("agent_roles").select("role_id, agent_id").execute()
+        agent_roles = await asyncio.to_thread(_sync_query, supabase, "agent_roles", "role_id, agent_id")
         roles_with_agents = set(ar["role_id"] for ar in agent_roles.data if ar.get("role_id"))
 
         # High-priority seniority levels

@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "pnpm --filter @vital/digital-health-startup dev",
+    "dev": "pnpm --filter @vital/vital-system dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
@@ -16,10 +16,8 @@
     "clean": "pnpm -r clean",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "compliance:langchain": "node scripts/check-langchain-imports.js",
-    "db:migrate": "cd apps/digital-health-startup && pnpm db:migrate",
-    "db:status": "cd apps/digital-health-startup && pnpm db:status",
-    "db:setup": "cd apps/digital-health-startup && pnpm db:setup",
-    "healthcare:check": "cd apps/digital-health-startup && pnpm healthcare:check",
+    "db:migrate": "cd apps/vital-system && pnpm migrate",
+    "db:status": "cd apps/vital-system && pnpm migrate:status",
     "pre-commit": "pnpm lint && pnpm type-check && pnpm compliance:langchain",
     "pre-deploy": "pnpm build && pnpm test && pnpm compliance:langchain"
   },

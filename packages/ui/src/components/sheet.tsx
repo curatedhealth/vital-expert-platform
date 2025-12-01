@@ -5,7 +5,7 @@ import { X } from "lucide-react"
 import * as React from "react"
 import { createPortal } from "react-dom"
 
-import { cn } from "@/shared/services/utils"
+import { cn } from "../lib/utils"
 
 interface SheetContextValue {
   open: boolean

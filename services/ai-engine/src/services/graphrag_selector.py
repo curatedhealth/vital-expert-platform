@@ -88,7 +88,7 @@ class GraphRAGSelector:
         tenant_id: str,
         mode: str,
         max_agents: int = 3,
-        min_confidence: float = 0.70
+        min_confidence: float = 0.005  # Adjusted for RRF scores (typically 0.01-0.02)
     ) -> List[Dict]:
         """
         Hybrid agent selection using 3 methods with weighted fusion.
@@ -144,11 +144,25 @@ class GraphRAGSelector:
             neo4j=neo4j_results
         )
 
+        # Log pre-filter stats for debugging
+        logger.info(
+            "GraphRAG score fusion completed",
+            total_unique_agents=len(fused_agents),
+            top_fused_score=round(fused_agents[0]["fused_score"], 4) if fused_agents else 0.0,
+            min_confidence_threshold=min_confidence
+        )
+
         # Apply minimum confidence threshold
         filtered_agents = [
             agent for agent in fused_agents
             if agent.get("fused_score", 0) >= min_confidence
         ]
+
+        logger.info(
+            "GraphRAG confidence filtering",
+            agents_before_filter=len(fused_agents),
+            agents_after_filter=len(filtered_agents)
+        )
 
         # Select top-k agents
         selected = filtered_agents[:max_agents]
@@ -206,28 +220,34 @@ class GraphRAGSelector:
             supabase = self._get_supabase()
 
             # Call PostgreSQL RPC function for full-text search
-            result = await supabase.client.rpc(
-                "search_agents_fulltext",
-                {
-                    "search_query": query,
-                    "tenant_filter": tenant_id,
-                    "result_limit": limit
-                }
-            ).execute()
+            # Note: supabase-py client is synchronous, so we run in thread pool
+            def _run_rpc():
+                return supabase.client.rpc(
+                    "search_agents_fulltext",
+                    {
+                        "search_query": query,
+                        "tenant_filter": tenant_id,
+                        "result_limit": limit
+                    }
+                ).execute()
+
+            result = await asyncio.to_thread(_run_rpc)
 
             agents = [
                 {
                     "agent_id": r["id"],
                     "agent_name": r["name"],
-                    "postgres_score": float(r.get("text_rank", 0.5)),
+                    # RPC function returns "rank" not "text_rank"
+                    "postgres_score": float(r.get("rank", r.get("text_rank", 0.5))),
                     "source": "postgres"
                 }
                 for r in (result.data or [])
             ]
 
-            logger.debug(
+            logger.info(
                 "PostgreSQL fulltext search completed",
-                agents_found=len(agents)
+                agents_found=len(agents),
+                sample_agents=[a["agent_name"] for a in agents[:3]] if agents else []
             )
 
             return agents
@@ -265,15 +285,37 @@ class GraphRAGSelector:
 
             pc = Pinecone(api_key=api_key)
 
-            # Use dedicated agent index (not document index)
-            index = pc.Index("vital-medical-agents")  # Corrected index name
+            # Use dedicated agent index (from env or default)
+            # Note: The "ont-agents" namespace contains all agent embeddings (2,547 vectors)
+            # Check both env var names for compatibility
+            index_name = os.getenv("PINECONE_AGENTS_INDEX_NAME") or os.getenv("PINECONE_AGENT_INDEX", "vital-knowledge")
+            agent_namespace = os.getenv("PINECONE_AGENT_NAMESPACE", "ont-agents")
 
+            index = pc.Index(index_name)
+
+            # Check embedding dimension compatibility
+            # The current embedding service uses all-mpnet-base-v2 (768-dim)
+            # but the Pinecone index was created with text-embedding-3-large (3072-dim)
+            query_dim = len(query_embedding)
+            expected_dim = int(os.getenv("PINECONE_INDEX_DIMENSION", "3072"))
+
+            if query_dim != expected_dim:
+                logger.warning(
+                    "Pinecone dimension mismatch - skipping vector search",
+                    query_embedding_dim=query_dim,
+                    expected_index_dim=expected_dim,
+                    recommendation="Either recreate Pinecone index with 768 dimensions or use OpenAI text-embedding-3-large"
+                )
+                return []
+
+            # Query the ont-agents namespace which contains all agent vectors
+            # Previously used tenant-{tenant_id} but that namespace is empty
             results = index.query(
                 vector=query_embedding,
                 top_k=limit,
-                namespace=f"tenant-{tenant_id}",
-                include_metadata=True,
-                filter={"is_active": True}
+                namespace=agent_namespace,
+                include_metadata=True
+                # Removed filter={"is_active": True} as metadata may not have this field
             )
 
             agents = [
@@ -286,9 +328,12 @@ class GraphRAGSelector:
                 for match in results.matches
             ]
 
-            logger.debug(
+            logger.info(
                 "Pinecone vector search completed",
-                agents_found=len(agents)
+                agents_found=len(agents),
+                namespace=agent_namespace,
+                index=index_name,
+                sample_agents=[a["agent_name"] for a in agents[:3]] if agents else []
             )
 
             return agents
@@ -338,9 +383,10 @@ class GraphRAGSelector:
                 for r in results
             ]
 
-            logger.debug(
+            logger.info(
                 "Neo4j graph search completed",
-                agents_found=len(agents)
+                agents_found=len(agents),
+                sample_agents=[a["agent_name"] for a in agents[:3]] if agents else []
             )
 
             return agents
@@ -552,9 +598,13 @@ class GraphRAGSelector:
             agent_ids = [agent["agent_id"] for agent in agents]
 
             # Batch fetch agent details
-            result = await supabase.client.table("agents").select("*").in_(
-                "id", agent_ids
-            ).eq("tenant_id", tenant_id).execute()
+            # Note: supabase-py client is synchronous, so we run in thread pool
+            def _fetch_agents():
+                return supabase.client.table("agents").select("*").in_(
+                    "id", agent_ids
+                ).execute()
+
+            result = await asyncio.to_thread(_fetch_agents)
 
             # Create lookup map
             agent_details_map = {

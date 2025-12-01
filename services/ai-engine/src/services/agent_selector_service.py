@@ -402,15 +402,18 @@ Be precise with domain classification and keyword extraction."""
             )
             return []
 
-        # Get active agents for tenant
+        # Get active agents for tenant - CRITICAL: Use limit to prevent fetching 100+ agents
+        # Fetch 3x max_agents to have enough candidates for scoring
+        candidate_limit = max_agents * 3
         agents = await self.supabase_client.get_all_agents(
             tenant_id=tenant_id,
-            status="active"
+            status="active",
+            limit=candidate_limit
         )
 
         # Score agents based on query analysis
         scored_agents = []
-        for agent in agents[:max_agents * 3]:
+        for agent in agents:
             score = 0.5  # Base score
             agent_domains = agent.get("knowledge_domains", [])
 

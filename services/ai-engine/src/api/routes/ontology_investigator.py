@@ -25,7 +25,12 @@ from langgraph_workflows.ontology_investigator import (
     get_ontology_stats,
     get_gap_analysis,
     get_opportunity_scores,
-    get_persona_distribution
+    get_persona_distribution,
+    get_all_tenants,
+    get_all_industries,
+    get_departments_by_function,
+    get_roles_by_department,
+    get_jtbds_filtered
 )
 
 logger = logging.getLogger(__name__)
@@ -274,19 +279,30 @@ async def get_persona_insights():
 
 @router.get("/hierarchy", response_model=HierarchyResponse)
 async def get_full_hierarchy(
-    tenant_id: Optional[str] = Query(None, description="Filter by tenant ID")
+    tenant_id: Optional[str] = Query(None, description="Legacy - use industry instead"),
+    industry: Optional[str] = Query(None, description="Filter by industry (pharmaceuticals, digital-health, or all)"),
+    function_id: Optional[str] = Query(None, description="Filter by function ID"),
+    department_id: Optional[str] = Query(None, description="Filter by department ID"),
+    role_id: Optional[str] = Query(None, description="Filter by role ID")
 ):
     """
     Get full ontology hierarchy with counts for all 8 layers (L0-L7)
 
+    Supports cascading filters: Industry -> Function -> Department -> Role -> Personas
+
     Returns:
-    - Layer counts (tenants, functions, departments, roles, personas, JTBDs, mappings, agents)
+    - Layer counts (industries, functions, departments, roles, personas, JTBDs, mappings, agents)
     - Junction table counts (agent_roles, jtbd_roles)
     - Summary statistics with coverage percentage
-    - Functions list for sidebar filtering
+    - Functions list for sidebar filtering (filtered by industry)
     """
     try:
-        result = await get_ontology_stats(tenant_id)
+        result = await get_ontology_stats(
+            industry=industry,
+            function_id=function_id,
+            department_id=department_id,
+            role_id=role_id
+        )
 
         if "error" in result:
             raise HTTPException(status_code=500, detail=result["error"])
@@ -468,3 +484,91 @@ async def investigator_health_check():
             "error": str(e),
             "timestamp": datetime.utcnow().isoformat()
         }
+
+
+# ============== Cascading Filter Endpoints ==============
+
+@router.get("/tenants")
+async def list_tenants():
+    """
+    Get all tenants for cascading filter dropdown (legacy - use /industries instead)
+
+    Returns list of industries formatted as tenants for backwards compatibility.
+    """
+    try:
+        result = await get_all_tenants()
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching tenants: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/industries")
+async def list_industries():
+    """
+    Get all industries for cascading filter dropdown
+
+    Returns list of industries:
+    - All Industries (shows all data)
+    - Pharmaceuticals
+    - Digital Health
+    """
+    try:
+        result = await get_all_industries()
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching industries: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/departments")
+async def list_departments(
+    function_id: str = Query(..., description="Function ID to filter departments")
+):
+    """
+    Get departments filtered by function for cascading dropdown
+
+    Returns departments with role counts for the selected function.
+    """
+    try:
+        result = await get_departments_by_function(function_id)
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching departments: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/roles")
+async def list_roles(
+    department_id: str = Query(..., description="Department ID to filter roles")
+):
+    """
+    Get roles filtered by department for cascading dropdown
+
+    Returns roles with agent counts for the selected department.
+    """
+    try:
+        result = await get_roles_by_department(department_id)
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching roles: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/jtbds")
+async def list_jtbds(
+    function_id: Optional[str] = Query(None, description="Filter by function ID"),
+    role_id: Optional[str] = Query(None, description="Filter by role ID"),
+    limit: int = Query(50, le=100, description="Max JTBDs to return")
+):
+    """
+    Get JTBDs with optional function/role filters
+
+    Returns JTBDs filtered by function or role, useful for cascading filters.
+    """
+    try:
+        result = await get_jtbds_filtered(function_id, role_id, limit)
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching JTBDs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

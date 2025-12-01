@@ -456,14 +456,22 @@ class UnifiedWorkflowState(TypedDict):
     # =========================================================================
     # ERROR HANDLING & OBSERVABILITY
     # =========================================================================
-    
+
     # Errors
     errors: Annotated[List[str], operator.add]
     retry_count: NotRequired[int]
-    
+
     # Tracing
     trace_id: NotRequired[str]
     metrics: NotRequired[Dict[str, Any]]
+
+    # =========================================================================
+    # NODE EXECUTION TRACKING (CRITICAL FOR DEBUGGING)
+    # =========================================================================
+
+    # Nodes executed (Annotated for reducer - accumulates as workflow progresses)
+    # IMPORTANT: Each node MUST return {'nodes_executed': ['node_name']} to populate this
+    nodes_executed: Annotated[List[str], operator.add]
 
 
 # =============================================================================
@@ -529,11 +537,12 @@ def create_initial_state(
         user_id=user_id,
         session_id=session_id,
         
-        # Lists (empty defaults)
+        # Lists (empty defaults - all Annotated list fields need initialization)
         selected_agents=selected_agents,
         retrieved_documents=[],
         agent_responses=[],
         errors=[],
+        nodes_executed=[],  # CRITICAL: Track which nodes are executed
         
         # Configuration from kwargs
         enable_rag=kwargs.get('enable_rag', True),

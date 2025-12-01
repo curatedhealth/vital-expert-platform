@@ -21,11 +21,21 @@ from datetime import datetime
 from functools import wraps
 import logging
 
-from langfuse import Langfuse
-from langfuse.decorators import langfuse_context, observe
-from langfuse.client import StatefulGenerationClient
-
 logger = logging.getLogger(__name__)
+
+# Make langfuse imports optional
+try:
+    from langfuse import Langfuse
+    from langfuse.decorators import langfuse_context, observe
+    from langfuse.client import StatefulGenerationClient
+    LANGFUSE_AVAILABLE = True
+except ImportError:
+    logger.warning("langfuse not installed - monitoring features disabled")
+    LANGFUSE_AVAILABLE = False
+    Langfuse = None
+    langfuse_context = None
+    observe = None
+    StatefulGenerationClient = None
 
 
 # ============================================================================
@@ -62,6 +72,11 @@ class LangFuseMonitor:
             enabled: Enable/disable monitoring
         """
         self.enabled = enabled
+
+        if not LANGFUSE_AVAILABLE:
+            logger.info("LangFuse package not installed - monitoring disabled")
+            self.enabled = False
+            return
 
         if not self.enabled:
             logger.info("LangFuse monitoring is disabled")

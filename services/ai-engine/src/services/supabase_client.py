@@ -423,21 +423,46 @@ class SupabaseClient:
             logger.error("❌ Failed to get documents metadata", error=str(e))
             return {}
 
-    async def get_all_agents(self) -> List[Dict[str, Any]]:
-        """Get all agents from database (active and inactive)"""
+    async def get_all_agents(
+        self,
+        tenant_id: Optional[str] = None,
+        status: Optional[str] = None,
+        limit: int = 20
+    ) -> List[Dict[str, Any]]:
+        """
+        Get agents from database with optional filtering.
+
+        Args:
+            tenant_id: Optional tenant UUID for multi-tenant isolation
+            status: Optional status filter (e.g., 'active', 'testing')
+            limit: Maximum number of agents to return (default: 20, critical for performance)
+
+        Returns:
+            List of agent dictionaries
+        """
         try:
-            # Get all agents - don't filter by is_active since many user copies are inactive
-            result = self.client.table("agents").select("*").execute()
+            query = self.client.table("agents").select("*")
+
+            # Apply filters
+            if tenant_id:
+                query = query.eq("tenant_id", tenant_id)
+            if status:
+                query = query.eq("status", status)
+
+            # CRITICAL: Apply limit to prevent loading 100+ agents
+            query = query.limit(limit)
+
+            result = query.execute()
 
             if result.data:
-                logger.info("📚 Retrieved all agents", count=len(result.data))
+                logger.info("📚 Retrieved agents", count=len(result.data), limit=limit, tenant_id=tenant_id[:8] if tenant_id else None)
                 return result.data
             else:
                 logger.warning("⚠️ No agents found")
                 return []
 
         except Exception as e:
-            logger.error("❌ Failed to get all agents", error=str(e))
+            logger.error("❌ Failed to get agents", error=str(e))
             return []
 
     async def keyword_search(

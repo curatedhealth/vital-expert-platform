@@ -52,7 +52,7 @@ const envSchema = z.object({
     .uuid({
       message: 'NEXT_PUBLIC_PLATFORM_TENANT_ID must be a valid UUID',
     })
-    .default('00000000-0000-0000-0000-000000000001'),
+    .default('c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244'),
   NEXT_PUBLIC_STARTUP_TENANT_ID: z.string().uuid().optional(),
 
   // Optional Configuration
@@ -141,7 +141,7 @@ class EnvironmentConfig {
             PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT || undefined,
             PINECONE_INDEX_NAME: process.env.PINECONE_INDEX_NAME || undefined,
             ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || undefined,
-            NEXT_PUBLIC_PLATFORM_TENANT_ID: process.env.NEXT_PUBLIC_PLATFORM_TENANT_ID || '00000000-0000-0000-0000-000000000001',
+            NEXT_PUBLIC_PLATFORM_TENANT_ID: process.env.NEXT_PUBLIC_PLATFORM_TENANT_ID || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244',
             NEXT_PUBLIC_STARTUP_TENANT_ID: process.env.NEXT_PUBLIC_STARTUP_TENANT_ID || undefined,
             NODE_ENV: (process.env.NODE_ENV as 'development' | 'test' | 'production') || 'development',
             NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || undefined,

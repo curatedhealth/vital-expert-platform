@@ -236,7 +236,7 @@ api_gateway_memory_total_mb ${metrics.memory.total}
 app.post('/v1/chat/completions', async (req, res) => {
   try {
     const { messages, agent_id, model, temperature, max_tokens, stream = false } = req.body;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     // Validate required fields
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -311,7 +311,7 @@ app.post('/v1/chat/completions', async (req, res) => {
 app.post('/api/rag/query', async (req, res) => {
   try {
     const { query, text, strategy, domain_ids, selectedRagDomains, filters, max_results, maxResults, similarity_threshold, similarityThreshold, agent_id, agentId, user_id, userId, session_id, sessionId } = req.body;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     const queryText = query || text;
     if (!queryText) {
@@ -368,7 +368,7 @@ app.post('/api/rag/query', async (req, res) => {
 app.post('/v1/agents/query', async (req, res) => {
   try {
     const { query, agent_id, session_id, enable_rag = true } = req.body;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     if (!query || !agent_id) {
       return res.status(400).json({
@@ -439,7 +439,7 @@ app.post('/v1/agents/query', async (req, res) => {
 app.post('/api/mode1/manual', async (req, res) => {
   try {
     const { agent_id, message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, user_id, tenant_id, session_id, conversation_history } = req.body;
-    const tenantId = req.tenantId || tenant_id || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || tenant_id || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     if (!agent_id || !message) {
       return res.status(400).json({
@@ -498,7 +498,7 @@ app.post('/api/mode1/manual', async (req, res) => {
 app.post('/api/mode2/automatic', async (req, res) => {
   try {
     const { message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, user_id, tenant_id, session_id, conversation_history } = req.body;
-    const tenantId = req.tenantId || tenant_id || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || tenant_id || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     if (!message) {
       return res.status(400).json({
@@ -556,7 +556,7 @@ app.post('/api/mode2/automatic', async (req, res) => {
 app.post('/api/mode3/autonomous-automatic', async (req, res) => {
   try {
     const { message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, max_iterations, confidence_threshold, user_id, tenant_id, session_id, conversation_history } = req.body;
-    const tenantId = req.tenantId || tenant_id || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || tenant_id || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     if (!message) {
       return res.status(400).json({
@@ -616,7 +616,7 @@ app.post('/api/mode3/autonomous-automatic', async (req, res) => {
 app.post('/api/mode4/autonomous-manual', async (req, res) => {
   try {
     const { agent_id, message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, max_iterations, confidence_threshold, user_id, tenant_id, session_id, conversation_history } = req.body;
-    const tenantId = req.tenantId || tenant_id || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || tenant_id || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     if (!agent_id || !message) {
       return res.status(400).json({
@@ -677,7 +677,7 @@ app.post('/api/mode4/autonomous-manual', async (req, res) => {
 app.post('/api/metadata/process', async (req, res) => {
   try {
     const { filename, file_name, content, text, options } = req.body;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     const file_name_final = filename || file_name;
     const content_final = content || text || '';
@@ -730,7 +730,7 @@ app.post('/api/metadata/process', async (req, res) => {
 app.post('/api/metadata/extract', async (req, res) => {
   try {
     const { filename, file_name, content } = req.body;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     const file_name_final = filename || file_name;
     const content_final = content;
@@ -781,7 +781,7 @@ app.post('/api/metadata/extract', async (req, res) => {
 app.post('/api/metadata/sanitize', async (req, res) => {
   try {
     const { content, text, options } = req.body;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     const content_final = content || text || '';
 
@@ -831,7 +831,7 @@ app.post('/api/metadata/sanitize', async (req, res) => {
 app.post('/api/metadata/copyright-check', async (req, res) => {
   try {
     const { content, text, filename, file_name, metadata, options } = req.body;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     const content_final = content || text || '';
     const file_name_final = filename || file_name || 'document';
@@ -884,7 +884,7 @@ app.post('/api/metadata/copyright-check', async (req, res) => {
 app.post('/api/metadata/generate-filename', async (req, res) => {
   try {
     const { metadata, original_filename, filename } = req.body;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     if (!metadata) {
       return res.status(400).json({
@@ -932,7 +932,7 @@ app.post('/api/metadata/generate-filename', async (req, res) => {
 app.get('/v1/agents/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     const response = await axios.get(`${AI_ENGINE_URL}/v1/agents/${id}`, {
       headers: { 'x-tenant-id': tenantId },
@@ -961,7 +961,7 @@ app.get('/v1/agents/:id', async (req, res) => {
 app.post('/api/embeddings/generate', async (req, res) => {
   try {
     const { text, model, provider, dimensions, normalize } = req.body;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     if (!text) {
       return res.status(400).json({
@@ -1018,7 +1018,7 @@ app.post('/api/embeddings/generate', async (req, res) => {
 app.post('/api/embeddings/generate/batch', async (req, res) => {
   try {
     const { texts, model, provider, normalize } = req.body;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     if (!texts || !Array.isArray(texts) || texts.length === 0) {
       return res.status(400).json({
@@ -1074,7 +1074,7 @@ app.post('/api/embeddings/generate/batch', async (req, res) => {
 app.post('/api/agents/select', async (req, res) => {
   try {
     const { query, user_id, tenant_id, correlation_id } = req.body;
-    const tenantId = req.tenantId || tenant_id || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || tenant_id || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     if (!query) {
       return res.status(400).json({
@@ -1179,7 +1179,7 @@ app.get('/api/agents/:id/stats', async (req, res) => {
   try {
     const { id } = req.params;
     const { days = 7 } = req.query;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     if (!id) {
       return res.status(400).json({
@@ -1243,7 +1243,7 @@ app.get('/api/agents/:id/stats', async (req, res) => {
 app.post('/api/broker/query', async (req, res) => {
   try {
     const { query, service_mode, agent_id, role_id, persona_id, include_ontology, include_agents, include_jtbds, top_k } = req.body;
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
     if (!query) {
       return res.status(400).json({
@@ -1881,13 +1881,116 @@ app.get('/api/ontology-investigator/health', async (req, res) => {
   }
 });
 
+// ============================================================================
+// ONTOLOGY INVESTIGATOR - CASCADING FILTER ROUTES
+// ============================================================================
+
+/**
+ * GET /api/ontology-investigator/tenants
+ * Get all tenants for cascading filter dropdown
+ */
+app.get('/api/ontology-investigator/tenants', async (req, res) => {
+  try {
+    console.log('[Gateway] Ontology Investigator - Get tenants');
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/ontology-investigator/tenants`,
+      { timeout: 15000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Ontology Investigator tenants error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/ontology-investigator/departments
+ * Get departments filtered by function for cascading dropdown
+ */
+app.get('/api/ontology-investigator/departments', async (req, res) => {
+  try {
+    const { function_id } = req.query;
+    console.log(`[Gateway] Ontology Investigator - Get departments for function: ${function_id}`);
+    if (!function_id) {
+      return res.status(400).json({ error: 'function_id query parameter is required' });
+    }
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/ontology-investigator/departments?function_id=${function_id}`,
+      { timeout: 15000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Ontology Investigator departments error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/ontology-investigator/roles
+ * Get roles filtered by department for cascading dropdown
+ */
+app.get('/api/ontology-investigator/roles', async (req, res) => {
+  try {
+    const { department_id } = req.query;
+    console.log(`[Gateway] Ontology Investigator - Get roles for department: ${department_id}`);
+    if (!department_id) {
+      return res.status(400).json({ error: 'department_id query parameter is required' });
+    }
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/v1/ontology-investigator/roles?department_id=${department_id}`,
+      { timeout: 15000 }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Ontology Investigator roles error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
+/**
+ * GET /api/ontology-investigator/jtbds
+ * Get JTBDs with optional function/role filters
+ */
+app.get('/api/ontology-investigator/jtbds', async (req, res) => {
+  try {
+    const { function_id, role_id, limit = 50 } = req.query;
+    console.log(`[Gateway] Ontology Investigator - Get JTBDs (function: ${function_id || 'all'}, role: ${role_id || 'all'})`);
+
+    let url = `${AI_ENGINE_URL}/v1/ontology-investigator/jtbds?limit=${limit}`;
+    if (function_id) url += `&function_id=${function_id}`;
+    if (role_id) url += `&role_id=${role_id}`;
+
+    const response = await axios.get(url, { timeout: 15000 });
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Ontology Investigator JTBDs error:', error.message);
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Gateway error', message: error.message });
+    }
+  }
+});
+
 /**
  * LangGraph GUI Proxy Routes
  * Proxy all /api/langgraph-gui/* requests to Python AI Engine
  */
 app.all('/api/langgraph-gui/*', async (req, res) => {
   try {
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
     // Extract the path after /api/langgraph-gui
     const remainingPath = req.path.replace(/^\/api\/langgraph-gui/, '') || '/';
     const url = `${AI_ENGINE_URL}/api/langgraph-gui${remainingPath}`;

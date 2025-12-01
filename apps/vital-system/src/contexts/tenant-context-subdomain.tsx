@@ -46,9 +46,11 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
 // Check for bypass mode
 const BYPASS_AUTH = process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV === 'development';
 
-// Default tenant context for bypass mode
+// Default tenant context for bypass mode - uses Vital System tenant UUID
+const VITAL_SYSTEM_TENANT_ID = 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
+
 const DEFAULT_TENANT: Organization = {
-  id: 'default-tenant-id',
+  id: VITAL_SYSTEM_TENANT_ID,
   tenant_key: 'vital-system',
   name: 'VITAL System',
   tenant_type: 'platform',
@@ -59,8 +61,8 @@ const DEFAULT_TENANT: Organization = {
 };
 
 const DEFAULT_CONFIG: TenantConfiguration = {
-  id: 'default-config-id',
-  tenant_id: 'default-tenant-id',
+  id: 'c6d221f8-0000-0000-0000-000000000001',
+  tenant_id: VITAL_SYSTEM_TENANT_ID,
   theme: {},
   features: {},
   integrations: {},

@@ -411,7 +411,11 @@ class MemoryNodes:
             elif session_id:
                 query_builder = query_builder.eq('session_id', session_id)
             
-            response = await query_builder.order('created_at', desc=True).limit(20).execute()
+            # Supabase-py client is synchronous - run in thread pool
+            def _execute_query():
+                return query_builder.order('created_at', desc=True).limit(20).execute()
+
+            response = await asyncio.to_thread(_execute_query)
             
             if not response.data:
                 return {'entities': {}, 'preferences': {}, 'facts': []}

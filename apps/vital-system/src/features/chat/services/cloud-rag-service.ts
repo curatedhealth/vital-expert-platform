@@ -25,7 +25,7 @@
 
 import { OpenAIEmbeddings , ChatOpenAI } from '@langchain/openai';
 import { createClient } from '@supabase/supabase-js';
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
 import { ragCostTracker } from '@/lib/services/monitoring/rag-cost-tracker';
 import { RAG_CIRCUIT_BREAKERS } from '@/lib/services/monitoring/circuit-breaker';
 import { v4 as uuidv4 } from 'uuid';

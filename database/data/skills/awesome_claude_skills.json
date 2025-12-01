@@ -1,0 +1,380 @@
+[
+  {
+    "name": "Docx",
+    "slug": "docx",
+    "description": "Create, edit, analyze Word docs with tracked changes, comments, formatting.",
+    "category": "Document Skills",
+    "github_url": "https://github.com/anthropics/skills/tree/main/document-skills/docx",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Pdf",
+    "slug": "pdf",
+    "description": "Extract text, tables, metadata, merge & annotate PDFs.",
+    "category": "Document Skills",
+    "github_url": "https://github.com/anthropics/skills/tree/main/document-skills/pdf",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Pptx",
+    "slug": "pptx",
+    "description": "Read, generate, and adjust slides, layouts, templates.",
+    "category": "Document Skills",
+    "github_url": "https://github.com/anthropics/skills/tree/main/document-skills/pptx",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Xlsx",
+    "slug": "xlsx",
+    "description": "Spreadsheet manipulation: formulas, charts, data transformations.",
+    "category": "Document Skills",
+    "github_url": "https://github.com/anthropics/skills/tree/main/document-skills/xlsx",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Artifacts Builder",
+    "slug": "artifacts-builder",
+    "description": "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn/ui).",
+    "category": "Development & Code Tools",
+    "github_url": "https://github.com/anthropics/skills/tree/main/artifacts-builder",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Test Driven Development",
+    "slug": "test-driven-development",
+    "description": "Use when implementing any feature or bugfix, before writing implementation code",
+    "category": "Development & Code Tools",
+    "github_url": "https://github.com/obra/superpowers/tree/main/skills/test-driven-development",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Using Git Worktrees",
+    "slug": "using-git-worktrees",
+    "description": "Creates isolated git worktrees with smart directory selection and safety verification.",
+    "category": "Development & Code Tools",
+    "github_url": "https://github.com/obra/superpowers/blob/main/skills/using-git-worktrees/",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Finishing A Development Branch",
+    "slug": "finishing-a-development-branch",
+    "description": "Guides completion of development work by presenting clear options and handling chosen workflow.",
+    "category": "Development & Code Tools",
+    "github_url": "https://github.com/obra/superpowers/tree/main/skills/finishing-a-development-branch",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Pypict Claude Skill",
+    "slug": "pypict-claude-skill",
+    "description": "Design comprehensive test cases using PICT (Pairwise Independent Combinatorial Testing) for requirements or code, generating optimized test suites with pairwise coverage.",
+    "category": "Development & Code Tools",
+    "github_url": "https://github.com/omkamal/pypict-claude-skill",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Aws Skills",
+    "slug": "aws-skills",
+    "description": "AWS development with CDK best practices, cost optimization MCP servers, and serverless/event-driven architecture patterns.",
+    "category": "Development & Code Tools",
+    "github_url": "https://github.com/zxkane/aws-skills",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Move Code Quality Skill",
+    "slug": "move-code-quality-skill",
+    "description": "Analyzes Move language packages against the official Move Book Code Quality Checklist for Move 2024 Edition compliance and best practices.",
+    "category": "Development & Code Tools",
+    "github_url": "https://github.com/1NickPappas/move-code-quality-skill",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Claude Code Terminal Title",
+    "slug": "claude-code-terminal-title",
+    "description": "Gives each Claud Code terminal window a dynamic title that describes the work being done so you don't lose track of what terminal window is doing what.",
+    "category": "Development & Code Tools",
+    "github_url": "https://github.com/bluzername/claude-code-terminal-title",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Root Cause Tracing",
+    "slug": "root-cause-tracing",
+    "description": "Use when errors occur deep in execution and you need to trace back to find the original trigger",
+    "category": "Data & Analysis",
+    "github_url": "https://github.com/obra/superpowers/tree/main/skills/root-cause-tracing",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Csv Data Summarizer Claude Skill",
+    "slug": "csv-data-summarizer-claude-skill",
+    "description": "Automatically analyzes CSVs: columns, distributions, missing data, correlations.",
+    "category": "Data & Analysis",
+    "github_url": "https://github.com/coffeefuelbump/csv-data-summarizer-claude-skill",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Scientific Databases",
+    "slug": "scientific-databases",
+    "description": "Access to 26 scientific databases including PubMed, PubChem, UniProt, ChEMBL, and AlphaFold DB.",
+    "category": "Scientific & Research Tools",
+    "github_url": "https://github.com/K-Dense-AI/claude-scientific-skills/tree/main/scientific-databases",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Scientific Integrations",
+    "slug": "scientific-integrations",
+    "description": "Platform integrations for lab automation and workflow management (Benchling, DNAnexus, Opentrons, and more).",
+    "category": "Scientific & Research Tools",
+    "github_url": "https://github.com/K-Dense-AI/claude-scientific-skills/tree/main/scientific-integrations",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Scientific Packages",
+    "slug": "scientific-packages",
+    "description": "58 specialized Python packages for bioinformatics, cheminformatics, machine learning, and data analysis.",
+    "category": "Scientific & Research Tools",
+    "github_url": "https://github.com/K-Dense-AI/claude-scientific-skills/tree/main/scientific-packages",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Scientific Thinking",
+    "slug": "scientific-thinking",
+    "description": "Analysis tools and document processing for scientific writing, visualization, and methodology.",
+    "category": "Scientific & Research Tools",
+    "github_url": "https://github.com/K-Dense-AI/claude-scientific-skills/tree/main/scientific-thinking",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Article Extractor",
+    "slug": "article-extractor",
+    "description": "Extract full article text and metadata from web pages.",
+    "category": "## ✍️ Writing & Research",
+    "github_url": "https://github.com/michalparkola/tapestry-skills-for-claude-code/tree/main/article-extractor",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Content Research Writer",
+    "slug": "content-research-writer",
+    "description": "Assists in writing high-quality content by conducting research, adding citations, improving hooks, iterating on outlines, and providing real-time feedback on each section",
+    "category": "## ✍️ Writing & Research",
+    "github_url": "https://github.com/ComposioHQ/awesome-claude-skills/tree/master/content-research-writer",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Internal Comms",
+    "slug": "internal-comms",
+    "description": "Create internal communications\t(status reports, leadership updates, etc)",
+    "category": "## ✍️ Writing & Research",
+    "github_url": "https://github.com/anthropics/skills/tree/main/internal-comms",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Brainstorming",
+    "slug": "brainstorming",
+    "description": "Transform rough ideas into fully-formed designs through structured questioning and alternative exploration.",
+    "category": "## ✍️ Writing & Research",
+    "github_url": "https://github.com/obra/superpowers/tree/main/skills/brainstorming",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Family History Research",
+    "slug": "family-history-research",
+    "description": "Provides assistance with planning family history and genealogy research projects.",
+    "category": "## ✍️ Writing & Research",
+    "github_url": "https://github.com/emaynard/claude-family-history-research-skill",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Tapestry",
+    "slug": "tapestry",
+    "description": "Interlink and summarize related documents into knowledge networks.",
+    "category": "Learning & Knowledge",
+    "github_url": "https://github.com/michalparkola/tapestry-skills-for-claude-code/tree/main/tapestry",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Ship Learn Next",
+    "slug": "ship-learn-next",
+    "description": "Skill to help iterate on what to build or learn next, based on feedback loops.",
+    "category": "Learning & Knowledge",
+    "github_url": "https://github.com/michalparkola/tapestry-skills-for-claude-code/tree/main/ship-learn-next",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Youtube Transcript",
+    "slug": "youtube-transcript",
+    "description": "Fetch transcripts from YouTube videos and prepare summaries.",
+    "category": "Media & Content",
+    "github_url": "https://github.com/michalparkola/tapestry-skills-for-claude-code/tree/main/youtube-transcript",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Video Downloader",
+    "slug": "video-downloader",
+    "description": "Downloads videos from YouTube and other platforms for offline viewing, editing, or archival.",
+    "category": "Media & Content",
+    "github_url": "https://github.com/ComposioHQ/awesome-claude-skills/tree/master/video-downloader",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Image Enhancer",
+    "slug": "image-enhancer",
+    "description": "Improves the quality of images, especially screenshots.",
+    "category": "Media & Content",
+    "github_url": "https://github.com/ComposioHQ/awesome-claude-skills/tree/master/image-enhancer",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Claude Epub Skill",
+    "slug": "claude-epub-skill",
+    "description": "Parse and analyze EPUB ebook contents for querying or summarizing.",
+    "category": "Media & Content",
+    "github_url": "https://github.com/smerchek/claude-epub-skill",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Git Pushing",
+    "slug": "git-pushing",
+    "description": "Automate git operations and repository interactions.",
+    "category": "Collaboration & Project Management",
+    "github_url": "https://github.com/mhattingpete/claude-skills-marketplace/tree/main/engineering-workflow-plugin/skills/git-pushing",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Review Implementing",
+    "slug": "review-implementing",
+    "description": "Evaluate code implementation plans and align with specs.",
+    "category": "Collaboration & Project Management",
+    "github_url": "https://github.com/mhattingpete/claude-skills-marketplace/tree/main/engineering-workflow-plugin/skills/review-implementing",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Test Fixing",
+    "slug": "test-fixing",
+    "description": "Detect failing tests and propose patches or fixes.",
+    "category": "Collaboration & Project Management",
+    "github_url": "https://github.com/mhattingpete/claude-skills-marketplace/tree/main/engineering-workflow-plugin/skills/test-fixing",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Meeting Insights Analyzer",
+    "slug": "meeting-insights-analyzer",
+    "description": "Transforms your meeting transcripts into actionable insights about your communication patterns",
+    "category": "Collaboration & Project Management",
+    "github_url": "https://github.com/ComposioHQ/awesome-claude-skills/blob/master/meeting-insights-analyzer/",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Linear Cli Skill",
+    "slug": "linear-cli-skill",
+    "description": "A skill teaching claude how to use linear-CLI (provided alongside the skill), meant to replace linear MCP.",
+    "category": "Collaboration & Project Management",
+    "github_url": "https://github.com/Valian/linear-cli-skill",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Ffuf_Claude_Skill",
+    "slug": "ffuf_claude_skill",
+    "description": "Integrate Claude with FFUF (fuzzing) and analyze results for vulnerabilities.",
+    "category": "Security & Web Testing",
+    "github_url": "https://github.com/jthack/ffuf_claude_skill",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Defense In Depth",
+    "slug": "defense-in-depth",
+    "description": "Implement multi-layered testing and security best practices.",
+    "category": "Security & Web Testing",
+    "github_url": "https://github.com/obra/superpowers/blob/main/skills/defense-in-depth",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Webapp Testing",
+    "slug": "webapp-testing",
+    "description": "Toolkit for interacting with and testing local web applications using Playwright.",
+    "category": "Security & Web Testing",
+    "github_url": "https://github.com/anthropics/skills/tree/main/webapp-testing",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Systematic Debugging",
+    "slug": "systematic-debugging",
+    "description": "Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes",
+    "category": "Security & Web Testing",
+    "github_url": "https://github.com/obra/superpowers/blob/main/skills/systematic-debugging",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "File Organizer",
+    "slug": "file-organizer",
+    "description": "Intelligently organizes your files and folders across your computer.",
+    "category": "Utility & Automation",
+    "github_url": "https://github.com/ComposioHQ/awesome-claude-skills/tree/master/file-organizer",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Invoice Organizer",
+    "slug": "invoice-organizer",
+    "description": "Automatically organizes invoices and receipts for tax preparation",
+    "category": "Utility & Automation",
+    "github_url": "https://github.com/ComposioHQ/awesome-claude-skills/blob/master/invoice-organizer/SKILL.md",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Skill Creator",
+    "slug": "skill-creator",
+    "description": "Template / helper to build new Claude skills.",
+    "category": "Utility & Automation",
+    "github_url": "https://github.com/anthropics/skills/tree/main/skill-creator",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  },
+  {
+    "name": "Template Skill",
+    "slug": "template-skill",
+    "description": "Minimal skeleton for a new skill project structure.",
+    "category": "Utility & Automation",
+    "github_url": "https://github.com/anthropics/skills/tree/main/template-skill",
+    "implementation_type": "tool",
+    "source": "awesome-claude-skills"
+  }
+]

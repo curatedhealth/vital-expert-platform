@@ -53,6 +53,63 @@
     --vital-warning: #F59E0B;
     --vital-error: #EF4444;
     --vital-info: #06B6D4;
+
+    /* ═══════════════════════════════════════════════════════════════════
+       VALUE VIEW: 8-Layer Semantic Ontology Design System
+       Based on VITAL Enterprise OS Ontology Handbook
+       ═══════════════════════════════════════════════════════════════════ */
+
+    /* 8-Layer Ontology Colors */
+    --layer-0: #7C3AED;  /* L0: Domain Knowledge - Purple (Therapeutic Areas, Products, Diseases) */
+    --layer-1: #2563EB;  /* L1: Strategic Pillars - Blue (SP01-SP07, OKRs, Themes) */
+    --layer-2: #059669;  /* L2: Org Structure - Emerald (Functions, Departments) */
+    --layer-3: #EA580C;  /* L3: Personas - Orange (43 profiles, 4 archetypes) */
+    --layer-4: #0891B2;  /* L4: JTBD - Cyan (700+ Jobs-to-be-Done) */
+    --layer-5: #DB2777;  /* L5: Outcomes/ODI - Pink (Importance/Satisfaction scoring) */
+    --layer-6: #4F46E5;  /* L6: Workflows - Indigo (400+ processes with HITL) */
+    --layer-7: #D97706;  /* L7: Value Metrics - Amber (Time, Cost, Quality, Risk) */
+
+    /* Layer Background Tints (10% opacity for cards/surfaces) */
+    --layer-0-bg: rgba(124, 58, 237, 0.1);
+    --layer-1-bg: rgba(37, 99, 235, 0.1);
+    --layer-2-bg: rgba(5, 150, 105, 0.1);
+    --layer-3-bg: rgba(234, 88, 12, 0.1);
+    --layer-4-bg: rgba(8, 145, 178, 0.1);
+    --layer-5-bg: rgba(219, 39, 119, 0.1);
+    --layer-6-bg: rgba(79, 70, 229, 0.1);
+    --layer-7-bg: rgba(217, 119, 6, 0.1);
+
+    /* ODI Opportunity Tier Colors (0-20 scale) */
+    --odi-extreme: #DC2626;      /* Score ≥15: Extreme opportunity - Red */
+    --odi-high: #F59E0B;         /* Score 12-14.9: High opportunity - Amber */
+    --odi-moderate: #3B82F6;     /* Score 10-11.9: Moderate opportunity - Blue */
+    --odi-table-stakes: #6B7280; /* Score <10: Table stakes - Gray */
+
+    /* ODI Tier Backgrounds */
+    --odi-extreme-bg: rgba(220, 38, 38, 0.1);
+    --odi-high-bg: rgba(245, 158, 11, 0.1);
+    --odi-moderate-bg: rgba(59, 130, 246, 0.1);
+    --odi-table-stakes-bg: rgba(107, 114, 128, 0.1);
+
+    /* Persona Archetype Colors */
+    --archetype-automator: #14B8A6;   /* High AI + BAU: Teal */
+    --archetype-orchestrator: #7C3AED; /* High AI + Project: Purple */
+    --archetype-learner: #3B82F6;      /* Low AI + BAU: Blue */
+    --archetype-skeptic: #F59E0B;      /* Low AI + Project: Amber */
+
+    /* Archetype Backgrounds */
+    --archetype-automator-bg: rgba(20, 184, 166, 0.1);
+    --archetype-orchestrator-bg: rgba(124, 58, 237, 0.1);
+    --archetype-learner-bg: rgba(59, 130, 246, 0.1);
+    --archetype-skeptic-bg: rgba(245, 158, 11, 0.1);
+
+    /* VPANES Score Colors */
+    --vpanes-value: #8B5CF6;      /* Value (20%) - Violet */
+    --vpanes-pain: #EF4444;       /* Pain (15%) - Red */
+    --vpanes-adoption: #10B981;   /* Adoption (15%) - Emerald */
+    --vpanes-network: #06B6D4;    /* Network (15%) - Cyan */
+    --vpanes-ease: #F59E0B;       /* Ease (15%) - Amber */
+    --vpanes-strategic: #2563EB;  /* Strategic (20%) - Blue */
     
     /* Legacy service line colors - mapped to tenant colors */
     --regulatory-blue: var(--vital-pharma-500);

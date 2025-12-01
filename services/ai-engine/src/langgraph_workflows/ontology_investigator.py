@@ -255,16 +255,119 @@ def _sync_query(supabase, table_name: str, select_cols: str, filters: Optional[D
     return query.execute()
 
 
-async def get_ontology_stats(tenant_id: Optional[str] = None) -> Dict[str, Any]:
-    """Get comprehensive ontology statistics"""
+async def get_ontology_stats(
+    tenant_id: Optional[str] = None,
+    function_id: Optional[str] = None,
+    department_id: Optional[str] = None,
+    role_id: Optional[str] = None,
+    industry: Optional[str] = None
+) -> Dict[str, Any]:
+    """Get comprehensive ontology statistics with optional filtering
+
+    Args:
+        tenant_id: Legacy - use industry instead (kept for backwards compatibility)
+        function_id: Filter by function (e.g., Medical Affairs)
+        department_id: Filter by department
+        role_id: Filter by specific role
+        industry: Filter by industry (Pharmaceuticals, Digital Health, or 'all')
+    """
     try:
         supabase = get_supabase_client()
 
+        # Convert industry slug to filter value
+        # Industry filtering using 15 standard Healthcare/Life Sciences categories
+        industry_filter = None
+        if industry and industry not in ("all", "All Industries"):
+            # Map slug to actual industry value (supports both slug and display name)
+            industry_map = {
+                # Slugs (lowercase with hyphens)
+                "pharmaceuticals": "Pharmaceuticals",
+                "biotechnology": "Biotechnology",
+                "medical-devices": "Medical Devices",
+                "digital-health": "Digital Health",
+                "diagnostics": "Diagnostics",
+                "healthcare-providers": "Healthcare Providers",
+                "payers": "Payers",
+                "cro": "Contract Research Organizations",
+                "cdmo": "Contract Development & Manufacturing",
+                "health-it": "Health Information Technology",
+                "research-institutions": "Research Institutions",
+                "regulatory-bodies": "Regulatory Bodies",
+                "pharmacy-services": "Pharmacy Services",
+                "medical-education": "Medical Education",
+                "healthcare-consulting": "Healthcare Consulting",
+                # Display names (pass-through)
+                "Pharmaceuticals": "Pharmaceuticals",
+                "Biotechnology": "Biotechnology",
+                "Medical Devices": "Medical Devices",
+                "Digital Health": "Digital Health",
+                "Diagnostics": "Diagnostics",
+                "Healthcare Providers": "Healthcare Providers",
+                "Payers": "Payers",
+                "Contract Research Organizations": "Contract Research Organizations",
+                "Contract Development & Manufacturing": "Contract Development & Manufacturing",
+                "Health Information Technology": "Health Information Technology",
+                "Research Institutions": "Research Institutions",
+                "Regulatory Bodies": "Regulatory Bodies",
+                "Pharmacy Services": "Pharmacy Services",
+                "Medical Education": "Medical Education",
+                "Healthcare Consulting": "Healthcare Consulting"
+            }
+            industry_filter = industry_map.get(industry, industry)
+
+        # Build role filters
+        dept_filters = {"function_id": function_id} if function_id else None
+        role_filters = {}
+        if function_id:
+            role_filters["function_id"] = function_id
+        if department_id:
+            role_filters["department_id"] = department_id
+
         # Run queries in thread pool to avoid blocking the event loop
         # Supabase Python client is synchronous, so we use asyncio.to_thread
-        functions = await asyncio.to_thread(_sync_query, supabase, "org_functions", "id, name, slug")
-        departments = await asyncio.to_thread(_sync_query, supabase, "org_departments", "id, name, function_id")
-        roles = await asyncio.to_thread(_sync_query, supabase, "org_roles", "id, name, slug, department_id, function_id, seniority_level")
+        # Fetch ALL functions first, then filter by industry in Python
+        functions = await asyncio.to_thread(
+            _sync_query, supabase, "org_functions", "id, name, slug, tenant_id, industry",
+            None  # No database filter - filter in Python
+        )
+
+        # Apply industry filter in Python
+        if industry_filter:
+            functions_data = [f for f in functions.data if f.get("industry") == industry_filter]
+            logger.info(f"Filtering by industry={industry_filter}, found {len(functions_data)} functions")
+        else:
+            functions_data = functions.data
+
+        # Get function IDs for cascading filter (from industry-filtered functions)
+        function_ids = {f["id"] for f in functions_data}
+
+        # Get all departments, then filter by industry's functions if needed
+        all_departments = await asyncio.to_thread(
+            _sync_query, supabase, "org_departments", "id, name, function_id",
+            dept_filters if dept_filters else None
+        )
+
+        # Filter departments to only those in industry's functions
+        if industry_filter and not function_id:
+            departments_data = [d for d in all_departments.data if d.get("function_id") in function_ids]
+        else:
+            departments_data = all_departments.data
+
+        # Build department lookup early
+        dept_lookup = {d["id"]: {"name": d["name"], "function_id": d.get("function_id")} for d in departments_data}
+
+        # Get all roles, then filter by industry's functions if needed
+        all_roles = await asyncio.to_thread(
+            _sync_query, supabase, "org_roles", "id, name, slug, department_id, function_id, seniority_level",
+            role_filters if role_filters else None
+        )
+
+        # Filter roles to only those in industry's functions
+        if industry_filter and not function_id:
+            roles_data = [r for r in all_roles.data if r.get("function_id") in function_ids]
+        else:
+            roles_data = all_roles.data
+
         personas = await asyncio.to_thread(_sync_query, supabase, "personas", "id, persona_type, source_role_id, function_area")
         jtbds = await asyncio.to_thread(_sync_query, supabase, "jtbd", "id, name, job_type")
         agents = await asyncio.to_thread(_sync_query, supabase, "agents", "id, name, status", {"status": "active"})
@@ -273,13 +376,17 @@ async def get_ontology_stats(tenant_id: Optional[str] = None) -> Dict[str, Any]:
         jtbd_roles = await asyncio.to_thread(_sync_query, supabase, "jtbd_roles", "id")
         agent_roles = await asyncio.to_thread(_sync_query, supabase, "agent_roles", "id")
 
-        # Build function lookup for enriching data
-        function_lookup = {f["id"]: f["name"] for f in functions.data}
-        dept_lookup = {d["id"]: {"name": d["name"], "function_id": d.get("function_id")} for d in departments.data}
+        # Build function lookup for enriching data (use industry-filtered data)
+        function_lookup = {f["id"]: f["name"] for f in functions_data}
 
-        # Enrich roles with function/department names
+        # Filter functions if function_id is specified
+        filtered_functions = functions_data
+        if function_id:
+            filtered_functions = [f for f in functions_data if f["id"] == function_id]
+
+        # Enrich roles with function/department names (up to 100 for display)
         enriched_roles = []
-        for role in roles.data[:100]:
+        for role in roles_data[:100]:  # Limit display data to 100
             func_id = role.get("function_id")
             dept_id = role.get("department_id")
             dept_info = dept_lookup.get(dept_id, {})
@@ -289,13 +396,36 @@ async def get_ontology_stats(tenant_id: Optional[str] = None) -> Dict[str, Any]:
                 "department_name": dept_info.get("name")
             })
 
+        # Apply additional filters if needed
+        filtered_departments = departments_data
+        # Use actual count from filtered data
+        actual_role_count = len(roles_data)
+        filtered_roles = enriched_roles
+
+        # Filter personas based on filtered role IDs
+        if industry_filter or function_id or department_id or role_id:
+            # Get set of role IDs from the filtered roles
+            filtered_role_ids = {role["id"] for role in roles_data}
+            # Filter personas to only those linked to the filtered roles
+            filtered_personas = [
+                p for p in personas.data
+                if p.get("source_role_id") in filtered_role_ids
+            ]
+            actual_persona_count = len(filtered_personas)
+        else:
+            actual_persona_count = len(personas.data)
+
+        # Log what filters were applied
+        if function_id or department_id or role_id:
+            logger.info(f"Ontology stats filtered by: function_id={function_id}, department_id={department_id}, role_id={role_id}")
+
         return {
             "layers": {
-                "L0_tenants": {"count": 12, "description": "Multi-tenant organizations"},
-                "L1_functions": {"count": len(functions.data), "data": functions.data},
-                "L2_departments": {"count": len(departments.data)},
-                "L3_roles": {"count": len(roles.data), "data": enriched_roles},
-                "L4_personas": {"count": len(personas.data)},
+                "L0_tenants": {"count": 3, "description": "Industry verticals"},
+                "L1_functions": {"count": len(filtered_functions), "data": filtered_functions},
+                "L2_departments": {"count": len(filtered_departments)},
+                "L3_roles": {"count": actual_role_count, "data": filtered_roles},
+                "L4_personas": {"count": actual_persona_count},
                 "L5_jtbds": {"count": len(jtbds.data)},
                 "L6_jtbd_roles": {"count": len(jtbd_roles.data)},
                 "L7_agents": {"count": len(agents.data)}
@@ -304,11 +434,17 @@ async def get_ontology_stats(tenant_id: Optional[str] = None) -> Dict[str, Any]:
                 "agent_roles": len(agent_roles.data) if agent_roles.data else 0,
                 "jtbd_roles": len(jtbd_roles.data) if jtbd_roles.data else 0
             },
-            "functions": functions.data,  # For sidebar filtering
+            "functions": functions_data,  # Return industry-filtered functions for filtering dropdown
+            "filters_applied": {
+                "industry": industry,
+                "function_id": function_id,
+                "department_id": department_id,
+                "role_id": role_id
+            },
             "raw_data": {
-                "functions": functions.data,
-                "departments": departments.data,
-                "roles": enriched_roles,
+                "functions": filtered_functions,
+                "departments": filtered_departments,
+                "roles": filtered_roles,
                 "personas_sample": personas.data[:50],
                 "agents": agents.data[:50]
             }
@@ -317,6 +453,509 @@ async def get_ontology_stats(tenant_id: Optional[str] = None) -> Dict[str, Any]:
         logger.error(f"Error fetching ontology stats: {e}")
         return {"error": str(e)}
 
+
+# =============================================================================
+# CASCADING FILTER DATA FUNCTIONS
+# =============================================================================
+
+async def get_all_tenants() -> Dict[str, Any]:
+    """Get all tenants for filter dropdown (legacy - redirects to industries)"""
+    # Redirect to industries for backwards compatibility
+    industries = await get_all_industries()
+    return {
+        "tenants": industries["industries"],
+        "count": industries["count"]
+    }
+
+
+async def get_all_industries() -> Dict[str, Any]:
+    """Get all industries for filter dropdown
+
+    Returns the 15 standard Healthcare/Life Sciences industry categories
+    based on NAICS and GICS classification codes.
+
+    Industry Categories:
+    1. Pharmaceuticals (NAICS: 3254, GICS: 35201010)
+    2. Biotechnology (NAICS: 541714, GICS: 35201020)
+    3. Medical Devices (NAICS: 3391, GICS: 35101010)
+    4. Digital Health (NAICS: 5112, GICS: 35102010)
+    5. Diagnostics (NAICS: 3345, GICS: 35201010)
+    6. Healthcare Providers (NAICS: 622, GICS: 35101020)
+    7. Payers (NAICS: 524114, GICS: 35301010)
+    8. Contract Research Organizations (NAICS: 541711, GICS: 20201020)
+    9. Contract Development & Manufacturing (NAICS: 32541, GICS: 35201010)
+    10. Health Information Technology (NAICS: 5182, GICS: 45102010)
+    11. Research Institutions (NAICS: 541720, GICS: 20201020)
+    12. Regulatory Bodies (NAICS: 921, GICS: N/A)
+    13. Pharmacy Services (NAICS: 446110, GICS: 30101010)
+    14. Medical Education (NAICS: 6113, GICS: 25301020)
+    15. Healthcare Consulting (NAICS: 541611, GICS: 20201050)
+    """
+    # Get counts from database for each industry
+    supabase = get_supabase_client()
+
+    # Query to count functions per industry
+    try:
+        result = await asyncio.to_thread(
+            lambda: supabase.table("org_functions")
+                .select("industry")
+                .execute()
+        )
+
+        industry_counts = {}
+        if result.data:
+            for row in result.data:
+                ind = row.get("industry", "Other")
+                industry_counts[ind] = industry_counts.get(ind, 0) + 1
+
+        total_count = sum(industry_counts.values())
+    except Exception as e:
+        logger.warning(f"Could not fetch industry counts: {e}")
+        industry_counts = {}
+        total_count = 27  # Default fallback
+
+    # Standard 15 Healthcare/Life Sciences industry categories
+    industries = [
+        {
+            "id": "all",
+            "name": "All Industries",
+            "slug": "all",
+            "naics_code": None,
+            "gics_code": None,
+            "count": total_count,
+            "subcategories": []
+        },
+        {
+            "id": "pharmaceuticals",
+            "name": "Pharmaceuticals",
+            "slug": "pharmaceuticals",
+            "naics_code": "3254",
+            "gics_code": "35201010",
+            "count": industry_counts.get("Pharmaceuticals", 0),
+            "subcategories": [
+                "Big Pharma",
+                "Specialty Pharma",
+                "Generic/Biosimilars",
+                "Emerging Pharma"
+            ],
+            "example_agents": [
+                "Drug Safety Specialist",
+                "Regulatory Affairs Manager",
+                "Clinical Trial Designer"
+            ]
+        },
+        {
+            "id": "biotechnology",
+            "name": "Biotechnology",
+            "slug": "biotechnology",
+            "naics_code": "541714",
+            "gics_code": "35201020",
+            "count": industry_counts.get("Biotechnology", 0),
+            "subcategories": [
+                "Therapeutic Biotech",
+                "Platform Technology",
+                "Agricultural Biotech"
+            ],
+            "example_agents": [
+                "Genomics Researcher",
+                "Bioprocess Engineer",
+                "Cell Therapy Specialist"
+            ]
+        },
+        {
+            "id": "medical-devices",
+            "name": "Medical Devices",
+            "slug": "medical-devices",
+            "naics_code": "3391",
+            "gics_code": "35101010",
+            "count": industry_counts.get("Medical Devices", 0),
+            "subcategories": [
+                "Class I (Low Risk)",
+                "Class II (Moderate)",
+                "Class III (High Risk)",
+                "IVD Devices"
+            ],
+            "example_agents": [
+                "Device Regulatory Specialist",
+                "Quality Systems Manager",
+                "Biocompatibility Expert"
+            ]
+        },
+        {
+            "id": "digital-health",
+            "name": "Digital Health",
+            "slug": "digital-health",
+            "naics_code": "5112",
+            "gics_code": "35102010",
+            "count": industry_counts.get("Digital Health", 0),
+            "subcategories": [
+                "Digital Therapeutics (DTx)",
+                "Telehealth/Telemedicine",
+                "Health Apps & Wearables",
+                "Remote Patient Monitoring"
+            ],
+            "example_agents": [
+                "DTx Product Manager",
+                "Health App Developer",
+                "UX/UI Designer for Health"
+            ]
+        },
+        {
+            "id": "diagnostics",
+            "name": "Diagnostics",
+            "slug": "diagnostics",
+            "naics_code": "3345",
+            "gics_code": "35201010",
+            "count": industry_counts.get("Diagnostics", 0),
+            "subcategories": [
+                "In Vitro Diagnostics",
+                "Companion Diagnostics",
+                "Point-of-Care Testing"
+            ],
+            "example_agents": [
+                "Assay Development Lead",
+                "Clinical Lab Scientist",
+                "Biomarker Researcher"
+            ]
+        },
+        {
+            "id": "healthcare-providers",
+            "name": "Healthcare Providers",
+            "slug": "healthcare-providers",
+            "naics_code": "622",
+            "gics_code": "35101020",
+            "count": industry_counts.get("Healthcare Providers", 0),
+            "subcategories": [
+                "Hospital Systems",
+                "Physician Practices",
+                "Specialty Clinics",
+                "Long-Term Care"
+            ],
+            "example_agents": [
+                "Care Coordinator",
+                "Hospital Administrator",
+                "Clinical Informaticist"
+            ]
+        },
+        {
+            "id": "payers",
+            "name": "Payers",
+            "slug": "payers",
+            "naics_code": "524114",
+            "gics_code": "35301010",
+            "count": industry_counts.get("Payers", 0),
+            "subcategories": [
+                "Commercial Insurers",
+                "Government (Medicare/Medicaid)",
+                "PBMs",
+                "Managed Care"
+            ],
+            "example_agents": [
+                "Market Access Manager",
+                "Health Economics Analyst",
+                "Reimbursement Specialist"
+            ]
+        },
+        {
+            "id": "cro",
+            "name": "Contract Research Organizations",
+            "slug": "cro",
+            "naics_code": "541711",
+            "gics_code": "20201020",
+            "count": industry_counts.get("Contract Research Organizations", 0),
+            "subcategories": [
+                "Full-Service CRO",
+                "Functional Service Provider",
+                "Specialty CRO"
+            ],
+            "example_agents": [
+                "Clinical Operations Manager",
+                "Biostatistician",
+                "Site Monitor (CRA)"
+            ]
+        },
+        {
+            "id": "cdmo",
+            "name": "Contract Development & Manufacturing",
+            "slug": "cdmo",
+            "naics_code": "32541",
+            "gics_code": "35201010",
+            "count": industry_counts.get("Contract Development & Manufacturing", 0),
+            "subcategories": [
+                "Drug Substance Manufacturing",
+                "Drug Product Manufacturing",
+                "Packaging & Labeling"
+            ],
+            "example_agents": [
+                "Process Development Lead",
+                "QC/QA Manager",
+                "Supply Chain Director"
+            ]
+        },
+        {
+            "id": "health-it",
+            "name": "Health Information Technology",
+            "slug": "health-it",
+            "naics_code": "5182",
+            "gics_code": "45102010",
+            "count": industry_counts.get("Health Information Technology", 0),
+            "subcategories": [
+                "EHR/EMR Systems",
+                "Healthcare Analytics",
+                "Interoperability Solutions",
+                "Healthcare AI/ML"
+            ],
+            "example_agents": [
+                "EHR Implementation Lead",
+                "Healthcare Data Scientist",
+                "Interoperability Specialist"
+            ]
+        },
+        {
+            "id": "research-institutions",
+            "name": "Research Institutions",
+            "slug": "research-institutions",
+            "naics_code": "541720",
+            "gics_code": "20201020",
+            "count": industry_counts.get("Research Institutions", 0),
+            "subcategories": [
+                "Academic Medical Centers",
+                "Research Universities",
+                "National Labs"
+            ],
+            "example_agents": [
+                "Principal Investigator",
+                "Research Coordinator",
+                "Grant Writer"
+            ]
+        },
+        {
+            "id": "regulatory-bodies",
+            "name": "Regulatory Bodies",
+            "slug": "regulatory-bodies",
+            "naics_code": "921",
+            "gics_code": None,
+            "count": industry_counts.get("Regulatory Bodies", 0),
+            "subcategories": [
+                "FDA (US)",
+                "EMA (EU)",
+                "PMDA (Japan)",
+                "Health Canada"
+            ],
+            "example_agents": [
+                "Regulatory Reviewer",
+                "Policy Analyst",
+                "Compliance Officer"
+            ]
+        },
+        {
+            "id": "pharmacy-services",
+            "name": "Pharmacy Services",
+            "slug": "pharmacy-services",
+            "naics_code": "446110",
+            "gics_code": "30101010",
+            "count": industry_counts.get("Pharmacy Services", 0),
+            "subcategories": [
+                "Retail Pharmacy",
+                "Specialty Pharmacy",
+                "Mail-Order Pharmacy",
+                "Compounding Pharmacy"
+            ],
+            "example_agents": [
+                "Clinical Pharmacist",
+                "Pharmacy Technician",
+                "Medication Therapy Manager"
+            ]
+        },
+        {
+            "id": "medical-education",
+            "name": "Medical Education",
+            "slug": "medical-education",
+            "naics_code": "6113",
+            "gics_code": "25301020",
+            "count": industry_counts.get("Medical Education", 0),
+            "subcategories": [
+                "CME/CE Programs",
+                "Medical Schools",
+                "Nursing Programs",
+                "Allied Health Education"
+            ],
+            "example_agents": [
+                "Medical Writer",
+                "CME Program Director",
+                "Curriculum Developer"
+            ]
+        },
+        {
+            "id": "healthcare-consulting",
+            "name": "Healthcare Consulting",
+            "slug": "healthcare-consulting",
+            "naics_code": "541611",
+            "gics_code": "20201050",
+            "count": industry_counts.get("Healthcare Consulting", 0),
+            "subcategories": [
+                "Strategy Consulting",
+                "Operations Consulting",
+                "IT/Digital Consulting",
+                "Regulatory Consulting"
+            ],
+            "example_agents": [
+                "Strategy Consultant",
+                "Implementation Manager",
+                "Change Management Lead"
+            ]
+        }
+    ]
+
+    return {
+        "industries": industries,
+        "count": len(industries)
+    }
+
+
+async def get_departments_by_function(function_id: str) -> Dict[str, Any]:
+    """Get departments filtered by function for cascading dropdown"""
+    try:
+        supabase = get_supabase_client()
+
+        # Fetch departments with function filter
+        departments = await asyncio.to_thread(
+            _sync_query, supabase, "org_departments",
+            "id, name, slug, function_id",
+            {"function_id": function_id}
+        )
+
+        # Get role counts per department
+        roles = await asyncio.to_thread(_sync_query, supabase, "org_roles", "id, department_id")
+        role_counts = {}
+        for r in roles.data:
+            dept_id = r.get("department_id")
+            if dept_id:
+                role_counts[dept_id] = role_counts.get(dept_id, 0) + 1
+
+        return {
+            "departments": [
+                {
+                    "id": d.get("id"),
+                    "name": d.get("name") or "Unknown",
+                    "slug": d.get("slug"),
+                    "function_id": d.get("function_id"),
+                    "role_count": role_counts.get(d.get("id"), 0)
+                }
+                for d in departments.data
+            ],
+            "count": len(departments.data)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching departments: {e}")
+        return {"departments": [], "count": 0, "error": str(e)}
+
+
+async def get_roles_by_department(department_id: str) -> Dict[str, Any]:
+    """Get roles filtered by department for cascading dropdown"""
+    try:
+        supabase = get_supabase_client()
+
+        # Fetch roles with department filter
+        roles = await asyncio.to_thread(
+            _sync_query, supabase, "org_roles",
+            "id, name, slug, department_id, seniority_level",
+            {"department_id": department_id}
+        )
+
+        # Get agent counts per role
+        agent_roles = await asyncio.to_thread(_sync_query, supabase, "agent_roles", "role_id")
+        agent_counts = {}
+        for ar in agent_roles.data:
+            role_id = ar.get("role_id")
+            if role_id:
+                agent_counts[role_id] = agent_counts.get(role_id, 0) + 1
+
+        return {
+            "roles": [
+                {
+                    "id": r.get("id"),
+                    "name": r.get("name") or "Unknown",
+                    "slug": r.get("slug"),
+                    "seniority": r.get("seniority_level"),
+                    "agent_count": agent_counts.get(r.get("id"), 0)
+                }
+                for r in roles.data
+            ],
+            "count": len(roles.data)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching roles: {e}")
+        return {"roles": [], "count": 0, "error": str(e)}
+
+
+async def get_jtbds_filtered(
+    function_id: Optional[str] = None,
+    role_id: Optional[str] = None,
+    limit: int = 50
+) -> Dict[str, Any]:
+    """Get JTBDs with optional function/role filters"""
+    try:
+        supabase = get_supabase_client()
+
+        if role_id:
+            # Get JTBDs mapped to specific role
+            jtbd_roles = await asyncio.to_thread(
+                _sync_query, supabase, "jtbd_roles",
+                "jtbd_id", {"role_id": role_id}, limit
+            )
+            jtbd_ids = [jr.get("jtbd_id") for jr in jtbd_roles.data if jr.get("jtbd_id")]
+
+            if jtbd_ids:
+                # Fetch JTBD details
+                all_jtbds = await asyncio.to_thread(_sync_query, supabase, "jtbd", "id, name, job_statement, job_type")
+                jtbds = [j for j in all_jtbds.data if j.get("id") in jtbd_ids]
+            else:
+                jtbds = []
+        elif function_id:
+            # Get JTBDs related to function via jtbd_functions or generic fetch
+            try:
+                jtbd_functions = await asyncio.to_thread(
+                    _sync_query, supabase, "jtbd_functions",
+                    "jtbd_id", {"function_id": function_id}, limit
+                )
+                jtbd_ids = [jf.get("jtbd_id") for jf in jtbd_functions.data if jf.get("jtbd_id")]
+
+                if jtbd_ids:
+                    all_jtbds = await asyncio.to_thread(_sync_query, supabase, "jtbd", "id, name, job_statement, job_type")
+                    jtbds = [j for j in all_jtbds.data if j.get("id") in jtbd_ids]
+                else:
+                    # Fallback to general JTBDs
+                    result = await asyncio.to_thread(_sync_query, supabase, "jtbd", "id, name, job_statement, job_type", None, limit)
+                    jtbds = result.data
+            except Exception:
+                # jtbd_functions table may not exist, fall back
+                result = await asyncio.to_thread(_sync_query, supabase, "jtbd", "id, name, job_statement, job_type", None, limit)
+                jtbds = result.data
+        else:
+            # Get all JTBDs up to limit
+            result = await asyncio.to_thread(_sync_query, supabase, "jtbd", "id, name, job_statement, job_type", None, limit)
+            jtbds = result.data
+
+        return {
+            "jtbds": [
+                {
+                    "id": j.get("id"),
+                    "name": j.get("name") or (j.get("job_statement", "")[:60] + "..." if len(j.get("job_statement", "")) > 60 else j.get("job_statement")) or "Unknown",
+                    "job_type": j.get("job_type")
+                }
+                for j in jtbds[:limit]
+            ],
+            "count": len(jtbds)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching JTBDs: {e}")
+        return {"jtbds": [], "count": 0, "error": str(e)}
+
+
+# =============================================================================
+# GAP AND OPPORTUNITY ANALYSIS
+# =============================================================================
 
 async def get_gap_analysis(function_id: Optional[str] = None) -> Dict[str, Any]:
     """Analyze gaps in AI coverage across the ontology"""

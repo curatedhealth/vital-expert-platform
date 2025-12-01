@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import { agentSelectorService } from '../agent-selector-service';
-import { executeMode2, validateMode2Config } from '../mode2-automatic-agent-selection';
+import { executeMode2, validateMode2Config } from '../mode2-automatic-interactive';
 
 // ============================================================================
 // TEST SETUP

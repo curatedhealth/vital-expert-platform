@@ -26,9 +26,12 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 from prometheus_client import Counter, Histogram, generate_latest
 # Temporary stubs for middleware functions (middleware disabled for testing)
+# Default tenant UUID - this is the primary VITAL tenant
+DEFAULT_TENANT_ID = "c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244"
+
 async def get_tenant_id() -> str:
-    """Stub function - returns default tenant ID"""
-    return "default-tenant"
+    """Stub function - returns default tenant ID (valid UUID)"""
+    return DEFAULT_TENANT_ID
 
 async def set_tenant_context_in_db(tenant_id: str, client: Any):
     """Stub function - does nothing"""
@@ -109,12 +112,11 @@ from langgraph_workflows import (
     get_checkpoint_manager,
     get_observability
 )
-# Mode workflows for LangGraph execution
-from langgraph_workflows.mode1_interactive_manual import Mode1InteractiveManualWorkflow
-from langgraph_workflows.mode2_interactive_manual_workflow import Mode2InteractiveManualWorkflow
-from langgraph_workflows.mode2_interactive_automatic import Mode1InteractiveAutoWorkflow as Mode2InteractiveAutoWorkflow
-from langgraph_workflows.mode3_manual_chat_autonomous import Mode3ManualChatAutonomousWorkflow
-from langgraph_workflows.mode4_auto_chat_autonomous import Mode4AutoChatAutonomousWorkflow
+# Mode workflows for LangGraph execution (2x2 Matrix: Manual/Automatic × Interactive/Autonomous)
+from langgraph_workflows.mode1_manual_interactive import Mode1ManualInteractiveWorkflow
+from langgraph_workflows.mode2_automatic_interactive import Mode2AutomaticInteractiveWorkflow
+from langgraph_workflows.mode3_manual_autonomous import Mode3ManualAutonomousWorkflow
+from langgraph_workflows.mode4_automatic_autonomous import Mode4AutomaticAutonomousWorkflow
 # Ask Panel imports
 from api.dependencies import set_supabase_client
 from api.routes import panels as panel_routes
@@ -510,6 +512,26 @@ async def initialize_services_background():
         from services.panel_template_service import initialize_panel_template_service
         await initialize_panel_template_service(supabase_client)
         logger.info("✅ Panel template service initialized")
+
+        # Initialize GraphRAG selector with Supabase client - CRITICAL for agent selection
+        from services.graphrag_selector import initialize_graphrag_selector
+        initialize_graphrag_selector(supabase_client=supabase_client)
+        logger.info("✅ GraphRAG selector initialized with Supabase client")
+
+        # Initialize Neo4j client (REQUIRED for 20% graph search weight in hybrid selection)
+        # Environment variables: NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
+        neo4j_uri = os.getenv("NEO4J_URI")
+        neo4j_user = os.getenv("NEO4J_USER", "neo4j")
+        neo4j_password = os.getenv("NEO4J_PASSWORD")
+        if neo4j_uri and neo4j_password:
+            try:
+                from services.neo4j_client import initialize_neo4j_client
+                initialize_neo4j_client(neo4j_uri, neo4j_user, neo4j_password)
+                logger.info("✅ Neo4j client initialized for graph-based agent selection")
+            except Exception as neo4j_err:
+                logger.error("❌ Neo4j client initialization failed", error=str(neo4j_err))
+        else:
+            logger.warning("⚠️ Neo4j credentials not found - graph search will be disabled (set NEO4J_URI, NEO4J_PASSWORD)")
     except asyncio.TimeoutError:
         logger.error("❌ Supabase initialization timed out")
         supabase_client = None
@@ -1125,8 +1147,8 @@ async def execute_mode1_manual(
     try:
         logger.info("🚀 [Mode 1] Executing via LangGraph workflow (Manual agent selection)", agent_id=request.agent_id)
         
-        # Initialize LangGraph workflow - Mode1InteractiveManualWorkflow for Mode 1 (Multi-Turn Chat)
-        workflow = Mode1InteractiveManualWorkflow(
+        # Initialize LangGraph workflow - Mode1ManualInteractiveWorkflow for Mode 1 (Multi-Turn Chat)
+        workflow = Mode1ManualInteractiveWorkflow(
             supabase_client=supabase_client,
             rag_pipeline=rag_pipeline,
             agent_orchestrator=agent_orchestrator,
@@ -1195,7 +1217,7 @@ async def execute_mode1_manual(
         # Build metadata
         metadata: Dict[str, Any] = {
             "langgraph_execution": True,
-            "workflow": "Mode2InteractiveManualWorkflow",
+            "workflow": "Mode2AutomaticInteractiveWorkflow",
             "nodes_executed": result.get('nodes_executed', []),
             "reasoning_steps": reasoning_steps,
             "request": {
@@ -1252,10 +1274,12 @@ async def execute_mode2_automatic(
     try:
         logger.info("🚀 [Mode 2] Executing via LangGraph workflow (Automatic agent selection)")
         
-        # Initialize LangGraph workflow - Mode2InteractiveAutoWorkflow for Mode 2 (Automatic selection)
-        workflow = Mode2InteractiveAutoWorkflow(
+        # Initialize LangGraph workflow - Mode2AutomaticInteractiveWorkflow for Mode 2 (Automatic selection)
+        # CRITICAL: Mode 2 requires agent_selector_service for automatic agent selection
+        agent_selector_service = get_agent_selector_service(supabase_client)
+        workflow = Mode2AutomaticInteractiveWorkflow(
             supabase_client=supabase_client,
-            agent_selector_service=None,  # Will use get_agent_selector_service() internally
+            agent_selector_service=agent_selector_service,  # Explicit initialization with supabase_client
             rag_service=unified_rag_service,
             agent_orchestrator=agent_orchestrator,
             conversation_manager=None
@@ -1321,7 +1345,7 @@ async def execute_mode2_automatic(
         
         metadata: Dict[str, Any] = {
             "langgraph_execution": True,
-            "workflow": "Mode2InteractiveAutoWorkflow",
+            "workflow": "Mode2AutomaticInteractiveWorkflow",
             "nodes_executed": result.get('nodes_executed', []),
             "reasoning_steps": reasoning_steps,
             "request": {
@@ -1379,8 +1403,8 @@ async def execute_mode3_autonomous_manual(
     try:
         logger.info("🚀 [Mode 3] Executing via LangGraph workflow (Manual selection + Autonomous)")
         
-        # Initialize LangGraph workflow - Mode3ManualChatAutonomousWorkflow
-        workflow = Mode3ManualChatAutonomousWorkflow(
+        # Initialize LangGraph workflow - Mode3ManualAutonomousWorkflow
+        workflow = Mode3ManualAutonomousWorkflow(
             supabase_client=supabase_client,
             rag_pipeline=rag_pipeline,
             agent_orchestrator=agent_orchestrator,
@@ -1517,11 +1541,13 @@ async def execute_mode4_autonomous_automatic(
     try:
         logger.info("🚀 [Mode 4] Executing via LangGraph workflow (Automatic selection + Autonomous)")
         
-        # Initialize LangGraph workflow - Mode4AutoChatAutonomousWorkflow
-        workflow = Mode4AutoChatAutonomousWorkflow(
+        # Initialize LangGraph workflow - Mode4AutomaticAutonomousWorkflow
+        # CRITICAL: Mode 4 requires agent_selector for automatic agent selection
+        agent_selector = get_agent_selector_service(supabase_client)
+        workflow = Mode4AutomaticAutonomousWorkflow(
             supabase_client=supabase_client,
             rag_pipeline=rag_pipeline,
-            agent_selector=None,
+            agent_selector=agent_selector,
             agent_orchestrator=agent_orchestrator,
             sub_agent_spawner=sub_agent_spawner,
             panel_orchestrator=None,

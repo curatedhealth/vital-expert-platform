@@ -37,6 +37,15 @@ except ImportError:
     EVIDENCE_SCORING_AVAILABLE = False
     get_evidence_scoring_service = None
     EvidenceScoringService = None
+
+# SciBERT-based Evidence Detection (Phase 4)
+try:
+    from services.evidence_detector import get_evidence_detector, EvidenceDetector, EvidenceType, EvidenceQuality
+    EVIDENCE_DETECTOR_AVAILABLE = True
+except ImportError:
+    EVIDENCE_DETECTOR_AVAILABLE = False
+    get_evidence_detector = None
+    EvidenceDetector = None
 from core.config import get_settings
 
 logger = structlog.get_logger()
@@ -55,7 +64,8 @@ class UnifiedRAGService:
         self.knowledge_namespace = "KD-general"  # Default namespace (updated to KD-* convention)
         self.default_kd_namespaces = ["KD-general", "KD-best-practices"]  # Fallback namespaces
         self.neo4j_client: Optional[Neo4jClient] = None  # Neo4j client for graph search
-        
+        self.evidence_detector: Optional[EvidenceDetector] = None  # SciBERT evidence detector
+
         # Cache statistics
         self._cache_hits = 0
         self._cache_misses = 0
@@ -99,6 +109,17 @@ class UnifiedRAGService:
                 logger.warning("⚠️ PINECONE_API_KEY not set, using Supabase only")
                 self.pinecone = None
                 self.pinecone_index = None
+
+            # Initialize SciBERT Evidence Detector (Phase 4)
+            if EVIDENCE_DETECTOR_AVAILABLE:
+                try:
+                    self.evidence_detector = get_evidence_detector()
+                    logger.info("✅ SciBERT Evidence Detector initialized")
+                except Exception as e:
+                    logger.warning("⚠️ Evidence detector initialization failed (optional)", error=str(e))
+                    self.evidence_detector = None
+            else:
+                logger.info("ℹ️ Evidence detector not available (missing dependencies)")
 
             logger.info("✅ Unified RAG service initialized", caching_enabled=self.cache_manager is not None and self.cache_manager.enabled)
 
@@ -302,6 +323,59 @@ class UnifiedRAGService:
                 except Exception as e:
                     logger.warning("evidence_scoring_failed", error=str(e))
 
+            # Apply SciBERT Evidence Detection (Phase 4) - extract entities and citations
+            evidence_detection = None
+            if self.evidence_detector and result.get("context"):
+                try:
+                    # Detect evidence in the context
+                    detected_evidence = await self.evidence_detector.detect_evidence(
+                        text=result.get("context", ""),
+                        min_confidence=0.6,
+                        include_context=True
+                    )
+
+                    # Extract unique entities and citations
+                    all_entities = []
+                    all_citations = []
+                    for evidence in detected_evidence:
+                        all_entities.extend([{
+                            "text": e.text,
+                            "type": e.entity_type.value,
+                            "confidence": e.confidence
+                        } for e in evidence.entities])
+                        all_citations.extend([{
+                            "text": c.text,
+                            "pmid": c.pmid,
+                            "doi": c.doi,
+                            "url": c.url,
+                            "confidence": c.confidence
+                        } for c in evidence.citations])
+
+                    # Deduplicate entities by text
+                    seen_entities = set()
+                    unique_entities = []
+                    for e in all_entities:
+                        if e["text"].lower() not in seen_entities:
+                            seen_entities.add(e["text"].lower())
+                            unique_entities.append(e)
+
+                    evidence_detection = {
+                        "evidence_count": len(detected_evidence),
+                        "entities": unique_entities[:20],  # Top 20 entities
+                        "citations": all_citations[:10],   # Top 10 citations
+                        "evidence_types": list(set(e.evidence_type.value for e in detected_evidence)),
+                        "quality_levels": list(set(e.quality.value for e in detected_evidence)),
+                    }
+
+                    logger.debug(
+                        "evidence_detection_applied",
+                        evidence_count=len(detected_evidence),
+                        entity_count=len(unique_entities),
+                        citation_count=len(all_citations)
+                    )
+                except Exception as e:
+                    logger.warning("evidence_detection_failed", error=str(e))
+
             # Add metadata
             final_result = {
                 **result,
@@ -312,6 +386,7 @@ class UnifiedRAGService:
                     "cached": False,
                     "cacheHit": False,
                     "evidence_analytics": evidence_analytics,
+                    "evidence_detection": evidence_detection,
                 }
             }
 

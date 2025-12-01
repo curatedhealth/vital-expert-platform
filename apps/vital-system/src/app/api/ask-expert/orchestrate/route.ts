@@ -10,9 +10,9 @@
 
 import { NextRequest } from 'next/server';
 import { executeMode1 } from '@/features/chat/services/mode1-manual-interactive';
-import { executeMode2 } from '@/features/chat/services/mode2-automatic-agent-selection';
-import { executeMode3 } from '@/features/chat/services/mode3-autonomous-automatic';
-import { executeMode4 } from '@/features/chat/services/mode4-autonomous-manual';
+import { executeMode2 } from '@/features/chat/services/mode2-automatic-interactive';
+import { executeMode3 } from '@/features/chat/services/mode3-manual-autonomous';
+import { executeMode4 } from '@/features/chat/services/mode4-automatic-autonomous';
 import {
   streamLangGraphMode,
   executeLangGraphMode,

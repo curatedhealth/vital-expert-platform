@@ -20,22 +20,46 @@
 
 import { StateGraph, END, START, MemorySaver, Annotation } from '@langchain/langgraph';
 import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
-import { 
-  executeMode1, 
-  Mode1Config 
-} from './mode1-manual-interactive';
-import {
-  executeMode2,
-  Mode2Config
-} from './mode2-automatic-agent-selection';
-import {
-  executeMode3,
-  Mode3Config
-} from './mode3-autonomous-automatic';
-import {
-  executeMode4,
+import { executeMode1 } from './mode1-manual-interactive';
+import { executeMode2 } from './mode2-automatic-interactive';
+import { executeMode3 } from './mode3-manual-autonomous';
+import { executeMode4 } from './mode4-automatic-autonomous';
+import type {
+  Mode3Config,
   Mode4Config
-} from './mode4-autonomous-manual';
+} from './autonomous-types';
+
+// Mode 1 and Mode 2 config types (matching Python backend and autonomous-types.ts)
+export interface Mode1Config {
+  agentId: string;
+  message: string;
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  enableRAG?: boolean;
+  enableTools?: boolean;
+  requestedTools?: string[];
+  selectedRagDomains?: string[];
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  userId?: string;
+  tenantId?: string;
+  sessionId?: string;
+}
+
+export interface Mode2Config {
+  message: string;
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  enableRAG?: boolean;
+  enableTools?: boolean;
+  requestedTools?: string[];
+  selectedRagDomains?: string[];
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  userId?: string;
+  tenantId?: string;
+  sessionId?: string;
+}
 
 // ============================================================================
 // STATE DEFINITIONS
@@ -50,15 +74,17 @@ export const LangGraphModeState = Annotation.Root({
   agentId: Annotation<string | undefined>(),
   message: Annotation<string>(),
   conversationHistory: Annotation<Array<{ role: 'user' | 'assistant'; content: string }>>({
-    reducer: (current, update) => update ?? current,
+    value: (current, update) => update ?? current,
     default: () => []
   }),
-  
+
   // Configuration
   enableRAG: Annotation<boolean>({
+    value: (current, update) => update ?? current,
     default: () => true
   }),
   enableTools: Annotation<boolean>({
+    value: (current, update) => update ?? current,
     default: () => false
   }),
   requestedTools: Annotation<string[] | undefined>(),
@@ -69,36 +95,39 @@ export const LangGraphModeState = Annotation.Root({
   userId: Annotation<string | undefined>(),
   tenantId: Annotation<string | undefined>(),
   sessionId: Annotation<string | undefined>(),
-  
+
   // Execution state
   currentStep: Annotation<string>({
+    value: (current, update) => update ?? current,
     default: () => 'initializing'
   }),
   error: Annotation<string | undefined>(),
-  
+
   // Response accumulation
   streamedChunks: Annotation<string[]>({
-    reducer: (current, update) => [...current, ...update],
+    value: (current, update) => [...current, ...update],
     default: () => []
   }),
   finalResponse: Annotation<string | undefined>(),
   metadata: Annotation<Record<string, any>>({
-    reducer: (current, update) => ({ ...current, ...update }),
+    value: (current, update) => ({ ...current, ...update }),
     default: () => ({})
   }),
-  
+
   // Workflow tracking
   startTime: Annotation<number>({
+    value: (current, update) => update ?? current,
     default: () => Date.now()
   }),
   endTime: Annotation<number | undefined>(),
   totalTokens: Annotation<number>({
+    value: (current, update) => update ?? current,
     default: () => 0
   }),
-  
+
   // Memory and checkpoints
   messages: Annotation<BaseMessage[]>({
-    reducer: (current, update) => [...current, ...update],
+    value: (current, update) => [...current, ...update],
     default: () => []
   }),
 });

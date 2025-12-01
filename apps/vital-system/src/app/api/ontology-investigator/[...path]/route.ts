@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:4000';
+// Call AI Engine directly instead of going through API Gateway
+// AI Engine serves ontology data at /v1/ontology-investigator/
+const AI_ENGINE_URL = process.env.AI_ENGINE_URL || 'http://localhost:8000';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  const path = params.path.join('/');
+  const { path: pathArray } = await params;
+  const path = pathArray.join('/');
   const searchParams = request.nextUrl.searchParams.toString();
-  const url = `${API_GATEWAY_URL}/api/ontology-investigator/${path}${searchParams ? `?${searchParams}` : ''}`;
+  const url = `${AI_ENGINE_URL}/v1/ontology-investigator/${path}${searchParams ? `?${searchParams}` : ''}`;
+
+  console.log(`[API] Ontology Investigator GET -> ${url}`);
 
   try {
     const response = await fetch(url, {
@@ -17,14 +22,25 @@ export async function GET(
         'Content-Type': 'application/json',
         'x-tenant-id': request.headers.get('x-tenant-id') || '',
       },
+      // Add timeout to prevent hanging requests
+      signal: AbortSignal.timeout(30000),
     });
+
+    if (!response.ok) {
+      console.error(`[API] Ontology Investigator GET /${path} status: ${response.status}`);
+      const errorText = await response.text();
+      return NextResponse.json(
+        { error: `AI Engine error: ${response.status}`, details: errorText },
+        { status: response.status }
+      );
+    }
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error(`[API] Ontology Investigator GET /${path} error:`, error);
     return NextResponse.json(
-      { error: 'Failed to fetch from ontology investigator' },
+      { error: 'Failed to fetch from ontology investigator', details: String(error) },
       { status: 500 }
     );
   }
@@ -32,11 +48,14 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  const path = params.path.join('/');
+  const { path: pathArray } = await params;
+  const path = pathArray.join('/');
   const searchParams = request.nextUrl.searchParams.toString();
-  const url = `${API_GATEWAY_URL}/api/ontology-investigator/${path}${searchParams ? `?${searchParams}` : ''}`;
+  const url = `${AI_ENGINE_URL}/v1/ontology-investigator/${path}${searchParams ? `?${searchParams}` : ''}`;
+
+  console.log(`[API] Ontology Investigator POST -> ${url}`);
 
   try {
     const body = await request.json().catch(() => ({}));
@@ -48,14 +67,25 @@ export async function POST(
         'x-tenant-id': request.headers.get('x-tenant-id') || '',
       },
       body: JSON.stringify(body),
+      // Add timeout to prevent hanging requests
+      signal: AbortSignal.timeout(30000),
     });
+
+    if (!response.ok) {
+      console.error(`[API] Ontology Investigator POST /${path} status: ${response.status}`);
+      const errorText = await response.text();
+      return NextResponse.json(
+        { error: `AI Engine error: ${response.status}`, details: errorText },
+        { status: response.status }
+      );
+    }
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error(`[API] Ontology Investigator POST /${path} error:`, error);
     return NextResponse.json(
-      { error: 'Failed to send to ontology investigator' },
+      { error: 'Failed to send to ontology investigator', details: String(error) },
       { status: 500 }
     );
   }

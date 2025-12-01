@@ -1,12 +1,20 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 import { MainNavbar } from '@/components/navbar/MainNavbar'
 
+// Routes that should NOT show the global AppSidebar (they have their own navigation)
+const FULL_WIDTH_ROUTES = ['/value']
+
 export function UnifiedDashboardLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
+  const pathname = usePathname()
+
+  // Check if current route should be full-width (no global sidebar)
+  const isFullWidthRoute = FULL_WIDTH_ROUTES.some(route => pathname?.startsWith(route))
 
   useEffect(() => {
     setMounted(true)
@@ -23,6 +31,22 @@ export function UnifiedDashboardLayout({ children }: { children: React.ReactNode
     )
   }
 
+  // Full-width layout for routes like /value that have their own sidebar
+  if (isFullWidthRoute) {
+    return (
+      <div className="flex min-h-screen w-full flex-col">
+        {/* Main Navbar - Keep consistent */}
+        <MainNavbar />
+
+        {/* Full-width Content Area (no global sidebar) */}
+        <main className="flex flex-1 flex-col">
+          {children}
+        </main>
+      </div>
+    )
+  }
+
+  // Standard layout with global sidebar
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full flex-col">

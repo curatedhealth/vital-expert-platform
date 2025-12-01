@@ -266,37 +266,73 @@ export const GET = withAgentAuth(async (
     let agents: any[] | null = null;
     let error: any = null;
     
-    // Strategy 1: Try with status filter and ordering (most specific)
+    // Strategy 1: For superadmin, use pagination to bypass 1000 row limit
     try {
-      let query = supabase
-        .from('agents')
-        .select('*');
-      
-      // Apply tenant filtering
       if (isVitalSystemTenant || isDevBypass) {
-        query = query.in('status', ['active', 'testing']);
+        // Superadmin sees ALL agents - use pagination to bypass PostgREST 1000 row limit
         logger.debug('agents_crud_get_platform_view', { operationId, tenantKey });
-      } else if (profile?.tenant_id) {
-        // Try allowed_tenants first
-        try {
-          query = query.contains('allowed_tenants', [profile.tenant_id]);
-        } catch (e) {
-          // Fallback to tenant_id
-          query = query.eq('tenant_id', profile.tenant_id);
+
+        // Fetch all agents in batches
+        let allAgents: any[] = [];
+        let page = 0;
+        const pageSize = 1000;
+        let hasMore = true;
+
+        while (hasMore) {
+          const start = page * pageSize;
+          const end = start + pageSize - 1;
+
+          const { data: batchData, error: batchError } = await supabase
+            .from('agents')
+            .select('*')
+            .order('name', { ascending: true })
+            .range(start, end);
+
+          if (batchError) {
+            logger.warn('agents_crud_batch_error', { operationId, page, error: batchError });
+            error = batchError;
+            break;
+          }
+
+          if (batchData && batchData.length > 0) {
+            allAgents = [...allAgents, ...batchData];
+            hasMore = batchData.length === pageSize;
+            page++;
+          } else {
+            hasMore = false;
+          }
         }
-        query = query.in('status', ['active', 'testing']);
-        logger.debug('agents_crud_get_tenant_filtered', { operationId, tenantId: profile.tenant_id });
+
+        agents = allAgents;
+        logger.debug('agents_crud_paginated_fetch_complete', { operationId, totalAgents: agents.length, pages: page });
       } else {
-        // No tenant - return empty
-        query = query.eq('tenant_id', '00000000-0000-0000-0000-000000000000');
+        // For non-superadmin, use normal query
+        let query = supabase
+          .from('agents')
+          .select('*');
+
+        if (profile?.tenant_id) {
+          // Try allowed_tenants first
+          try {
+            query = query.contains('allowed_tenants', [profile.tenant_id]);
+          } catch (e) {
+            // Fallback to tenant_id
+            query = query.eq('tenant_id', profile.tenant_id);
+          }
+          query = query.in('status', ['active', 'testing']);
+          logger.debug('agents_crud_get_tenant_filtered', { operationId, tenantId: profile.tenant_id });
+        } else {
+          // No tenant - return empty
+          query = query.eq('tenant_id', '00000000-0000-0000-0000-000000000000');
+        }
+
+        query = query.order('name', { ascending: true });
+
+        const result = await query;
+        agents = result.data;
+        error = result.error;
       }
-      
-      query = query.order('name', { ascending: true });
-      
-      const result = await query;
-      agents = result.data;
-      error = result.error;
-      
+
       if (!error && agents) {
         logger.debug('agents_crud_query_success_with_filters', { operationId, count: agents.length });
       }

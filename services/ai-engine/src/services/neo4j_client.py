@@ -300,10 +300,16 @@ class Neo4jClient:
         """
         start_time = time.time()
 
+        # NOTE: Neo4j 5+ does not support parameters in variable-length path patterns
+        # We must construct the query with a literal depth value
+        # Validate max_depth to prevent injection (must be 1-5)
+        safe_depth = max(1, min(5, int(max_depth)))
+
         async with self.driver.session(database="neo4j") as session:
-            result = await session.run("""
+            # Build query with literal depth value (Neo4j 5+ requirement)
+            query = f"""
                 // Find seed agents matching query
-                MATCH (seed:Agent {tenant_id: $tenant_id})
+                MATCH (seed:Agent {{tenant_id: $tenant_id}})
                 WHERE seed.embedding IS NOT NULL
                   AND seed.is_active = true
 
@@ -314,8 +320,8 @@ class Neo4jClient:
                 ORDER BY similarity DESC
                 LIMIT 5
 
-                // Traverse relationships
-                MATCH path = (seed)-[r:RELATES_TO|CO_OCCURS_WITH|COMPLEMENTS*1..$max_depth]-(related:Agent)
+                // Traverse relationships (depth is literal due to Neo4j 5+ limitation)
+                MATCH path = (seed)-[r:RELATES_TO|CO_OCCURS_WITH|COMPLEMENTS*1..{safe_depth}]-(related:Agent)
                 WHERE related.tenant_id = $tenant_id
                   AND related.is_active = true
 
@@ -356,10 +362,11 @@ class Neo4jClient:
                     seed_count
                 ORDER BY graph_score DESC
                 LIMIT $limit
-            """,
+            """
+            result = await session.run(
+                query,
                 tenant_id=tenant_id,
                 query_embedding=query_embedding,
-                max_depth=max_depth,
                 limit=limit
             )
 

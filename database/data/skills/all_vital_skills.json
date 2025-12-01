@@ -1,0 +1,162 @@
+[
+  {
+    "name": "Algorithmic Art",
+    "slug": "algorithmic-art",
+    "description": "Skill for Algorithmic Art",
+    "category": "General Utilities",
+    "folder_path": "algorithmic-art",
+    "implementation_type": "workflow",
+    "complexity_level": 9,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "Anthropic Brand Styling",
+    "slug": "brand-guidelines",
+    "description": "## Overview",
+    "category": "General Utilities",
+    "folder_path": "brand-guidelines",
+    "implementation_type": "prompt",
+    "complexity_level": 7,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "Canvas Design",
+    "slug": "canvas-design",
+    "description": "Skill for Canvas Design",
+    "category": "General Utilities",
+    "folder_path": "canvas-design",
+    "implementation_type": "workflow",
+    "complexity_level": 7,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "DOCX creation, editing, and analysis",
+    "slug": "docx",
+    "description": "## Overview",
+    "category": "Document Processing",
+    "folder_path": "document-skills/docx",
+    "implementation_type": "workflow",
+    "complexity_level": 9,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "PDF Processing Guide",
+    "slug": "pdf",
+    "description": "## Overview",
+    "category": "Document Processing",
+    "folder_path": "document-skills/pdf",
+    "implementation_type": "tool",
+    "complexity_level": 9,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "PPTX creation, editing, and analysis",
+    "slug": "pptx",
+    "description": "## Overview",
+    "category": "Document Processing",
+    "folder_path": "document-skills/pptx",
+    "implementation_type": "workflow",
+    "complexity_level": 9,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "Requirements for Outputs",
+    "slug": "xlsx",
+    "description": "## All Excel files",
+    "category": "Document Processing",
+    "folder_path": "document-skills/xlsx",
+    "implementation_type": "tool",
+    "complexity_level": 9,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "Frontend Design",
+    "slug": "frontend-design",
+    "description": "Skill for Frontend Design",
+    "category": "General Utilities",
+    "folder_path": "frontend-design",
+    "implementation_type": "prompt",
+    "complexity_level": 9,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "Internal Comms",
+    "slug": "internal-comms",
+    "description": "Skill for Internal Comms",
+    "category": "General Utilities",
+    "folder_path": "internal-comms",
+    "implementation_type": "prompt",
+    "complexity_level": 5,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "MCP Server Development Guide",
+    "slug": "mcp-builder",
+    "description": "## Overview",
+    "category": "General Utilities",
+    "folder_path": "mcp-builder",
+    "implementation_type": "workflow",
+    "complexity_level": 9,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "Skill Creator",
+    "slug": "skill-creator",
+    "description": "This skill provides guidance for creating effective skills.",
+    "category": "General Utilities",
+    "folder_path": "skill-creator",
+    "implementation_type": "workflow",
+    "complexity_level": 9,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "Slack GIF Creator",
+    "slug": "slack-gif-creator",
+    "description": "A toolkit providing utilities and knowledge for creating animated GIFs optimized for Slack.",
+    "category": "General Utilities",
+    "folder_path": "slack-gif-creator",
+    "implementation_type": "tool",
+    "complexity_level": 9,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "Insert instructions below",
+    "slug": "template-skill",
+    "description": "Skill for Insert instructions below",
+    "category": "General Utilities",
+    "folder_path": "template-skill",
+    "implementation_type": "prompt",
+    "complexity_level": 3,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "Theme Factory Skill",
+    "slug": "theme-factory",
+    "description": "This skill provides a curated collection of professional font and color themes themes, each with carefully selected color palettes and font pairings. Once a theme is chosen, it can be applied to any artifact.",
+    "category": "General Utilities",
+    "folder_path": "theme-factory",
+    "implementation_type": "prompt",
+    "complexity_level": 7,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "Web Artifacts Builder",
+    "slug": "web-artifacts-builder",
+    "description": "To build powerful frontend claude.ai artifacts, follow these steps:",
+    "category": "General Utilities",
+    "folder_path": "web-artifacts-builder",
+    "implementation_type": "workflow",
+    "complexity_level": 9,
+    "source": "vital-command-center"
+  },
+  {
+    "name": "Web Application Testing",
+    "slug": "webapp-testing",
+    "description": "To test local web applications, write native Python Playwright scripts.",
+    "category": "General Utilities",
+    "folder_path": "webapp-testing",
+    "implementation_type": "tool",
+    "complexity_level": 9,
+    "source": "vital-command-center"
+  }
+]

@@ -227,9 +227,12 @@ const convertDbAgentToStoreFormat = (dbAgent: DbAgent | any): Agent => {
     created_at: dbAgent.created_at || new Date().toISOString(),
     updated_at: dbAgent.updated_at || new Date().toISOString(),
     recentFeedback: [],
-    // Preserve metadata for any additional fields
-    metadata: dbAgent.metadata || metadata,
-  };
+    // Preserve metadata for any additional fields including slug
+    metadata: {
+      ...(dbAgent.metadata || metadata),
+      slug: (dbAgent as any).slug || metadata.slug || null, // Preserve slug for agent matching
+    },
+  } as any; // Cast to any to allow slug property
 
   console.log(`🔄 Converted agent "${converted.display_name}" (${converted.name}): tier=${converted.tier}, status=${converted.status}, avatar=${converted.avatar}`);
   return converted;

@@ -844,6 +844,14 @@ app.add_middleware(
 app.include_router(panel_routes.router, prefix="", tags=["ask-panel"])
 logger.info("✅ Ask Panel routes registered")
 
+# Include Ask Panel Enhanced (Streaming with Agent Communication)
+try:
+    from api.routes import ask_panel_streaming
+    app.include_router(ask_panel_streaming.router, prefix="", tags=["ask-panel-enhanced"])
+    logger.info("✅ Ask Panel Enhanced streaming routes registered")
+except Exception as e:
+    logger.warning(f"⚠️ Could not register Ask Panel Enhanced routes: {e}")
+
 # Include Ask Expert routes (Phase 4 - 4-Mode System)
 app.include_router(ask_expert.router, prefix="/v1/ai", tags=["ask-expert"])
 logger.info("✅ Ask Expert routes registered (4-Mode System)")

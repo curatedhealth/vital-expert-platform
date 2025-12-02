@@ -512,6 +512,7 @@ class Mode4AutomaticAutonomousWorkflow(BaseWorkflow):
         graph.add_node("plan_with_tot", self.plan_with_tot_node)  # FROM MODE 3
         graph.add_node("request_plan_approval", self.request_plan_approval_node)  # FROM MODE 3
         graph.add_node("execute_experts_parallel_autonomous", self.execute_experts_parallel_autonomous_node)  # Existing
+        graph.add_node("build_consensus", self.build_consensus_with_debate_node)  # Build consensus from parallel expert responses
         graph.add_node("execute_with_react", self.execute_with_react_node)  # FROM MODE 3
         graph.add_node("validate_with_constitutional", self.validate_with_constitutional_node)  # FROM MODE 3
         graph.add_node("request_decision_approval", self.request_decision_approval_node)  # FROM MODE 3
@@ -537,7 +538,8 @@ class Mode4AutomaticAutonomousWorkflow(BaseWorkflow):
         )
         
         graph.add_edge("request_plan_approval", "execute_experts_parallel_autonomous")
-        graph.add_edge("execute_experts_parallel_autonomous", "execute_with_react")
+        graph.add_edge("execute_experts_parallel_autonomous", "build_consensus")  # Build consensus from expert responses
+        graph.add_edge("build_consensus", "execute_with_react")  # Then execute with ReAct pattern
         graph.add_edge("execute_with_react", "validate_with_constitutional")
         
         # HITL Checkpoint 4: Decision approval (conditional)
@@ -708,7 +710,7 @@ class Mode4AutomaticAutonomousWorkflow(BaseWorkflow):
                 tenant_id=tenant_id,
                 mode="mode4",
                 max_agents=max_agents,
-                min_confidence=0.55  # Slightly lower threshold for multi-expert panel
+                min_confidence=0.005  # RRF scores are typically 0.01-0.03, so use low threshold
             )
 
             if selected_agents and len(selected_agents) > 0:
@@ -720,7 +722,8 @@ class Mode4AutomaticAutonomousWorkflow(BaseWorkflow):
 
                 for agent in selected_agents:
                     agent_id = agent.get('id', agent.get('agent_id', ''))
-                    agent_name = agent.get('name', agent.get('display_name', 'Expert'))
+                    # Prioritize agent_name over name (GraphRAG selector uses agent_name)
+                    agent_name = agent.get('agent_name', agent.get('name', agent.get('display_name', 'Expert')))
                     selected_agent_ids.append(agent_id)
                     agent_names.append(agent_name)
                     avg_confidence += agent.get('fused_score', 0.7)
@@ -1148,9 +1151,10 @@ class Mode4AutomaticAutonomousWorkflow(BaseWorkflow):
         """
         logger.info(f"Executing expert autonomously: {expert_id}")
 
-        # 1. RAG retrieval (domain-specific)
+        # 1. RAG retrieval (domain-specific) with web search fallback
         context = ""
         rag_documents = []
+        retrieval_source = 'rag'
 
         try:
             # Use true_hybrid search (Neo4j + Pinecone + Supabase)
@@ -1163,9 +1167,70 @@ class Mode4AutomaticAutonomousWorkflow(BaseWorkflow):
                 similarity_threshold=0.7
             )
             rag_documents = rag_results.get('sources', []) or rag_results.get('documents', [])
+            
+            # FALLBACK: If RAG returns no documents, use web search
+            if not rag_documents:
+                logger.info(f"⚠️ RAG returned no documents for {expert_id}, falling back to web search...")
+                try:
+                    from tools.web_tools import WebSearchTool
+                    from urllib.parse import urlparse
+                    
+                    web_search_tool = WebSearchTool()
+                    web_results = await web_search_tool.search(
+                        query=query,
+                        max_results=10
+                    )
+                    
+                    if web_results.get('results'):
+                        rag_documents = [
+                            {
+                                "id": f"web_{idx}",
+                                "content": res.get('content', ''),
+                                "metadata": {
+                                    "title": res.get('title', ''),
+                                    "url": res.get('url', ''),
+                                    "source": "web_search",
+                                    "published_date": res.get('published_date'),
+                                    "domain": urlparse(res.get('url', '')).netloc if res.get('url') else None,
+                                }
+                            } for idx, res in enumerate(web_results['results'])
+                        ]
+                        retrieval_source = 'web_search'
+                        logger.info(f"✅ Web search fallback successful for {expert_id}, retrieved {len(rag_documents)} documents.")
+                    else:
+                        logger.warning(f"⚠️ Web search fallback also returned no documents for {expert_id}.")
+                except Exception as web_error:
+                    logger.error(f"❌ Web search fallback failed for {expert_id}: {web_error}")
+            
             context = self._create_context_summary(rag_documents)
         except Exception as e:
             logger.error(f"RAG failed for {expert_id}", error=str(e))
+            # Emergency fallback to web search
+            try:
+                from tools.web_tools import WebSearchTool
+                from urllib.parse import urlparse
+                
+                logger.info(f"🆘 Emergency web search fallback for {expert_id}...")
+                web_search_tool = WebSearchTool()
+                web_results = await web_search_tool.search(query=query, max_results=5)
+                
+                if web_results.get('results'):
+                    rag_documents = [
+                        {
+                            "id": f"web_{idx}",
+                            "content": res.get('content', ''),
+                            "metadata": {
+                                "title": res.get('title', ''),
+                                "url": res.get('url', ''),
+                                "source": "web_search_emergency",
+                            }
+                        } for idx, res in enumerate(web_results['results'])
+                    ]
+                    retrieval_source = 'web_search_emergency'
+                    context = self._create_context_summary(rag_documents)
+                    logger.info(f"✅ Emergency web search successful for {expert_id}")
+            except Exception as emergency_error:
+                logger.error(f"❌ Emergency web search also failed for {expert_id}: {emergency_error}")
 
         # 2. Tool/code execution using ToolRegistry
         tool_results = []
@@ -1250,22 +1315,35 @@ Use this format in your response:
             artifacts = []
             citations = agent_response_obj.citations or []
 
-            # Spawn sub-agents (always enabled in Mode 4)
+            # Spawn sub-agents (optional in Mode 4 - can be slow)
             sub_agents_spawned = []
-            specialist_id = await self.sub_agent_spawner.spawn_specialist(
-                parent_agent_id=expert_id,
-                task=f"Autonomous analysis for: {query[:100]}",
-                specialty="Multi-expert autonomous reasoning",
-                context={'query': query, 'tenant_id': tenant_id}
-            )
-            sub_agents_spawned.append(specialist_id)
+            try:
+                specialist_id = await self.sub_agent_spawner.spawn_specialist(
+                    parent_agent_id=expert_id,
+                    task=f"Autonomous analysis for: {query[:100]}",
+                    specialty="Multi-expert autonomous reasoning",
+                    context={'query': query, 'tenant_id': tenant_id}
+                )
+                sub_agents_spawned.append(specialist_id)
 
-            specialist_result = await self.sub_agent_spawner.execute_sub_agent(
-                sub_agent_id=specialist_id
-            )
+                specialist_result = await self.sub_agent_spawner.execute_sub_agent(
+                    sub_agent_id=specialist_id
+                )
 
-            if specialist_result:
-                response_text += f"\n\n**Specialist Analysis:**\n{specialist_result.get('response', '')}"
+                # Handle SubAgentResult object or dict
+                if specialist_result:
+                    if hasattr(specialist_result, 'response'):
+                        # It's a SubAgentResult object
+                        specialist_response = specialist_result.response
+                    elif isinstance(specialist_result, dict):
+                        specialist_response = specialist_result.get('response', '')
+                    else:
+                        specialist_response = str(specialist_result)
+                    
+                    if specialist_response:
+                        response_text += f"\n\n**Specialist Analysis:**\n{specialist_response}"
+            except Exception as sub_agent_error:
+                logger.warning(f"Sub-agent spawning failed for {expert_id} (non-critical): {sub_agent_error}")
 
             return {
                 'expert_id': expert_id,
@@ -1282,8 +1360,23 @@ Use this format in your response:
             }
 
         except Exception as e:
-            logger.error(f"Expert execution failed for {expert_id}", error=str(e))
-            raise
+            import traceback
+            logger.error(f"Expert execution failed for {expert_id}", error=str(e), traceback=traceback.format_exc())
+            # Return a fallback response instead of raising to allow other experts to succeed
+            return {
+                'expert_id': expert_id,
+                'response': f'Expert {expert_id} encountered an error: {str(e)}',
+                'confidence': 0.3,
+                'reasoning_trace': reasoning_steps,
+                'sub_agents_spawned': [],
+                'artifacts': [],
+                'citations': [],
+                'rag_documents': rag_documents if 'rag_documents' in dir() else [],
+                'tools_used': [],
+                'code_executed': [],
+                'tokens_used': 0,
+                'error': str(e)
+            }
 
     @trace_node("mode4_build_consensus_with_debate")
     async def build_consensus_with_debate_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
@@ -1607,19 +1700,27 @@ Use this format in your response:
             all_agents_used.extend(resp.get('sub_agents_spawned', []))
             all_reasoning_traces.extend(resp.get('reasoning_trace', []))
 
-        total_tokens = sum(resp.get('tokens_used', 0) for resp in agent_responses)
+        total_tokens = sum(resp.get('tokens_used', 0) or 0 for resp in agent_responses)
 
+        # Collect all RAG documents from all experts for sources
+        all_rag_documents = []
+        for resp in agent_responses:
+            all_rag_documents.extend(resp.get('rag_documents', []) or [])
+        
         return {
             **state,
             'response': state.get('synthesized_response', ''),
+            'final_response': state.get('synthesized_response', ''),  # Alias for main.py
             'confidence': state.get('synthesis_confidence', 0.0),
             'agents_used': all_agents_used,
             'citations': all_citations,
+            'sources': all_rag_documents,  # For consistency with Mode 2
             'artifacts': all_artifacts,
             'reasoning_traces': all_reasoning_traces,
-            'sources_used': sum(len(resp.get('rag_documents', [])) for resp in agent_responses),
-            'tools_used': sum(len(resp.get('tools_used', [])) for resp in agent_responses),
-            'code_executed': sum(len(resp.get('code_executed', [])) for resp in agent_responses),
+            'reasoning_steps': state.get('reasoning_steps', []),  # For main.py
+            'sources_used': sum(len(resp.get('rag_documents', []) or []) for resp in agent_responses),
+            'tools_used': sum(len(resp.get('tools_used', []) or []) for resp in agent_responses),
+            'code_executed': sum(len(resp.get('code_executed', []) or []) for resp in agent_responses),
             'tokens_used': total_tokens,
             'expert_responses': agent_responses,  # Individual perspectives
             'agreement_score': state.get('agreement_score', 0.0),

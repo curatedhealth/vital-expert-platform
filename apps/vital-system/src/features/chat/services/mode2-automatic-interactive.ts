@@ -34,6 +34,8 @@ export interface Mode2Config {
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
   enableRAG?: boolean;
   enableTools?: boolean;
+  requestedTools?: string[];        // Tools requested by the orchestrator
+  selectedRagDomains?: string[];    // RAG domains selected by the orchestrator
   model?: string;
   temperature?: number;
   maxTokens?: number;
@@ -537,15 +539,17 @@ export class Mode2AutomaticAgentSelectionHandler {
  * Execute Mode 2 with automatic agent selection
  */
 // Port Architecture: Next.js (3000) -> API Gateway (4000) -> AI Engine (8000)
+// NOTE: In Next.js App Router server context, NEXT_PUBLIC_* vars are NOT available
+// Using 127.0.0.1 explicitly to avoid IPv6 resolution issues with "localhost"
 const API_GATEWAY_URL =
   process.env.API_GATEWAY_URL ||
   process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
-  'http://localhost:4000'; // Default to API Gateway port
+  'http://127.0.0.1:4000'; // Use IPv4 explicitly to avoid IPv6 resolution issues
 
 const DEFAULT_TENANT_ID =
   process.env.API_GATEWAY_TENANT_ID ||
   process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID ||
-  '00000000-0000-0000-0000-000000000001';
+  'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244'; // VITAL System tenant
 
 interface Mode2AutomaticApiResponse {
   agent_id: string;
@@ -601,6 +605,9 @@ export async function* executeMode2(config: Mode2Config): AsyncGenerator<Mode2St
   const requestId = `mode2_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const startTime = Date.now();
 
+  // Log the URL being used for debugging
+  console.log(`[Mode2] Request ${requestId}: Using API_GATEWAY_URL=${API_GATEWAY_URL}`);
+
   try {
     const payload = {
       message: config.message,
@@ -616,7 +623,12 @@ export async function* executeMode2(config: Mode2Config): AsyncGenerator<Mode2St
       conversation_history: config.conversationHistory ?? [],
     };
 
+    // Create abort controller with 30-second timeout (Mode 2 can take ~6-10s)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     // Call via API Gateway to comply with Golden Rule (Python services via gateway)
+    console.log(`[Mode2] Request ${requestId}: Fetching from ${API_GATEWAY_URL}/api/mode2/automatic`);
     const response = await fetch(`${API_GATEWAY_URL}/api/mode2/automatic`, {
       method: 'POST',
       headers: {
@@ -624,7 +636,12 @@ export async function* executeMode2(config: Mode2Config): AsyncGenerator<Mode2St
         'x-tenant-id': config.tenantId || DEFAULT_TENANT_ID,
       },
       body: JSON.stringify(payload),
+      signal: controller.signal,
+      cache: 'no-store', // Required for Next.js App Router server-side dynamic requests
     });
+
+    clearTimeout(timeoutId);
+    console.log(`[Mode2] Request ${requestId}: Response status=${response.status}`);
 
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
@@ -670,34 +687,42 @@ export async function* executeMode2(config: Mode2Config): AsyncGenerator<Mode2St
       }
     }
 
-    // Emit RAG sources if available
+    // Emit RAG sources if available - wrap as proper Mode2StreamChunk
     const sources = mapCitationsToSources(result.citations || []);
     if (sources.length > 0) {
-      yield buildMetadataChunk({
-        event: 'rag_sources',
-        total: sources.length,
-        sources,
-        strategy: 'python_orchestrator',
-        cacheHit: false,
-        domains: config.selectedRagDomains ?? [],
-      });
+      yield {
+        type: 'chunk' as const,
+        content: buildMetadataChunk({
+          event: 'rag_sources',
+          total: sources.length,
+          sources,
+          strategy: 'python_orchestrator',
+          cacheHit: false,
+          domains: config.selectedRagDomains ?? [],
+        }),
+        timestamp: new Date().toISOString(),
+      };
     }
 
-    // Emit final metadata
-    yield buildMetadataChunk({
-      event: 'final',
-      confidence: result.confidence,
-      rag: {
-        totalSources: sources.length,
-        strategy: 'python_orchestrator',
-        domains: config.selectedRagDomains ?? [],
-        cacheHit: false,
-        retrievalTimeMs: result.processing_time_ms,
-      },
-      agent_selection: result.agent_selection,
-      citations: result.citations ?? [],
-      reasoning: result.reasoning ?? [],  // ✅ Add reasoning from API response
-    });
+    // Emit final metadata - wrap as proper Mode2StreamChunk
+    yield {
+      type: 'chunk' as const,
+      content: buildMetadataChunk({
+        event: 'final',
+        confidence: result.confidence,
+        rag: {
+          totalSources: sources.length,
+          strategy: 'python_orchestrator',
+          domains: config.selectedRagDomains ?? [],
+          cacheHit: false,
+          retrievalTimeMs: result.processing_time_ms,
+        },
+        agent_selection: result.agent_selection,
+        citations: result.citations ?? [],
+        reasoning: result.reasoning ?? [],
+      }),
+      timestamp: new Date().toISOString(),
+    };
 
     // Emit response content - stream word-by-word
     const words = result.content.split(' ');

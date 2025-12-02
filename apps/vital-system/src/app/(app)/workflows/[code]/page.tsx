@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { WorkflowFlowVisualizer } from '@/components/workflow-flow';
+import { WorkflowFlowVisualizer } from '@/components/workflow-flow/index';
 import { UseCaseDetailSkeleton } from '@/components/loading-skeletons';
 
 interface UseCase {

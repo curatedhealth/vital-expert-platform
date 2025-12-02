@@ -7,7 +7,8 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { MainNavbar } from '@/components/navbar/MainNavbar'
 
 // Routes that should NOT show the global AppSidebar (they have their own navigation)
-const FULL_WIDTH_ROUTES = ['/value']
+// Note: /value now uses the standard sidebar for consistency
+const FULL_WIDTH_ROUTES: string[] = []
 
 export function UnifiedDashboardLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)

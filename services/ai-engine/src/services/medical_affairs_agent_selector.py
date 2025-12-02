@@ -182,15 +182,17 @@ class MedicalAffairsAgentSelector:
         """Analyze query using LLM"""
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4o",  # gpt-4o supports JSON mode reliably
                 messages=[
                     {
                         "role": "system",
-                        "content": """Analyze this Medical Affairs query and extract:
+                        "content": """Analyze this Medical Affairs query and extract JSON:
 - intent: primary intent (regulatory, clinical, evidence, education, etc.)
 - domains: medical domains (regulatory, clinical operations, HEOR, publications, etc.)
 - complexity: low/medium/high
-- keywords: key terms"""}
+- keywords: key terms
+
+Return valid JSON only."""}
                     ,
                     {"role": "user", "content": query}
                 ],

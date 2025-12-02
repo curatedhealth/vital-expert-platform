@@ -205,7 +205,10 @@ export function createCsrfCookieOptions(): {
   maxAge: number;
 } {
   return {
-    httpOnly: true,
+    // httpOnly must be FALSE for double-submit cookie pattern
+    // The client needs to read the token from the cookie and send it in the header
+    // Security is maintained by SameSite: strict and the double-submit validation
+    httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',

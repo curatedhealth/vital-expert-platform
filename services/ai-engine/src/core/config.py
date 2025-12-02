@@ -4,9 +4,25 @@ Configuration management for VITAL Path AI Services
 
 import os
 from typing import Optional
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+
+def _get_supabase_url() -> Optional[str]:
+    """Get Supabase URL from environment, supporting both SUPABASE_URL and NEW_SUPABASE_URL"""
+    return os.getenv("SUPABASE_URL") or os.getenv("NEW_SUPABASE_URL")
+
+
+def _get_supabase_anon_key() -> Optional[str]:
+    """Get Supabase anon key from environment"""
+    return os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEW_SUPABASE_ANON_KEY")
+
+
+def _get_supabase_service_key() -> Optional[str]:
+    """Get Supabase service role key from environment, supporting both naming conventions"""
+    return os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("NEW_SUPABASE_SERVICE_KEY")
+
 
 class Settings(BaseSettings):
     """Application settings with environment variable support"""
@@ -17,9 +33,10 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False, env="DEBUG")
 
     # Supabase Configuration (optional to allow graceful startup)
-    supabase_url: Optional[str] = Field(default=None, env="SUPABASE_URL")
-    supabase_anon_key: Optional[str] = Field(default=None, env="SUPABASE_ANON_KEY")
-    supabase_service_role_key: Optional[str] = Field(default=None, env="SUPABASE_SERVICE_ROLE_KEY")
+    # Support both SUPABASE_* and NEW_SUPABASE_* environment variables
+    supabase_url: Optional[str] = Field(default_factory=_get_supabase_url)
+    supabase_anon_key: Optional[str] = Field(default_factory=_get_supabase_anon_key)
+    supabase_service_role_key: Optional[str] = Field(default_factory=_get_supabase_service_key)
 
     # Database Configuration (optional to allow graceful startup)
     database_url: Optional[str] = Field(default=None, env="DATABASE_URL")
@@ -47,7 +64,7 @@ class Settings(BaseSettings):
     tavily_api_key: Optional[str] = Field(default=None, env="TAVILY_API_KEY")
 
     # Vector Database Configuration
-    vector_dimension: int = Field(default=1536, env="VECTOR_DIMENSION")
+    vector_dimension: int = Field(default=3072, env="VECTOR_DIMENSION")  # text-embedding-3-large
     similarity_threshold: float = Field(default=0.7, env="SIMILARITY_THRESHOLD")
     max_search_results: int = Field(default=10, env="MAX_SEARCH_RESULTS")
     

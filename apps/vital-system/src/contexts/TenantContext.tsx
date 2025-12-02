@@ -11,8 +11,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-// Platform Tenant ID (default/fallback)
-const PLATFORM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+// Platform Tenant ID (default/fallback) - VITAL System tenant
+const PLATFORM_TENANT_ID = 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
 // Tenant type (simplified from shared types)
 type Tenant = {

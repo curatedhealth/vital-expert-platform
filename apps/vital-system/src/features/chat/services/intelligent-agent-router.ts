@@ -16,7 +16,7 @@ const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.A
 const DEFAULT_TENANT_ID =
   process.env.API_GATEWAY_TENANT_ID ||
   process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID ||
-  '00000000-0000-0000-0000-000000000001';
+  'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244'; // VITAL System tenant
 
 export interface Agent {
   id: string;

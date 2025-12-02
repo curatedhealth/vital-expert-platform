@@ -417,61 +417,34 @@ export function SidebarAskExpert() {
       <SidebarMenuItem key={session.sessionId}>
         <div className="group/session relative">
           <SidebarMenuButton
-            data-active={isActive}
+            isActive={isActive}
             onClick={() => {
               setActiveSessionId(session.sessionId);
-              // Dispatch event to notify page to load this conversation
               window.dispatchEvent(new CustomEvent('ask-expert:open-chat', {
                 detail: { sessionId: session.sessionId, conversationId: session.sessionId }
               }));
             }}
             className={cn(
-              "group relative w-full rounded-lg transition-all duration-200",
-              isPinned && "bg-gradient-to-r from-yellow-50/80 to-yellow-50/40 dark:from-yellow-900/20 dark:to-yellow-900/10 border-l-2 border-l-yellow-500 shadow-sm",
-              !isPinned && !isActive && "hover:bg-gradient-to-r hover:from-accent/50 hover:to-accent/30 hover:shadow-sm hover:-translate-y-0.5",
-              isActive && "bg-gradient-to-r from-primary/15 to-primary/5 border-l-2 border-l-primary shadow-md",
-              isKeyboardSelected && !isActive && "ring-2 ring-primary/30 bg-primary/10"
+              isKeyboardSelected && !isActive && "ring-1 ring-primary/50"
             )}
           >
-            {/* Subtle gradient overlay */}
-            <div className={cn(
-              "absolute inset-0 rounded-lg transition-all duration-300 pointer-events-none",
-              isActive ? "bg-gradient-to-br from-primary/5 to-transparent" : "bg-gradient-to-br from-accent/0 to-accent/0 group-hover:from-accent/5 group-hover:to-transparent"
-            )} />
-
-            <div className="relative flex w-full items-center gap-3">
-              <div className={cn(
-                "p-1.5 rounded-md transition-all duration-200",
-                isActive ? "bg-primary/20" : "bg-muted/50 group-hover:bg-accent/30"
-              )}>
-                <UserCircle2Icon className={cn(
-                  "h-3.5 w-3.5 shrink-0 transition-all duration-200",
-                  isActive ? "text-primary" : "group-hover:scale-110"
-                )} />
-              </div>
-              <div className="flex flex-1 flex-col items-start gap-0.5 min-w-0">
-                <div className="flex items-center gap-1.5 w-full">
-                  {isPinned && <Pin className="h-3 w-3 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />}
-                  <span className={cn(
-                    "text-sm truncate transition-colors duration-200",
-                    isActive ? "font-semibold text-primary" : "font-medium group-hover:text-foreground"
-                  )}>
-                    {session.title || session.agent?.name || "Consultation"}
-                  </span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {formatTimestamp(session.lastMessage)}
+            <UserCircle2Icon className="h-4 w-4" />
+            <div className="flex flex-1 flex-col items-start min-w-0">
+              <div className="flex items-center gap-1 w-full">
+                {isPinned && <Pin className="h-3 w-3 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />}
+                <span className="text-sm truncate">
+                  {session.title || session.agent?.name || "Consultation"}
                 </span>
               </div>
-              {session.messageCount > 0 && (
-                <Badge variant="outline" className={cn(
-                  "ml-auto flex-shrink-0 transition-all duration-200",
-                  isActive && "bg-primary/10 border-primary/30 text-primary"
-                )}>
-                  {session.messageCount}
-                </Badge>
-              )}
+              <span className="text-xs text-muted-foreground">
+                {formatTimestamp(session.lastMessage)}
+              </span>
             </div>
+            {session.messageCount > 0 && (
+              <Badge variant="outline" className="ml-auto text-xs">
+                {session.messageCount}
+              </Badge>
+            )}
           </SidebarMenuButton>
 
           {/* Quick Actions Dropdown */}
@@ -481,7 +454,7 @@ export function SidebarAskExpert() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  className="h-6 w-6 p-0"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreVertical className="h-3 w-3" />
@@ -489,7 +462,6 @@ export function SidebarAskExpert() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
                 <DropdownMenuItem
-                  className="text-xs"
                   onClick={(e) => {
                     e.stopPropagation()
                     togglePin(session.sessionId)
@@ -497,29 +469,28 @@ export function SidebarAskExpert() {
                 >
                   {isPinned ? (
                     <>
-                      <PinOff className="h-3 w-3 mr-2" />
+                      <PinOff className="h-4 w-4 mr-2" />
                       Unpin
                     </>
                   ) : (
                     <>
-                      <Pin className="h-3 w-3 mr-2" />
+                      <Pin className="h-4 w-4 mr-2" />
                       Pin
                     </>
                   )}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-xs"
                   onClick={(e) => {
                     e.stopPropagation()
                     toggleArchive(session.sessionId)
                   }}
                 >
-                  <Archive className="h-3 w-3 mr-2" />
+                  <Archive className="h-4 w-4 mr-2" />
                   Archive
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-xs text-red-600 dark:text-red-400">
-                  <Trash2Icon className="h-3 w-3 mr-2" />
+                <DropdownMenuItem className="text-red-600 dark:text-red-400">
+                  <Trash2Icon className="h-4 w-4 mr-2" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -535,35 +506,27 @@ export function SidebarAskExpert() {
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="group flex w-full items-center justify-between hover:bg-gradient-to-r hover:from-accent/50 hover:to-accent/30 rounded-lg px-3 py-2 transition-all duration-200">
-              <span className="text-xs font-bold uppercase tracking-wider text-foreground/80 group-hover:text-foreground">Quick Actions</span>
-              <ChevronDown className="ml-auto h-3.5 w-3.5 transition-all duration-200 group-data-[state=open]/collapsible:rotate-180 group-hover:text-primary" />
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              Quick Actions
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
           <CollapsibleContent>
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-1.5">
+              <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    className="group relative justify-between rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:shadow-sm hover:-translate-y-0.5"
                     onClick={handleNewChat}
                     disabled={isCreatingChat}
                   >
-                    {/* Subtle gradient overlay on hover */}
-                    <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:to-transparent transition-all duration-300 pointer-events-none" />
-
-                    <div className="relative flex items-center gap-2.5">
-                      <div className="p-1.5 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-all duration-200">
-                        {isCreatingChat ? (
-                          <Loader2Icon className="h-3.5 w-3.5 animate-spin text-primary" />
-                        ) : (
-                          <PlusIcon className="h-3.5 w-3.5 text-primary transition-transform duration-200 group-hover:scale-110 group-hover:rotate-90" />
-                        )}
-                      </div>
-                      <span className="font-medium">New Consultation</span>
-                    </div>
+                    {isCreatingChat ? (
+                      <Loader2Icon className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <PlusIcon className="h-4 w-4" />
+                    )}
+                    <span>New Consultation</span>
                     {selectedAgents.length > 0 && (
-                      <Badge variant="outline" className="text-xs ml-auto bg-primary/10 border-primary/20">
+                      <Badge variant="outline" className="ml-auto text-xs">
                         {selectedAgents.length}
                       </Badge>
                     )}
@@ -571,35 +534,22 @@ export function SidebarAskExpert() {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    className="group relative justify-between rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-secondary/10 hover:to-secondary/5 hover:shadow-sm hover:-translate-y-0.5"
                     onClick={handleRefresh}
                     disabled={isRefreshing}
                   >
-                    <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-secondary/0 to-secondary/0 group-hover:from-secondary/5 group-hover:to-transparent transition-all duration-300 pointer-events-none" />
-
-                    <div className="relative flex items-center gap-2.5">
-                      <div className="p-1.5 rounded-md bg-secondary/10 group-hover:bg-secondary/20 transition-all duration-200">
-                        {isRefreshing ? (
-                          <Loader2Icon className="h-3.5 w-3.5 animate-spin text-secondary-foreground" />
-                        ) : (
-                          <RefreshCwIcon className="h-3.5 w-3.5 text-secondary-foreground transition-transform duration-200 group-hover:scale-110 group-hover:rotate-180" />
-                        )}
-                      </div>
-                      <span className="font-medium">Refresh</span>
-                    </div>
+                    {isRefreshing ? (
+                      <Loader2Icon className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCwIcon className="h-4 w-4" />
+                    )}
+                    <span>Refresh</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
-                  <SidebarMenuButton asChild className="group relative rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-accent/50 hover:to-accent/30 hover:shadow-sm hover:-translate-y-0.5">
+                  <SidebarMenuButton asChild>
                     <Link href="/agents">
-                      <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-accent/0 to-accent/0 group-hover:from-accent/10 group-hover:to-transparent transition-all duration-300 pointer-events-none" />
-
-                      <div className="relative flex items-center gap-2.5">
-                        <div className="p-1.5 rounded-md bg-accent/20 group-hover:bg-accent/30 transition-all duration-200">
-                          <SparklesIcon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:scale-110" />
-                        </div>
-                        <span className="font-medium">Browse Agent Store</span>
-                      </div>
+                      <SparklesIcon className="h-4 w-4" />
+                      <span>Browse Agent Store</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -612,30 +562,23 @@ export function SidebarAskExpert() {
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="group flex w-full items-center justify-between hover:bg-gradient-to-r hover:from-accent/50 hover:to-accent/30 rounded-lg px-3 py-2 transition-all duration-200">
-              <span className="text-xs font-bold uppercase tracking-wider text-foreground/80 group-hover:text-foreground">Conversations</span>
-              <ChevronDown className="ml-auto h-3.5 w-3.5 transition-all duration-200 group-data-[state=open]/collapsible:rotate-180 group-hover:text-primary" />
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              Conversations
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
           <CollapsibleContent>
-            <SidebarGroupContent className="space-y-3">
-              {/* Conversation Search with premium styling */}
-              <div className="relative px-2">
-                <div className="relative group">
-                  {/* Gradient border effect on focus */}
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/20 to-secondary/20 opacity-0 group-focus-within:opacity-100 blur-sm transition-opacity duration-300 pointer-events-none" />
-
-                  <div className="relative">
-                    <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors duration-200" />
-                    <Input
-                      ref={conversationSearchRef}
-                      value={conversationSearch}
-                      onChange={(e) => setConversationSearch(e.target.value)}
-                      placeholder="Search conversations… (⌘K)"
-                      className="h-9 pl-9 text-xs rounded-lg bg-muted/50 border-border/40 focus-visible:ring-primary/20 transition-all duration-200"
-                    />
-                  </div>
-                </div>
+            <SidebarGroupContent>
+              {/* Conversation Search */}
+              <div className="relative px-2 mb-2">
+                <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  ref={conversationSearchRef}
+                  value={conversationSearch}
+                  onChange={(e) => setConversationSearch(e.target.value)}
+                  placeholder="Search conversations… (⌘K)"
+                  className="h-8 pl-8 text-sm"
+                />
               </div>
 
               {sessionsLoading && (
@@ -657,105 +600,78 @@ export function SidebarAskExpert() {
               )}
 
               {!sessionsLoading && sessions.length > 0 && (
-                <ScrollArea className="max-h-[400px]">
-                  <div className="space-y-4">
+                <ScrollArea className="max-h-[300px]">
+                  <SidebarMenu>
                     {/* Pinned Conversations */}
                     {groupedSessions.pinned.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-yellow-50/50 to-yellow-50/30 dark:from-yellow-900/10 dark:to-yellow-900/5">
-                          <div className="p-1 rounded-md bg-yellow-500/10">
-                            <Pin className="h-3 w-3 text-yellow-600 dark:text-yellow-400" />
-                          </div>
-                          <span className="text-xs font-bold text-yellow-900 dark:text-yellow-300 uppercase tracking-wider">
-                            Pinned
-                          </span>
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
+                          Pinned
                         </div>
-                        <SidebarMenu>
-                          {groupedSessions.pinned.map((session, idx) => renderSessionItem(session, idx))}
-                        </SidebarMenu>
-                      </div>
+                        {groupedSessions.pinned.map((session, idx) => renderSessionItem(session, idx))}
+                      </>
                     )}
 
                     {/* Today */}
                     {groupedSessions.today.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5">
-                          <div className="p-1 rounded-md bg-primary/10">
-                            <Clock className="h-3 w-3 text-primary" />
-                          </div>
-                          <span className="text-xs font-bold text-primary uppercase tracking-wider">
-                            Today
-                          </span>
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
+                          Today
                         </div>
-                        <SidebarMenu>
-                          {groupedSessions.today.map((session, idx) =>
-                            renderSessionItem(session, groupedSessions.pinned.length + idx)
-                          )}
-                        </SidebarMenu>
-                      </div>
+                        {groupedSessions.today.map((session, idx) =>
+                          renderSessionItem(session, groupedSessions.pinned.length + idx)
+                        )}
+                      </>
                     )}
 
                     {/* Yesterday */}
                     {groupedSessions.yesterday.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-muted/50 to-muted/30">
-                          <div className="p-1 rounded-md bg-muted/50">
-                            <Calendar className="h-3 w-3 text-muted-foreground" />
-                          </div>
-                          <span className="text-xs font-bold text-foreground/70 uppercase tracking-wider">
-                            Yesterday
-                          </span>
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
+                          Yesterday
                         </div>
-                        <SidebarMenu>
-                          {groupedSessions.yesterday.map((session, idx) =>
-                            renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + idx)
-                          )}
-                        </SidebarMenu>
-                      </div>
+                        {groupedSessions.yesterday.map((session, idx) =>
+                          renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + idx)
+                        )}
+                      </>
                     )}
 
                     {/* Last 7 Days */}
                     {groupedSessions.last7Days.length > 0 && (
-                      <div className="space-y-1">
-                        <span className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
                           Last 7 Days
-                        </span>
-                        <SidebarMenu>
-                          {groupedSessions.last7Days.map((session, idx) =>
-                            renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + groupedSessions.yesterday.length + idx)
-                          )}
-                        </SidebarMenu>
-                      </div>
+                        </div>
+                        {groupedSessions.last7Days.map((session, idx) =>
+                          renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + groupedSessions.yesterday.length + idx)
+                        )}
+                      </>
                     )}
 
                     {/* Last 30 Days */}
                     {groupedSessions.last30Days.length > 0 && (
-                      <div className="space-y-1">
-                        <span className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
                           Last 30 Days
-                        </span>
-                        <SidebarMenu>
-                          {groupedSessions.last30Days.map((session, idx) =>
-                            renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + groupedSessions.yesterday.length + groupedSessions.last7Days.length + idx)
-                          )}
-                        </SidebarMenu>
-                      </div>
+                        </div>
+                        {groupedSessions.last30Days.map((session, idx) =>
+                          renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + groupedSessions.yesterday.length + groupedSessions.last7Days.length + idx)
+                        )}
+                      </>
                     )}
 
                     {/* Older */}
                     {groupedSessions.older.length > 0 && (
-                      <div className="space-y-1">
-                        <span className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
                           Older
-                        </span>
-                        <SidebarMenu>
-                          {groupedSessions.older.map((session, idx) =>
-                            renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + groupedSessions.yesterday.length + groupedSessions.last7Days.length + groupedSessions.last30Days.length + idx)
-                          )}
-                        </SidebarMenu>
-                      </div>
+                        </div>
+                        {groupedSessions.older.map((session, idx) =>
+                          renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + groupedSessions.yesterday.length + groupedSessions.last7Days.length + groupedSessions.last30Days.length + idx)
+                        )}
+                      </>
                     )}
-                  </div>
+                  </SidebarMenu>
                 </ScrollArea>
               )}
             </SidebarGroupContent>
@@ -766,154 +682,112 @@ export function SidebarAskExpert() {
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="group flex w-full items-center justify-between hover:bg-gradient-to-r hover:from-accent/50 hover:to-accent/30 rounded-lg px-3 py-2 transition-all duration-200">
-              <span className="text-xs font-bold uppercase tracking-wider text-foreground/80 group-hover:text-foreground">My Agents</span>
-              <ChevronDown className="ml-auto h-3.5 w-3.5 transition-all duration-200 group-data-[state=open]/collapsible:rotate-180 group-hover:text-primary" />
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              My Agents
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
           <CollapsibleContent>
-            <SidebarGroupContent className="space-y-3">
-              <div className="space-y-2">
-                <div className="relative px-2">
-                  <div className="relative group">
-                    {/* Gradient border effect on focus */}
-                    <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/20 to-secondary/20 opacity-0 group-focus-within:opacity-100 blur-sm transition-opacity duration-300 pointer-events-none" />
-
-                    <div className="relative">
-                      <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors duration-200" />
-                      <Input
-                        value={searchQuery}
-                        onChange={(event) => setSearchQuery(event.target.value)}
-                        placeholder="Search agents…"
-                        className="pl-9 rounded-lg bg-muted/50 border-border/40 focus-visible:ring-primary/20 transition-all duration-200"
-                      />
-                    </div>
-                  </div>
-                </div>
+            <SidebarGroupContent>
+              {/* Agent Search */}
+              <div className="relative px-2 mb-2">
+                <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search agents…"
+                  className="h-8 pl-8 text-sm"
+                />
               </div>
 
-          <ScrollArea className="max-h-[320px] pr-2">
-            <SidebarMenu className="space-y-2">
-              {agentsLoading && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton disabled>
-                    <Loader2Icon className="h-4 w-4 animate-spin" />
-                    <span>Loading agents…</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
+              <ScrollArea className="max-h-[280px]">
+                <SidebarMenu>
+                  {agentsLoading && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton disabled>
+                        <Loader2Icon className="h-4 w-4 animate-spin" />
+                        <span>Loading agents…</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
 
-              {!agentsLoading && filteredAgents.length === 0 && agents.length === 0 && (
-                <div className="p-4 space-y-3">
-                  <div className="flex flex-col items-center text-center space-y-2">
-                    <SparklesIcon className="h-8 w-8 text-muted-foreground" />
-                    <div className="space-y-1">
+                  {!agentsLoading && filteredAgents.length === 0 && agents.length === 0 && (
+                    <div className="p-3 text-center">
+                      <SparklesIcon className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
                       <p className="text-sm font-medium">No agents yet</p>
-                      <p className="text-xs text-muted-foreground">
-                        Add agents from the Agent Store to get started
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Add agents from the Agent Store
                       </p>
+                      <Link href="/agents">
+                        <Button size="sm" variant="outline">
+                          <SparklesIcon className="h-4 w-4 mr-1" />
+                          Browse Agent Store
+                        </Button>
+                      </Link>
                     </div>
-                    <Link href="/agents">
-                      <Button size="sm" className="mt-2">
-                        <SparklesIcon className="h-3 w-3 mr-1" />
-                        Browse Agent Store
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              )}
+                  )}
 
-              {!agentsLoading && filteredAgents.length === 0 && agents.length > 0 && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton disabled>
-                    <SearchIcon className="h-4 w-4" />
-                    <span>No agents match your search</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
+                  {!agentsLoading && filteredAgents.length === 0 && agents.length > 0 && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton disabled>
+                        <SearchIcon className="h-4 w-4" />
+                        <span>No agents match your search</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
 
-              {Object.entries(agentsByTier)
-                .sort(([a], [b]) => Number(b) - Number(a))
-                .map(([tier, tierAgents]) => (
-                  <div key={tier} className="space-y-1">
-                    <span className="pl-2 text-xs font-semibold text-muted-foreground">
-                      Tier {tier}
-                    </span>
-                    {tierAgents.map((agent) => {
-                      const isSelected = selectedAgents.includes(agent.id)
-                      return (
-                        <SidebarMenuItem key={agent.id}>
-                          <AgentPreviewCard
-                            agent={agent}
-                            isSelected={isSelected}
-                            onSelect={() => {
-                              console.log('🔍 [Agent Click] Agent clicked:', agent.id, agent.displayName);
-                              const nextSelection = isSelected
-                                ? selectedAgents.filter((id) => id !== agent.id)
-                                : [...selectedAgents, agent.id]
-                              console.log('🔍 [Agent Click] New selection:', nextSelection);
-                              setSelectedAgents(nextSelection)
-                            }}
-                            stats={{
-                              totalConversations: Math.floor(Math.random() * 50) + 10,
-                              avgResponseTime: `${(Math.random() * 2 + 0.5).toFixed(1)}s`,
-                              successRate: Math.floor(Math.random() * 15) + 85,
-                            }}
-                          >
-                            <SidebarMenuButton
-                              data-active={isSelected}
-                              onClick={() => {
-                                console.log('🔍 [Agent Click] Agent clicked:', agent.id, agent.displayName);
-                                const nextSelection = isSelected
-                                  ? selectedAgents.filter((id) => id !== agent.id)
-                                  : [...selectedAgents, agent.id]
-                                console.log('🔍 [Agent Click] New selection:', nextSelection);
-                                setSelectedAgents(nextSelection)
-                              }}
-                              className={cn(
-                                'items-center transition-all p-2 rounded-lg',
-                                agent.isUserAdded && !isSelected && 'bg-green-50/50 border-l-2 border-l-green-500',
-                                isSelected && 'bg-vital-primary-100 border-l-4 border-l-vital-primary-600 shadow-sm'
-                              )}
-                            >
-                              {/* Avatar, Name, and Action Button in single row */}
-                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                {/* Avatar */}
-                                <div className="flex-shrink-0">
+                  {Object.entries(agentsByTier)
+                    .sort(([a], [b]) => Number(b) - Number(a))
+                    .map(([tier, tierAgents]) => (
+                      <div key={tier}>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
+                          Tier {tier}
+                        </div>
+                        {tierAgents.map((agent) => {
+                          const isSelected = selectedAgents.includes(agent.id)
+                          return (
+                            <SidebarMenuItem key={agent.id}>
+                              <AgentPreviewCard
+                                agent={agent}
+                                isSelected={isSelected}
+                                onSelect={() => {
+                                  const nextSelection = isSelected
+                                    ? selectedAgents.filter((id) => id !== agent.id)
+                                    : [...selectedAgents, agent.id]
+                                  setSelectedAgents(nextSelection)
+                                }}
+                                stats={{
+                                  totalConversations: Math.floor(Math.random() * 50) + 10,
+                                  avgResponseTime: `${(Math.random() * 2 + 0.5).toFixed(1)}s`,
+                                  successRate: Math.floor(Math.random() * 15) + 85,
+                                }}
+                              >
+                                <SidebarMenuButton
+                                  isActive={isSelected}
+                                  onClick={() => {
+                                    const nextSelection = isSelected
+                                      ? selectedAgents.filter((id) => id !== agent.id)
+                                      : [...selectedAgents, agent.id]
+                                    setSelectedAgents(nextSelection)
+                                  }}
+                                >
                                   <AgentAvatar
                                     agent={agent}
                                     size="sm"
-                                    className={cn(
-                                      'w-7 h-7 rounded-lg border-2 transition-all',
-                                      isSelected
-                                        ? 'border-vital-primary-500 shadow-sm'
-                                        : 'border-gray-200'
-                                    )}
+                                    className="w-6 h-6 rounded-md"
                                   />
-                                </div>
-
-                                {/* Name with Check Icon */}
-                                <div className="flex-1 min-w-0 flex items-center gap-1.5">
-                                  {isSelected && (
-                                    <CheckIcon className="h-3 w-3 text-vital-primary-600 flex-shrink-0" />
-                                  )}
-                                  <span className={cn(
-                                    'text-xs font-medium leading-tight break-words',
-                                    isSelected && 'text-vital-primary-900 font-semibold'
-                                  )}>
+                                  <span className="flex-1 text-sm truncate">
                                     {cleanDisplayName(agent.displayName)}
                                   </span>
-                                </div>
-
-                                {/* Action Button */}
-                                <div className="flex-shrink-0">
+                                  {isSelected && (
+                                    <CheckIcon className="h-4 w-4 text-primary flex-shrink-0" />
+                                  )}
                                   {!agent.isUserAdded ? (
                                     <div
                                       role="button"
                                       tabIndex={0}
-                                      className="inline-flex items-center justify-center h-5 w-5 p-0 rounded-md hover:bg-gray-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-vital-primary-500 focus:ring-offset-1"
+                                      className="h-6 w-6 p-0 inline-flex items-center justify-center rounded-md hover:bg-accent cursor-pointer"
                                       onClick={(e) => {
-                                        console.log('🔍 [Button Click] Add button clicked for agent:', agent.id);
                                         e.stopPropagation()
                                         addAgentToUserList(agent.id)
                                       }}
@@ -926,13 +800,13 @@ export function SidebarAskExpert() {
                                       }}
                                       title="Add to chat list"
                                     >
-                                      <PlusIcon className="h-3 w-3" />
+                                      <PlusIcon className="h-4 w-4" />
                                     </div>
                                   ) : (
                                     <div
                                       role="button"
                                       tabIndex={0}
-                                      className="inline-flex items-center justify-center h-5 w-5 p-0 rounded-md hover:bg-red-50 text-red-500 hover:text-red-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                                      className="h-6 w-6 p-0 inline-flex items-center justify-center rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 hover:text-red-700 cursor-pointer"
                                       onClick={(e) => {
                                         e.stopPropagation()
                                         removeAgentFromUserList(agent.id)
@@ -946,20 +820,18 @@ export function SidebarAskExpert() {
                                       }}
                                       title="Remove from chat list"
                                     >
-                                      <Trash2Icon className="h-3 w-3" />
+                                      <Trash2Icon className="h-4 w-4" />
                                     </div>
                                   )}
-                                </div>
-                              </div>
-                            </SidebarMenuButton>
-                          </AgentPreviewCard>
-                        </SidebarMenuItem>
-                      )
-                    })}
-                  </div>
-                ))}
-            </SidebarMenu>
-          </ScrollArea>
+                                </SidebarMenuButton>
+                              </AgentPreviewCard>
+                            </SidebarMenuItem>
+                          )
+                        })}
+                      </div>
+                    ))}
+                </SidebarMenu>
+              </ScrollArea>
 
               {isMobile && (
                 <Button variant="outline" size="sm" onClick={() => router.push("/agents")}>

@@ -1,6 +1,11 @@
 /**
  * Shared types for persona components
+ * Updated to support MECE persona framework
  */
+
+// MECE Archetype types
+export type PersonaArchetype = 'AUTOMATOR' | 'ORCHESTRATOR' | 'LEARNER' | 'SKEPTIC';
+export type ServiceLayer = 'L1_expert' | 'L2_panel' | 'L3_workflow' | 'L4_solution';
 
 export interface Persona {
   id: string;
@@ -11,12 +16,9 @@ export interface Persona {
   one_liner?: string;
   archetype?: string;
   persona_type?: string;
-  persona_number?: number;
-  section?: string;
-  segment?: string;
-  organization_type?: string;
-  typical_organization_size?: string;
   seniority_level?: string;
+  
+  // Org structure
   department_id?: string;
   department_slug?: string;
   department_name?: string;
@@ -26,45 +28,61 @@ export interface Persona {
   role_id?: string;
   role_slug?: string;
   role_name?: string;
-  // Joined org structure data
-  org_roles?: { id: string; name: string; role_code?: string } | null;
-  org_departments?: { id: string; name: string; department_code?: string } | null;
-  org_functions?: { id: string; name: string; function_code?: string } | null;
-  years_of_experience?: number;
-  years_in_function?: number;
-  years_in_industry?: number;
-  years_in_current_role?: number;
+  
+  // Demographics
+  age_range?: string;
+  years_of_experience?: string | number;
   education_level?: string;
-  budget_authority?: string;
-  key_responsibilities?: string[];
-  technology_adoption?: string;
-  risk_tolerance?: string;
-  decision_making_style?: string;
-  learning_style?: string;
-  work_style?: string;
-  work_style_preference?: string;
-  work_arrangement?: string;
-  location_type?: string;
   geographic_scope?: string;
-  team_size?: string;
-  team_size_typical?: number;
-  direct_reports?: number;
-  reporting_to?: string;
-  span_of_control?: string;
-  salary_min_usd?: number;
-  salary_median_usd?: number;
-  salary_max_usd?: number;
-  metadata?: Record<string, any>;
-  tags?: string[];
+  
+  // MECE Archetype attributes
+  ai_readiness_score?: number;
+  work_complexity_score?: number;
+  derived_archetype?: PersonaArchetype;
+  preferred_service_layer?: ServiceLayer;
+  
+  // Work mix
+  project_work_ratio?: number;
+  bau_work_ratio?: number;
+  work_dominance?: string;
+  
+  // OKR ownership
+  owned_okr_count?: number;
+  contributed_okr_count?: number;
+  
+  // Goals & Challenges (JSONB arrays)
+  goals?: string[];
+  challenges?: string[];
+  motivations?: string[];
+  frustrations?: string[];
+  
+  // Professional context
+  daily_activities?: string[];
+  tools_used?: string[];
+  skills?: string[];
+  competencies?: string[];
+  success_metrics?: string[];
+  
+  // Pharma-specific
+  gxp_requirements?: string[];
+  regulatory_context?: string[];
+  therapeutic_areas?: string[];
+  
+  // Quality
+  data_quality_score?: number;
+  
+  // Metadata
   is_active?: boolean;
   tenant_id?: string;
   created_at?: string;
   updated_at?: string;
-  // Counts from junction tables
-  pain_points_count?: number;
+  
+  // Counts
   jtbds_count?: number;
   goals_count?: number;
   challenges_count?: number;
+  motivations_count?: number;
+  frustrations_count?: number;
 }
 
 export interface PersonaStats {
@@ -76,13 +94,70 @@ export interface PersonaStats {
   byDepartment: Record<string, number>;
   byFunction: Record<string, number>;
   bySeniority: Record<string, number>;
+  // MECE stats
+  byArchetype?: Record<string, number>;
+  byServiceLayer?: Record<string, number>;
+  avgAiReadiness?: number;
+  avgWorkComplexity?: number;
 }
 
-export interface PersonaFilters {
+export interface PersonaFiltersType {
   searchQuery: string;
   selectedRole: string;
   selectedDepartment: string;
   selectedFunction: string;
   selectedSeniority: string;
+  selectedArchetype?: string;
+  selectedServiceLayer?: string;
 }
+
+// Backward compatibility alias
+export type PersonaFilters = PersonaFiltersType;
+
+// Archetype descriptions for UI
+export const ARCHETYPE_INFO: Record<PersonaArchetype, { label: string; description: string; color: string; bgColor: string }> = {
+  AUTOMATOR: {
+    label: 'Automator',
+    description: 'High AI readiness + Low complexity: Efficiency-focused, automation champions',
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-50 border-blue-200',
+  },
+  ORCHESTRATOR: {
+    label: 'Orchestrator', 
+    description: 'High AI readiness + High complexity: Strategic leaders, AI power users',
+    color: 'text-purple-700',
+    bgColor: 'bg-purple-50 border-purple-200',
+  },
+  LEARNER: {
+    label: 'Learner',
+    description: 'Low AI readiness + Low complexity: Building skills, needs guidance',
+    color: 'text-green-700',
+    bgColor: 'bg-green-50 border-green-200',
+  },
+  SKEPTIC: {
+    label: 'Skeptic',
+    description: 'Low AI readiness + High complexity: Proof-driven, values multiple perspectives',
+    color: 'text-orange-700',
+    bgColor: 'bg-orange-50 border-orange-200',
+  },
+};
+
+export const SERVICE_LAYER_INFO: Record<ServiceLayer, { label: string; description: string }> = {
+  L1_expert: {
+    label: 'L1 Expert',
+    description: 'Quick expert answers with optional human review',
+  },
+  L2_panel: {
+    label: 'L2 Panel',
+    description: 'Multi-expert panel for diverse perspectives',
+  },
+  L3_workflow: {
+    label: 'L3 Workflow',
+    description: 'Guided workflow with automation and HITL checkpoints',
+  },
+  L4_solution: {
+    label: 'L4 Solution',
+    description: 'Full end-to-end solution with orchestration',
+  },
+};
 

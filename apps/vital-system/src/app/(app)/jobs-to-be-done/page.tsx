@@ -6,28 +6,46 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { PageHeader } from '@/components/page-header';
 import {
   Search,
   Target,
   CheckCircle2,
   TrendingUp,
-  Users,
   Zap,
-  AlertCircle
+  AlertCircle,
+  Layers,
+  BarChart3,
+  Shield,
+  Clock,
 } from 'lucide-react';
 
 interface JTBD {
   id: string;
+  code?: string;
   job_statement: string;
   description?: string;
   category?: string;
-  persona?: string;
-  context?: string;
-  success_criteria?: string[];
-  obstacles?: string[];
+  functional_area?: string;
+  job_type?: string;
+  job_category?: string;
+  complexity?: string;
+  frequency?: string;
   priority?: 'high' | 'medium' | 'low';
-  status?: 'active' | 'planned' | 'completed';
+  status?: 'active' | 'planned' | 'completed' | 'draft';
+  // ODI scores
+  importance_score?: number;
+  satisfaction_score?: number;
+  opportunity_score?: number;
+  odi_tier?: string;
+  // Additional attributes
+  work_pattern?: string;
+  jtbd_type?: string;
+  impact_level?: string;
+  compliance_sensitivity?: string;
+  recommended_service_layer?: string;
+  validation_score?: number;
   tenant_id?: string;
   created_at?: string;
   updated_at?: string;
@@ -52,7 +70,12 @@ export default function JTBDPage() {
       active: 0,
       planned: 0,
       completed: 0,
+      draft: 0,
     },
+    byComplexity: {} as Record<string, number>,
+    byJobCategory: {} as Record<string, number>,
+    byOdiTier: {} as Record<string, number>,
+    avgOpportunityScore: 0,
   });
   const [loading, setLoading] = useState(true);
   const [selectedJTBD, setSelectedJTBD] = useState<JTBD | null>(null);
@@ -70,7 +93,7 @@ export default function JTBDPage() {
       setLoading(true);
       console.log('JTBD page: Loading jobs-to-be-done for current tenant...');
 
-      // Fetch from API endpoint - no showAll parameter means tenant-filtered
+      // Fetch from API endpoint
       const response = await fetch('/api/jtbd');
 
       if (!response.ok) {
@@ -79,33 +102,23 @@ export default function JTBDPage() {
 
       const data = await response.json();
       const allJTBDs = data.jtbd || [];
+      const apiStats = data.stats || {};
 
       console.log('JTBD page: Loaded', allJTBDs.length, 'jobs-to-be-done');
+      console.log('JTBD stats:', apiStats);
 
       setJTBDs(allJTBDs);
 
-      // Calculate stats
-      const byCategory: Record<string, number> = {};
-      const byPriority = { high: 0, medium: 0, low: 0 };
-      const byStatus = { active: 0, planned: 0, completed: 0 };
-
-      allJTBDs.forEach((jtbd: JTBD) => {
-        if (jtbd.category) {
-          byCategory[jtbd.category] = (byCategory[jtbd.category] || 0) + 1;
-        }
-        if (jtbd.priority) {
-          byPriority[jtbd.priority]++;
-        }
-        if (jtbd.status) {
-          byStatus[jtbd.status]++;
-        }
-      });
-
+      // Use stats from API or calculate locally
       setStats({
-        total: allJTBDs.length,
-        byCategory,
-        byPriority,
-        byStatus,
+        total: apiStats.total || allJTBDs.length,
+        byCategory: apiStats.byCategory || {},
+        byPriority: apiStats.byPriority || { high: 0, medium: 0, low: 0 },
+        byStatus: apiStats.byStatus || { active: 0, planned: 0, completed: 0, draft: 0 },
+        byComplexity: apiStats.byComplexity || {},
+        byJobCategory: apiStats.byJobCategory || {},
+        byOdiTier: apiStats.byOdiTier || {},
+        avgOpportunityScore: apiStats.avgOpportunityScore || 0,
       });
     } catch (error) {
       console.error('Error loading JTBD:', error);
@@ -191,10 +204,13 @@ export default function JTBDPage() {
         <div className="max-w-7xl mx-auto p-6 space-y-6">
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-gray-600">Total Jobs</CardTitle>
+                <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                  <Target className="h-3 w-3" />
+                  Total Jobs
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.total}</div>
@@ -228,13 +244,27 @@ export default function JTBDPage() {
             <Card className="border-2 border-purple-200 bg-purple-50">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs font-medium text-purple-800 flex items-center gap-1">
-                  <Zap className="h-3 w-3" />
+                  <Layers className="h-3 w-3" />
                   Categories
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
                   {Object.keys(stats.byCategory).length}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 border-blue-200 bg-blue-50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-medium text-blue-800 flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  Avg Opportunity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {stats.avgOpportunityScore > 0 ? stats.avgOpportunityScore.toFixed(1) : '—'}
                 </div>
               </CardContent>
             </Card>
@@ -429,24 +459,63 @@ function JTBDCard({ jtbd, compact = false, onClick, getPriorityColor, getStatusC
   getPriorityColor: (priority?: string) => string;
   getStatusColor: (status?: string) => string;
 }) {
+  const getComplexityColor = (complexity?: string) => {
+    switch (complexity?.toLowerCase()) {
+      case 'very_high':
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getOdiTierColor = (tier?: string) => {
+    switch (tier?.toLowerCase()) {
+      case 'extreme':
+        return 'bg-red-500 text-white';
+      case 'high':
+        return 'bg-orange-100 text-orange-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
     <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onClick?.(jtbd)}>
       <CardHeader className={compact ? 'pb-3' : ''}>
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            <CardTitle className="text-lg line-clamp-2">{jtbd.job_statement}</CardTitle>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Target className="h-4 w-4 text-primary" />
+              {jtbd.code && (
+                <span className="text-xs font-mono text-gray-500">{jtbd.code}</span>
+              )}
+            </div>
+            <CardTitle className="text-base line-clamp-2">{jtbd.job_statement}</CardTitle>
           </div>
+          {jtbd.odi_tier && (
+            <Badge className={`ml-2 ${getOdiTierColor(jtbd.odi_tier)}`}>
+              {jtbd.odi_tier}
+            </Badge>
+          )}
         </div>
         {!compact && jtbd.description && (
-          <CardDescription className="line-clamp-2">
+          <CardDescription className="line-clamp-2 mt-2">
             {jtbd.description}
           </CardDescription>
         )}
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {/* Badges */}
+          {/* Primary Badges */}
           <div className="flex flex-wrap gap-2">
             {jtbd.priority && (
               <Badge className={getPriorityColor(jtbd.priority)}>
@@ -460,29 +529,75 @@ function JTBDCard({ jtbd, compact = false, onClick, getPriorityColor, getStatusC
               </Badge>
             )}
 
-            {jtbd.category && (
-              <Badge className="bg-purple-100 text-purple-800 border-purple-200">
-                {jtbd.category}
+            {jtbd.complexity && (
+              <Badge className={getComplexityColor(jtbd.complexity)}>
+                {jtbd.complexity.replace('_', ' ')}
               </Badge>
             )}
           </div>
 
-          {/* Metadata */}
+          {/* Category & Type */}
+          <div className="flex flex-wrap gap-2">
+            {jtbd.category && (
+              <Badge variant="outline" className="text-xs">
+                {jtbd.category}
+              </Badge>
+            )}
+            {jtbd.job_category && jtbd.job_category !== jtbd.category && (
+              <Badge variant="outline" className="text-xs bg-blue-50">
+                {jtbd.job_category}
+              </Badge>
+            )}
+            {jtbd.recommended_service_layer && (
+              <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700">
+                {jtbd.recommended_service_layer}
+              </Badge>
+            )}
+          </div>
+
+          {/* ODI Scores */}
+          {!compact && (jtbd.opportunity_score || jtbd.importance_score) && (
+            <div className="space-y-2 pt-2 border-t">
+              {jtbd.opportunity_score && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-600 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    Opportunity
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={Math.min((jtbd.opportunity_score / 20) * 100, 100)} className="w-16 h-1.5" />
+                    <span className="font-medium">{jtbd.opportunity_score}</span>
+                  </div>
+                </div>
+              )}
+              {jtbd.importance_score && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-600 flex items-center gap-1">
+                    <BarChart3 className="h-3 w-3" />
+                    Importance
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={(jtbd.importance_score / 10) * 100} className="w-16 h-1.5" />
+                    <span className="font-medium">{jtbd.importance_score}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Additional Metadata */}
           {!compact && (
-            <div className="text-xs text-gray-500 space-y-1">
-              {jtbd.persona && (
-                <div>
-                  <span className="font-semibold">Persona:</span> {jtbd.persona}
+            <div className="text-xs text-gray-500 space-y-1 pt-2">
+              {jtbd.frequency && (
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  <span>{jtbd.frequency}</span>
                 </div>
               )}
-              {jtbd.success_criteria && jtbd.success_criteria.length > 0 && (
-                <div>
-                  <span className="font-semibold">Success Criteria:</span> {jtbd.success_criteria.length}
-                </div>
-              )}
-              {jtbd.obstacles && jtbd.obstacles.length > 0 && (
-                <div>
-                  <span className="font-semibold">Obstacles:</span> {jtbd.obstacles.length}
+              {jtbd.compliance_sensitivity && (
+                <div className="flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  <span>Compliance: {jtbd.compliance_sensitivity}</span>
                 </div>
               )}
             </div>
@@ -500,25 +615,41 @@ function JTBDListItem({ jtbd, onClick, getPriorityColor, getStatusColor }: {
   getStatusColor: (status?: string) => string;
 }) {
   return (
-    <Card className="cursor-pointer hover:bg-gray-50" onClick={() => onClick?.(jtbd)}>
+    <Card className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50" onClick={() => onClick?.(jtbd)}>
       <CardContent className="py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 flex-1">
-            <Target className="h-6 w-6 text-gray-600" />
-            <div className="flex-1">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="flex-shrink-0">
+              <Target className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                {jtbd.code && (
+                  <span className="text-xs font-mono text-gray-500">{jtbd.code}</span>
+                )}
+                {jtbd.category && (
+                  <Badge variant="outline" className="text-xs">
+                    {jtbd.category}
+                  </Badge>
+                )}
+              </div>
               <h3 className="font-semibold line-clamp-1">{jtbd.job_statement}</h3>
               {jtbd.description && (
                 <p className="text-sm text-gray-500 line-clamp-1">
                   {jtbd.description}
                 </p>
               )}
-              {jtbd.persona && (
-                <p className="text-xs text-gray-400 mt-1">Persona: {jtbd.persona}</p>
-              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {jtbd.opportunity_score && (
+              <div className="text-xs text-right">
+                <span className="text-gray-500">ODI</span>
+                <div className="font-bold text-blue-600">{jtbd.opportunity_score}</div>
+              </div>
+            )}
+            
             {jtbd.priority && (
               <Badge className={getPriorityColor(jtbd.priority)}>
                 {jtbd.priority}
@@ -530,9 +661,20 @@ function JTBDListItem({ jtbd, onClick, getPriorityColor, getStatusColor }: {
                 {jtbd.status}
               </Badge>
             )}
+
+            {jtbd.odi_tier && (
+              <Badge className={
+                jtbd.odi_tier === 'extreme' ? 'bg-red-500 text-white' :
+                jtbd.odi_tier === 'high' ? 'bg-orange-100 text-orange-800' :
+                'bg-gray-100 text-gray-800'
+              }>
+                {jtbd.odi_tier}
+              </Badge>
+            )}
           </div>
         </div>
       </CardContent>
     </Card>
   );
 }
+

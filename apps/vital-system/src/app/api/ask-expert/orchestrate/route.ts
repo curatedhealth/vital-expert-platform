@@ -72,7 +72,10 @@ export async function POST(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    let tenantId: string | undefined;
+    // Default tenant ID for VITAL System
+    const DEFAULT_TENANT_ID = 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
+    
+    let tenantId: string = DEFAULT_TENANT_ID;
     let sessionId: string | undefined;
     if (user) {
       const { data: profile } = await supabase
@@ -81,9 +84,11 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id)
         .single();
 
-      tenantId = profile?.tenant_id || undefined;
+      tenantId = profile?.tenant_id || DEFAULT_TENANT_ID;
       sessionId = `session_${Date.now()}_${user.id}`;
     }
+    
+    console.log('🔑 [Orchestrate] Using tenant ID:', tenantId);
 
     // Create streaming response
     const stream = new ReadableStream({
@@ -353,9 +358,15 @@ export async function POST(request: NextRequest) {
               // MODE 4: Agentic + Auto Selection (system picks agent + autonomous reasoning)
               // Golden Rule: 'autonomous' = Mode 4 (Agentic + Auto)
               console.log('🎯 [Orchestrate] Routing to Mode 4: Agentic + Auto Selection');
+              console.log('📋 [Mode 4] Config:', {
+                messageLength: body.message?.length,
+                tenantId,
+                enableRAG: body.enableRAG !== false,
+                enableTools: body.enableTools ?? true,
+              });
 
               try {
-                const mode3Stream = executeMode3({
+                const mode4Stream = executeMode4({
                   message: body.message,
                   conversationHistory: body.conversationHistory,
                   enableRAG: body.enableRAG !== false,
@@ -372,8 +383,25 @@ export async function POST(request: NextRequest) {
                   sessionId
                 });
 
-                // Stream chunks (Mode 4 uses executeMode3 which yields AutonomousStreamChunk objects)
-                for await (const chunk of mode3Stream) {
+                let chunkCount = 0;
+                let totalContentLength = 0;
+                
+                // Stream chunks (Mode 4 uses executeMode4 which yields AutonomousStreamChunk objects)
+                for await (const chunk of mode4Stream) {
+                  chunkCount++;
+                  if (chunk.content) {
+                    totalContentLength += chunk.content.length;
+                  }
+                  
+                  if (chunkCount <= 3 || chunk.type === 'done' || chunk.type === 'error') {
+                    console.log(`📦 [Mode 4] Chunk ${chunkCount}:`, {
+                      type: chunk.type,
+                      hasContent: !!chunk.content,
+                      contentLength: chunk.content?.length ?? 0,
+                      contentPreview: chunk.content?.substring(0, 50),
+                    });
+                  }
+                  
                   if (controller.desiredSize === null) {
                     console.log('⚠️ [Orchestrate] Controller closed, stopping Mode 4 stream');
                     break;
@@ -388,6 +416,8 @@ export async function POST(request: NextRequest) {
                   };
                   controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
                 }
+                
+                console.log(`✅ [Mode 4] Stream completed. Chunks: ${chunkCount}, Total content: ${totalContentLength} chars`);
 
                 if (controller.desiredSize !== null) {
                   controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));

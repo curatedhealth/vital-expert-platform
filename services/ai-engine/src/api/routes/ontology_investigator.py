@@ -225,7 +225,7 @@ async def analyze_gaps(
 @router.post("/opportunities", response_model=List[OpportunityItem])
 async def score_opportunities(
     function_id: Optional[str] = Query(None, description="Filter by function ID"),
-    limit: int = Query(50, le=100, description="Max opportunities to return")
+    limit: int = Query(200, le=1200, description="Max opportunities to return (default 200, max 1200)")
 ):
     """
     Score roles by AI transformation opportunity
@@ -238,10 +238,10 @@ async def score_opportunities(
     - Senior roles (strategic adoption)
     """
     try:
-        result = await get_opportunity_scores(function_id)
+        result = await get_opportunity_scores(function_id, limit=limit)
 
         opportunities = [
-            OpportunityItem(**opp) for opp in result[:limit]
+            OpportunityItem(**opp) for opp in result
         ]
 
         return opportunities

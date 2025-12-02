@@ -65,7 +65,9 @@ export default async function proxy(request: NextRequest) {
   // Also allow monitoring/metrics endpoints for internal use
   const publicApiRoutes = [
     '/api/ask-expert/chat', 
-    '/api/ask-expert/generate-document', 
+    '/api/ask-expert/generate-document',
+    '/api/ask-expert/orchestrate',  // Main Ask Expert orchestration endpoint
+    '/api/prompt-starters',  // Prompt starters for Ask Expert
     '/api/user-agents', 
     '/api/chat/conversations', 
     '/api/chat/sessions', 
@@ -280,7 +282,7 @@ export default async function proxy(request: NextRequest) {
 
   if (isClientOnlyPage) {
     const tenantId = response.headers.get('x-tenant-id');
-    const PLATFORM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+    const PLATFORM_TENANT_ID = 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244'; // VITAL System tenant
 
     // If on platform tenant, redirect to dashboard instead of marketing home
     if (tenantId === PLATFORM_TENANT_ID) {

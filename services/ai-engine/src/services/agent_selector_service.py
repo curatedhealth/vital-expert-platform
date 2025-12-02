@@ -498,7 +498,9 @@ def get_agent_selector_service(
     Get or create agent selector service instance (singleton pattern)
 
     Args:
-        supabase_client: Optional Supabase client for dependency injection
+        supabase_client: Optional Supabase client for dependency injection.
+                        If provided and the singleton exists without a client,
+                        the client will be injected.
 
     Returns:
         AgentSelectorService instance
@@ -509,5 +511,17 @@ def get_agent_selector_service(
         _agent_selector_service = AgentSelectorService(
             supabase_client=supabase_client
         )
+    elif supabase_client is not None and _agent_selector_service.supabase_client is None:
+        # Inject supabase_client if the singleton was created without one
+        _agent_selector_service.supabase_client = supabase_client
+        # Also update the graphrag_selector if it exists
+        if _agent_selector_service.graphrag_selector:
+            _agent_selector_service.graphrag_selector.supabase = supabase_client
 
     return _agent_selector_service
+
+
+def reset_agent_selector_service():
+    """Reset the singleton for testing purposes."""
+    global _agent_selector_service
+    _agent_selector_service = None

@@ -3,7 +3,7 @@
  * Following VITAL Brand Guidelines v5.0
  * 
  * Design Principles:
- * - Warm Ivory Background (#FAF8F1)
+ * - Clean White Background
  * - Atomic geometry (circles, squares)
  * - Clean tenant-based color badges
  * - Inter typography
@@ -267,14 +267,14 @@ export function EnhancedAgentCard({
   return (
     <Card
       className={cn(
-        // Base styles - Warm Ivory aesthetic
+        // Base styles - Clean white aesthetic
         'group relative cursor-pointer',
-        'bg-[#FAF8F1] border border-[#E8E5DC]',
+        'bg-white border border-gray-200',
         'rounded-xl overflow-hidden',
         // Transitions
         'transition-all duration-200 ease-out',
         // Hover state - subtle lift
-        'hover:border-[#BFBFBF] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]',
+        'hover:border-gray-300 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]',
         // Focus state
         'focus:outline-none focus:ring-2 focus:ring-[#9B5DE0]/30 focus:ring-offset-1',
         // Selected state
@@ -300,10 +300,10 @@ export function EnhancedAgentCard({
           <div className="flex-shrink-0 relative">
             <div className={cn(
               'rounded-xl overflow-hidden',
-              'border-2 border-[#E8E5DC]',
+              'border-2 border-gray-200',
               'bg-white',
               'transition-all duration-200',
-              'group-hover:border-[#9B5DE0]/30',
+              'group-hover:border-purple-300',
               isSelected && 'border-[#9B5DE0]',
               config.avatar
             )}>
@@ -318,7 +318,7 @@ export function EnhancedAgentCard({
             
             {/* Can Spawn indicator */}
             {agentLevel <= 3 && (
-              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#22c55e] border-2 border-[#FAF8F1] flex items-center justify-center">
+              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-green-500 border-2 border-white flex items-center justify-center">
                 <Zap className="w-2 h-2 text-white" />
               </div>
             )}
@@ -348,19 +348,19 @@ export function EnhancedAgentCard({
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-[#555555] hover:text-[#1A1A1A] hover:bg-[#E8E5DC]"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-900 hover:bg-gray-100"
                     >
                       <MoreVertical className="h-3.5 w-3.5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-36 bg-white border-[#E8E5DC]">
+                  <DropdownMenuContent align="end" className="w-36 bg-white border-gray-200">
                     {canEdit && onEdit && (
                       <DropdownMenuItem 
                         onClick={(e) => {
                           e.stopPropagation();
                           onEdit(agent);
                         }}
-                        className="text-[#1A1A1A] focus:bg-[#FAF8F1]"
+                        className="text-gray-900 focus:bg-gray-50"
                       >
                         <Edit className="h-3.5 w-3.5 mr-2" />
                         Edit
@@ -368,7 +368,7 @@ export function EnhancedAgentCard({
                     )}
                     {canDelete && onDelete && (
                       <>
-                        {canEdit && <DropdownMenuSeparator className="bg-[#E8E5DC]" />}
+                        {canEdit && <DropdownMenuSeparator className="bg-gray-200" />}
                         <DropdownMenuItem 
                           onClick={(e) => {
                             e.stopPropagation();
@@ -423,7 +423,7 @@ export function EnhancedAgentCard({
                     key={index}
                     className={cn(
                       'inline-flex items-center rounded-md',
-                      'bg-[#E8E5DC] text-[#555555]',
+                      'bg-gray-100 text-gray-600',
                       'font-medium',
                       config.badge
                     )}
@@ -445,7 +445,7 @@ export function EnhancedAgentCard({
             )}
 
             {/* Action Buttons Row - ADD, DUPLICATE, BOOKMARK */}
-            <div className="mt-3 pt-3 border-t border-[#E8E5DC]">
+            <div className="mt-3 pt-3 border-t border-gray-200">
               <div className="flex items-center justify-between gap-2">
                 {/* Add to Chat - Primary Action */}
                 {onAddToChat && (

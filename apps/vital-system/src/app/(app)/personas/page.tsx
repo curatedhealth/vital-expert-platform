@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/page-header';
-import { Users, Building2 } from 'lucide-react';
+import { Users, Building2, Zap, Brain, Lightbulb, AlertTriangle } from 'lucide-react';
 import {
   PersonaCard,
   PersonaListItem,
@@ -18,6 +18,30 @@ import {
   type PersonaFiltersType,
 } from '@/components/personas';
 
+// Archetype configuration for grouping view
+const archetypeConfig: Record<string, { icon: React.ReactNode; color: string; description: string }> = {
+  AUTOMATOR: {
+    icon: <Zap className="h-6 w-6" />,
+    color: 'text-blue-600',
+    description: 'High AI readiness + Low complexity: Efficiency-focused, automation champions',
+  },
+  ORCHESTRATOR: {
+    icon: <Brain className="h-6 w-6" />,
+    color: 'text-purple-600',
+    description: 'High AI readiness + High complexity: Strategic leaders, AI power users',
+  },
+  LEARNER: {
+    icon: <Lightbulb className="h-6 w-6" />,
+    color: 'text-green-600',
+    description: 'Low AI readiness + Low complexity: Building skills, needs guidance',
+  },
+  SKEPTIC: {
+    icon: <AlertTriangle className="h-6 w-6" />,
+    color: 'text-orange-600',
+    description: 'Low AI readiness + High complexity: Proof-driven, values multiple perspectives',
+  },
+};
+
 export default function PersonasPage() {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [allDepartments, setAllDepartments] = useState<Array<{ id: string; name: string; department_code?: string }>>([]);
@@ -27,6 +51,8 @@ export default function PersonasPage() {
     selectedDepartment: 'all',
     selectedFunction: 'all',
     selectedSeniority: 'all',
+    selectedArchetype: 'all',
+    selectedServiceLayer: 'all',
   });
   const [stats, setStats] = useState<PersonaStats>({
     total: 0,
@@ -90,7 +116,8 @@ export default function PersonasPage() {
         persona.department_slug?.toLowerCase().includes(query) ||
         persona.function_slug?.toLowerCase().includes(query) ||
         persona.seniority_level?.toLowerCase().includes(query) ||
-        persona.tags?.some(tag => tag.toLowerCase().includes(query))
+        persona.derived_archetype?.toLowerCase().includes(query) ||
+        persona.preferred_service_layer?.toLowerCase().includes(query)
       );
     }
 
@@ -112,6 +139,16 @@ export default function PersonasPage() {
     // Seniority filter
     if (filters.selectedSeniority !== 'all') {
       filtered = filtered.filter(persona => persona.seniority_level === filters.selectedSeniority);
+    }
+
+    // Archetype filter
+    if (filters.selectedArchetype && filters.selectedArchetype !== 'all') {
+      filtered = filtered.filter(persona => persona.derived_archetype === filters.selectedArchetype);
+    }
+
+    // Service Layer filter
+    if (filters.selectedServiceLayer && filters.selectedServiceLayer !== 'all') {
+      filtered = filtered.filter(persona => persona.preferred_service_layer === filters.selectedServiceLayer);
     }
 
     return filtered;
@@ -333,6 +370,7 @@ export default function PersonasPage() {
             <TabsList className="mb-4">
               <TabsTrigger value="grid">Grid View</TabsTrigger>
               <TabsTrigger value="list">List View</TabsTrigger>
+              <TabsTrigger value="archetypes">By Archetype</TabsTrigger>
               <TabsTrigger value="departments">By Department</TabsTrigger>
             </TabsList>
 
@@ -357,6 +395,75 @@ export default function PersonasPage() {
                     onClick={(p) => router.push(`/personas/${p.slug}`)} 
                   />
                 ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="archetypes">
+              <div className="space-y-8">
+                {['AUTOMATOR', 'ORCHESTRATOR', 'LEARNER', 'SKEPTIC'].map(archetype => {
+                  const archetypePersonas = filteredPersonas.filter(p => 
+                    p.derived_archetype === archetype || p.archetype === archetype
+                  );
+                  const config = archetypeConfig[archetype];
+                  
+                  return (
+                    <div key={archetype}>
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className={config.color}>{config.icon}</div>
+                        <h2 className={`text-2xl font-bold ${config.color}`}>{archetype}</h2>
+                        <Badge variant={archetypePersonas.length > 0 ? "default" : "secondary"}>
+                          {archetypePersonas.length}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4">{config.description}</p>
+                      {archetypePersonas.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {archetypePersonas.map((persona) => (
+                            <PersonaCard 
+                              key={persona.id} 
+                              persona={persona} 
+                              compact 
+                              onClick={(p) => router.push(`/personas/${p.slug}`)} 
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500 italic py-4 border-l-4 border-gray-200 pl-4">
+                          No personas with this archetype
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                
+                {/* Unknown/Unassigned Archetype */}
+                {(() => {
+                  const unknownPersonas = filteredPersonas.filter(p => 
+                    !p.derived_archetype && !p.archetype
+                  );
+                  if (unknownPersonas.length === 0) return null;
+                  
+                  return (
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <Users className="h-6 w-6 text-gray-500" />
+                        <h2 className="text-2xl font-bold text-gray-500">Unassigned</h2>
+                        <Badge variant="secondary">{unknownPersonas.length}</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4">Personas without MECE archetype assignment</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {unknownPersonas.map((persona) => (
+                          <PersonaCard 
+                            key={persona.id} 
+                            persona={persona} 
+                            compact 
+                            onClick={(p) => router.push(`/personas/${p.slug}`)} 
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </TabsContent>
 

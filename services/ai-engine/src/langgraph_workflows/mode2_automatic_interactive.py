@@ -220,7 +220,9 @@ class Mode2AutomaticInteractiveWorkflow(BaseWorkflow, ToolChainMixin, MemoryInte
         
         # Initialize services
         self.supabase = supabase_client
-        self.agent_selector = agent_selector_service or get_agent_selector_service()
+        self.supabase_client = supabase_client  # Alias for compatibility
+        # CRITICAL: Pass supabase_client to agent_selector for database access
+        self.agent_selector = agent_selector_service or get_agent_selector_service(supabase_client)
         self.rag_service = rag_service or UnifiedRAGService(supabase_client)
         self.agent_orchestrator = agent_orchestrator or AgentOrchestrator(supabase_client, self.rag_service)
         self.conversation_manager = conversation_manager or ConversationManager(supabase_client)
@@ -249,6 +251,13 @@ class Mode2AutomaticInteractiveWorkflow(BaseWorkflow, ToolChainMixin, MemoryInte
 
         logger.info("✅ Mode2InteractiveAutoWorkflow initialized with tool chaining + long-term memory + deep agent architecture")
     
+    def _get_supabase(self):
+        """Get Supabase client (for fallback in nodes)."""
+        if self.supabase_client is None:
+            from services.supabase_client import get_supabase_client
+            self.supabase_client = get_supabase_client()
+        return self.supabase_client
+
     def build_graph(self) -> StateGraph:
         """
         Build LangGraph workflow for Mode 1 with multi-branching.
@@ -554,19 +563,22 @@ class Mode2AutomaticInteractiveWorkflow(BaseWorkflow, ToolChainMixin, MemoryInte
                 tenant_id=tenant_id[:8] if tenant_id else 'unknown'
             )
 
+            # NOTE: RRF fused scores are typically 0.01-0.03, not 0-1
+            # Using min_confidence=0.005 to capture valid results
             selected_agents = await self.agent_selector.select_agents_hybrid(
                 query=query,
                 tenant_id=tenant_id,
                 mode="mode2",
                 max_agents=1,  # Mode 2 selects single best expert
-                min_confidence=0.60
+                min_confidence=0.005  # RRF scores are low by design
             )
 
             if selected_agents and len(selected_agents) > 0:
                 # Use the top-ranked agent from hybrid selection
                 best_agent = selected_agents[0]
-                selected_agent_id = best_agent.get('id', best_agent.get('agent_id', ''))
-                agent_name = best_agent.get('name', best_agent.get('display_name', 'Selected Expert'))
+                # GraphRAG returns 'agent_id' and 'agent_name' keys
+                selected_agent_id = best_agent.get('agent_id', best_agent.get('id', ''))
+                agent_name = best_agent.get('agent_name', best_agent.get('name', best_agent.get('display_name', 'Selected Expert')))
                 fused_score = best_agent.get('fused_score', 0.85)
                 confidence_data = best_agent.get('confidence', {})
 
@@ -598,32 +610,66 @@ class Mode2AutomaticInteractiveWorkflow(BaseWorkflow, ToolChainMixin, MemoryInte
                     breakdown=breakdown
                 )
             else:
-                # Fallback: Use query analysis to determine domain and select generic expert
-                logger.warning("⚠️ Hybrid selection returned no agents, using fallback")
-                analysis_result = await self.agent_selector.analyze_query(query)
+                # Fallback: Use Postgres fulltext search directly on agents table
+                logger.warning("⚠️ Hybrid selection returned no agents, using Postgres fulltext fallback")
 
-                # Map domains to fallback agents
-                domain_agent_map = {
-                    'cardiology': 'cardiology_expert',
-                    'oncology': 'oncology_expert',
-                    'neurology': 'neurology_expert',
-                    'regulatory': 'regulatory_expert',
-                    'research': 'research_expert',
-                    'clinical': 'clinical_expert',
-                }
+                # Try to find an agent using fulltext search
+                try:
+                    supabase = self.supabase_client or self._get_supabase()
 
-                selected_agent_id = 'general_medical_expert'
-                agent_name = 'General Medical Expert'
-                if hasattr(analysis_result, 'domains') and analysis_result.domains:
-                    for domain in analysis_result.domains:
-                        if domain.lower() in domain_agent_map:
-                            selected_agent_id = domain_agent_map[domain.lower()]
-                            agent_name = f"{domain.title()} Expert"
-                            break
+                    def _search_fallback():
+                        return supabase.client.rpc(
+                            "search_agents_fulltext",
+                            {
+                                "search_query": query,
+                                "tenant_filter": tenant_id,
+                                "result_limit": 5
+                            }
+                        ).execute()
 
-                reasoning = f"Fallback selection based on query analysis. Intent: {getattr(analysis_result, 'intent', 'general')}, Domains: {getattr(analysis_result, 'domains', [])}"
-                confidence = getattr(analysis_result, 'confidence', 0.6)
-                breakdown = {'fallback': 100}
+                    import asyncio
+                    fallback_result = await asyncio.to_thread(_search_fallback)
+
+                    if fallback_result.data and len(fallback_result.data) > 0:
+                        # Use the top result from fulltext search
+                        best_agent = fallback_result.data[0]
+                        selected_agent_id = best_agent.get('id', '')
+                        agent_name = best_agent.get('name', 'Selected Expert')
+                        reasoning = f"Fallback fulltext selection: found {agent_name} via Postgres search"
+                        confidence = 0.65
+                        breakdown = {'postgres_fulltext': 100}
+                        logger.info(f"✅ Fallback found agent via fulltext: {agent_name} ({selected_agent_id})")
+                    else:
+                        # Ultimate fallback: get any active agent from the database
+                        def _get_any_agent():
+                            return supabase.client.table('agents').select('id, name').eq('status', 'active').limit(1).execute()
+
+                        any_agent_result = await asyncio.to_thread(_get_any_agent)
+
+                        if any_agent_result.data and len(any_agent_result.data) > 0:
+                            best_agent = any_agent_result.data[0]
+                            selected_agent_id = best_agent.get('id', '')
+                            agent_name = best_agent.get('name', 'General Expert')
+                            reasoning = f"Ultimate fallback: selected first available active agent ({agent_name})"
+                            confidence = 0.5
+                            breakdown = {'fallback_any_agent': 100}
+                            logger.info(f"✅ Ultimate fallback: using any active agent: {agent_name}")
+                        else:
+                            # No agents in database at all - critical error
+                            logger.error("❌ No agents found in database - critical configuration error")
+                            selected_agent_id = ''
+                            agent_name = 'No Agent Available'
+                            reasoning = "Critical error: No agents found in database"
+                            confidence = 0.0
+                            breakdown = {'error': 100}
+
+                except Exception as fallback_error:
+                    logger.error(f"Fallback agent search failed: {fallback_error}")
+                    selected_agent_id = ''
+                    agent_name = 'Fallback Failed'
+                    reasoning = f"Fallback search error: {str(fallback_error)[:100]}"
+                    confidence = 0.3
+                    breakdown = {'fallback_error': 100}
 
             # Cache selection (Golden Rule #2)
             if self.cache_manager and self.cache_manager.enabled:
@@ -664,19 +710,37 @@ class Mode2AutomaticInteractiveWorkflow(BaseWorkflow, ToolChainMixin, MemoryInte
 
         except Exception as e:
             logger.error("Hybrid expert selection failed", error=str(e), exc_info=True)
-            # Fallback to generic expert with error context
+            # Emergency fallback: try to get any active agent from database
+            fallback_agent_id = ''
+            fallback_agent_name = 'Fallback Agent'
+            try:
+                supabase = self.supabase_client or self._get_supabase()
+
+                def _get_emergency_agent():
+                    return supabase.client.table('agents').select('id, name').eq('status', 'active').limit(1).execute()
+
+                import asyncio
+                emergency_result = await asyncio.to_thread(_get_emergency_agent)
+
+                if emergency_result.data and len(emergency_result.data) > 0:
+                    fallback_agent_id = emergency_result.data[0].get('id', '')
+                    fallback_agent_name = emergency_result.data[0].get('name', 'Emergency Fallback')
+                    logger.info(f"✅ Emergency fallback: using {fallback_agent_name}")
+            except Exception as fallback_err:
+                logger.error(f"Emergency fallback also failed: {fallback_err}")
+
             return {
                 **state,
-                'selected_agents': state.get('selected_agents', []) + ['general_medical_expert'],
-                'selected_agent_id': 'general_medical_expert',
-                'selected_agent_name': 'General Medical Expert',
-                'selection_reasoning': f'Fallback to general expert due to error: {str(e)[:100]}',
-                'selection_confidence': 0.5,
-                'selection_method': 'fallback',
+                'selected_agents': state.get('selected_agents', []) + [fallback_agent_id] if fallback_agent_id else [],
+                'selected_agent_id': fallback_agent_id,
+                'selected_agent_name': fallback_agent_name,
+                'selection_reasoning': f'Emergency fallback due to error: {str(e)[:100]}',
+                'selection_confidence': 0.3,
+                'selection_method': 'emergency_fallback',
                 'reasoning_steps': state.get('reasoning_steps', []) + [{
                     'step': 'agent_selection',
-                    'action': 'Fallback due to hybrid selection error',
-                    'result': 'general_medical_expert',
+                    'action': 'Emergency fallback due to hybrid selection error',
+                    'result': fallback_agent_name,
                     'error': str(e)[:200]
                 }],
                 'errors': state.get('errors', []) + [f"Hybrid expert selection failed: {str(e)}"],
@@ -686,9 +750,12 @@ class Mode2AutomaticInteractiveWorkflow(BaseWorkflow, ToolChainMixin, MemoryInte
     @trace_node("mode1_rag_retrieval")
     async def rag_retrieval_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
-        Node: Retrieve RAG context.
+        Node: Retrieve RAG context with web search fallback.
         
         Golden Rule #2: Cache RAG results
+        
+        If RAG returns no documents, automatically falls back to web search
+        to ensure the agent always has context to work with.
         """
         tenant_id = state['tenant_id']
         query = state['query']
@@ -722,10 +789,57 @@ class Mode2AutomaticInteractiveWorkflow(BaseWorkflow, ToolChainMixin, MemoryInte
             )
             
             documents = rag_results.get('documents', [])
+            retrieval_source = 'rag'
+            
+            # FALLBACK: If RAG returns no documents, use web search
+            if not documents or len(documents) == 0:
+                logger.info("⚠️ RAG returned no documents, falling back to web search")
+                try:
+                    from tools.web_tools import WebSearchTool
+                    web_search_tool = WebSearchTool()
+                    
+                    # Perform web search
+                    web_results = await web_search_tool.search(
+                        query=query,
+                        max_results=state.get('max_results', 5),
+                        search_depth="advanced"  # Use advanced for better results
+                    )
+                    
+                    # Convert web results to document format
+                    web_documents = []
+                    for idx, result in enumerate(web_results.get('results', [])):
+                        web_documents.append({
+                            'id': f"web_{idx}",
+                            'content': result.get('content', result.get('snippet', '')),
+                            'title': result.get('title', f'Web Source {idx + 1}'),
+                            'url': result.get('url', ''),
+                            'source': 'web_search',
+                            'similarity_score': result.get('score', 0.8),
+                            'metadata': {
+                                'source_type': 'web',
+                                'domain': result.get('domain', ''),
+                                'published_date': result.get('published_date'),
+                            }
+                        })
+                    
+                    if web_documents:
+                        documents = web_documents
+                        retrieval_source = 'web_search'
+                        logger.info(
+                            "✅ Web search fallback successful",
+                            documents_retrieved=len(documents)
+                        )
+                    else:
+                        logger.warning("⚠️ Web search also returned no results")
+                        
+                except Exception as web_error:
+                    logger.warning(f"⚠️ Web search fallback failed: {web_error}")
+                    # Continue with empty documents - agent will still respond
+            
             context_summary = self._create_context_summary(documents)
             
             # Cache results (Golden Rule #2)
-            if self.cache_manager and self.cache_manager.enabled:
+            if self.cache_manager and self.cache_manager.enabled and documents:
                 await self.cache_manager.set(
                     cache_key,
                     {
@@ -738,7 +852,8 @@ class Mode2AutomaticInteractiveWorkflow(BaseWorkflow, ToolChainMixin, MemoryInte
             
             logger.info(
                 "RAG retrieval completed",
-                documents_retrieved=len(documents)
+                documents_retrieved=len(documents),
+                retrieval_source=retrieval_source
             )
             
             return {
@@ -747,12 +862,51 @@ class Mode2AutomaticInteractiveWorkflow(BaseWorkflow, ToolChainMixin, MemoryInte
                 'context_summary': context_summary,
                 'total_documents': len(documents),
                 'rag_cache_hit': False,
+                'retrieval_source': retrieval_source,
                 'current_node': 'rag_retrieval',
                 'nodes_executed': ['rag_retrieval']
             }
             
         except Exception as e:
             logger.error("RAG retrieval failed", error=str(e))
+            
+            # Try web search as emergency fallback
+            try:
+                logger.info("🔄 Attempting web search as emergency fallback")
+                from tools.web_tools import WebSearchTool
+                web_search_tool = WebSearchTool()
+                
+                web_results = await web_search_tool.search(
+                    query=query,
+                    max_results=3,
+                    search_depth="basic"
+                )
+                
+                web_documents = []
+                for idx, result in enumerate(web_results.get('results', [])):
+                    web_documents.append({
+                        'id': f"web_fallback_{idx}",
+                        'content': result.get('content', result.get('snippet', '')),
+                        'title': result.get('title', f'Web Source {idx + 1}'),
+                        'url': result.get('url', ''),
+                        'source': 'web_search_fallback',
+                        'similarity_score': result.get('score', 0.7),
+                        'metadata': {'source_type': 'web_fallback'}
+                    })
+                
+                if web_documents:
+                    logger.info(f"✅ Emergency web search fallback successful: {len(web_documents)} documents")
+                    return {
+                        **state,
+                        'retrieved_documents': web_documents,
+                        'context_summary': self._create_context_summary(web_documents),
+                        'retrieval_source': 'web_search_fallback',
+                        'errors': state.get('errors', []) + [f"RAG failed, used web search: {str(e)[:100]}"],
+                        'nodes_executed': ['rag_retrieval']
+                    }
+            except Exception as fallback_error:
+                logger.error(f"Emergency web search also failed: {fallback_error}")
+            
             return {
                 **state,
                 'retrieved_documents': [],
@@ -912,10 +1066,10 @@ class Mode2AutomaticInteractiveWorkflow(BaseWorkflow, ToolChainMixin, MemoryInte
                     context={
                         'agent_id': selected_agent,
                         'conversation_history': conversation_history,
-                        'rag_domains': state.get('selected_rag_domains', [])
+                        'rag_domains': state.get('selected_rag_domains', []),
+                        'model': model  # Pass model in context instead
                     },
-                    max_steps=3,
-                    model=model
+                    max_steps=3
                 )
                 
                 logger.info(
@@ -1055,10 +1209,11 @@ class Mode2AutomaticInteractiveWorkflow(BaseWorkflow, ToolChainMixin, MemoryInte
             }
 
         except Exception as e:
-            logger.error("Agent execution failed (Mode 1)", error=str(e))
+            import traceback
+            logger.error("Agent execution failed (Mode 2)", error=str(e), traceback=traceback.format_exc())
             return {
                 **state,
-                'agent_response': 'I apologize, but I encountered an error processing your request.',
+                'agent_response': f'I apologize, but I encountered an error processing your request. Error: {str(e)}',
                 'response_confidence': 0.0,
                 'errors': state.get('errors', []) + [f"Agent execution failed: {str(e)}"],
                 'nodes_executed': ['execute_agent']
@@ -1111,13 +1266,29 @@ class Mode2AutomaticInteractiveWorkflow(BaseWorkflow, ToolChainMixin, MemoryInte
         if response_confidence <= 0.0:
             response_confidence = 0.85  # Default confidence for successful responses
         
+        # Map retrieved_documents to sources for the API response
+        retrieved_docs = state.get('retrieved_documents', [])
+        sources = []
+        for doc in retrieved_docs:
+            sources.append({
+                'id': doc.get('id', ''),
+                'title': doc.get('title', doc.get('metadata', {}).get('title', 'Source')),
+                'content': doc.get('content', ''),
+                'url': doc.get('url', doc.get('metadata', {}).get('url', '')),
+                'similarity_score': doc.get('similarity_score', doc.get('score', 0.0)),
+                'source_type': doc.get('source', doc.get('metadata', {}).get('source_type', 'rag')),
+                'metadata': doc.get('metadata', {})
+            })
+        
         return {
             **state,
             'response': state.get('agent_response', ''),
             'confidence': response_confidence,
             'response_confidence': response_confidence,  # Ensure both are set
             'agents_used': state.get('selected_agents', []),
-            'sources_used': len(state.get('retrieved_documents', [])),
+            'sources_used': len(retrieved_docs),
+            'sources': sources,  # Include sources for API response
+            'retrieval_source': state.get('retrieval_source', 'rag'),
             'status': ExecutionStatus.COMPLETED,
             'current_node': 'format_output',
             'nodes_executed': ['format_output']

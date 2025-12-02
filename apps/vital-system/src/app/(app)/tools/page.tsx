@@ -44,7 +44,44 @@ import {
 // Removed ToolRegistryService - now using API endpoint
 
 // Tool categories with icons and colors
-const TOOL_CATEGORIES = {
+const TOOL_CATEGORIES: Record<string, { icon: any; color: string; description: string }> = {
+  // Main seeded categories from tool_categories table
+  'Evidence Research': {
+    icon: Microscope,
+    color: 'bg-blue-100 text-blue-800 border-blue-200',
+    description: 'Search and retrieve evidence from medical literature, clinical trials, and regulatory databases'
+  },
+  'Regulatory & Standards': {
+    icon: Shield,
+    color: 'bg-red-100 text-red-800 border-red-200',
+    description: 'Access regulatory guidelines, standards, and compliance information'
+  },
+  'Digital Health': {
+    icon: Heart,
+    color: 'bg-pink-100 text-pink-800 border-pink-200',
+    description: 'Digital medicine resources, decentralized trials, and digital endpoints'
+  },
+  'Knowledge Management': {
+    icon: Database,
+    color: 'bg-amber-100 text-amber-800 border-amber-200',
+    description: 'Internal knowledge bases and documentation'
+  },
+  'Computation': {
+    icon: BarChart3,
+    color: 'bg-purple-100 text-purple-800 border-purple-200',
+    description: 'Mathematical calculations and data analysis'
+  },
+  'General Research': {
+    icon: Search,
+    color: 'bg-green-100 text-green-800 border-green-200',
+    description: 'Web search and general information retrieval'
+  },
+  'General': {
+    icon: Wrench,
+    color: 'bg-gray-100 text-gray-800 border-gray-200',
+    description: 'General purpose tools'
+  },
+  // Healthcare categories
   'Healthcare/FHIR': { 
     icon: Activity, 
     color: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -94,6 +131,104 @@ const TOOL_CATEGORIES = {
     icon: Microscope, 
     color: 'bg-cyan-100 text-cyan-800 border-cyan-200',
     description: 'Academic and medical literature search'
+  },
+  // Digital Health tool categories
+  'STATISTICAL_SOFTWARE': {
+    icon: BarChart3,
+    color: 'bg-violet-100 text-violet-800 border-violet-200',
+    description: 'Statistical analysis and data science tools'
+  },
+  'EDC_SYSTEM': {
+    icon: FileText,
+    color: 'bg-green-100 text-green-800 border-green-200',
+    description: 'Electronic Data Capture systems'
+  },
+  'CTMS': {
+    icon: Activity,
+    color: 'bg-blue-100 text-blue-800 border-blue-200',
+    description: 'Clinical Trial Management Systems'
+  },
+  'RESEARCH_DATABASE': {
+    icon: Database,
+    color: 'bg-amber-100 text-amber-800 border-amber-200',
+    description: 'Research databases and literature sources'
+  },
+  'PRO_REGISTRY': {
+    icon: Heart,
+    color: 'bg-rose-100 text-rose-800 border-rose-200',
+    description: 'Patient-Reported Outcomes registries'
+  },
+  'DECISION_ANALYSIS': {
+    icon: Brain,
+    color: 'bg-purple-100 text-purple-800 border-purple-200',
+    description: 'Decision analysis and modeling tools'
+  },
+  'SIMULATION': {
+    icon: Zap,
+    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    description: 'Simulation and Monte Carlo tools'
+  },
+  'REGULATORY_SUBMISSION': {
+    icon: Shield,
+    color: 'bg-red-100 text-red-800 border-red-200',
+    description: 'Regulatory submission software'
+  },
+  'REGULATORY_INFORMATION_MANAGEMENT': {
+    icon: Lock,
+    color: 'bg-red-100 text-red-800 border-red-200',
+    description: 'Regulatory information management'
+  },
+  'AI_ORCHESTRATION': {
+    icon: Brain,
+    color: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    description: 'AI workflow orchestration tools'
+  },
+  'WORKFLOW_MANAGEMENT': {
+    icon: Activity,
+    color: 'bg-sky-100 text-sky-800 border-sky-200',
+    description: 'Workflow and task management'
+  },
+  // Strategic Intelligence categories
+  'Strategic Intelligence': {
+    icon: TrendingUp,
+    color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    description: 'Strategic intelligence and foresight tools'
+  },
+  'Strategic Intelligence/News': {
+    icon: FileText,
+    color: 'bg-blue-100 text-blue-800 border-blue-200',
+    description: 'News monitoring and aggregation'
+  },
+  'Strategic Intelligence/Trends': {
+    icon: TrendingUp,
+    color: 'bg-green-100 text-green-800 border-green-200',
+    description: 'Trend analysis and forecasting'
+  },
+  'Strategic Intelligence/Competitive': {
+    icon: BarChart3,
+    color: 'bg-orange-100 text-orange-800 border-orange-200',
+    description: 'Competitive intelligence tools'
+  },
+  'Strategic Intelligence/Market': {
+    icon: TrendingUp,
+    color: 'bg-purple-100 text-purple-800 border-purple-200',
+    description: 'Market research and analysis'
+  },
+  // Academic & Medical Literature
+  'Academic/Literature': {
+    icon: Microscope,
+    color: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+    description: 'Academic literature search and analysis'
+  },
+  'Academic/Clinical Trials': {
+    icon: Beaker,
+    color: 'bg-teal-100 text-teal-800 border-teal-200',
+    description: 'Clinical trials databases and registries'
+  },
+  'Academic/Regulatory': {
+    icon: Shield,
+    color: 'bg-red-100 text-red-800 border-red-200',
+    description: 'Regulatory databases and guidelines'
   },
 };
 
@@ -155,8 +290,20 @@ export default function ToolsPage() {
       setTools(allTools);
 
       // Calculate stats
-      const healthcareTools = allTools.filter(t => t.category?.startsWith('Healthcare'));
-      const researchTools = allTools.filter(t => t.category === 'Research');
+      const healthcareTools = allTools.filter(t => 
+        t.category?.startsWith('Healthcare') || 
+        t.category_parent === 'Healthcare' ||
+        ['EDC_SYSTEM', 'CTMS', 'PRO_REGISTRY'].includes(t.category)
+      );
+      const researchTools = allTools.filter(t => 
+        t.category === 'Research' || 
+        t.category?.startsWith('RESEARCH') ||
+        t.category?.startsWith('Academic')
+      );
+      const strategicTools = allTools.filter(t => 
+        t.category?.startsWith('Strategic Intelligence') ||
+        t.category_parent === 'Strategic Intelligence'
+      );
       const tier1Tools = allTools.filter(t =>
         t.metadata && typeof t.metadata === 'object' && 'tier' in t.metadata && t.metadata.tier === 1
       );
@@ -170,9 +317,19 @@ export default function ToolsPage() {
         development: allTools.filter(t => t.lifecycle_stage === 'development').length,
         langchainTools: allTools.filter(t => t.implementation_type === 'langchain_tool').length,
         tier1: tier1Tools.length,
-        fhir: allTools.filter(t => t.category === 'Healthcare/FHIR').length,
-        nlp: allTools.filter(t => t.category === 'Healthcare/Clinical NLP').length,
+        fhir: allTools.filter(t => t.category === 'Healthcare/FHIR' || t.category === 'FHIR').length,
+        nlp: allTools.filter(t => t.category === 'Healthcare/Clinical NLP' || t.category?.includes('NLP')).length,
         deidentification: allTools.filter(t => t.category === 'Healthcare/De-identification').length,
+      });
+      
+      console.log('Tools stats:', {
+        total: allTools.length,
+        healthcare: healthcareTools.length,
+        research: researchTools.length,
+        strategic: strategicTools.length,
+        production: allTools.filter(t => t.lifecycle_stage === 'production').length,
+        langchain: allTools.filter(t => t.implementation_type === 'langchain_tool').length,
+        categories: [...new Set(allTools.map(t => t.category))].slice(0, 20)
       });
     } catch (error) {
       console.error('Error loading tools:', error);
@@ -227,6 +384,24 @@ export default function ToolsPage() {
     // Reload tools to get updated data
     loadTools();
   };
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <PageHeader
+          icon={Wrench}
+          title="Tool Registry"
+          description="Loading tools..."
+        />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-500">Loading tools from database...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -486,14 +661,23 @@ export default function ToolsPage() {
               const categoryTools = filteredTools.filter(t => t.category === category);
               if (categoryTools.length === 0) return null;
 
-              const categoryConfig = TOOL_CATEGORIES[category as keyof typeof TOOL_CATEGORIES];
+              const categoryConfig = TOOL_CATEGORIES[category];
               const Icon = categoryConfig?.icon || Database;
+
+              // Format category name for display
+              const formatCategoryName = (cat: string) => {
+                return cat
+                  .replace(/_/g, ' ')
+                  .split(' ')
+                  .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                  .join(' ');
+              };
 
               return (
                 <div key={category}>
                   <div className="flex items-center gap-3 mb-4">
                     <Icon className="h-6 w-6" />
-                    <h2 className="text-2xl font-bold">{category}</h2>
+                    <h2 className="text-2xl font-bold">{formatCategoryName(category)}</h2>
                     <Badge variant="secondary">{categoryTools.length}</Badge>
                   </div>
                   {categoryConfig?.description && (
@@ -534,7 +718,10 @@ export default function ToolsPage() {
 }
 
 function ToolCard({ tool, compact = false, onClick }: { tool: any; compact?: boolean; onClick?: (tool: any) => void }) {
-  const categoryConfig = TOOL_CATEGORIES[tool.category as keyof typeof TOOL_CATEGORIES];
+  // Try to find category config by category or category_parent
+  const categoryConfig = TOOL_CATEGORIES[tool.category] || 
+                         TOOL_CATEGORIES[tool.category_parent] ||
+                         null;
   const Icon = categoryConfig?.icon || Database;
   const lifecycleBadge = LIFECYCLE_BADGES[tool.lifecycle_stage as keyof typeof LIFECYCLE_BADGES];
   const LifecycleIcon = lifecycleBadge?.icon || AlertCircle;
@@ -542,6 +729,19 @@ function ToolCard({ tool, compact = false, onClick }: { tool: any; compact?: boo
   const tier = tool.metadata && typeof tool.metadata === 'object' && 'tier' in tool.metadata 
     ? tool.metadata.tier 
     : null;
+
+  // Format category display name
+  const formatCategory = (category: string) => {
+    if (!category) return '';
+    return category
+      .replace('Healthcare/', '')
+      .replace('Strategic Intelligence/', '')
+      .replace('Academic/', '')
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
 
   return (
     <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onClick?.(tool)}>
@@ -567,9 +767,9 @@ function ToolCard({ tool, compact = false, onClick }: { tool: any; compact?: boo
         <div className="space-y-3">
           {/* Badges */}
           <div className="flex flex-wrap gap-2">
-            {tool.category && categoryConfig && (
-              <Badge className={categoryConfig.color}>
-                {tool.category.replace('Healthcare/', '')}
+            {tool.category && (
+              <Badge className={categoryConfig?.color || 'bg-gray-100 text-gray-800 border-gray-200'}>
+                {formatCategory(tool.category)}
               </Badge>
             )}
             
@@ -593,13 +793,21 @@ function ToolCard({ tool, compact = false, onClick }: { tool: any; compact?: boo
             )}
           </div>
 
+          {/* Vendor & Version */}
+          {!compact && (tool.vendor || tool.version) && (
+            <div className="text-xs text-gray-500 space-y-1">
+              {tool.vendor && <div>Vendor: {tool.vendor}</div>}
+              {tool.version && <div>Version: {tool.version}</div>}
+            </div>
+          )}
+
           {/* Metadata */}
           {!compact && tool.metadata && typeof tool.metadata === 'object' && (
             <div className="text-xs text-gray-500 space-y-1">
-              {'license' in tool.metadata && (
+              {'license' in tool.metadata && tool.metadata.license && (
                 <div>License: {tool.metadata.license}</div>
               )}
-              {'language' in tool.metadata && (
+              {'language' in tool.metadata && tool.metadata.language && (
                 <div>Language: {tool.metadata.language}</div>
               )}
             </div>
@@ -612,6 +820,7 @@ function ToolCard({ tool, compact = false, onClick }: { tool: any; compact?: boo
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              onClick={(e) => e.stopPropagation()}
             >
               <ExternalLink className="h-3 w-3" />
               Documentation
@@ -624,13 +833,28 @@ function ToolCard({ tool, compact = false, onClick }: { tool: any; compact?: boo
 }
 
 function ToolListItem({ tool, onClick }: { tool: any; onClick?: (tool: any) => void }) {
-  const categoryConfig = TOOL_CATEGORIES[tool.category as keyof typeof TOOL_CATEGORIES];
+  const categoryConfig = TOOL_CATEGORIES[tool.category] || 
+                         TOOL_CATEGORIES[tool.category_parent] ||
+                         null;
   const Icon = categoryConfig?.icon || Database;
   const lifecycleBadge = LIFECYCLE_BADGES[tool.lifecycle_stage as keyof typeof LIFECYCLE_BADGES];
   const LifecycleIcon = lifecycleBadge?.icon || AlertCircle;
 
+  // Format category display name
+  const formatCategory = (category: string) => {
+    if (!category) return '';
+    return category
+      .replace('Healthcare/', '')
+      .replace('Strategic Intelligence/', '')
+      .replace('Academic/', '')
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   return (
-    <Card className="cursor-pointer hover:bg-gray-50" onClick={() => onClick?.(tool)}>
+    <Card className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800" onClick={() => onClick?.(tool)}>
       <CardContent className="py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1">
@@ -640,13 +864,18 @@ function ToolListItem({ tool, onClick }: { tool: any; onClick?: (tool: any) => v
               <p className="text-sm text-gray-500 line-clamp-1">
                 {tool.tool_description || tool.description}
               </p>
+              {tool.vendor && (
+                <p className="text-xs text-gray-400 mt-1">
+                  {tool.vendor} {tool.version && `v${tool.version}`}
+                </p>
+              )}
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            {tool.category && categoryConfig && (
-              <Badge className={categoryConfig.color}>
-                {tool.category.replace('Healthcare/', '')}
+            {tool.category && (
+              <Badge className={categoryConfig?.color || 'bg-gray-100 text-gray-800 border-gray-200'}>
+                {formatCategory(tool.category)}
               </Badge>
             )}
             
@@ -669,6 +898,7 @@ function ToolListItem({ tool, onClick }: { tool: any; onClick?: (tool: any) => v
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-800"
+                onClick={(e) => e.stopPropagation()}
               >
                 <ExternalLink className="h-4 w-4" />
               </a>

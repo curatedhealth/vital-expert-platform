@@ -1,7 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
 import { withAgentAuth, type AgentPermissionContext } from '@/middleware/agent-auth';
 import { createLogger } from '@/lib/services/observability/structured-logger';
+import { STARTUP_TENANT_ID } from '@/lib/constants/tenant';
 
 export const GET = withAgentAuth(async (
   request: NextRequest,
@@ -12,7 +14,8 @@ export const GET = withAgentAuth(async (
   const startTime = Date.now();
 
   try {
-    const supabase = await createClient();
+    // Use service client to bypass RLS for reading tools (auth is already verified by withAgentAuth)
+    const supabase = getServiceSupabaseClient();
     const { profile } = context;
 
     const { searchParams } = new URL(request.url);
@@ -31,56 +34,169 @@ export const GET = withAgentAuth(async (
       offset,
     });
 
-    // Build query using actual database column names
-    let query = supabase
-      .from('tools')
-      .select(`
-        id,
-        slug,
-        name,
-        description,
-        category,
-        tool_type,
-        implementation_type,
-        integration_name,
-        endpoint_url,
-        authentication_type,
-        function_spec,
-        configuration,
-        metadata,
-        tags,
-        average_response_time_ms,
-        is_active,
-        requires_approval,
-        usage_count,
-        success_rate,
-        tenant_id,
-        created_at,
-        updated_at,
-        deleted_at
-      `, { count: 'exact' });
-
-    // Apply tenant filtering using allowed_tenants array
-    if (showAll && (profile.role === 'super_admin' || profile.role === 'admin')) {
-      logger.debug('tools_get_admin_view_all_tenants', { operationId });
-    } else {
-      query = query.contains('allowed_tenants', [profile.tenant_id]);
-      logger.debug('tools_get_tenant_filtered', { operationId, tenantId: profile.tenant_id });
-    }
-
-    // Filter by active status - only show active tools
-    query = query.eq('is_active', true);
+    // Query both tools and dh_tool tables to get all tools
+    // The dh_tool table contains tenant-specific tools with more detailed data
     
-    // Filter out soft-deleted tools
-    query = query.is('deleted_at', null);
+    // First, try to get tools from dh_tool (tenant-specific tools)
+    const { data: dhTools, error: dhError, count: dhCount } = await supabase
+      .from('dh_tool')
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', STARTUP_TENANT_ID)
+      .order('name', { ascending: true });
 
-    // Add pagination
-    query = query.range(offset, offset + limit - 1);
+    // Also get tools from the public.tools table (general tools registry)
+    const { data: publicTools, error: publicError, count: publicCount } = await supabase
+      .from('tools')
+      .select('*', { count: 'exact' })
+      .order('name', { ascending: true });
 
-    // Add ordering
-    query = query.order('name', { ascending: true });
+    // Log results from both tables
+    console.log('🔧 Tools API Debug:', {
+      dhToolsCount: dhTools?.length || 0,
+      dhCount,
+      dhError: dhError?.message,
+      publicToolsCount: publicTools?.length || 0,
+      publicCount,
+      publicError: publicError?.message,
+    });
 
-    const { data: tools, error, count } = await query;
+    logger.info('tools_get_query_result', {
+      operationId,
+      dhToolsCount: dhTools?.length || 0,
+      publicToolsCount: publicTools?.length || 0,
+      dhError: dhError?.message,
+      publicError: publicError?.message,
+      tenantId: profile.tenant_id,
+    });
+
+    // Use dh_tool if it has data, otherwise fallback to public.tools
+    // This ensures we always return tools even if one table is empty
+    let rawTools: any[] = [];
+    let error: any = null;
+    let count = 0;
+
+    if (dhTools && dhTools.length > 0) {
+      // Use dh_tool data (tenant-specific tools)
+      rawTools = dhTools;
+      error = dhError;
+      count = dhCount || dhTools.length;
+      console.log('🔧 Using dh_tool table:', rawTools.length, 'tools');
+    } else if (publicTools && publicTools.length > 0) {
+      // Fallback to public.tools table
+      rawTools = publicTools;
+      error = publicError;
+      count = publicCount || publicTools.length;
+      console.log('🔧 Using public.tools table:', rawTools.length, 'tools');
+    } else {
+      // Both tables are empty or errored
+      error = dhError || publicError;
+      console.log('🔧 No tools found in either table');
+    }
+    
+    // Map tool columns to the format expected by the frontend
+    // Handle both dh_tool and public.tools schemas
+    const tools = (rawTools || []).map((tool: any) => {
+      // Determine which schema we're dealing with based on available fields
+      const isDhTool = 'code' in tool || 'unique_id' in tool;
+      
+      // Get category from available fields
+      const category = tool.category || tool.category_parent || tool.category_name || 'General';
+      const metadata = tool.metadata || {};
+      
+      if (isDhTool) {
+        // dh_tool schema mapping
+        return {
+          id: tool.id,
+          slug: tool.code || tool.unique_id,
+          name: tool.name,
+          description: tool.tool_description || tool.llm_description || tool.notes,
+          tool_description: tool.tool_description || tool.llm_description,
+          category: category,
+          category_parent: tool.category_parent || category,
+          tool_type: tool.tool_type || 'function',
+          implementation_type: tool.implementation_type || tool.tool_type || 'function',
+          integration_name: tool.function_name || tool.implementation_path,
+          endpoint_url: tool.documentation_url,
+          function_spec: tool.input_schema,
+          configuration: tool.output_schema,
+          metadata: {
+            vendor: tool.vendor,
+            version: tool.version,
+            license: metadata.license,
+            tier: metadata.tier,
+            use_cases: metadata.use_cases,
+            key_packages: metadata.key_packages,
+            ...metadata,
+          },
+          tags: tool.tags || tool.capabilities || [],
+          average_response_time_ms: tool.max_execution_time_seconds ? tool.max_execution_time_seconds * 1000 : null,
+          is_active: tool.is_active !== false,
+          requires_approval: tool.access_level === 'premium' || tool.access_level === 'restricted',
+          usage_count: tool.usage_count || 0,
+          success_rate: tool.success_rate,
+          tenant_id: tool.tenant_id,
+          created_at: tool.created_at,
+          updated_at: tool.updated_at,
+          deleted_at: null,
+          lifecycle_stage: tool.lifecycle_stage || 'production',
+          langgraph_compatible: tool.langgraph_compatible !== false,
+          documentation_url: tool.documentation_url,
+          health_status: tool.health_status || 'healthy',
+          business_impact: tool.business_impact,
+          usage_guide: tool.usage_guide,
+          vendor: tool.vendor,
+          version: tool.version,
+          unique_id: tool.unique_id,
+          code: tool.code,
+        };
+      } else {
+        // public.tools schema mapping
+        return {
+          id: tool.id,
+          slug: tool.tool_key || tool.slug,
+          name: tool.name,
+          description: tool.description,
+          tool_description: tool.description,
+          category: category,
+          category_parent: category,
+          tool_type: tool.tool_type || 'function',
+          implementation_type: tool.tool_type || 'function',
+          integration_name: tool.implementation_path,
+          endpoint_url: tool.api_endpoint || tool.documentation_url,
+          function_spec: tool.input_schema,
+          configuration: tool.usage_examples,
+          metadata: {
+            requires_api_key: tool.requires_api_key,
+            api_key_env_var: tool.api_key_env_var,
+            is_premium: tool.is_premium,
+            output_format: tool.output_format,
+            best_practices: tool.best_practices,
+            limitations: tool.limitations,
+            ...metadata,
+          },
+          tags: tool.best_practices || [],
+          average_response_time_ms: tool.avg_response_time_ms,
+          is_active: tool.is_active !== false,
+          requires_approval: tool.requires_approval,
+          usage_count: tool.total_calls || 0,
+          success_rate: tool.success_rate,
+          tenant_id: null,
+          created_at: tool.created_at,
+          updated_at: tool.updated_at,
+          deleted_at: null,
+          lifecycle_stage: 'production',
+          langgraph_compatible: true,
+          documentation_url: tool.documentation_url,
+          health_status: 'healthy',
+          business_impact: null,
+          usage_guide: null,
+          vendor: null,
+          version: '1.0.0',
+          unique_id: tool.tool_key,
+          code: tool.tool_key,
+        };
+      }
+    });
 
     if (error) {
       const duration = Date.now() - startTime;
@@ -122,14 +238,14 @@ export const GET = withAgentAuth(async (
     logger.infoWithMetrics('tools_get_completed', duration, {
       operation: 'GET /api/tools-crud',
       operationId,
-      toolCount: tools?.length || 0,
+      toolCount: tools.length,
       totalCount: count,
     });
 
     return NextResponse.json({
       success: true,
-      tools: tools || [],
-      count: count || 0,
+      tools,
+      count: count || tools.length,
       limit,
       offset,
     });

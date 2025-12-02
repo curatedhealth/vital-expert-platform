@@ -21,7 +21,7 @@ export type ArchetypeKey = 'AUTOMATOR' | 'ORCHESTRATOR' | 'LEARNER' | 'SKEPTIC'
 
 export type ODITier = 'extreme' | 'high' | 'moderate' | 'table-stakes'
 
-export type ViewMode = 'stack' | 'radar' | 'heatmap' | 'flow' | 'metrics'
+export type ViewMode = 'stack' | 'radar' | 'heatmap' | 'flow' | 'metrics' | 'list'
 
 export interface LayerData {
   key: LayerKey

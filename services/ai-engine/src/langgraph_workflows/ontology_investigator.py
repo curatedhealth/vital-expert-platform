@@ -1079,7 +1079,7 @@ async def get_persona_distribution() -> Dict[str, Any]:
         return {"error": str(e)}
 
 
-async def get_opportunity_scores(function_id: Optional[str] = None) -> List[Dict[str, Any]]:
+async def get_opportunity_scores(function_id: Optional[str] = None, limit: int = 200) -> List[Dict[str, Any]]:
     """Score roles by AI transformation opportunity"""
     try:
         supabase = get_supabase_client()
@@ -1087,7 +1087,8 @@ async def get_opportunity_scores(function_id: Optional[str] = None) -> List[Dict
         # Get roles with correct columns - use asyncio.to_thread for sync Supabase client
         role_cols = "id, name, slug, function_id, department_id, seniority_level, travel_percentage_min, travel_percentage_max"
         role_filters = {"function_id": function_id} if function_id else None
-        roles = await asyncio.to_thread(_sync_query, supabase, "org_roles", role_cols, role_filters, 200)
+        # Query up to 'limit' roles to support larger datasets (1149+ roles exist)
+        roles = await asyncio.to_thread(_sync_query, supabase, "org_roles", role_cols, role_filters, limit)
 
         # Get functions and departments for enrichment
         functions = await asyncio.to_thread(_sync_query, supabase, "org_functions", "id, name")
@@ -1151,7 +1152,7 @@ async def get_opportunity_scores(function_id: Optional[str] = None) -> List[Dict
         # Sort by score descending
         opportunities.sort(key=lambda x: x["opportunity_score"], reverse=True)
 
-        return opportunities[:50]  # Top 50 opportunities
+        return opportunities[:limit]  # Return top N opportunities (default 200)
     except Exception as e:
         logger.error(f"Error calculating opportunities: {e}")
         return []
@@ -1353,8 +1354,9 @@ def _format_context(context: Dict[str, Any]) -> str:
 
         if "gaps_by_function" in gap:
             parts.append("\n### Gaps by Function:")
-            for func, roles in list(gap["gaps_by_function"].items())[:5]:
-                parts.append(f"- {func}: {len(roles)} uncovered roles")
+            for func, role_count in list(gap["gaps_by_function"].items())[:5]:
+                # role_count is already an int (the count), not a list
+                parts.append(f"- {func}: {role_count} uncovered roles")
 
     if "persona_distribution" in context:
         dist = context["persona_distribution"]

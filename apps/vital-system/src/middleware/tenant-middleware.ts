@@ -18,8 +18,8 @@ const SUBDOMAIN_TO_TENANT_KEY: Record<string, string> = {
 // Default tenant if no subdomain or unknown subdomain
 const DEFAULT_TENANT_KEY = 'vital-system';
 
-// Platform Tenant ID (fallback)
-const PLATFORM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+// Platform Tenant ID (fallback) - VITAL System tenant
+const PLATFORM_TENANT_ID = 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
 
 export async function tenantMiddleware(
   request: NextRequest,

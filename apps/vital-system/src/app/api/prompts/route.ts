@@ -108,10 +108,8 @@ export const GET = withPromptAuth(async (
       return !status || status === 'active';
     }) || [];
 
-    // Post-process to add derived fields and map suites from metadata
+    // Post-process to add derived fields and map suites based on role/function
     const enrichedPrompts = prompts?.map(prompt => {
-      // Extract suite from metadata (stored in Supabase)
-      // Try to get suite from metadata first (from CSV import)
       let suite = null;
       
       // Check if we have metadata with suite information
@@ -120,44 +118,95 @@ export const GET = withPromptAuth(async (
         suite = metadata.suite || null;
       }
       
-      // If no suite in metadata, try to infer from name/domain/display_name
+      // If no suite in metadata, infer from prompt name, content, and category
       if (!suite) {
         const nameLower = (prompt.name || '').toLowerCase();
-        const displayNameLower = (prompt.display_name || '').toLowerCase();
+        const contentLower = (prompt.content || '').toLowerCase();
         const categoryLower = (prompt.category || '').toLowerCase();
-        const domainLower = (prompt.domain || '').toLowerCase();
+        const titleLower = (prompt.title || '').toLowerCase();
         
-        // Check for suite prefixes (e.g., "GUARD_MANAGE_PV...", "VALUE_BUDGET...")
-        // These prompts from CSV have suite prefixes in their names
-        if (nameLower.startsWith('rules') || displayNameLower.includes('rules') || nameLower.includes('_rules_') || domainLower.includes('regulatory')) {
-          suite = 'RULES™';
-        } else if (nameLower.startsWith('trial') || displayNameLower.includes('trial') || nameLower.includes('_trial_') || domainLower.includes('clinical')) {
-          suite = 'TRIALS™';
-        } else if (nameLower.startsWith('guard') || displayNameLower.includes('guard') || nameLower.includes('_guard_') || nameLower.includes('guard_') || domainLower.includes('safety')) {
-          suite = 'GUARD™';
-        } else if (nameLower.startsWith('value') || displayNameLower.includes('value') || nameLower.includes('_value_') || nameLower.includes('value_') || domainLower.includes('commercial')) {
-          suite = 'VALUE™';
-        } else if (nameLower.startsWith('bridge') || displayNameLower.includes('bridge') || nameLower.includes('_bridge_') || nameLower.includes('bridge_')) {
-          suite = 'BRIDGE™';
-        } else if (nameLower.startsWith('proof') || displayNameLower.includes('proof') || nameLower.includes('_proof_') || nameLower.includes('proof_')) {
-          suite = 'PROOF™';
-        } else if (nameLower.startsWith('craft') || displayNameLower.includes('craft') || nameLower.includes('_craft_') || nameLower.includes('craft_')) {
-          suite = 'CRAFT™';
-        } else if (nameLower.startsWith('scout') || displayNameLower.includes('scout') || nameLower.includes('_scout_') || nameLower.includes('scout_')) {
-          suite = 'SCOUT™';
-        } else if (nameLower.startsWith('project') || displayNameLower.includes('project') || nameLower.includes('_project_') || nameLower.includes('project_') || domainLower.includes('project')) {
-          suite = 'PROJECT™';
-        } else if (nameLower.startsWith('forge') || displayNameLower.includes('forge') || nameLower.includes('_forge_') || nameLower.includes('forge_')) {
+        // RULES™ - Regulatory Excellence (FDA, EMA, compliance, regulatory affairs)
+        const rulesKeywords = ['regulatory', 'fda', 'ema', 'compliance', 'gmp', 'quality', 'validation', 'audit', 'cmc', 'nda', 'bla', 'ind', 'submission', 'dossier', 'deficiency', 'guidance', 'approval'];
+        
+        // TRIALS™ - Clinical Development (clinical trials, protocols, investigators)
+        const trialsKeywords = ['clinical trial', 'protocol', 'investigator', 'study design', 'endpoint', 'randomization', 'placebo', 'phase i', 'phase ii', 'phase iii', 'clinical operations', 'site selection', 'patient recruitment', 'clinical data', 'cro', 'irb', 'ethics committee', 'informed consent', 'clinical study'];
+        
+        // GUARD™ - Safety Framework (pharmacovigilance, adverse events, safety)
+        const guardKeywords = ['safety', 'pharmacovigilance', 'adverse event', 'signal detection', 'risk management', 'psur', 'pbrer', 'aggregate report', 'safety database', 'medical monitor', 'toxicology', 'genotoxicity', 'carcinogenicity', 'reproductive toxicology'];
+        
+        // VALUE™ - Market Access (HEOR, pricing, reimbursement, payer)
+        const valueKeywords = ['market access', 'heor', 'health economics', 'pricing', 'reimbursement', 'payer', 'formulary', 'hta', 'value dossier', 'cost-effectiveness', 'budget impact', 'outcomes research', 'national account', 'contracting', 'gross-to-net'];
+        
+        // BRIDGE™ - Stakeholder Engagement (MSL, KOL, medical affairs)
+        const bridgeKeywords = ['medical science liaison', 'msl', 'kol', 'key opinion leader', 'medical affairs', 'advisory board', 'speaker program', 'medical information', 'field medical', 'regional medical', 'therapeutic area'];
+        
+        // PROOF™ - Evidence Analytics (real-world evidence, data analysis, outcomes)
+        const proofKeywords = ['real-world evidence', 'rwe', 'evidence synthesis', 'systematic review', 'meta-analysis', 'data analysis', 'biostatistic', 'epidemiolog', 'database analysis', 'patient-reported outcomes', 'pro study'];
+        
+        // CRAFT™ - Medical Writing (publications, manuscripts, medical writing)
+        const craftKeywords = ['medical writer', 'publication', 'manuscript', 'abstract', 'poster', 'medical content', 'medical editor', 'medical communication', 'scientific writing', 'document'];
+        
+        // SCOUT™ - Competitive Intelligence (market research, competitive analysis)
+        const scoutKeywords = ['competitive intelligence', 'market research', 'brand strategy', 'brand manager', 'marketing', 'customer insight', 'omnichannel', 'digital marketing', 'sales force', 'territory design'];
+        
+        // PROJECT™ - Project Management (project coordination, operations)
+        const projectKeywords = ['project', 'operations', 'coordination', 'planning', 'scheduling', 'manufacturing', 'supply chain', 'inventory', 'logistics', 'warehouse', 'production', 'process optimization'];
+        
+        // FORGE™ - Digital Health (digital therapeutics, AI, software)
+        const forgeKeywords = ['digital health', 'digital therapeutic', 'dtx', 'samd', 'software', 'ai ', 'machine learning', 'nlp', 'natural language', 'digital biomarker', 'mobile health', 'telemedicine', 'organ-on-chip', 'organoid', 'in silico', '3d bioprinting'];
+        
+        // Helper function to check if text contains any keywords
+        const containsKeywords = (text: string, keywords: string[]) => 
+          keywords.some(keyword => text.includes(keyword));
+        
+        const combinedText = `${nameLower} ${contentLower} ${titleLower}`;
+        
+        // Check each suite in priority order
+        if (containsKeywords(combinedText, forgeKeywords)) {
           suite = 'FORGE™';
-        } else {
-          // Default to RULES if we can't determine
+        } else if (containsKeywords(combinedText, guardKeywords)) {
+          suite = 'GUARD™';
+        } else if (containsKeywords(combinedText, trialsKeywords)) {
+          suite = 'TRIALS™';
+        } else if (containsKeywords(combinedText, valueKeywords)) {
+          suite = 'VALUE™';
+        } else if (containsKeywords(combinedText, bridgeKeywords)) {
+          suite = 'BRIDGE™';
+        } else if (containsKeywords(combinedText, proofKeywords)) {
+          suite = 'PROOF™';
+        } else if (containsKeywords(combinedText, craftKeywords)) {
+          suite = 'CRAFT™';
+        } else if (containsKeywords(combinedText, scoutKeywords)) {
+          suite = 'SCOUT™';
+        } else if (containsKeywords(combinedText, projectKeywords)) {
+          suite = 'PROJECT™';
+        } else if (containsKeywords(combinedText, rulesKeywords)) {
           suite = 'RULES™';
+        } else if (categoryLower === 'clinical') {
+          suite = 'TRIALS™';
+        } else if (categoryLower === 'regulatory') {
+          suite = 'RULES™';
+        } else if (categoryLower === 'market-access') {
+          suite = 'VALUE™';
+        } else if (categoryLower === 'medical-affairs') {
+          suite = 'BRIDGE™';
+        } else {
+          // Default based on common patterns in name
+          if (nameLower.includes('analyst') || nameLower.includes('data')) {
+            suite = 'PROOF™';
+          } else if (nameLower.includes('manager') || nameLower.includes('coordinator')) {
+            suite = 'PROJECT™';
+          } else {
+            suite = 'RULES™';
+          }
         }
       }
       
       return {
         ...prompt,
         suite: suite,
+        // Use title as display_name if available, otherwise use name
+        display_name: prompt.title || prompt.name,
         is_user_created: prompt.created_by !== null
       };
     }) || [];

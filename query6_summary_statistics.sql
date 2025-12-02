@@ -20,9 +20,7 @@ SELECT
    AND r.geographic_scope IS NOT NULL) as roles_with_complete_fields,
    
   (SELECT COUNT(*) FROM personas p
-   JOIN org_roles r ON p.role_id = r.id
+   JOIN org_roles r ON p.source_role_id = r.id
    JOIN org_departments d ON r.department_id = d.id
    JOIN org_functions f ON d.function_id = f.id
-   WHERE f.industry = 'Digital Health'
-   AND p.deleted_at IS NULL) as total_dh_personas;
-
+   WHERE f.industry = 'Digital Health') as total_dh_personas;

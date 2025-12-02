@@ -158,6 +158,10 @@ async function normalizeAgent(agent: any, adminSupabase: any) {
   const avatarValue = agent.avatar_url || metadata.avatar || '🤖';
   const resolvedAvatar = await resolveAvatarUrl(avatarValue, adminSupabase);
 
+  // Get tier from agent_levels relationship if available, otherwise fallback to metadata
+  const agentLevel = agent.agent_levels;
+  const tier = agentLevel?.level_number || metadata.tier || 3; // Default to 3 (Specialist) if not set
+
   return {
     id: agent.id,
     name: agent.name,
@@ -171,7 +175,7 @@ async function normalizeAgent(agent: any, adminSupabase: any) {
     capabilities: normalizedCapabilities,
     specializations: agent.specializations || [],
     knowledge_domains: metadata.knowledge_domains || [],
-    tier: metadata.tier || 1,
+    tier: tier,
     model: agent.base_model || metadata.model || 'gpt-4',
     avatar: resolvedAvatar,
     avatar_url: agent.avatar_url,
@@ -187,6 +191,9 @@ async function normalizeAgent(agent: any, adminSupabase: any) {
     role: metadata.role || null,
     created_at: agent.created_at,
     updated_at: agent.updated_at,
+    // Include agent_levels for frontend level display
+    agent_levels: agentLevel || null,
+    agent_level_id: agent.agent_level_id || null,
   };
 }
 
@@ -284,7 +291,7 @@ export const GET = withAgentAuth(async (
 
           const { data: batchData, error: batchError } = await supabase
             .from('agents')
-            .select('*')
+            .select('*, agent_levels(id, name, slug, level_number, can_spawn_lower_levels)')
             .order('name', { ascending: true })
             .range(start, end);
 
@@ -309,7 +316,7 @@ export const GET = withAgentAuth(async (
         // For non-superadmin, use normal query
         let query = supabase
           .from('agents')
-          .select('*');
+          .select('*, agent_levels(id, name, slug, level_number, can_spawn_lower_levels)');
 
         if (profile?.tenant_id) {
           // Try allowed_tenants first
@@ -346,7 +353,7 @@ export const GET = withAgentAuth(async (
       try {
         let query = supabase
           .from('agents')
-          .select('*');
+          .select('*, agent_levels(id, name, slug, level_number, can_spawn_lower_levels)');
         
         // Apply tenant filtering only
         if (isVitalSystemTenant || isDevBypass) {
@@ -388,7 +395,7 @@ export const GET = withAgentAuth(async (
       try {
         const result = await supabase
           .from('agents')
-          .select('*')
+          .select('*, agent_levels(id, name, slug, level_number, can_spawn_lower_levels)')
           .limit(1000);
         
         agents = result.data;
@@ -458,10 +465,12 @@ export const GET = withAgentAuth(async (
                 system_prompt: agent.system_prompt || '',
                 capabilities: agent.capabilities || agent.specializations || [],
                 status: agent.status || 'active',
-                tier: agent.metadata?.tier || 1,
+                tier: agent.agent_levels?.level_number || agent.metadata?.tier || 3,
                 model: agent.base_model || agent.metadata?.model || 'gpt-4',
                 avatar: agent.avatar_url || agent.metadata?.avatar || '🤖',
                 metadata: agent.metadata || {},
+                agent_levels: agent.agent_levels || null,
+                agent_level_id: agent.agent_level_id || null,
               };
             }
           })
@@ -477,10 +486,12 @@ export const GET = withAgentAuth(async (
           system_prompt: agent.system_prompt || '',
           capabilities: agent.capabilities || agent.specializations || [],
           status: agent.status || 'active',
-          tier: agent.metadata?.tier || 1,
+          tier: agent.agent_levels?.level_number || agent.metadata?.tier || 3,
           model: agent.base_model || agent.metadata?.model || 'gpt-4',
           avatar: agent.avatar_url || agent.metadata?.avatar || '🤖',
           metadata: agent.metadata || {},
+          agent_levels: agent.agent_levels || null,
+          agent_level_id: agent.agent_level_id || null,
         }));
       }
     } catch (normalizeError) {
@@ -497,10 +508,12 @@ export const GET = withAgentAuth(async (
         system_prompt: agent.system_prompt || '',
         capabilities: agent.capabilities || agent.specializations || [],
         status: agent.status || 'active',
-        tier: agent.metadata?.tier || 1,
+        tier: agent.agent_levels?.level_number || agent.metadata?.tier || 3,
         model: agent.base_model || agent.metadata?.model || 'gpt-4',
         avatar: agent.avatar_url || agent.metadata?.avatar || '🤖',
         metadata: agent.metadata || {},
+        agent_levels: agent.agent_levels || null,
+        agent_level_id: agent.agent_level_id || null,
       }));
     }
 

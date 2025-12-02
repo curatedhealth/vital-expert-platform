@@ -25,8 +25,16 @@ from transformers import (
     AutoModelForSequenceClassification,
     pipeline
 )
-import spacy
-from spacy.tokens import Doc
+
+# Optional spacy import - not required for basic functionality
+try:
+    import spacy
+    from spacy.tokens import Doc
+    SPACY_AVAILABLE = True
+except ImportError:
+    spacy = None
+    Doc = None
+    SPACY_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -143,12 +151,18 @@ class EvidenceDetector:
         # Load models
         self._load_models(scibert_model, biobert_ner_model)
 
-        # Load spaCy for additional NLP tasks
+        # Load spaCy for additional NLP tasks (graceful degradation)
+        self.nlp = None
         try:
             self.nlp = spacy.load("en_core_sci_md")  # scispaCy model
+            logger.info("Loaded scispaCy model: en_core_sci_md")
         except OSError:
-            logger.warning("scispaCy model not found, using default")
-            self.nlp = spacy.load("en_core_web_sm")
+            logger.warning("scispaCy model not found, trying default model")
+            try:
+                self.nlp = spacy.load("en_core_web_sm")
+                logger.info("Loaded spaCy model: en_core_web_sm")
+            except OSError:
+                logger.warning("No spaCy models available - NLP features will be limited")
 
         # Citation patterns
         self._citation_patterns = self._compile_citation_patterns()
@@ -365,24 +379,25 @@ class EvidenceDetector:
                 )
                 entities.append(entity)
 
-        # Also use scispaCy for additional entities
-        doc = self.nlp(text)
+        # Also use scispaCy for additional entities (if available)
+        if self.nlp is not None:
+            doc = self.nlp(text)
 
-        for ent in doc.ents:
-            entity_type = self._map_spacy_label(ent.label_)
+            for ent in doc.ents:
+                entity_type = self._map_spacy_label(ent.label_)
 
-            if entity_type:
-                entity = MedicalEntity(
-                    text=ent.text,
-                    entity_type=entity_type,
-                    start=ent.start_char,
-                    end=ent.end_char,
-                    confidence=0.8  # Default confidence for spaCy
-                )
+                if entity_type:
+                    entity = MedicalEntity(
+                        text=ent.text,
+                        entity_type=entity_type,
+                        start=ent.start_char,
+                        end=ent.end_char,
+                        confidence=0.8  # Default confidence for spaCy
+                    )
 
-                # Avoid duplicates
-                if not any(e.text == entity.text for e in entities):
-                    entities.append(entity)
+                    # Avoid duplicates
+                    if not any(e.text == entity.text for e in entities):
+                        entities.append(entity)
 
         return entities
 
@@ -539,16 +554,23 @@ class EvidenceDetector:
         Returns:
             List of (start, end, text) tuples
         """
-        doc = self.nlp(text)
         spans = []
 
-        # Split into sentences
-        for sent in doc.sents:
-            sent_text = sent.text.strip()
-
-            # Check if sentence contains evidence keywords
-            if self._contains_evidence_keywords(sent_text):
-                spans.append((sent.start_char, sent.end_char, sent_text))
+        # Split into sentences (with fallback if spaCy unavailable)
+        if self.nlp is not None:
+            doc = self.nlp(text)
+            for sent in doc.sents:
+                sent_text = sent.text.strip()
+                if self._contains_evidence_keywords(sent_text):
+                    spans.append((sent.start_char, sent.end_char, sent_text))
+        else:
+            # Fallback: simple regex-based sentence splitting
+            sentence_pattern = re.compile(r'[^.!?]+[.!?]+')
+            pos = 0
+            for match in sentence_pattern.finditer(text):
+                sent_text = match.group().strip()
+                if self._contains_evidence_keywords(sent_text):
+                    spans.append((match.start(), match.end(), sent_text))
 
         # Merge adjacent sentences with evidence
         merged_spans = self._merge_adjacent_spans(spans, text)

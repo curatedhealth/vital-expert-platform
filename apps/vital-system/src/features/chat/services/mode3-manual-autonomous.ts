@@ -846,7 +846,7 @@ const AI_ENGINE_URL =
 const DEFAULT_TENANT_ID =
   process.env.API_GATEWAY_TENANT_ID ||
   process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID ||
-  '00000000-0000-0000-0000-000000000001';
+  'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244'; // VITAL System tenant ID
 
 interface Mode3AutonomousAutomaticApiResponse {
   agent_id: string;
@@ -917,10 +917,10 @@ export async function* executeMode3(config: Mode3Config): AsyncGenerator<Autonom
     };
 
     // Call AI Engine Mode 3 endpoint directly (bypasses API Gateway for agentic workflows)
-    // Mode 3 = Auto Selection + Agentic (system picks expert + CoT/ToT/ReAct reasoning)
+    // Mode 3 = Manual Selection + Agentic (user picks expert + CoT/ToT/ReAct reasoning)
     const agenticPayload = {
-      query: config.message,
-      mode: 'autonomous_automatic', // Mode 3: automatic agent selection + agentic reasoning
+      message: config.message,
+      mode: 'autonomous_manual', // Mode 3: manual agent selection + agentic reasoning
       tenant_id: config.tenantId || DEFAULT_TENANT_ID,
       session_id: config.sessionId,
       user_id: config.userId,
@@ -937,7 +937,7 @@ export async function* executeMode3(config: Mode3Config): AsyncGenerator<Autonom
       confidence_threshold: config.confidenceThreshold ?? 0.95,
     };
 
-    const response = await fetch(`${AI_ENGINE_URL}/api/mode3/autonomous-automatic`, {
+    const response = await fetch(`${AI_ENGINE_URL}/api/mode3/autonomous-manual`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

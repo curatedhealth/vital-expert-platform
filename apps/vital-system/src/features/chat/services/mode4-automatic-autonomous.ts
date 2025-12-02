@@ -859,26 +859,30 @@ export class Mode4AutonomousManualHandler {
 const AI_ENGINE_URL =
   process.env.PYTHON_AI_ENGINE_URL ||
   process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL ||
-  'http://localhost:8000'; // Default to AI Engine port for agentic modes
+  'http://127.0.0.1:8000'; // Default to AI Engine port for agentic modes (use IPv4 to avoid resolution issues)
 
 const DEFAULT_TENANT_ID =
   process.env.API_GATEWAY_TENANT_ID ||
   process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID ||
-  '00000000-0000-0000-0000-000000000001';
+  'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244'; // VITAL System tenant ID
 
 interface Mode4AutonomousManualApiResponse {
   agent_id: string;
+  selected_agents?: string[];
   content: string;
   confidence: number;
   citations: Array<Record<string, unknown>>;
+  reasoning?: Array<Record<string, unknown>>;
   metadata: Record<string, unknown>;
   processing_time_ms: number;
-  autonomous_reasoning: {
+  autonomous_reasoning?: {
     iterations: number;
     tools_used: string[];
     reasoning_steps: string[];
     confidence_threshold: number;
     max_iterations: number;
+    strategy?: string;
+    final_answer_validated?: boolean;
   };
 }
 
@@ -917,11 +921,11 @@ export async function* executeMode4(
 
   try {
     // Call AI Engine Mode 4 endpoint directly (bypasses API Gateway for agentic workflows)
-    // Mode 4 (this file): Manual Selection + Agentic (user picks expert + CoT/ToT/ReAct reasoning)
+    // Mode 4 (this file): Automatic Selection + Agentic (AI picks expert + CoT/ToT/ReAct reasoning)
     const agenticPayload = {
-      query: config.message,
-      mode: 'autonomous_manual', // Manual selection + agentic reasoning
-      expert_id: config.agentId, // User-selected specific agent
+      message: config.message,
+      mode: 'autonomous_automatic', // Automatic selection + agentic reasoning
+      agent_id: config.agentId, // Optional - AI auto-selects if not provided
       tenant_id: config.tenantId || DEFAULT_TENANT_ID,
       session_id: config.sessionId,
       user_id: config.userId,
@@ -939,7 +943,7 @@ export async function* executeMode4(
     };
 
     const response = await fetch(
-      `${AI_ENGINE_URL}/api/mode4/autonomous-manual`,
+      `${AI_ENGINE_URL}/api/mode4/autonomous-automatic`,
       {
         method: 'POST',
         headers: {
@@ -959,6 +963,18 @@ export async function* executeMode4(
 
     const result =
       (await response.json()) as Mode4AutonomousManualApiResponse;
+
+    // Debug logging
+    console.log('🔍 [Mode 4] API Response received:', {
+      hasContent: !!result.content,
+      contentLength: result.content?.length ?? 0,
+      contentPreview: result.content?.substring(0, 100) ?? 'EMPTY',
+      agentId: result.agent_id,
+      selectedAgents: result.selected_agents?.slice(0, 3),
+      citationsCount: result.citations?.length ?? 0,
+      confidence: result.confidence,
+      hasAutonomousReasoning: !!result.autonomous_reasoning,
+    });
 
     if (result.autonomous_reasoning) {
       yield {
@@ -1001,24 +1017,42 @@ export async function* executeMode4(
     });
 
     // Emit response content - stream word-by-word
-    const words = result.content.split(' ');
-    const wordsPerChunk = 3; // Stream 3 words at a time
+    // IMPORTANT: Use 'chunk' type to match frontend expectations (page.tsx handles 'chunk' type)
+    const responseContent = result.content || '';
     
-    for (let i = 0; i < words.length; i += wordsPerChunk) {
-      const chunkContent = words.slice(i, i + wordsPerChunk).join(' ') + (i + wordsPerChunk < words.length ? ' ' : '');
+    if (!responseContent) {
+      console.warn('⚠️ [Mode 4] Empty content received from API');
       yield {
-        type: 'content',
-        content: chunkContent,
+        type: 'chunk',  // Changed from 'content' to 'chunk' for frontend compatibility
+        content: 'No response content was generated. Please try again.',
         metadata: {
-          confidence: result.confidence,
+          confidence: result.confidence ?? 0,
           iterations: result.autonomous_reasoning?.iterations ?? 0,
           toolsUsed: result.autonomous_reasoning?.tools_used ?? [],
           agentId: result.agent_id,
         },
         timestamp: new Date().toISOString(),
       };
-      // Small delay for smoother streaming
-      await new Promise(resolve => setTimeout(resolve, 50));
+    } else {
+      const words = responseContent.split(' ');
+      const wordsPerChunk = 3; // Stream 3 words at a time
+      
+      for (let i = 0; i < words.length; i += wordsPerChunk) {
+        const chunkContent = words.slice(i, i + wordsPerChunk).join(' ') + (i + wordsPerChunk < words.length ? ' ' : '');
+        yield {
+          type: 'chunk',  // Changed from 'content' to 'chunk' for frontend compatibility
+          content: chunkContent,
+          metadata: {
+            confidence: result.confidence,
+            iterations: result.autonomous_reasoning?.iterations ?? 0,
+            toolsUsed: result.autonomous_reasoning?.tools_used ?? [],
+            agentId: result.agent_id,
+          },
+          timestamp: new Date().toISOString(),
+        };
+        // Small delay for smoother streaming
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
     }
 
     yield {

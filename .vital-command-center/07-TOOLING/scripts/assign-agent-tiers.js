@@ -2,7 +2,14 @@
 
 /**
  * Assign Tier Numbers to All Agents
- * Based on seniority and role complexity
+ * Based on VITAL 5-Level Hierarchy (CORRECTED)
+ * 
+ * CORRECT HIERARCHY:
+ * - Level 1 (MASTER): Department Heads ONLY (one per department)
+ * - Level 2 (EXPERT): Senior/Director Level (Directors, VPs, Senior roles, Leads)
+ * - Level 3 (SPECIALIST): Mid/Entry Level (Managers, MSLs, Coordinators)
+ * - Level 4 (WORKER): Task Executors (Analysts, Associates, Assistants)
+ * - Level 5 (TOOL): API Wrappers & Micro-agents
  */
 
 const { createClient } = require('@supabase/supabase-js');
@@ -13,48 +20,123 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Tier classification:
-// Tier 1: C-Suite executives, Directors, strategic leadership roles
-// Tier 2: Managers, specialists with significant expertise
-// Tier 3: Individual contributors, entry-level specialists
+/**
+ * Determine tier based on agent name/role patterns
+ * CORRECTED LOGIC:
+ * - Tier 1: Department Heads, CMO, Masters (NOT Directors/VPs)
+ * - Tier 2: Directors, VPs, Senior roles, Leads, Scientists, Strategists
+ * - Tier 3: Managers, MSLs, Coordinators, Specialists, Writers
+ * - Tier 4: Analysts, Associates, Assistants, Workers
+ * - Tier 5: Tools, APIs, Bots, Calculators
+ */
+function determineTier(agent) {
+  const name = (agent.display_name || agent.name || '').toLowerCase();
+  const slug = (agent.slug || '').toLowerCase();
+  const role = (agent.role || '').toLowerCase();
 
-const tierMappings = {
-  // Tier 1 - Strategic Leadership (C-Suite, Directors, Chiefs)
-  'Dr. Sarah Chen': 1, // Chief Scientific Officer
-  'Dr. Robert Kim': 1, // Chief Medical Officer
-  'Dr. Thomas Anderson': 1, // Regulatory Attorney (high-level strategic)
-  'Dr. David Wilson': 1, // Chief Business Officer
-  'Maria Gonzalez': 1, // Brand Director
-  'Quality Systems Architect': 1, // QA Director
-  'Pharmacovigilance Specialist': 1, // Pharmacovigilance Director
-  'Value-Based Care Consultant': 1, // HEOR Director
+  // Tier 1: MASTER - Department Heads ONLY
+  if (
+    name.includes('master') ||
+    slug.includes('-master') ||
+    name.includes('chief medical officer') ||
+    name.includes('cmo') ||
+    name.includes('department head') ||
+    name.includes('head of department')
+  ) {
+    return 1;
+  }
 
-  // Tier 2 - Managers and Senior Specialists
-  'Health Economics Analyst': 2, // Health Economist
-  'Real-World Evidence Specialist': 2, // RWE Scientist
-  'Healthcare Cybersecurity Specialist': 2, // Cybersecurity Specialist
-  'Patient Engagement Strategist': 2, // Payer Relations Manager
-  'Clinical Data Manager': 2, // Clinical Data Manager
-  'Biostatistician': 2, // Principal Biostatistician
-  'Digital Therapeutics Specialist': 2, // Digital Transformation Lead
-  'FDA Regulatory Strategist': 2, // Regulatory Affairs Manager
-  'Clinical Trial Designer': 2, // Clinical Trial Manager
-  'Reimbursement Strategist': 2, // Reimbursement Specialist
-  'HIPAA Compliance Officer': 2, // Compliance Manager
+  // Tier 5: TOOL - API Wrappers, Bots, Calculators (check before others)
+  if (
+    name.includes('api') ||
+    name.includes('bot') ||
+    name.includes('automation') ||
+    name.includes('wrapper') ||
+    name.includes('tool') ||
+    slug.includes('-tool') ||
+    name.includes('calculator') ||
+    name.includes('searcher') ||
+    name.includes('retriever') ||
+    name.includes('extractor') ||
+    name.includes('converter') ||
+    name.includes('parser') ||
+    name.includes('checker') ||
+    name.includes('lookup') ||
+    name.includes('plotter') ||
+    name.includes('runner') ||
+    name.includes('scorer') ||
+    name.includes('notifier') ||
+    name.includes('scheduler') ||
+    name.includes('sender')
+  ) {
+    return 5;
+  }
 
-  // Tier 3 - Individual Contributors
-  'Dr. Priya Sharma': 3, // Data Scientist
-  'Medical Writer': 3 // Medical Writer
-};
+  // Tier 4: WORKER - Task Executors
+  if (
+    name.includes('analyst') ||
+    name.includes('associate') ||
+    name.includes('assistant') ||
+    name.includes('junior') ||
+    name.includes('technician') ||
+    name.includes('administrator') ||
+    name.includes('worker') ||
+    slug.includes('-worker') ||
+    name.includes('processor') ||
+    name.includes('validator') ||
+    name.includes('reviewer') ||
+    name.includes('compiler') ||
+    name.includes('tracker') ||
+    name.includes('formatter') ||
+    name.includes('generator') ||
+    name.includes('archiver') ||
+    name.includes('monitor') ||
+    name.includes('detector') ||
+    name.includes('drafter') ||
+    name.includes('tagger') ||
+    name.includes('controller') ||
+    name.includes('builder')
+  ) {
+    return 4;
+  }
+
+  // Tier 2: EXPERT - Senior/Director Level
+  if (
+    name.includes('director') ||
+    name.includes('vp') ||
+    name.includes('vice president') ||
+    name.includes('senior') ||
+    name.includes('lead') ||
+    name.includes('scientist') ||
+    name.includes('strategist') ||
+    name.includes('principal') ||
+    name.includes('architect') ||
+    name.includes('expert') ||
+    slug.includes('-expert') ||
+    (name.includes('executive') && !name.includes('chief'))
+  ) {
+    return 2;
+  }
+
+  // Tier 3: SPECIALIST - Mid/Entry Level (default for most roles)
+  // Managers, MSLs, Coordinators, Specialists, Writers, etc.
+  return 3;
+}
 
 async function assignTiers() {
-  console.log('🔢 Assigning Tier Numbers to Agents...\n');
+  console.log('🔢 Assigning Tier Numbers to Agents (CORRECTED LOGIC)...\n');
+  console.log('📋 Tier Hierarchy:');
+  console.log('   L1 (MASTER): Department Heads ONLY');
+  console.log('   L2 (EXPERT): Directors, VPs, Senior roles, Leads');
+  console.log('   L3 (SPECIALIST): Managers, MSLs, Coordinators');
+  console.log('   L4 (WORKER): Analysts, Associates, Assistants');
+  console.log('   L5 (TOOL): APIs, Bots, Calculators\n');
 
   try {
     // Get all agents
     const { data: agents, error: fetchError } = await supabase
       .from('agents')
-      .select('id, display_name, name, role, tier');
+      .select('id, display_name, name, slug, role, tier');
 
     if (fetchError) {
       console.error('❌ Error fetching agents:', fetchError);
@@ -65,15 +147,11 @@ async function assignTiers() {
 
     let successCount = 0;
     let errorCount = 0;
+    const tierDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
 
     for (const agent of agents) {
       const agentName = agent.display_name || agent.name;
-      const tier = tierMappings[agentName];
-
-      if (tier === undefined) {
-        console.log(`⏭️  Skipped: ${agentName} (no tier mapping)`);
-        continue;
-      }
+      const tier = determineTier(agent);
 
       const { error: updateError } = await supabase
         .from('agents')
@@ -84,10 +162,13 @@ async function assignTiers() {
         console.error(`❌ Error updating ${agentName}:`, updateError.message);
         errorCount++;
       } else {
-        console.log(`✅ ${agentName}`);
-        console.log(`   Role: ${agent.role}`);
-        console.log(`   Tier: ${tier}\n`);
+        tierDistribution[tier]++;
         successCount++;
+        // Only log first few of each tier for brevity
+        if (tierDistribution[tier] <= 3) {
+          const tierNames = { 1: 'MASTER', 2: 'EXPERT', 3: 'SPECIALIST', 4: 'WORKER', 5: 'TOOL' };
+          console.log(`✅ ${agentName} → Tier ${tier} (${tierNames[tier]})`);
+        }
       }
     }
 
@@ -96,19 +177,27 @@ async function assignTiers() {
     console.log(`   ❌ Errors: ${errorCount}`);
 
     // Show tier distribution
-    console.log('\n\n🎯 Tier Distribution:');
-    const { data: tierCounts } = await supabase
-      .from('agents')
-      .select('tier');
-
-    const distribution = tierCounts.reduce((acc, agent) => {
-      acc[agent.tier] = (acc[agent.tier] || 0) + 1;
-      return acc;
-    }, {});
-
-    Object.entries(distribution).sort().forEach(([tier, count]) => {
-      console.log(`   Tier ${tier}: ${count} agents`);
+    console.log('\n🎯 Tier Distribution:');
+    const tierNames = { 
+      1: 'MASTER (Dept Heads)', 
+      2: 'EXPERT (Senior/Director)', 
+      3: 'SPECIALIST (Mid/Entry)', 
+      4: 'WORKER (Task Executors)', 
+      5: 'TOOL (API Wrappers)' 
+    };
+    
+    Object.entries(tierDistribution).sort().forEach(([tier, count]) => {
+      const percentage = ((count / successCount) * 100).toFixed(1);
+      console.log(`   Tier ${tier} - ${tierNames[tier]}: ${count} agents (${percentage}%)`);
     });
+
+    // Verify expected distribution
+    console.log('\n📈 Expected vs Actual:');
+    console.log(`   L1 (MASTER): Expected ~9, Got ${tierDistribution[1]}`);
+    console.log(`   L2 (EXPERT): Expected ~45-50, Got ${tierDistribution[2]}`);
+    console.log(`   L3 (SPECIALIST): Expected ~50-60, Got ${tierDistribution[3]}`);
+    console.log(`   L4 (WORKER): Expected ~18-20, Got ${tierDistribution[4]}`);
+    console.log(`   L5 (TOOL): Expected ~50+, Got ${tierDistribution[5]}`);
 
   } catch (error) {
     console.error('❌ Fatal error:', error);

@@ -1,17 +1,30 @@
 -- ============================================================================
--- ASSIGN AGENT LEVELS TO ALL AGENTS
+-- ASSIGN AGENT LEVELS TO ALL AGENTS (CORRECTED)
 -- ============================================================================
--- Based on the 5-level hierarchy:
--- Level 1: Master (Orchestrators - Directors, VPs, Chiefs)
--- Level 2: Expert (Deep specialists - Scientists, Strategists, Leads)
--- Level 3: Specialist (Focused specialists - Managers, Coordinators, Specific roles)
--- Level 4: Worker (Task executors - Analysts, Associates, Assistants)
--- Level 5: Tool (Micro-agents - Wrappers, APIs, Atomic operations)
+-- Based on VITAL 5-Level Hierarchy (REVISED):
+--
+-- Level 1: MASTER - Department Heads ONLY (one per department)
+--          Examples: CMO, Medical Leadership Master, Field Medical Master
+--
+-- Level 2: EXPERT - Senior/Director Level (10+ years experience)
+--          Examples: Directors, VPs, Senior roles, Leads, Scientists, Strategists
+--
+-- Level 3: SPECIALIST - Mid/Entry Level (5-10 years experience)
+--          Examples: Managers, MSLs, Coordinators, Writers, Specialists
+--
+-- Level 4: WORKER - Task Executors (universal, role-agnostic)
+--          Examples: Analysts, Associates, Assistants, Technicians
+--
+-- Level 5: TOOL - API Wrappers & Micro-agents (atomic operations)
+--          Examples: Bots, APIs, Automation tools, Calculators
 -- ============================================================================
 
 BEGIN;
 
--- Get level IDs
+-- First, clear all existing level assignments to start fresh
+UPDATE agents SET agent_level_id = NULL WHERE agent_level_id IS NOT NULL;
+
+-- Get level IDs for reference
 WITH level_ids AS (
     SELECT 
         id,
@@ -21,63 +34,140 @@ WITH level_ids AS (
 )
 
 -- ============================================================================
--- LEVEL 1: MASTER (Top-level orchestrators)
+-- LEVEL 1: MASTER (Department Heads ONLY)
 -- ============================================================================
--- Directors, VPs, Chiefs, C-Suite, Heads
+-- CRITICAL: Only ONE Master per department - these are the department heads
+-- NOT Directors, VPs, or other senior roles (those are Level 2)
 , master_updates AS (
 UPDATE agents 
 SET agent_level_id = (SELECT id FROM level_ids WHERE name = 'Master')
 WHERE agent_level_id IS NULL
 AND (
-    name ILIKE '%Director%' OR
-    name ILIKE '%VP%' OR
-    name ILIKE '%Vice President%' OR
-    name ILIKE '%Chief%' OR
-    name ILIKE '%Head of%' OR
-    name ILIKE '%Executive%' OR
-    name ILIKE '%President%' OR
-    name ILIKE 'Global %Lead' OR
-    name ILIKE '%C-Level%'
+    -- Explicit Master agents (department heads)
+    name ILIKE '%Master%' OR
+    slug ILIKE '%-master' OR
+    slug ILIKE '%-master-%' OR
+    
+    -- Chief Medical Officer (C-Suite department head)
+    name ILIKE '%Chief Medical Officer%' OR
+    name ILIKE '%CMO%' OR
+    
+    -- Department head patterns
+    name ILIKE '%Head of Department%' OR
+    name ILIKE '%Department Head%' OR
+    
+    -- Orchestration master agents
+    (name ILIKE '%Orchestrat%' AND name ILIKE '%Master%')
 )
 RETURNING id, name, 'Master' as assigned_level
 )
 
 -- ============================================================================
--- LEVEL 2: EXPERT (Deep domain specialists)
+-- LEVEL 2: EXPERT (Senior/Director Level)
 -- ============================================================================
--- Scientists, Strategists, Principal, Senior Leads, Experts
+-- Directors, VPs, Senior roles, Leads, Scientists, Strategists
+-- These are the senior professionals with 10+ years experience
 , expert_updates AS (
 UPDATE agents 
 SET agent_level_id = (SELECT id FROM level_ids WHERE name = 'Expert')
 WHERE agent_level_id IS NULL
 AND (
+    -- Directors (NOT department heads, but senior leaders)
+    name ILIKE '%Director%' OR
+    
+    -- Vice Presidents (senior leadership)
+    name ILIKE '%VP%' OR
+    name ILIKE '%Vice President%' OR
+    
+    -- Executive roles (but not C-suite/department heads)
+    (name ILIKE '%Executive%' AND NOT name ILIKE '%Chief%') OR
+    
+    -- Senior roles
+    name ILIKE '%Senior %' OR
+    name ILIKE '% Senior%' OR
+    
+    -- Lead roles (senior leads)
+    name ILIKE '%Lead%' OR
+    
+    -- Scientists (deep expertise)
     name ILIKE '%Scientist%' OR
+    
+    -- Strategists (strategic expertise)
     name ILIKE '%Strategist%' OR
+    
+    -- Principal roles
     name ILIKE '%Principal%' OR
-    name ILIKE '%Senior Lead%' OR
-    name ILIKE '%Expert%' OR
-    name ILIKE '%Specialist' AND name ILIKE 'Senior%' OR
-    name ILIKE '%Researcher' AND name ILIKE 'Senior%' OR
+    
+    -- Architects (system/solution architects)
     name ILIKE '%Architect%' OR
-    name ILIKE '%Lead' AND NOT name ILIKE '%Global%' OR
-    name ILIKE 'Regional%' AND name ILIKE '%Lead%'
+    
+    -- Expert suffix
+    name ILIKE '%Expert%' OR
+    slug ILIKE '%-expert' OR
+    slug ILIKE '%-expert-%' OR
+    
+    -- Global/Regional senior roles
+    (name ILIKE 'Global%' AND (
+        name ILIKE '%Director%' OR 
+        name ILIKE '%Lead%' OR 
+        name ILIKE '%Scientist%'
+    )) OR
+    (name ILIKE 'Regional%' AND (
+        name ILIKE '%Director%' OR 
+        name ILIKE '%Lead%' OR 
+        name ILIKE '%Scientist%'
+    ))
 )
 RETURNING id, name, 'Expert' as assigned_level
 )
 
 -- ============================================================================
--- LEVEL 3: SPECIALIST (Focused specialists)
+-- LEVEL 3: SPECIALIST (Mid/Entry Level)
 -- ============================================================================
--- Managers, Coordinators, Specialists, Specific Medical/Clinical roles
+-- Managers, MSLs, Coordinators, Writers, Specialists
+-- These are mid-level professionals with 5-10 years experience
 , specialist_updates AS (
 UPDATE agents 
 SET agent_level_id = (SELECT id FROM level_ids WHERE name = 'Specialist')
 WHERE agent_level_id IS NULL
 AND (
+    -- Managers (mid-level, not senior)
     name ILIKE '%Manager%' OR
+    
+    -- Medical Science Liaisons (MSLs)
+    name ILIKE '%MSL%' OR
+    name ILIKE '%Medical Science Liaison%' OR
+    
+    -- Coordinators
     name ILIKE '%Coordinator%' OR
+    
+    -- Specialists (generic)
     name ILIKE '%Specialist%' OR
+    slug ILIKE '%-specialist' OR
+    slug ILIKE '%-specialist-%' OR
+    
+    -- Writers (medical writers, etc.)
     name ILIKE '%Writer%' OR
+    
+    -- Planners
+    name ILIKE '%Planner%' OR
+    
+    -- Engineers (mid-level technical)
+    name ILIKE '%Engineer%' OR
+    
+    -- Developers
+    name ILIKE '%Developer%' OR
+    
+    -- Designers
+    name ILIKE '%Designer%' OR
+    
+    -- Advisors (non-senior)
+    name ILIKE '%Advisor%' OR
+    
+    -- Consultants
+    name ILIKE '%Consultant%' OR
+    
+    -- Medical/Clinical/Regulatory roles (mid-level)
     name ILIKE '%Medical%' OR
     name ILIKE '%Clinical%' OR
     name ILIKE '%Regulatory%' OR
@@ -85,51 +175,169 @@ AND (
     name ILIKE '%Quality%' OR
     name ILIKE '%Compliance%' OR
     name ILIKE '%Affairs%' OR
-    name ILIKE '%Advisor%' OR
-    name ILIKE '%Consultant%' OR
-    name ILIKE '%Engineer%' OR
-    name ILIKE '%Developer%' OR
-    name ILIKE '%Designer%' OR
-    name ILIKE '%Planner%'
+    
+    -- Trainers
+    name ILIKE '%Trainer%' OR
+    
+    -- Modelers
+    name ILIKE '%Modeler%'
 )
 RETURNING id, name, 'Specialist' as assigned_level
 )
 
 -- ============================================================================
--- LEVEL 4: WORKER (Task executors)
+-- LEVEL 4: WORKER (Task Executors)
 -- ============================================================================
--- Analysts, Associates, Assistants, Junior roles
+-- Analysts, Associates, Assistants, Technicians
+-- Universal task executors serving all departments
 , worker_updates AS (
 UPDATE agents 
 SET agent_level_id = (SELECT id FROM level_ids WHERE name = 'Worker')
 WHERE agent_level_id IS NULL
 AND (
+    -- Analysts (data/research)
     name ILIKE '%Analyst%' OR
+    
+    -- Associates (junior roles)
     name ILIKE '%Associate%' OR
+    
+    -- Assistants
     name ILIKE '%Assistant%' OR
+    
+    -- Junior roles
     name ILIKE 'Junior%' OR
+    name ILIKE '%Junior%' OR
+    
+    -- Technicians
     name ILIKE '%Technician%' OR
+    
+    -- Officers (operational)
     name ILIKE '%Officer%' OR
-    name ILIKE '%Administrator%'
+    
+    -- Administrators
+    name ILIKE '%Administrator%' OR
+    
+    -- Worker suffix
+    name ILIKE '%Worker%' OR
+    slug ILIKE '%-worker' OR
+    slug ILIKE '%-worker-%' OR
+    
+    -- Processors
+    name ILIKE '%Processor%' OR
+    
+    -- Validators
+    name ILIKE '%Validator%' OR
+    
+    -- Reviewers (operational)
+    name ILIKE '%Reviewer%' OR
+    
+    -- Compilers
+    name ILIKE '%Compiler%' OR
+    
+    -- Trackers
+    name ILIKE '%Tracker%' OR
+    
+    -- Formatters
+    name ILIKE '%Formatter%' OR
+    
+    -- Generators
+    name ILIKE '%Generator%' OR
+    
+    -- Archivers
+    name ILIKE '%Archiver%' OR
+    
+    -- Monitors
+    name ILIKE '%Monitor%' OR
+    
+    -- Detectors
+    name ILIKE '%Detector%' OR
+    
+    -- Drafters
+    name ILIKE '%Drafter%' OR
+    
+    -- Taggers
+    name ILIKE '%Tagger%' OR
+    
+    -- Controllers
+    name ILIKE '%Controller%' OR
+    
+    -- Builders
+    name ILIKE '%Builder%'
 )
 RETURNING id, name, 'Worker' as assigned_level
 )
 
 -- ============================================================================
--- LEVEL 5: TOOL (Micro-agents, wrappers)
+-- LEVEL 5: TOOL (API Wrappers & Micro-agents)
 -- ============================================================================
--- API wrappers, Automation bots, Integration agents
+-- Bots, APIs, Automation tools, Calculators
+-- Atomic operations serving all agents
 , tool_updates AS (
 UPDATE agents 
 SET agent_level_id = (SELECT id FROM level_ids WHERE name = 'Tool')
 WHERE agent_level_id IS NULL
 AND (
+    -- API wrappers
     name ILIKE '%API%' OR
+    
+    -- Bots
     name ILIKE '%Bot%' OR
+    
+    -- Automation
     name ILIKE '%Automation%' OR
+    
+    -- Integration
     name ILIKE '%Integration%' OR
+    
+    -- Wrappers
     name ILIKE '%Wrapper%' OR
-    name ILIKE '%Tool%'
+    
+    -- Tools
+    name ILIKE '%Tool%' OR
+    slug ILIKE '%-tool' OR
+    slug ILIKE '%-tool-%' OR
+    
+    -- Calculators
+    name ILIKE '%Calculator%' OR
+    
+    -- Searchers
+    name ILIKE '%Searcher%' OR
+    
+    -- Retrievers
+    name ILIKE '%Retriever%' OR
+    
+    -- Extractors
+    name ILIKE '%Extractor%' OR
+    
+    -- Converters
+    name ILIKE '%Converter%' OR
+    
+    -- Parsers
+    name ILIKE '%Parser%' OR
+    
+    -- Checkers (simple validation)
+    name ILIKE '%Checker%' OR
+    
+    -- Lookups
+    name ILIKE '%Lookup%' OR
+    
+    -- Plotters
+    name ILIKE '%Plotter%' OR
+    
+    -- Runners
+    name ILIKE '%Runner%' OR
+    
+    -- Scorers
+    name ILIKE '%Scorer%' OR
+    
+    -- Notifiers
+    name ILIKE '%Notifier%' OR
+    
+    -- Schedulers
+    name ILIKE '%Scheduler%' OR
+    
+    -- Senders
+    name ILIKE '%Sender%'
 )
 RETURNING id, name, 'Tool' as assigned_level
 )
@@ -137,6 +345,7 @@ RETURNING id, name, 'Tool' as assigned_level
 -- ============================================================================
 -- DEFAULT: SPECIALIST (for any remaining agents)
 -- ============================================================================
+-- If an agent doesn't match any pattern, default to Specialist (L3)
 , default_updates AS (
 UPDATE agents 
 SET agent_level_id = (SELECT id FROM level_ids WHERE name = 'Specialist')
@@ -148,17 +357,17 @@ RETURNING id, name, 'Specialist (default)' as assigned_level
 -- VERIFICATION & REPORTING
 -- ============================================================================
 , update_summary AS (
-    SELECT 'Master' as level, COUNT(*) as count, 1 as sort_order FROM master_updates
+    SELECT 'Master (L1)' as level, COUNT(*) as count, 1 as sort_order FROM master_updates
     UNION ALL
-    SELECT 'Expert' as level, COUNT(*) as count, 2 as sort_order FROM expert_updates
+    SELECT 'Expert (L2)' as level, COUNT(*) as count, 2 as sort_order FROM expert_updates
     UNION ALL
-    SELECT 'Specialist' as level, COUNT(*) as count, 3 as sort_order FROM specialist_updates
+    SELECT 'Specialist (L3)' as level, COUNT(*) as count, 3 as sort_order FROM specialist_updates
     UNION ALL
-    SELECT 'Worker' as level, COUNT(*) as count, 4 as sort_order FROM worker_updates
+    SELECT 'Worker (L4)' as level, COUNT(*) as count, 4 as sort_order FROM worker_updates
     UNION ALL
-    SELECT 'Tool' as level, COUNT(*) as count, 5 as sort_order FROM tool_updates
+    SELECT 'Tool (L5)' as level, COUNT(*) as count, 5 as sort_order FROM tool_updates
     UNION ALL
-    SELECT 'Default (Specialist)' as level, COUNT(*) as count, 6 as sort_order FROM default_updates
+    SELECT 'Default (L3)' as level, COUNT(*) as count, 6 as sort_order FROM default_updates
 )
 SELECT level, count
 FROM update_summary

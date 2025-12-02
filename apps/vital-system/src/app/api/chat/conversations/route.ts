@@ -157,9 +157,9 @@ export async function POST(request: NextRequest) {
 
     tenantId = profile?.tenant_id || null;
     
-    // Fallback to platform tenant if no tenant_id found
-    const PLATFORM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
-    const STARTUP_TENANT_ID = '11111111-1111-1111-1111-111111111111';
+    // Fallback to platform tenant if no tenant_id found - VITAL System tenant
+    const PLATFORM_TENANT_ID = 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
+    const STARTUP_TENANT_ID = 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244'; // Same as platform for VITAL
     
     // Use user's tenant, or fallback to platform tenant
     const finalTenantId = tenantId || PLATFORM_TENANT_ID;

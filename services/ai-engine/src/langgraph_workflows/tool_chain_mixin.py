@@ -87,6 +87,9 @@ class ToolChainMixin:
         """
         Simple decision logic for interactive modes (Mode 1, 2).
         
+        CONSERVATIVE: Only use tool chain for explicitly complex research tasks.
+        Most queries should use direct agent execution for speed.
+        
         Args:
             query: User query
             complexity: Query complexity
@@ -96,26 +99,27 @@ class ToolChainMixin:
         """
         query_lower = query.lower()
         
-        # Keywords suggesting comprehensive research
+        # Keywords suggesting comprehensive research (must be explicit)
         research_keywords = [
-            'comprehensive', 'thorough', 'detailed', 'complete',
-            'research', 'analyze', 'compare', 'evaluate'
+            'comprehensive', 'thorough', 'detailed analysis',
+            'research everything', 'compare all', 'evaluate thoroughly'
         ]
         
-        # Multi-step indicators
+        # Multi-step indicators (must be explicit multi-step)
         multi_step_keywords = [
-            'and', 'then', 'after', 'also', 'plus',
-            'both', 'multiple', 'various'
+            'step by step', 'first then', 'multiple sources',
+            'compare and contrast', 'analyze then summarize'
         ]
         
         has_research_intent = any(kw in query_lower for kw in research_keywords)
         has_multi_step = any(kw in query_lower for kw in multi_step_keywords)
-        is_complex = complexity in ['high', 'very_high']
+        is_very_complex = complexity in ['very_high']  # Only very_high, not just high
         
-        # Use chaining for complex research queries
+        # Use chaining ONLY for very explicit complex research queries
+        # Most queries should go through normal agent execution
         should_use = (
-            (has_research_intent and is_complex) or
-            (has_multi_step and len(query.split()) > 15)
+            (has_research_intent and is_very_complex) or
+            (has_multi_step and len(query.split()) > 25)  # Longer threshold
         )
         
         if should_use:

@@ -1,21 +1,22 @@
 """
 Embedding Service - Semantic Search for Long-Term Memory
 
-Generates vector embeddings for memory content using sentence transformers.
+Generates vector embeddings for memory content using OpenAI or sentence transformers.
 Enables semantic similarity search across stored memories.
 
 Golden Rules Compliance:
-✅ #1: Pure Python (sentence-transformers)
+✅ #1: Pure Python (OpenAI API / sentence-transformers)
 ✅ #2: Caching integrated
 ✅ #3: Tenant-aware
 ✅ #4: Supports RAG/memory operations
 
 Features:
-- Sentence transformer embeddings (768-dim)
+- OpenAI embeddings (3072-dim for text-embedding-3-large) - DEFAULT
+- Sentence transformer embeddings (768-dim) - fallback
 - Batch processing for efficiency
 - Caching for performance
 - Error handling with fallbacks
-- GPU/CPU auto-detection
+- Provider selection via EMBEDDING_PROVIDER env var
 
 Usage:
     >>> service = EmbeddingService()
@@ -31,7 +32,15 @@ import numpy as np
 import structlog
 from pydantic import BaseModel, Field
 
-# Sentence transformers for embeddings
+# OpenAI for embeddings (primary)
+try:
+    from openai import AsyncOpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    AsyncOpenAI = None
+
+# Sentence transformers for embeddings (fallback)
 try:
     from sentence_transformers import SentenceTransformer
     SENTENCE_TRANSFORMERS_AVAILABLE = True
@@ -57,79 +66,132 @@ class EmbeddingResult(BaseModel):
 class EmbeddingService:
     """
     Service for generating semantic embeddings.
-    
-    Uses sentence-transformers for high-quality embeddings optimized
-    for semantic search and similarity matching.
-    
-    Model: all-MiniLM-L6-v2 (384-dim) or all-mpnet-base-v2 (768-dim)
-    - Fast inference
-    - Good quality for semantic search
-    - Supports batch processing
+
+    Supports two providers:
+    1. OpenAI (DEFAULT): text-embedding-3-large (3072-dim) - matches Pinecone index
+    2. HuggingFace/sentence-transformers: all-mpnet-base-v2 (768-dim) - fallback
+
+    Provider selection via EMBEDDING_PROVIDER env var ('openai' or 'huggingface').
     """
-    
+
     def __init__(
         self,
-        model_name: str = "sentence-transformers/all-mpnet-base-v2",
+        model_name: Optional[str] = None,
         cache_manager: Optional[CacheManager] = None,
-        use_cache: bool = True
+        use_cache: bool = True,
+        provider: Optional[str] = None
     ):
         """
         Initialize embedding service.
-        
+
         Args:
-            model_name: Sentence transformer model to use
+            model_name: Model to use (auto-selected based on provider if not specified)
             cache_manager: Cache manager for embedding caching
             use_cache: Whether to cache embeddings
+            provider: 'openai' or 'huggingface' (defaults to settings.embedding_provider)
         """
-        self.model_name = model_name
+        # Determine provider (default to openai if API key available)
+        self.provider = provider or settings.embedding_provider
+
+        # Set model name based on provider
+        if model_name:
+            self.model_name = model_name
+        elif self.provider == "openai":
+            self.model_name = settings.openai_embedding_model  # text-embedding-3-large
+        else:
+            self.model_name = "sentence-transformers/all-mpnet-base-v2"
+
         self.cache_manager = cache_manager or CacheManager()
         self.use_cache = use_cache
-        
-        self.model: Optional[SentenceTransformer] = None
-        self.embedding_dim: int = 768  # Default for all-mpnet-base-v2
+
+        # Provider-specific attributes
+        self.openai_client: Optional[AsyncOpenAI] = None
+        self.st_model: Optional[SentenceTransformer] = None
+
+        # Set embedding dimension based on provider/model
+        if self.provider == "openai":
+            # text-embedding-3-large = 3072, text-embedding-3-small = 1536
+            self.embedding_dim = 3072 if "large" in self.model_name else 1536
+        else:
+            self.embedding_dim = 768  # Default for all-mpnet-base-v2
+
         self._initialized = False
-        
-        if not SENTENCE_TRANSFORMERS_AVAILABLE:
-            logger.warning(
-                "sentence-transformers not available",
-                recommendation="pip install sentence-transformers"
-            )
+
+        # Log provider selection
+        logger.info(
+            "EmbeddingService configured",
+            provider=self.provider,
+            model=self.model_name,
+            dimension=self.embedding_dim
+        )
     
     async def initialize(self):
-        """Initialize the embedding model (lazy loading)."""
+        """Initialize the embedding model/client (lazy loading)."""
         if self._initialized:
             return
-        
-        if not SENTENCE_TRANSFORMERS_AVAILABLE:
-            raise RuntimeError(
-                "sentence-transformers not installed. "
-                "Install with: pip install sentence-transformers"
-            )
-        
+
         try:
-            logger.info("Loading embedding model", model=self.model_name)
-            
-            # Load model in thread pool to avoid blocking
-            loop = asyncio.get_event_loop()
-            self.model = await loop.run_in_executor(
-                None,
-                lambda: SentenceTransformer(self.model_name)
-            )
-            
-            # Get actual embedding dimension
-            test_embedding = self.model.encode(["test"], convert_to_numpy=True)
-            self.embedding_dim = test_embedding.shape[1]
-            
-            self._initialized = True
-            
-            logger.info(
-                "✅ Embedding model loaded",
-                model=self.model_name,
-                dimension=self.embedding_dim
-            )
-            
+            if self.provider == "openai":
+                # Initialize OpenAI client
+                if not OPENAI_AVAILABLE:
+                    raise RuntimeError(
+                        "openai package not installed. "
+                        "Install with: pip install openai"
+                    )
+
+                api_key = settings.openai_api_key
+                if not api_key:
+                    raise RuntimeError(
+                        "OPENAI_API_KEY not set. "
+                        "Set the environment variable to use OpenAI embeddings."
+                    )
+
+                logger.info(
+                    "Initializing OpenAI embedding client",
+                    model=self.model_name,
+                    dimension=self.embedding_dim
+                )
+
+                self.openai_client = AsyncOpenAI(api_key=api_key)
+                self._initialized = True
+
+                logger.info(
+                    "✅ OpenAI embedding client initialized",
+                    model=self.model_name,
+                    dimension=self.embedding_dim
+                )
+
+            else:
+                # Initialize sentence-transformers (fallback)
+                if not SENTENCE_TRANSFORMERS_AVAILABLE:
+                    raise RuntimeError(
+                        "sentence-transformers not installed. "
+                        "Install with: pip install sentence-transformers"
+                    )
+
+                logger.info("Loading sentence-transformers model", model=self.model_name)
+
+                # Load model in thread pool to avoid blocking
+                loop = asyncio.get_event_loop()
+                self.st_model = await loop.run_in_executor(
+                    None,
+                    lambda: SentenceTransformer(self.model_name)
+                )
+
+                # Get actual embedding dimension
+                test_embedding = self.st_model.encode(["test"], convert_to_numpy=True)
+                self.embedding_dim = test_embedding.shape[1]
+
+                self._initialized = True
+
+                logger.info(
+                    "✅ Sentence-transformers model loaded",
+                    model=self.model_name,
+                    dimension=self.embedding_dim
+                )
+
         except Exception as e:
-            logger.error("Failed to load embedding model", error=str(e))
+            logger.error("Failed to initialize embedding service", error=str(e))
             raise
     
     async def embed_text(
@@ -139,44 +201,53 @@ class EmbeddingService:
     ) -> EmbeddingResult:
         """
         Generate embedding for a single text.
-        
+
         Args:
             text: Text to embed
             cache_key_prefix: Prefix for cache key
-            
+
         Returns:
             EmbeddingResult with vector and metadata
         """
         await self.initialize()
-        
+
         # Check cache first
         if self.use_cache:
-            cache_key = f"{cache_key_prefix}:{hash(text)}"
+            cache_key = f"{cache_key_prefix}:{self.provider}:{hash(text)}"
             cached = await self.cache_manager.get(cache_key)
             if cached:
                 logger.debug("Embedding cache hit", text_preview=text[:50])
                 return EmbeddingResult(**cached)
-        
+
         # Generate embedding
         start_time = datetime.now(timezone.utc)
-        
+
         try:
-            loop = asyncio.get_event_loop()
-            embedding_array = await loop.run_in_executor(
-                None,
-                lambda: self.model.encode([text], convert_to_numpy=True)[0]
-            )
-            
-            embedding_list = embedding_array.tolist()
+            if self.provider == "openai":
+                # Use OpenAI API
+                response = await self.openai_client.embeddings.create(
+                    model=self.model_name,
+                    input=text
+                )
+                embedding_list = response.data[0].embedding
+            else:
+                # Use sentence-transformers
+                loop = asyncio.get_event_loop()
+                embedding_array = await loop.run_in_executor(
+                    None,
+                    lambda: self.st_model.encode([text], convert_to_numpy=True)[0]
+                )
+                embedding_list = embedding_array.tolist()
+
             duration_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
-            
+
             result = EmbeddingResult(
                 embedding=embedding_list,
                 model=self.model_name,
                 dimension=len(embedding_list),
                 duration_ms=duration_ms
             )
-            
+
             # Cache the result
             if self.use_cache:
                 await self.cache_manager.set(
@@ -184,18 +255,19 @@ class EmbeddingService:
                     result.model_dump(),
                     ttl=86400  # 24 hours
                 )
-            
+
             logger.debug(
                 "Embedding generated",
+                provider=self.provider,
                 text_length=len(text),
                 dimension=len(embedding_list),
                 duration_ms=duration_ms
             )
-            
+
             return result
-            
+
         except Exception as e:
-            logger.error("Embedding generation failed", error=str(e))
+            logger.error("Embedding generation failed", provider=self.provider, error=str(e))
             raise
     
     async def embed_query(self, query: str) -> List[float]:
@@ -222,32 +294,32 @@ class EmbeddingService:
     ) -> List[EmbeddingResult]:
         """
         Generate embeddings for multiple texts (batched for efficiency).
-        
+
         Args:
             texts: List of texts to embed
             batch_size: Batch size for processing
             cache_key_prefix: Prefix for cache keys
-            
+
         Returns:
             List of EmbeddingResult objects
         """
         await self.initialize()
-        
+
         if not texts:
             return []
-        
+
         results = []
         start_time = datetime.now(timezone.utc)
-        
+
         try:
             # Check cache for all texts
             cached_results = []
             uncached_texts = []
             uncached_indices = []
-            
+
             if self.use_cache:
                 for i, text in enumerate(texts):
-                    cache_key = f"{cache_key_prefix}:{hash(text)}"
+                    cache_key = f"{cache_key_prefix}:{self.provider}:{hash(text)}"
                     cached = await self.cache_manager.get(cache_key)
                     if cached:
                         cached_results.append((i, EmbeddingResult(**cached)))
@@ -257,62 +329,72 @@ class EmbeddingService:
             else:
                 uncached_texts = texts
                 uncached_indices = list(range(len(texts)))
-            
+
             # Generate embeddings for uncached texts
             if uncached_texts:
-                loop = asyncio.get_event_loop()
-                embeddings_array = await loop.run_in_executor(
-                    None,
-                    lambda: self.model.encode(
-                        uncached_texts,
-                        batch_size=batch_size,
-                        convert_to_numpy=True
+                if self.provider == "openai":
+                    # Use OpenAI API (supports batch embedding natively)
+                    response = await self.openai_client.embeddings.create(
+                        model=self.model_name,
+                        input=uncached_texts
                     )
-                )
-                
+                    embeddings_list = [d.embedding for d in response.data]
+                else:
+                    # Use sentence-transformers
+                    loop = asyncio.get_event_loop()
+                    embeddings_array = await loop.run_in_executor(
+                        None,
+                        lambda: self.st_model.encode(
+                            uncached_texts,
+                            batch_size=batch_size,
+                            convert_to_numpy=True
+                        )
+                    )
+                    embeddings_list = [arr.tolist() for arr in embeddings_array]
+
                 # Create results for newly generated embeddings
-                for idx, text, embedding_array in zip(
+                for idx, text, embedding_list in zip(
                     uncached_indices,
                     uncached_texts,
-                    embeddings_array
+                    embeddings_list
                 ):
-                    embedding_list = embedding_array.tolist()
                     result = EmbeddingResult(
                         embedding=embedding_list,
                         model=self.model_name,
                         dimension=len(embedding_list),
                         duration_ms=0  # Batch duration calculated below
                     )
-                    
+
                     # Cache the result
                     if self.use_cache:
-                        cache_key = f"{cache_key_prefix}:{hash(text)}"
+                        cache_key = f"{cache_key_prefix}:{self.provider}:{hash(text)}"
                         await self.cache_manager.set(
                             cache_key,
                             result.model_dump(),
                             ttl=86400
                         )
-                    
+
                     cached_results.append((idx, result))
-            
+
             # Sort by original index and extract results
             cached_results.sort(key=lambda x: x[0])
             results = [result for _, result in cached_results]
-            
+
             duration_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
-            
+
             logger.info(
                 "✅ Batch embeddings generated",
+                provider=self.provider,
                 total_texts=len(texts),
                 cached=len(texts) - len(uncached_texts),
                 generated=len(uncached_texts),
                 duration_ms=duration_ms
             )
-            
+
             return results
-            
+
         except Exception as e:
-            logger.error("Batch embedding generation failed", error=str(e))
+            logger.error("Batch embedding generation failed", provider=self.provider, error=str(e))
             raise
     
     async def compute_similarity(
@@ -371,17 +453,24 @@ _embedding_service: Optional[EmbeddingService] = None
 
 
 def get_embedding_service(
-    model_name: str = "sentence-transformers/all-mpnet-base-v2",
-    cache_manager: Optional[CacheManager] = None
+    model_name: Optional[str] = None,
+    cache_manager: Optional[CacheManager] = None,
+    provider: Optional[str] = None
 ) -> EmbeddingService:
-    """Get or create global embedding service instance."""
+    """
+    Get or create global embedding service instance.
+
+    Default provider is 'openai' using text-embedding-3-large (3072-dim).
+    To use sentence-transformers, set EMBEDDING_PROVIDER=huggingface.
+    """
     global _embedding_service
-    
+
     if _embedding_service is None:
         _embedding_service = EmbeddingService(
             model_name=model_name,
-            cache_manager=cache_manager
+            cache_manager=cache_manager,
+            provider=provider
         )
-    
+
     return _embedding_service
 

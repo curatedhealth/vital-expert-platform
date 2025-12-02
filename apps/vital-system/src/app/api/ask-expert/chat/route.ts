@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'x-tenant-id': userId || '00000000-0000-0000-0000-000000000001',
+              'x-tenant-id': userId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244', // VITAL System tenant
             },
             body: JSON.stringify({
               text: message,
@@ -288,7 +288,7 @@ export async function POST(req: NextRequest) {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'x-tenant-id': userId || '00000000-0000-0000-0000-000000000001',
+              'x-tenant-id': userId || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244', // VITAL System tenant
             },
             body: JSON.stringify({
               messages: [

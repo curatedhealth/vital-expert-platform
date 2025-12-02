@@ -22,7 +22,13 @@ import logging
 # ML/NLP imports
 from transformers import AutoTokenizer, AutoModel, pipeline
 import torch
-import spacy
+# Optional spacy import - not required for basic functionality
+try:
+    import spacy
+    SPACY_AVAILABLE = True
+except ImportError:
+    spacy = None
+    SPACY_AVAILABLE = False
 import asyncio
 
 logger = logging.getLogger(__name__)
@@ -230,12 +236,19 @@ class MultiDomainEvidenceDetector:
                 device=0 if self.device == "cuda" else -1
             )
 
-            # spaCy for general NER
+            # spaCy for general NER (graceful degradation)
+            self.nlp = None
             try:
                 import en_core_sci_md
                 self.nlp = en_core_sci_md.load()
-            except:
-                self.nlp = spacy.load("en_core_web_sm")
+                logger.info("Loaded scispaCy model: en_core_sci_md")
+            except (ImportError, ModuleNotFoundError, OSError):
+                logger.warning("scispaCy model not found, trying default model")
+                try:
+                    self.nlp = spacy.load("en_core_web_sm")
+                    logger.info("Loaded spaCy model: en_core_web_sm")
+                except OSError:
+                    logger.warning("No spaCy models available - NER features will be limited")
 
             logger.info("Models initialized successfully")
 

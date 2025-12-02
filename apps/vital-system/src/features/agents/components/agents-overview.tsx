@@ -9,8 +9,7 @@
  * - Velocity Orange: #FF6B00
  * - Neutral-900: #1A1A1A
  * - Neutral-600: #555555
- * - Neutral-200: #E8E5DC
- * - Warm Ivory: #FAF8F1
+ * - Uses Tailwind's border/background tokens for consistency
  */
 
 'use client';
@@ -45,8 +44,6 @@ const COLORS = {
   neutral900: '#1A1A1A',
   neutral600: '#555555',
   neutral400: '#BFBFBF',
-  neutral200: '#E8E5DC',
-  warmIvory: '#FAF8F1',
 };
 
 // Level configuration with VITAL colors
@@ -131,7 +128,7 @@ export function AgentsOverview() {
       {/* Key Metrics - Clean cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Agents */}
-        <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+        <Card className="border-border bg-background">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -149,7 +146,7 @@ export function AgentsOverview() {
         </Card>
 
         {/* Active */}
-        <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+        <Card className="border-border bg-background">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -167,7 +164,7 @@ export function AgentsOverview() {
         </Card>
 
         {/* Can Spawn */}
-        <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+        <Card className="border-border bg-background">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -185,7 +182,7 @@ export function AgentsOverview() {
         </Card>
 
         {/* Active Rate */}
-        <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+        <Card className="border-border bg-background">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -206,7 +203,7 @@ export function AgentsOverview() {
       </div>
 
       {/* Level Distribution */}
-      <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+      <Card className="border-border bg-background">
         <CardHeader className="pb-4">
           <CardTitle className="text-base font-semibold text-[#1A1A1A]">
             Agents by Level
@@ -222,7 +219,7 @@ export function AgentsOverview() {
               return (
                 <div 
                   key={level}
-                  className="text-center p-4 rounded-xl border border-[#E8E5DC] bg-white"
+                  className="text-center p-4 rounded-xl border border-border bg-white"
                 >
                   <div 
                     className="w-10 h-10 rounded-lg mx-auto mb-2 flex items-center justify-center"
@@ -243,7 +240,7 @@ export function AgentsOverview() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Status Distribution */}
-        <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+        <Card className="border-border bg-background">
           <CardHeader className="pb-4">
             <CardTitle className="text-base font-semibold text-[#1A1A1A]">
               Status Distribution
@@ -271,7 +268,7 @@ export function AgentsOverview() {
                     </div>
                     <span className="text-sm font-semibold text-[#1A1A1A]">{count}</span>
                   </div>
-                  <div className="h-1.5 bg-[#E8E5DC] rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{ 
@@ -287,7 +284,7 @@ export function AgentsOverview() {
         </Card>
 
         {/* Top Business Functions */}
-        <Card className="border-[#E8E5DC] bg-[#FAF8F1]">
+        <Card className="border-border bg-background">
           <CardHeader className="pb-4">
             <CardTitle className="text-base font-semibold text-[#1A1A1A]">
               Top Business Functions
@@ -314,7 +311,7 @@ export function AgentsOverview() {
                         {count}
                       </span>
                     </div>
-                    <div className="h-1 bg-[#E8E5DC] rounded-full overflow-hidden">
+                    <div className="h-1 bg-muted rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full"
                         style={{ 

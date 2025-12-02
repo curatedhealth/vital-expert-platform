@@ -275,6 +275,7 @@ function AskExpertPageContent() {
   const [isAutonomous, setIsAutonomous] = useState(false);
   const [enableRAG, setEnableRAG] = useState(true); // RAG enabled by default - all modes should use knowledge base
   const [enableTools, setEnableTools] = useState(false); // Tools disabled by default - user must enable
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-4'); // Model selection for AI interactions
   const [hasManualToolsToggle, setHasManualToolsToggle] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [tokenCount, setTokenCount] = useState(0);
@@ -496,16 +497,27 @@ function AskExpertPageContent() {
     });
   }, [availableTools]);
 
+  // GOLDEN RULE MATRIX:
+  //                  | Manual Selection | Auto Selection  |
+  //                  | (User picks)     | (System picks)  |
+  // -----------------+------------------+-----------------+
+  // Conversational   | Mode 1           | Mode 2          |
+  // -----------------+------------------+-----------------+
+  // Agentic          | Mode 3           | Mode 4          |
   const currentMode = useMemo(() => {
-    if (isAutonomous && isAutomatic) {
-      return { id: 3, name: 'Autonomous Automatic', description: 'AI selects agent + autonomous reasoning', color: 'purple' };
-    }
     if (isAutonomous && !isAutomatic) {
-      return { id: 4, name: 'Autonomous Manual', description: 'You select agent + autonomous reasoning', color: 'green' };
+      // Mode 3: Manual-Agentic (User selects + Autonomous reasoning)
+      return { id: 3, name: 'Manual-Agentic', description: 'You select agent + autonomous reasoning', color: 'purple' };
+    }
+    if (isAutonomous && isAutomatic) {
+      // Mode 4: Auto-Agentic (AI selects + Autonomous reasoning)
+      return { id: 4, name: 'Auto-Agentic', description: 'AI selects agent + autonomous reasoning', color: 'green' };
     }
     if (!isAutonomous && isAutomatic) {
+      // Mode 2: Auto-Conversational (AI selects + Interactive)
       return { id: 2, name: 'Automatic Selection', description: 'AI selects best agent for you', color: 'blue' };
     }
+    // Mode 1: Manual-Conversational (User selects + Interactive)
     return { id: 1, name: 'Manual Interactive', description: 'You select agent + interactive chat', color: 'gray' };
   }, [isAutonomous, isAutomatic]);
 
@@ -745,21 +757,36 @@ function AskExpertPageContent() {
     }
 
     const fetchPromptStarters = async () => {
-      setLoadingPromptStarters(true);
-      try {
-        const response = await fetch('/api/prompt-starters', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ agentIds: selectedAgents }),
-        });
+     setLoadingPromptStarters(true);
+     try {
+       // Get CSRF token from cookie
+       const csrfToken = document.cookie
+         .split('; ')
+         .find(row => row.startsWith('__Host-csrf-token='))
+         ?.split('=')[1];
+       
+       const headers: Record<string, string> = {
+         'Content-Type': 'application/json',
+       };
+       
+       // Add CSRF token if available
+       if (csrfToken) {
+         headers['x-csrf-token'] = csrfToken;
+       }
+       
+       const response = await fetch('/api/prompt-starters', {
+         method: 'POST',
+         headers,
+         body: JSON.stringify({ agentIds: selectedAgents }),
+       });
 
-        if (response.ok) {
-          const data = await response.json();
-          setPromptStarters(data.prompts || []);
-        } else {
-          console.error('Failed to fetch prompt starters');
-          setPromptStarters([]);
-        }
+       if (response.ok) {
+         const data = await response.json();
+         setPromptStarters(data.prompts || []);
+       } else {
+         console.error('Failed to fetch prompt starters');
+         setPromptStarters([]);
+       }
       } catch (error) {
         console.error('Error fetching prompt starters:', error);
         setPromptStarters([]);
@@ -920,9 +947,24 @@ function AskExpertPageContent() {
         confidenceThreshold: (mode === 'autonomous' || mode === 'multi-expert') ? 0.95 : undefined,
       };
 
+      // Get CSRF token from cookie
+      const csrfToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('__Host-csrf-token='))
+        ?.split('=')[1];
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add CSRF token if available
+      if (csrfToken) {
+        headers['x-csrf-token'] = csrfToken;
+      }
+      
       const response = await fetch('/api/ask-expert/orchestrate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(requestBody),
       });
 
@@ -1065,9 +1107,15 @@ function AskExpertPageContent() {
 
               // Handle different chunk types based on mode
               if (data.type === 'chunk' && data.content) {
-                if (typeof data.content === 'string' && data.content.startsWith('__mode1_meta__')) {
+                // Handle metadata chunks for Mode 1 AND Mode 2 (both use same metadata format)
+                const metaPrefix = typeof data.content === 'string' &&
+                  (data.content.startsWith('__mode1_meta__') || data.content.startsWith('__mode2_meta__'));
+
+                if (metaPrefix) {
+                  // Extract the actual prefix to strip it correctly
+                  const prefixToStrip = data.content.startsWith('__mode1_meta__') ? '__mode1_meta__' : '__mode2_meta__';
                   try {
-                    const meta = JSON.parse(data.content.slice('__mode1_meta__'.length));
+                    const meta = JSON.parse(data.content.slice(prefixToStrip.length));
                     switch (meta?.event) {
                       case 'rag_sources': {
                         const incomingSources = Array.isArray(meta.sources) ? meta.sources : [];
@@ -2040,11 +2088,11 @@ function AskExpertPageContent() {
                       </p>
                     </button>
 
-                    {/* Mode 3 */}
+                    {/* Mode 3: Manual-Agentic (User selects + Autonomous) */}
                     <button
                       onClick={() => {
-                        setIsAutomatic(true);
-                        setIsAutonomous(true);
+                        setIsAutomatic(false);  // Manual selection (user picks)
+                        setIsAutonomous(true);  // Agentic mode
                       }}
                       className={`p-4 rounded-lg border-2 text-left transition-all ${
                         currentMode.id === 3
@@ -2054,22 +2102,22 @@ function AskExpertPageContent() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Mode 3: Autonomous Automatic
+                          Mode 3: Manual-Agentic
                         </span>
                         {currentMode.id === 3 && (
                           <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                         )}
                       </div>
                       <p className="text-xs text-gray-600 dark:text-gray-400">
-                        AI selects agent + autonomous reasoning
+                        You select agent + autonomous reasoning
                       </p>
                     </button>
 
-                    {/* Mode 4 */}
+                    {/* Mode 4: Auto-Agentic (AI selects + Autonomous) */}
                     <button
                       onClick={() => {
-                        setIsAutomatic(false);
-                        setIsAutonomous(true);
+                        setIsAutomatic(true);   // Auto selection (AI picks)
+                        setIsAutonomous(true);  // Agentic mode
                       }}
                       className={`p-4 rounded-lg border-2 text-left transition-all ${
                         currentMode.id === 4
@@ -2079,14 +2127,14 @@ function AskExpertPageContent() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Mode 4: Autonomous Manual
+                          Mode 4: Auto-Agentic
                         </span>
                         {currentMode.id === 4 && (
                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                         )}
                       </div>
                       <p className="text-xs text-gray-600 dark:text-gray-400">
-                        You select agent + autonomous reasoning
+                        AI selects agent + autonomous reasoning
                       </p>
                     </button>
                   </div>

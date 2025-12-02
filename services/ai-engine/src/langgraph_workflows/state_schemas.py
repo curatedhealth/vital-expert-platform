@@ -349,12 +349,22 @@ class UnifiedWorkflowState(TypedDict):
     # Selected agents (Annotated for reducer)
     selected_agents: Annotated[List[str], operator.add]
     
+    # Selected agent details (for Mode 2 automatic selection)
+    selected_agent_id: NotRequired[str]  # UUID of the selected agent
+    selected_agent_name: NotRequired[str]  # Display name of the selected agent
+    candidate_count: NotRequired[int]  # Number of candidate agents considered
+    
     # Selection metadata
     selection_reasoning: NotRequired[str]
     selection_confidence: NotRequired[float]
+    selection_method: NotRequired[str]  # e.g., 'hybrid_rrf', 'manual', 'fallback'
+    selection_breakdown: NotRequired[Dict[str, Any]]  # Method-specific scores
     detected_intent: NotRequired[str]
     detected_domains: NotRequired[List[str]]
     complexity_score: NotRequired[float]
+    
+    # RAG domain selection
+    selected_rag_domains: NotRequired[List[str]]  # Domains selected for RAG retrieval
     
     # =========================================================================
     # RAG RETRIEVAL STATE (WITH CACHING - GOLDEN RULE #2)
@@ -373,7 +383,8 @@ class UnifiedWorkflowState(TypedDict):
     total_documents: NotRequired[int]
     rag_cache_hit: NotRequired[bool]  # Cache hit indicator
     rag_cache_key: NotRequired[str]
-    context_summary: NotRequired[Dict[str, Any]]
+    context_summary: NotRequired[str]  # Summary of retrieved context
+    retrieval_source: NotRequired[str]  # 'rag', 'web_search', or 'web_search_fallback'
     
     # =========================================================================
     # AGENT PREFERENCES (Citation style, formatting, etc.)
@@ -444,8 +455,10 @@ class UnifiedWorkflowState(TypedDict):
     response: NotRequired[str]
     confidence: NotRequired[float]
     agents_used: NotRequired[List[str]]
+    sources_used: NotRequired[int]  # Count of sources used
     
-    # Citations
+    # Sources and Citations
+    sources: NotRequired[List[Dict[str, Any]]]  # RAG/Web search sources
     citations: NotRequired[List[Dict[str, Any]]]
     evidence_level: NotRequired[str]
     

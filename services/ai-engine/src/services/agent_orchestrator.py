@@ -157,8 +157,8 @@ class AgentOrchestrator:
             if agent_id and agent_id in self.active_agents:
                 return self.active_agents[agent_id]
 
-            if agent_id:
-                # Try to load from database
+            if agent_id and self.supabase:
+                # Try to load from database (only if supabase client is available)
                 agent_data = await self.supabase.get_agent_by_id(agent_id)
                 if agent_data:
                     agent = await self._initialize_agent_from_data(agent_data)

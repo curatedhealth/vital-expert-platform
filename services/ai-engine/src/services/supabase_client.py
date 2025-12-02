@@ -572,9 +572,9 @@ class SupabaseClient:
             start_date = end_date - timedelta(days=days)
             
             with self.engine.connect() as conn:
-                # Get agent record for certifications and metadata
+                # Get agent record for metadata (use existing columns only)
                 agent_result = conn.execute(
-                    text("SELECT id, name, display_name, status, certifications, metadata FROM agents WHERE id = :agent_id"),
+                    text("SELECT id, name, status, metadata FROM agents WHERE id = :agent_id"),
                     {"agent_id": agent_id}
                 )
                 agent_record = agent_result.fetchone()

@@ -43,29 +43,93 @@ const roleMap = {
   'processor': 'Data Manager'
 };
 
-// Tier determination based on role and accuracy
+/**
+ * Tier determination based on VITAL 5-Level Hierarchy (CORRECTED)
+ * 
+ * CORRECT HIERARCHY:
+ * - Tier 1 (MASTER): Department Heads ONLY (one per department)
+ * - Tier 2 (EXPERT): Senior/Director Level (Directors, VPs, Senior roles, Leads)
+ * - Tier 3 (SPECIALIST): Mid/Entry Level (Managers, MSLs, Coordinators)
+ * - Tier 4 (WORKER): Task Executors (Analysts, Associates, Assistants)
+ * - Tier 5 (TOOL): API Wrappers & Micro-agents
+ */
 function determineTier(agent) {
+  const name = (agent.display_name || agent.name || '').toLowerCase();
   const role = agent.role?.toLowerCase() || '';
-  const businessFunc = agent.business_function?.toLowerCase() || '';
-  const accuracy = agent.performance_metrics?.accuracy_rate || agent.accuracy_score || 0;
 
-  // Tier 1: Orchestrators, Chiefs, Directors, high accuracy strategic roles
-  if (role.includes('orchestrator') ||
-      role.includes('chief') ||
-      agent.display_name?.includes('Chief') ||
-      (accuracy >= 0.97 && role.includes('strategist'))) {
+  // Tier 1: MASTER - Department Heads ONLY (NOT Directors/VPs)
+  if (
+    name.includes('master') ||
+    name.includes('chief medical officer') ||
+    name.includes('cmo') ||
+    name.includes('department head') ||
+    (role.includes('orchestrator') && name.includes('master'))
+  ) {
     return 1;
   }
 
-  // Tier 3: Analysts, entry-level specialists, lower accuracy
-  if (role.includes('analyst') ||
-      role.includes('writer') ||
-      accuracy < 0.90) {
-    return 3;
+  // Tier 5: TOOL - API Wrappers, Bots, Calculators
+  if (
+    name.includes('api') ||
+    name.includes('bot') ||
+    name.includes('automation') ||
+    name.includes('tool') ||
+    name.includes('calculator') ||
+    name.includes('searcher') ||
+    name.includes('retriever') ||
+    name.includes('extractor') ||
+    name.includes('converter') ||
+    name.includes('parser') ||
+    name.includes('checker') ||
+    name.includes('lookup')
+  ) {
+    return 5;
   }
 
-  // Tier 2: All others (managers, specialists, validators)
-  return 2;
+  // Tier 4: WORKER - Task Executors
+  if (
+    name.includes('analyst') ||
+    name.includes('associate') ||
+    name.includes('assistant') ||
+    name.includes('junior') ||
+    name.includes('technician') ||
+    name.includes('worker') ||
+    name.includes('processor') ||
+    name.includes('validator') ||
+    name.includes('reviewer') ||
+    name.includes('compiler') ||
+    name.includes('tracker') ||
+    name.includes('formatter') ||
+    name.includes('generator') ||
+    name.includes('archiver') ||
+    name.includes('monitor') ||
+    name.includes('detector') ||
+    name.includes('drafter') ||
+    role.includes('writer') // Medical writers are workers
+  ) {
+    return 4;
+  }
+
+  // Tier 2: EXPERT - Senior/Director Level
+  if (
+    name.includes('director') ||
+    name.includes('vp') ||
+    name.includes('vice president') ||
+    name.includes('senior') ||
+    name.includes('lead') ||
+    name.includes('scientist') ||
+    name.includes('strategist') ||
+    name.includes('principal') ||
+    name.includes('architect') ||
+    name.includes('expert') ||
+    agent.display_name?.includes('Chief') // Chiefs (not CMO) are experts
+  ) {
+    return 2;
+  }
+
+  // Tier 3: SPECIALIST - Mid/Entry Level (default)
+  // Managers, MSLs, Coordinators, Specialists, etc.
+  return 3;
 }
 
 // Get appropriate role from org_roles

@@ -244,7 +244,7 @@ export default function AdminPage() {
         return (
           <div className="container mx-auto py-8">
             <HITLReviewPanel
-              tenantId="00000000-0000-0000-0000-000000000001"
+              tenantId="c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244"
               userId="admin"
             />
           </div>

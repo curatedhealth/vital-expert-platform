@@ -1,42 +1,37 @@
 'use client'
 
 /**
- * Value View - Immersive Enterprise Ontology Dashboard
+ * Value View - Enterprise Ontology Dashboard
  *
  * Gold standard implementation of VITAL's 8-layer semantic ontology visualization.
  * Features:
- * - 8-Layer Stack visualization with drill-down
- * - ODI Opportunity Radar for AI transformation prioritization
- * - Value Metrics dashboard with VPANES scoring
- * - Cascading filters with global state management
+ * - Multiple visualization modes: Stack, Radar, Heatmap, Flow, Metrics
+ * - ODI Opportunity Analysis with quadrant visualization
  * - AI Companion for intelligent queries
+ * - Cascading filters with global state management
  *
  * Based on VITAL Enterprise OS Ontology Handbook specifications.
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Layers,
   Target,
-  BarChart3,
   MessageSquare,
   Send,
   Loader2,
   RefreshCw,
-  PanelLeftClose,
-  PanelLeft,
   Sparkles,
   ChevronRight,
   Filter,
-  X,
-  Settings2,
   Download,
-  Maximize2,
   LayoutGrid,
-  GitBranch,
-  Bot,
-  TrendingUp,
+  SlidersHorizontal,
+  Workflow,
+  Grid3X3,
+  BarChart3,
+  List,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -45,7 +40,6 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
-import { Separator } from '@/components/ui/separator'
 import {
   Select,
   SelectContent,
@@ -63,15 +57,33 @@ import {
 } from '@/components/ui/sheet'
 import { PageHeader } from '@/components/page-header'
 
-// Import our new Value View components
+// Import Value View components
 import { OntologyFilterStack, OpportunityRadar, OpportunityDetailPanel, ValueMetrics } from '@/components/value-view'
+import {
+  StackVisualization,
+  RadarVisualization,
+  HeatmapVisualization,
+  FlowVisualization,
+  WorkflowsVisualization,
+} from '@/components/value-view/visualizations'
 import {
   useValueViewStore,
   type LayerKey,
   type LayerItem,
   type ODIOpportunity,
   type ODITier,
+  type ViewMode,
 } from '@/stores/valueViewStore'
+
+// View mode icons
+const VIEW_MODE_ICONS: Record<ViewMode, React.ComponentType<{ className?: string }>> = {
+  stack: Layers,
+  radar: Target,
+  heatmap: Grid3X3,
+  flow: Workflow,
+  metrics: BarChart3,
+  list: List,
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // AI COMPANION TYPES
@@ -102,21 +114,19 @@ export default function ValuePage() {
     setViewMode,
     activeTab,
     setActiveTab,
-    sidebarOpen,
-    toggleSidebar,
     isLoading,
     setLoading,
     error,
     setError,
     filters,
-    setFilter,
     resetFilters,
     filterOptions,
     setFilterOptions,
     filterLabels,
-    setFilterLabel,
     layers,
     updateLayerData,
+    selectedLayer,
+    selectLayer,
     opportunities,
     setOpportunities,
     selectedOpportunity,
@@ -127,7 +137,6 @@ export default function ValuePage() {
     metrics,
     setMetrics,
     vpanes,
-    setVPANES,
     getActiveFilterCount,
   } = useValueViewStore()
 
@@ -140,6 +149,9 @@ export default function ValuePage() {
 
   // ODI tier filter for radar
   const [odiTierFilter, setOdiTierFilter] = useState<ODITier | 'all'>('all')
+
+  // Filter sheet state
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
 
   // Scroll to bottom of messages
   useEffect(() => {
@@ -155,6 +167,10 @@ export default function ValuePage() {
     setError(null)
 
     try {
+      // Local variables to collect metrics from both hierarchy and opportunities
+      let hierarchyMetrics: Partial<typeof metrics> = {}
+      let opportunityMetrics: Partial<typeof metrics> = {}
+
       // Build query params from filters
       const params = new URLSearchParams()
       Object.entries(filters).forEach(([key, value]) => {
@@ -219,21 +235,15 @@ export default function ValuePage() {
           if (data) updateLayerData(key as LayerKey, data)
         })
 
-        // Update metrics
-        setMetrics({
+        // Store metrics from hierarchy
+        hierarchyMetrics = {
           totalJTBDs: data.layers?.L5_jtbds?.count || 0,
-          extremeOpportunities: 0,
-          highOpportunities: 0,
-          moderateOpportunities: 0,
-          tableStakes: 0,
-          avgODIScore: 0,
           agentCoverage: data.summary?.coverage_percentage || 0,
-          workflowCoverage: 0,
           totalFunctions: data.summary?.total_functions || 0,
           totalRoles: data.summary?.total_roles || 0,
           totalPersonas: data.summary?.total_personas || 0,
           totalAgents: data.summary?.total_agents || 0,
-        })
+        }
 
         // Extract functions for filter options
         if (data.functions) {
@@ -270,7 +280,7 @@ export default function ValuePage() {
 
         setOpportunities(opps)
 
-        // Update ODI tier counts in metrics
+        // Update ODI tier counts
         const tierCounts = opps.reduce(
           (acc, opp) => {
             acc[opp.tier]++
@@ -283,14 +293,13 @@ export default function ValuePage() {
           ? opps.reduce((sum, o) => sum + o.opportunity_score, 0) / opps.length
           : 0
 
-        setMetrics({
-          ...metrics,
+        opportunityMetrics = {
           extremeOpportunities: tierCounts.extreme,
           highOpportunities: tierCounts.high,
           moderateOpportunities: tierCounts.moderate,
           tableStakes: tierCounts['table-stakes'],
           avgODIScore: avgScore,
-        })
+        }
       }
 
       // Process suggestions
@@ -309,6 +318,22 @@ export default function ValuePage() {
           })),
         })
       }
+
+      // Combine all metrics
+      setMetrics({
+        totalJTBDs: hierarchyMetrics.totalJTBDs || 0,
+        agentCoverage: hierarchyMetrics.agentCoverage || 0,
+        workflowCoverage: 0,
+        totalFunctions: hierarchyMetrics.totalFunctions || 0,
+        totalRoles: hierarchyMetrics.totalRoles || 0,
+        totalPersonas: hierarchyMetrics.totalPersonas || 0,
+        totalAgents: hierarchyMetrics.totalAgents || 0,
+        extremeOpportunities: opportunityMetrics.extremeOpportunities || 0,
+        highOpportunities: opportunityMetrics.highOpportunities || 0,
+        moderateOpportunities: opportunityMetrics.moderateOpportunities || 0,
+        tableStakes: opportunityMetrics.tableStakes || 0,
+        avgODIScore: opportunityMetrics.avgODIScore || 0,
+      })
     } catch (err) {
       console.error('Error loading Value data:', err)
       setError('Failed to load data. Please try again.')
@@ -317,18 +342,27 @@ export default function ValuePage() {
     }
   }, [filters])
 
+  // Track if component has mounted
+  const hasMountedRef = useRef(false)
+  const previousFiltersRef = useRef<string>('')
+
   // Initial data load
   useEffect(() => {
     loadAllData()
+    hasMountedRef.current = true
+    previousFiltersRef.current = JSON.stringify(filters)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Reload when filters change
+  const filtersString = JSON.stringify(filters)
   useEffect(() => {
-    const hasActiveFilters = getActiveFilterCount() > 0
-    if (hasActiveFilters) {
+    if (hasMountedRef.current && filtersString !== previousFiltersRef.current) {
+      previousFiltersRef.current = filtersString
       loadAllData()
     }
-  }, [filters])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersString])
 
   // ═══════════════════════════════════════════════════════════════════
   // AI COMPANION HANDLERS
@@ -392,6 +426,89 @@ export default function ValuePage() {
   }
 
   const activeFilterCount = getActiveFilterCount()
+  const ViewModeIcon = VIEW_MODE_ICONS[viewMode]
+
+  // ═══════════════════════════════════════════════════════════════════
+  // RENDER VIEW MODE CONTENT
+  // ═══════════════════════════════════════════════════════════════════
+
+  const renderViewModeContent = () => {
+    switch (viewMode) {
+      case 'stack':
+        return (
+          <StackVisualization
+            layers={layers}
+            selectedLayer={selectedLayer}
+            onSelectLayer={selectLayer}
+          />
+        )
+      case 'radar':
+        return (
+          <RadarVisualization
+            opportunities={opportunities}
+            selectedOpportunity={selectedOpportunity}
+            onSelectOpportunity={selectOpportunity}
+            tierFilter={odiTierFilter}
+          />
+        )
+      case 'heatmap':
+        return (
+          <HeatmapVisualization
+            layers={layers}
+            opportunities={opportunities}
+          />
+        )
+      case 'flow':
+        return (
+          <FlowVisualization
+            layers={layers}
+            opportunities={opportunities}
+          />
+        )
+      case 'list':
+        return (
+          <div className="flex h-[calc(100vh-340px)] gap-4">
+            <div className={cn(
+              'transition-all duration-300',
+              selectedOpportunity ? 'w-1/2' : 'w-full'
+            )}>
+              <OpportunityRadar
+                opportunities={opportunities}
+                selectedOpportunity={selectedOpportunity}
+                onSelectOpportunity={selectOpportunity}
+                sortBy={opportunitySortBy}
+                sortOrder={opportunitySortOrder}
+                onSort={sortOpportunities}
+                tierFilter={odiTierFilter}
+                onTierFilter={setOdiTierFilter}
+              />
+            </div>
+            <AnimatePresence mode="wait">
+              {selectedOpportunity && (
+                <motion.div
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: '50%', opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="border-l overflow-hidden"
+                >
+                  <Card className="h-full border-0 rounded-l-none">
+                    <OpportunityDetailPanel
+                      opportunity={selectedOpportunity}
+                      onClose={() => selectOpportunity(null)}
+                      className="h-full"
+                    />
+                  </Card>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )
+      case 'metrics':
+      default:
+        return <ValueMetrics metrics={metrics} vpanes={vpanes} />
+    }
+  }
 
   // ═══════════════════════════════════════════════════════════════════
   // RENDER
@@ -416,7 +533,7 @@ export default function ValuePage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/20">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-slate-50/50 via-white to-purple-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/20">
       {/* Header */}
       <PageHeader
         icon={Layers}
@@ -424,11 +541,50 @@ export default function ValuePage() {
         description="8-Layer Semantic Ontology & AI Transformation Opportunities"
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => loadAllData()}>
+            {/* Filter Sheet Trigger */}
+            <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="relative bg-white/80 backdrop-blur-sm">
+                  <SlidersHorizontal className="h-4 w-4 mr-2" />
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                    >
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[400px] sm:w-[540px] p-0">
+                <SheetHeader className="p-6 pb-4 border-b">
+                  <SheetTitle className="flex items-center gap-2">
+                    <Filter className="h-5 w-5 text-purple-600" />
+                    Ontology Filters
+                  </SheetTitle>
+                  <SheetDescription>
+                    Filter by layer to drill down into specific areas
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="p-0 h-[calc(100vh-140px)]">
+                  <OntologyFilterStack
+                    className="h-full"
+                    onFilterChange={() => {
+                      loadAllData()
+                      setFilterSheetOpen(false)
+                    }}
+                    onClose={() => setFilterSheetOpen(false)}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <Button variant="outline" size="sm" onClick={() => loadAllData()} className="bg-white/80 backdrop-blur-sm">
               <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
               Refresh
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="bg-white/80 backdrop-blur-sm">
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
@@ -436,203 +592,145 @@ export default function ValuePage() {
         }
       />
 
-      {/* Compact Active Filters Indicator - Shows in header when sidebar is closed */}
-      {!sidebarOpen && activeFilterCount > 0 && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="px-6 py-2 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 border-b flex items-center gap-3"
-        >
-          <div className="flex items-center gap-2 text-sm">
-            <Filter className="h-4 w-4 text-purple-600" />
-            <Badge variant="secondary" className="bg-purple-100 text-purple-700">
-              {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} active
-            </Badge>
-          </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {Object.entries(filterLabels).slice(0, 3).map(([key, label]) => (
-              <Badge
-                key={key}
-                variant="outline"
-                className="text-xs"
-              >
-                {label}
-              </Badge>
-            ))}
-            {Object.keys(filterLabels).length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{Object.keys(filterLabels).length - 3} more
-              </Badge>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleSidebar}
-            className="ml-auto text-xs text-purple-600"
+      {/* Active Filters Indicator */}
+      <AnimatePresence>
+        {activeFilterCount > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="px-6 py-2 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 border-b flex items-center gap-3"
           >
-            Edit Filters
-          </Button>
-        </motion.div>
-      )}
+            <div className="flex items-center gap-2 text-sm">
+              <Filter className="h-4 w-4 text-purple-600" />
+              <span className="text-muted-foreground">Active filters:</span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {Object.entries(filterLabels).slice(0, 4).map(([key, label]) => (
+                <Badge
+                  key={key}
+                  variant="outline"
+                  className="text-xs bg-white dark:bg-slate-900"
+                >
+                  {label}
+                </Badge>
+              ))}
+              {Object.keys(filterLabels).length > 4 && (
+                <Badge variant="outline" className="text-xs">
+                  +{Object.keys(filterLabels).length - 4} more
+                </Badge>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetFilters}
+              className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+            >
+              Clear all
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden flex">
-        {/* Left Panel - Unified 8-Layer Filter Stack */}
-        <AnimatePresence mode="wait">
-          {sidebarOpen && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 320, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="border-r bg-card overflow-hidden flex flex-col"
-            >
-              <OntologyFilterStack
-                className="flex-1"
-                onFilterChange={loadAllData}
-                onClose={toggleSidebar}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
+          {/* Tab Navigation with View Mode Selector */}
+          <div className="flex items-center justify-between gap-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+              <TabsList className="grid w-full max-w-xl grid-cols-4 bg-white/80 backdrop-blur-sm shadow-sm">
+                <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
+                  <LayoutGrid className="h-4 w-4" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="opportunities" className="gap-2 data-[state=active]:bg-pink-100 data-[state=active]:text-pink-700">
+                  <Target className="h-4 w-4" />
+                  Opportunities
+                </TabsTrigger>
+                <TabsTrigger value="workflows" className="gap-2 data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
+                  <Workflow className="h-4 w-4" />
+                  Workflows
+                </TabsTrigger>
+                <TabsTrigger value="insights" className="gap-2 data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
+                  <Sparkles className="h-4 w-4" />
+                  Insights
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
 
-        {/* Center Content Area */}
-        <div className="flex-1 overflow-hidden flex flex-col">
-          {/* Tab Navigation */}
-          <div className="px-6 pt-4">
-            <div className="flex items-center justify-between mb-4">
-              {!sidebarOpen && (
-                <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-                  <PanelLeft className="h-4 w-4" />
-                </Button>
-              )}
-
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-                <TabsList className="grid w-full max-w-md grid-cols-3">
-                  <TabsTrigger value="overview" className="gap-2">
-                    <LayoutGrid className="h-4 w-4" />
-                    Overview
-                  </TabsTrigger>
-                  <TabsTrigger value="opportunities" className="gap-2">
+            {/* View Mode Selector */}
+            <Select value={viewMode} onValueChange={(v: ViewMode) => setViewMode(v)}>
+              <SelectTrigger className="w-[140px] bg-white/80 backdrop-blur-sm shadow-sm">
+                <ViewModeIcon className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="View" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="stack">
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-4 w-4" />
+                    Stack
+                  </div>
+                </SelectItem>
+                <SelectItem value="radar">
+                  <div className="flex items-center gap-2">
                     <Target className="h-4 w-4" />
-                    Opportunities
-                  </TabsTrigger>
-                  <TabsTrigger value="insights" className="gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    Insights
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-
-              <div className="flex items-center gap-2">
-                <Select value={viewMode} onValueChange={(v: any) => setViewMode(v)}>
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue placeholder="View" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stack">Stack</SelectItem>
-                    <SelectItem value="radar">Radar</SelectItem>
-                    <SelectItem value="heatmap">Heatmap</SelectItem>
-                    <SelectItem value="flow">Flow</SelectItem>
-                    <SelectItem value="metrics">Metrics</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                    Radar
+                  </div>
+                </SelectItem>
+                <SelectItem value="heatmap">
+                  <div className="flex items-center gap-2">
+                    <Grid3X3 className="h-4 w-4" />
+                    Heatmap
+                  </div>
+                </SelectItem>
+                <SelectItem value="flow">
+                  <div className="flex items-center gap-2">
+                    <Workflow className="h-4 w-4" />
+                    Flow
+                  </div>
+                </SelectItem>
+                <SelectItem value="metrics">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    Metrics
+                  </div>
+                </SelectItem>
+                <SelectItem value="list">
+                  <div className="flex items-center gap-2">
+                    <List className="h-4 w-4" />
+                    List
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Tab Content */}
-          <ScrollArea className="flex-1 px-6 pb-6">
-            <AnimatePresence mode="wait">
-              {activeTab === 'overview' && (
-                <motion.div
-                  key="overview"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="space-y-6"
-                >
-                  {/* Value Metrics Dashboard */}
-                  <ValueMetrics metrics={metrics} vpanes={vpanes} />
+          <Tabs value={activeTab} className="space-y-6">
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="m-0 space-y-6">
+              {/* Visualization Section */}
+              <motion.div
+                key={viewMode}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {renderViewModeContent()}
+              </motion.div>
+            </TabsContent>
 
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 border-purple-200 dark:border-purple-800">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900/50">
-                            <Layers className="h-5 w-5 text-purple-600" />
-                          </div>
-                          <div>
-                            <p className="text-2xl font-bold text-purple-600">8</p>
-                            <p className="text-sm text-muted-foreground">Layers</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/30 border-pink-200 dark:border-pink-800">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-pink-100 dark:bg-pink-900/50">
-                            <Target className="h-5 w-5 text-pink-600" />
-                          </div>
-                          <div>
-                            <p className="text-2xl font-bold text-pink-600">
-                              {opportunities.length}
-                            </p>
-                            <p className="text-sm text-muted-foreground">Opportunities</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-gradient-to-br from-cyan-50 to-teal-50 dark:from-cyan-950/30 dark:to-teal-950/30 border-cyan-200 dark:border-cyan-800">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-cyan-100 dark:bg-cyan-900/50">
-                            <GitBranch className="h-5 w-5 text-cyan-600" />
-                          </div>
-                          <div>
-                            <p className="text-2xl font-bold text-cyan-600">
-                              {metrics.totalJTBDs}
-                            </p>
-                            <p className="text-sm text-muted-foreground">JTBDs</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200 dark:border-amber-800">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/50">
-                            <Bot className="h-5 w-5 text-amber-600" />
-                          </div>
-                          <div>
-                            <p className="text-2xl font-bold text-amber-600">
-                              {metrics.agentCoverage.toFixed(0)}%
-                            </p>
-                            <p className="text-sm text-muted-foreground">AI Coverage</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeTab === 'opportunities' && (
-                <motion.div
-                  key="opportunities"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="h-[calc(100vh-280px)]"
-                >
-                  <div className="flex h-full gap-4">
+            {/* Opportunities Tab */}
+            <TabsContent value="opportunities" className="m-0 space-y-4">
+              <motion.div
+                key={viewMode}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {viewMode === 'list' && (
+                  <div className="flex h-[calc(100vh-340px)] gap-4">
                     {/* Opportunity List */}
                     <div className={cn(
                       'transition-all duration-300',
@@ -650,7 +748,7 @@ export default function ValuePage() {
                       />
                     </div>
 
-                    {/* Detail Panel - Shows when opportunity is selected */}
+                    {/* Detail Panel */}
                     <AnimatePresence mode="wait">
                       {selectedOpportunity && (
                         <motion.div
@@ -671,126 +769,162 @@ export default function ValuePage() {
                       )}
                     </AnimatePresence>
                   </div>
-                </motion.div>
-              )}
+                )}
 
-              {activeTab === 'insights' && (
-                <motion.div
-                  key="insights"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="space-y-6"
-                >
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 text-purple-600" />
-                        AI-Powered Insights
-                      </CardTitle>
-                      <CardDescription>
-                        Ask questions about your enterprise ontology and AI transformation opportunities
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-[400px] flex flex-col">
-                        <ScrollArea className="flex-1 p-4 border rounded-lg bg-muted/20 mb-4">
-                          {messages.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-center">
-                              <MessageSquare className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                              <p className="text-muted-foreground mb-4">
-                                Ask about your ontology, opportunities, or get recommendations
-                              </p>
-                              {suggestions.length > 0 && (
-                                <div className="space-y-2 max-w-md">
-                                  {suggestions.slice(0, 4).map((s, i) => (
-                                    <Button
-                                      key={i}
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full justify-start text-left"
-                                      onClick={() => setInputMessage(s.question)}
-                                    >
-                                      <ChevronRight className="h-4 w-4 mr-2 flex-shrink-0" />
-                                      <span className="truncate">{s.question}</span>
-                                    </Button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="space-y-4">
-                              {messages.map((m, i) => (
+                {viewMode === 'radar' && (
+                  <RadarVisualization
+                    opportunities={opportunities}
+                    selectedOpportunity={selectedOpportunity}
+                    onSelectOpportunity={selectOpportunity}
+                    tierFilter={odiTierFilter}
+                  />
+                )}
+
+                {viewMode === 'heatmap' && (
+                  <HeatmapVisualization
+                    layers={layers}
+                    opportunities={opportunities}
+                  />
+                )}
+
+                {/* For other view modes, show the same visualization as Overview */}
+                {(viewMode === 'stack' || viewMode === 'flow' || viewMode === 'metrics') && (
+                  renderViewModeContent()
+                )}
+              </motion.div>
+            </TabsContent>
+
+            {/* Workflows Tab */}
+            <TabsContent value="workflows" className="m-0">
+              <motion.div
+                key="workflows"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <WorkflowsVisualization className="min-h-[600px]" />
+              </motion.div>
+            </TabsContent>
+
+            {/* Insights Tab */}
+            <TabsContent value="insights" className="m-0">
+              <motion.div
+                key="insights"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <Card className="bg-gradient-to-br from-blue-50/80 to-purple-50/80 dark:from-blue-950/40 dark:to-purple-950/40 border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
+                        <Sparkles className="h-5 w-5 text-white" />
+                      </div>
+                      AI-Powered Insights
+                    </CardTitle>
+                    <CardDescription>
+                      Ask questions about your enterprise ontology and AI transformation opportunities
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[400px] flex flex-col">
+                      <ScrollArea className="flex-1 p-4 border rounded-xl bg-white/50 dark:bg-black/20 mb-4">
+                        {messages.length === 0 ? (
+                          <div className="h-full flex flex-col items-center justify-center text-center">
+                            <MessageSquare className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                            <p className="text-muted-foreground mb-4">
+                              Ask about your ontology, opportunities, or get recommendations
+                            </p>
+                            {suggestions.length > 0 && (
+                              <div className="space-y-2 max-w-md">
+                                {suggestions.slice(0, 4).map((s, i) => (
+                                  <Button
+                                    key={i}
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full justify-start text-left bg-white/80 hover:bg-white"
+                                    onClick={() => setInputMessage(s.question)}
+                                  >
+                                    <ChevronRight className="h-4 w-4 mr-2 flex-shrink-0 text-purple-500" />
+                                    <span className="truncate">{s.question}</span>
+                                  </Button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {messages.map((m, i) => (
+                              <div
+                                key={i}
+                                className={cn(
+                                  'flex',
+                                  m.role === 'user' ? 'justify-end' : 'justify-start'
+                                )}
+                              >
                                 <div
-                                  key={i}
                                   className={cn(
-                                    'flex',
-                                    m.role === 'user' ? 'justify-end' : 'justify-start'
+                                    'max-w-[80%] p-3 rounded-xl shadow-sm',
+                                    m.role === 'user'
+                                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
+                                      : 'bg-white dark:bg-slate-800'
                                   )}
                                 >
-                                  <div
-                                    className={cn(
-                                      'max-w-[80%] p-3 rounded-xl',
-                                      m.role === 'user'
-                                        ? 'bg-purple-600 text-white'
-                                        : 'bg-muted'
-                                    )}
-                                  >
-                                    <p className="text-sm whitespace-pre-wrap">{m.content}</p>
-                                    {m.recommendations && (
-                                      <div className="mt-3 pt-3 border-t border-white/20 space-y-2">
-                                        {m.recommendations.slice(0, 3).map((r, j) => (
-                                          <div key={j} className="text-xs bg-white/10 p-2 rounded">
-                                            <Badge variant="outline" className="mb-1 text-[10px]">
-                                              {r.priority}
-                                            </Badge>
-                                            <p>{r.text}</p>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
+                                  <p className="text-sm whitespace-pre-wrap">{m.content}</p>
+                                  {m.recommendations && (
+                                    <div className="mt-3 pt-3 border-t border-white/20 space-y-2">
+                                      {m.recommendations.slice(0, 3).map((r, j) => (
+                                        <div key={j} className="text-xs bg-white/10 p-2 rounded">
+                                          <Badge variant="outline" className="mb-1 text-[10px]">
+                                            {r.priority}
+                                          </Badge>
+                                          <p>{r.text}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
-                              ))}
-                              {isAILoading && (
-                                <div className="flex justify-start">
-                                  <div className="bg-muted p-3 rounded-xl">
-                                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                                  </div>
+                              </div>
+                            ))}
+                            {isAILoading && (
+                              <div className="flex justify-start">
+                                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm">
+                                  <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
                                 </div>
-                              )}
-                              <div ref={messagesEndRef} />
-                            </div>
-                          )}
-                        </ScrollArea>
+                              </div>
+                            )}
+                            <div ref={messagesEndRef} />
+                          </div>
+                        )}
+                      </ScrollArea>
 
-                        <div className="flex gap-2">
-                          <Textarea
-                            value={inputMessage}
-                            onChange={(e) => setInputMessage(e.target.value)}
-                            placeholder="Ask about opportunities, coverage gaps, recommendations..."
-                            className="resize-none min-h-[48px] max-h-[120px]"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault()
-                                handleSendMessage()
-                              }
-                            }}
-                          />
-                          <Button
-                            onClick={handleSendMessage}
-                            disabled={!inputMessage.trim() || isAILoading}
-                          >
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <div className="flex gap-2">
+                        <Textarea
+                          value={inputMessage}
+                          onChange={(e) => setInputMessage(e.target.value)}
+                          placeholder="Ask about opportunities, coverage gaps, recommendations..."
+                          className="resize-none min-h-[48px] max-h-[120px] bg-white/80"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault()
+                              handleSendMessage()
+                            }
+                          }}
+                        />
+                        <Button
+                          onClick={handleSendMessage}
+                          disabled={!inputMessage.trim() || isAILoading}
+                          className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </ScrollArea>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

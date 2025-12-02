@@ -17,7 +17,7 @@ export const GET = withAgentAuth(async (
 
     const { searchParams } = new URL(request.url);
     const showAll = searchParams.get('showAll') === 'true';
-    const limit = parseInt(searchParams.get('limit') || '100');
+    const limit = parseInt(searchParams.get('limit') || '1000');
     const offset = parseInt(searchParams.get('offset') || '0');
 
     logger.info('jtbd_get_started', {
@@ -31,51 +31,56 @@ export const GET = withAgentAuth(async (
       offset,
     });
 
-    // Build query
+    // Build query - using the correct 'jtbd' table with verified columns
+    // Schema from: 20251129_029_jtbd_gold_standard_phase2.sql + 20251201_042_digital_health_jtbd_complete.sql
     let query = supabase
-      .from('jobs_to_be_done')
+      .from('jtbd')
       .select(`
         id,
-        slug,
+        code,
         name,
-        description,
-        category,
-        functional_dimension,
-        emotional_dimension,
-        social_dimension,
-        desired_outcome,
-        current_solution,
-        solution_gaps,
-        trigger_events,
-        success_criteria,
-        constraints,
-        value_drivers,
-        competitive_alternatives,
-        evidence_sources,
-        priority,
-        frequency,
-        importance,
-        satisfaction,
-        metadata,
-        tags,
-        status,
         tenant_id,
+        job_statement,
+        when_situation,
+        circumstance,
+        desired_outcome,
+        job_type,
+        job_category,
+        complexity,
+        frequency,
+        status,
+        validation_score,
+        work_pattern,
+        jtbd_type,
+        active_okr_count,
+        okr_alignment_score,
+        strategic_priority,
+        impact_level,
+        compliance_sensitivity,
+        recommended_service_layer,
+        importance_score,
+        satisfaction_score,
+        opportunity_score,
         created_at,
         updated_at
       `, { count: 'exact' });
 
-    // Apply tenant filtering
-    if (showAll && (profile.role === 'super_admin' || profile.role === 'admin')) {
-      logger.debug('jtbd_get_admin_view_all_tenants', { operationId });
-    } else {
+    // Apply tenant filtering - in development show all
+    const isDev = process.env.NODE_ENV === 'development';
+    if (showAll || isDev || profile.role === 'super_admin' || profile.role === 'admin') {
+      logger.debug('jtbd_get_all_tenants', { operationId, isDev, showAll, role: profile.role });
+    } else if (profile.tenant_id) {
       query = query.eq('tenant_id', profile.tenant_id);
       logger.debug('jtbd_get_tenant_filtered', { operationId, tenantId: profile.tenant_id });
     }
 
+    // Only fetch non-deleted JTBDs
+    query = query.is('deleted_at', null);
+
     // Add pagination
     query = query.range(offset, offset + limit - 1);
 
-    // Add ordering
+    // Add ordering by name
     query = query.order('name', { ascending: true });
 
     const { data: jtbds, error, count } = await query;
@@ -99,20 +104,64 @@ export const GET = withAgentAuth(async (
       );
     }
 
+    // Transform JTBDs to match frontend expected format
+    const transformedJtbds = (jtbds || []).map((jtbd: any) => {
+      // Calculate ODI tier from opportunity score
+      const opportunityScore = parseFloat(jtbd.opportunity_score) || 0;
+      let odiTier = 'low';
+      if (opportunityScore >= 15) odiTier = 'extreme';
+      else if (opportunityScore >= 12) odiTier = 'high';
+      else if (opportunityScore >= 10) odiTier = 'medium';
+
+      return {
+        id: jtbd.id,
+        code: jtbd.code,
+        job_statement: jtbd.name || jtbd.job_statement,
+        description: jtbd.job_statement || jtbd.name,
+        category: jtbd.job_category,
+        job_type: jtbd.job_type,
+        job_category: jtbd.job_category,
+        complexity: jtbd.complexity,
+        frequency: jtbd.frequency,
+        priority: mapStrategicPriorityToPriority(jtbd.strategic_priority),
+        status: jtbd.status || 'active',
+        // ODI scores
+        importance_score: jtbd.importance_score,
+        satisfaction_score: jtbd.satisfaction_score,
+        opportunity_score: jtbd.opportunity_score,
+        odi_tier: odiTier,
+        // Additional attributes
+        work_pattern: jtbd.work_pattern,
+        jtbd_type: jtbd.jtbd_type,
+        impact_level: jtbd.impact_level,
+        compliance_sensitivity: jtbd.compliance_sensitivity,
+        recommended_service_layer: jtbd.recommended_service_layer,
+        validation_score: jtbd.validation_score,
+        // Metadata
+        tenant_id: jtbd.tenant_id,
+        created_at: jtbd.created_at,
+        updated_at: jtbd.updated_at,
+      };
+    });
+
+    // Calculate stats
+    const stats = calculateJtbdStats(transformedJtbds);
+
     const duration = Date.now() - startTime;
     logger.infoWithMetrics('jtbd_get_completed', duration, {
       operation: 'GET /api/jtbd',
       operationId,
-      jtbdCount: jtbds?.length || 0,
+      jtbdCount: transformedJtbds.length,
       totalCount: count,
     });
 
     return NextResponse.json({
       success: true,
-      jtbds: jtbds || [],
+      jtbd: transformedJtbds,
       count: count || 0,
       limit,
       offset,
+      stats,
     });
   } catch (error) {
     const duration = Date.now() - startTime;
@@ -135,3 +184,80 @@ export const GET = withAgentAuth(async (
     );
   }
 });
+
+// Helper to map strategic_priority to simple priority
+function mapStrategicPriorityToPriority(strategicPriority?: string): 'high' | 'medium' | 'low' {
+  switch (strategicPriority?.toLowerCase()) {
+    case 'critical':
+    case 'high':
+      return 'high';
+    case 'medium':
+    case 'moderate':
+      return 'medium';
+    case 'low':
+    default:
+      return 'low';
+  }
+}
+
+// Calculate JTBD statistics
+function calculateJtbdStats(jtbds: any[]) {
+  const byCategory: Record<string, number> = {};
+  const byPriority = { high: 0, medium: 0, low: 0 };
+  const byStatus = { active: 0, planned: 0, completed: 0, draft: 0 };
+  const byComplexity: Record<string, number> = {};
+  const byJobCategory: Record<string, number> = {};
+  const byOdiTier: Record<string, number> = {};
+  
+  let totalOpportunityScore = 0;
+  let opportunityCount = 0;
+
+  jtbds.forEach((jtbd: any) => {
+    // By category/functional area
+    const category = jtbd.category || jtbd.functional_area || 'Uncategorized';
+    byCategory[category] = (byCategory[category] || 0) + 1;
+
+    // By priority
+    if (jtbd.priority) {
+      byPriority[jtbd.priority as keyof typeof byPriority]++;
+    }
+
+    // By status
+    const status = jtbd.status?.toLowerCase() || 'active';
+    if (status in byStatus) {
+      byStatus[status as keyof typeof byStatus]++;
+    }
+
+    // By complexity
+    if (jtbd.complexity) {
+      byComplexity[jtbd.complexity] = (byComplexity[jtbd.complexity] || 0) + 1;
+    }
+
+    // By job category
+    if (jtbd.job_category) {
+      byJobCategory[jtbd.job_category] = (byJobCategory[jtbd.job_category] || 0) + 1;
+    }
+
+    // By ODI tier
+    if (jtbd.odi_tier) {
+      byOdiTier[jtbd.odi_tier] = (byOdiTier[jtbd.odi_tier] || 0) + 1;
+    }
+
+    // Opportunity score average
+    if (jtbd.opportunity_score) {
+      totalOpportunityScore += parseFloat(jtbd.opportunity_score);
+      opportunityCount++;
+    }
+  });
+
+  return {
+    total: jtbds.length,
+    byCategory,
+    byPriority,
+    byStatus,
+    byComplexity,
+    byJobCategory,
+    byOdiTier,
+    avgOpportunityScore: opportunityCount > 0 ? Math.round((totalOpportunityScore / opportunityCount) * 100) / 100 : 0,
+  };
+}

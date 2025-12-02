@@ -33,75 +33,73 @@ export const GET = withAgentAuth(async (
 
     // Build query using actual database column names
     // Note: We'll fetch counts separately for performance
-    // The personas table already has normalized foreign keys: role_id, department_id, function_id
+    // The personas table has MECE persona attributes and normalized foreign keys
     let query = supabase
       .from('personas')
       .select(`
         id,
-        slug,
-        name,
-        title,
-        one_liner,
-        tagline,
-        archetype,
+        unique_id,
+        persona_name,
         persona_type,
-        persona_number,
-        section,
-        segment,
-        organization_type,
-        typical_organization_size,
-        seniority_level,
-        department_id,
-        department_slug,
-        function_id,
-        function_slug,
-        role_id,
-        role_slug,
-        years_of_experience,
-        years_in_function,
-        years_in_industry,
-        years_in_current_role,
-        education_level,
-        budget_authority,
-        key_responsibilities,
-        technology_adoption,
-        risk_tolerance,
-        decision_making_style,
-        learning_style,
-        work_style,
-        work_style_preference,
-        work_arrangement,
-        location_type,
-        geographic_scope,
-        team_size,
-        team_size_typical,
-        direct_reports,
-        reporting_to,
-        span_of_control,
-        salary_min_usd,
-        salary_median_usd,
-        salary_max_usd,
-        metadata,
-        tags,
+        source_role_id,
+        title,
+        description,
         is_active,
+        age_range,
+        experience_level,
+        education_level,
+        department,
+        function_area,
+        geographic_scope,
+        goals,
+        challenges,
+        motivations,
+        frustrations,
+        daily_activities,
+        tools_used,
+        communication_preferences,
+        skills,
+        competencies,
+        success_metrics,
+        gxp_requirements,
+        regulatory_context,
+        therapeutic_areas,
+        data_quality_score,
+        ai_readiness_score,
+        work_complexity_score,
+        derived_archetype,
+        preferred_service_layer,
+        project_work_ratio,
+        bau_work_ratio,
+        work_dominance,
+        owned_okr_count,
+        contributed_okr_count,
+        validated_by,
+        last_validated,
         tenant_id,
+        created_by,
         created_at,
         updated_at
       `, { count: 'exact' });
 
-    // Apply tenant filtering using allowed_tenants array
-    if (showAll && (profile.role === 'super_admin' || profile.role === 'admin')) {
-      logger.debug('personas_get_admin_view_all_tenants', { operationId });
-    } else {
-      query = query.contains('allowed_tenants', [profile.tenant_id]);
+    // Apply tenant filtering using tenant_id
+    // In development or for admins with showAll, show all personas
+    const isDev = process.env.NODE_ENV === 'development';
+    if (showAll || isDev || profile.role === 'super_admin' || profile.role === 'admin') {
+      logger.debug('personas_get_all_tenants', { operationId, isDev, showAll, role: profile.role });
+    } else if (profile.tenant_id) {
+      query = query.eq('tenant_id', profile.tenant_id);
       logger.debug('personas_get_tenant_filtered', { operationId, tenantId: profile.tenant_id });
     }
+    
+    // Only fetch active personas
+    query = query.eq('is_active', true);
 
     // Add pagination
     query = query.range(offset, offset + limit - 1);
 
     // Add ordering
-    query = query.order('name', { ascending: true });
+    query = query.order('persona_name', { ascending: true });
 
     const { data: personas, error, count } = await query;
 
@@ -124,109 +122,143 @@ export const GET = withAgentAuth(async (
       );
     }
 
-    // Fetch org structure data separately using normalized foreign keys
-    // The personas table has normalized schema with foreign keys: role_id, department_id, function_id
-    const uniqueRoleIds = [...new Set((personas || []).map((p: any) => p.role_id).filter(Boolean))];
-    const uniqueDepartmentIds = [...new Set((personas || []).map((p: any) => p.department_id).filter(Boolean))];
-    const uniqueFunctionIds = [...new Set((personas || []).map((p: any) => p.function_id).filter(Boolean))];
+    // Fetch org structure data separately using source_role_id
+    const uniqueRoleIds = [...new Set((personas || []).map((p: any) => p.source_role_id).filter(Boolean))];
 
-    // Fetch roles, departments, and functions in parallel using normalized foreign keys
-    const [rolesResult, departmentsResult, functionsResult] = await Promise.all([
-      uniqueRoleIds.length > 0
-        ? supabase.from('org_roles').select('id, name, role_code').in('id', uniqueRoleIds)
-        : Promise.resolve({ data: [], error: null }),
-      uniqueDepartmentIds.length > 0
-        ? supabase.from('org_departments').select('id, name, department_code').in('id', uniqueDepartmentIds)
-        : Promise.resolve({ data: [], error: null }),
-      uniqueFunctionIds.length > 0
-        ? supabase.from('org_functions').select('id, name, function_code').in('id', uniqueFunctionIds)
-        : Promise.resolve({ data: [], error: null }),
-    ]);
+    // Fetch roles with their departments and functions
+    const rolesResult = uniqueRoleIds.length > 0
+      ? await supabase
+          .from('org_roles')
+          .select(`
+            id, 
+            name, 
+            role_code,
+            department_id,
+            org_departments (
+              id,
+              name,
+              department_code,
+              function_id,
+              org_functions (
+                id,
+                name,
+                function_code
+              )
+            )
+          `)
+          .in('id', uniqueRoleIds)
+      : { data: [], error: null };
 
-    // Create lookup maps for O(1) access - normalized data lookup
-    const rolesMap = new Map((rolesResult.data || []).map((r: any) => [r.id, r.name]));
-    const departmentsMap = new Map((departmentsResult.data || []).map((d: any) => [d.id, d.name]));
-    const functionsMap = new Map((functionsResult.data || []).map((f: any) => [f.id, f.name]));
+    // Create lookup map for roles with full org structure
+    const rolesMap = new Map((rolesResult.data || []).map((r: any) => [r.id, r]));
 
-    // Transform personas to add normalized org structure names
+    // Transform personas to add org structure names and normalize field names for frontend
     const transformedPersonas = (personas || []).map((persona: any) => {
-      const transformed: any = { ...persona };
+      const role = persona.source_role_id ? rolesMap.get(persona.source_role_id) : null;
+      const dept = role?.org_departments;
+      const func = dept?.org_functions;
       
-      // Add role name from normalized lookup using role_id foreign key
-      if (persona.role_id && rolesMap.has(persona.role_id)) {
-        transformed.role_name = rolesMap.get(persona.role_id);
-      }
-      
-      // Add department name from normalized lookup using department_id foreign key
-      if (persona.department_id && departmentsMap.has(persona.department_id)) {
-        transformed.department_name = departmentsMap.get(persona.department_id);
-      }
-      
-      // Add function name from normalized lookup using function_id foreign key
-      if (persona.function_id && functionsMap.has(persona.function_id)) {
-        transformed.function_name = functionsMap.get(persona.function_id);
-      }
-      
-      return transformed;
+      return {
+        // Map to frontend expected field names
+        id: persona.id,
+        slug: persona.unique_id,
+        name: persona.persona_name,
+        title: persona.title,
+        tagline: persona.description,
+        one_liner: persona.description?.substring(0, 100),
+        archetype: persona.derived_archetype,
+        persona_type: persona.persona_type,
+        seniority_level: persona.experience_level,
+        
+        // Org structure
+        role_id: persona.source_role_id,
+        role_name: role?.name || null,
+        role_slug: role?.role_code || null,
+        department_id: dept?.id || null,
+        department_name: persona.department || dept?.name || null,
+        department_slug: dept?.department_code || null,
+        function_id: func?.id || null,
+        function_name: persona.function_area || func?.name || null,
+        function_slug: func?.function_code || null,
+        
+        // Demographics
+        age_range: persona.age_range,
+        years_of_experience: persona.experience_level,
+        education_level: persona.education_level,
+        geographic_scope: persona.geographic_scope,
+        
+        // MECE Archetype attributes
+        ai_readiness_score: persona.ai_readiness_score,
+        work_complexity_score: persona.work_complexity_score,
+        derived_archetype: persona.derived_archetype,
+        preferred_service_layer: persona.preferred_service_layer,
+        
+        // Work mix
+        project_work_ratio: persona.project_work_ratio,
+        bau_work_ratio: persona.bau_work_ratio,
+        work_dominance: persona.work_dominance,
+        
+        // OKR ownership
+        owned_okr_count: persona.owned_okr_count,
+        contributed_okr_count: persona.contributed_okr_count,
+        
+        // Goals & Challenges (JSONB arrays)
+        goals: persona.goals,
+        challenges: persona.challenges,
+        motivations: persona.motivations,
+        frustrations: persona.frustrations,
+        
+        // Professional context
+        daily_activities: persona.daily_activities,
+        tools_used: persona.tools_used,
+        skills: persona.skills,
+        competencies: persona.competencies,
+        success_metrics: persona.success_metrics,
+        
+        // Pharma-specific
+        gxp_requirements: persona.gxp_requirements,
+        regulatory_context: persona.regulatory_context,
+        therapeutic_areas: persona.therapeutic_areas,
+        
+        // Quality
+        data_quality_score: persona.data_quality_score,
+        
+        // Metadata
+        is_active: persona.is_active,
+        tenant_id: persona.tenant_id,
+        created_at: persona.created_at,
+        updated_at: persona.updated_at,
+      };
     });
 
-    // Fetch counts for pain points and JTBDs for all personas
-    const personaIds = transformedPersonas.map(p => p.id) || [];
+    // Calculate counts from JSONB arrays and add JTBD mapping counts
+    const personaIds = transformedPersonas.map((p: any) => p.id) || [];
     let personasWithCounts = transformedPersonas || [];
 
     if (personaIds.length > 0) {
-      // Get pain points counts
-      const { data: painPointsData } = await supabase
-        .from('persona_pain_points')
+      // Get JTBD mapping counts
+      const { data: jtbdMappingData } = await supabase
+        .from('jtbd_persona_mapping')
         .select('persona_id')
         .in('persona_id', personaIds);
 
-      // Get JTBD counts
-      const { data: jtbdsData } = await supabase
-        .from('jtbd_personas')
-        .select('persona_id')
-        .in('persona_id', personaIds);
-
-      // Get goals counts
-      const { data: goalsData } = await supabase
-        .from('persona_goals')
-        .select('persona_id')
-        .in('persona_id', personaIds);
-
-      // Get challenges counts
-      const { data: challengesData } = await supabase
-        .from('persona_challenges')
-        .select('persona_id')
-        .in('persona_id', personaIds);
-
-      // Count by persona_id
-      const painPointsCounts = (painPointsData || []).reduce((acc, item) => {
+      const jtbdsCounts = (jtbdMappingData || []).reduce((acc: Record<string, number>, item: any) => {
         acc[item.persona_id] = (acc[item.persona_id] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 
-      const jtbdsCounts = (jtbdsData || []).reduce((acc, item) => {
-        acc[item.persona_id] = (acc[item.persona_id] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      const goalsCounts = (goalsData || []).reduce((acc, item) => {
-        acc[item.persona_id] = (acc[item.persona_id] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      const challengesCounts = (challengesData || []).reduce((acc, item) => {
-        acc[item.persona_id] = (acc[item.persona_id] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      // Add counts to personas
-      personasWithCounts = personas.map((persona: any) => ({
+      // Add counts to personas (goals/challenges are from JSONB arrays)
+      personasWithCounts = transformedPersonas.map((persona: any) => ({
         ...persona,
-        pain_points_count: painPointsCounts[persona.id] || 0,
+        goals_count: Array.isArray(persona.goals) ? persona.goals.length : 
+                     (typeof persona.goals === 'string' ? JSON.parse(persona.goals || '[]').length : 0),
+        challenges_count: Array.isArray(persona.challenges) ? persona.challenges.length :
+                         (typeof persona.challenges === 'string' ? JSON.parse(persona.challenges || '[]').length : 0),
+        motivations_count: Array.isArray(persona.motivations) ? persona.motivations.length :
+                          (typeof persona.motivations === 'string' ? JSON.parse(persona.motivations || '[]').length : 0),
+        frustrations_count: Array.isArray(persona.frustrations) ? persona.frustrations.length :
+                           (typeof persona.frustrations === 'string' ? JSON.parse(persona.frustrations || '[]').length : 0),
         jtbds_count: jtbdsCounts[persona.id] || 0,
-        goals_count: goalsCounts[persona.id] || 0,
-        challenges_count: challengesCounts[persona.id] || 0,
       }));
     }
 
@@ -238,20 +270,42 @@ export const GET = withAgentAuth(async (
       totalCount: count,
     });
 
+    // Calculate archetype distribution stats
+    const archetypeStats = personasWithCounts.reduce((acc: Record<string, number>, p: any) => {
+      const archetype = p.derived_archetype || 'Unknown';
+      acc[archetype] = (acc[archetype] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const serviceLayerStats = personasWithCounts.reduce((acc: Record<string, number>, p: any) => {
+      const layer = p.preferred_service_layer || 'Unknown';
+      acc[layer] = (acc[layer] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Calculate average scores
+    const avgAiReadiness = personasWithCounts.length > 0
+      ? personasWithCounts.reduce((sum: number, p: any) => sum + (parseFloat(p.ai_readiness_score) || 0), 0) / personasWithCounts.length
+      : 0;
+    
+    const avgWorkComplexity = personasWithCounts.length > 0
+      ? personasWithCounts.reduce((sum: number, p: any) => sum + (parseFloat(p.work_complexity_score) || 0), 0) / personasWithCounts.length
+      : 0;
+
     // Fetch actual counts from org tables for accurate statistics
     const [rolesCountResult, departmentsCountResult, functionsCountResult] = await Promise.all([
       supabase
         .from('org_roles')
         .select('id', { count: 'exact', head: true })
-        .contains('allowed_tenants', [profile.tenant_id]),
+        .eq('tenant_id', profile.tenant_id),
       supabase
         .from('org_departments')
         .select('id', { count: 'exact', head: true })
-        .contains('allowed_tenants', [profile.tenant_id]),
+        .eq('tenant_id', profile.tenant_id),
       supabase
         .from('org_functions')
         .select('id', { count: 'exact', head: true })
-        .contains('allowed_tenants', [profile.tenant_id]),
+        .eq('tenant_id', profile.tenant_id),
     ]);
 
     return NextResponse.json({
@@ -265,6 +319,10 @@ export const GET = withAgentAuth(async (
         totalRoles: rolesCountResult.count || 0,
         totalDepartments: departmentsCountResult.count || 0,
         totalFunctions: functionsCountResult.count || 0,
+        byArchetype: archetypeStats,
+        byServiceLayer: serviceLayerStats,
+        avgAiReadiness: Math.round(avgAiReadiness * 100) / 100,
+        avgWorkComplexity: Math.round(avgWorkComplexity * 100) / 100,
       },
     });
   } catch (error) {

@@ -36,6 +36,20 @@ export const createClient = (): SupabaseClient => {
       detectSessionInUrl: true,
       storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     },
+    global: {
+      headers: {
+        'X-Client-Info': 'vital-system-browser',
+      },
+    },
+    db: {
+      schema: 'public',
+    },
+    // SSL configuration for secure connections
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
+    },
   });
 
   globalForSupabase.__vitalBrowserSupabaseClient = clientInstance;

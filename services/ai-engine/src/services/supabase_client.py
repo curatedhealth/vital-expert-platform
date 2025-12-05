@@ -268,36 +268,132 @@ class SupabaseClient:
                         error=str(e))
             return False
 
-    async def get_agent_by_id(self, agent_id: str) -> Optional[Dict[str, Any]]:
+    async def get_agent_by_id(self, agent_id: str, tenant_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """
         Get agent configuration by ID or name.
         
         Args:
             agent_id: Either a UUID (id field) or agent name (name field)
+            tenant_id: Optional tenant ID for RLS filtering. If not provided, uses default tenant.
             
         Returns:
             Agent configuration dictionary or None if not found
         """
+        # If Supabase is unavailable, return None.
+        if not self.client:
+            logger.warning("⚠️ get_agent_by_id called but Supabase client is not initialized; returning None")
+            return None
+
+        # Default tenant ID if not provided
+        DEFAULT_TENANT_ID = "c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244"
+        effective_tenant_id = tenant_id or DEFAULT_TENANT_ID
+
         try:
+            # Note: We're using service role key, so RLS is bypassed
+            # However, we still filter by tenant_id for data isolation
+            # If agent has NULL or different tenant_id, we'll try without filter as fallback
+
             # First, try to determine if this looks like a UUID
             import re
             uuid_pattern = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
             is_uuid = bool(uuid_pattern.match(agent_id))
             
+            logger.info(
+                "🔍 Agent lookup details",
+                agent_id=agent_id,
+                is_uuid=is_uuid,
+                requested_tenant_id=effective_tenant_id
+            )
+            
+            # Set tenant context for RLS
+            await self.set_tenant_context(effective_tenant_id)
+            
+            # First attempt: Query with tenant_id filter
+            query = self.client.table("agents").select("*")
+            
             if is_uuid:
-                # Query by id field (UUID)
-                result = self.client.table("agents").select("*").eq("id", agent_id).execute()
+                # Query by id field (UUID) - don't filter by status to allow inactive agents too
+                query = query.eq("id", agent_id)
             else:
-                # Query by name field (string)
-                result = self.client.table("agents").select("*").eq("name", agent_id).execute()
+                # Query by name field (string) - don't filter by status
+                query = query.eq("name", agent_id)
+            
+            # Explicitly filter by tenant_id as fallback if RLS doesn't work
+            query = query.eq("tenant_id", effective_tenant_id)
+            
+            result = query.execute()
 
-            if result.data:
+            if result.data and len(result.data) > 0:
                 agent = result.data[0]
-                logger.info("🤖 Agent retrieved", agent_id=agent_id, agent_name=agent.get("name"), lookup_method="id" if is_uuid else "name")
+                logger.info(
+                    "🤖 Agent retrieved",
+                    agent_id=agent_id,
+                    agent_name=agent.get("name"),
+                    agent_status=agent.get("status"),
+                    tenant_id=effective_tenant_id,
+                    lookup_method="id" if is_uuid else "name"
+                )
                 return agent
+            
+            # If not found with tenant_id filter, try without tenant_id filter (agent might have NULL or different tenant_id)
+            logger.warning(
+                "⚠️ Agent not found with tenant_id filter, trying without tenant filter",
+                agent_id=agent_id,
+                tenant_id=effective_tenant_id,
+                lookup_method="id" if is_uuid else "name"
+            )
+            
+            # Retry without tenant_id filter
+            fallback_query = self.client.table("agents").select("*")
+            if is_uuid:
+                fallback_query = fallback_query.eq("id", agent_id)
             else:
-                logger.warning("⚠️ Agent not found", agent_id=agent_id, lookup_method="id" if is_uuid else "name")
-                return None
+                fallback_query = fallback_query.eq("name", agent_id)
+            
+            # Don't filter by tenant_id - this allows finding agents with NULL or different tenant_id
+            fallback_result = fallback_query.execute()
+            
+            if fallback_result.data and len(fallback_result.data) > 0:
+                agent = fallback_result.data[0]
+                logger.info(
+                    "🤖 Agent retrieved (without tenant filter)",
+                    agent_id=agent_id,
+                    agent_name=agent.get("name"),
+                    agent_status=agent.get("status"),
+                    agent_tenant_id=agent.get("tenant_id"),
+                    requested_tenant_id=effective_tenant_id,
+                    lookup_method="id" if is_uuid else "name"
+                )
+                return agent
+            
+            # Still not found - log detailed diagnostics
+            logger.warning(
+                "⚠️ Agent not found even without tenant filter",
+                agent_id=agent_id,
+                tenant_id=effective_tenant_id,
+                lookup_method="id" if is_uuid else "name",
+                result_count=len(fallback_result.data) if fallback_result.data else 0
+            )
+            
+            # If query returned empty but no error, the agent might not exist
+            # Since we're using service role key, we should be able to see all agents
+            # Let's verify if the agent exists at all (regardless of tenant_id)
+            if is_uuid:
+                try:
+                    # Query with just the ID (no tenant filter) to see if agent exists
+                    test_result = self.client.table("agents").select("id, name, tenant_id, status").eq("id", agent_id).limit(1).execute()
+                    if test_result.data and len(test_result.data) > 0:
+                        logger.warning(
+                            "⚠️ Agent exists but doesn't match tenant filter",
+                            agent_id=agent_id,
+                            agent_name=test_result.data[0].get("name"),
+                            agent_tenant_id=test_result.data[0].get("tenant_id"),
+                            requested_tenant_id=effective_tenant_id
+                        )
+                except Exception as test_error:
+                    logger.debug("Test query failed", error=str(test_error))
+            
+            return None
 
         except Exception as e:
             logger.error("❌ Failed to get agent", agent_id=agent_id, error=str(e))

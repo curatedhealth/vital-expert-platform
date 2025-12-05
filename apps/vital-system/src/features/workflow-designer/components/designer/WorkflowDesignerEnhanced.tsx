@@ -88,6 +88,8 @@ import { AIChatbot, ChatMessage } from '@/components/langgraph-gui/AIChatbot';
 import { apiEndpoints, setApiBaseUrl } from '@/lib/langgraph-gui/config/api';
 import { expertIdentityManager } from '@/lib/langgraph-gui/expertIdentity';
 import { createDefaultPanelWorkflow, getAvailablePanelTypes, PANEL_CONFIGS } from '@/components/langgraph-gui/panel-workflows';
+import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { Loader2, Search } from 'lucide-react';
 
 import type { 
   WorkflowDefinition,
@@ -99,6 +101,7 @@ import type {
 
 // Custom node types for React Flow - defined outside component to prevent recreation
 // Using Object.freeze to ensure the object reference never changes
+// We'll use a ref to pass the update function to nodes
 const nodeTypes = Object.freeze({
   workflowNode: CustomWorkflowNode,
 }) as const;
@@ -148,7 +151,7 @@ export function WorkflowDesignerEnhanced({
     initialWorkflow?.nodes.map(node => ({
       id: node.id,
       type: 'workflowNode',
-      position: node.position,
+      position: node.position || { x: 0, y: 0 }, // Default position if undefined
       data: {
         ...node,
         type: node.type,
@@ -177,6 +180,18 @@ export function WorkflowDesignerEnhanced({
   const [isDirty, setIsDirty] = useState(false);
   const [undoStack, setUndoStack] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
   const [redoStack, setRedoStack] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
+  
+  // Track initial mount to avoid marking as dirty on first render
+  const isInitialMount = useRef(true);
+
+  // Mark workflow as dirty when nodes or edges change (but not on initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    setIsDirty(true);
+  }, [nodes, edges]);
 
   // AI Chatbot state - collapsed by default
   const [showChat, setShowChat] = useState(false);
@@ -221,6 +236,15 @@ export function WorkflowDesignerEnhanced({
   const [showPanelDialog, setShowPanelDialog] = useState(false);
   const [selectedPanelType, setSelectedPanelType] = useState<string>('');
   const [currentPanelType, setCurrentPanelType] = useState<string | null>(null);
+
+  // Detect panel type from initial workflow metadata
+  useEffect(() => {
+    if (initialWorkflow?.metadata?.panel_type) {
+      const panelType = initialWorkflow.metadata.panel_type;
+      console.log('[WorkflowDesigner] Detected panel type from initial workflow:', panelType);
+      setCurrentPanelType(panelType);
+    }
+  }, [initialWorkflow]);
   const [showCodeView, setShowCodeView] = useState(false);
   const [workflowCode, setWorkflowCode] = useState<string>('');
   const [showTestModal, setShowTestModal] = useState(false);
@@ -230,6 +254,11 @@ export function WorkflowDesignerEnhanced({
   const [panelName, setPanelName] = useState('');
   const [panelDescription, setPanelDescription] = useState('');
   const [isSavingPanel, setIsSavingPanel] = useState(false);
+  
+  // Agent store state
+  const [agents, setAgents] = useState<any[]>([]);
+  const [agentsLoading, setAgentsLoading] = useState(false);
+  const [agentSearchQuery, setAgentSearchQuery] = useState('');
 
   // Save current state to undo stack
   const saveToUndoStack = useCallback(() => {
@@ -269,28 +298,165 @@ export function WorkflowDesignerEnhanced({
 
       const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
       const type = event.dataTransfer.getData('application/reactflow') as NodeType;
+      const agentData = event.dataTransfer.getData('application/agent');
 
       if (typeof type === 'undefined' || !type || !reactFlowInstance) {
         return;
       }
 
+      // Check if we're dropping on an existing agent node
+      if (agentData && type === 'agent') {
+        console.log('🔍 Checking for agent node at drop position:', event.clientX, event.clientY);
+        
+        // Find the node element at the drop position
+        const allNodes = reactFlowInstance.getNodes();
+        console.log('📋 Total nodes:', allNodes.length);
+        
+        const targetNode = allNodes.find((node) => {
+          // Accept both 'agent' type nodes and 'task' type nodes (like Expert Agent 1, Expert Agent 2, Moderator)
+          const nodeType = node.data?.type;
+          if (nodeType !== 'agent' && nodeType !== 'task') {
+            console.log(`⏭️ Skipping node ${node.id} - type is ${nodeType}, not agent or task`);
+            return false;
+          }
+          
+          // For task nodes, check if the label suggests it's an agent placeholder
+          if (nodeType === 'task') {
+            const label = (node.data?.label || '').toLowerCase();
+            const isAgentPlaceholder = label.includes('expert') || 
+                                      label.includes('agent') || 
+                                      label.includes('moderator');
+            if (!isAgentPlaceholder) {
+              console.log(`⏭️ Skipping task node ${node.id} - label "${node.data?.label}" is not an agent placeholder`);
+              return false;
+            }
+          }
+          
+          const nodeElement = document.querySelector(`[data-id="${node.id}"]`);
+          if (!nodeElement) {
+            console.log(`❌ Node ${node.id} element not found in DOM`);
+            return false;
+          }
+          
+          const rect = nodeElement.getBoundingClientRect();
+          console.log(`📍 Node ${node.id} bounds:`, {
+            left: rect.left,
+            right: rect.right,
+            top: rect.top,
+            bottom: rect.bottom,
+            dropX: event.clientX,
+            dropY: event.clientY,
+            inBounds: (
+              event.clientX >= rect.left &&
+              event.clientX <= rect.right &&
+              event.clientY >= rect.top &&
+              event.clientY <= rect.bottom
+            )
+          });
+          
+          // Check if drop coordinates are within node bounds
+          return (
+            event.clientX >= rect.left &&
+            event.clientX <= rect.right &&
+            event.clientY >= rect.top &&
+            event.clientY <= rect.bottom
+          );
+        });
+
+        // If dropping on an existing agent node, update it instead of creating new
+        if (targetNode) {
+          console.log('✅ Found target agent node:', targetNode.id, targetNode.data);
+          try {
+            const agent = JSON.parse(agentData);
+            console.log('🔄 Replacing agent:', agent.name);
+            saveToUndoStack();
+            setNodes((nds) =>
+              nds.map((node) => {
+                if (node.id === targetNode.id) {
+                  console.log('✏️ Updating node:', node.id, 'from type', node.data?.type);
+                  
+                  // If it's a task node, convert it to an agent node
+                  const isTaskNode = node.data?.type === 'task';
+                  const updatedData = {
+                    ...node.data,
+                    // Update type to 'agent' if it was a 'task'
+                    type: isTaskNode ? 'agent' : node.data.type,
+                    label: agent.display_name || agent.name || 'Agent',
+                    config: {
+                      ...node.data.config,
+                      agentId: agent.id,
+                      agentName: agent.name,
+                      agentDisplayName: agent.display_name || agent.name,
+                      agentDescription: agent.description || '',
+                      agentAvatar: agent.avatar_url || agent.avatar,
+                      systemPrompt: agent.system_prompt || node.data.config.systemPrompt,
+                      model: agent.base_model || node.data.config.model,
+                      temperature: agent.temperature ?? node.data.config.temperature,
+                      maxTokens: agent.max_tokens || node.data.config.maxTokens,
+                    },
+                  };
+                  
+                  return {
+                    ...node,
+                    data: updatedData,
+                  };
+                }
+                return node;
+              })
+            );
+            setIsDirty(true);
+            console.log('✅ Agent replaced successfully on node:', targetNode.id, 'with agent:', agent.name);
+            return; // Exit early, don't create new node
+          } catch (e) {
+            console.error('❌ Failed to parse agent data:', e);
+          }
+        } else {
+          console.log('ℹ️ No agent node found at drop position, will create new node');
+        }
+      }
+
+      // Otherwise, create a new node at the drop position
       const position = reactFlowInstance.project({
         x: event.clientX - (reactFlowBounds?.left || 0),
         y: event.clientY - (reactFlowBounds?.top || 0),
       });
-
       const nodeDef = getNodeTypeDefinition(type);
+      
+      // If agent data is present, use it to configure the agent node
+      let nodeData: any = {
+        id: `${type}-${Date.now()}`,
+        type,
+        label: nodeDef.label,
+        config: nodeDef.defaultConfig,
+        position,
+      };
+
+      if (agentData && type === 'agent') {
+        try {
+          const agent = JSON.parse(agentData);
+          nodeData.label = agent.display_name || agent.name || 'Agent';
+          nodeData.config = {
+            ...nodeDef.defaultConfig,
+            agentId: agent.id,
+            agentName: agent.name,
+            agentDisplayName: agent.display_name || agent.name,
+            agentDescription: agent.description || '',
+            agentAvatar: agent.avatar_url || agent.avatar,
+            systemPrompt: agent.system_prompt || nodeDef.defaultConfig.systemPrompt,
+            model: agent.base_model || nodeDef.defaultConfig.model,
+            temperature: agent.temperature ?? nodeDef.defaultConfig.temperature,
+            maxTokens: agent.max_tokens || nodeDef.defaultConfig.maxTokens,
+          };
+        } catch (e) {
+          console.error('Failed to parse agent data:', e);
+        }
+      }
+
       const newNode: Node = {
         id: `${type}-${Date.now()}`,
         type: 'workflowNode',
         position,
-        data: {
-          id: `${type}-${Date.now()}`,
-          type,
-          label: nodeDef.label,
-          config: nodeDef.defaultConfig,
-          position,
-        },
+        data: nodeData,
       };
 
       saveToUndoStack();
@@ -412,11 +578,25 @@ export function WorkflowDesignerEnhanced({
         // Try multiple paths to find agentId from node.data (React Flow stores everything in data)
         // Use type assertion for dynamic properties not in the type definition
         const nodeData = node.data as any;
-        const agentId = nodeData?.config?.agentId || 
-                        nodeData?.expertConfig?.id ||
-                        nodeData?.agentId;
+
+        // Check multiple locations where agentId might be stored:
+        // 1. node.data.config.agentId (when loaded from database)
+        // 2. node.data.agentId (direct assignment)
+        // 3. node.data.expertConfig.id (legacy format)
+        const agentId = nodeData?.config?.agentId ||
+                        nodeData?.agentId ||
+                        nodeData?.expertConfig?.id;
+
         if (agentId && typeof agentId === 'string' && agentId.trim() && !agentIds.includes(agentId)) {
           agentIds.push(agentId);
+          console.log(`✅ Found agent ID: ${agentId} in node ${node.id} (type: ${nodeType})`);
+        } else {
+          console.log(`⚠️ Node ${node.id} is type ${nodeType} but has no agentId.`);
+          console.log('   Checked paths:', {
+            'data.config.agentId': nodeData?.config?.agentId,
+            'data.agentId': nodeData?.agentId,
+            'data.expertConfig.id': nodeData?.expertConfig?.id
+          });
         }
       }
     });
@@ -428,6 +608,44 @@ export function WorkflowDesignerEnhanced({
   const handleSaveWorkflow = useCallback(() => {
     // Check if workflow has agent nodes
     const agentIds = extractAgentIds();
+    console.log('[WorkflowDesigner] Save clicked. Agent IDs found:', agentIds.length);
+    
+    // If embedded mode, always use onSave callback (for panel designer)
+    if (embedded && onSave) {
+      const workflowNodes = nodes.map(n => n.data as WorkflowNode);
+      const workflowEdges = edges.map(e => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        type: e.type === 'step' ? ('conditional' as const) : ('default' as const),
+        label: e.label as string | undefined,
+      }));
+
+      const workflow: WorkflowDefinition = {
+        id: initialWorkflow?.id || `workflow-${Date.now()}`,
+        name: initialWorkflow?.name || 'Untitled Workflow',
+        description: initialWorkflow?.description || '',
+        framework: initialWorkflow?.framework || 'langgraph',
+        nodes: workflowNodes,
+        edges: workflowEdges,
+        config: initialWorkflow?.config || {},
+        metadata: {
+          ...initialWorkflow?.metadata,
+        },
+      };
+
+      onSave(workflow);
+      setIsDirty(false);
+      
+      addMessage({
+        id: `msg-${Date.now()}`,
+        role: 'log',
+        content: `Workflow saved successfully!`,
+        timestamp: new Date().toLocaleTimeString(),
+        level: 'success',
+      });
+      return;
+    }
     
     if (agentIds.length === 0) {
       // If no agents, just save as regular workflow
@@ -472,7 +690,7 @@ export function WorkflowDesignerEnhanced({
       setPanelDescription(initialWorkflow?.description || '');
       setShowSavePanelDialog(true);
     }
-  }, [nodes, edges, initialWorkflow, onSave, extractAgentIds, addMessage]);
+  }, [nodes, edges, initialWorkflow, onSave, extractAgentIds, addMessage, embedded]);
 
   // Save panel to Supabase
   const handleSavePanel = useCallback(async () => {
@@ -782,15 +1000,102 @@ export function WorkflowDesignerEnhanced({
           }),
         });
       } else {
-        // Execute as regular workflow via database-backed execution
-        response = await fetch(`/api/workflows/${workflow.id}/execute`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            inputs: {},
-            streaming: false,
-          }),
-        });
+        // For embedded panel workflows, use panel execution endpoint
+        // If workflow doesn't have an ID, it's a new workflow from the designer
+        if (workflow.id && workflow.id.startsWith('workflow-')) {
+          // Try database-backed execution if workflow exists
+          try {
+            response = await fetch(`/api/workflows/${workflow.id}/execute`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                inputs: {},
+                streaming: false,
+              }),
+            });
+          } catch (err) {
+            // If workflow doesn't exist, use panel execution as fallback
+            console.log('[WorkflowDesigner] Workflow not found in database, using panel execution');
+            const panelWorkflowDefinition = {
+              nodes: nodes.map(n => ({
+                id: n.id,
+                type: n.data.type || 'task',
+                taskId: n.data.config?.taskId,
+                label: n.data.label,
+                position: n.position,
+                data: n.data.config,
+                expertConfig: n.data.config?.expertConfig,
+                parameters: n.data.config?.parameters,
+              })),
+              edges: edges.map(e => ({
+                id: e.id,
+                source: e.source,
+                target: e.target,
+                type: e.type || 'default',
+                label: e.label,
+              })),
+              metadata: {
+                source: 'workflow-designer-enhanced',
+              },
+            };
+            
+            response = await fetch(`${apiBaseUrl || '/api/langgraph-gui'}/panels/execute`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                query: 'Execute workflow',
+                openai_api_key: apiKeys.openai,
+                pinecone_api_key: apiKeys.pinecone || '',
+                provider: apiKeys.provider || 'openai',
+                ollama_base_url: apiKeys.ollama_base_url || 'http://localhost:11434',
+                ollama_model: apiKeys.ollama_model || 'qwen3:4b',
+                workflow: panelWorkflowDefinition,
+                panel_type: 'custom',
+                user_id: 'user',
+              }),
+            });
+          }
+        } else {
+          // New workflow from designer - use panel execution
+          const panelWorkflowDefinition = {
+            nodes: nodes.map(n => ({
+              id: n.id,
+              type: n.data.type || 'task',
+              taskId: n.data.config?.taskId,
+              label: n.data.label,
+              position: n.position,
+              data: n.data.config,
+              expertConfig: n.data.config?.expertConfig,
+              parameters: n.data.config?.parameters,
+            })),
+            edges: edges.map(e => ({
+              id: e.id,
+              source: e.source,
+              target: e.target,
+              type: e.type || 'default',
+              label: e.label,
+            })),
+            metadata: {
+              source: 'workflow-designer-enhanced',
+            },
+          };
+          
+          response = await fetch(`${apiBaseUrl || '/api/langgraph-gui'}/panels/execute`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query: 'Execute workflow',
+              openai_api_key: apiKeys.openai,
+              pinecone_api_key: apiKeys.pinecone || '',
+              provider: apiKeys.provider || 'openai',
+              ollama_base_url: apiKeys.ollama_base_url || 'http://localhost:11434',
+              ollama_model: apiKeys.ollama_model || 'qwen3:4b',
+              workflow: panelWorkflowDefinition,
+              panel_type: 'custom',
+              user_id: 'user',
+            }),
+          });
+        }
       }
 
       if (!response.ok) {
@@ -924,12 +1229,12 @@ export function WorkflowDesignerEnhanced({
           return {
             id: node.id,
             type: 'workflowNode',
-            position: node.position,
+            position: node.position || { x: 100, y: 100 + (index * 150) }, // Default position with spacing
             data: {
               id: node.id,
               type: modernType,
               label: nodeLabel,
-              position: node.position,
+              position: node.position || { x: 100, y: 100 + (index * 150) },
               // Include workflow metadata in the first node for inspection API
               ...(index === 0 ? { workflowMetadata } : {}),
               config: {
@@ -1088,10 +1393,10 @@ export function WorkflowDesignerEnhanced({
             saveToUndoStack();
             
             // Convert to React Flow format
-            const newNodes = workflow.nodes.map(node => ({
+            const newNodes = workflow.nodes.map((node, index) => ({
               id: node.id,
               type: 'workflowNode',
-              position: node.position,
+              position: node.position || { x: 100, y: 100 + (index * 150) }, // Default position if missing
               data: node,
             }));
             
@@ -1226,13 +1531,33 @@ workflow = StateGraph(WorkflowState)
     setCurrentPanelType(detectPanelType());
   }, [nodes, detectPanelType]);
 
+  // Fetch agents for the agent store
+  useEffect(() => {
+    const fetchAgents = async () => {
+      setAgentsLoading(true);
+      try {
+        const response = await fetch('/api/agents?status=active&no_filters=true');
+        const data = await response.json();
+        if (data.success && data.agents) {
+          setAgents(data.agents);
+        }
+      } catch (error) {
+        console.error('Failed to fetch agents:', error);
+      } finally {
+        setAgentsLoading(false);
+      }
+    };
+    
+    fetchAgents();
+  }, []);
+
   return (
     <div className={`flex h-full w-full gap-2 ${className}`}>
       {/* Left Sidebar - Component Palette, Agent Store, Panel Workflows */}
       <div className="w-64 flex flex-col">
-        <Card className="flex-1 flex flex-col overflow-hidden">
-          <Tabs defaultValue="components" className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 m-2">
+        <Card className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <Tabs defaultValue="components" className="flex-1 flex flex-col min-h-0">
+            <TabsList className={`grid w-full ${embedded ? 'grid-cols-2' : 'grid-cols-3'} m-2`}>
               <TabsTrigger value="components" className="text-xs">
                 <Box className="h-3 w-3 mr-1" />
                 Nodes
@@ -1241,10 +1566,12 @@ workflow = StateGraph(WorkflowState)
                 <Users className="h-3 w-3 mr-1" />
                 Agents
               </TabsTrigger>
-              <TabsTrigger value="panels" className="text-xs">
-                <Workflow className="h-3 w-3 mr-1" />
-                Panels
-              </TabsTrigger>
+              {!embedded && (
+                <TabsTrigger value="panels" className="text-xs">
+                  <Workflow className="h-3 w-3 mr-1" />
+                  Panels
+                </TabsTrigger>
+              )}
             </TabsList>
 
             {/* Components Tab - Node Palette */}
@@ -1298,54 +1625,128 @@ workflow = StateGraph(WorkflowState)
             </TabsContent>
 
             {/* Agent Store Tab */}
-            <TabsContent value="agents" className="flex-1 overflow-hidden m-0">
-              <ScrollArea className="h-full">
-                <div className="p-3">
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Browse and select AI agents for your workflow
-                  </p>
-                  {/* Placeholder for agent store integration */}
-                  <div className="text-xs text-center text-muted-foreground py-8">
-                    Agent store coming soon
-                  </div>
+            <TabsContent value="agents" className="flex-1 flex flex-col overflow-hidden m-0 p-0">
+              {/* Fixed header with search */}
+              <div className="p-3 border-b flex-shrink-0 bg-background">
+                <p className="text-xs text-muted-foreground mb-2">
+                  Browse and select AI agents for your workflow
+                </p>
+                {/* Search input */}
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                  <Input
+                    placeholder="Search agents..."
+                    value={agentSearchQuery}
+                    onChange={(e) => setAgentSearchQuery(e.target.value)}
+                    className="h-7 pl-7 text-xs"
+                  />
                 </div>
-              </ScrollArea>
-            </TabsContent>
+              </div>
 
-            {/* Panel Workflows Tab */}
-            <TabsContent value="panels" className="flex-1 overflow-hidden m-0">
-              <ScrollArea className="h-full">
-                <div className="p-3">
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Load pre-configured panel workflows
-                  </p>
-                  <div className="space-y-2">
-                    {getAvailablePanelTypes().map((type) => {
-                      const config = PANEL_CONFIGS[type];
-                      return (
-                        <Button
-                          key={type}
-                          variant="outline"
-                          className="w-full justify-start text-left h-auto py-2"
-                          onClick={() => handleLoadPanelWorkflow(type)}
-                        >
-                          <div className="flex-1">
-                            <div className="text-xs font-medium">
-                              {config?.name || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </div>
-                            {config?.description && (
-                              <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
-                                {config.description}
+              {/* Scrollable agents list */}
+              <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
+                <div className="p-3 space-y-1">
+                  {agentsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : agents.length === 0 ? (
+                    <div className="text-xs text-center text-muted-foreground py-8">
+                      No agents found
+                    </div>
+                  ) : (
+                    agents
+                      .filter((agent) => {
+                        if (!agentSearchQuery) return true;
+                        const query = agentSearchQuery.toLowerCase();
+                        return (
+                          (agent.name || '').toLowerCase().includes(query) ||
+                          (agent.display_name || '').toLowerCase().includes(query) ||
+                          (agent.description || '').toLowerCase().includes(query) ||
+                          (agent.title || '').toLowerCase().includes(query)
+                        );
+                      })
+                      .map((agent) => {
+                        const nodeDef = getNodeTypeDefinition('agent');
+                        return (
+                          <div
+                            key={agent.id}
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('application/reactflow', 'agent');
+                              e.dataTransfer.setData('application/agent', JSON.stringify(agent));
+                              e.dataTransfer.effectAllowed = 'move';
+                            }}
+                            className="flex items-center gap-2 p-2 rounded border cursor-move hover:bg-accent transition-colors"
+                            style={{
+                              borderColor: nodeDef.borderColor,
+                              backgroundColor: nodeDef.bgColor,
+                            }}
+                          >
+                            <AgentAvatar
+                              avatar={agent.avatar_url || agent.avatar}
+                              name={agent.display_name || agent.name}
+                              size="sm"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-medium truncate">
+                                {agent.display_name || agent.name}
                               </div>
+                              {agent.title && (
+                                <div className="text-[10px] text-muted-foreground truncate">
+                                  {agent.title}
+                                </div>
+                              )}
+                            </div>
+                            {agent.tier && (
+                              <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                L{agent.tier}
+                              </Badge>
                             )}
                           </div>
-                        </Button>
-                      );
-                    })}
-                  </div>
+                        );
+                      })
+                  )}
                 </div>
-              </ScrollArea>
+              </div>
             </TabsContent>
+
+            {/* Panel Workflows Tab - Only show when not embedded */}
+            {!embedded && (
+              <TabsContent value="panels" className="flex-1 overflow-hidden m-0">
+                <ScrollArea className="h-full">
+                  <div className="p-3">
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Load pre-configured panel workflows
+                    </p>
+                    <div className="space-y-2">
+                      {getAvailablePanelTypes().map((type) => {
+                        const config = PANEL_CONFIGS[type];
+                        return (
+                          <Button
+                            key={type}
+                            variant="outline"
+                            className="w-full justify-start text-left h-auto py-2"
+                            onClick={() => handleLoadPanelWorkflow(type)}
+                          >
+                            <div className="flex-1">
+                              <div className="text-xs font-medium">
+                                {config?.name || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              </div>
+                              {config?.description && (
+                                <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
+                                  {config.description}
+                                </div>
+                              )}
+                            </div>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            )}
           </Tabs>
         </Card>
       </div>
@@ -1437,6 +1838,19 @@ workflow = StateGraph(WorkflowState)
               selectedNode={selectedNode}
               onUpdate={handlePropertyChange}
               onClose={() => setSelectedNode(null)}
+              onDelete={(nodeId) => {
+                const nodeToDelete = nodes.find(n => n.id === nodeId);
+                if (nodeToDelete) {
+                  saveToUndoStack();
+                  setNodes((nds) => nds.filter(n => n.id !== nodeId));
+                  // Remove edges connected to this node
+                  setEdges((eds) => 
+                    eds.filter(e => e.source !== nodeId && e.target !== nodeId)
+                  );
+                  setSelectedNode(null);
+                  setIsDirty(true);
+                }
+              }}
             />
           </Card>
         </div>

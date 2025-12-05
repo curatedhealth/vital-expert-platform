@@ -22,7 +22,7 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Settings, X, Save } from 'lucide-react';
+import { Settings, X, Save, Trash2, UserPlus } from 'lucide-react';
 import { getNodeTypeDefinition } from '../../constants/node-types';
 import type { WorkflowNode, NodeConfig } from '../../types/workflow';
 
@@ -36,9 +36,10 @@ interface PropertyPanelProps {
   selectedNode: WorkflowNode | null;
   onUpdate: (nodeId: string, config: Partial<NodeConfig>) => void;
   onClose: () => void;
+  onDelete?: (nodeId: string) => void;
 }
 
-export function PropertyPanel({ selectedNode, onUpdate, onClose }: PropertyPanelProps) {
+export function PropertyPanel({ selectedNode, onUpdate, onClose, onDelete }: PropertyPanelProps) {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loadingAgents, setLoadingAgents] = useState(false);
   
@@ -189,7 +190,25 @@ export function PropertyPanel({ selectedNode, onUpdate, onClose }: PropertyPanel
           {isExpertNode && (
             <div className="space-y-4 mb-4">
               <div className="space-y-2">
-                <Label htmlFor="agentId">Select Expert Agent</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="agentId">Select Expert Agent</Label>
+                  {onDelete && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        if (selectedNode && onDelete) {
+                          onDelete(selectedNode.id);
+                          onClose();
+                        }
+                      }}
+                      className="h-7 text-xs"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Remove
+                    </Button>
+                  )}
+                </div>
                 {loadingAgents ? (
                   <div className="text-sm text-muted-foreground">Loading agents...</div>
                 ) : agents.length === 0 ? (
@@ -215,7 +234,7 @@ export function PropertyPanel({ selectedNode, onUpdate, onClose }: PropertyPanel
                     <SelectTrigger id="agentId">
                       <SelectValue placeholder="Choose an expert agent..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px]">
                       {agents.map((agent) => (
                         <SelectItem key={agent.id} value={agent.id}>
                           {agent.display_name || agent.name}
@@ -227,7 +246,7 @@ export function PropertyPanel({ selectedNode, onUpdate, onClose }: PropertyPanel
                 <p className="text-xs text-muted-foreground">
                   {config.agentId 
                     ? `Selected: ${agents.find(a => a.id === config.agentId)?.display_name || agents.find(a => a.id === config.agentId)?.name || config.agentId}`
-                    : 'Select a real agent from the database to use in this panel workflow'}
+                    : 'Select a real agent from the database to use in this panel workflow. You can also drag agents from the Agents tab onto the canvas.'}
                 </p>
               </div>
             </div>

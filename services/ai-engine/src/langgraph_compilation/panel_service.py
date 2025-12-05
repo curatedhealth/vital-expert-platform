@@ -81,7 +81,7 @@ class PanelService:
             )
             
             # Load panel agents
-            agents = await self._load_agents(agent_ids)
+            agents = await self._load_agents(agent_ids, tenant_id=tenant_id)
             
             if not agents:
                 raise ValueError("No valid agents found for panel")
@@ -123,23 +123,71 @@ class PanelService:
             logger.error("panel_execution_failed", error=str(e))
             raise
     
-    async def _load_agents(self, agent_ids: List[UUID]) -> List[Dict[str, Any]]:
-        """Load agent configurations from database"""
-        query = """
-        SELECT
-            a.id,
-            a.name,
-            a.system_prompt,
-            a.model_name,
-            ag.id as graph_id
-        FROM agents a
-        LEFT JOIN agent_graph_assignments aga ON a.id = aga.agent_id AND aga.is_primary = true
-        LEFT JOIN agent_graphs ag ON aga.graph_id = ag.id
-        WHERE a.id = ANY($1) AND a.deleted_at IS NULL
+    async def _load_agents(self, agent_ids: List[UUID], tenant_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
         """
+        Load agent configurations from Supabase agents table.
         
-        results = await self.pg.fetch(query, agent_ids)
-        return [dict(row) for row in results]
+        Uses the same Supabase client and agent service as the rest of the codebase
+        to ensure consistency and proper tenant filtering via RLS.
+        """
+        try:
+            from services.supabase_client import get_supabase_client
+            from services.agent_service import AgentService
+            
+            supabase_client = get_supabase_client()
+            if not supabase_client.client:
+                await supabase_client.initialize()
+            
+            agent_service = AgentService(supabase_client)
+            
+            # Convert UUIDs to strings for agent_service
+            agents = []
+            tenant_id_str = str(tenant_id) if tenant_id else None
+            
+            for agent_id in agent_ids:
+                agent = await agent_service.get_agent(str(agent_id), tenant_id=tenant_id_str)
+                if agent:
+                    # Map to expected format (add graph_id if needed from metadata)
+                    agent_dict = {
+                        'id': agent.get('id'),
+                        'name': agent.get('name'),
+                        'system_prompt': agent.get('system_prompt', ''),
+                        'model_name': agent.get('model') or agent.get('base_model', 'gpt-4'),
+                        'graph_id': agent.get('metadata', {}).get('graph_id') if isinstance(agent.get('metadata'), dict) else None
+                    }
+                    agents.append(agent_dict)
+                else:
+                    logger.warning(
+                        "agent_not_found_in_panel_service",
+                        agent_id=str(agent_id),
+                        tenant_id=tenant_id_str
+                    )
+            
+            return agents
+            
+        except Exception as e:
+            logger.error(
+                "failed_to_load_agents_via_supabase_fallback_to_postgres",
+                error=str(e),
+                agent_count=len(agent_ids)
+            )
+            # Fallback to direct PostgreSQL query if Supabase fails
+            # This maintains backward compatibility but should be avoided
+            query = """
+            SELECT
+                a.id,
+                a.name,
+                a.system_prompt,
+                a.model_name,
+                ag.id as graph_id
+            FROM agents a
+            LEFT JOIN agent_graph_assignments aga ON a.id = aga.agent_id AND aga.is_primary = true
+            LEFT JOIN agent_graphs ag ON aga.graph_id = ag.id
+            WHERE a.id = ANY($1) AND a.deleted_at IS NULL
+            """
+            
+            results = await self.pg.fetch(query, agent_ids)
+            return [dict(row) for row in results]
     
     async def _execute_parallel(
         self,

@@ -1,0 +1,399 @@
+{
+  "template": {
+    "id": "c624ae36-9b0b-4001-b7fc-97842c6d5f13",
+    "code": "WF-FME-001",
+    "name": "Field Medical Education Program Workflow",
+    "description": "Design and deliver field medical education programs for MSLs and medical science liaisons",
+    "estimated_duration_hours": 80,
+    "status": "active",
+    "version": "1.0",
+    "created_at": "2025-12-02T09:06:25.793099+00:00",
+    "updated_at": "2025-12-02T09:06:25.793099+00:00"
+  },
+  "stages": [
+    {
+      "id": "164f56e3-3065-4f68-8434-4109c6b276d6",
+      "stage_number": 1,
+      "name": "Needs Assessment",
+      "description": "Assess educational needs and gaps",
+      "is_mandatory": true,
+      "estimated_duration_hours": 16,
+      "tasks": [
+        {
+          "id": "d5ce93b8-ebea-4b64-ae4c-d7934dc683e6",
+          "task_number": 1,
+          "code": "FME001-S1-T1",
+          "name": "Competency Gap Analysis",
+          "description": "Analyze MSL competency gaps",
+          "task_type": "manual",
+          "estimated_duration_minutes": 180,
+          "agents": [
+            {
+              "id": "66319cda-9c1d-4ecc-b298-5ff9437ac388",
+              "name": "Competency Analyst",
+              "code": "AGT-CA",
+              "role": "Analyzes competency gaps",
+              "assignment_type": "primary",
+              "execution_order": 1
+            }
+          ],
+          "tools": [],
+          "rag_sources": []
+        },
+        {
+          "id": "80b26fd9-3461-47fa-bc10-8af48afac3db",
+          "task_number": 2,
+          "code": "FME001-S1-T2",
+          "name": "Learning Objectives Definition",
+          "description": "Define learning objectives",
+          "task_type": "manual",
+          "estimated_duration_minutes": 120,
+          "agents": [],
+          "tools": [],
+          "rag_sources": []
+        },
+        {
+          "id": "e8c2b450-83d3-4c9d-9aca-5083ccbf23bf",
+          "task_number": 3,
+          "code": "FME001-S1-T3",
+          "name": "Stakeholder Input Collection",
+          "description": "Gather stakeholder input on needs",
+          "task_type": "manual",
+          "estimated_duration_minutes": 90,
+          "agents": [],
+          "tools": [],
+          "rag_sources": []
+        },
+        {
+          "id": "ab2ce842-fe87-4f7c-8e6c-311afefbd00d",
+          "task_number": 4,
+          "code": "FME001-S1-T4",
+          "name": "Needs Assessment Report",
+          "description": "Compile needs assessment report",
+          "task_type": "manual",
+          "estimated_duration_minutes": 60,
+          "agents": [],
+          "tools": [],
+          "rag_sources": []
+        }
+      ]
+    },
+    {
+      "id": "a2ed6337-51e1-4db9-89c4-f7025a1bfda6",
+      "stage_number": 2,
+      "name": "Curriculum Development",
+      "description": "Develop educational curriculum and materials",
+      "is_mandatory": true,
+      "estimated_duration_hours": 24,
+      "tasks": [
+        {
+          "id": "16d03e75-e23f-4297-a0af-849df0618816",
+          "task_number": 1,
+          "code": "FME001-S2-T1",
+          "name": "Curriculum Framework Design",
+          "description": "Design curriculum framework",
+          "task_type": "manual",
+          "estimated_duration_minutes": 240,
+          "agents": [
+            {
+              "id": "f2dedf80-52a1-4f19-8269-49af8b292635",
+              "name": "Curriculum Designer",
+              "code": "AGT-CD",
+              "role": "Designs curriculum",
+              "assignment_type": "primary",
+              "execution_order": 1
+            }
+          ],
+          "tools": [
+            {
+              "id": "d443a978-62d8-4d71-86c5-63bf0614bd77",
+              "name": "Curriculum Design Tool",
+              "code": "",
+              "category": "general",
+              "is_required": true
+            }
+          ],
+          "rag_sources": []
+        },
+        {
+          "id": "bd101ff0-7974-47b8-be94-83b06132e14b",
+          "task_number": 2,
+          "code": "FME001-S2-T2",
+          "name": "Module Structure Development",
+          "description": "Develop module structure",
+          "task_type": "manual",
+          "estimated_duration_minutes": 180,
+          "agents": [],
+          "tools": [],
+          "rag_sources": []
+        },
+        {
+          "id": "0b0d8310-3142-4534-af15-6f48312af962",
+          "task_number": 3,
+          "code": "FME001-S2-T3",
+          "name": "Assessment Strategy Design",
+          "description": "Design assessment strategy",
+          "task_type": "manual",
+          "estimated_duration_minutes": 120,
+          "agents": [],
+          "tools": [],
+          "rag_sources": []
+        },
+        {
+          "id": "bdaac423-fa11-451f-95b2-26836330674e",
+          "task_number": 4,
+          "code": "FME001-S2-T4",
+          "name": "SME Review",
+          "description": "Subject matter expert review",
+          "task_type": "review",
+          "estimated_duration_minutes": 90,
+          "agents": [],
+          "tools": [],
+          "rag_sources": []
+        }
+      ]
+    },
+    {
+      "id": "2cb55c50-c194-4448-b411-a5b14df19583",
+      "stage_number": 3,
+      "name": "Content Creation",
+      "description": "Create educational content and resources",
+      "is_mandatory": true,
+      "estimated_duration_hours": 20,
+      "tasks": [
+        {
+          "id": "eab92f23-5d4c-441f-a66e-fe920ea5d27f",
+          "task_number": 1,
+          "code": "FME001-S3-T1",
+          "name": "Scientific Content Development",
+          "description": "Develop scientific content",
+          "task_type": "manual",
+          "estimated_duration_minutes": 360,
+          "agents": [
+            {
+              "id": "a700aaf7-f21e-4d9a-9548-f65e9c3bb47f",
+              "name": "Content Developer",
+              "code": "AGT-CONT",
+              "role": "Develops scientific content",
+              "assignment_type": "primary",
+              "execution_order": 1
+            }
+          ],
+          "tools": [],
+          "rag_sources": []
+        },
+        {
+          "id": "28cd0f57-1162-494e-9e7b-8b2d62fda9ca",
+          "task_number": 2,
+          "code": "FME001-S3-T2",
+          "name": "Case Study Creation",
+          "description": "Create case studies and scenarios",
+          "task_type": "manual",
+          "estimated_duration_minutes": 180,
+          "agents": [],
+          "tools": [],
+          "rag_sources": []
+        },
+        {
+          "id": "5b21c4e2-6c00-4fed-b758-b599c256b43a",
+          "task_number": 3,
+          "code": "FME001-S3-T3",
+          "name": "Interactive Materials",
+          "description": "Develop interactive learning materials",
+          "task_type": "manual",
+          "estimated_duration_minutes": 240,
+          "agents": [],
+          "tools": [
+            {
+              "id": "8deb4873-6bf8-42fe-90c7-2c2630f16d0a",
+              "name": "Interactive Content Builder",
+              "code": "",
+              "category": "general",
+              "is_required": true
+            }
+          ],
+          "rag_sources": []
+        },
+        {
+          "id": "e6b1ec0a-d324-4d5b-a6f7-09486a5d34b1",
+          "task_number": 4,
+          "code": "FME001-S3-T4",
+          "name": "Medical Legal Review",
+          "description": "Conduct medical legal review",
+          "task_type": "review",
+          "estimated_duration_minutes": 120,
+          "agents": [
+            {
+              "id": "e2539533-568d-4f0b-96a1-4b4df3de01ce",
+              "name": "MedLegal Reviewer",
+              "code": "AGT-MLR",
+              "role": "Reviews for compliance",
+              "assignment_type": "reviewer",
+              "execution_order": 1
+            }
+          ],
+          "tools": [],
+          "rag_sources": []
+        }
+      ]
+    },
+    {
+      "id": "0cd312d9-3dea-4ae1-bbe5-623118b434f4",
+      "stage_number": 4,
+      "name": "Program Delivery",
+      "description": "Deliver educational program",
+      "is_mandatory": true,
+      "estimated_duration_hours": 12,
+      "tasks": [
+        {
+          "id": "0878604c-c32f-44d7-aec0-85ff16c9be91",
+          "task_number": 1,
+          "code": "FME001-S4-T1",
+          "name": "Instructor Preparation",
+          "description": "Prepare instructors and facilitators",
+          "task_type": "manual",
+          "estimated_duration_minutes": 120,
+          "agents": [],
+          "tools": [],
+          "rag_sources": []
+        },
+        {
+          "id": "d97dd6db-c189-4f4f-888e-5fb832120061",
+          "task_number": 2,
+          "code": "FME001-S4-T2",
+          "name": "Live Session Delivery",
+          "description": "Deliver live training sessions",
+          "task_type": "manual",
+          "estimated_duration_minutes": 480,
+          "agents": [
+            {
+              "id": "b15d2c67-9729-4877-8be6-27e55d4bda9e",
+              "name": "Training Facilitator",
+              "code": "AGT-TF",
+              "role": "Delivers training",
+              "assignment_type": "primary",
+              "execution_order": 1
+            }
+          ],
+          "tools": [],
+          "rag_sources": []
+        },
+        {
+          "id": "d27764a7-5d35-4ac9-93c4-f045bcf8c8d0",
+          "task_number": 3,
+          "code": "FME001-S4-T3",
+          "name": "Self-Paced Module Deployment",
+          "description": "Deploy self-paced modules",
+          "task_type": "automated",
+          "estimated_duration_minutes": 30,
+          "agents": [],
+          "tools": [
+            {
+              "id": "253f25ea-c53c-4768-b5f6-1d8dbd013c0c",
+              "name": "LMS Platform",
+              "code": "",
+              "category": "general",
+              "is_required": true
+            }
+          ],
+          "rag_sources": []
+        },
+        {
+          "id": "f080a5d2-b253-49f5-b35b-beb19d149f59",
+          "task_number": 4,
+          "code": "FME001-S4-T4",
+          "name": "Q&A Session Facilitation",
+          "description": "Facilitate Q&A sessions",
+          "task_type": "manual",
+          "estimated_duration_minutes": 60,
+          "agents": [],
+          "tools": [],
+          "rag_sources": []
+        }
+      ]
+    },
+    {
+      "id": "40ceeced-93b7-43e4-bc55-3f34f0f2f4dd",
+      "stage_number": 5,
+      "name": "Assessment & Certification",
+      "description": "Assess learning and provide certification",
+      "is_mandatory": true,
+      "estimated_duration_hours": 8,
+      "tasks": [
+        {
+          "id": "66b54980-8325-4e19-9be1-5ee301c724b3",
+          "task_number": 1,
+          "code": "FME001-S5-T1",
+          "name": "Knowledge Assessment",
+          "description": "Conduct knowledge assessments",
+          "task_type": "automated",
+          "estimated_duration_minutes": 45,
+          "agents": [
+            {
+              "id": "2326dd66-e5d2-4914-928c-64e66ba97c17",
+              "name": "Assessment Agent",
+              "code": "AGT-AA",
+              "role": "Conducts assessments",
+              "assignment_type": "primary",
+              "execution_order": 1
+            }
+          ],
+          "tools": [
+            {
+              "id": "0c60c7f3-dc65-423b-bea2-f0bcaec61241",
+              "name": "Assessment Platform",
+              "code": "",
+              "category": "general",
+              "is_required": true
+            }
+          ],
+          "rag_sources": []
+        },
+        {
+          "id": "ba2df87d-585c-4223-bfad-a0168d702f39",
+          "task_number": 2,
+          "code": "FME001-S5-T2",
+          "name": "Competency Evaluation",
+          "description": "Evaluate competency demonstration",
+          "task_type": "review",
+          "estimated_duration_minutes": 90,
+          "agents": [],
+          "tools": [],
+          "rag_sources": []
+        },
+        {
+          "id": "7a321af6-3bb6-400d-a612-cd0e2b714e22",
+          "task_number": 3,
+          "code": "FME001-S5-T3",
+          "name": "Certification Processing",
+          "description": "Process certifications",
+          "task_type": "automated",
+          "estimated_duration_minutes": 30,
+          "agents": [],
+          "tools": [],
+          "rag_sources": []
+        },
+        {
+          "id": "7e7ef916-bbbe-4c65-829a-257268adcb36",
+          "task_number": 4,
+          "code": "FME001-S5-T4",
+          "name": "Program Evaluation",
+          "description": "Evaluate program effectiveness",
+          "task_type": "manual",
+          "estimated_duration_minutes": 60,
+          "agents": [],
+          "tools": [],
+          "rag_sources": []
+        }
+      ]
+    }
+  ],
+  "stats": {
+    "stages": 5,
+    "tasks": 20,
+    "agents": 6,
+    "tools": 4,
+    "rag_sources": 0,
+    "exported_at": "2025-12-02T12:47:59.922Z"
+  }
+}

@@ -67,7 +67,7 @@ function TaskNode({ data }: { data: any }) {
           <div>
             <div className="flex items-center gap-1 mb-1">
               <Bot className="h-3 w-3 text-blue-600" />
-              <span className="text-xs font-semibold text-gray-700">Agents</span>
+              <span className="text-xs font-semibold text-neutral-700">Agents</span>
             </div>
             <div className="space-y-1">
               {data.agents.slice(0, 2).map((agent: any) => (
@@ -80,7 +80,7 @@ function TaskNode({ data }: { data: any }) {
                 </div>
               ))}
               {data.agents.length > 2 && (
-                <div className="text-xs text-gray-500 italic">
+                <div className="text-xs text-neutral-500 italic">
                   +{data.agents.length - 2} more
                 </div>
               )}
@@ -93,7 +93,7 @@ function TaskNode({ data }: { data: any }) {
           <div>
             <div className="flex items-center gap-1 mb-1">
               <Wrench className="h-3 w-3 text-green-600" />
-              <span className="text-xs font-semibold text-gray-700">Tools</span>
+              <span className="text-xs font-semibold text-neutral-700">Tools</span>
             </div>
             <div className="flex flex-wrap gap-1">
               {data.tools.slice(0, 3).map((tool: any) => (
@@ -115,7 +115,7 @@ function TaskNode({ data }: { data: any }) {
           <div>
             <div className="flex items-center gap-1 mb-1">
               <Database className="h-3 w-3 text-purple-600" />
-              <span className="text-xs font-semibold text-gray-700">Knowledge</span>
+              <span className="text-xs font-semibold text-neutral-700">Knowledge</span>
             </div>
             <div className="flex flex-wrap gap-1">
               {data.rags.slice(0, 2).map((rag: any) => (
@@ -260,7 +260,7 @@ export function WorkflowVisualizer({ tasks, workflowName }: WorkflowVisualizerPr
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   return (
-    <div className="w-full h-[800px] border rounded-lg bg-gray-50">
+    <div className="w-full h-[800px] border rounded-lg bg-neutral-50">
       <ReactFlow
         nodes={nodes}
         edges={edges}

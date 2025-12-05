@@ -34,7 +34,7 @@ export default function FAQSection() {
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-6">
             Frequently Asked Questions
           </h2>
         </div>
@@ -47,20 +47,20 @@ export default function FAQSection() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="border border-gray-200 rounded-xl overflow-hidden"
+              className="border border-neutral-200 rounded-xl overflow-hidden"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full px-6 py-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                className="w-full px-6 py-6 text-left flex items-center justify-between hover:bg-neutral-50 transition-colors"
               >
-                <h3 className="text-lg font-semibold text-gray-900 pr-4">
+                <h3 className="text-lg font-semibold text-neutral-900 pr-4">
                   {faq.question}
                 </h3>
                 <div className="flex-shrink-0">
                   {openIndex === index ? (
                     <Minus className="w-5 h-5 text-vital-blue-600" />
                   ) : (
-                    <Plus className="w-5 h-5 text-gray-500" />
+                    <Plus className="w-5 h-5 text-neutral-500" />
                   )}
                 </div>
               </button>
@@ -74,7 +74,7 @@ export default function FAQSection() {
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                   >
-                    <div className="px-6 pb-6 text-gray-600 leading-relaxed">
+                    <div className="px-6 pb-6 text-neutral-600 leading-relaxed">
                       {faq.answer}
                     </div>
                   </motion.div>
@@ -85,7 +85,7 @@ export default function FAQSection() {
         </div>
 
         <div className="text-center mt-12">
-          <p className="text-gray-600 mb-4">
+          <p className="text-neutral-600 mb-4">
             Still have questions?
           </p>
           <a 

@@ -239,16 +239,16 @@ export default function FeedbackDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-canvas-surface dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
                 Feedback Analytics
               </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
                 Real-time monitoring of user feedback and satisfaction
               </p>
             </div>
@@ -258,7 +258,7 @@ export default function FeedbackDashboard() {
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                className="px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-canvas-surface dark:bg-neutral-800 text-neutral-900 dark:text-white"
               >
                 <option value="7">Last 7 days</option>
                 <option value="30">Last 30 days</option>
@@ -271,7 +271,7 @@ export default function FeedbackDashboard() {
                 className={`px-3 py-2 text-sm rounded-lg border ${
                   autoRefresh
                     ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400'
-                    : 'bg-gray-50 border-gray-300 text-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300'
+                    : 'bg-neutral-50 border-neutral-300 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-300'
                 }`}
               >
                 Auto-refresh: {autoRefresh ? 'ON' : 'OFF'}
@@ -290,7 +290,7 @@ export default function FeedbackDashboard() {
               {/* Export Button */}
               <button
                 onClick={handleExport}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-neutral-600 hover:bg-neutral-700 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Export
@@ -298,7 +298,7 @@ export default function FeedbackDashboard() {
             </div>
           </div>
 
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-2">
             Last updated: {lastRefresh.toLocaleTimeString()}
           </div>
         </div>
@@ -313,12 +313,12 @@ export default function FeedbackDashboard() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
+              className="bg-canvas-surface dark:bg-neutral-800 rounded-lg p-6 border border-neutral-200 dark:border-neutral-700"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Feedback</p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Total Feedback</p>
+                  <p className="text-3xl font-bold text-neutral-900 dark:text-white mt-2">
                     {summary.totalFeedback}
                   </p>
                 </div>
@@ -331,11 +331,11 @@ export default function FeedbackDashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
+              className="bg-canvas-surface dark:bg-neutral-800 rounded-lg p-6 border border-neutral-200 dark:border-neutral-700"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Satisfaction</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Satisfaction</p>
                   <p className={`text-3xl font-bold mt-2 ${getSatisfactionColor(summary.satisfactionRate)}`}>
                     {summary.satisfactionRate.toFixed(1)}%
                   </p>
@@ -353,11 +353,11 @@ export default function FeedbackDashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
+              className="bg-canvas-surface dark:bg-neutral-800 rounded-lg p-6 border border-neutral-200 dark:border-neutral-700"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Avg Rating</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Avg Rating</p>
                   <p className={`text-3xl font-bold mt-2 ${getRatingColor(summary.avgRating)}`}>
                     {summary.avgRating.toFixed(1)}
                   </p>
@@ -371,11 +371,11 @@ export default function FeedbackDashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
+              className="bg-canvas-surface dark:bg-neutral-800 rounded-lg p-6 border border-neutral-200 dark:border-neutral-700"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Thumbs Up</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Thumbs Up</p>
                   <p className="text-3xl font-bold text-green-600 mt-2">
                     {summary.thumbsUp}
                   </p>
@@ -389,11 +389,11 @@ export default function FeedbackDashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
+              className="bg-canvas-surface dark:bg-neutral-800 rounded-lg p-6 border border-neutral-200 dark:border-neutral-700"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Needs Review</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Needs Review</p>
                   <p className="text-3xl font-bold text-red-600 mt-2">
                     {summary.needsReview}
                   </p>
@@ -407,19 +407,19 @@ export default function FeedbackDashboard() {
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Feedback Volume Trend */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-canvas-surface dark:bg-neutral-800 rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
                 Feedback Volume Trend
               </h2>
-              <BarChart3 className="w-5 h-5 text-gray-400" />
+              <BarChart3 className="w-5 h-5 text-neutral-400" />
             </div>
 
             {dailyData.length > 0 ? (
               <div className="space-y-2">
                 {dailyData.slice(0, 10).map((day, index) => (
                   <div key={day.feedback_date} className="flex items-center gap-3">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 w-20">
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400 w-20">
                       {new Date(day.feedback_date).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -427,7 +427,7 @@ export default function FeedbackDashboard() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-6 overflow-hidden">
+                        <div className="flex-1 bg-neutral-200 dark:bg-neutral-700 rounded-full h-6 overflow-hidden">
                           <div
                             className="bg-green-500 h-full flex items-center justify-end px-2 transition-all"
                             style={{
@@ -442,7 +442,7 @@ export default function FeedbackDashboard() {
                             </span>
                           </div>
                         </div>
-                        <div className="text-sm font-medium text-gray-700 dark:text-gray-300 w-12 text-right">
+                        <div className="text-sm font-medium text-neutral-700 dark:text-neutral-300 w-12 text-right">
                           {day.total_feedback}
                         </div>
                       </div>
@@ -451,19 +451,19 @@ export default function FeedbackDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <div className="text-center py-12 text-neutral-500 dark:text-neutral-400">
                 No feedback data available
               </div>
             )}
           </div>
 
           {/* Category Breakdown */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-canvas-surface dark:bg-neutral-800 rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
                 Issue Categories
               </h2>
-              <PieChart className="w-5 h-5 text-gray-400" />
+              <PieChart className="w-5 h-5 text-neutral-400" />
             </div>
 
             {categories.length > 0 ? (
@@ -471,14 +471,14 @@ export default function FeedbackDashboard() {
                 {categories.map((cat, index) => (
                   <div key={cat.category}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="text-sm text-neutral-700 dark:text-neutral-300">
                         {cat.category}
                       </span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      <span className="text-sm font-medium text-neutral-900 dark:text-white">
                         {cat.count} ({cat.percentage.toFixed(0)}%)
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full ${
                           index === 0 ? 'bg-red-500' :
@@ -487,7 +487,7 @@ export default function FeedbackDashboard() {
                           index === 3 ? 'bg-blue-500' :
                           index === 4 ? 'bg-purple-500' :
                           index === 5 ? 'bg-pink-500' :
-                          'bg-gray-500'
+                          'bg-neutral-500'
                         }`}
                         style={{ width: `${cat.percentage}%` }}
                       />
@@ -496,7 +496,7 @@ export default function FeedbackDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <div className="text-center py-12 text-neutral-500 dark:text-neutral-400">
                 No issues reported
               </div>
             )}
@@ -504,55 +504,55 @@ export default function FeedbackDashboard() {
         </div>
 
         {/* Problem Queries Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="bg-canvas-surface dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
+          <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
                   Problem Queries Needing Review
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
                   Low-rated responses that require attention
                 </p>
               </div>
-              <Filter className="w-5 h-5 text-gray-400" />
+              <Filter className="w-5 h-5 text-neutral-400" />
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-900">
+              <thead className="bg-neutral-50 dark:bg-neutral-900">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                     Query
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                     Rating
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                     Category
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                     Comment
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                     Date
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">
                 {problemQueries.length > 0 ? (
                   problemQueries.map((query) => (
                     <tr
                       key={query.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
                     >
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 dark:text-white max-w-md">
+                        <div className="text-sm text-neutral-900 dark:text-white max-w-md">
                           {query.query_text}
                         </div>
                         {query.agent_name && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                             Agent: {query.agent_name}
                           </div>
                         )}
@@ -571,12 +571,12 @@ export default function FeedbackDashboard() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-700 dark:text-gray-300 max-w-md truncate">
+                        <div className="text-sm text-neutral-700 dark:text-neutral-300 max-w-md truncate">
                           {query.comment || '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="text-sm text-neutral-500 dark:text-neutral-400">
                           {new Date(query.created_at).toLocaleDateString()}
                         </div>
                       </td>
@@ -584,7 +584,7 @@ export default function FeedbackDashboard() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                    <td colSpan={5} className="px-6 py-12 text-center text-neutral-500 dark:text-neutral-400">
                       No problem queries found
                     </td>
                   </tr>
@@ -595,64 +595,64 @@ export default function FeedbackDashboard() {
         </div>
 
         {/* Agent Performance Comparison */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="bg-canvas-surface dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
+          <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
                   Agent Performance Comparison
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
                   Satisfaction rates across different agents
                 </p>
               </div>
-              <Users className="w-5 h-5 text-gray-400" />
+              <Users className="w-5 h-5 text-neutral-400" />
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-900">
+              <thead className="bg-neutral-50 dark:bg-neutral-900">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                     Agent
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                     Total Feedback
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                     Satisfaction
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                     Avg Rating
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                     Needs Review
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">
                 {agentPerformance.length > 0 ? (
                   agentPerformance
                     .sort((a, b) => b.satisfaction_percent - a.satisfaction_percent)
                     .map((agent) => (
                       <tr
                         key={agent.agent_id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        className="hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
                       >
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          <div className="text-sm font-medium text-neutral-900 dark:text-white">
                             {agent.agent_name}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-700 dark:text-gray-300">
+                          <div className="text-sm text-neutral-700 dark:text-neutral-300">
                             {agent.total_feedback}
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 max-w-[200px] bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div className="flex-1 max-w-[200px] bg-neutral-200 dark:bg-neutral-700 rounded-full h-2">
                               <div
                                 className={`h-2 rounded-full ${
                                   agent.satisfaction_percent >= 80
@@ -689,7 +689,7 @@ export default function FeedbackDashboard() {
                     ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                    <td colSpan={5} className="px-6 py-12 text-center text-neutral-500 dark:text-neutral-400">
                       No agent performance data available
                     </td>
                   </tr>

@@ -56,7 +56,7 @@ export function PersonaStatsCards({ stats }: PersonaStatsCardsProps) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-1">
+            <CardTitle className="text-xs font-medium text-neutral-600 flex items-center gap-1">
               <Users className="h-3 w-3" />
               Total Personas
             </CardTitle>
@@ -68,7 +68,7 @@ export function PersonaStatsCards({ stats }: PersonaStatsCardsProps) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-1">
+            <CardTitle className="text-xs font-medium text-neutral-600 flex items-center gap-1">
               <Zap className="h-3 w-3 text-blue-500" />
               Avg AI Readiness
             </CardTitle>
@@ -85,7 +85,7 @@ export function PersonaStatsCards({ stats }: PersonaStatsCardsProps) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-1">
+            <CardTitle className="text-xs font-medium text-neutral-600 flex items-center gap-1">
               <Brain className="h-3 w-3 text-purple-500" />
               Avg Work Complexity
             </CardTitle>
@@ -102,7 +102,7 @@ export function PersonaStatsCards({ stats }: PersonaStatsCardsProps) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-1">
+            <CardTitle className="text-xs font-medium text-neutral-600 flex items-center gap-1">
               <TrendingUp className="h-3 w-3 text-green-500" />
               Org Coverage
             </CardTitle>
@@ -110,15 +110,15 @@ export function PersonaStatsCards({ stats }: PersonaStatsCardsProps) {
           <CardContent>
             <div className="text-sm space-y-1">
               <div className="flex justify-between">
-                <span className="text-gray-500">Functions:</span>
+                <span className="text-neutral-500">Functions:</span>
                 <span className="font-semibold">{stats.totalFunctions ?? Object.keys(stats.byFunction).length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Departments:</span>
+                <span className="text-neutral-500">Departments:</span>
                 <span className="font-semibold">{stats.totalDepartments ?? Object.keys(stats.byDepartment).length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Roles:</span>
+                <span className="text-neutral-500">Roles:</span>
                 <span className="font-semibold">{stats.totalRoles ?? Object.keys(stats.byRole).length}</span>
               </div>
             </div>
@@ -130,7 +130,7 @@ export function PersonaStatsCards({ stats }: PersonaStatsCardsProps) {
       {archetypeTotal > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">
+            <CardTitle className="text-sm font-medium text-neutral-700">
               MECE Archetype Distribution
             </CardTitle>
           </CardHeader>
@@ -152,7 +152,7 @@ export function PersonaStatsCards({ stats }: PersonaStatsCardsProps) {
                     </div>
                     <div className="flex items-baseline gap-2">
                       <span className={`text-2xl font-bold ${config.color}`}>{count}</span>
-                      <span className="text-sm text-gray-500">({percentage}%)</span>
+                      <span className="text-sm text-neutral-500">({percentage}%)</span>
                     </div>
                     <Progress value={percentage} className="h-1.5 mt-2" />
                   </div>
@@ -167,7 +167,7 @@ export function PersonaStatsCards({ stats }: PersonaStatsCardsProps) {
       {stats.byServiceLayer && Object.keys(stats.byServiceLayer).length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-neutral-700 flex items-center gap-2">
               <Layers className="h-4 w-4" />
               Service Layer Preferences
             </CardTitle>
@@ -184,7 +184,7 @@ export function PersonaStatsCards({ stats }: PersonaStatsCardsProps) {
                 return (
                   <div key={key} className={`p-3 rounded-lg border ${color}`}>
                     <div className="font-medium text-sm">{label}</div>
-                    <div className="text-xs text-gray-500 mb-1">{desc}</div>
+                    <div className="text-xs text-neutral-500 mb-1">{desc}</div>
                     <div className="text-xl font-bold">{count}</div>
                   </div>
                 );

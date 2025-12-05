@@ -10,15 +10,16 @@ import {
   Award,
   Star,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Settings
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Input } from '@/shared/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // VITAL Framework components mapping
 const VITAL_COMPONENTS = {
@@ -99,15 +100,15 @@ const LIFECYCLE_STAGES = {
 };
 
 // Priority levels
-
+const PRIORITY_LEVELS: Record<string, { label: string; color: string; priority: number }> = {
   'critical_immediate': { label: 'Critical (Immediate)', color: 'bg-red-100 text-red-800', priority: 1 },
   'near_term_90_days': { label: 'Near-term (90 days)', color: 'bg-orange-100 text-orange-800', priority: 2 },
   'strategic_180_days': { label: 'Strategic (180 days)', color: 'bg-yellow-100 text-yellow-800', priority: 3 },
-  'future_horizon': { label: 'Future Horizon', color: 'bg-gray-100 text-gray-800', priority: 4 }
+  'future_horizon': { label: 'Future Horizon', color: 'bg-neutral-100 text-neutral-800', priority: 4 }
 };
 
 // Maturity levels
-
+const MATURITY_LEVELS: Record<string, { label: string; progress: number }> = {
   'level_1_initial': { label: 'Level 1: Initial', progress: 20 },
   'level_2_developing': { label: 'Level 2: Developing', progress: 40 },
   'level_3_advanced': { label: 'Level 3: Advanced', progress: 60 },
@@ -292,7 +293,13 @@ export default function EnhancedCapabilityManagement({
   }, [initialCapabilities, initialAgents]);
 
   // Filter capabilities based on selected criteria
-
+  const filteredCapabilities = capabilities.filter((capability) => {
+    const matchesStage = !selectedStage || capability.lifecycle_stage === selectedStage;
+    const matchesVitalComponent = !selectedVitalComponent || capability.vital_component === selectedVitalComponent;
+    const matchesPriority = !selectedPriority || capability.priority === selectedPriority;
+    const matchesNewFilter = !showOnlyNew || capability.is_new;
+    const matchesPanelRecommended = !showOnlyPanelRecommended || capability.panel_recommended;
+    const matchesSearch = !searchQuery ||
       capability.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       capability.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       capability.competencies.some(comp => comp.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -300,6 +307,9 @@ export default function EnhancedCapabilityManagement({
     return matchesStage && matchesVitalComponent && matchesPriority && matchesSearch &&
            matchesNewFilter && matchesPanelRecommended;
   });
+
+  const CapabilityCard = ({ capability }: { capability: Capability }) => {
+    const VitalIcon = VITAL_COMPONENTS[capability.vital_component]?.icon || Settings;
 
     return (
       <Card
@@ -312,7 +322,7 @@ export default function EnhancedCapabilityManagement({
               <VitalIcon className="h-5 w-5 text-blue-600" />
               <div>
                 <CardTitle className="text-lg font-semibold">{capability.name}</CardTitle>
-                <CardDescription className="text-sm text-gray-600 mt-1">
+                <CardDescription className="text-sm text-neutral-600 mt-1">
                   {capability.description}
                 </CardDescription>
               </div>
@@ -351,15 +361,15 @@ export default function EnhancedCapabilityManagement({
                 {priority.label}
               </Badge>
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Maturity:</span>
+                <span className="text-sm text-neutral-600">Maturity:</span>
                 <div className="flex items-center space-x-1">
-                  <div className="w-16 h-2 bg-gray-200 rounded-full">
+                  <div className="w-16 h-2 bg-neutral-200 rounded-full">
                     <div
                       className="h-2 bg-blue-500 rounded-full"
                       style={{ width: `${maturity.progress}%` }}
                     />
                   </div>
-                  <span className="text-xs text-gray-500">{maturity.progress}%</span>
+                  <span className="text-xs text-neutral-500">{maturity.progress}%</span>
                 </div>
               </div>
             </div>
@@ -368,12 +378,12 @@ export default function EnhancedCapabilityManagement({
             {capability.lead_agent && (
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
-                  <Users className="h-4 w-4 text-gray-500" />
+                  <Users className="h-4 w-4 text-neutral-500" />
                   <span className="font-medium">{capability.lead_agent.name}</span>
-                  <span className="text-gray-500">({capability.lead_agent.organization})</span>
+                  <span className="text-neutral-500">({capability.lead_agent.organization})</span>
                 </div>
                 {capability.supporting_agents_count && (
-                  <span className="text-gray-500">
+                  <span className="text-neutral-500">
                     +{capability.supporting_agents_count} supporting
                   </span>
                 )}
@@ -382,7 +392,7 @@ export default function EnhancedCapabilityManagement({
 
             {/* Competencies Preview */}
             <div className="text-sm">
-              <span className="font-medium text-gray-700">Key Competencies:</span>
+              <span className="font-medium text-neutral-700">Key Competencies:</span>
               <div className="mt-1 flex flex-wrap gap-1">
                 {capability.competencies.slice(0, 3).map((competency, index) => (
                   <Badge key={index} variant="secondary" className="text-xs">
@@ -402,19 +412,24 @@ export default function EnhancedCapabilityManagement({
     );
   };
 
+  const CapabilityDetailModal = ({ capability }: { capability: Capability }) => {
+    const vitalComponent = VITAL_COMPONENTS[capability.vital_component] || VITAL_COMPONENTS.value_demonstration;
+    const stage = LIFECYCLE_STAGES[capability.lifecycle_stage] || LIFECYCLE_STAGES.phase_1_discovery;
+    const priority = PRIORITY_LEVELS[capability.priority] || PRIORITY_LEVELS.strategic_180_days;
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-canvas-surface rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <div className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h2 className="text-2xl font-bold">{capability.name}</h2>
-                <p className="text-gray-600 mt-2">{capability.description}</p>
+                <p className="text-neutral-600 mt-2">{capability.description}</p>
               </div>
               <Button
                 variant="ghost"
                 onClick={() => setSelectedCapability(null)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-neutral-500 hover:text-neutral-700"
               >
                 ✕
               </Button>
@@ -432,14 +447,14 @@ export default function EnhancedCapabilityManagement({
                     <Badge className={`ml-2 ${vitalComponent.color}`}>
                       {vitalComponent.label}
                     </Badge>
-                    <p className="text-sm text-gray-600 mt-1">{vitalComponent.description}</p>
+                    <p className="text-sm text-neutral-600 mt-1">{vitalComponent.description}</p>
                   </div>
                   <div>
                     <span className="font-medium">Lifecycle Stage:</span>
                     <Badge variant="outline" className="ml-2">
                       Phase {stage.phase}: {stage.label}
                     </Badge>
-                    <p className="text-sm text-gray-600 mt-1">{stage.description}</p>
+                    <p className="text-sm text-neutral-600 mt-1">{stage.description}</p>
                   </div>
                   <div>
                     <span className="font-medium">Priority:</span>
@@ -451,7 +466,7 @@ export default function EnhancedCapabilityManagement({
                     <span className="font-medium">Maturity Level:</span>
                     <div className="mt-1">
                       <div className="flex items-center space-x-2">
-                        <div className="w-32 h-3 bg-gray-200 rounded-full">
+                        <div className="w-32 h-3 bg-neutral-200 rounded-full">
                           <div
                             className="h-3 bg-blue-500 rounded-full"
                             style={{ width: `${maturity.progress}%` }}
@@ -476,13 +491,13 @@ export default function EnhancedCapabilityManagement({
                         <span className="font-medium">Lead Expert:</span>
                         <div className="mt-1 p-3 bg-blue-50 rounded-lg">
                           <div className="font-medium">{capability.lead_agent.name}</div>
-                          <div className="text-sm text-gray-600">{capability.lead_agent.organization}</div>
+                          <div className="text-sm text-neutral-600">{capability.lead_agent.organization}</div>
                         </div>
                       </div>
                       {capability.supporting_agents_count && (
                         <div>
                           <span className="font-medium">Supporting Agents:</span>
-                          <div className="mt-1 text-sm text-gray-600">
+                          <div className="mt-1 text-sm text-neutral-600">
                             {capability.supporting_agents_count} expert agents providing specialized support
                           </div>
                         </div>
@@ -541,12 +556,12 @@ export default function EnhancedCapabilityManagement({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-neutral-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">VITAL AI Capability Registry</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-neutral-900">VITAL AI Capability Registry</h1>
+          <p className="text-neutral-600 mt-2">
             Enhanced capability management system with 125 capabilities across 8 lifecycle stages
           </p>
         </div>
@@ -558,7 +573,7 @@ export default function EnhancedCapabilityManagement({
               <div className="space-y-2">
                 <label className="text-sm font-medium">Search Capabilities</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
                   <Input
                     placeholder="Search by name, description, or competency..."
                     value={searchQuery}
@@ -646,10 +661,10 @@ export default function EnhancedCapabilityManagement({
         {/* Results Summary */}
         <div className="mb-6">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-neutral-600">
               Showing {filteredCapabilities.length} of {capabilities.length} capabilities
             </div>
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
+            <div className="flex items-center space-x-4 text-sm text-neutral-600">
               <div className="flex items-center space-x-1">
                 <Star className="h-4 w-4 text-green-500" />
                 <span>{capabilities.filter((c: any) => c.is_new).length} New</span>
@@ -672,9 +687,9 @@ export default function EnhancedCapabilityManagement({
         {/* Empty State */}
         {filteredCapabilities.length === 0 && (
           <Card className="p-12 text-center">
-            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No capabilities found</h3>
-            <p className="text-gray-600 mb-4">
+            <AlertCircle className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-neutral-900 mb-2">No capabilities found</h3>
+            <p className="text-neutral-600 mb-4">
               Try adjusting your filters or search criteria to find relevant capabilities.
             </p>
             <Button

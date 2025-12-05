@@ -3,6 +3,7 @@
  * Based on VITAL AI Implementation Guide v1.0.0
  */
 
+import { v4 as uuidv4 } from 'uuid';
 import { RealTimeMetrics } from '../monitoring/real-time-metrics';
 import { MasterOrchestrator } from '../orchestration/master-orchestrator';
 
@@ -433,7 +434,8 @@ export class EnhancedConversationManager {
   }
 
   private generateSessionId(): string {
-    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Use proper UUID format for database compatibility
+    return uuidv4();
   }
 
   private generateMessageId(): string {

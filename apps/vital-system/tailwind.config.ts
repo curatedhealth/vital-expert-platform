@@ -18,17 +18,38 @@ const config: Config = {
   	},
   	extend: {
   		colors: {
-  			// VITAL Brand Colors v2.0
+  			// VITAL Platform Design Tokens v2.0
+  			// Canvas tokens - Soft white backgrounds
+  			canvas: {
+  				primary: '#FFFAFA',   // Snow - main background (80-90% of UI)
+  				surface: '#FFFFFF',   // Pure white - elevated cards, modals
+  				alt: '#F8F8FF',       // Ghost White - alternate surfaces
+  				muted: '#FAF9F6',     // Off White - subtle backgrounds
+  			},
+  			// Cool Neutral Scale (aligned with Snow)
+  			neutral: {
+  				50: '#FAFAFA',
+  				100: '#F5F5F5',
+  				200: '#EEEEEE',
+  				300: '#E0E0E0',
+  				400: '#BDBDBD',
+  				500: '#9E9E9E',
+  				600: '#757575',
+  				700: '#616161',
+  				800: '#424242',
+  				900: '#212121',
+  			},
+  			// VITAL Brand Colors
   			vital: {
   				primary: {
-  					50: '#F9F5FD',
+  					50: '#EDE9FE',
   					100: '#F5EEFD',
   					200: '#E9DCFB',
   					300: '#D4B9F7',
   					400: '#B896F3',
-  					500: '#9B5DE0',
-  					600: '#8A4FD0',
-  					700: '#7A41C0',
+  					500: '#9B5DE0',   // Expert Purple - main brand
+  					600: '#8B4CD0',
+  					700: '#6D28D9',
   					800: '#6A35B0',
   					900: '#5A2AA0',
   				},

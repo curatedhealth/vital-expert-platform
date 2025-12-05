@@ -108,7 +108,7 @@ function CustomNode({ data }: { data: any }) {
   
   return (
     <div
-      className="px-4 py-2 rounded-lg border-2 shadow-md bg-white min-w-[120px]"
+      className="px-4 py-2 rounded-lg border-2 shadow-md bg-canvas-surface min-w-[120px]"
       style={{ borderColor: nodeColor }}
     >
       <div className="flex items-center gap-2">
@@ -116,9 +116,9 @@ function CustomNode({ data }: { data: any }) {
           className="w-3 h-3 rounded-full"
           style={{ backgroundColor: nodeColor }}
         />
-        <div className="font-medium text-sm text-gray-900">{data.label}</div>
+        <div className="font-medium text-sm text-neutral-900">{data.label}</div>
       </div>
-      <div className="text-xs text-gray-500 mt-1">{data.type}</div>
+      <div className="text-xs text-neutral-500 mt-1">{data.type}</div>
       {data.embedding_similarity && (
         <div className="text-xs text-blue-600 mt-1">
           {Math.round(data.embedding_similarity * 100)}% match
@@ -294,12 +294,12 @@ export function KnowledgeGraphVisualization({
       {/* Header with Stats */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
             <Network className="w-5 h-5 text-blue-600" />
             Knowledge Graph
           </h3>
           {stats && (
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-neutral-500 mt-1">
               {stats.node_count} nodes · {stats.edge_count} edges · {stats.connected_agents} connected agents
             </p>
           )}
@@ -326,7 +326,7 @@ export function KnowledgeGraphVisualization({
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search Query */}
             <div className="md:col-span-2">
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
+              <label className="text-sm font-medium text-neutral-700 mb-2 block">
                 Search Query (Semantic)
               </label>
               <div className="flex gap-2">
@@ -344,7 +344,7 @@ export function KnowledgeGraphVisualization({
 
             {/* Search Mode */}
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
+              <label className="text-sm font-medium text-neutral-700 mb-2 block">
                 Search Mode
               </label>
               <Select value={searchMode} onValueChange={(v) => setSearchMode(v as SearchMode)}>
@@ -376,7 +376,7 @@ export function KnowledgeGraphVisualization({
 
             {/* Max Hops */}
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
+              <label className="text-sm font-medium text-neutral-700 mb-2 block">
                 Max Hops
               </label>
               <Select value={maxHops.toString()} onValueChange={(v) => setMaxHops(parseInt(v))}>
@@ -396,13 +396,13 @@ export function KnowledgeGraphVisualization({
 
           {/* Node Type Legend */}
           {stats && Object.keys(stats.node_types).length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="mt-4 pt-4 border-t border-neutral-200">
               <div className="flex flex-wrap gap-2">
                 {Object.entries(stats.node_types).map(([type, count]) => (
                   <Badge
                     key={type}
                     variant="outline"
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-neutral-50"
                     style={{
                       borderColor: nodeTypeColors[type] || nodeTypeColors.default,
                       color: nodeTypeColors[type] || nodeTypeColors.default,
@@ -424,7 +424,7 @@ export function KnowledgeGraphVisualization({
       </Card>
 
       {/* Graph Visualization */}
-      <div style={{ height }} className="border border-gray-200 rounded-lg bg-gray-50">
+      <div style={{ height }} className="border border-neutral-200 rounded-lg bg-neutral-50">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -446,12 +446,12 @@ export function KnowledgeGraphVisualization({
           />
           
           {/* Info Panel */}
-          <Panel position="top-right" className="bg-white rounded-lg shadow-md p-3 max-w-xs">
-            <div className="flex items-center gap-2 text-sm text-gray-700">
+          <Panel position="top-right" className="bg-canvas-surface rounded-lg shadow-md p-3 max-w-xs">
+            <div className="flex items-center gap-2 text-sm text-neutral-700">
               <Info className="w-4 h-4 text-blue-600" />
               <span className="font-medium">Navigation</span>
             </div>
-            <ul className="text-xs text-gray-600 mt-2 space-y-1">
+            <ul className="text-xs text-neutral-600 mt-2 space-y-1">
               <li>• Click nodes to see details</li>
               <li>• Drag to rearrange</li>
               <li>• Scroll to zoom</li>
@@ -463,10 +463,10 @@ export function KnowledgeGraphVisualization({
 
       {/* Loading Overlay */}
       {loading && (
-        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
+        <div className="absolute inset-0 bg-canvas-surface/80 flex items-center justify-center rounded-lg">
           <div className="flex flex-col items-center gap-3">
             <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
-            <p className="text-sm text-gray-600">Loading knowledge graph...</p>
+            <p className="text-sm text-neutral-600">Loading knowledge graph...</p>
           </div>
         </div>
       )}

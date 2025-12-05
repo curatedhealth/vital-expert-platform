@@ -48,6 +48,7 @@ async def set_tenant_context_in_db(tenant_id: str, client: Any):
 from typing import List, Dict, Any, Optional
 import asyncio
 import json
+import re
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -1255,6 +1256,575 @@ async def execute_mode1_manual(
         logger.error("❌ Mode 1 LangGraph execution failed", error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail=f"Mode 1 execution failed: {str(exc)}")
 
+
+# Mode 1 Streaming: True SSE Streaming for real-time token delivery
+@app.post("/api/mode1/manual/stream")
+async def execute_mode1_manual_stream(
+    request: Mode1ManualRequest,
+    fastapi_request: Request,
+    tenant_id: str = Depends(get_tenant_id)
+):
+    """
+    Execute Mode 1 with true Server-Sent Events (SSE) streaming.
+
+    Streams events in real-time:
+    - thinking: Workflow step progress
+    - token: Individual tokens as generated
+    - sources: RAG sources retrieved
+    - tool: Tool execution results
+    - done: Final metadata and completion
+    - error: Error information
+
+    Event Format:
+    data: {"event": "token", "content": "word"}
+    data: {"event": "thinking", "step": "rag_retrieval", "status": "running"}
+    data: {"event": "done", "metadata": {...}}
+    """
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/mode1/manual/stream").inc()
+
+    # Set tenant context for RLS
+    if supabase_client:
+        await set_tenant_context_in_db(tenant_id, supabase_client)
+
+    async def generate_sse_events():
+        """Generator for Server-Sent Events"""
+        start_time = asyncio.get_event_loop().time()
+        tokens_generated = 0
+
+        try:
+            logger.info("🌊 [Mode 1 Stream] Starting SSE streaming", agent_id=request.agent_id)
+
+            # Send initial thinking event
+            yield f"data: {json.dumps({'event': 'thinking', 'step': 'initializing', 'status': 'running', 'message': 'Initializing workflow...'})}\n\n"
+
+            # Initialize LangGraph workflow
+            workflow = Mode1ManualInteractiveWorkflow(
+                supabase_client=supabase_client,
+                rag_pipeline=rag_pipeline,
+                agent_orchestrator=agent_orchestrator,
+                sub_agent_spawner=sub_agent_spawner,
+                rag_service=unified_rag_service,
+                tool_registry=tool_registry,
+                confidence_calculator=confidence_calculator,
+                compliance_service=compliance_service,
+                human_validator=human_in_loop_validator
+            )
+
+            # Build and compile the graph
+            from langgraph_workflows.state_schemas import create_initial_state, WorkflowMode
+            import uuid
+            graph = workflow.build_graph()
+            compiled_graph = graph.compile()
+
+            # Create initial state
+            request_id = str(uuid.uuid4())
+            citation_prefs = await get_agent_citation_preferences(supabase_client, request.agent_id)
+
+            initial_state = create_initial_state(
+                tenant_id=tenant_id,
+                mode=WorkflowMode.MODE_1_MANUAL,
+                query=request.message,
+                request_id=request_id,
+                selected_agents=[request.agent_id],
+                enable_rag=request.enable_rag,
+                enable_tools=request.enable_tools,
+                selected_rag_domains=request.selected_rag_domains or [],
+                requested_tools=request.requested_tools or [],
+                model=request.model or "gpt-4",
+                temperature=request.temperature,
+                max_tokens=request.max_tokens,
+                user_id=request.user_id,
+                session_id=request.session_id,
+                citation_style=citation_prefs.citation_style,
+                include_citations=citation_prefs.include_citations
+            )
+
+            yield f"data: {json.dumps({'event': 'thinking', 'step': 'initializing', 'status': 'completed', 'message': 'Workflow initialized'})}\n\n"
+
+            # Track workflow progress
+            current_node = None
+            accumulated_response = ""
+            sources_sent = False
+            accumulated_sources = []  # Track sources for inclusion in done event
+            accumulated_citations = []  # Track citations from workflow
+
+            # Streaming tag filter state - prevents React from seeing <thinking> and <answer> tags
+            in_thinking_block = False
+            thinking_buffer = ""  # Buffer content while in thinking block
+            tag_buffer = ""  # Buffer for partial tag detection
+            answer_started = False  # Track if we've seen <answer> tag
+
+            # Use astream_events for real-time streaming (LangGraph v0.1+)
+            try:
+                async for event in compiled_graph.astream_events(initial_state, version="v2"):
+                    event_kind = event.get("event", "")
+                    event_name = event.get("name", "")
+                    event_data = event.get("data", {})
+
+                    # Track node transitions
+                    if event_kind == "on_chain_start":
+                        node_name = event_name
+                        if node_name and node_name != current_node:
+                            current_node = node_name
+                            # Map internal node names to user-friendly messages
+                            # NOTE: Use SHORT graph node names (add_node first arg), not method names
+                            node_messages = {
+                                "load_session": "Loading session...",
+                                "validate_tenant": "Validating access...",
+                                "load_agent_profile": "Loading expert profile...",
+                                "load_conversation_history": "Loading conversation history...",
+                                "analyze_query_complexity": "Analyzing your question...",
+                                "rag_retrieval": "Searching knowledge base...",
+                                "skip_rag": "Skipping knowledge base...",
+                                "execute_tools": "Executing tools...",
+                                "skip_tools": "Skipping tools...",
+                                "execute_expert_agent": "Expert is thinking...",
+                                "generate_streaming_response": "Generating response...",
+                                "validate_human_review": "Validating response...",
+                                "save_message": "Saving message...",
+                                "update_session_metadata": "Updating session...",
+                                "format_output": "Formatting output...",
+                            }
+                            friendly_message = node_messages.get(node_name, f"Processing: {node_name}")
+                            yield f"data: {json.dumps({'event': 'thinking', 'step': node_name, 'status': 'running', 'message': friendly_message})}\n\n"
+
+                    elif event_kind == "on_chain_end":
+                        node_name = event_name
+                        if node_name == current_node:
+                            yield f"data: {json.dumps({'event': 'thinking', 'step': node_name, 'status': 'completed'})}\n\n"
+
+                            # Extract sources AND citations from RAG node output
+                            # LangGraph v2 events use GRAPH node names (first arg to add_node)
+                            if node_name == "rag_retrieval":
+                                output = event_data.get("output", {})
+                                # Debug: Log what we receive
+                                output_keys = list(output.keys()) if isinstance(output, dict) else str(type(output))
+                                logger.info("🔍 RAG node output structure", keys=output_keys, has_citations="citations" in output if isinstance(output, dict) else False)
+
+                                # Extract sources (retrieved documents)
+                                if not sources_sent:
+                                    sources = output.get("sources", output.get("rag_results", output.get("retrieved_documents", [])))
+                                    if sources:
+                                        sources_sent = True
+                                        accumulated_sources = sources[:10]  # Store for done event
+                                        yield f"data: {json.dumps({'event': 'sources', 'sources': accumulated_sources, 'total': len(sources)})}\n\n"
+
+                                # Extract citations from RAG node (evidence gatherer builds these)
+                                citations = output.get("citations", [])
+                                if citations and not accumulated_citations:
+                                    accumulated_citations = citations[:10]
+                                    logger.info("📚 Extracted citations from rag_retrieval", count=len(accumulated_citations))
+
+                            # Also check format_output node for any additional citations
+                            # LangGraph v2 events use GRAPH node names
+                            if node_name == "format_output":
+                                output = event_data.get("output", {})
+                                citations = output.get("citations", output.get("sources", []))
+                                if citations and not accumulated_citations:
+                                    accumulated_citations = citations[:10]
+                                    logger.info("📚 Extracted citations from format_output_node", count=len(accumulated_citations))
+
+                    # Stream LLM tokens in real-time with tag filtering
+                    elif event_kind == "on_chat_model_stream":
+                        chunk = event_data.get("chunk")
+                        if chunk:
+                            content = ""
+                            if hasattr(chunk, "content"):
+                                content = chunk.content
+                            elif isinstance(chunk, dict):
+                                content = chunk.get("content", "")
+
+                            if content:
+                                tokens_generated += 1
+                                accumulated_response += content
+
+                                # Tag filtering: Buffer content while in <thinking> block, only stream <answer> content
+                                tag_buffer += content
+
+                                # Process buffer to detect and filter tags
+                                streamable_content = ""
+                                while tag_buffer:
+                                    # Check for <thinking> opening tag
+                                    if '<thinking>' in tag_buffer.lower():
+                                        idx = tag_buffer.lower().index('<thinking>')
+                                        # Stream content before the tag (if we're not already in thinking)
+                                        if not in_thinking_block:
+                                            streamable_content += tag_buffer[:idx]
+                                        in_thinking_block = True
+                                        tag_buffer = tag_buffer[idx + len('<thinking>'):]
+                                        # Send thinking indicator to frontend
+                                        yield f"data: {json.dumps({'event': 'thinking', 'step': 'ai_reasoning', 'status': 'running', 'message': 'Analyzing sources and formulating response...'})}\n\n"
+                                        continue
+
+                                    # Check for </thinking> closing tag
+                                    if '</thinking>' in tag_buffer.lower():
+                                        idx = tag_buffer.lower().index('</thinking>')
+                                        # Save the thinking content for later but don't stream it
+                                        thinking_buffer += tag_buffer[:idx]
+                                        in_thinking_block = False
+                                        tag_buffer = tag_buffer[idx + len('</thinking>'):]
+                                        yield f"data: {json.dumps({'event': 'thinking', 'step': 'ai_reasoning', 'status': 'completed', 'message': 'Analysis complete'})}\n\n"
+                                        continue
+
+                                    # Check for <answer> opening tag
+                                    if '<answer>' in tag_buffer.lower():
+                                        idx = tag_buffer.lower().index('<answer>')
+                                        # Don't include anything before <answer> if we're outside thinking
+                                        if not in_thinking_block:
+                                            pass  # Skip pre-answer content outside thinking block
+                                        answer_started = True
+                                        tag_buffer = tag_buffer[idx + len('<answer>'):]
+                                        continue
+
+                                    # Check for </answer> closing tag
+                                    if '</answer>' in tag_buffer.lower():
+                                        idx = tag_buffer.lower().index('</answer>')
+                                        # Stream content before the closing tag
+                                        if answer_started and not in_thinking_block:
+                                            streamable_content += tag_buffer[:idx]
+                                        tag_buffer = tag_buffer[idx + len('</answer>'):]
+                                        continue
+
+                                    # Check for potential partial tags at the end of buffer
+                                    # If buffer ends with '<' or any partial tag sequence, wait for more content
+                                    lower_buffer = tag_buffer.lower()
+                                    partial_patterns = [
+                                        '<', '<t', '<th', '<thi', '<thin', '<think', '<thinki', '<thinkin', '<thinking',
+                                        '</t', '</th', '</thi', '</thin', '</think', '</thinki', '</thinkin', '</thinking',
+                                        '<a', '<an', '<ans', '<answ', '<answe', '<answer',
+                                        '</a', '</an', '</ans', '</answ', '</answe', '</answer'
+                                    ]
+                                    if any(lower_buffer.endswith(p) for p in partial_patterns):
+                                        break  # Keep the partial tag in buffer for next iteration
+
+                                    # No complete tags found - process the content
+                                    if in_thinking_block:
+                                        # Inside thinking block - buffer but don't stream
+                                        thinking_buffer += tag_buffer
+                                        tag_buffer = ""
+                                    elif answer_started:
+                                        # Inside answer block - stream to user
+                                        streamable_content += tag_buffer
+                                        tag_buffer = ""
+                                    else:
+                                        # Before any tags - this shouldn't happen if LLM follows format
+                                        # But stream it anyway for safety
+                                        streamable_content += tag_buffer
+                                        tag_buffer = ""
+
+                                # Stream the filtered content to frontend
+                                if streamable_content:
+                                    yield f"data: {json.dumps({'event': 'token', 'content': streamable_content, 'tokens': tokens_generated})}\n\n"
+
+                    # Handle tool calls
+                    elif event_kind == "on_tool_start":
+                        tool_name = event_name
+                        tool_input = event_data.get("input", {})
+                        yield f"data: {json.dumps({'event': 'tool', 'action': 'start', 'tool': tool_name, 'input': str(tool_input)[:200]})}\n\n"
+
+                    elif event_kind == "on_tool_end":
+                        tool_name = event_name
+                        tool_output = event_data.get("output", "")
+                        yield f"data: {json.dumps({'event': 'tool', 'action': 'end', 'tool': tool_name, 'output': str(tool_output)[:500]})}\n\n"
+
+            except Exception as stream_error:
+                logger.warning("⚠️ Streaming events failed, falling back to invoke", error=str(stream_error))
+                # Fallback: Execute without streaming and chunk the response
+                yield f"data: {json.dumps({'event': 'thinking', 'step': 'execute_expert_agent_node', 'status': 'running', 'message': 'Expert is generating response...'})}\n\n"
+
+                result = await compiled_graph.ainvoke(initial_state)
+                accumulated_response = result.get('response', '') or result.get('final_response', '') or result.get('agent_response', '')
+
+                # Stream the response word by word for smooth UX (with tag stripping)
+                if accumulated_response:
+                    # Strip <thinking> and <answer> tags from response before streaming
+                    clean_response = accumulated_response
+                    # Extract just the answer content if tags are present
+                    answer_match = re.search(r'<answer>(.*?)</answer>', clean_response, re.DOTALL | re.IGNORECASE)
+                    if answer_match:
+                        clean_response = answer_match.group(1).strip()
+                    else:
+                        # Remove thinking block if present
+                        clean_response = re.sub(r'<thinking>.*?</thinking>\s*', '', clean_response, flags=re.DOTALL | re.IGNORECASE)
+                        # Strip any remaining tags
+                        clean_response = re.sub(r'</?thinking>', '', clean_response, flags=re.IGNORECASE)
+                        clean_response = re.sub(r'</?answer>', '', clean_response, flags=re.IGNORECASE)
+                        clean_response = clean_response.strip()
+
+                    words = clean_response.split(' ')
+                    for i, word in enumerate(words):
+                        tokens_generated += 1
+                        content = word + (' ' if i < len(words) - 1 else '')
+                        yield f"data: {json.dumps({'event': 'token', 'content': content, 'tokens': tokens_generated})}\n\n"
+                        # Small delay for smooth streaming effect
+                        await asyncio.sleep(0.02)
+
+                # Send sources if available
+                sources = result.get('sources', result.get('rag_results', result.get('retrieved_documents', [])))
+                if sources and not sources_sent:
+                    accumulated_sources = sources[:10]  # Store for done event
+                    yield f"data: {json.dumps({'event': 'sources', 'sources': accumulated_sources, 'total': len(sources)})}\n\n"
+
+                # Extract citations from result
+                citations = result.get('citations', result.get('sources', []))
+                if citations:
+                    accumulated_citations = citations[:10]
+
+            # POST-WORKFLOW STREAMING FIX:
+            # If astream_events completed but no tokens were streamed (LLM call was inside orchestrator),
+            # we need to extract and stream the response now
+            if tokens_generated == 0:
+                logger.info("🔄 No tokens streamed during workflow, extracting final response for streaming")
+
+                # Get the final state from the workflow by running it once more (ainvoke)
+                # The astream_events already completed, so we need the final output
+                try:
+                    # Re-invoke to get final state (astream_events doesn't return final state easily)
+                    final_result = await compiled_graph.ainvoke(initial_state)
+
+                    # Extract response from various possible keys
+                    final_response = (
+                        final_result.get('response', '') or
+                        final_result.get('agent_response', '') or
+                        final_result.get('final_response', '')
+                    )
+
+                    if final_response:
+                        accumulated_response = final_response
+                        # Strip <thinking> and <answer> tags from response before streaming
+                        clean_final_response = final_response
+                        answer_match = re.search(r'<answer>(.*?)</answer>', clean_final_response, re.DOTALL | re.IGNORECASE)
+                        if answer_match:
+                            clean_final_response = answer_match.group(1).strip()
+                        else:
+                            clean_final_response = re.sub(r'<thinking>.*?</thinking>\s*', '', clean_final_response, flags=re.DOTALL | re.IGNORECASE)
+                            clean_final_response = re.sub(r'</?thinking>', '', clean_final_response, flags=re.IGNORECASE)
+                            clean_final_response = re.sub(r'</?answer>', '', clean_final_response, flags=re.IGNORECASE)
+                            clean_final_response = clean_final_response.strip()
+
+                        # Stream word by word for smooth UX
+                        words = clean_final_response.split(' ')
+                        for i, word in enumerate(words):
+                            tokens_generated += 1
+                            content = word + (' ' if i < len(words) - 1 else '')
+                            yield f"data: {json.dumps({'event': 'token', 'content': content, 'tokens': tokens_generated})}\n\n"
+                            await asyncio.sleep(0.015)  # 15ms delay for smooth effect
+
+                    # Extract sources from final result
+                    if not sources_sent:
+                        sources = (
+                            final_result.get('sources', []) or
+                            final_result.get('rag_results', []) or
+                            final_result.get('retrieved_documents', [])
+                        )
+                        if sources:
+                            accumulated_sources = sources[:10]
+                            sources_sent = True
+                            yield f"data: {json.dumps({'event': 'sources', 'sources': accumulated_sources, 'total': len(sources)})}\n\n"
+
+                    # Extract citations
+                    citations = final_result.get('citations', []) or final_result.get('sources', [])
+                    if citations and not accumulated_citations:
+                        accumulated_citations = citations[:10]
+                        logger.info("📚 Extracted citations from post-stream ainvoke", count=len(accumulated_citations))
+
+                except Exception as post_stream_error:
+                    logger.error("❌ Post-workflow streaming failed", error=str(post_stream_error))
+
+            # CRITICAL FIX: Always extract citations if not yet captured
+            # LangGraph v2 astream_events doesn't reliably provide on_chain_end output for graph nodes
+            # So we MUST get citations from the final state regardless of streaming
+            if not accumulated_citations:
+                logger.info("📝 Citations not captured during streaming, fetching from final state...")
+                try:
+                    # Get final state to extract citations
+                    final_state_for_citations = await compiled_graph.ainvoke(initial_state)
+
+                    # Try multiple possible citation keys
+                    citations = (
+                        final_state_for_citations.get('citations', []) or
+                        final_state_for_citations.get('evidence_citations', []) or
+                        final_state_for_citations.get('l5_citations', []) or
+                        []
+                    )
+
+                    if citations:
+                        accumulated_citations = citations[:10]
+                        logger.info("📚 Extracted citations from final state", count=len(accumulated_citations))
+                    else:
+                        # Fallback: Try to extract from sources if they have citation info
+                        sources = (
+                            final_state_for_citations.get('sources', []) or
+                            final_state_for_citations.get('retrieved_documents', []) or
+                            final_state_for_citations.get('rag_results', [])
+                        )
+                        if sources:
+                            # Convert sources to citation format with improved extraction
+                            accumulated_citations = []
+                            for idx, src in enumerate(sources[:10]):
+                                if isinstance(src, dict):
+                                    metadata = src.get('metadata', {})
+
+                                    # Extract title with multiple fallbacks
+                                    title = (
+                                        src.get('title') or
+                                        metadata.get('title') or
+                                        src.get('name') or
+                                        metadata.get('name') or
+                                        src.get('page_title') or
+                                        metadata.get('page_title') or
+                                        src.get('document_title') or
+                                        # Try to extract from content if no title
+                                        (src.get('content', '')[:60] + '...' if src.get('content') else None) or
+                                        f'Source {idx + 1}'
+                                    )
+
+                                    # Extract source/URL with multiple fallbacks
+                                    source_url = (
+                                        src.get('url') or
+                                        src.get('source_url') or
+                                        src.get('link') or
+                                        metadata.get('url') or
+                                        metadata.get('source_url') or
+                                        metadata.get('source') or
+                                        src.get('source') or
+                                        ''
+                                    )
+
+                                    # Extract source type
+                                    source_type = (
+                                        src.get('source_type') or
+                                        src.get('type') or
+                                        metadata.get('source_type') or
+                                        metadata.get('type') or
+                                        'document'
+                                    )
+
+                                    # Build readable source string
+                                    source_display = source_url or source_type.replace('_', ' ').title()
+
+                                    citation = {
+                                        'title': title.strip() if isinstance(title, str) else title,
+                                        'source': source_display,
+                                        'url': source_url,
+                                        'source_type': source_type,
+                                        'content': (src.get('content') or src.get('text') or src.get('page_content') or '')[:200],
+                                        'relevance_score': src.get('relevance_score') or src.get('score') or metadata.get('score') or 0.8
+                                    }
+                                    accumulated_citations.append(citation)
+                            if accumulated_citations:
+                                logger.info("📚 Converted sources to citations", count=len(accumulated_citations))
+
+                    # Also extract sources if not yet captured
+                    if not accumulated_sources:
+                        sources = (
+                            final_state_for_citations.get('sources', []) or
+                            final_state_for_citations.get('retrieved_documents', []) or
+                            final_state_for_citations.get('rag_results', [])
+                        )
+                        if sources:
+                            accumulated_sources = sources[:10]
+                            logger.info("📦 Extracted sources from final state", count=len(accumulated_sources))
+
+                except Exception as citation_error:
+                    logger.warning("⚠️ Could not extract citations from final state", error=str(citation_error))
+
+            # Calculate final metrics
+            processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+            tokens_per_second = tokens_generated / (processing_time_ms / 1000) if processing_time_ms > 0 else 0
+
+            # Determine response source for clarity (Issue #4)
+            response_source = 'llm'  # Default to LLM
+            if accumulated_sources and len(accumulated_sources) > 0:
+                response_source = 'rag_augmented'  # RAG-augmented response
+            if request.enable_tools:
+                response_source = 'tool_augmented' if not accumulated_sources else 'rag_tool_augmented'
+
+            # Extract AI reasoning from <thinking> tags in accumulated response
+            # This captures the actual LLM chain-of-thought reasoning
+            ai_reasoning = ""
+            final_response_content = accumulated_response
+
+            # Parse <thinking> and <answer> tags from the response
+            thinking_match = re.search(r'<thinking>(.*?)</thinking>', accumulated_response, re.DOTALL | re.IGNORECASE)
+            answer_match = re.search(r'<answer>(.*?)</answer>', accumulated_response, re.DOTALL | re.IGNORECASE)
+
+            if thinking_match:
+                ai_reasoning = thinking_match.group(1).strip()
+                logger.info("📝 Extracted AI reasoning from <thinking> tags", reasoning_length=len(ai_reasoning))
+
+            if answer_match:
+                # Use the clean answer without tags
+                final_response_content = answer_match.group(1).strip()
+                logger.info("📝 Extracted clean answer from <answer> tags")
+            elif thinking_match:
+                # Remove thinking tags from response if no answer tags
+                final_response_content = re.sub(r'<thinking>.*?</thinking>\s*', '', accumulated_response, flags=re.DOTALL | re.IGNORECASE).strip()
+
+            # Build reasoning array for frontend (compatible with existing format)
+            reasoning_array = []
+            if ai_reasoning:
+                reasoning_array.append({
+                    "step": "ai_thinking",
+                    "content": ai_reasoning,
+                    "status": "completed"
+                })
+
+            # Send completion event with metadata
+            completion_data = {
+                'event': 'done',
+                'agent_id': request.agent_id,
+                'content': final_response_content,  # Clean response without tags
+                'confidence': 0.85,  # Will be calculated properly when streaming is fully integrated
+                'sources': accumulated_sources,  # Include sources for frontend
+                'citations': accumulated_citations,  # Include citations for frontend
+                'response_source': response_source,  # Clarify response origin
+                'reasoning': reasoning_array,  # AI reasoning for frontend display
+                'ai_reasoning': ai_reasoning,  # Raw AI thinking for direct access
+                'metrics': {
+                    'processing_time_ms': round(processing_time_ms, 2),
+                    'tokens_generated': tokens_generated,
+                    'tokens_per_second': round(tokens_per_second, 2),
+                },
+                'metadata': {
+                    'request_id': request_id,
+                    'model': request.model or "gpt-4",
+                    'enable_rag': request.enable_rag,
+                    'enable_tools': request.enable_tools,
+                    'response_source': response_source,  # Also in metadata for convenience
+                }
+            }
+            yield f"data: {json.dumps(completion_data)}\n\n"
+
+            logger.info(
+                "✅ [Mode 1 Stream] Streaming completed",
+                agent_id=request.agent_id,
+                tokens=tokens_generated,
+                processing_time_ms=round(processing_time_ms, 2)
+            )
+
+        except Exception as e:
+            logger.error("❌ [Mode 1 Stream] Streaming failed", error=str(e), exc_info=True)
+            error_data = {
+                'event': 'error',
+                'message': str(e),
+                'code': 'STREAM_ERROR'
+            }
+            yield f"data: {json.dumps(error_data)}\n\n"
+
+    return StreamingResponse(
+        generate_sse_events(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Tenant-ID",
+        }
+    )
+
+
 # Mode 2: Automatic Agent Selection
 @app.post("/api/mode2/automatic", response_model=Mode2AutomaticResponse)
 async def execute_mode2_automatic(
@@ -1441,12 +2011,17 @@ async def execute_mode3_autonomous_manual(
             citation_style=citation_prefs.citation_style,
             include_citations=citation_prefs.include_citations
         )
-        
+
         # Execute workflow with LangGraph using compiled graph
-        result = await compiled_graph.ainvoke(initial_state)
-        
+        # Mode 3's goal-driven loop has ~6-8 nodes per iteration × max 10 iterations = 60-80 nodes
+        # LangGraph default recursion_limit is 25, so we need to increase it for autonomous workflows
+        result = await compiled_graph.ainvoke(
+            initial_state,
+            config={"recursion_limit": 100}
+        )
+
         processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
-        
+
         # Extract results
         content = result.get('response', '') or result.get('final_response', '')
         confidence = result.get('confidence', 0.90)
@@ -1522,6 +2097,87 @@ async def execute_mode3_autonomous_manual(
     except Exception as exc:
         logger.error("❌ Mode 3 LangGraph execution failed", error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail=f"Mode 3 execution failed: {str(exc)}")
+
+# Mode 3 HITL Response Endpoint
+class HITLResponseRequest(BaseModel):
+    checkpoint_id: str
+    session_id: str
+    decision: str  # "approved" or "rejected"
+    rejection_reason: Optional[str] = None
+    user_id: Optional[str] = None
+    responded_at: Optional[str] = None
+
+class HITLResponseResponse(BaseModel):
+    status: str
+    checkpoint_id: str
+    decision: str
+    message: str
+
+@app.post("/api/mode3/hitl/respond", response_model=HITLResponseResponse)
+async def respond_to_hitl_checkpoint(
+    request: HITLResponseRequest,
+    tenant_id: str = Depends(get_tenant_id)
+):
+    """Handle HITL (Human-in-the-Loop) checkpoint approval/rejection for Mode 3"""
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/mode3/hitl/respond").inc()
+
+    try:
+        logger.info(
+            "📋 [Mode 3 HITL] Processing checkpoint response",
+            checkpoint_id=request.checkpoint_id,
+            session_id=request.session_id,
+            decision=request.decision,
+            user_id=request.user_id
+        )
+
+        # Validate decision
+        if request.decision not in ["approved", "rejected"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid decision. Must be 'approved' or 'rejected'"
+            )
+
+        # Store the HITL response in database if available
+        if supabase_client:
+            try:
+                response_data = {
+                    "checkpoint_id": request.checkpoint_id,
+                    "session_id": request.session_id,
+                    "decision": request.decision,
+                    "rejection_reason": request.rejection_reason,
+                    "user_id": request.user_id,
+                    "responded_at": request.responded_at or datetime.utcnow().isoformat(),
+                    "tenant_id": tenant_id
+                }
+
+                # Try to insert into mode3_hitl_responses table if it exists
+                # This is a soft insert - if table doesn't exist, we just log
+                await supabase_client.table("mode3_hitl_responses").insert(response_data).execute()
+                logger.info("✅ [Mode 3 HITL] Response stored in database")
+            except Exception as db_error:
+                # Log but don't fail if database storage fails
+                logger.warning(f"⚠️ [Mode 3 HITL] Could not store response in database: {db_error}")
+
+        message = (
+            f"Checkpoint {request.checkpoint_id} has been {request.decision}"
+            if request.decision == "approved"
+            else f"Checkpoint {request.checkpoint_id} has been rejected: {request.rejection_reason or 'No reason provided'}"
+        )
+
+        logger.info(f"✅ [Mode 3 HITL] {message}")
+
+        return HITLResponseResponse(
+            status="success",
+            checkpoint_id=request.checkpoint_id,
+            decision=request.decision,
+            message=message
+        )
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ [Mode 3 HITL] Response processing failed", error=str(exc), exc_info=True)
+        raise HTTPException(status_code=500, detail=f"HITL response processing failed: {str(exc)}")
 
 # Mode 4: Autonomous-Automatic (Automatic Selection + Autonomous Execution)
 @app.post("/api/mode4/autonomous-automatic", response_model=Mode4AutonomousAutomaticResponse)

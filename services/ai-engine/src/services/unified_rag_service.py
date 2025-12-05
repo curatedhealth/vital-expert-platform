@@ -948,7 +948,7 @@ class UnifiedRAGService:
         """
         Get configured Knowledge Domain namespaces for an agent.
 
-        These namespaces are stored in agent.metadata.knowledge_namespaces
+        These namespaces are stored in agent.knowledge_namespaces (normalized column)
         and correspond to Pinecone KD-* namespaces.
 
         Args:
@@ -960,8 +960,13 @@ class UnifiedRAGService:
         try:
             agent = await self.supabase.get_agent_by_id(agent_id)
             if agent:
-                metadata = agent.get("metadata") or {}
-                namespaces = metadata.get("knowledge_namespaces", [])
+                # Prefer normalized column, fallback to JSONB metadata for backward compatibility
+                namespaces = agent.get("knowledge_namespaces")
+                if not namespaces:
+                    # Fallback to JSONB metadata during migration period
+                    metadata = agent.get("metadata") or {}
+                    namespaces = metadata.get("knowledge_namespaces", [])
+
                 if namespaces and isinstance(namespaces, list) and len(namespaces) > 0:
                     logger.info(
                         "agent_knowledge_namespaces_found",
@@ -1393,13 +1398,13 @@ class UnifiedRAGService:
         """
         Backward compatibility alias for query() method.
         Workflows call search() but the service uses query().
-        
+
         Args:
             query: User query text
             tenant_id: Tenant ID
             agent_id: Optional agent ID
             **kwargs: Additional arguments passed to query()
-            
+
         Returns:
             Query results
         """
@@ -1409,4 +1414,98 @@ class UnifiedRAGService:
             agent_id=agent_id,
             **kwargs
         )
+
+    async def enhanced_search(
+        self,
+        query: str,
+        filters: Optional[Dict[str, Any]] = None,
+        max_results: int = 10,
+        similarity_threshold: float = 0.7,
+        include_metadata: bool = True,
+        agent_id: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+    ):
+        """
+        Enhanced search method for backward compatibility with MedicalRAGPipeline.
+
+        This method wraps the query() method and returns a RAGSearchResponse-compatible
+        object that agent_orchestrator.py expects.
+
+        Args:
+            query: Search query text
+            filters: Optional metadata filters
+            max_results: Maximum results to return
+            similarity_threshold: Minimum similarity score threshold
+            include_metadata: Whether to include document metadata
+            agent_id: Optional agent ID for agent-optimized search
+            tenant_id: Optional tenant ID for RLS isolation
+
+        Returns:
+            RAGSearchResponse-compatible object with results, context_summary, etc.
+        """
+        from models import RAGSearchResponse
+
+        start_time = datetime.now()
+
+        try:
+            # Use hybrid strategy for enhanced search (combines vector + keyword)
+            strategy = "agent-optimized" if agent_id else "hybrid"
+
+            # Call the main query method
+            result = await self.query(
+                query_text=query,
+                strategy=strategy,
+                filters=filters,
+                max_results=max_results,
+                similarity_threshold=similarity_threshold,
+                agent_id=agent_id,
+                tenant_id=tenant_id,
+            )
+
+            processing_time = (datetime.now() - start_time).total_seconds() * 1000
+
+            # Convert sources to results format expected by agent_orchestrator
+            sources = result.get("sources", [])
+            results = []
+            for source in sources:
+                results.append({
+                    "content": source.get("page_content", ""),
+                    "metadata": source.get("metadata", {}),
+                    "similarity": source.get("metadata", {}).get("similarity", 0.0),
+                    "document_id": source.get("metadata", {}).get("document_id"),
+                    "title": source.get("metadata", {}).get("title"),
+                })
+
+            # Get context summary
+            context_summary = result.get("context", "No relevant documents found.")
+
+            logger.info(
+                "🔍 Enhanced search completed",
+                query_length=len(query),
+                results_count=len(results),
+                processing_time_ms=processing_time,
+            )
+
+            return RAGSearchResponse(
+                query=query,
+                results=results,
+                context_summary=context_summary,
+                total_results=len(sources),
+                processing_time_ms=processing_time,
+                filters_applied=filters,
+                similarity_threshold=similarity_threshold,
+            )
+
+        except Exception as e:
+            logger.error("❌ Enhanced search failed", error=str(e))
+            # Return empty response on error
+            return RAGSearchResponse(
+                query=query,
+                results=[],
+                context_summary="Search failed due to an error.",
+                total_results=0,
+                processing_time_ms=(datetime.now() - start_time).total_seconds() * 1000,
+                filters_applied=filters,
+                similarity_threshold=similarity_threshold,
+            )
 

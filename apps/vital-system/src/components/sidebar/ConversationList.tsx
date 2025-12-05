@@ -41,10 +41,17 @@ const mockConversations: Conversation[] = [
 export function ConversationList() {
   const [conversations] = useState<Conversation[]>(mockConversations);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const router = useRouter();
 
+  const handleConversationClick = (conversation: Conversation) => {
     setSelectedId(conversation.id);
     router.push(`/c/${conversation.id}`);
   };
+
+  const formatTimestamp = (timestamp: Date) => {
+    const now = new Date();
+    const diffTime = now.getTime() - timestamp.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
       return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -57,6 +64,7 @@ export function ConversationList() {
     }
   };
 
+  const getAgentIcon = (agentType: string) => {
     const iconMap: Record<string, string> = {
       'clinical-trial-designer': '🧪',
       'digital-therapeutics-expert': '📱',

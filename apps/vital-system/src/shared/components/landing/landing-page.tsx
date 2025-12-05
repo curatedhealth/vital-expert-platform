@@ -186,7 +186,7 @@ export function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
+            <div className="p-6 rounded-lg border border-neutral-200 hover:shadow-lg transition-shadow">
               <Brain className="h-12 w-12 text-trust-blue mb-4" />
               <h3 className="text-xl font-semibold text-deep-charcoal mb-2">100+ AI Agents</h3>
               <p className="text-medical-gray">
@@ -194,7 +194,7 @@ export function LandingPage() {
               </p>
             </div>
 
-            <div className="p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
+            <div className="p-6 rounded-lg border border-neutral-200 hover:shadow-lg transition-shadow">
               <Shield className="h-12 w-12 text-progress-teal mb-4" />
               <h3 className="text-xl font-semibold text-deep-charcoal mb-2">Healthcare-Specific</h3>
               <p className="text-medical-gray">
@@ -202,7 +202,7 @@ export function LandingPage() {
               </p>
             </div>
 
-            <div className="p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
+            <div className="p-6 rounded-lg border border-neutral-200 hover:shadow-lg transition-shadow">
               <Users className="h-12 w-12 text-market-purple mb-4" />
               <h3 className="text-xl font-semibold text-deep-charcoal mb-2">Team Collaboration</h3>
               <p className="text-medical-gray">
@@ -276,7 +276,7 @@ export function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="border border-gray-200 rounded-lg p-8">
+            <div className="border border-neutral-200 rounded-lg p-8">
               <div className="text-center">
                 <h3 className="text-2xl font-semibold text-deep-charcoal mb-2">Starter</h3>
                 <div className="text-4xl font-bold text-trust-blue mb-4">$49<span className="text-lg text-medical-gray">/month</span></div>
@@ -333,7 +333,7 @@ export function LandingPage() {
               </Button>
             </div>
 
-            <div className="border border-gray-200 rounded-lg p-8">
+            <div className="border border-neutral-200 rounded-lg p-8">
               <div className="text-center">
                 <h3 className="text-2xl font-semibold text-deep-charcoal mb-2">Enterprise</h3>
                 <div className="text-4xl font-bold text-trust-blue mb-4">Custom</div>
@@ -376,7 +376,7 @@ export function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link href="/dashboard">
-              <Button size="lg" className="bg-white text-trust-blue hover:bg-gray-50 px-8 py-3 text-lg">
+              <Button size="lg" className="bg-white text-trust-blue hover:bg-neutral-50 px-8 py-3 text-lg">
                 Start Your Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -401,17 +401,17 @@ export function LandingPage() {
                 <span className="text-2xl mr-2">🧩</span>
                 <span className="text-xl font-bold">VITALpath</span>
               </div>
-              <p className="text-gray-400 mb-4">
+              <p className="text-neutral-400 mb-4">
                 Empowering healthcare organizations through AI-powered expertise and the VITAL Framework.
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-neutral-500">
                 © 2024 VITALpath. All rights reserved.
               </p>
             </div>
 
             <div>
               <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-gray-400">
+              <ul className="space-y-2 text-neutral-400">
                 <li><a href="#features" className="hover:text-white">Features</a></li>
                 <li><a href="#pricing" className="hover:text-white">Pricing</a></li>
                 <li><a href="#" className="hover:text-white">API</a></li>
@@ -421,7 +421,7 @@ export function LandingPage() {
 
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-gray-400">
+              <ul className="space-y-2 text-neutral-400">
                 <li><a href="#" className="hover:text-white">About</a></li>
                 <li><a href="#" className="hover:text-white">Blog</a></li>
                 <li><a href="#" className="hover:text-white">Careers</a></li>

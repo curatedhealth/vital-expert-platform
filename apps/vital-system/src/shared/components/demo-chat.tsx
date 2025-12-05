@@ -127,7 +127,7 @@ export function DemoChat() {
                           <div className={`p-3 rounded-lg ${
                             message.type === 'user'
                               ? 'bg-blue-600 text-white max-w-xs ml-auto'
-                              : 'bg-gray-100 text-gray-900'
+                              : 'bg-neutral-100 text-neutral-900'
                           }`}>
                             <div className="w-full">
                               {message.type === 'assistant' ? (
@@ -158,7 +158,7 @@ export function DemoChat() {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <div className="flex items-center gap-2 text-xs text-neutral-500">
                             <Clock className="h-3 w-3" />
                             {formatTime(message.timestamp)}
 
@@ -201,10 +201,10 @@ export function DemoChat() {
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
                       <Bot className="h-4 w-4" />
                     </div>
-                    <div className="bg-gray-100 p-3 rounded-lg">
+                    <div className="bg-neutral-100 p-3 rounded-lg">
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm text-gray-600">AI Expert Panel analyzing...</span>
+                        <span className="text-sm text-neutral-600">AI Expert Panel analyzing...</span>
                       </div>
                     </div>
                   </div>
@@ -258,7 +258,7 @@ export function DemoChat() {
               >
                 <div className="text-xs text-left">
                   <div className="font-medium mb-1">Test Query {index + 1}:</div>
-                  <div className="text-gray-600 line-clamp-3">
+                  <div className="text-neutral-600 line-clamp-3">
                     {query.substring(0, 80)}...
                   </div>
                 </div>

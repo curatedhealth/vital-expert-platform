@@ -49,8 +49,26 @@ import structlog
 import asyncio
 import uuid
 import json
+import os
 
 logger = structlog.get_logger()
+
+# Supabase client for reading agent metadata
+try:
+    from supabase import create_client, Client
+    SUPABASE_URL = os.getenv("SUPABASE_URL", "https://bomltkhixeatxuoxmolq.supabase.co")
+    SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+    _supabase_client: Optional[Client] = None
+
+    def get_supabase_client() -> Optional[Client]:
+        global _supabase_client
+        if _supabase_client is None and SUPABASE_SERVICE_KEY:
+            _supabase_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+        return _supabase_client
+except ImportError:
+    logger.warning("Supabase client not available - hierarchy metadata reading disabled")
+    def get_supabase_client() -> None:
+        return None
 
 
 # ============================================================================
@@ -166,6 +184,57 @@ class AgentResult(BaseModel):
     delegated_to: List[str] = Field(default_factory=list)
     escalated_from: Optional[str] = None
     delegation_depth: int = 0
+
+
+# ============================================================================
+# Hierarchy Configuration Models (from agent.metadata.hierarchy)
+# These models match the frontend SubagentSelector component output
+# ============================================================================
+
+class ConfiguredSubagent(BaseModel):
+    """A subagent configured via the UI (stored in metadata)"""
+    agent_id: str
+    agent_name: str
+    agent_level: int  # 4 for workers, 5 for tools
+    priority: int = 1  # 1 = primary, 2+ = fallback
+    is_enabled: bool = True
+    assignment_type: str = "recommended"  # 'recommended' or 'manual'
+    configured_at: Optional[str] = None
+
+
+class L4WorkersConfig(BaseModel):
+    """Configuration for L4 Worker agents"""
+    recommended: List[Dict[str, Any]] = Field(default_factory=list)
+    configured: List[ConfiguredSubagent] = Field(default_factory=list)
+    use_pool: bool = True
+    max_concurrent: int = 3
+
+
+class L5ToolsConfig(BaseModel):
+    """Configuration for L5 Tool agents"""
+    recommended: List[Dict[str, Any]] = Field(default_factory=list)
+    configured: List[ConfiguredSubagent] = Field(default_factory=list)
+
+
+class ContextEngineerConfig(BaseModel):
+    """Configuration for Context Engineer agent"""
+    agent_id: Optional[str] = None
+    agent_name: Optional[str] = None
+    is_enabled: bool = False
+    context_strategy: str = "summarize"  # 'full', 'summarize', 'selective'
+
+
+class SubagentHierarchyConfig(BaseModel):
+    """
+    Complete hierarchy configuration stored in agent.metadata.hierarchy.
+    This is populated by the frontend SubagentSelector component.
+    """
+    l4_workers: L4WorkersConfig = Field(default_factory=L4WorkersConfig)
+    l5_tools: L5ToolsConfig = Field(default_factory=L5ToolsConfig)
+    context_engineer: ContextEngineerConfig = Field(default_factory=ContextEngineerConfig)
+    expert_consultants: Optional[Dict[str, Any]] = None
+    last_configured_at: Optional[str] = None
+    configured_by: Optional[str] = None
 
 
 # ============================================================================
@@ -319,6 +388,10 @@ class AgentHierarchyService:
         if not agent_data:
             return None
 
+        # Derive tier from agent_levels join or default to L2 (Expert)
+        agent_levels_data = agent_data.get("agent_levels") or {}
+        tier_value = agent_levels_data.get("level_number", 2) if agent_levels_data else 2
+
         expert = AgentDefinition(
             agent_id=agent_id,
             name=agent_data.get("display_name", "Expert"),
@@ -331,7 +404,7 @@ class AgentHierarchyService:
             temperature=agent_data.get("temperature", 0.7),
             max_tokens=agent_data.get("max_tokens", 4000),
             parent_agent_id=parent_master_id,
-            tier=agent_data.get("tier", 2)
+            tier=tier_value
         )
 
         self.active_agents[agent_id] = expert
@@ -598,6 +671,427 @@ class AgentHierarchyService:
         )
 
         return tool_agent
+
+    # ========================================================================
+    # Metadata-Based Hierarchy Configuration (NEW)
+    # Read configured subagents from agent.metadata.hierarchy
+    # ========================================================================
+
+    async def get_hierarchy_config_from_metadata(
+        self,
+        agent_id: str,
+        tenant_id: Optional[str] = None
+    ) -> Optional[SubagentHierarchyConfig]:
+        """
+        Fetch hierarchy configuration from agent.metadata.hierarchy.
+
+        This reads the configuration set by the frontend SubagentSelector
+        component and stored in the agent's metadata JSONB field.
+
+        Args:
+            agent_id: Agent ID to get hierarchy config for
+            tenant_id: Optional tenant ID for RLS
+
+        Returns:
+            SubagentHierarchyConfig if found, None otherwise
+        """
+        client = get_supabase_client()
+        if not client:
+            logger.warning(
+                "Supabase client not available for hierarchy config lookup",
+                agent_id=agent_id
+            )
+            return None
+
+        try:
+            # Query agent metadata
+            query = client.table("agents").select("metadata").eq("id", agent_id)
+
+            result = query.execute()
+
+            if not result.data or len(result.data) == 0:
+                logger.warning("Agent not found for hierarchy config", agent_id=agent_id)
+                return None
+
+            agent_data = result.data[0]
+            metadata = agent_data.get("metadata", {})
+
+            if not metadata:
+                logger.debug("No metadata found for agent", agent_id=agent_id)
+                return None
+
+            hierarchy_data = metadata.get("hierarchy")
+
+            if not hierarchy_data:
+                logger.debug("No hierarchy config in agent metadata", agent_id=agent_id)
+                return None
+
+            # Parse into Pydantic model
+            config = SubagentHierarchyConfig(**hierarchy_data)
+
+            logger.info(
+                "Loaded hierarchy config from metadata",
+                agent_id=agent_id,
+                l4_workers_count=len(config.l4_workers.configured),
+                l5_tools_count=len(config.l5_tools.configured),
+                context_engineer_enabled=config.context_engineer.is_enabled
+            )
+
+            return config
+
+        except Exception as e:
+            logger.error(
+                "Failed to load hierarchy config from metadata",
+                agent_id=agent_id,
+                error=str(e)
+            )
+            return None
+
+    async def spawn_configured_workers(
+        self,
+        parent_agent_id: str,
+        tasks: List[str],
+        context: Dict[str, Any],
+        tenant_id: Optional[str] = None
+    ) -> List[AgentDefinition]:
+        """
+        Spawn L4 Worker Agents using UI-configured hierarchy.
+
+        If hierarchy config exists in metadata, uses those specific agents.
+        Otherwise falls back to generic worker spawning.
+
+        Args:
+            parent_agent_id: Parent agent ID (L2 or L3)
+            tasks: List of tasks to execute
+            context: Execution context
+            tenant_id: Optional tenant ID
+
+        Returns:
+            List of configured worker agents
+        """
+        # First, try to load hierarchy config from metadata
+        hierarchy_config = await self.get_hierarchy_config_from_metadata(
+            parent_agent_id, tenant_id
+        )
+
+        if not hierarchy_config or not hierarchy_config.l4_workers.configured:
+            # Fallback to generic worker spawning
+            logger.info(
+                "No configured workers in metadata, using generic spawning",
+                parent_agent_id=parent_agent_id
+            )
+            return await self.spawn_workers(parent_agent_id, tasks, context)
+
+        # Use configured workers from metadata
+        workers_config = hierarchy_config.l4_workers
+        configured_workers = [
+            w for w in workers_config.configured
+            if w.is_enabled
+        ]
+
+        if not configured_workers:
+            logger.info("No enabled configured workers, using generic spawning")
+            return await self.spawn_workers(parent_agent_id, tasks, context)
+
+        # Sort by priority
+        configured_workers.sort(key=lambda w: w.priority)
+
+        # Limit by max_concurrent
+        max_workers = min(
+            workers_config.max_concurrent,
+            len(configured_workers),
+            len(tasks)
+        )
+
+        workers_to_use = configured_workers[:max_workers]
+        spawned_workers = []
+
+        for i, worker_config in enumerate(workers_to_use):
+            task = tasks[i] if i < len(tasks) else tasks[0]
+
+            # Fetch actual agent data from store
+            worker_agent = await self._get_configured_agent(
+                agent_id=worker_config.agent_id,
+                tenant_id=tenant_id,
+                parent_id=parent_agent_id,
+                level=AgentLevel.WORKER
+            )
+
+            if worker_agent:
+                spawned_workers.append(worker_agent)
+                logger.info(
+                    "Spawned configured worker from metadata",
+                    worker_id=worker_config.agent_id,
+                    worker_name=worker_config.agent_name,
+                    task_preview=task[:50]
+                )
+
+        if not spawned_workers:
+            # Fallback if configured agents couldn't be loaded
+            logger.warning("Configured workers failed to load, using generic spawning")
+            return await self.spawn_workers(parent_agent_id, tasks, context)
+
+        return spawned_workers
+
+    async def spawn_configured_tools(
+        self,
+        parent_agent_id: str,
+        task: str,
+        tools_needed: List[str],
+        context: Dict[str, Any],
+        tenant_id: Optional[str] = None
+    ) -> List[AgentDefinition]:
+        """
+        Spawn L5 Tool Agents using UI-configured hierarchy.
+
+        If hierarchy config exists in metadata, uses those specific agents.
+        Otherwise falls back to generic tool agent spawning.
+
+        Args:
+            parent_agent_id: Parent agent ID
+            task: Task requiring tools
+            tools_needed: List of required tool names
+            context: Execution context
+            tenant_id: Optional tenant ID
+
+        Returns:
+            List of configured tool agents
+        """
+        # First, try to load hierarchy config from metadata
+        hierarchy_config = await self.get_hierarchy_config_from_metadata(
+            parent_agent_id, tenant_id
+        )
+
+        if not hierarchy_config or not hierarchy_config.l5_tools.configured:
+            # Fallback to generic tool agent spawning
+            logger.info(
+                "No configured tools in metadata, using generic spawning",
+                parent_agent_id=parent_agent_id
+            )
+            tool_agent = await self.spawn_tool_agent(
+                parent_agent_id, task, tools_needed, context
+            )
+            return [tool_agent]
+
+        # Use configured tools from metadata
+        tools_config = hierarchy_config.l5_tools
+        configured_tools = [
+            t for t in tools_config.configured
+            if t.is_enabled
+        ]
+
+        if not configured_tools:
+            logger.info("No enabled configured tools, using generic spawning")
+            tool_agent = await self.spawn_tool_agent(
+                parent_agent_id, task, tools_needed, context
+            )
+            return [tool_agent]
+
+        spawned_tools = []
+
+        for tool_config in configured_tools:
+            # Fetch actual agent data from store
+            tool_agent = await self._get_configured_agent(
+                agent_id=tool_config.agent_id,
+                tenant_id=tenant_id,
+                parent_id=parent_agent_id,
+                level=AgentLevel.TOOL
+            )
+
+            if tool_agent:
+                spawned_tools.append(tool_agent)
+                logger.info(
+                    "Spawned configured tool agent from metadata",
+                    tool_id=tool_config.agent_id,
+                    tool_name=tool_config.agent_name
+                )
+
+        if not spawned_tools:
+            # Fallback if configured agents couldn't be loaded
+            logger.warning("Configured tools failed to load, using generic spawning")
+            tool_agent = await self.spawn_tool_agent(
+                parent_agent_id, task, tools_needed, context
+            )
+            return [tool_agent]
+
+        return spawned_tools
+
+    async def get_context_engineer(
+        self,
+        parent_agent_id: str,
+        tenant_id: Optional[str] = None
+    ) -> Optional[AgentDefinition]:
+        """
+        Get Context Engineer agent if configured in hierarchy.
+
+        Context Engineers manage context compression and summarization
+        during deep agent workflows.
+
+        Args:
+            parent_agent_id: Parent agent ID
+            tenant_id: Optional tenant ID
+
+        Returns:
+            Context Engineer agent if enabled, None otherwise
+        """
+        hierarchy_config = await self.get_hierarchy_config_from_metadata(
+            parent_agent_id, tenant_id
+        )
+
+        if not hierarchy_config:
+            return None
+
+        ce_config = hierarchy_config.context_engineer
+
+        if not ce_config.is_enabled or not ce_config.agent_id:
+            logger.debug(
+                "Context engineer not enabled or not configured",
+                parent_agent_id=parent_agent_id
+            )
+            return None
+
+        # Fetch context engineer agent
+        context_engineer = await self._get_configured_agent(
+            agent_id=ce_config.agent_id,
+            tenant_id=tenant_id,
+            parent_id=parent_agent_id,
+            level=AgentLevel.SPECIALIST  # Context engineers are typically L3
+        )
+
+        if context_engineer:
+            # Add context strategy to agent's metadata
+            context_engineer.system_prompt += f"\n\nContext Strategy: {ce_config.context_strategy}"
+
+            logger.info(
+                "Loaded context engineer from metadata",
+                ce_agent_id=ce_config.agent_id,
+                ce_name=ce_config.agent_name,
+                strategy=ce_config.context_strategy
+            )
+
+        return context_engineer
+
+    async def _get_configured_agent(
+        self,
+        agent_id: str,
+        tenant_id: Optional[str],
+        parent_id: str,
+        level: AgentLevel
+    ) -> Optional[AgentDefinition]:
+        """
+        Fetch a configured agent from the database.
+
+        Args:
+            agent_id: Agent ID to fetch
+            tenant_id: Optional tenant ID
+            parent_id: Parent agent ID
+            level: Expected agent level
+
+        Returns:
+            AgentDefinition if found, None otherwise
+        """
+        client = get_supabase_client()
+        if not client:
+            return None
+
+        try:
+            # Query with agent_level_id join to agent_levels for level_number (replaces legacy tier)
+            query = client.table("agents").select(
+                "id, name, display_name, system_prompt, model, temperature, "
+                "max_tokens, knowledge_domains, tools, agent_level_id, agent_levels(level_number), metadata"
+            ).eq("id", agent_id)
+
+            result = query.execute()
+
+            if not result.data or len(result.data) == 0:
+                logger.warning("Configured agent not found", agent_id=agent_id)
+                return None
+
+            agent_data = result.data[0]
+
+            # Derive tier from agent_levels join (level_number), fallback to level.value
+            agent_levels_data = agent_data.get("agent_levels") or {}
+            tier_value = agent_levels_data.get("level_number", level.value) if agent_levels_data else level.value
+
+            # Create AgentDefinition from database data
+            agent = AgentDefinition(
+                agent_id=agent_id,
+                name=agent_data.get("display_name") or agent_data.get("name", "Agent"),
+                level=level,
+                capabilities=[AgentCapability.PARALLEL_EXECUTION if level == AgentLevel.WORKER
+                             else AgentCapability.TOOL_EXECUTION if level == AgentLevel.TOOL
+                             else AgentCapability.SPECIALIZED_ANALYSIS],
+                knowledge_domains=agent_data.get("knowledge_domains", []),
+                system_prompt=agent_data.get("system_prompt", ""),
+                tools=agent_data.get("tools", []),
+                model=agent_data.get("model", "gpt-4"),
+                temperature=agent_data.get("temperature", 0.7),
+                max_tokens=agent_data.get("max_tokens", 4000),
+                parent_agent_id=parent_id,
+                tier=tier_value
+            )
+
+            # Register in active agents
+            self.active_agents[agent_id] = agent
+            self._stats["agents_by_level"][level.name] += 1
+
+            # Link to parent hierarchy
+            if parent_id not in self._hierarchy_tree:
+                self._hierarchy_tree[parent_id] = []
+            self._hierarchy_tree[parent_id].append(agent_id)
+            self._hierarchy_tree[agent_id] = []
+
+            return agent
+
+        except Exception as e:
+            logger.error(
+                "Failed to fetch configured agent",
+                agent_id=agent_id,
+                error=str(e)
+            )
+            return None
+
+    async def get_full_hierarchy_for_agent(
+        self,
+        agent_id: str,
+        tenant_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Get complete hierarchy configuration for an agent.
+
+        Returns both the configured hierarchy from metadata and the
+        currently active hierarchy tree.
+
+        Args:
+            agent_id: Agent ID to get hierarchy for
+            tenant_id: Optional tenant ID
+
+        Returns:
+            Dict with configured and active hierarchy info
+        """
+        config = await self.get_hierarchy_config_from_metadata(agent_id, tenant_id)
+
+        return {
+            "agent_id": agent_id,
+            "configured": {
+                "l4_workers": {
+                    "count": len(config.l4_workers.configured) if config else 0,
+                    "agents": [w.agent_name for w in config.l4_workers.configured] if config else [],
+                    "max_concurrent": config.l4_workers.max_concurrent if config else 3
+                },
+                "l5_tools": {
+                    "count": len(config.l5_tools.configured) if config else 0,
+                    "agents": [t.agent_name for t in config.l5_tools.configured] if config else []
+                },
+                "context_engineer": {
+                    "enabled": config.context_engineer.is_enabled if config else False,
+                    "agent_name": config.context_engineer.agent_name if config else None,
+                    "strategy": config.context_engineer.context_strategy if config else None
+                } if config else None,
+                "last_configured_at": config.last_configured_at if config else None
+            },
+            "active_tree": self.get_hierarchy_tree()
+        }
 
     # ========================================================================
     # Escalation (Lower → Higher Level)

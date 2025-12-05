@@ -290,19 +290,19 @@ const RemoteMonitoringBuilder: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-canvas-surface border-b border-neutral-200 px-6 py-4">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900">Remote Monitoring Solution Builder</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-neutral-900">Remote Monitoring Solution Builder</h1>
+          <p className="text-neutral-600 mt-1">
             Build HIPAA-compliant remote patient monitoring solutions with FDA-cleared devices
           </p>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="bg-white border-b border-gray-200 px-6">
+      <div className="bg-canvas-surface border-b border-neutral-200 px-6">
         <div className="max-w-7xl mx-auto">
           <nav className="-mb-px flex space-x-8">
             {[
@@ -318,11 +318,11 @@ const RemoteMonitoringBuilder: React.FC = () => {
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.key
                     ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
                 }`}
               >
                 <div>{tab.label}</div>
-                <div className="text-xs text-gray-400">{tab.desc}</div>
+                <div className="text-xs text-neutral-400">{tab.desc}</div>
               </button>
             ))}
           </nav>
@@ -334,8 +334,8 @@ const RemoteMonitoringBuilder: React.FC = () => {
         {activeTab === 'devices' && (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">FDA-Cleared Device Catalog</h2>
-              <div className="text-sm text-gray-600">
+              <h2 className="text-lg font-semibold text-neutral-900">FDA-Cleared Device Catalog</h2>
+              <div className="text-sm text-neutral-600">
                 Selected: {selectedDevices.length} devices
               </div>
             </div>
@@ -343,7 +343,7 @@ const RemoteMonitoringBuilder: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Available Devices */}
               <div>
-                <h3 className="text-md font-medium text-gray-900 mb-4">Available Devices</h3>
+                <h3 className="text-md font-medium text-neutral-900 mb-4">Available Devices</h3>
                 <div className="space-y-4">
                   {availableDevices.map(device => (
                     <div
@@ -351,7 +351,7 @@ const RemoteMonitoringBuilder: React.FC = () => {
                       className={`border rounded-lg p-4 cursor-pointer transition-all ${
                         selectedDevices.find((d: any) => d.id === device.id)
                           ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 bg-white hover:border-gray-300'
+                          : 'border-neutral-200 bg-canvas-surface hover:border-neutral-300'
                       }`}
                       onClick={() => {
                         if (selectedDevices.find((d: any) => d.id === device.id)) {
@@ -363,8 +363,8 @@ const RemoteMonitoringBuilder: React.FC = () => {
                     >
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h4 className="font-medium text-gray-900">{device.name}</h4>
-                          <p className="text-sm text-gray-600">{device.manufacturer}</p>
+                          <h4 className="font-medium text-neutral-900">{device.name}</h4>
+                          <p className="text-sm text-neutral-600">{device.manufacturer}</p>
                         </div>
                         <div className="flex space-x-2">
                           {device.fdaCleared && (
@@ -380,7 +380,7 @@ const RemoteMonitoringBuilder: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="text-xs text-gray-500 space-y-1">
+                      <div className="text-xs text-neutral-500 space-y-1">
                         <div>Data Types: {device.dataTypes.join(', ')}</div>
                         <div>Connectivity: {device.connectivity} • Battery: {device.batteryLife}</div>
                         <div>Sampling: {device.samplingRate}</div>
@@ -392,11 +392,11 @@ const RemoteMonitoringBuilder: React.FC = () => {
 
               {/* Selected Configuration */}
               <div>
-                <h3 className="text-md font-medium text-gray-900 mb-4">Selected Configuration</h3>
+                <h3 className="text-md font-medium text-neutral-900 mb-4">Selected Configuration</h3>
                 {selectedDevices.length === 0 ? (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <div className="text-gray-400 mb-2">📱</div>
-                    <p className="text-gray-600">Select devices to start building your monitoring solution</p>
+                  <div className="border-2 border-dashed border-neutral-300 rounded-lg p-8 text-center">
+                    <div className="text-neutral-400 mb-2">📱</div>
+                    <p className="text-neutral-600">Select devices to start building your monitoring solution</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -404,8 +404,8 @@ const RemoteMonitoringBuilder: React.FC = () => {
                       <div key={device.id} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                         <div className="flex justify-between items-start">
                           <div>
-                            <div className="font-medium text-gray-900">{device.name}</div>
-                            <div className="text-sm text-gray-600">
+                            <div className="font-medium text-neutral-900">{device.name}</div>
+                            <div className="text-sm text-neutral-600">
                               {device.dataTypes.length} data streams
                             </div>
                           </div>
@@ -435,7 +435,7 @@ const RemoteMonitoringBuilder: React.FC = () => {
         {activeTab === 'pipeline' && (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Data Processing Pipeline</h2>
+              <h2 className="text-lg font-semibold text-neutral-900">Data Processing Pipeline</h2>
               {!dataPipeline && (
                 <button
                   onClick={createDataPipeline}
@@ -450,8 +450,8 @@ const RemoteMonitoringBuilder: React.FC = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-6">
                   {/* Data Processing Steps */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Processing Steps</h3>
+                  <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                    <h3 className="text-lg font-medium text-neutral-900 mb-4">Processing Steps</h3>
 
                     <div className="space-y-3">
                       {dataPipeline.processors.map(processor => (
@@ -460,8 +460,8 @@ const RemoteMonitoringBuilder: React.FC = () => {
                             {processor.order}
                           </div>
                           <div>
-                            <div className="font-medium text-gray-900">{processor.name}</div>
-                            <div className="text-sm text-gray-600">{processor.type}</div>
+                            <div className="font-medium text-neutral-900">{processor.name}</div>
+                            <div className="text-sm text-neutral-600">{processor.type}</div>
                           </div>
                         </div>
                       ))}
@@ -469,26 +469,26 @@ const RemoteMonitoringBuilder: React.FC = () => {
                   </div>
 
                   {/* Storage Configuration */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Storage Configuration</h3>
+                  <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                    <h3 className="text-lg font-medium text-neutral-900 mb-4">Storage Configuration</h3>
 
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Type:</span>
+                        <span className="text-neutral-600">Type:</span>
                         <span className="font-medium">{dataPipeline.storage.type}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Encryption:</span>
+                        <span className="text-neutral-600">Encryption:</span>
                         <span className={`font-medium ${dataPipeline.storage.encryption ? 'text-green-600' : 'text-red-600'}`}>
                           {dataPipeline.storage.encryption ? 'Enabled' : 'Disabled'}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Retention:</span>
+                        <span className="text-neutral-600">Retention:</span>
                         <span className="font-medium">{dataPipeline.storage.retention} days</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Compliance:</span>
+                        <span className="text-neutral-600">Compliance:</span>
                         <div className="flex space-x-1">
                           {dataPipeline.storage.compliance.map(std => (
                             <span key={std} className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
@@ -503,16 +503,16 @@ const RemoteMonitoringBuilder: React.FC = () => {
 
                 <div>
                   {/* Generated Configuration */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Generated Configuration</h3>
+                  <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                    <h3 className="text-lg font-medium text-neutral-900 mb-4">Generated Configuration</h3>
 
-                    <div className="bg-gray-900 rounded-lg p-4 text-green-400 font-mono text-sm max-h-96 overflow-y-auto">
+                    <div className="bg-neutral-900 rounded-lg p-4 text-green-400 font-mono text-sm max-h-96 overflow-y-auto">
                       <pre>{generateConfigCode()}</pre>
                     </div>
 
                     <button
                       onClick={() => navigator.clipboard.writeText(generateConfigCode())}
-                      className="w-full mt-3 px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50"
+                      className="w-full mt-3 px-4 py-2 border border-neutral-300 rounded-md text-sm hover:bg-neutral-50"
                     >
                       Copy Configuration
                     </button>
@@ -520,10 +520,10 @@ const RemoteMonitoringBuilder: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-12 text-center">
                 <div className="text-4xl mb-4">⚡</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Configure Your Data Pipeline</h3>
-                <p className="text-gray-600 mb-4">
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">Configure Your Data Pipeline</h3>
+                <p className="text-neutral-600 mb-4">
                   Select devices first, then generate an optimized HIPAA-compliant data processing pipeline
                 </p>
               </div>
@@ -533,16 +533,16 @@ const RemoteMonitoringBuilder: React.FC = () => {
 
         {activeTab === 'alerts' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Clinical Alert System</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">Clinical Alert System</h2>
 
             {dataPipeline ? (
               <div className="space-y-6">
                 {dataPipeline.alerts.map(alert => (
-                  <div key={alert.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div key={alert.id} className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900">{alert.name}</h3>
-                        <p className="text-sm text-gray-600 font-mono">{alert.condition}</p>
+                        <h3 className="text-lg font-medium text-neutral-900">{alert.name}</h3>
+                        <p className="text-sm text-neutral-600 font-mono">{alert.condition}</p>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                         alert.severity === 'critical' ? 'bg-red-100 text-red-800' :
@@ -556,10 +556,10 @@ const RemoteMonitoringBuilder: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Notifications</h4>
+                        <h4 className="font-medium text-neutral-900 mb-2">Notifications</h4>
                         <div className="space-y-2">
                           {alert.notification.map((notif, index) => (
-                            <div key={index} className="text-sm text-gray-600">
+                            <div key={index} className="text-sm text-neutral-600">
                               <span className="font-medium">{notif.type}:</span> {notif.target}
                             </div>
                           ))}
@@ -567,10 +567,10 @@ const RemoteMonitoringBuilder: React.FC = () => {
                       </div>
 
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Escalation Path</h4>
+                        <h4 className="font-medium text-neutral-900 mb-2">Escalation Path</h4>
                         <div className="space-y-2">
                           {alert.escalation.map((step, index) => (
-                            <div key={index} className="text-sm text-gray-600">
+                            <div key={index} className="text-sm text-neutral-600">
                               <span className="font-medium">{step.delay}min:</span> {step.method} {step.target}
                             </div>
                           ))}
@@ -581,10 +581,10 @@ const RemoteMonitoringBuilder: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-12 text-center">
                 <div className="text-4xl mb-4">🚨</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Set Up Clinical Alerts</h3>
-                <p className="text-gray-600">Configure your data pipeline first to enable alert configuration</p>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">Set Up Clinical Alerts</h3>
+                <p className="text-neutral-600">Configure your data pipeline first to enable alert configuration</p>
               </div>
             )}
           </div>
@@ -592,15 +592,15 @@ const RemoteMonitoringBuilder: React.FC = () => {
 
         {activeTab === 'dashboard' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Monitoring Dashboard</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">Monitoring Dashboard</h2>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-8 text-center">
               <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Dashboard Builder</h3>
-              <p className="text-gray-600 mb-4">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-2">Dashboard Builder</h3>
+              <p className="text-neutral-600 mb-4">
                 Drag-and-drop dashboard builder for creating custom monitoring interfaces
               </p>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-neutral-500">
                 Coming soon - Real-time dashboard designer with clinical widgets
               </div>
             </div>
@@ -610,7 +610,7 @@ const RemoteMonitoringBuilder: React.FC = () => {
         {activeTab === 'deploy' && (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Deployment Configuration</h2>
+              <h2 className="text-lg font-semibold text-neutral-900">Deployment Configuration</h2>
               <button
                 onClick={exportDeploymentConfig}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -620,34 +620,34 @@ const RemoteMonitoringBuilder: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Cloud Infrastructure</h3>
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-lg font-medium text-neutral-900 mb-4">Cloud Infrastructure</h3>
 
                 <div className="space-y-4">
-                  <div className="border border-gray-200 rounded-lg p-3">
-                    <div className="font-medium text-gray-900">AWS IoT Core</div>
-                    <div className="text-sm text-gray-600">Device connectivity and management</div>
+                  <div className="border border-neutral-200 rounded-lg p-3">
+                    <div className="font-medium text-neutral-900">AWS IoT Core</div>
+                    <div className="text-sm text-neutral-600">Device connectivity and management</div>
                   </div>
 
-                  <div className="border border-gray-200 rounded-lg p-3">
-                    <div className="font-medium text-gray-900">Lambda Functions</div>
-                    <div className="text-sm text-gray-600">Serverless data processing</div>
+                  <div className="border border-neutral-200 rounded-lg p-3">
+                    <div className="font-medium text-neutral-900">Lambda Functions</div>
+                    <div className="text-sm text-neutral-600">Serverless data processing</div>
                   </div>
 
-                  <div className="border border-gray-200 rounded-lg p-3">
-                    <div className="font-medium text-gray-900">DynamoDB</div>
-                    <div className="text-sm text-gray-600">Patient data storage</div>
+                  <div className="border border-neutral-200 rounded-lg p-3">
+                    <div className="font-medium text-neutral-900">DynamoDB</div>
+                    <div className="text-sm text-neutral-600">Patient data storage</div>
                   </div>
 
-                  <div className="border border-gray-200 rounded-lg p-3">
-                    <div className="font-medium text-gray-900">API Gateway</div>
-                    <div className="text-sm text-gray-600">Mobile app and EHR integration</div>
+                  <div className="border border-neutral-200 rounded-lg p-3">
+                    <div className="font-medium text-neutral-900">API Gateway</div>
+                    <div className="text-sm text-neutral-600">Mobile app and EHR integration</div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Compliance & Security</h3>
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-lg font-medium text-neutral-900 mb-4">Compliance & Security</h3>
 
                 <div className="space-y-3">
                   {[
@@ -661,7 +661,7 @@ const RemoteMonitoringBuilder: React.FC = () => {
                   ].map((item, index) => (
                     <div key={index} className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-green-500 rounded-full" />
-                      <span className="text-sm text-gray-700">{item}</span>
+                      <span className="text-sm text-neutral-700">{item}</span>
                     </div>
                   ))}
                 </div>

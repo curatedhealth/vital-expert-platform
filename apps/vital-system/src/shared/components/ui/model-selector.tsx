@@ -205,7 +205,7 @@ interface ModelSelectorProps {
     case 'google': return 'bg-blue-100 text-blue-800';
     case 'meta': return 'bg-purple-100 text-purple-800';
     case 'huggingface': return 'bg-yellow-100 text-yellow-800';
-    default: return 'bg-gray-100 text-gray-800';
+    default: return 'bg-neutral-100 text-neutral-800';
   }
 };
 
@@ -260,11 +260,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   </Badge>
                 </div>
 
-                <p className="text-xs text-gray-600 text-left">
+                <p className="text-xs text-neutral-600 text-left">
                   {model.description}
                 </p>
 
-                <div className="flex items-center gap-3 text-xs text-gray-500">
+                <div className="flex items-center gap-3 text-xs text-neutral-500">
                   <span>{(model.contextLength / 1000).toFixed(0)}K context</span>
                   <span>•</span>
                   <span>{formatPrice(model.pricing.input)}/M tokens</span>
@@ -282,7 +282,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
       {/* Model Details */}
       {showDetails && (
-        <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+        <div className="bg-neutral-50 rounded-lg p-3 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Current Model</span>
@@ -295,7 +295,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             )}
           </div>
 
-          <p className="text-xs text-gray-600">{currentModel.description}</p>
+          <p className="text-xs text-neutral-600">{currentModel.description}</p>
 
           {/* Capabilities */}
           <div className="flex items-center gap-4 text-xs">
@@ -323,7 +323,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           </div>
 
           {/* Pricing */}
-          <div className="flex items-center justify-between text-xs text-gray-500 pt-1 border-t border-gray-200">
+          <div className="flex items-center justify-between text-xs text-neutral-500 pt-1 border-t border-neutral-200">
             <span>Context: {(currentModel.contextLength / 1000).toFixed(0)}K tokens</span>
             <span>
               Input: {formatPrice(currentModel.pricing.input)}/M •

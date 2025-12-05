@@ -14,11 +14,11 @@ export function WorkflowFlowVisualizer({ workflows, tasksByWorkflow, useCaseTitl
   return (
     <Card>
       <CardContent className="p-12 text-center">
-        <GitBranch className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+        <GitBranch className="h-16 w-16 text-neutral-400 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold text-neutral-900 mb-2">
           Flow Diagram
         </h3>
-        <p className="text-gray-600 mb-4">
+        <p className="text-neutral-600 mb-4">
           Interactive workflow visualization for <strong>{useCaseTitle}</strong>
         </p>
         <div className="inline-block bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
@@ -27,7 +27,7 @@ export function WorkflowFlowVisualizer({ workflows, tasksByWorkflow, useCaseTitl
             <strong className="ml-1">{Object.values(tasksByWorkflow).reduce((sum, tasks) => sum + tasks.length, 0)}</strong> total tasks
           </p>
         </div>
-        <p className="text-sm text-gray-500 mt-6 italic">
+        <p className="text-sm text-neutral-500 mt-6 italic">
           Flow visualization coming soon
         </p>
       </CardContent>

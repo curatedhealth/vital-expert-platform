@@ -62,7 +62,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
       case 'healthy': return 'text-green-600 bg-green-50';
       case 'degraded': return 'text-yellow-600 bg-yellow-50';
       case 'critical': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
+      default: return 'text-neutral-600 bg-neutral-50';
     }
   };
 
@@ -148,8 +148,8 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Performance Dashboard</h1>
-          <p className="text-gray-600 mt-1">Real-time system performance monitoring</p>
+          <h1 className="text-2xl font-bold text-neutral-900">Performance Dashboard</h1>
+          <p className="text-neutral-600 mt-1">Real-time system performance monitoring</p>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -157,7 +157,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
           <select
             value={timeWindow}
             onChange={(e) => setTimeWindow(Number(e.target.value))}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value={300000}>5 minutes</option>
             <option value={900000}>15 minutes</option>
@@ -188,7 +188,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
             <span className="font-semibold text-lg capitalize">{healthStatus.status}</span>
           </div>
           {snapshot && (
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-neutral-600">
               Last updated: {new Date(snapshot.timestamp).toLocaleTimeString()}
             </span>
           )}
@@ -229,15 +229,15 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {metricCards.map((card, index) => (
-          <div key={index} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div key={index} className="bg-white border border-neutral-200 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-600">{card.title}</h3>
+              <h3 className="text-sm font-medium text-neutral-600">{card.title}</h3>
               <div className={`w-3 h-3 rounded-full ${
                 card.status === 'good' ? 'bg-green-500' :
                 card.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
               }`}></div>
             </div>
-            <p className="text-2xl font-bold text-gray-900 mt-2">
+            <p className="text-2xl font-bold text-neutral-900 mt-2">
               {card.value} {card.unit}
             </p>
           </div>
@@ -246,16 +246,16 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
 
       {/* Top Agents */}
       {snapshot && snapshot.topAgents.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Agents</h3>
+        <div className="bg-white border border-neutral-200 rounded-lg p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-neutral-900 mb-4">Top Performing Agents</h3>
           <div className="space-y-3">
             {snapshot.topAgents.map((agent, index) => (
-              <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+              <div key={index} className="flex items-center justify-between py-2 border-b border-neutral-100 last:border-b-0">
                 <div className="flex items-center space-x-3">
-                  <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
-                  <span className="text-sm font-medium text-gray-900">{agent.agentId}</span>
+                  <span className="text-sm font-medium text-neutral-500">#{index + 1}</span>
+                  <span className="text-sm font-medium text-neutral-900">{agent.agentId}</span>
                 </div>
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                <div className="flex items-center space-x-4 text-sm text-neutral-600">
                   <span>{agent.requests} requests</span>
                   <span>{formatDuration(agent.avgTime)} avg</span>
                 </div>
@@ -266,8 +266,8 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
       )}
 
       {/* Error Summary */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Error Summary</h3>
+      <div className="bg-white border border-neutral-200 rounded-lg p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-neutral-900 mb-4">Error Summary</h3>
         <ErrorSummary timeWindow={timeWindow} />
       </div>
     </div>

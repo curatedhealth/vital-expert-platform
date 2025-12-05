@@ -31,7 +31,7 @@ export const __Slider = React.forwardRef<HTMLInputElement, SliderProps>(
           onChange={handleChange}
           disabled={disabled}
           className={`
-            w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer
+            w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer
             [&::-webkit-slider-thumb]:appearance-none
             [&::-webkit-slider-thumb]:h-5
             [&::-webkit-slider-thumb]:w-5

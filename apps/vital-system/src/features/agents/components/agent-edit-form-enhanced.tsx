@@ -56,7 +56,9 @@ import type {
   ResponseFormat,
   PersonaArchetypeCode,
   CommunicationStyleCode,
+  SubagentHierarchyConfig,
 } from '../types/agent.types';
+import { SubagentSelector } from './subagent-selector';
 import {
   AGENT_LEVEL_DEFAULTS,
   PERSONALITY_SLIDERS,
@@ -3341,6 +3343,30 @@ hipaa_compliant: ${formState.hipaa_compliant || false}
                   </div>
                 </CardContent>
               </Card>
+
+              {/* L4/L5 Agent Selection - Only show for agents that can spawn */}
+              {(formState.can_spawn_l4 || formState.can_spawn_l3) && agent && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Configure L4/L5 Agents</CardTitle>
+                    <CardDescription>
+                      Select specific L4 Workers and L5 Tools this agent can spawn. AI will recommend agents based on domain expertise.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <SubagentSelector
+                      agent={agent}
+                      onSave={(config: SubagentHierarchyConfig) => {
+                        // Update the agent's metadata with the hierarchy config
+                        updateField('metadata', {
+                          ...formState.metadata,
+                          hierarchy: config,
+                        });
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* TAB 8: SUCCESS CRITERIA */}

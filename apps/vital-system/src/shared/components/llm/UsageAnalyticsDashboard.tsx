@@ -74,7 +74,7 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Usage Analytics</h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-neutral-600 mt-1">
             Real-time LLM usage tracking and cost monitoring
           </p>
         </div>
@@ -195,9 +195,9 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
               <CardContent>
                 {costLoading ? (
                   <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
-                    <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2"></div>
+                    <div className="h-4 bg-neutral-200 rounded animate-pulse"></div>
+                    <div className="h-4 bg-neutral-200 rounded animate-pulse w-3/4"></div>
+                    <div className="h-4 bg-neutral-200 rounded animate-pulse w-1/2"></div>
                   </div>
                 ) : costData ? (
                   <div className="space-y-4">
@@ -206,17 +206,17 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-gray-600">Total Tokens</p>
+                        <p className="text-neutral-600">Total Tokens</p>
                         <p className="font-semibold">{formatNumber(costData.total_tokens)}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Total Requests</p>
+                        <p className="text-neutral-600">Total Requests</p>
                         <p className="font-semibold">{formatNumber(costData.total_requests)}</p>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-gray-500">No usage data available</p>
+                  <p className="text-neutral-500">No usage data available</p>
                 )}
               </CardContent>
             </Card>
@@ -232,26 +232,26 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
               <CardContent>
                 {costLoading ? (
                   <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                    <div className="h-4 bg-neutral-200 rounded animate-pulse"></div>
+                    <div className="h-4 bg-neutral-200 rounded animate-pulse w-3/4"></div>
                   </div>
                 ) : costData && costData.total_requests > 0 ? (
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm text-gray-600">Cost per Request</p>
+                      <p className="text-sm text-neutral-600">Cost per Request</p>
                       <p className="text-2xl font-bold">
                         {formatCurrency(costData.total_cost / costData.total_requests)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Cost per 1K Tokens</p>
+                      <p className="text-sm text-neutral-600">Cost per 1K Tokens</p>
                       <p className="text-2xl font-bold">
                         {formatCurrency((costData.total_cost / costData.total_tokens) * 1000)}
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-gray-500">No efficiency data available</p>
+                  <p className="text-neutral-500">No efficiency data available</p>
                 )}
               </CardContent>
             </Card>
@@ -267,7 +267,7 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
               {costLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i: any) => (
-                    <div key={i} className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                    <div key={i} className="h-12 bg-neutral-200 rounded animate-pulse"></div>
                   ))}
                 </div>
               ) : costData?.by_provider && costData.by_provider.length > 0 ? (
@@ -278,7 +278,7 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
                         <span className="font-medium">{provider.provider_name}</span>
                         <div className="text-right">
                           <span className="font-bold">{formatCurrency(provider.cost)}</span>
-                          <span className="text-sm text-gray-600 ml-2">
+                          <span className="text-sm text-neutral-600 ml-2">
                             ({provider.percentage.toFixed(1)}%)
                           </span>
                         </div>
@@ -288,7 +288,7 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">No provider data available</p>
+                <p className="text-neutral-500">No provider data available</p>
               )}
             </CardContent>
           </Card>
@@ -303,7 +303,7 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
               {costLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i: any) => (
-                    <div key={i} className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                    <div key={i} className="h-12 bg-neutral-200 rounded animate-pulse"></div>
                   ))}
                 </div>
               ) : costData?.by_model && costData.by_model.length > 0 ? (
@@ -314,7 +314,7 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
                         <span className="font-medium">{model.model}</span>
                         <div className="text-right">
                           <span className="font-bold">{formatCurrency(model.cost)}</span>
-                          <span className="text-sm text-gray-600 ml-2">
+                          <span className="text-sm text-neutral-600 ml-2">
                             ({model.percentage.toFixed(1)}%)
                           </span>
                         </div>
@@ -324,7 +324,7 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">No model data available</p>
+                <p className="text-neutral-500">No model data available</p>
               )}
             </CardContent>
           </Card>
@@ -339,7 +339,7 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
               {costLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4, 5].map((i: any) => (
-                    <div key={i} className="h-8 bg-gray-200 rounded animate-pulse"></div>
+                    <div key={i} className="h-8 bg-neutral-200 rounded animate-pulse"></div>
                   ))}
                 </div>
               ) : costData?.daily && costData.daily.length > 0 ? (
@@ -347,14 +347,14 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
                   {costData.daily.slice(-7).map((day, index) => (
                     <div key={index} className="flex justify-between items-center py-2 border-b">
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
+                        <Calendar className="h-4 w-4 text-neutral-400" />
                         <span className="font-medium">
                           {new Date(day.date).toLocaleDateString()}
                         </span>
                       </div>
                       <div className="text-right space-y-1">
                         <div className="font-bold">{formatCurrency(day.cost)}</div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-neutral-600">
                           {formatNumber(day.requests)} requests • {formatNumber(day.tokens)} tokens
                         </div>
                       </div>
@@ -362,7 +362,7 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">No daily data available</p>
+                <p className="text-neutral-500">No daily data available</p>
               )}
             </CardContent>
           </Card>

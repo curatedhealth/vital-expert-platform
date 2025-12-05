@@ -122,8 +122,8 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
       case 'development': return 'bg-yellow-100 text-yellow-800';
       case 'testing': return 'bg-purple-100 text-purple-800';
       case 'deployment': return 'bg-green-100 text-green-800';
-      case 'maintenance': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'maintenance': return 'bg-neutral-100 text-neutral-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -160,12 +160,12 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Create New Solution</h2>
+        <div className="bg-canvas-surface rounded-lg p-6 w-full max-w-md mx-4">
+          <h2 className="text-xl font-bold text-neutral-900 mb-4">Create New Solution</h2>
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="project-name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="project-name" className="block text-sm font-medium text-neutral-700 mb-1">
                 Project Name
               </label>
               <input
@@ -173,20 +173,20 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter project name"
               />
             </div>
 
             <div>
-              <label htmlFor="solution-type" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="solution-type" className="block text-sm font-medium text-neutral-700 mb-1">
                 Solution Type
               </label>
               <select
                 id="solution-type"
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as SolutionType })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {solutionTypes.map(type => (
                   <option key={type.value} value={type.value}>
@@ -197,14 +197,14 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
             </div>
 
             <div>
-              <label htmlFor="project-description" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="project-description" className="block text-sm font-medium text-neutral-700 mb-1">
                 Description
               </label>
               <textarea
                 id="project-description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={3}
                 placeholder="Describe your solution"
               />
@@ -214,7 +214,7 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
           <div className="flex justify-end space-x-3 mt-6">
             <button
               onClick={() => setShowNewProjectModal(false)}
-              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-4 py-2 text-neutral-700 border border-neutral-300 rounded-md hover:bg-neutral-50"
             >
               Cancel
             </button>
@@ -232,19 +232,19 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-canvas-surface border-b border-neutral-200 px-6 py-4">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900">Digital Health Solution Builder</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-neutral-900">Digital Health Solution Builder</h1>
+          <p className="text-neutral-600 mt-1">
             Design, build, deploy, and test digital health solutions
           </p>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="bg-white border-b border-gray-200 px-6">
+      <div className="bg-canvas-surface border-b border-neutral-200 px-6">
         <div className="max-w-7xl mx-auto">
           <nav className="-mb-px flex space-x-8">
             <button
@@ -252,7 +252,7 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'projects'
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               My Projects
@@ -262,7 +262,7 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'templates'
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               Solution Templates
@@ -272,7 +272,7 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'marketplace'
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               Component Marketplace
@@ -282,7 +282,7 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'vital'
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               VITAL Framework™
@@ -297,7 +297,7 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
           <div>
             {/* Project Actions */}
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Your Solutions</h2>
+              <h2 className="text-lg font-semibold text-neutral-900">Your Solutions</h2>
               <button
                 onClick={() => setShowNewProjectModal(true)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
@@ -311,25 +311,25 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
               {projects.map(project => (
                 <div
                   key={project.id}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
+                  className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
                   onClick=() => setSelectedProject(project) onKeyDown=() => setSelectedProject(project) role="button" tabIndex={0}
                 >
                   <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
+                    <h3 className="text-lg font-semibold text-neutral-900">{project.name}</h3>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
                       {project.status}
                     </span>
                   </div>
 
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{project.description}</p>
+                  <p className="text-neutral-600 text-sm mb-4 line-clamp-2">{project.description}</p>
 
-                  <div className="flex justify-between items-center text-xs text-gray-500">
+                  <div className="flex justify-between items-center text-xs text-neutral-500">
                     <span>{solutionTypes.find((t: any) => t.value === project.type)?.label}</span>
                     <span>v{project.version}</span>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <div className="flex justify-between items-center text-xs text-gray-500">
+                  <div className="mt-3 pt-3 border-t border-neutral-100">
+                    <div className="flex justify-between items-center text-xs text-neutral-500">
                       <span>{project.team.length} team members</span>
                       <span>Modified {project.lastModified.toLocaleDateString()}</span>
                     </div>
@@ -342,19 +342,19 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
 
         {activeTab === 'templates' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Solution Templates</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">Solution Templates</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {solutionTypes.map(type => (
                 <div
                   key={type.value}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                  className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6 hover:shadow-md transition-shadow"
                 >
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{type.label}</h3>
-                  <p className="text-gray-600 text-sm mb-4">{type.description}</p>
+                  <h3 className="text-lg font-semibold text-neutral-900 mb-2">{type.label}</h3>
+                  <p className="text-neutral-600 text-sm mb-4">{type.description}</p>
 
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-xs text-gray-500">Pre-built components</span>
+                    <span className="text-xs text-neutral-500">Pre-built components</span>
                     <span className="text-xs text-green-600 font-medium">FDA Ready</span>
                   </div>
 
@@ -379,15 +379,15 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
 
         {activeTab === 'marketplace' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Component Marketplace</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">Component Marketplace</h2>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-8 text-center">
               <div className="text-4xl mb-4">🏪</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Component Marketplace</h3>
-              <p className="text-gray-600 mb-4">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-2">Component Marketplace</h3>
+              <p className="text-neutral-600 mb-4">
                 Browse and purchase pre-built, compliant components for your digital health solutions
               </p>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-neutral-500">
                 Coming soon - HIPAA-compliant, FDA-ready components
               </div>
             </div>
@@ -396,26 +396,26 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
 
         {activeTab === 'vital' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">VITAL Framework™ - B2B Intelligence Platform</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">VITAL Framework™ - B2B Intelligence Platform</h2>
 
             {/* VITAL Framework Modules */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               {/* Value Discovery Module */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center mb-4">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
                     <span className="text-2xl">📊</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Value Discovery</h3>
-                    <p className="text-sm text-gray-600">Market analysis & opportunity assessment</p>
+                    <h3 className="text-lg font-semibold text-neutral-900">Value Discovery</h3>
+                    <p className="text-sm text-neutral-600">Market analysis & opportunity assessment</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Market Intelligence</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                  <div className="bg-neutral-50 rounded-lg p-4">
+                    <h4 className="font-medium text-neutral-900 mb-2">Market Intelligence</h4>
+                    <ul className="text-sm text-neutral-600 space-y-1">
                       <li>• TAM/SAM/SOM Analysis</li>
                       <li>• Competitive Landscape Mapping</li>
                       <li>• Regulatory Environment Assessment</li>
@@ -423,9 +423,9 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                     </ul>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Opportunity Scoring</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                  <div className="bg-neutral-50 rounded-lg p-4">
+                    <h4 className="font-medium text-neutral-900 mb-2">Opportunity Scoring</h4>
+                    <ul className="text-sm text-neutral-600 space-y-1">
                       <li>• Market Size & Growth Potential</li>
                       <li>• Competitive Advantage Analysis</li>
                       <li>• Regulatory Pathway Complexity</li>
@@ -440,21 +440,21 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
               </div>
 
               {/* Intelligence Engine Module */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center mb-4">
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
                     <span className="text-2xl">🧠</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Intelligence Engine</h3>
-                    <p className="text-sm text-gray-600">AI-powered market insights & predictions</p>
+                    <h3 className="text-lg font-semibold text-neutral-900">Intelligence Engine</h3>
+                    <p className="text-sm text-neutral-600">AI-powered market insights & predictions</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Predictive Analytics</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                  <div className="bg-neutral-50 rounded-lg p-4">
+                    <h4 className="font-medium text-neutral-900 mb-2">Predictive Analytics</h4>
+                    <ul className="text-sm text-neutral-600 space-y-1">
                       <li>• Market Trend Forecasting</li>
                       <li>• Competitive Move Prediction</li>
                       <li>• Regulatory Timeline Estimation</li>
@@ -462,9 +462,9 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                     </ul>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Real-Time Monitoring</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                  <div className="bg-neutral-50 rounded-lg p-4">
+                    <h4 className="font-medium text-neutral-900 mb-2">Real-Time Monitoring</h4>
+                    <ul className="text-sm text-neutral-600 space-y-1">
                       <li>• Patent Filing Alerts</li>
                       <li>• FDA Submission Tracking</li>
                       <li>• Clinical Trial Updates</li>
@@ -482,21 +482,21 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
             {/* Transform & Accelerate Modules */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               {/* Transform Module */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center mb-4">
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
                     <span className="text-2xl">⚡</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Transform</h3>
-                    <p className="text-sm text-gray-600">Strategy development & execution planning</p>
+                    <h3 className="text-lg font-semibold text-neutral-900">Transform</h3>
+                    <p className="text-sm text-neutral-600">Strategy development & execution planning</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Strategic Planning</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                  <div className="bg-neutral-50 rounded-lg p-4">
+                    <h4 className="font-medium text-neutral-900 mb-2">Strategic Planning</h4>
+                    <ul className="text-sm text-neutral-600 space-y-1">
                       <li>• Go-to-Market Strategy</li>
                       <li>• Product Roadmap Development</li>
                       <li>• Resource Allocation Planning</li>
@@ -504,9 +504,9 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                     </ul>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Business Model Innovation</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                  <div className="bg-neutral-50 rounded-lg p-4">
+                    <h4 className="font-medium text-neutral-900 mb-2">Business Model Innovation</h4>
+                    <ul className="text-sm text-neutral-600 space-y-1">
                       <li>• Revenue Model Optimization</li>
                       <li>• Value Proposition Design</li>
                       <li>• Partnership Strategy</li>
@@ -521,21 +521,21 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
               </div>
 
               {/* Accelerate Module */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center mb-4">
                   <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
                     <span className="text-2xl">🚀</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Accelerate</h3>
-                    <p className="text-sm text-gray-600">Market entry & growth acceleration</p>
+                    <h3 className="text-lg font-semibold text-neutral-900">Accelerate</h3>
+                    <p className="text-sm text-neutral-600">Market entry & growth acceleration</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Market Entry</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                  <div className="bg-neutral-50 rounded-lg p-4">
+                    <h4 className="font-medium text-neutral-900 mb-2">Market Entry</h4>
+                    <ul className="text-sm text-neutral-600 space-y-1">
                       <li>• Customer Acquisition Strategy</li>
                       <li>• Sales Channel Development</li>
                       <li>• Marketing Campaign Optimization</li>
@@ -543,9 +543,9 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                     </ul>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Growth Optimization</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                  <div className="bg-neutral-50 rounded-lg p-4">
+                    <h4 className="font-medium text-neutral-900 mb-2">Growth Optimization</h4>
+                    <ul className="text-sm text-neutral-600 space-y-1">
                       <li>• Performance Analytics</li>
                       <li>• Market Expansion Planning</li>
                       <li>• Product Enhancement Roadmap</li>
@@ -561,21 +561,21 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
             </div>
 
             {/* Lead Module */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
               <div className="flex items-center mb-4">
                 <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
                   <span className="text-2xl">👑</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Lead</h3>
-                  <p className="text-sm text-gray-600">Market leadership & competitive advantage</p>
+                  <h3 className="text-lg font-semibold text-neutral-900">Lead</h3>
+                  <p className="text-sm text-neutral-600">Market leadership & competitive advantage</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Thought Leadership</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                <div className="bg-neutral-50 rounded-lg p-4">
+                  <h4 className="font-medium text-neutral-900 mb-2">Thought Leadership</h4>
+                  <ul className="text-sm text-neutral-600 space-y-1">
                     <li>• Industry Report Generation</li>
                     <li>• Expert Network Building</li>
                     <li>• Conference Speaking Strategy</li>
@@ -583,9 +583,9 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                   </ul>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Innovation Pipeline</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                <div className="bg-neutral-50 rounded-lg p-4">
+                  <h4 className="font-medium text-neutral-900 mb-2">Innovation Pipeline</h4>
+                  <ul className="text-sm text-neutral-600 space-y-1">
                     <li>• R&D Portfolio Management</li>
                     <li>• Technology Scouting</li>
                     <li>• IP Strategy Development</li>
@@ -593,9 +593,9 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                   </ul>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Market Defense</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                <div className="bg-neutral-50 rounded-lg p-4">
+                  <h4 className="font-medium text-neutral-900 mb-2">Market Defense</h4>
+                  <ul className="text-sm text-neutral-600 space-y-1">
                     <li>• Competitive Intelligence</li>
                     <li>• Defensive Patent Strategy</li>
                     <li>• Market Barrier Creation</li>
@@ -611,27 +611,27 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
 
             {/* VITAL Intelligence Dashboard */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mt-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">🎯 VITAL Intelligence Dashboard</h3>
-              <p className="text-gray-700 mb-6">
+              <h3 className="text-xl font-bold text-neutral-900 mb-4">🎯 VITAL Intelligence Dashboard</h3>
+              <p className="text-neutral-700 mb-6">
                 Real-time B2B digital health intelligence powered by AI and comprehensive market data
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-lg p-4 text-center">
+                <div className="bg-canvas-surface rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-blue-600 mb-1">$847B</div>
-                  <div className="text-sm text-gray-600">Global Digital Health TAM</div>
+                  <div className="text-sm text-neutral-600">Global Digital Health TAM</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
+                <div className="bg-canvas-surface rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-green-600 mb-1">2,847</div>
-                  <div className="text-sm text-gray-600">Active Opportunities</div>
+                  <div className="text-sm text-neutral-600">Active Opportunities</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
+                <div className="bg-canvas-surface rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-purple-600 mb-1">156</div>
-                  <div className="text-sm text-gray-600">FDA Submissions YTD</div>
+                  <div className="text-sm text-neutral-600">FDA Submissions YTD</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
+                <div className="bg-canvas-surface rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-orange-600 mb-1">92%</div>
-                  <div className="text-sm text-gray-600">Success Rate with VITAL</div>
+                  <div className="text-sm text-neutral-600">Success Rate with VITAL</div>
                 </div>
               </div>
 
@@ -639,76 +639,76 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                 <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 font-semibold mr-4">
                   Access Full Intelligence Platform →
                 </button>
-                <button className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 font-semibold">
+                <button className="px-6 py-3 bg-canvas-surface text-neutral-700 border border-neutral-300 rounded-lg hover:bg-neutral-50 font-semibold">
                   Generate AI Forecast
                 </button>
               </div>
             </div>
 
             {/* AI-Powered Predictive Analytics */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">🤖 AI-Powered Predictive Analytics & Market Forecasting</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6 mt-8">
+              <h3 className="text-xl font-bold text-neutral-900 mb-4">🤖 AI-Powered Predictive Analytics & Market Forecasting</h3>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Market Trend Predictions</h4>
+                  <h4 className="font-semibold text-neutral-900 mb-3">Market Trend Predictions</h4>
                   <div className="space-y-3">
                     <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                       <div className="flex justify-between items-center mb-2">
-                        <div className="text-sm font-medium text-gray-900">Digital Therapeutics Growth</div>
+                        <div className="text-sm font-medium text-neutral-900">Digital Therapeutics Growth</div>
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">↗ 34% CAGR</span>
                       </div>
-                      <div className="text-xs text-gray-600">Predicted market size: $18.6B by 2028</div>
+                      <div className="text-xs text-neutral-600">Predicted market size: $18.6B by 2028</div>
                       <div className="text-xs text-green-600 mt-1">Confidence: 94% | Data points: 15,847</div>
                     </div>
 
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <div className="flex justify-between items-center mb-2">
-                        <div className="text-sm font-medium text-gray-900">AI/ML Medical Devices</div>
+                        <div className="text-sm font-medium text-neutral-900">AI/ML Medical Devices</div>
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">↗ 28% CAGR</span>
                       </div>
-                      <div className="text-xs text-gray-600">FDA approvals expected to double by 2026</div>
+                      <div className="text-xs text-neutral-600">FDA approvals expected to double by 2026</div>
                       <div className="text-xs text-blue-600 mt-1">Confidence: 89% | Data points: 8,234</div>
                     </div>
 
                     <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                       <div className="flex justify-between items-center mb-2">
-                        <div className="text-sm font-medium text-gray-900">Remote Monitoring</div>
+                        <div className="text-sm font-medium text-neutral-900">Remote Monitoring</div>
                         <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">↗ 31% CAGR</span>
                       </div>
-                      <div className="text-xs text-gray-600">Post-pandemic adoption acceleration continues</div>
+                      <div className="text-xs text-neutral-600">Post-pandemic adoption acceleration continues</div>
                       <div className="text-xs text-purple-600 mt-1">Confidence: 96% | Data points: 22,156</div>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Regulatory Timeline Predictions</h4>
+                  <h4 className="font-semibold text-neutral-900 mb-3">Regulatory Timeline Predictions</h4>
                   <div className="space-y-3">
                     <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                       <div className="flex justify-between items-center mb-2">
-                        <div className="text-sm font-medium text-gray-900">Your Product Pathway</div>
+                        <div className="text-sm font-medium text-neutral-900">Your Product Pathway</div>
                         <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">14-16 months</span>
                       </div>
-                      <div className="text-xs text-gray-600">De Novo classification recommended</div>
+                      <div className="text-xs text-neutral-600">De Novo classification recommended</div>
                       <div className="text-xs text-orange-600 mt-1">Success probability: 87% | Similar products: 23</div>
                     </div>
 
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                       <div className="flex justify-between items-center mb-2">
-                        <div className="text-sm font-medium text-gray-900">FDA Policy Changes</div>
+                        <div className="text-sm font-medium text-neutral-900">FDA Policy Changes</div>
                         <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Q2 2024</span>
                       </div>
-                      <div className="text-xs text-gray-600">AI/ML guidance update expected</div>
+                      <div className="text-xs text-neutral-600">AI/ML guidance update expected</div>
                       <div className="text-xs text-yellow-600 mt-1">Impact assessment: Medium | Monitoring: Active</div>
                     </div>
 
                     <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
                       <div className="flex justify-between items-center mb-2">
-                        <div className="text-sm font-medium text-gray-900">Reimbursement Timeline</div>
+                        <div className="text-sm font-medium text-neutral-900">Reimbursement Timeline</div>
                         <span className="text-xs bg-teal-100 text-teal-800 px-2 py-1 rounded">18-22 months</span>
                       </div>
-                      <div className="text-xs text-gray-600">Post-FDA clearance coverage decisions</div>
+                      <div className="text-xs text-neutral-600">Post-FDA clearance coverage decisions</div>
                       <div className="text-xs text-teal-600 mt-1">CMS precedent: Favorable | Private: Mixed</div>
                     </div>
                   </div>
@@ -716,60 +716,60 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
               </div>
 
               {/* Competitive Intelligence Forecasting */}
-              <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg p-6">
-                <h4 className="font-semibold text-gray-900 mb-4">🎯 Competitive Intelligence & Strategic Forecasting</h4>
+              <div className="bg-gradient-to-r from-neutral-50 to-blue-50 rounded-lg p-6">
+                <h4 className="font-semibold text-neutral-900 mb-4">🎯 Competitive Intelligence & Strategic Forecasting</h4>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div className="bg-white rounded-lg p-4">
+                  <div className="bg-canvas-surface rounded-lg p-4">
                     <div className="text-lg font-bold text-red-600 mb-1">7</div>
-                    <div className="text-sm text-gray-600 mb-2">Direct Competitors Detected</div>
+                    <div className="text-sm text-neutral-600 mb-2">Direct Competitors Detected</div>
                     <div className="text-xs text-red-600">3 in clinical trials, 2 seeking funding</div>
                   </div>
-                  <div className="bg-white rounded-lg p-4">
+                  <div className="bg-canvas-surface rounded-lg p-4">
                     <div className="text-lg font-bold text-blue-600 mb-1">$847M</div>
-                    <div className="text-sm text-gray-600 mb-2">Competitive Funding Raised</div>
+                    <div className="text-sm text-neutral-600 mb-2">Competitive Funding Raised</div>
                     <div className="text-xs text-blue-600">Last 12 months in your space</div>
                   </div>
-                  <div className="bg-white rounded-lg p-4">
+                  <div className="bg-canvas-surface rounded-lg p-4">
                     <div className="text-lg font-bold text-green-600 mb-1">12</div>
-                    <div className="text-sm text-gray-600 mb-2">Market Entry Opportunities</div>
+                    <div className="text-sm text-neutral-600 mb-2">Market Entry Opportunities</div>
                     <div className="text-xs text-green-600">Underserved therapeutic areas</div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h5 className="font-medium text-gray-900 mb-2">Strategic Recommendations</h5>
+                    <h5 className="font-medium text-neutral-900 mb-2">Strategic Recommendations</h5>
                     <div className="space-y-2">
                       <div className="flex items-center text-sm">
                         <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                        <span className="text-gray-700">Accelerate FDA submission by 3 months</span>
+                        <span className="text-neutral-700">Accelerate FDA submission by 3 months</span>
                       </div>
                       <div className="flex items-center text-sm">
                         <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                        <span className="text-gray-700">Target European markets simultaneously</span>
+                        <span className="text-neutral-700">Target European markets simultaneously</span>
                       </div>
                       <div className="flex items-center text-sm">
                         <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
-                        <span className="text-gray-700">Develop IP portfolio in adjacent areas</span>
+                        <span className="text-neutral-700">Develop IP portfolio in adjacent areas</span>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <h5 className="font-medium text-gray-900 mb-2">Risk Mitigation</h5>
+                    <h5 className="font-medium text-neutral-900 mb-2">Risk Mitigation</h5>
                     <div className="space-y-2">
                       <div className="flex items-center text-sm">
                         <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
-                        <span className="text-gray-700">Monitor CompetitorX's Phase III results</span>
+                        <span className="text-neutral-700">Monitor CompetitorX's Phase III results</span>
                       </div>
                       <div className="flex items-center text-sm">
                         <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-                        <span className="text-gray-700">Prepare for potential patent challenges</span>
+                        <span className="text-neutral-700">Prepare for potential patent challenges</span>
                       </div>
                       <div className="flex items-center text-sm">
                         <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
-                        <span className="text-gray-700">Diversify reimbursement strategy</span>
+                        <span className="text-neutral-700">Diversify reimbursement strategy</span>
                       </div>
                     </div>
                   </div>
@@ -778,8 +778,8 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
             </div>
 
             {/* Market Access Automation Engine */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">⚡ Market Access Strategy Automation</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6 mt-8">
+              <h3 className="text-xl font-bold text-neutral-900 mb-4">⚡ Market Access Strategy Automation</h3>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4">
@@ -787,9 +787,9 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                       <span className="text-xl">🏥</span>
                     </div>
-                    <h4 className="font-semibold text-gray-900">HEOR Automation</h4>
+                    <h4 className="font-semibold text-neutral-900">HEOR Automation</h4>
                   </div>
-                  <div className="space-y-2 text-sm text-gray-600">
+                  <div className="space-y-2 text-sm text-neutral-600">
                     <div>• Automated budget impact modeling</div>
                     <div>• Real-world evidence data synthesis</div>
                     <div>• Cost-effectiveness analysis generation</div>
@@ -805,9 +805,9 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                       <span className="text-xl">💰</span>
                     </div>
-                    <h4 className="font-semibold text-gray-900">Payer Intelligence</h4>
+                    <h4 className="font-semibold text-neutral-900">Payer Intelligence</h4>
                   </div>
-                  <div className="space-y-2 text-sm text-gray-600">
+                  <div className="space-y-2 text-sm text-neutral-600">
                     <div>• Coverage policy analysis</div>
                     <div>• Reimbursement pathway mapping</div>
                     <div>• Payer decision timeline prediction</div>
@@ -823,9 +823,9 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                     <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
                       <span className="text-xl">📊</span>
                     </div>
-                    <h4 className="font-semibold text-gray-900">Evidence Generation</h4>
+                    <h4 className="font-semibold text-neutral-900">Evidence Generation</h4>
                   </div>
-                  <div className="space-y-2 text-sm text-gray-600">
+                  <div className="space-y-2 text-sm text-neutral-600">
                     <div>• Clinical endpoint optimization</div>
                     <div>• Real-world study design</div>
                     <div>• Health economics endpoint integration</div>
@@ -838,55 +838,55 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
               </div>
 
               {/* Automated Market Access Timeline */}
-              <div className="bg-gray-50 rounded-lg p-6 mt-6">
-                <h4 className="font-semibold text-gray-900 mb-4">🚀 Automated Market Access Timeline</h4>
+              <div className="bg-neutral-50 rounded-lg p-6 mt-6">
+                <h4 className="font-semibold text-neutral-900 mb-4">🚀 Automated Market Access Timeline</h4>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between p-3 bg-canvas-surface rounded-lg border border-neutral-200">
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                         <span className="text-blue-600 text-sm font-bold">1</span>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">Phase II Data Package</div>
-                        <div className="text-sm text-gray-600">Health economic endpoints integration</div>
+                        <div className="font-medium text-neutral-900">Phase II Data Package</div>
+                        <div className="text-sm text-neutral-600">Health economic endpoints integration</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-blue-600">Month 18</div>
-                      <div className="text-xs text-gray-500">Auto-generated</div>
+                      <div className="text-xs text-neutral-500">Auto-generated</div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between p-3 bg-canvas-surface rounded-lg border border-neutral-200">
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
                         <span className="text-green-600 text-sm font-bold">2</span>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">Payer Advisory Boards</div>
-                        <div className="text-sm text-gray-600">CMS, Anthem, Aetna engagement strategy</div>
+                        <div className="font-medium text-neutral-900">Payer Advisory Boards</div>
+                        <div className="text-sm text-neutral-600">CMS, Anthem, Aetna engagement strategy</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-green-600">Month 24</div>
-                      <div className="text-xs text-gray-500">AI-optimized</div>
+                      <div className="text-xs text-neutral-500">AI-optimized</div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between p-3 bg-canvas-surface rounded-lg border border-neutral-200">
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
                         <span className="text-purple-600 text-sm font-bold">3</span>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">Coverage Submissions</div>
-                        <div className="text-sm text-gray-600">Automated dossier generation & submission</div>
+                        <div className="font-medium text-neutral-900">Coverage Submissions</div>
+                        <div className="text-sm text-neutral-600">Automated dossier generation & submission</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-purple-600">Month 42</div>
-                      <div className="text-xs text-gray-500">Platform-driven</div>
+                      <div className="text-xs text-neutral-500">Platform-driven</div>
                     </div>
                   </div>
                 </div>
@@ -899,15 +899,15 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
       {/* Project Detail Modal */}
       {selectedProject && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+          <div className="bg-canvas-surface rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">{selectedProject.name}</h2>
-                <p className="text-gray-600">{selectedProject.description}</p>
+                <h2 className="text-xl font-bold text-neutral-900">{selectedProject.name}</h2>
+                <p className="text-neutral-600">{selectedProject.description}</p>
               </div>
               <button
                 onClick={() => setSelectedProject(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-neutral-400 hover:text-neutral-600"
               >
                 ✕
               </button>
@@ -915,23 +915,23 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
-                <div className="text-sm text-gray-500">Status</div>
+                <div className="text-sm text-neutral-500">Status</div>
                 <div className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedProject.status)}`}>
                   {selectedProject.status}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Version</div>
+                <div className="text-sm text-neutral-500">Version</div>
                 <div className="font-medium">{selectedProject.version}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Type</div>
+                <div className="text-sm text-neutral-500">Type</div>
                 <div className="font-medium">
                   {solutionTypes.find((t: any) => t.value === selectedProject.type)?.label}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Team Size</div>
+                <div className="text-sm text-neutral-500">Team Size</div>
                 <div className="font-medium">{selectedProject.team.length} members</div>
               </div>
             </div>

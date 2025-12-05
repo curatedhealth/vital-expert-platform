@@ -188,7 +188,7 @@ export function OrganizationManagement() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading organizations...</p>
+          <p className="text-neutral-600">Loading organizations...</p>
         </div>
       </div>
     );
@@ -270,7 +270,7 @@ export function OrganizationManagement() {
             <CardTitle>Organizations</CardTitle>
             <div className="flex items-center gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
                 <Input
                   placeholder="Search organizations..."
                   value={searchQuery}
@@ -302,7 +302,7 @@ export function OrganizationManagement() {
                 <TableRow key={org.id}>
                   <TableCell className="font-medium">{org.name}</TableCell>
                   <TableCell>
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">{org.slug}</code>
+                    <code className="text-sm bg-neutral-100 px-2 py-1 rounded">{org.slug}</code>
                   </TableCell>
                   <TableCell>{org.industry || '-'}</TableCell>
                   <TableCell>

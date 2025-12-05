@@ -434,7 +434,7 @@ export function ToolDetailModal({
   const lifecycleColors: any = {
     production: 'bg-green-100 text-green-800',
     testing: 'bg-yellow-100 text-yellow-800',
-    development: 'bg-gray-100 text-gray-800',
+    development: 'bg-neutral-100 text-neutral-800',
     staging: 'bg-blue-100 text-blue-800',
     deprecated: 'bg-red-100 text-red-800',
   };
@@ -752,7 +752,7 @@ export function ToolDetailModal({
                       placeholder="tools.research_tools"
                     />
                   ) : (
-                    <p className="text-sm font-mono bg-gray-100 p-2 rounded">
+                    <p className="text-sm font-mono bg-neutral-100 p-2 rounded">
                       {tool.implementation_path || 'Not specified'}
                     </p>
                   )}
@@ -769,7 +769,7 @@ export function ToolDetailModal({
                       placeholder="arxiv_search"
                     />
                   ) : (
-                    <p className="text-sm font-mono bg-gray-100 p-2 rounded">
+                    <p className="text-sm font-mono bg-neutral-100 p-2 rounded">
                       {tool.function_name || 'Not specified'}
                     </p>
                   )}
@@ -866,7 +866,7 @@ export function ToolDetailModal({
                           className={`cursor-pointer transition-all ${
                             isSelected
                               ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950 border-blue-500'
-                              : 'hover:shadow-md hover:border-gray-300'
+                              : 'hover:shadow-md hover:border-neutral-300'
                           }`}
                           onClick={() => handleAgentToggle(agent.id)}
                         >
@@ -885,7 +885,7 @@ export function ToolDetailModal({
                               {/* Agent Info */}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2 mb-1">
-                                  <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100 line-clamp-1">
+                                  <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100 line-clamp-1">
                                     {displayName}
                                   </h4>
                                   <div onClick={(e) => e.stopPropagation()}>
@@ -897,7 +897,7 @@ export function ToolDetailModal({
                                 </div>
                                 
                                 {agent.title && agent.title !== displayName && (
-                                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-1 line-clamp-1">
+                                  <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-1 line-clamp-1">
                                     {agent.title}
                                   </p>
                                 )}
@@ -1047,7 +1047,7 @@ export function ToolDetailModal({
                     {filteredTasks.map(task => (
                       <div
                         key={task.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-neutral-50"
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">

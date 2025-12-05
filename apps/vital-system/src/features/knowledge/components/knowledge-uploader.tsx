@@ -516,7 +516,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                   id="tier"
                   value={selectedTier}
                   onChange={(e) => setSelectedTier(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full mt-1 px-3 py-2 border border-neutral-300 rounded-md text-sm"
                 >
                   <option value="all">All Tiers ({domains.length})</option>
                   <option value={1}>Tier 1: Core ({domains.filter((d: any) => d.tier === 1).length})</option>
@@ -532,7 +532,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                     id="function-filter"
                     value={selectedFunction}
                     onChange={(e) => setSelectedFunction(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full mt-1 px-3 py-2 border border-neutral-300 rounded-md text-sm"
                   >
                     <option value="all">All Functions</option>
                     {uniqueFunctions.map((func: string) => (
@@ -548,7 +548,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                   id="maturity-filter"
                   value={selectedMaturity}
                   onChange={(e) => setSelectedMaturity(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full mt-1 px-3 py-2 border border-neutral-300 rounded-md text-sm"
                 >
                   <option value="all">All Maturity</option>
                   <option value="Established">Established</option>
@@ -564,7 +564,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                   id="access-policy-filter"
                   value={selectedAccessPolicy}
                   onChange={(e) => setSelectedAccessPolicy(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full mt-1 px-3 py-2 border border-neutral-300 rounded-md text-sm"
                 >
                   <option value="all">All Policies</option>
                   <option value="public">Public</option>
@@ -580,7 +580,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                   id="scope-filter"
                   value={selectedDomainScope}
                   onChange={(e) => setSelectedDomainScope(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full mt-1 px-3 py-2 border border-neutral-300 rounded-md text-sm"
                 >
                   <option value="all">All Scopes</option>
                   <option value="global">Global</option>
@@ -616,7 +616,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                 id="domain"
                 value={uploadSettings.domain}
                 onChange={(e) => setUploadSettings(prev => ({ ...prev, domain: e.target.value }))}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full mt-1 px-3 py-2 border border-neutral-300 rounded-md"
               >
                 {filteredDomains.length > 0 ? (
                   filteredDomains.map((domain: any) => (
@@ -650,7 +650,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                     selectedAgents: isGlobal ? [] : prev.selectedAgents
                   }));
                 }}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full mt-1 px-3 py-2 border border-neutral-300 rounded-md"
               >
                 <option value="global">Global (All Agents)</option>
                 <option value="agent">Agent-Specific</option>
@@ -671,7 +671,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                 id="embedding-model"
                 value={uploadSettings.embeddingModel}
                 onChange={(e) => setUploadSettings(prev => ({ ...prev, embeddingModel: e.target.value }))}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full mt-1 px-3 py-2 border border-neutral-300 rounded-md"
               >
                 {/* Recommended Models Section */}
                 {recommendedModels.embedding.primary && (
@@ -790,7 +790,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
           'relative border-2 border-dashed rounded-lg p-8 text-center transition-colors',
           dragActive
             ? 'border-progress-teal bg-progress-teal/5'
-            : 'border-gray-300 hover:border-progress-teal hover:bg-progress-teal/5'
+            : 'border-neutral-300 hover:border-progress-teal hover:bg-progress-teal/5'
         )}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}

@@ -341,7 +341,7 @@ export default function PromptLibrary() {
       case 'intermediate': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300';
       case 'advanced': return 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300';
       case 'expert': return 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300';
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+      default: return 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300';
     }
   };
 
@@ -355,7 +355,7 @@ export default function PromptLibrary() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading PRISM Library...</p>
+            <p className="text-neutral-600 dark:text-neutral-400">Loading PRISM Library...</p>
           </div>
         </div>
       </div>
@@ -378,17 +378,17 @@ export default function PromptLibrary() {
             </Badge>
           )}
         </div>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
+        <p className="text-neutral-600 dark:text-neutral-400 mb-4">
           Professional Healthcare Prompt Templates & Strategies
         </p>
-        <p className="text-sm text-gray-500 dark:text-gray-500">
+        <p className="text-sm text-neutral-500 dark:text-neutral-500">
           {totalPrompts} prompts available across {suites.length} suites
         </p>
       </div>
 
       {/* Search */}
       <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
         <Input
           placeholder="Search prompts by name, description, or tags..."
           value={searchQuery}
@@ -398,7 +398,7 @@ export default function PromptLibrary() {
       </div>
 
       {/* Suite Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
+      <div className="border-b border-neutral-200 dark:border-neutral-700 mb-6">
         <div className="flex overflow-x-auto pb-px -mb-px scrollbar-hide">
           {suites.map(suite => {
             const count = getPromptsForSuite(suite.name).length;
@@ -415,7 +415,7 @@ export default function PromptLibrary() {
                   border-b-2 transition-colors min-w-fit
                   ${activeTab === suite.name
                     ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300 dark:text-neutral-400 dark:hover:text-neutral-300'
                   }
                 `}
               >
@@ -424,7 +424,7 @@ export default function PromptLibrary() {
                 <span className={`text-xs px-2 py-0.5 rounded-full ${
                   activeTab === suite.name 
                     ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' 
-                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                    : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'
                 }`}>
                   {count}
                 </span>
@@ -436,14 +436,14 @@ export default function PromptLibrary() {
 
       {/* Prompt Type Filter */}
       <div className="flex flex-wrap items-center gap-4 mb-4">
-        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Prompt Type:</span>
+        <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Prompt Type:</span>
         <div className="flex gap-2">
           <button
             onClick={() => setPromptTypeFilter('all')}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
               promptTypeFilter === 'all'
                 ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
+                : 'bg-canvas-surface text-neutral-700 border-neutral-300 hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-600 dark:hover:bg-neutral-700'
             }`}
           >
             All Prompts
@@ -454,7 +454,7 @@ export default function PromptLibrary() {
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
               promptTypeFilter === 'detailed'
                 ? 'bg-green-600 text-white border-green-600'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
+                : 'bg-canvas-surface text-neutral-700 border-neutral-300 hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-600 dark:hover:bg-neutral-700'
             }`}
           >
             <PenTool className="h-3 w-3 inline mr-1" />
@@ -466,7 +466,7 @@ export default function PromptLibrary() {
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
               promptTypeFilter === 'starter'
                 ? 'bg-purple-600 text-white border-purple-600'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
+                : 'bg-canvas-surface text-neutral-700 border-neutral-300 hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-600 dark:hover:bg-neutral-700'
             }`}
           >
             <Zap className="h-3 w-3 inline mr-1" />
@@ -479,13 +479,13 @@ export default function PromptLibrary() {
       {/* Sub-Suite Pills (if available) */}
       {currentSubSuites.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-6">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400 self-center mr-2">Sub-Suite:</span>
+          <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400 self-center mr-2">Sub-Suite:</span>
           <button
             onClick={() => setActiveSubSuite(null)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
               !activeSubSuite
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
             }`}
           >
             All
@@ -497,7 +497,7 @@ export default function PromptLibrary() {
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 activeSubSuite === subSuite.code
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
               }`}
             >
               {subSuite.name}
@@ -552,7 +552,7 @@ export default function PromptLibrary() {
                         {prompt.display_name || prompt.title || prompt.name}
                       </CardTitle>
                       {prompt.prompt_code && (
-                        <span className="text-xs text-gray-400 font-mono">{prompt.prompt_code}</span>
+                        <span className="text-xs text-neutral-400 font-mono">{prompt.prompt_code}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1">
@@ -564,7 +564,7 @@ export default function PromptLibrary() {
                         size="sm"
                         className="p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        <Star className={`h-4 w-4 ${prompt.is_favorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'}`} />
+                        <Star className={`h-4 w-4 ${prompt.is_favorite ? 'fill-yellow-400 text-yellow-400' : 'text-neutral-400'}`} />
                       </Button>
                     </div>
                   </div>
@@ -627,7 +627,7 @@ export default function PromptLibrary() {
             })}
           </div>
         ) : (
-          <div className="text-center text-gray-400 py-16 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="text-center text-neutral-400 py-16 border-2 border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg">
             {searchQuery ? (
               <>
                 <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -655,7 +655,7 @@ export default function PromptLibrary() {
                   {selectedPrompt?.display_name || selectedPrompt?.title || selectedPrompt?.name}
                 </DialogTitle>
                 {selectedPrompt?.prompt_code && (
-                  <span className="text-sm text-gray-500 font-mono">{selectedPrompt.prompt_code}</span>
+                  <span className="text-sm text-neutral-500 font-mono">{selectedPrompt.prompt_code}</span>
                 )}
               </div>
               {selectedPrompt?.expert_validated && (
@@ -706,7 +706,7 @@ export default function PromptLibrary() {
             {selectedPrompt?.tags && selectedPrompt.tags.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {selectedPrompt.tags.map((tag, idx) => (
-                  <span key={idx} className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded">
+                  <span key={idx} className="text-xs px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded">
                     #{tag}
                   </span>
                 ))}
@@ -740,9 +740,9 @@ export default function PromptLibrary() {
             )}
 
             {/* Main Content */}
-            <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-              <h4 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Prompt Content</h4>
-              <pre className="text-sm whitespace-pre-wrap font-mono text-gray-800 dark:text-gray-200 max-h-96 overflow-y-auto">
+            <div className="bg-neutral-50 dark:bg-neutral-900 p-4 rounded-lg">
+              <h4 className="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300">Prompt Content</h4>
+              <pre className="text-sm whitespace-pre-wrap font-mono text-neutral-800 dark:text-neutral-200 max-h-96 overflow-y-auto">
                 {selectedPrompt?.content || 'No content available'}
               </pre>
             </div>

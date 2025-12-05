@@ -625,8 +625,8 @@ extract_features <- function(data) {
       case 'fda_cleared': return 'bg-green-100 text-green-800';
       case 'published': return 'bg-blue-100 text-blue-800';
       case 'validation': return 'bg-yellow-100 text-yellow-800';
-      case 'development': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'development': return 'bg-neutral-100 text-neutral-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -641,19 +641,19 @@ extract_features <- function(data) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-canvas-surface border-b border-neutral-200 px-6 py-4">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900">Digital Biomarker Development Kit</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-neutral-900">Digital Biomarker Development Kit</h1>
+          <p className="text-neutral-600 mt-1">
             Develop, validate, and deploy clinically-validated digital biomarkers
           </p>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="bg-white border-b border-gray-200 px-6">
+      <div className="bg-canvas-surface border-b border-neutral-200 px-6">
         <div className="max-w-7xl mx-auto">
           <nav className="-mb-px flex space-x-8">
             {[
@@ -668,11 +668,11 @@ extract_features <- function(data) {
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.key
                     ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
                 }`}
               >
                 <div>{tab.label}</div>
-                <div className="text-xs text-gray-400">{tab.desc}</div>
+                <div className="text-xs text-neutral-400">{tab.desc}</div>
               </button>
             ))}
           </nav>
@@ -683,17 +683,17 @@ extract_features <- function(data) {
       <div className="max-w-7xl mx-auto px-6 py-6">
         {activeTab === 'discover' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Digital Biomarker Library</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">Digital Biomarker Library</h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {biomarkerLibrary.map(biomarker => (
-                <div key={biomarker.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div key={biomarker.id} className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-start space-x-3">
                       <div className="text-2xl">{getCategoryIcon(biomarker.category)}</div>
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900">{biomarker.name}</h3>
-                        <p className="text-sm text-gray-600 capitalize">{biomarker.category.replace('_', ' ')}</p>
+                        <h3 className="text-lg font-medium text-neutral-900">{biomarker.name}</h3>
+                        <p className="text-sm text-neutral-600 capitalize">{biomarker.category.replace('_', ' ')}</p>
                       </div>
                     </div>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(biomarker.status)}`}>
@@ -703,20 +703,20 @@ extract_features <- function(data) {
 
                   <div className="space-y-3 mb-4">
                     <div>
-                      <div className="text-sm font-medium text-gray-700">Clinical Context</div>
-                      <div className="text-sm text-gray-600">{biomarker.clinicalContext.intendedUse}</div>
+                      <div className="text-sm font-medium text-neutral-700">Clinical Context</div>
+                      <div className="text-sm text-neutral-600">{biomarker.clinicalContext.intendedUse}</div>
                     </div>
 
                     <div>
-                      <div className="text-sm font-medium text-gray-700">Data Source</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm font-medium text-neutral-700">Data Source</div>
+                      <div className="text-sm text-neutral-600">
                         {biomarker.dataSource.type} • {biomarker.dataSource.sensors.join(', ')}
                       </div>
                     </div>
 
                     <div>
-                      <div className="text-sm font-medium text-gray-700">Validation</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm font-medium text-neutral-700">Validation</div>
+                      <div className="text-sm text-neutral-600">
                         Accuracy: {(biomarker.algorithm.validation.accuracy * 100).toFixed(0)}% •
                         Evidence Level: {biomarker.validation.clinicalValidation.evidenceLevel}
                       </div>
@@ -730,7 +730,7 @@ extract_features <- function(data) {
                     >
                       Generate SDK
                     </button>
-                    <button className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm">
+                    <button className="flex-1 px-3 py-2 border border-neutral-300 rounded-md text-neutral-700 hover:bg-neutral-50 text-sm">
                       View Details
                     </button>
                   </div>
@@ -742,19 +742,19 @@ extract_features <- function(data) {
 
         {activeTab === 'develop' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Algorithm Development</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">Algorithm Development</h2>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-8 text-center">
               <div className="text-4xl mb-4">⚗️</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Algorithm Development Environment</h3>
-              <p className="text-gray-600 mb-4">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-2">Algorithm Development Environment</h3>
+              <p className="text-neutral-600 mb-4">
                 Interactive environment for developing and testing digital biomarker algorithms
               </p>
-              <div className="text-sm text-gray-500 mb-6">
+              <div className="text-sm text-neutral-500 mb-6">
                 Features include: Jupyter notebook integration, algorithm templates, signal processing tools,
                 machine learning pipelines, and real-time validation
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-neutral-500">
                 Coming soon - Full development environment with code generation and testing
               </div>
             </div>
@@ -763,14 +763,14 @@ extract_features <- function(data) {
 
         {activeTab === 'validate' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Clinical Validation</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">Clinical Validation</h2>
 
             {biomarkerLibrary.length > 0 && (
               <div className="space-y-6">
                 {biomarkerLibrary.map(biomarker => (
-                  <div key={biomarker.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div key={biomarker.id} className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                     <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-lg font-medium text-gray-900">{biomarker.name}</h3>
+                      <h3 className="text-lg font-medium text-neutral-900">{biomarker.name}</h3>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(biomarker.status)}`}>
                         {biomarker.status.replace('_', ' ')}
                       </span>
@@ -778,66 +778,66 @@ extract_features <- function(data) {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-3">Analytical Validation</h4>
+                        <h4 className="font-medium text-neutral-900 mb-3">Analytical Validation</h4>
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Precision:</span>
+                            <span className="text-neutral-600">Precision:</span>
                             <span className="font-medium">{(biomarker.validation.analyticalValidation.precision * 100).toFixed(1)}%</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Accuracy:</span>
+                            <span className="text-neutral-600">Accuracy:</span>
                             <span className="font-medium">{(biomarker.validation.analyticalValidation.accuracy * 100).toFixed(1)}%</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Robustness:</span>
+                            <span className="text-neutral-600">Robustness:</span>
                             <span className="font-medium">{(biomarker.validation.analyticalValidation.robustness * 100).toFixed(1)}%</span>
                           </div>
                         </div>
                       </div>
 
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-3">Clinical Validation</h4>
+                        <h4 className="font-medium text-neutral-900 mb-3">Clinical Validation</h4>
                         <div className="space-y-2">
                           <div className="text-sm">
-                            <span className="text-gray-600">Evidence Level:</span>
+                            <span className="text-neutral-600">Evidence Level:</span>
                             <span className="ml-2 font-medium">{biomarker.validation.clinicalValidation.evidenceLevel}</span>
                           </div>
                           <div className="text-sm">
-                            <span className="text-gray-600">Comparator:</span>
-                            <span className="ml-2 text-gray-900">{biomarker.validation.clinicalValidation.comparator}</span>
+                            <span className="text-neutral-600">Comparator:</span>
+                            <span className="ml-2 text-neutral-900">{biomarker.validation.clinicalValidation.comparator}</span>
                           </div>
                           <div className="text-sm">
-                            <span className="text-gray-600">Sample Size:</span>
+                            <span className="text-neutral-600">Sample Size:</span>
                             <span className="ml-2 font-medium">{biomarker.validation.clinicalStudy.sampleSize.toLocaleString()}</span>
                           </div>
                         </div>
                       </div>
 
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-3">Regulatory Status</h4>
+                        <h4 className="font-medium text-neutral-900 mb-3">Regulatory Status</h4>
                         <div className="space-y-2">
                           <div className="text-sm">
-                            <span className="text-gray-600">Pathway:</span>
+                            <span className="text-neutral-600">Pathway:</span>
                             <span className="ml-2 font-medium">{biomarker.validation.regulatoryStatus.pathway.replace('_', ' ')}</span>
                           </div>
                           <div className="text-sm">
-                            <span className="text-gray-600">Classification:</span>
+                            <span className="text-neutral-600">Classification:</span>
                             <span className="ml-2 font-medium">{biomarker.validation.regulatoryStatus.classification.replace('_', ' ')}</span>
                           </div>
                           <div className="text-sm">
-                            <span className="text-gray-600">Guidances:</span>
-                            <span className="ml-2 text-gray-900">{biomarker.validation.regulatoryStatus.guidances.length}</span>
+                            <span className="text-neutral-600">Guidances:</span>
+                            <span className="ml-2 text-neutral-900">{biomarker.validation.regulatoryStatus.guidances.length}</span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <h4 className="font-medium text-gray-900 mb-2">Clinical Interpretation</h4>
+                    <div className="mt-4 pt-4 border-t border-neutral-200">
+                      <h4 className="font-medium text-neutral-900 mb-2">Clinical Interpretation</h4>
                       <div className="space-y-2">
                         {biomarker.clinicalContext.interpretation.map((interp, index) => (
                           <div key={index} className="flex justify-between items-center text-sm">
-                            <span className="text-gray-600">{interp.range}:</span>
+                            <span className="text-neutral-600">{interp.range}:</span>
                             <span className="font-medium">{interp.interpretation}</span>
                             <span className="text-blue-600">{interp.clinicalAction}</span>
                           </div>
@@ -853,19 +853,19 @@ extract_features <- function(data) {
 
         {activeTab === 'deploy' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">SDK Generation & Deployment</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">SDK Generation & Deployment</h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Generate SDK</h3>
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-lg font-medium text-neutral-900 mb-4">Generate SDK</h3>
 
                 <div className="space-y-4">
                   {biomarkerLibrary.slice(0, 2).map(biomarker => (
-                    <div key={biomarker.id} className="border border-gray-200 rounded-lg p-4">
+                    <div key={biomarker.id} className="border border-neutral-200 rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h4 className="font-medium text-gray-900">{biomarker.name}</h4>
-                          <p className="text-sm text-gray-600">{biomarker.clinicalContext.indication}</p>
+                          <h4 className="font-medium text-neutral-900">{biomarker.name}</h4>
+                          <p className="text-sm text-neutral-600">{biomarker.clinicalContext.indication}</p>
                         </div>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(biomarker.status)}`}>
                           {biomarker.status.replace('_', ' ')}
@@ -897,36 +897,36 @@ extract_features <- function(data) {
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Deployment Options</h3>
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-lg font-medium text-neutral-900 mb-4">Deployment Options</h3>
 
                 <div className="space-y-4">
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Cloud API</h4>
-                    <p className="text-sm text-gray-600 mb-3">
+                  <div className="border border-neutral-200 rounded-lg p-4">
+                    <h4 className="font-medium text-neutral-900 mb-2">Cloud API</h4>
+                    <p className="text-sm text-neutral-600 mb-3">
                       Deploy as a scalable REST API with automatic scaling and monitoring
                     </p>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-neutral-500">
                       Supports AWS, Azure, Google Cloud
                     </div>
                   </div>
 
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Edge Computing</h4>
-                    <p className="text-sm text-gray-600 mb-3">
+                  <div className="border border-neutral-200 rounded-lg p-4">
+                    <h4 className="font-medium text-neutral-900 mb-2">Edge Computing</h4>
+                    <p className="text-sm text-neutral-600 mb-3">
                       Deploy on mobile devices or edge hardware for real-time processing
                     </p>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-neutral-500">
                       TensorFlow Lite, Core ML, ONNX Runtime
                     </div>
                   </div>
 
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">EHR Integration</h4>
-                    <p className="text-sm text-gray-600 mb-3">
+                  <div className="border border-neutral-200 rounded-lg p-4">
+                    <h4 className="font-medium text-neutral-900 mb-2">EHR Integration</h4>
+                    <p className="text-sm text-neutral-600 mb-3">
                       Integrate directly with electronic health record systems
                     </p>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-neutral-500">
                       FHIR R4, HL7, Epic, Cerner
                     </div>
                   </div>

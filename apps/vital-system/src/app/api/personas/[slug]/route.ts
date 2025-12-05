@@ -26,71 +26,115 @@ export const GET = withAgentAuth(async (
     });
 
     // Build comprehensive query for single persona
-    let query = supabase
-      .from('personas')
-      .select(`
-        id,
-        slug,
-        name,
-        title,
-        one_liner,
-        tagline,
-        archetype,
-        persona_type,
-        persona_number,
-        section,
-        segment,
-        organization_type,
-        typical_organization_size,
-        seniority_level,
-        department_id,
-        department_slug,
-        function_id,
-        function_slug,
-        role_id,
-        role_slug,
-        years_of_experience,
-        years_in_function,
-        years_in_industry,
-        years_in_current_role,
-        education_level,
-        budget_authority,
-        key_responsibilities,
-        technology_adoption,
-        risk_tolerance,
-        decision_making_style,
-        learning_style,
-        work_style,
-        work_style_preference,
-        work_arrangement,
-        location_type,
-        geographic_scope,
-        team_size,
-        team_size_typical,
-        direct_reports,
-        reporting_to,
-        span_of_control,
-        salary_min_usd,
-        salary_median_usd,
-        salary_max_usd,
-        metadata,
-        tags,
-        is_active,
-        tenant_id,
-        allowed_tenants,
-        created_at,
-        updated_at
-      `)
-      .eq('slug', slug)
-      .single();
+    const baseSelect = `
+      id,
+      unique_id,
+      persona_name,
+      persona_type,
+      source_role_id,
+      title,
+      description,
+      age_range,
+      experience_level,
+      archetype,
+      persona_number,
+      section,
+      segment,
+      organization_type,
+      typical_organization_size,
+      seniority_level,
+      department_id,
+      department_slug,
+      function_id,
+      function_slug,
+      role_id,
+      role_slug,
+      years_of_experience,
+      years_in_function,
+      years_in_industry,
+      years_in_current_role,
+      education_level,
+      department,
+      function_area,
+      communication_preferences,
+      goals,
+      challenges,
+      motivations,
+      frustrations,
+      daily_activities,
+      tools_used,
+      skills,
+      competencies,
+      success_metrics,
+      gxp_requirements,
+      regulatory_context,
+      therapeutic_areas,
+      data_quality_score,
+      ai_readiness_score,
+      work_complexity_score,
+      derived_archetype,
+      preferred_service_layer,
+      project_work_ratio,
+      bau_work_ratio,
+      work_dominance,
+      owned_okr_count,
+      contributed_okr_count,
+      budget_authority,
+      key_responsibilities,
+      technology_adoption,
+      risk_tolerance,
+      decision_making_style,
+      learning_style,
+      work_style,
+      work_style_preference,
+      work_arrangement,
+      location_type,
+      geographic_scope,
+      team_size,
+      team_size_typical,
+      direct_reports,
+      reporting_to,
+      span_of_control,
+      salary_min_usd,
+      salary_median_usd,
+      salary_max_usd,
+      metadata,
+      tags,
+      is_active,
+      tenant_id,
+      allowed_tenants,
+      created_at,
+      updated_at
+    `;
 
-    // Apply tenant filtering using allowed_tenants array
-    // Note: contains() may not be in TypeScript types but works at runtime
-    if (profile.role !== 'super_admin' && profile.role !== 'admin') {
-      (query as any).contains('allowed_tenants', [profile.tenant_id]);
+    // Attempt exact match on unique_id first (primary key used by frontend), then persona_name
+    let { data: persona, error } = await supabase
+      .from('personas')
+      .select(baseSelect)
+      .eq('unique_id', slug)
+      .maybeSingle();
+
+    if ((!persona || error) && !error) {
+      const fallback = await supabase
+        .from('personas')
+        .select(baseSelect)
+        .eq('persona_name', slug)
+        .maybeSingle();
+      persona = fallback.data || null;
+      error = fallback.error || null;
     }
 
-    const { data: persona, error } = await query;
+    // Final fallback: case-insensitive equals on unique_id/persona_name
+    if ((!persona || error) && !error) {
+      const fallbackIlike = await supabase
+        .from('personas')
+        .select(baseSelect)
+        .or(`unique_id.ilike.${slug},persona_name.ilike.${slug}`)
+        .limit(1)
+        .maybeSingle();
+      persona = fallbackIlike.data || null;
+      error = fallbackIlike.error || null;
+    }
 
     if (error) {
       const duration = Date.now() - startTime;
@@ -103,12 +147,27 @@ export const GET = withAgentAuth(async (
       });
 
       return NextResponse.json(
-        { error: 'Persona not found', details: error.message },
+        { error: 'Persona not found', details: error?.message },
         { status: 404 }
       );
     }
 
     if (!persona) {
+      return NextResponse.json(
+        { error: 'Persona not found' },
+        { status: 404 }
+      );
+    }
+
+    // Enforce tenant visibility after fetch to avoid false negatives when allowed_tenants is null/empty
+    const canView =
+      profile.role === 'super_admin' ||
+      profile.role === 'admin' ||
+      !persona.allowed_tenants ||
+      (Array.isArray(persona.allowed_tenants) && persona.allowed_tenants.length === 0) ||
+      (Array.isArray(persona.allowed_tenants) && persona.allowed_tenants.includes(profile.tenant_id));
+
+    if (!canView) {
       return NextResponse.json(
         { error: 'Persona not found' },
         { status: 404 }
@@ -172,9 +231,17 @@ export const GET = withAgentAuth(async (
         .eq('persona_id', persona.id),
     ]);
 
-    // Add full data to persona
+    // Normalize naming to match frontend expectations (aligns with /api/personas list)
     const personaWithData = {
       ...persona,
+      slug: persona.unique_id || persona.slug || slug,
+      name: (persona as any).persona_name || persona.name || slug,
+      tagline: (persona as any).description || persona.tagline,
+      one_liner: (persona as any).description || persona.one_liner,
+      role_id: persona.source_role_id,
+      role_slug: persona.role_slug,
+      department_name: (persona as any).department || persona.department_name,
+      function_name: (persona as any).function_area || persona.function_name,
       pain_points_count: painPointsResult.data?.length || 0,
       jtbds_count: jtbdsResult.data?.length || 0,
       goals_count: goalsResult.data?.length || 0,
@@ -219,4 +286,3 @@ export const GET = withAgentAuth(async (
     );
   }
 });
-

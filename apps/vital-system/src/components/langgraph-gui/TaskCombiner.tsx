@@ -169,8 +169,8 @@ export const TaskCombiner: React.FC<TaskCombinerProps> = ({
                       <div key={task.id} className="flex items-center gap-4 p-4 bg-muted/50 border-2 border-primary rounded-lg">
                         <span className="text-2xl">{task.icon}</span>
                         <div className="flex-1">
-                          <div className="font-semibold text-gray-900">{task.name}</div>
-                          <div className="text-sm text-gray-600 uppercase">{task.category}</div>
+                          <div className="font-semibold text-neutral-900">{task.name}</div>
+                          <div className="text-sm text-neutral-600 uppercase">{task.category}</div>
                         </div>
                         <Button
                           variant="destructive"
@@ -233,8 +233,8 @@ export const TaskCombiner: React.FC<TaskCombinerProps> = ({
                   <div className="flex items-start gap-4 mb-4 pb-4 border-b">
                     <span className="text-4xl">{combinedTask.icon}</span>
                     <div className="flex-1">
-                      <div className="text-xl font-semibold text-gray-900 mb-2">{combinedTask.name}</div>
-                      <div className="text-sm text-gray-600">{combinedTask.description}</div>
+                      <div className="text-xl font-semibold text-neutral-900 mb-2">{combinedTask.name}</div>
+                      <div className="text-sm text-neutral-600">{combinedTask.description}</div>
                     </div>
                   </div>
                   <div className="space-y-2">

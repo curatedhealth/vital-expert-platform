@@ -333,18 +333,28 @@ export class UserAgentsService implements IUserAgentsService {
 
   /**
    * Normalize agent data from Supabase response
+   *
+   * API returns database column names which differ from frontend types:
+   * - avatar_url (DB) -> avatar (frontend)
+   * - base_model (DB) -> model (frontend)
+   * - name (DB) -> name (frontend), also used for display_name if missing
    */
   private normalizeAgentData(agentData: any): Agent {
+    // Handle both DB field names (avatar_url, base_model) and frontend names (avatar, model)
+    const avatar = agentData.avatar_url || agentData.avatar || agentData.metadata?.avatar || '🤖';
+    const model = agentData.base_model || agentData.model || 'gpt-4-turbo-preview';
+    const displayName = agentData.display_name || agentData.metadata?.display_name || agentData.name || 'Unnamed Agent';
+
     return {
       id: agentData.id,
       name: agentData.name || 'Unnamed Agent',
-      display_name: agentData.display_name || agentData.metadata?.display_name || agentData.name || 'Unnamed Agent',
-      description: agentData.description || '',
+      display_name: displayName,
+      description: agentData.description || agentData.tagline || '',
       system_prompt: agentData.system_prompt || '',
-      model: agentData.model || 'gpt-4-turbo-preview',
+      model: model,
       temperature: agentData.temperature ?? 0.7,
       max_tokens: agentData.max_tokens ?? 2000,
-      avatar: agentData.avatar || agentData.metadata?.avatar || '🤖',
+      avatar: avatar,
       color: agentData.color || agentData.metadata?.color || '#3B82F6',
       capabilities: Array.isArray(agentData.capabilities) ? agentData.capabilities : [],
       rag_enabled: agentData.rag_enabled ?? true, // RAG enabled by default for all agents

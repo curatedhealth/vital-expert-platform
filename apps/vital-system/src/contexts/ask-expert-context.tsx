@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { AgentService } from '@/features/agents/services/agent-service';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { useAgentsStore } from '@/lib/stores/agents-store';
@@ -683,25 +683,49 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
     refreshAgents();
   }, [user?.id, refreshAgents]);
 
+  // CRITICAL FIX: Memoize context value to prevent unnecessary re-renders
+  // Without this, every render creates a new object reference, causing all consumers to re-render
+  const contextValue = useMemo<AskExpertContextType>(() => {
+    console.log('🔄 [AskExpertContext] Context value updated:', {
+      agentsCount: agents.length,
+      selectedAgentsCount: selectedAgents.length,
+      selectedAgentIds: selectedAgents,
+    });
+    return {
+      agents,
+      selectedAgents,
+      setSelectedAgents,
+      agentsLoading,
+      sessions,
+      sessionsLoading,
+      activeSessionId,
+      setActiveSessionId: handleSetActiveSessionId,
+      refreshSessions,
+      createNewSession,
+      getAllAgents,
+      refreshAgents,
+      addAgentToUserList,
+      removeAgentFromUserList,
+    };
+  }, [
+    agents,
+    selectedAgents,
+    setSelectedAgents,
+    agentsLoading,
+    sessions,
+    sessionsLoading,
+    activeSessionId,
+    handleSetActiveSessionId,
+    refreshSessions,
+    createNewSession,
+    getAllAgents,
+    refreshAgents,
+    addAgentToUserList,
+    removeAgentFromUserList,
+  ]);
+
   return (
-    <AskExpertContext.Provider
-      value={{
-        agents,
-        selectedAgents,
-        setSelectedAgents,
-        agentsLoading,
-        sessions,
-        sessionsLoading,
-        activeSessionId,
-        setActiveSessionId: handleSetActiveSessionId,
-        refreshSessions,
-        createNewSession,
-        getAllAgents,
-        refreshAgents,
-        addAgentToUserList,
-        removeAgentFromUserList,
-      }}
-    >
+    <AskExpertContext.Provider value={contextValue}>
       {children}
     </AskExpertContext.Provider>
   );

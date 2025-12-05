@@ -42,14 +42,14 @@ interface WorkflowSidebarProps {
 const STATUS_CONFIG = {
   idle: {
     icon: Clock,
-    color: 'text-gray-500',
-    bg: 'bg-gray-100',
+    color: 'text-neutral-500',
+    bg: 'bg-neutral-100',
     label: 'Ready'
   },
   pending: {
     icon: Clock,
-    color: 'text-gray-500',
-    bg: 'bg-gray-100',
+    color: 'text-neutral-500',
+    bg: 'bg-neutral-100',
     label: 'Pending'
   },
   running: {
@@ -192,7 +192,7 @@ export function WorkflowSidebar({
                           <span>Progress</span>
                           <span>{progress}%</span>
                         </div>
-                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-neutral-200 rounded-full overflow-hidden">
                           <div
                             className={cn(
                               "h-full transition-all duration-300",
@@ -234,7 +234,7 @@ export function WorkflowSidebar({
 
                 {/* Tasks List (when expanded) */}
                 {isExpanded && workflowTasks.length > 0 && (
-                  <div className="mt-3 ml-8 space-y-1.5 border-l-2 border-gray-200 pl-3">
+                  <div className="mt-3 ml-8 space-y-1.5 border-l-2 border-neutral-200 pl-3">
                     {workflowTasks
                       .sort((a, b) => a.position - b.position)
                       .map((task) => {

@@ -84,7 +84,7 @@ export const Action: React.FC<ActionProps> = ({
             onClick={onClick}
             disabled={disabled}
             className={cn(
-              "h-7 w-7 p-0 hover:bg-gray-100 transition-colors",
+              "h-7 w-7 p-0 hover:bg-neutral-100 transition-colors",
               className
             )}
           >

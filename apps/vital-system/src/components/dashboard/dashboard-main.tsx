@@ -143,7 +143,7 @@ const MOCK_SYSTEM_HEALTH: SystemHealth = {
 
 const KPICard: React.FC<{ metric: KPIMetric }> = ({ metric }) => {
 
-                     metric.changeType === 'decrease' ? 'text-red-600' : 'text-gray-600';
+                     metric.changeType === 'decrease' ? 'text-red-600' : 'text-neutral-600';
 
                     metric.changeType === 'decrease' ? '↘' : '→';
 
@@ -214,7 +214,7 @@ const SystemHealthPanel: React.FC<{ health: SystemHealth }> = ({ health }) => {
       case 'healthy': return 'text-green-600';
       case 'warning': return 'text-yellow-600';
       case 'critical': return 'text-red-600';
-      default: return 'text-gray-600';
+      default: return 'text-neutral-600';
     }
   };
 
@@ -239,7 +239,7 @@ const SystemHealthPanel: React.FC<{ health: SystemHealth }> = ({ health }) => {
       <CardContent>
         <div className="space-y-4">
           {health.components.map((component, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div key={index} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${
                   component.status === 'healthy' ? 'bg-green-500' :
@@ -247,7 +247,7 @@ const SystemHealthPanel: React.FC<{ health: SystemHealth }> = ({ health }) => {
                 }`} />
                 <span className="font-medium">{component.name}</span>
               </div>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-4 text-sm text-neutral-600">
                 {component.responseTime && (
                   <span>{component.responseTime}ms</span>
                 )}
@@ -301,11 +301,11 @@ const ChartWidget: React.FC<{ data: ChartData }> = ({ data }) => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-[280px] flex items-center justify-center bg-gray-50 rounded-lg">
+        <div className="h-[280px] flex items-center justify-center bg-neutral-50 rounded-lg">
           {data.status === 'loading' || isLoading ? (
             <div className="flex flex-col items-center gap-2">
               <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-              <span className="text-sm text-gray-600">Loading chart data...</span>
+              <span className="text-sm text-neutral-600">Loading chart data...</span>
             </div>
           ) : data.status === 'error' ? (
             <div className="flex flex-col items-center gap-2 text-red-600">
@@ -313,7 +313,7 @@ const ChartWidget: React.FC<{ data: ChartData }> = ({ data }) => {
               <span className="text-sm">Failed to load chart data</span>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 text-gray-500">
+            <div className="flex flex-col items-center gap-2 text-neutral-500">
               {data.type === 'line' && <LineChart className="h-16 w-16" />}
               {data.type === 'bar' && <BarChart3 className="h-16 w-16" />}
               {data.type === 'pie' && <PieChart className="h-16 w-16" />}
@@ -406,12 +406,12 @@ const DashboardMain: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="p-6 space-y-6 bg-neutral-50 min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">VITAL Path Dashboard</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-neutral-900">VITAL Path Dashboard</h1>
+          <p className="text-neutral-600 mt-1">
             Last updated: {lastRefresh.toLocaleTimeString()}
             {criticalAlerts.length > 0 && (
               <Badge className="ml-2 bg-red-100 text-red-800">
@@ -434,7 +434,7 @@ const DashboardMain: React.FC = () => {
           <select
             value={selectedTimeRange}
             onChange={(e) => setSelectedTimeRange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+            className="px-3 py-2 border border-neutral-300 rounded-md bg-canvas-surface text-sm"
           >
             <option value="1h">Last Hour</option>
             <option value="24h">Last 24 Hours</option>
@@ -509,16 +509,16 @@ const DashboardMain: React.FC = () => {
                     { name: 'Market Access Strategist', status: 'active', load: 43 },
                     { name: 'Virtual Advisory Board', status: 'idle', load: 12 }
                   ].map((agent, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                       <div className="flex items-center gap-3">
                         <div className={`w-3 h-3 rounded-full ${
-                          agent.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
+                          agent.status === 'active' ? 'bg-green-500' : 'bg-neutral-400'
                         }`} />
                         <span className="font-medium">{agent.name}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600">Load:</span>
+                          <span className="text-sm text-neutral-600">Load:</span>
                           <Progress value={agent.load} className="w-20" />
                           <span className="text-sm font-medium">{agent.load}%</span>
                         </div>
@@ -549,7 +549,7 @@ const DashboardMain: React.FC = () => {
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <h4 className="font-medium">{workflow.name}</h4>
-                          <p className="text-sm text-gray-600">{workflow.id} • {workflow.stage}</p>
+                          <p className="text-sm text-neutral-600">{workflow.id} • {workflow.stage}</p>
                         </div>
                         <Badge variant={workflow.progress > 80 ? "default" : workflow.progress > 50 ? "secondary" : "outline"}>
                           {workflow.progress}%

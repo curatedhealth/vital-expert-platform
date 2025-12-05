@@ -60,8 +60,8 @@ export function Suggestion({
       variant={variant}
       size={size}
       className={cn(
-        'rounded-full border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 whitespace-normal',
-        'dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800',
+        'rounded-full border border-neutral-200 bg-white text-sm font-medium text-neutral-700 hover:bg-neutral-100 whitespace-normal',
+        'dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-800',
         className
       )}
       onClick={() => onClick?.(suggestion)}

@@ -204,13 +204,13 @@ export function HeatmapVisualization({
 
           {/* Heatmap Grid */}
           <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5">
-            {heatmapData.map((cell) => {
+            {heatmapData.map((cell, index) => {
               const isHovered = hoveredCell === cell.functionName
               const coverageColor = getCoverageColor(cell.coverage)
               const textColor = getCoverageTextColor(cell.coverage)
 
               return (
-                <Tooltip key={cell.functionName}>
+                <Tooltip key={`${cell.functionName}-${index}`}>
                   <TooltipTrigger asChild>
                     <div
                       className={cn(

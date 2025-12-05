@@ -37,13 +37,13 @@ export default function ROICalculator() {
   const results = calculateROI()
 
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-neutral-50">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-6">
             Calculate Your Savings
           </h2>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-neutral-600">
             See how much you could save with VITAL Expert
           </p>
         </div>
@@ -103,7 +103,7 @@ export default function ROICalculator() {
 
           {/* Results */}
           <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">
+            <h3 className="text-2xl font-bold text-neutral-900 mb-6">
               Your Potential Savings with VITAL:
             </h3>
 

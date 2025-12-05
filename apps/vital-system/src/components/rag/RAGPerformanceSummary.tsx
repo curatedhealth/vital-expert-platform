@@ -37,8 +37,8 @@ export function RAGPerformanceSummary({ className }: RAGPerformanceSummaryProps)
           <h3 className="text-lg font-semibold">RAG Performance</h3>
         </div>
         <div className="flex items-center space-x-2">
-          <Activity className="h-4 w-4 text-gray-400" />
-          <span className="text-sm text-gray-600">Live</span>
+          <Activity className="h-4 w-4 text-neutral-400" />
+          <span className="text-sm text-neutral-600">Live</span>
         </div>
       </div>
 
@@ -46,7 +46,7 @@ export function RAGPerformanceSummary({ className }: RAGPerformanceSummaryProps)
         <div>
           <div className="flex items-center space-x-1 mb-1">
             <Database className="h-3 w-3 text-blue-500" />
-            <span className="text-xs text-gray-600">Overall Score</span>
+            <span className="text-xs text-neutral-600">Overall Score</span>
           </div>
           <p className={`text-xl font-bold ${getScoreColor(metrics.overall_score)}`}>
             {metrics.overall_score.toFixed(1)}%
@@ -55,7 +55,7 @@ export function RAGPerformanceSummary({ className }: RAGPerformanceSummaryProps)
         <div>
           <div className="flex items-center space-x-1 mb-1">
             <Clock className="h-3 w-3 text-green-500" />
-            <span className="text-xs text-gray-600">Response Time</span>
+            <span className="text-xs text-neutral-600">Response Time</span>
           </div>
           <p className="text-xl font-bold">
             {metrics.response_time_ms.toLocaleString()}ms
@@ -65,13 +65,13 @@ export function RAGPerformanceSummary({ className }: RAGPerformanceSummaryProps)
 
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <div className="text-xs text-gray-600 mb-1">Cache Hit Rate</div>
+          <div className="text-xs text-neutral-600 mb-1">Cache Hit Rate</div>
           <p className="text-lg font-semibold">
             {(metrics.cache_hit_rate * 100).toFixed(1)}%
           </p>
         </div>
         <div>
-          <div className="text-xs text-gray-600 mb-1">Total Queries (24h)</div>
+          <div className="text-xs text-neutral-600 mb-1">Total Queries (24h)</div>
           <p className="text-lg font-semibold">
             {metrics.total_queries.toLocaleString()}
           </p>
@@ -97,7 +97,7 @@ export function RAGPerformanceSummary({ className }: RAGPerformanceSummaryProps)
           <Brain className="h-3 w-3 mr-1 inline" />
           Full Dashboard
         </button>
-        <button className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200">
+        <button className="flex-1 px-3 py-2 bg-neutral-100 text-neutral-700 text-sm font-medium rounded-md hover:bg-neutral-200">
           <Activity className="h-3 w-3 mr-1 inline" />
           API Metrics
         </button>

@@ -43,7 +43,7 @@ export function AgentsBoard({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {agents.length === 0 ? (
-          <div className="col-span-full text-center text-gray-500 py-8">
+          <div className="col-span-full text-center text-neutral-500 py-8">
             No agents created yet. Click "Create Agent" to get started.
           </div>
         ) : (
@@ -54,12 +54,12 @@ export function AgentsBoard({
                 <span className={`px-2 py-1 rounded text-xs ${
                   agent.status === 'active'
                     ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-100 text-gray-800'
+                    : 'bg-neutral-100 text-neutral-800'
                 }`}>
                   {agent.status}
                 </span>
               </div>
-              <p className="text-gray-600 text-sm mb-4">{agent.description}</p>
+              <p className="text-neutral-600 text-sm mb-4">{agent.description}</p>
               <div className="flex gap-2">
                 {onAgentSelect && (
                   <Button

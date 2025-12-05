@@ -17,6 +17,11 @@ import {
   Briefcase,
   UserCircle,
   Network,
+  Wrench,
+  Lightbulb,
+  CheckCircle,
+  Target,
+  Sparkles,
 } from 'lucide-react';
 
 import { AgentAvatar } from '@vital/ui';
@@ -66,8 +71,32 @@ export function AgentDetailsModal({
       'quality-assurance': 'bg-amber-100 text-amber-800 border-amber-200',
       'health-economics': 'bg-rose-100 text-rose-800 border-rose-200',
     };
-    return colors[domain as keyof typeof colors] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return colors[domain as keyof typeof colors] || 'bg-neutral-100 text-neutral-800 border-neutral-200';
   };
+
+  const getProficiencyColor = (level?: string) => {
+    switch (level) {
+      case 'expert':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'proficient':
+        return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'familiar':
+        return 'bg-neutral-100 text-neutral-700 border-neutral-200';
+      default:
+        return 'bg-neutral-100 text-neutral-600 border-neutral-200';
+    }
+  };
+
+  // Get enriched data or fallback to simple arrays
+  const enrichedCapabilities = (agent as any).enriched_capabilities || [];
+  const enrichedSkills = (agent as any).enriched_skills || [];
+  const responsibilities = (agent as any).responsibilities || [];
+  const promptStarters = (agent as any).prompt_starters || [];
+  const assignedTools = (agent as any).assigned_tools || [];
+  const enrichedKnowledgeDomains = (agent as any).enriched_knowledge_domains || [];
+
+  // Helper to check if we have enriched data
+  const hasEnrichedData = enrichedCapabilities.length > 0 || enrichedSkills.length > 0 || responsibilities.length > 0;
 
   const handleDuplicate = () => {
     const duplicatedAgent: Agent = {
@@ -82,9 +111,9 @@ export function AgentDetailsModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+      <div className="bg-canvas-surface rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-6 border-b border-neutral-200 flex-shrink-0">
           <div className="flex items-center gap-4">
             <AgentAvatar agent={agent} size="lg" />
             <div>
@@ -135,7 +164,7 @@ export function AgentDetailsModal({
 
             <TabsContent value="overview" className="space-y-6">
               {/* Quick Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
@@ -154,11 +183,94 @@ export function AgentDetailsModal({
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-progress-teal/10 rounded-lg flex items-center justify-center">
-                        <Star className="h-5 w-5 text-progress-teal" />
+                        <Target className="h-5 w-5 text-progress-teal" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-deep-charcoal">Capabilities</p>
-                        <p className="text-xs text-medical-gray">{agent.capabilities.length} skills</p>
+                        <p className="text-xs text-medical-gray">
+                          {enrichedCapabilities.length > 0
+                            ? `${enrichedCapabilities.length} assigned`
+                            : agent.capabilities?.length > 0
+                              ? `${agent.capabilities.length} listed`
+                              : 'None'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-market-purple/10 rounded-lg flex items-center justify-center">
+                        <Sparkles className="h-5 w-5 text-market-purple" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-deep-charcoal">Skills</p>
+                        <p className="text-xs text-medical-gray">
+                          {enrichedSkills.length > 0
+                            ? `${enrichedSkills.length} assigned`
+                            : 'None'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-clinical-green/10 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="h-5 w-5 text-clinical-green" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-deep-charcoal">Responsibilities</p>
+                        <p className="text-xs text-medical-gray">
+                          {responsibilities.length > 0
+                            ? `${responsibilities.length} assigned`
+                            : 'None'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Additional Stats Row */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-trust-blue/10 rounded-lg flex items-center justify-center">
+                        <Wrench className="h-5 w-5 text-trust-blue" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-deep-charcoal">Tools</p>
+                        <p className="text-xs text-medical-gray">
+                          {assignedTools.length > 0
+                            ? `${assignedTools.length} available`
+                            : agent.tools?.length > 0
+                              ? `${agent.tools.length} available`
+                              : 'None'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                        <Lightbulb className="h-5 w-5 text-amber-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-deep-charcoal">Prompt Starters</p>
+                        <p className="text-xs text-medical-gray">
+                          {promptStarters.length > 0
+                            ? `${promptStarters.length} available`
+                            : 'None'}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -171,9 +283,13 @@ export function AgentDetailsModal({
                         <Database className="h-5 w-5 text-market-purple" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-deep-charcoal">Knowledge</p>
+                        <p className="text-sm font-medium text-deep-charcoal">Knowledge Domains</p>
                         <p className="text-xs text-medical-gray">
-                          {agent.ragEnabled ? 'Enabled' : 'Disabled'}
+                          {enrichedKnowledgeDomains.length > 0
+                            ? `${enrichedKnowledgeDomains.length} domains`
+                            : agent.ragEnabled
+                              ? 'RAG Enabled'
+                              : 'None'}
                         </p>
                       </div>
                     </div>
@@ -254,7 +370,7 @@ export function AgentDetailsModal({
                   <CardTitle className="text-lg">System Instructions</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-gray-50 rounded-lg p-4 max-h-40 overflow-y-auto">
+                  <div className="bg-neutral-50 rounded-lg p-4 max-h-40 overflow-y-auto">
                     <p className="text-sm text-deep-charcoal whitespace-pre-wrap">
                       {agent.systemPrompt || 'No system prompt configured.'}
                     </p>
@@ -264,17 +380,56 @@ export function AgentDetailsModal({
             </TabsContent>
 
             <TabsContent value="capabilities" className="space-y-6">
+              {/* Enriched Capabilities */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Skills & Capabilities</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Target className="h-5 w-5 text-progress-teal" />
+                    Capabilities
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {agent.capabilities.length > 0 ? (
+                  {enrichedCapabilities.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {agent.capabilities.map((capability) => (
+                      {enrichedCapabilities.map((ec: any) => (
+                        <div
+                          key={ec.id}
+                          className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-progress-teal/10 rounded-lg flex items-center justify-center">
+                              <Target className="h-4 w-4 text-progress-teal" />
+                            </div>
+                            <div>
+                              <span className="text-sm font-medium text-deep-charcoal">
+                                {ec.capability?.name || 'Unknown'}
+                              </span>
+                              {ec.capability?.category && (
+                                <p className="text-xs text-medical-gray">{ec.capability.category}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {ec.is_primary && (
+                              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
+                                Primary
+                              </Badge>
+                            )}
+                            {ec.proficiency_level && (
+                              <Badge variant="outline" className={cn('text-xs capitalize', getProficiencyColor(ec.proficiency_level))}>
+                                {ec.proficiency_level}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : agent.capabilities && agent.capabilities.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {agent.capabilities.map((capability: string) => (
                         <div
                           key={capability}
-                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                          className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg"
                         >
                           <div className="w-8 h-8 bg-progress-teal/10 rounded-lg flex items-center justify-center">
                             <Star className="h-4 w-4 text-progress-teal" />
@@ -286,25 +441,181 @@ export function AgentDetailsModal({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-medical-gray">
-                      No specific capabilities defined.
-                    </p>
+                    <p className="text-sm text-medical-gray">No capabilities defined.</p>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Tools */}
-              {agent.tools && agent.tools.length > 0 && (
+              {/* Enriched Skills */}
+              {enrichedSkills.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Available Tools</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-market-purple" />
+                      Skills
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {agent.tools.map((tool) => (
-                        <Badge key={tool} variant="outline">
-                          {tool}
-                        </Badge>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {enrichedSkills.map((es: any) => (
+                        <div
+                          key={es.id}
+                          className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-market-purple/10 rounded-lg flex items-center justify-center">
+                              <Sparkles className="h-4 w-4 text-market-purple" />
+                            </div>
+                            <span className="text-sm font-medium text-deep-charcoal">
+                              {es.skill?.name || 'Unknown'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {es.is_primary && (
+                              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
+                                Primary
+                              </Badge>
+                            )}
+                            {es.proficiency_level && (
+                              <Badge variant="outline" className={cn('text-xs capitalize', getProficiencyColor(es.proficiency_level))}>
+                                {es.proficiency_level}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Responsibilities */}
+              {responsibilities.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-clinical-green" />
+                      Responsibilities
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {responsibilities.map((r: any) => (
+                        <div
+                          key={r.id}
+                          className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="w-8 h-8 bg-clinical-green/10 rounded-lg flex items-center justify-center">
+                              <CheckCircle className="h-4 w-4 text-clinical-green" />
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-deep-charcoal">
+                                {r.responsibility?.name || 'Unknown'}
+                              </span>
+                              {r.responsibility?.description && (
+                                <p className="text-xs text-medical-gray line-clamp-1">
+                                  {r.responsibility.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {r.is_primary && (
+                              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
+                                Primary
+                              </Badge>
+                            )}
+                            {r.weight && (
+                              <Badge variant="outline" className="text-xs">
+                                Weight: {Math.round(r.weight * 100)}%
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Tools */}
+              {(assignedTools.length > 0 || (agent.tools && agent.tools.length > 0)) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Wrench className="h-5 w-5 text-trust-blue" />
+                      Available Tools
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {assignedTools.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {assignedTools.map((at: any) => (
+                          <div
+                            key={at.id}
+                            className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-trust-blue/10 rounded-lg flex items-center justify-center">
+                                <Wrench className="h-4 w-4 text-trust-blue" />
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium text-deep-charcoal">
+                                  {at.tool?.name || 'Unknown'}
+                                </span>
+                                {at.tool?.tool_type && (
+                                  <p className="text-xs text-medical-gray">{at.tool.tool_type}</p>
+                                )}
+                              </div>
+                            </div>
+                            {at.priority && (
+                              <Badge variant="outline" className="text-xs">
+                                Priority: {at.priority}
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {agent.tools?.map((tool: string) => (
+                          <Badge key={tool} variant="outline">
+                            {tool}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Prompt Starters */}
+              {promptStarters.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Lightbulb className="h-5 w-5 text-amber-500" />
+                      Prompt Starters
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {promptStarters.map((ps: any) => (
+                        <div
+                          key={ps.id}
+                          className="flex items-center gap-3 p-3 bg-amber-50/50 rounded-lg border border-amber-100"
+                        >
+                          <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center text-lg">
+                            {ps.icon || '💡'}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm text-deep-charcoal">{ps.text}</p>
+                            {ps.category && (
+                              <p className="text-xs text-medical-gray mt-1">Category: {ps.category}</p>
+                            )}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </CardContent>
@@ -329,10 +640,10 @@ export function AgentDetailsModal({
                     <div>
                       <h4 className="font-medium text-deep-charcoal mb-2">Knowledge Sources</h4>
                       <div className="space-y-2">
-                        {agent.knowledgeUrls.map((url, index) => (
+                        {agent.knowledgeUrls.map((url: string, index: number) => (
                           <div
                             key={index}
-                            className="p-3 bg-gray-50 rounded-lg text-sm text-deep-charcoal"
+                            className="p-3 bg-neutral-50 rounded-lg text-sm text-deep-charcoal"
                           >
                             {url}
                           </div>
@@ -341,11 +652,50 @@ export function AgentDetailsModal({
                     </div>
                   )}
 
-                  {agent.knowledgeDomains && agent.knowledgeDomains.length > 0 && (
+                  {/* Enriched Knowledge Domains */}
+                  {enrichedKnowledgeDomains.length > 0 ? (
+                    <div>
+                      <h4 className="font-medium text-deep-charcoal mb-2">Knowledge Domains</h4>
+                      <div className="space-y-2">
+                        {enrichedKnowledgeDomains.map((kd: any) => (
+                          <div
+                            key={kd.id}
+                            className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-market-purple/10 rounded-lg flex items-center justify-center">
+                                <Database className="h-4 w-4 text-market-purple" />
+                              </div>
+                              <span className="text-sm font-medium text-deep-charcoal">
+                                {kd.domain_name}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {kd.is_primary_domain && (
+                                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
+                                  Primary
+                                </Badge>
+                              )}
+                              {kd.proficiency_level && (
+                                <Badge variant="outline" className={cn('text-xs capitalize', getProficiencyColor(kd.proficiency_level))}>
+                                  {kd.proficiency_level}
+                                </Badge>
+                              )}
+                              {kd.expertise_level && (
+                                <Badge variant="outline" className="text-xs">
+                                  {kd.expertise_level}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : agent.knowledgeDomains && agent.knowledgeDomains.length > 0 ? (
                     <div>
                       <h4 className="font-medium text-deep-charcoal mb-2">Accessible Domains</h4>
                       <div className="flex flex-wrap gap-2">
-                        {agent.knowledgeDomains.map((domain) => (
+                        {agent.knowledgeDomains.map((domain: string) => (
                           <Badge
                             key={domain}
                             className={cn('border', getDomainColor(domain))}
@@ -355,7 +705,7 @@ export function AgentDetailsModal({
                         ))}
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -368,7 +718,7 @@ export function AgentDetailsModal({
                     <Network className="w-5 h-5 text-blue-600" />
                     Knowledge Graph Visualization
                   </CardTitle>
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-neutral-500 mt-2">
                     Interactive visualization of this agent's knowledge graph using Neo4j, Pinecone, and Supabase.
                     Explore relationships, skills, tools, and connected knowledge domains.
                   </p>
@@ -452,7 +802,7 @@ export function AgentDetailsModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-6 border-t border-neutral-200 flex-shrink-0">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
               <Heart className="h-4 w-4 mr-2" />

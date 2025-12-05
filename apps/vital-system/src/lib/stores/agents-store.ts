@@ -27,10 +27,14 @@ export interface Agent {
   priority: number;
   implementation_phase: number;
   knowledge_domains?: string[];
-  business_function?: string | null; // Business function name
-  department?: string | null; // Department name
-  role?: string | null; // Role name or UUID
+  business_function?: string | null; // Business function name (aliased from function_name)
+  department?: string | null; // Department name (aliased from department_name)
+  role?: string | null; // Role name (aliased from role_name)
   organizational_role?: string | null; // Organizational role name (mapped from role_id)
+  // Database column names (for filter components)
+  function_name?: string | null; // Direct from database: org function name
+  department_name?: string | null; // Direct from database: department name
+  role_name?: string | null; // Direct from database: role name
   // Foreign key IDs
   business_function_id?: string | null; // UUID foreign key to business_functions table
   department_id?: string | null; // UUID foreign key to departments table
@@ -217,10 +221,15 @@ const convertDbAgentToStoreFormat = (dbAgent: DbAgent | any): Agent => {
     priority: 1, // Default priority since it's not in the actual schema
     implementation_phase: dbAgent.implementation_phase ?? metadata.implementation_phase ?? 1,
     knowledge_domains: dbAgent.knowledge_domains || metadata.knowledge_domains || [],
-    business_function: dbAgent.business_function || metadata.business_function || '',
-    department: dbAgent.department || metadata.department || '',
-    role: dbAgent.role || metadata.role || '',
+    // Support both naming conventions from API
+    business_function: dbAgent.business_function || dbAgent.function_name || metadata.business_function || '',
+    department: dbAgent.department || dbAgent.department_name || metadata.department || '',
+    role: dbAgent.role || dbAgent.role_name || metadata.role || '',
     organizational_role: dbAgent.organizational_role || metadata.organizational_role || metadata.role || '',
+    // Include function/department/role names for filter components
+    function_name: dbAgent.function_name || dbAgent.business_function || '',
+    department_name: dbAgent.department_name || dbAgent.department || '',
+    role_name: dbAgent.role_name || dbAgent.role || '',
     is_user_copy: dbAgent.is_user_copy ?? metadata.is_user_copy ?? false,
     original_agent_id: dbAgent.original_agent_id || metadata.original_agent_id || null,
     copied_at: dbAgent.copied_at || metadata.copied_at || null,

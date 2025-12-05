@@ -77,7 +77,7 @@ export function Reasoning({ children, isStreaming = false, className }: Reasonin
     <ReasoningContext.Provider value={value}>
       <div
         className={cn(
-          'rounded-lg border border-gray-200 bg-gray-50/50 overflow-hidden transition-all',
+          'rounded-lg border border-neutral-200 bg-neutral-50/50 overflow-hidden transition-all',
           className
         )}
       >
@@ -104,7 +104,7 @@ export function ReasoningTrigger({ title = 'Thinking', className }: ReasoningTri
     <button
       onClick={() => setIsOpen(!isOpen)}
       className={cn(
-        'w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100/50',
+        'w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-neutral-100/50',
         className
       )}
       aria-expanded={isOpen}
@@ -128,20 +128,20 @@ export function ReasoningTrigger({ title = 'Thinking', className }: ReasoningTri
             </svg>
           </div>
         )}
-        <span className="text-gray-700">
+        <span className="text-neutral-700">
           {title}
           {isStreaming ? '...' : ''}
         </span>
         {duration > 0 && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-neutral-500">
             {formatDuration(duration)}
           </span>
         )}
       </div>
       {isOpen ? (
-        <ChevronUp className="h-4 w-4 text-gray-500" />
+        <ChevronUp className="h-4 w-4 text-neutral-500" />
       ) : (
-        <ChevronDown className="h-4 w-4 text-gray-500" />
+        <ChevronDown className="h-4 w-4 text-neutral-500" />
       )}
     </button>
   );
@@ -185,7 +185,7 @@ export function ReasoningContent({ children, className }: ReasoningContentProps)
       <div ref={contentRef}>
         <div
           className={cn(
-            'px-4 py-3 text-sm text-gray-600 border-t border-gray-200 bg-white',
+            'px-4 py-3 text-sm text-neutral-600 border-t border-neutral-200 bg-white',
             className
           )}
         >

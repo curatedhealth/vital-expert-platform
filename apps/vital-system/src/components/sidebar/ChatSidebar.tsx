@@ -14,6 +14,7 @@ export function ChatSidebar({ className }: ChatSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<'conversations' | 'agents' | 'settings'>('conversations');
 
+  const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   };
 

@@ -46,10 +46,10 @@ export function AgentRecommendationModal({
       <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+            <h3 className="text-lg font-semibold text-neutral-900 mb-1">
               Which expert would you like to consult?
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-neutral-600">
               Your question: &quot;{pendingMessage}&quot;
             </p>
           </div>
@@ -90,7 +90,7 @@ export function AgentRecommendationModal({
                 {/* Agent Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <h4 className="font-semibold text-gray-900">
+                    <h4 className="font-semibold text-neutral-900">
                       {agent.display_name || agent.name}
                     </h4>
                     {index === 0 && (
@@ -109,10 +109,10 @@ export function AgentRecommendationModal({
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                  <p className="text-sm text-neutral-600 mb-2 line-clamp-2">
                     {agent.description}
                   </p>
-                  <p className="text-xs text-gray-500 italic line-clamp-2">
+                  <p className="text-xs text-neutral-500 italic line-clamp-2">
                     {agent.reasoning}
                   </p>
                 </div>

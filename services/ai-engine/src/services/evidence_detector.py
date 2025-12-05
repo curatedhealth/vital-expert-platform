@@ -1,50 +1,76 @@
 """
-SciBERT-based Medical Evidence Detection Service
+Unified Multi-Domain Evidence Detection Service
 
-Automatically detects and extracts medical evidence from conversations using:
-- SciBERT for biomedical text understanding
-- Named Entity Recognition (NER) for medical entities
-- Citation extraction and validation
-- Evidence quality scoring
+Comprehensive evidence detection across multiple domains:
+- Medical/Clinical (SciBERT + BioBERT)
+- Digital Health (mHealth, telehealth, wearables)
+- Regulatory/Compliance (FDA, EMA, GDPR, MHRA, TGA)
+- Pharmaceutical (drug development, clinical trials)
+
+This module consolidates evidence_detector.py and multi_domain_evidence_detector.py
+into a single, unified implementation.
 
 Created: 2025-10-25
-Phase: 4 Week 2 - SciBERT Evidence Detection
+Updated: 2025-12-02 - Consolidated with multi-domain capabilities
 """
 
 import re
 import asyncio
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple, Set
 from dataclasses import dataclass
 from enum import Enum
 import logging
 
-import torch
-from transformers import (
-    AutoTokenizer,
-    AutoModelForTokenClassification,
-    AutoModelForSequenceClassification,
-    pipeline
+# Use centralized optional imports to prevent recurring issues
+from utils.optional_imports import (
+    SPACY_AVAILABLE,
+    spacy,
+    load_spacy_model,
+    TORCH_AVAILABLE,
+    torch,
+    get_device,
+    TRANSFORMERS_AVAILABLE,
 )
 
-# Optional spacy import - not required for basic functionality
-try:
-    import spacy
-    from spacy.tokens import Doc
-    SPACY_AVAILABLE = True
-except ImportError:
-    spacy = None
-    Doc = None
-    SPACY_AVAILABLE = False
+# ML/NLP imports (with graceful degradation)
+if TRANSFORMERS_AVAILABLE:
+    from transformers import (
+        AutoTokenizer,
+        AutoModelForTokenClassification,
+        AutoModelForSequenceClassification,
+        AutoModel,
+        pipeline
+    )
+else:
+    AutoTokenizer = None
+    AutoModelForTokenClassification = None
+    AutoModelForSequenceClassification = None
+    AutoModel = None
+    pipeline = None
 
 logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# DATA MODELS
+# DOMAIN TYPES
+# ============================================================================
+
+class EvidenceDomain(str, Enum):
+    """Evidence domains supported"""
+    MEDICAL = "medical"
+    DIGITAL_HEALTH = "digital_health"
+    REGULATORY = "regulatory"
+    COMPLIANCE = "compliance"
+    PHARMACEUTICAL = "pharmaceutical"
+    CLINICAL = "clinical"
+
+
+# ============================================================================
+# EVIDENCE TYPES
 # ============================================================================
 
 class EvidenceType(Enum):
-    """Types of medical evidence"""
+    """Types of medical evidence (legacy compatibility)"""
     CLINICAL_TRIAL = "clinical_trial"
     SYSTEMATIC_REVIEW = "systematic_review"
     META_ANALYSIS = "meta_analysis"
@@ -55,8 +81,73 @@ class EvidenceType(Enum):
     LABORATORY_STUDY = "laboratory_study"
 
 
+class MedicalEvidenceType(str, Enum):
+    """Medical/Clinical evidence types"""
+    CLINICAL_TRIAL = "clinical_trial"
+    SYSTEMATIC_REVIEW = "systematic_review"
+    META_ANALYSIS = "meta_analysis"
+    CASE_STUDY = "case_study"
+    OBSERVATIONAL_STUDY = "observational_study"
+    GUIDELINE = "guideline"
+    EXPERT_OPINION = "expert_opinion"
+    LABORATORY_STUDY = "laboratory_study"
+
+
+class DigitalHealthEvidenceType(str, Enum):
+    """Digital Health evidence types"""
+    MHEALTH_STUDY = "mhealth_study"
+    TELEHEALTH_TRIAL = "telehealth_trial"
+    WEARABLE_VALIDATION = "wearable_validation"
+    AI_ML_VALIDATION = "ai_ml_validation"
+    DIGITAL_THERAPEUTIC = "digital_therapeutic"
+    REMOTE_MONITORING = "remote_monitoring"
+    PATIENT_PORTAL_STUDY = "patient_portal_study"
+    HEALTH_APP_EVALUATION = "health_app_evaluation"
+
+
+class RegulatoryEvidenceType(str, Enum):
+    """Regulatory evidence types"""
+    FDA_APPROVAL = "fda_approval"
+    FDA_GUIDANCE = "fda_guidance"
+    EMA_APPROVAL = "ema_approval"
+    EMA_GUIDELINE = "ema_guideline"
+    MHRA_APPROVAL = "mhra_approval"
+    TGA_APPROVAL = "tga_approval"
+    REGULATORY_SUBMISSION = "regulatory_submission"
+    SAFETY_REPORT = "safety_report"
+    RECALL_NOTICE = "recall_notice"
+
+
+class ComplianceEvidenceType(str, Enum):
+    """Compliance evidence types"""
+    HIPAA_DOCUMENTATION = "hipaa_documentation"
+    GDPR_COMPLIANCE = "gdpr_compliance"
+    ISO_CERTIFICATION = "iso_certification"
+    AUDIT_REPORT = "audit_report"
+    PRIVACY_POLICY = "privacy_policy"
+    SECURITY_ASSESSMENT = "security_assessment"
+    CONSENT_FRAMEWORK = "consent_framework"
+    DATA_PROTECTION = "data_protection"
+
+
+# ============================================================================
+# EVIDENCE QUALITY
+# ============================================================================
+
+class EvidenceQuality(Enum):
+    """Evidence quality levels (GRADE system)"""
+    HIGH = "HIGH"
+    MODERATE = "MODERATE"
+    LOW = "LOW"
+    VERY_LOW = "VERY_LOW"
+
+
+# ============================================================================
+# ENTITY TYPES
+# ============================================================================
+
 class EntityType(Enum):
-    """Types of medical entities"""
+    """Types of medical entities (legacy compatibility)"""
     DISEASE = "disease"
     DRUG = "drug"
     PROTEIN = "protein"
@@ -67,17 +158,44 @@ class EntityType(Enum):
     SYMPTOM = "symptom"
 
 
-class EvidenceQuality(Enum):
-    """Evidence quality levels (GRADE system)"""
-    HIGH = "high"  # High confidence in effect estimate
-    MODERATE = "moderate"  # Moderate confidence
-    LOW = "low"  # Low confidence
-    VERY_LOW = "very_low"  # Very low confidence
+class MedicalEntityType(str, Enum):
+    """Medical entity types"""
+    DISEASE = "DISEASE"
+    DRUG = "DRUG"
+    PROTEIN = "PROTEIN"
+    GENE = "GENE"
+    CHEMICAL = "CHEMICAL"
+    PROCEDURE = "PROCEDURE"
+    ANATOMY = "ANATOMY"
+    SYMPTOM = "SYMPTOM"
 
+
+class DigitalHealthEntityType(str, Enum):
+    """Digital Health entity types"""
+    DEVICE = "DEVICE"
+    PLATFORM = "PLATFORM"
+    ALGORITHM = "ALGORITHM"
+    SENSOR = "SENSOR"
+    APPLICATION = "APPLICATION"
+    FRAMEWORK = "FRAMEWORK"
+
+
+class RegulatoryEntityType(str, Enum):
+    """Regulatory entity types"""
+    REGULATORY_BODY = "REGULATORY_BODY"
+    APPROVAL_NUMBER = "APPROVAL_NUMBER"
+    SUBMISSION_TYPE = "SUBMISSION_TYPE"
+    REGULATION = "REGULATION"
+    STANDARD = "STANDARD"
+
+
+# ============================================================================
+# DATA STRUCTURES
+# ============================================================================
 
 @dataclass
 class MedicalEntity:
-    """Extracted medical entity"""
+    """Extracted medical entity (legacy compatibility)"""
     text: str
     entity_type: EntityType
     start: int
@@ -87,10 +205,21 @@ class MedicalEntity:
 
 
 @dataclass
+class Entity:
+    """Detected entity (multi-domain)"""
+    text: str
+    entity_type: str
+    domain: EvidenceDomain
+    start_pos: int
+    end_pos: int
+    confidence: float
+
+
+@dataclass
 class Citation:
     """Medical citation"""
     text: str
-    pmid: Optional[str] = None  # PubMed ID
+    pmid: Optional[str] = None
     doi: Optional[str] = None
     authors: Optional[List[str]] = None
     title: Optional[str] = None
@@ -98,33 +227,43 @@ class Citation:
     year: Optional[int] = None
     url: Optional[str] = None
     confidence: float = 0.0
+    citation_type: Optional[str] = None  # pmid, doi, url, author_year
+    source: Optional[str] = None
 
 
 @dataclass
 class Evidence:
-    """Detected medical evidence"""
+    """Detected evidence (unified structure)"""
     text: str
-    evidence_type: EvidenceType
+    evidence_type: str
     quality: EvidenceQuality
     confidence: float
-    entities: List[MedicalEntity]
+    entities: List[Any]  # MedicalEntity or Entity
     citations: List[Citation]
-    start: int
-    end: int
+    start: int = 0
+    end: int = 0
     context: Optional[str] = None
     reasoning: Optional[str] = None
+    domain: Optional[EvidenceDomain] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 # ============================================================================
-# EVIDENCE DETECTOR
+# UNIFIED EVIDENCE DETECTOR
 # ============================================================================
 
 class EvidenceDetector:
     """
-    Detects and extracts medical evidence from text using SciBERT
+    Unified Multi-Domain Evidence Detector
+
+    Detects and extracts evidence from text across multiple domains:
+    - Medical/Clinical (SciBERT + BioBERT)
+    - Digital Health (mHealth, telehealth, wearables)
+    - Regulatory (FDA, EMA, MHRA, TGA)
+    - Compliance (HIPAA, GDPR, ISO)
 
     Features:
-    - Medical entity recognition (diseases, drugs, procedures)
+    - Entity recognition (domain-specific)
     - Evidence type classification
     - Citation extraction and validation
     - Quality assessment (GRADE system)
@@ -145,73 +284,74 @@ class EvidenceDetector:
             biobert_ner_model: BioBERT NER model name
             device: Device to run models on (cuda/cpu)
         """
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device or get_device()
         logger.info(f"Initializing EvidenceDetector on device: {self.device}")
 
-        # Load models
+        # Initialize ML models (with graceful degradation)
         self._load_models(scibert_model, biobert_ner_model)
 
-        # Load spaCy for additional NLP tasks (graceful degradation)
-        self.nlp = None
-        try:
-            self.nlp = spacy.load("en_core_sci_md")  # scispaCy model
-            logger.info("Loaded scispaCy model: en_core_sci_md")
-        except OSError:
-            logger.warning("scispaCy model not found, trying default model")
-            try:
-                self.nlp = spacy.load("en_core_web_sm")
-                logger.info("Loaded spaCy model: en_core_web_sm")
-            except OSError:
-                logger.warning("No spaCy models available - NLP features will be limited")
+        # Load spaCy using centralized utility
+        self.nlp = load_spacy_model("en_core_sci_md")
 
-        # Citation patterns
+        # Initialize patterns
         self._citation_patterns = self._compile_citation_patterns()
-
-        # Evidence keywords
         self._evidence_keywords = self._load_evidence_keywords()
+        self._initialize_domain_patterns()
 
     def _load_models(self, scibert_model: str, biobert_ner_model: str):
-        """Load SciBERT and BioBERT models"""
-        logger.info("Loading SciBERT tokenizer and model...")
+        """Load SciBERT and BioBERT models with graceful degradation"""
+        self.tokenizer = None
+        self.model = None
+        self.evidence_classifier = None
+        self.ner_pipeline = None
+        self.medical_ner = None
 
-        # SciBERT for sequence classification (evidence type)
-        self.tokenizer = AutoTokenizer.from_pretrained(scibert_model)
-        self.evidence_classifier = AutoModelForSequenceClassification.from_pretrained(
-            scibert_model,
-            num_labels=len(EvidenceType)
-        ).to(self.device)
+        if not TRANSFORMERS_AVAILABLE:
+            logger.warning("Transformers not available - ML features disabled")
+            return
 
-        # BioBERT for NER
-        logger.info("Loading BioBERT NER pipeline...")
-        self.ner_pipeline = pipeline(
-            "ner",
-            model=biobert_ner_model,
-            tokenizer=biobert_ner_model,
-            device=0 if self.device == "cuda" else -1,
-            aggregation_strategy="simple"
-        )
+        if not TORCH_AVAILABLE:
+            logger.warning("PyTorch not available - ML features disabled")
+            return
 
-        logger.info("Models loaded successfully")
+        try:
+            logger.info("Loading SciBERT tokenizer and model...")
+
+            # SciBERT for embeddings and sequence classification
+            self.tokenizer = AutoTokenizer.from_pretrained(scibert_model)
+            self.model = AutoModel.from_pretrained(scibert_model)
+
+            if self.device == "cuda":
+                self.model = self.model.to(self.device)
+
+            # BioBERT for NER
+            logger.info("Loading BioBERT NER pipeline...")
+            device_id = 0 if self.device == "cuda" else -1
+            self.ner_pipeline = pipeline(
+                "ner",
+                model=biobert_ner_model,
+                tokenizer=biobert_ner_model,
+                device=device_id,
+                aggregation_strategy="simple"
+            )
+            self.medical_ner = self.ner_pipeline  # Alias for compatibility
+
+            logger.info("Models loaded successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to load ML models: {e}")
+            logger.warning("Continuing with pattern-based detection only")
 
     def _compile_citation_patterns(self) -> Dict[str, re.Pattern]:
         """Compile regex patterns for citation extraction"""
         return {
-            # PubMed ID: PMID: 12345678 or PMID 12345678
             "pmid": re.compile(r'PMID:?\s*(\d{7,8})', re.IGNORECASE),
-
-            # DOI: 10.1234/journal.year.12345
             "doi": re.compile(r'doi:?\s*(10\.\d{4,}/[^\s]+)', re.IGNORECASE),
-
-            # Author et al., Year
             "author_year": re.compile(r'([A-Z][a-z]+(?:\s+et\s+al\.)?),?\s+\((\d{4})\)'),
-
-            # Journal citation: Journal Name. Year;Volume(Issue):Pages
             "journal": re.compile(
                 r'([A-Z][a-zA-Z\s&]+)\.\s+(\d{4});(\d+)(?:\((\d+)\))?:(\d+(?:-\d+)?)',
                 re.IGNORECASE
             ),
-
-            # URL to papers
             "url": re.compile(
                 r'https?://(?:www\.)?(?:ncbi\.nlm\.nih\.gov/pubmed/|doi\.org/|pubmed\.ncbi\.nlm\.nih\.gov/)([^\s]+)'
             )
@@ -254,92 +394,150 @@ class EvidenceDetector:
             ]
         }
 
+    def _initialize_domain_patterns(self):
+        """Initialize domain-specific detection patterns"""
+
+        # Medical evidence patterns
+        self.medical_patterns = {
+            MedicalEvidenceType.CLINICAL_TRIAL: [
+                r"clinical trial", r"randomized controlled trial", r"RCT",
+                r"double-blind", r"placebo-controlled"
+            ],
+            MedicalEvidenceType.SYSTEMATIC_REVIEW: [
+                r"systematic review", r"meta-analysis", r"Cochrane review"
+            ],
+            MedicalEvidenceType.GUIDELINE: [
+                r"clinical guideline", r"practice guideline", r"recommendation",
+                r"ADA guideline", r"NICE guideline"
+            ]
+        }
+
+        # Digital Health patterns
+        self.digital_health_patterns = {
+            DigitalHealthEvidenceType.MHEALTH_STUDY: [
+                r"mobile health", r"mHealth", r"health app", r"smartphone intervention"
+            ],
+            DigitalHealthEvidenceType.TELEHEALTH_TRIAL: [
+                r"telehealth", r"telemedicine", r"remote consultation", r"virtual care"
+            ],
+            DigitalHealthEvidenceType.WEARABLE_VALIDATION: [
+                r"wearable device", r"fitness tracker", r"smartwatch", r"continuous monitoring"
+            ],
+            DigitalHealthEvidenceType.AI_ML_VALIDATION: [
+                r"machine learning", r"artificial intelligence", r"deep learning",
+                r"AI algorithm", r"predictive model"
+            ],
+            DigitalHealthEvidenceType.DIGITAL_THERAPEUTIC: [
+                r"digital therapeutic", r"DTx", r"prescription digital therapeutic"
+            ],
+            DigitalHealthEvidenceType.REMOTE_MONITORING: [
+                r"remote patient monitoring", r"RPM", r"continuous glucose monitor",
+                r"home monitoring"
+            ]
+        }
+
+        # Regulatory patterns
+        self.regulatory_patterns = {
+            RegulatoryEvidenceType.FDA_APPROVAL: [
+                r"FDA approved", r"FDA clearance", r"510\(k\)",
+                r"PMA approval", r"De Novo classification"
+            ],
+            RegulatoryEvidenceType.EMA_APPROVAL: [
+                r"EMA approved", r"European Medicines Agency", r"CE mark",
+                r"CHMP recommendation"
+            ],
+            RegulatoryEvidenceType.MHRA_APPROVAL: [
+                r"MHRA approved", r"UK approved",
+                r"Medicines and Healthcare products Regulatory Agency"
+            ],
+            RegulatoryEvidenceType.TGA_APPROVAL: [
+                r"TGA approved", r"Therapeutic Goods Administration", r"Australian approved"
+            ],
+            RegulatoryEvidenceType.FDA_GUIDANCE: [
+                r"FDA guidance", r"draft guidance", r"final guidance", r"industry guidance"
+            ]
+        }
+
+        # Compliance patterns
+        self.compliance_patterns = {
+            ComplianceEvidenceType.HIPAA_DOCUMENTATION: [
+                r"HIPAA compliant", r"Protected Health Information", r"PHI",
+                r"HIPAA Security Rule", r"HIPAA Privacy Rule"
+            ],
+            ComplianceEvidenceType.GDPR_COMPLIANCE: [
+                r"GDPR compliant", r"General Data Protection Regulation",
+                r"data subject rights", r"right to be forgotten", r"data processing agreement"
+            ],
+            ComplianceEvidenceType.ISO_CERTIFICATION: [
+                r"ISO 13485", r"ISO 27001", r"ISO certified", r"quality management system"
+            ],
+            ComplianceEvidenceType.SECURITY_ASSESSMENT: [
+                r"penetration test", r"security audit", r"vulnerability assessment",
+                r"risk assessment"
+            ]
+        }
+
+        # Regulatory body patterns
+        self.regulatory_bodies = {
+            "FDA": ["FDA", "Food and Drug Administration", "U.S. FDA"],
+            "EMA": ["EMA", "European Medicines Agency", "CHMP"],
+            "MHRA": ["MHRA", "Medicines and Healthcare products Regulatory Agency"],
+            "TGA": ["TGA", "Therapeutic Goods Administration"],
+            "HIPAA": ["HIPAA", "Health Insurance Portability"],
+            "GDPR": ["GDPR", "General Data Protection Regulation"]
+        }
+
     # ========================================================================
-    # MAIN DETECTION METHODS
+    # DOMAIN DETECTION
     # ========================================================================
 
-    async def detect_evidence(
-        self,
-        text: str,
-        min_confidence: float = 0.7,
-        include_context: bool = True
-    ) -> List[Evidence]:
+    def detect_domain(self, text: str) -> List[EvidenceDomain]:
         """
-        Detect medical evidence in text
-
-        Args:
-            text: Text to analyze
-            min_confidence: Minimum confidence threshold
-            include_context: Include surrounding context
+        Detect which domains are relevant for the text
 
         Returns:
-            List of detected evidence
+            List of applicable domains
         """
-        # Run detections in parallel
-        entities_task = self.extract_entities(text)
-        citations_task = self.extract_citations(text)
-        evidence_spans_task = self._identify_evidence_spans(text)
+        domains = []
+        text_lower = text.lower()
 
-        entities, citations, evidence_spans = await asyncio.gather(
-            entities_task,
-            citations_task,
-            evidence_spans_task
-        )
+        # Medical domain indicators
+        medical_keywords = [
+            "patient", "clinical", "disease", "treatment", "drug",
+            "diagnosis", "therapy", "medical", "healthcare"
+        ]
+        if any(kw in text_lower for kw in medical_keywords):
+            domains.append(EvidenceDomain.MEDICAL)
 
-        # Build evidence objects
-        evidence_list = []
+        # Digital Health indicators
+        digital_health_keywords = [
+            "mhealth", "telehealth", "wearable", "app", "digital",
+            "remote monitoring", "telemedicine", "ai", "machine learning"
+        ]
+        if any(kw in text_lower for kw in digital_health_keywords):
+            domains.append(EvidenceDomain.DIGITAL_HEALTH)
 
-        for span_start, span_end, span_text in evidence_spans:
-            # Classify evidence type
-            evidence_type = await self._classify_evidence_type(span_text)
+        # Regulatory indicators
+        regulatory_keywords = [
+            "fda", "ema", "mhra", "tga", "approval", "clearance",
+            "regulatory", "submission", "guidance", "510(k)", "510k"
+        ]
+        if any(kw in text_lower for kw in regulatory_keywords):
+            domains.append(EvidenceDomain.REGULATORY)
 
-            # Assess quality
-            quality = await self._assess_evidence_quality(
-                span_text, evidence_type, citations
-            )
+        # Compliance indicators
+        compliance_keywords = [
+            "hipaa", "gdpr", "compliance", "privacy", "security",
+            "audit", "certification", "iso"
+        ]
+        if any(kw in text_lower for kw in compliance_keywords):
+            domains.append(EvidenceDomain.COMPLIANCE)
 
-            # Calculate confidence
-            confidence = await self._calculate_evidence_confidence(
-                span_text, evidence_type, quality, entities, citations
-            )
+        # Default to medical if no domain detected
+        if not domains:
+            domains.append(EvidenceDomain.MEDICAL)
 
-            if confidence >= min_confidence:
-                # Filter entities and citations in this span
-                span_entities = [
-                    e for e in entities
-                    if e.start >= span_start and e.end <= span_end
-                ]
-                span_citations = [
-                    c for c in citations
-                    if span_text.find(c.text) >= 0
-                ]
-
-                # Get context
-                context = None
-                if include_context:
-                    context = self._extract_context(text, span_start, span_end)
-
-                # Build reasoning
-                reasoning = self._generate_reasoning(
-                    evidence_type, quality, span_entities, span_citations
-                )
-
-                evidence = Evidence(
-                    text=span_text,
-                    evidence_type=evidence_type,
-                    quality=quality,
-                    confidence=confidence,
-                    entities=span_entities,
-                    citations=span_citations,
-                    start=span_start,
-                    end=span_end,
-                    context=context,
-                    reasoning=reasoning
-                )
-
-                evidence_list.append(evidence)
-
-        return evidence_list
+        return domains
 
     # ========================================================================
     # ENTITY EXTRACTION
@@ -348,56 +546,128 @@ class EvidenceDetector:
     async def extract_entities(
         self,
         text: str,
-        min_confidence: float = 0.7
-    ) -> List[MedicalEntity]:
+        min_confidence: float = 0.7,
+        domain: Optional[EvidenceDomain] = None
+    ) -> List[Any]:
         """
-        Extract medical entities using BioBERT NER
+        Extract entities from text
 
         Args:
             text: Text to analyze
             min_confidence: Minimum confidence threshold
+            domain: Optional domain filter
 
         Returns:
-            List of medical entities
+            List of entities (MedicalEntity or Entity)
         """
-        # Run NER pipeline
-        ner_results = self.ner_pipeline(text)
-
         entities = []
 
-        for result in ner_results:
-            # Map BioBERT labels to our EntityType
-            entity_type = self._map_ner_label(result['entity_group'])
-
-            if entity_type and result['score'] >= min_confidence:
-                entity = MedicalEntity(
-                    text=result['word'],
-                    entity_type=entity_type,
-                    start=result['start'],
-                    end=result['end'],
-                    confidence=result['score']
-                )
-                entities.append(entity)
-
-        # Also use scispaCy for additional entities (if available)
-        if self.nlp is not None:
-            doc = self.nlp(text)
-
-            for ent in doc.ents:
-                entity_type = self._map_spacy_label(ent.label_)
-
-                if entity_type:
-                    entity = MedicalEntity(
-                        text=ent.text,
-                        entity_type=entity_type,
-                        start=ent.start_char,
-                        end=ent.end_char,
-                        confidence=0.8  # Default confidence for spaCy
-                    )
-
-                    # Avoid duplicates
-                    if not any(e.text == entity.text for e in entities):
+        # Use BioBERT NER if available
+        if self.ner_pipeline:
+            try:
+                ner_results = self.ner_pipeline(text)
+                for result in ner_results:
+                    entity_type = self._map_ner_label(result.get('entity_group', result.get('entity', '')))
+                    if entity_type and result['score'] >= min_confidence:
+                        entity = MedicalEntity(
+                            text=result['word'],
+                            entity_type=entity_type,
+                            start=result['start'],
+                            end=result['end'],
+                            confidence=result['score']
+                        )
                         entities.append(entity)
+            except Exception as e:
+                logger.warning(f"NER pipeline failed: {e}")
+
+        # Use spaCy if available
+        if self.nlp is not None:
+            try:
+                doc = self.nlp(text)
+                for ent in doc.ents:
+                    entity_type = self._map_spacy_label(ent.label_)
+                    if entity_type:
+                        entity = MedicalEntity(
+                            text=ent.text,
+                            entity_type=entity_type,
+                            start=ent.start_char,
+                            end=ent.end_char,
+                            confidence=0.8
+                        )
+                        if not any(e.text == entity.text for e in entities):
+                            entities.append(entity)
+            except Exception as e:
+                logger.warning(f"spaCy NER failed: {e}")
+
+        # Domain-specific extraction
+        if domain:
+            entities.extend(await self._extract_domain_entities(text, domain))
+
+        return entities
+
+    async def _extract_domain_entities(self, text: str, domain: EvidenceDomain) -> List[Entity]:
+        """Extract domain-specific entities using patterns"""
+        entities = []
+
+        if domain == EvidenceDomain.DIGITAL_HEALTH:
+            # Device patterns
+            for match in re.finditer(r'\b(smartwatch|fitness tracker|wearable|CGM|sensor|monitor)\b', text, re.IGNORECASE):
+                entities.append(Entity(
+                    text=match.group(0),
+                    entity_type=DigitalHealthEntityType.DEVICE.value,
+                    domain=domain,
+                    start_pos=match.start(),
+                    end_pos=match.end(),
+                    confidence=0.85
+                ))
+
+            # Algorithm patterns
+            for match in re.finditer(r'\b(AI|machine learning|deep learning|algorithm|model)\b', text, re.IGNORECASE):
+                entities.append(Entity(
+                    text=match.group(0),
+                    entity_type=DigitalHealthEntityType.ALGORITHM.value,
+                    domain=domain,
+                    start_pos=match.start(),
+                    end_pos=match.end(),
+                    confidence=0.80
+                ))
+
+        elif domain == EvidenceDomain.REGULATORY:
+            # Regulatory bodies
+            for body, patterns in self.regulatory_bodies.items():
+                for pattern in patterns:
+                    for match in re.finditer(rf'\b{re.escape(pattern)}\b', text, re.IGNORECASE):
+                        entities.append(Entity(
+                            text=match.group(0),
+                            entity_type=RegulatoryEntityType.REGULATORY_BODY.value,
+                            domain=domain,
+                            start_pos=match.start(),
+                            end_pos=match.end(),
+                            confidence=0.95
+                        ))
+
+            # Approval numbers
+            for match in re.finditer(r'\b(K\d{6}|P\d{6}|BLA \d{6}|NDA \d{6})\b', text):
+                entities.append(Entity(
+                    text=match.group(0),
+                    entity_type=RegulatoryEntityType.APPROVAL_NUMBER.value,
+                    domain=domain,
+                    start_pos=match.start(),
+                    end_pos=match.end(),
+                    confidence=0.90
+                ))
+
+        elif domain == EvidenceDomain.COMPLIANCE:
+            # Standards
+            for match in re.finditer(r'\b(ISO \d{5}|NIST|HITRUST|SOC 2)\b', text):
+                entities.append(Entity(
+                    text=match.group(0),
+                    entity_type=RegulatoryEntityType.STANDARD.value,
+                    domain=domain,
+                    start_pos=match.start(),
+                    end_pos=match.end(),
+                    confidence=0.90
+                ))
 
         return entities
 
@@ -411,10 +681,7 @@ class EvidenceDetector:
             "DRUG": EntityType.DRUG,
             "ANATOMY": EntityType.ANATOMY
         }
-
-        # Extract base label (remove B- or I- prefix)
         base_label = label.split('-')[-1] if '-' in label else label
-
         return label_mapping.get(base_label.upper())
 
     def _map_spacy_label(self, label: str) -> Optional[EntityType]:
@@ -426,22 +693,15 @@ class EvidenceDetector:
             "SYMPTOM": EntityType.SYMPTOM,
             "ANATOMY": EntityType.ANATOMY
         }
-
         return label_mapping.get(label.upper())
 
     # ========================================================================
     # CITATION EXTRACTION
     # ========================================================================
 
-    async def extract_citations(
-        self,
-        text: str
-    ) -> List[Citation]:
+    async def extract_citations(self, text: str) -> List[Citation]:
         """
         Extract citations from text
-
-        Args:
-            text: Text to analyze
 
         Returns:
             List of citations
@@ -451,346 +711,343 @@ class EvidenceDetector:
         # Extract PMIDs
         for match in self._citation_patterns["pmid"].finditer(text):
             pmid = match.group(1)
-            citation = Citation(
+            citations.append(Citation(
                 text=match.group(0),
                 pmid=pmid,
                 url=f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
-                confidence=0.95
-            )
-            citations.append(citation)
+                confidence=0.95,
+                citation_type="pmid",
+                source="PubMed"
+            ))
 
         # Extract DOIs
         for match in self._citation_patterns["doi"].finditer(text):
             doi = match.group(1)
-            citation = Citation(
+            citations.append(Citation(
                 text=match.group(0),
                 doi=doi,
                 url=f"https://doi.org/{doi}",
-                confidence=0.95
-            )
-            citations.append(citation)
+                confidence=0.95,
+                citation_type="doi"
+            ))
 
         # Extract author-year citations
         for match in self._citation_patterns["author_year"].finditer(text):
             authors = [match.group(1)]
             year = int(match.group(2))
-            citation = Citation(
+            citations.append(Citation(
                 text=match.group(0),
                 authors=authors,
                 year=year,
-                confidence=0.80
-            )
-            citations.append(citation)
+                confidence=0.80,
+                citation_type="author_year"
+            ))
 
         # Extract journal citations
         for match in self._citation_patterns["journal"].finditer(text):
             journal = match.group(1).strip()
             year = int(match.group(2))
-            citation = Citation(
+            citations.append(Citation(
                 text=match.group(0),
                 journal=journal,
                 year=year,
-                confidence=0.85
-            )
-            citations.append(citation)
+                confidence=0.85,
+                citation_type="journal"
+            ))
 
         # Extract URLs
         for match in self._citation_patterns["url"].finditer(text):
             url = match.group(0)
-            citation = Citation(
+            citations.append(Citation(
                 text=url,
                 url=url,
-                confidence=0.90
-            )
-            citations.append(citation)
+                confidence=0.90,
+                citation_type="url"
+            ))
 
         return citations
 
-    async def validate_citation(
-        self,
-        citation: Citation
-    ) -> Tuple[bool, Optional[Dict[str, Any]]]:
-        """
-        Validate citation against PubMed/CrossRef
-
-        Args:
-            citation: Citation to validate
-
-        Returns:
-            (is_valid, metadata) tuple
-        """
-        # This would connect to PubMed/CrossRef APIs
-        # For now, return placeholder
-
-        if citation.pmid:
-            # TODO: Query PubMed API
-            return True, {
-                "source": "pubmed",
-                "pmid": citation.pmid,
-                "validated": True
-            }
-
-        if citation.doi:
-            # TODO: Query CrossRef API
-            return True, {
-                "source": "crossref",
-                "doi": citation.doi,
-                "validated": True
-            }
-
-        return False, None
-
     # ========================================================================
-    # EVIDENCE CLASSIFICATION
+    # EVIDENCE TYPE CLASSIFICATION
     # ========================================================================
 
-    async def _identify_evidence_spans(
+    async def classify_evidence_type(
         self,
-        text: str
-    ) -> List[Tuple[int, int, str]]:
-        """
-        Identify spans of text containing evidence
-
-        Returns:
-            List of (start, end, text) tuples
-        """
-        spans = []
-
-        # Split into sentences (with fallback if spaCy unavailable)
-        if self.nlp is not None:
-            doc = self.nlp(text)
-            for sent in doc.sents:
-                sent_text = sent.text.strip()
-                if self._contains_evidence_keywords(sent_text):
-                    spans.append((sent.start_char, sent.end_char, sent_text))
-        else:
-            # Fallback: simple regex-based sentence splitting
-            sentence_pattern = re.compile(r'[^.!?]+[.!?]+')
-            pos = 0
-            for match in sentence_pattern.finditer(text):
-                sent_text = match.group().strip()
-                if self._contains_evidence_keywords(sent_text):
-                    spans.append((match.start(), match.end(), sent_text))
-
-        # Merge adjacent sentences with evidence
-        merged_spans = self._merge_adjacent_spans(spans, text)
-
-        return merged_spans
-
-    def _contains_evidence_keywords(self, text: str) -> bool:
-        """Check if text contains evidence keywords"""
-        text_lower = text.lower()
-
-        for evidence_type, keywords in self._evidence_keywords.items():
-            if any(keyword in text_lower for keyword in keywords):
-                return True
-
-        # Also check for citation indicators
-        if any(pattern.search(text) for pattern in self._citation_patterns.values()):
-            return True
-
-        return False
-
-    def _merge_adjacent_spans(
-        self,
-        spans: List[Tuple[int, int, str]],
         text: str,
-        max_gap: int = 50
-    ) -> List[Tuple[int, int, str]]:
-        """Merge adjacent evidence spans"""
-        if not spans:
-            return []
-
-        sorted_spans = sorted(spans, key=lambda x: x[0])
-        merged = [sorted_spans[0]]
-
-        for current_start, current_end, _ in sorted_spans[1:]:
-            last_start, last_end, _ = merged[-1]
-
-            # Merge if gap is small
-            if current_start - last_end <= max_gap:
-                merged_text = text[last_start:current_end]
-                merged[-1] = (last_start, current_end, merged_text)
-            else:
-                merged.append((current_start, current_end, text[current_start:current_end]))
-
-        return merged
-
-    async def _classify_evidence_type(
-        self,
-        text: str
-    ) -> EvidenceType:
+        domain: Optional[EvidenceDomain] = None
+    ) -> str:
         """
-        Classify evidence type using keyword matching and ML
+        Classify evidence type
 
         Args:
-            text: Evidence text
+            text: Input text
+            domain: Evidence domain (auto-detected if not provided)
 
         Returns:
-            Evidence type
+            Evidence type string
         """
         text_lower = text.lower()
 
-        # Keyword-based classification
-        type_scores = {}
+        if domain is None:
+            domains = self.detect_domain(text)
+            domain = domains[0] if domains else EvidenceDomain.MEDICAL
 
-        for evidence_type, keywords in self._evidence_keywords.items():
-            score = sum(1 for keyword in keywords if keyword in text_lower)
-            type_scores[evidence_type] = score
+        if domain == EvidenceDomain.MEDICAL:
+            return self._classify_medical_evidence(text_lower)
+        elif domain == EvidenceDomain.DIGITAL_HEALTH:
+            return self._classify_digital_health_evidence(text_lower)
+        elif domain == EvidenceDomain.REGULATORY:
+            return self._classify_regulatory_evidence(text_lower)
+        elif domain == EvidenceDomain.COMPLIANCE:
+            return self._classify_compliance_evidence(text_lower)
 
-        # Get type with highest score
-        if type_scores:
-            best_type = max(type_scores, key=type_scores.get)
-            if type_scores[best_type] > 0:
-                return best_type
+        return MedicalEvidenceType.EXPERT_OPINION.value
 
-        # Default to expert opinion if no keywords match
-        return EvidenceType.EXPERT_OPINION
+    def _classify_medical_evidence(self, text: str) -> str:
+        """Classify medical evidence type"""
+        for evidence_type, patterns in self.medical_patterns.items():
+            for pattern in patterns:
+                if re.search(pattern, text, re.IGNORECASE):
+                    return evidence_type.value
+        return MedicalEvidenceType.EXPERT_OPINION.value
 
-    async def _assess_evidence_quality(
+    def _classify_digital_health_evidence(self, text: str) -> str:
+        """Classify digital health evidence type"""
+        for evidence_type, patterns in self.digital_health_patterns.items():
+            for pattern in patterns:
+                if re.search(pattern, text, re.IGNORECASE):
+                    return evidence_type.value
+        return DigitalHealthEvidenceType.HEALTH_APP_EVALUATION.value
+
+    def _classify_regulatory_evidence(self, text: str) -> str:
+        """Classify regulatory evidence type"""
+        for evidence_type, patterns in self.regulatory_patterns.items():
+            for pattern in patterns:
+                if re.search(pattern, text, re.IGNORECASE):
+                    return evidence_type.value
+        return RegulatoryEvidenceType.REGULATORY_SUBMISSION.value
+
+    def _classify_compliance_evidence(self, text: str) -> str:
+        """Classify compliance evidence type"""
+        for evidence_type, patterns in self.compliance_patterns.items():
+            for pattern in patterns:
+                if re.search(pattern, text, re.IGNORECASE):
+                    return evidence_type.value
+        return ComplianceEvidenceType.AUDIT_REPORT.value
+
+    # ========================================================================
+    # QUALITY ASSESSMENT
+    # ========================================================================
+
+    def assess_quality(
         self,
-        text: str,
-        evidence_type: EvidenceType,
-        citations: List[Citation]
+        evidence_type: str,
+        domain: Optional[EvidenceDomain] = None
     ) -> EvidenceQuality:
         """
-        Assess evidence quality using GRADE system
+        Assess evidence quality using domain-specific hierarchies
 
         Args:
-            text: Evidence text
-            evidence_type: Type of evidence
-            citations: Related citations
+            evidence_type: Evidence type string
+            domain: Evidence domain
 
         Returns:
-            Evidence quality level
+            Quality level
         """
-        # Base quality by evidence type (GRADE hierarchy)
-        quality_hierarchy = {
-            EvidenceType.SYSTEMATIC_REVIEW: EvidenceQuality.HIGH,
-            EvidenceType.META_ANALYSIS: EvidenceQuality.HIGH,
-            EvidenceType.CLINICAL_TRIAL: EvidenceQuality.MODERATE,
-            EvidenceType.OBSERVATIONAL_STUDY: EvidenceQuality.LOW,
-            EvidenceType.CASE_STUDY: EvidenceQuality.LOW,
-            EvidenceType.GUIDELINE: EvidenceQuality.MODERATE,
-            EvidenceType.LABORATORY_STUDY: EvidenceQuality.LOW,
-            EvidenceType.EXPERT_OPINION: EvidenceQuality.VERY_LOW
+        # Medical quality (GRADE system)
+        medical_quality = {
+            "systematic_review": EvidenceQuality.HIGH,
+            "meta_analysis": EvidenceQuality.HIGH,
+            "clinical_trial": EvidenceQuality.MODERATE,
+            "guideline": EvidenceQuality.MODERATE,
+            "observational_study": EvidenceQuality.LOW,
+            "case_study": EvidenceQuality.LOW,
+            "laboratory_study": EvidenceQuality.LOW,
+            "expert_opinion": EvidenceQuality.VERY_LOW
         }
 
-        base_quality = quality_hierarchy.get(evidence_type, EvidenceQuality.VERY_LOW)
+        # Regulatory quality
+        regulatory_quality = {
+            "fda_approval": EvidenceQuality.HIGH,
+            "ema_approval": EvidenceQuality.HIGH,
+            "mhra_approval": EvidenceQuality.HIGH,
+            "tga_approval": EvidenceQuality.HIGH,
+            "fda_guidance": EvidenceQuality.MODERATE,
+            "ema_guideline": EvidenceQuality.MODERATE,
+            "regulatory_submission": EvidenceQuality.LOW,
+            "safety_report": EvidenceQuality.MODERATE
+        }
 
-        # Upgrade if has citations
-        if len(citations) >= 3:
-            # Multiple citations → upgrade quality
-            quality_levels = [EvidenceQuality.VERY_LOW, EvidenceQuality.LOW,
-                            EvidenceQuality.MODERATE, EvidenceQuality.HIGH]
-            current_index = quality_levels.index(base_quality)
-            if current_index < len(quality_levels) - 1:
-                return quality_levels[current_index + 1]
+        # Compliance quality
+        compliance_quality = {
+            "iso_certification": EvidenceQuality.HIGH,
+            "audit_report": EvidenceQuality.HIGH,
+            "security_assessment": EvidenceQuality.MODERATE,
+            "hipaa_documentation": EvidenceQuality.MODERATE,
+            "gdpr_compliance": EvidenceQuality.MODERATE,
+            "privacy_policy": EvidenceQuality.LOW
+        }
 
-        # Downgrade if has limitation keywords
-        limitation_keywords = ["limitation", "bias", "small sample", "underpowered"]
-        if any(keyword in text.lower() for keyword in limitation_keywords):
-            quality_levels = [EvidenceQuality.VERY_LOW, EvidenceQuality.LOW,
-                            EvidenceQuality.MODERATE, EvidenceQuality.HIGH]
-            current_index = quality_levels.index(base_quality)
-            if current_index > 0:
-                return quality_levels[current_index - 1]
+        # Digital health quality
+        digital_health_quality = {
+            "ai_ml_validation": EvidenceQuality.HIGH,
+            "wearable_validation": EvidenceQuality.HIGH,
+            "telehealth_trial": EvidenceQuality.MODERATE,
+            "digital_therapeutic": EvidenceQuality.MODERATE,
+            "mhealth_study": EvidenceQuality.MODERATE,
+            "remote_monitoring": EvidenceQuality.LOW,
+            "health_app_evaluation": EvidenceQuality.LOW
+        }
 
-        return base_quality
+        # Try all quality maps
+        for quality_map in [medical_quality, regulatory_quality, compliance_quality, digital_health_quality]:
+            if evidence_type in quality_map:
+                return quality_map[evidence_type]
 
-    async def _calculate_evidence_confidence(
+        return EvidenceQuality.LOW
+
+    # ========================================================================
+    # CONFIDENCE CALCULATION
+    # ========================================================================
+
+    def calculate_confidence(
         self,
-        text: str,
-        evidence_type: EvidenceType,
         quality: EvidenceQuality,
-        entities: List[MedicalEntity],
-        citations: List[Citation]
+        entities: List[Any],
+        citations: List[Citation],
+        evidence_type: str
     ) -> float:
         """
-        Calculate confidence score for evidence
-
-        Args:
-            text: Evidence text
-            evidence_type: Type of evidence
-            quality: Quality assessment
-            entities: Medical entities
-            citations: Citations
+        Calculate confidence score
 
         Returns:
-            Confidence score (0.0-1.0)
+            Float between 0.0 and 1.0
         """
-        # Base confidence from quality
         quality_scores = {
-            EvidenceQuality.HIGH: 0.9,
-            EvidenceQuality.MODERATE: 0.75,
-            EvidenceQuality.LOW: 0.60,
-            EvidenceQuality.VERY_LOW: 0.45
+            EvidenceQuality.HIGH: 0.85,
+            EvidenceQuality.MODERATE: 0.70,
+            EvidenceQuality.LOW: 0.55,
+            EvidenceQuality.VERY_LOW: 0.40
         }
-
-        confidence = quality_scores.get(quality, 0.5)
+        confidence = quality_scores.get(quality, 0.50)
 
         # Boost for entities
         if len(entities) >= 3:
-            confidence = min(1.0, confidence * 1.1)
+            confidence *= 1.1
 
         # Boost for citations
-        if len(citations) > 0:
-            citation_boost = min(0.15, len(citations) * 0.05)
-            confidence = min(1.0, confidence + citation_boost)
+        citation_boost = min(0.15, len(citations) * 0.05)
+        confidence += citation_boost
 
-        # Boost for specific evidence types
-        if evidence_type in [EvidenceType.SYSTEMATIC_REVIEW, EvidenceType.META_ANALYSIS]:
-            confidence = min(1.0, confidence * 1.05)
+        # Boost for high-quality evidence types
+        high_quality_types = [
+            "systematic_review", "meta_analysis",
+            "fda_approval", "ema_approval",
+            "iso_certification", "ai_ml_validation"
+        ]
+        if evidence_type in high_quality_types:
+            confidence *= 1.05
 
-        return confidence
+        return min(confidence, 1.0)
 
     # ========================================================================
-    # HELPER METHODS
+    # MAIN DETECTION
     # ========================================================================
 
-    def _extract_context(
+    async def detect_evidence(
         self,
         text: str,
-        start: int,
-        end: int,
-        context_chars: int = 100
-    ) -> str:
-        """Extract surrounding context for evidence span"""
-        context_start = max(0, start - context_chars)
-        context_end = min(len(text), end + context_chars)
+        min_confidence: float = 0.7,
+        include_context: bool = True,
+        domains: Optional[List[EvidenceDomain]] = None
+    ) -> List[Evidence]:
+        """
+        Detect evidence in text across all domains
 
-        context = text[context_start:context_end]
+        Args:
+            text: Text to analyze
+            min_confidence: Minimum confidence threshold
+            include_context: Include surrounding context
+            domains: Specific domains to check (auto-detect if None)
 
-        # Add ellipsis if truncated
-        if context_start > 0:
-            context = "..." + context
-        if context_end < len(text):
-            context = context + "..."
+        Returns:
+            List of detected evidence
+        """
+        evidence_list = []
 
-        return context
+        # Auto-detect domains if not specified
+        if domains is None:
+            domains = self.detect_domain(text)
+
+        # Extract citations once (shared across domains)
+        citations = await self.extract_citations(text)
+
+        # Process each domain
+        for domain in domains:
+            # Extract entities
+            entities = await self.extract_entities(text, domain=domain)
+
+            # Classify evidence type
+            evidence_type = await self.classify_evidence_type(text, domain)
+
+            # Assess quality
+            quality = self.assess_quality(evidence_type, domain)
+
+            # Calculate confidence
+            confidence = self.calculate_confidence(quality, entities, citations, evidence_type)
+
+            # Skip if below threshold
+            if confidence < min_confidence:
+                continue
+
+            # Generate reasoning
+            reasoning = self._generate_reasoning(domain, evidence_type, quality, entities, citations)
+
+            # Create evidence object
+            evidence = Evidence(
+                text=text[:500],
+                evidence_type=evidence_type,
+                quality=quality,
+                confidence=confidence,
+                entities=entities,
+                citations=citations,
+                domain=domain,
+                reasoning=reasoning,
+                metadata={
+                    "entity_count": len(entities),
+                    "citation_count": len(citations),
+                    "text_length": len(text)
+                }
+            )
+
+            evidence_list.append(evidence)
+
+        return evidence_list
 
     def _generate_reasoning(
         self,
-        evidence_type: EvidenceType,
+        domain: EvidenceDomain,
+        evidence_type: str,
         quality: EvidenceQuality,
-        entities: List[MedicalEntity],
+        entities: List[Any],
         citations: List[Citation]
     ) -> str:
-        """Generate human-readable reasoning for evidence"""
+        """Generate human-readable reasoning"""
         parts = []
 
-        # Evidence type
-        parts.append(f"Type: {evidence_type.value.replace('_', ' ').title()}")
+        parts.append(f"Domain: {domain.value.replace('_', ' ').title()}")
+        parts.append(f"Type: {evidence_type.replace('_', ' ').title()}")
+        parts.append(f"Quality: {quality.value}")
 
-        # Quality
-        parts.append(f"Quality: {quality.value.upper()}")
-
-        # Entities
         if entities:
-            entity_types = set(e.entity_type.value for e in entities)
-            parts.append(f"Entities: {', '.join(entity_types)}")
+            entity_types = list(set(
+                getattr(e, 'entity_type', e.entity_type if hasattr(e, 'entity_type') else 'unknown')
+                for e in entities[:3]
+            ))
+            # Convert EntityType enum to string if needed
+            entity_strs = [str(et.value) if hasattr(et, 'value') else str(et) for et in entity_types]
+            parts.append(f"Entities: {', '.join(entity_strs)}")
 
-        # Citations
         if citations:
             parts.append(f"Citations: {len(citations)}")
 
@@ -798,10 +1055,25 @@ class EvidenceDetector:
 
 
 # ============================================================================
-# SINGLETON INSTANCE
+# BACKWARD COMPATIBILITY: MultiDomainEvidenceDetector Alias
+# ============================================================================
+
+class MultiDomainEvidenceDetector(EvidenceDetector):
+    """
+    Backward compatibility alias for MultiDomainEvidenceDetector.
+
+    This class is now consolidated into EvidenceDetector.
+    Import from evidence_detector instead of multi_domain_evidence_detector.
+    """
+    pass
+
+
+# ============================================================================
+# SINGLETON INSTANCES
 # ============================================================================
 
 _evidence_detector_instance: Optional[EvidenceDetector] = None
+_multi_domain_detector: Optional[MultiDomainEvidenceDetector] = None
 
 
 def get_evidence_detector() -> EvidenceDetector:
@@ -817,3 +1089,58 @@ def get_evidence_detector() -> EvidenceDetector:
         _evidence_detector_instance = EvidenceDetector()
 
     return _evidence_detector_instance
+
+
+def get_multi_domain_detector() -> MultiDomainEvidenceDetector:
+    """
+    Get singleton multi-domain evidence detector (alias for compatibility)
+
+    Returns:
+        MultiDomainEvidenceDetector instance (same as EvidenceDetector)
+    """
+    global _multi_domain_detector
+
+    if _multi_domain_detector is None:
+        _multi_domain_detector = MultiDomainEvidenceDetector()
+
+    return _multi_domain_detector
+
+
+# ============================================================================
+# EXPORTS (for backward compatibility)
+# ============================================================================
+
+__all__ = [
+    # Main classes
+    "EvidenceDetector",
+    "MultiDomainEvidenceDetector",
+
+    # Singleton getters
+    "get_evidence_detector",
+    "get_multi_domain_detector",
+
+    # Domain types
+    "EvidenceDomain",
+
+    # Evidence types
+    "EvidenceType",
+    "MedicalEvidenceType",
+    "DigitalHealthEvidenceType",
+    "RegulatoryEvidenceType",
+    "ComplianceEvidenceType",
+
+    # Entity types
+    "EntityType",
+    "MedicalEntityType",
+    "DigitalHealthEntityType",
+    "RegulatoryEntityType",
+
+    # Quality
+    "EvidenceQuality",
+
+    # Data structures
+    "MedicalEntity",
+    "Entity",
+    "Citation",
+    "Evidence",
+]

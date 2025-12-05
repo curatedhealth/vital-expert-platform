@@ -566,8 +566,13 @@ export class BlueGreenDeploymentManager {
     // Validate all systems are operational
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-      typeof check === 'boolean' ? check : Object.values(check).every(Boolean)
+    const allHealthy = deployment.environments.blue.instances.every(i => i.healthy) &&
+                       deployment.environments.green.instances.every(i => i.healthy);
+    const allHealthChecks = Object.values(deployment.environments.blue.healthChecks).every(
+      (check) => typeof check === 'boolean' ? check : Object.values(check).every(Boolean)
     );
+    const healthcareCompliant = deployment.environments.blue.healthcareCompliance.hipaaCompliant &&
+                                deployment.environments.green.healthcareCompliance.hipaaCompliant;
 
     if (!allHealthy || !allHealthChecks || !healthcareCompliant) {
       throw new Error('Final validation failed - system not ready');
@@ -704,7 +709,7 @@ ${this.generateBlueGreenRecommendations(deployment)}
   }
 
   async cancelDeployment(deploymentId: string): Promise<void> {
-
+    const deployment = this.deployments.get(deploymentId);
     if (deployment && deployment.status !== 'completed') {
       await this.executeRollback(deployment, 'Deployment cancelled by user');
     }
@@ -712,7 +717,7 @@ ${this.generateBlueGreenRecommendations(deployment)}
 
   async getEnvironmentStatus(color: 'blue' | 'green'): Promise<BlueGreenEnvironment | undefined> {
     // Find the most recent deployment and return the environment status
-
+    const deployments = Array.from(this.deployments.values()).sort(
       (a, b) => b.startTime.getTime() - a.startTime.getTime()
     );
 

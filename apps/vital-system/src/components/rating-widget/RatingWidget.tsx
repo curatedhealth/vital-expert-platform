@@ -178,7 +178,7 @@ export function RatingWidget({
           ) : (
             <Star className={cn(
               sizeClasses[size],
-              'text-gray-300'
+              'text-neutral-300'
             )} />
           )}
         </button>

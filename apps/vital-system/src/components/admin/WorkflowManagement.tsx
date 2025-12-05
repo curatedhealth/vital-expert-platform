@@ -301,7 +301,7 @@ export function WorkflowManagement() {
       case 'paused':
         return <Badge className="bg-yellow-100 text-yellow-800">Paused</Badge>;
       case 'draft':
-        return <Badge className="bg-gray-100 text-gray-800">Draft</Badge>;
+        return <Badge className="bg-neutral-100 text-neutral-800">Draft</Badge>;
       case 'archived':
         return <Badge variant="secondary">Archived</Badge>;
       default:
@@ -372,7 +372,7 @@ export function WorkflowManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Draft</CardTitle>
-            <Clock className="h-4 w-4 text-gray-600" />
+            <Clock className="h-4 w-4 text-neutral-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.draft}</div>

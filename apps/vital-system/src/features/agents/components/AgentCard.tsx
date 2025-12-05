@@ -12,8 +12,10 @@ import {
   CheckCircle,
   Clock,
   Brain,
-  DollarSign
+  DollarSign,
+  ExternalLink
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import React from 'react';
 
 import { Badge } from '@vital/ui';
@@ -48,6 +50,8 @@ interface AgentCardProps {
   onExport?: (agent: Agent) => void;
   showMetrics?: boolean;
   showActions?: boolean;
+  /** Navigate to detail page on click instead of calling onSelect */
+  navigateToDetail?: boolean;
 }
 
 export const AgentCard: React.FC<AgentCardProps> = ({
@@ -60,11 +64,25 @@ export const AgentCard: React.FC<AgentCardProps> = ({
   onDuplicate,
   onExport,
   showMetrics = true,
-  showActions = true
+  showActions = true,
+  navigateToDetail = true
 }) => {
+  const router = useRouter();
+
   // Get business function name from function_id
   const { getFunctionName } = useBusinessFunctionMap();
   const { canEditAgent, canDeleteAgent, isSuperAdmin } = useUserRole();
+
+  // Handle card click - navigate to detail page or call onSelect
+  const handleCardClick = () => {
+    if (navigateToDetail) {
+      // Use slug if available, otherwise use id
+      const identifier = (agent as any).slug || agent.id;
+      router.push(`/agents/${identifier}`);
+    } else if (onSelect) {
+      onSelect(agent);
+    }
+  };
 
   // Get domain-specific color
   const getDomainColor = (domain: DomainExpertise) => {
@@ -79,7 +97,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
       pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Pending' },
       in_review: { color: 'bg-blue-100 text-blue-800', icon: Eye, label: 'In Review' },
       expired: { color: 'bg-red-100 text-red-800', icon: AlertTriangle, label: 'Expired' },
-      not_required: { color: 'bg-gray-100 text-gray-800', icon: CheckCircle, label: 'Not Required' }
+      not_required: { color: 'bg-neutral-100 text-neutral-800', icon: CheckCircle, label: 'Not Required' }
     };
     return displays[status || 'pending'];
   };
@@ -91,7 +109,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
       development: 'bg-blue-100 text-blue-800',
       testing: 'bg-yellow-100 text-yellow-800',
       deprecated: 'bg-red-100 text-red-800',
-      inactive: 'bg-gray-100 text-gray-800',
+      inactive: 'bg-neutral-100 text-neutral-800',
       planned: 'bg-purple-100 text-purple-800',
       pipeline: 'bg-indigo-100 text-indigo-800'
     };
@@ -182,7 +200,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
     <TooltipProvider>
       <Card
         className="agent-card hover:shadow-lg transition-all cursor-pointer group relative"
-        onClick={() => onSelect?.(agent)}
+        onClick={handleCardClick}
         style={{
           borderLeftWidth: '4px',
           borderLeftColor: agent.color || getDomainColor(agent.domain_expertise)
@@ -203,11 +221,11 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                 <h3 className="font-semibold text-base truncate">
                   {agent.display_name}
                 </h3>
-                <p className="text-sm text-gray-600 truncate">
+                <p className="text-sm text-neutral-600 truncate">
                   {agent.department || agent.business_function || 'General Purpose'}
                 </p>
                 {agent.role && (
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="text-xs text-neutral-500 truncate">
                     {agent.role}
                   </p>
                 )}
@@ -244,7 +262,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
           </div>
 
           {/* Description */}
-          <p className="text-sm text-gray-700 mb-3 line-clamp-2 leading-relaxed">
+          <p className="text-sm text-neutral-700 mb-3 line-clamp-2 leading-relaxed">
             {agent.description}
           </p>
 
@@ -278,14 +296,14 @@ export const AgentCard: React.FC<AgentCardProps> = ({
             {/* Capabilities */}
             <div className="flex flex-wrap gap-1">
               {agent.capabilities.slice(0, 3).map((cap, i) => (
-                <span key={i} className="text-xs bg-gray-100 px-2 py-1 rounded-md">
+                <span key={i} className="text-xs bg-neutral-100 px-2 py-1 rounded-md">
                   {cap}
                 </span>
               ))}
               {agent.capabilities.length > 3 && (
                 <Tooltip>
                   <TooltipTrigger>
-                    <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
+                    <span className="text-xs text-neutral-500 bg-neutral-50 px-2 py-1 rounded-md">
                       +{agent.capabilities.length - 3} more
                     </span>
                   </TooltipTrigger>
@@ -318,24 +336,24 @@ export const AgentCard: React.FC<AgentCardProps> = ({
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {agent.total_interactions !== undefined && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Interactions:</span>
+                    <span className="text-neutral-600">Interactions:</span>
                     <span className="font-medium">{agent.total_interactions.toLocaleString()}</span>
                   </div>
                 )}
                 {agent.error_rate !== undefined && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Error Rate:</span>
+                    <span className="text-neutral-600">Error Rate:</span>
                     <span className="font-medium">{(agent.error_rate * 100).toFixed(2)}%</span>
                   </div>
                 )}
                 {agent.average_response_time !== undefined && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Avg Response:</span>
+                    <span className="text-neutral-600">Avg Response:</span>
                     <span className="font-medium">{agent.average_response_time}ms</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-600 flex items-center gap-1">
+                  <span className="text-neutral-600 flex items-center gap-1">
                     <DollarSign className="h-3 w-3" />
                     Cost:
                   </span>
@@ -364,10 +382,10 @@ export const AgentCard: React.FC<AgentCardProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center justify-between pt-3 border-t border-neutral-100">
+            <div className="flex items-center gap-2 text-xs text-neutral-500">
               {agent.model && (
-                <span className="bg-gray-100 px-2 py-1 rounded">
+                <span className="bg-neutral-100 px-2 py-1 rounded">
                   {agent.model}
                 </span>
               )}
@@ -393,9 +411,10 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onClick={(e) => {
                     e.stopPropagation();
-                    onSelect?.(agent);
+                    const identifier = (agent as any).slug || agent.id;
+                    router.push(`/agents/${identifier}`);
                   }}>
-                    <Eye className="h-4 w-4 mr-2" />
+                    <ExternalLink className="h-4 w-4 mr-2" />
                     View Details
                   </DropdownMenuItem>
 

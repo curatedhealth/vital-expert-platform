@@ -50,7 +50,7 @@ const workspaceColors: Record<WorkspaceType, string> = {
   'payer': 'bg-green-500',
   'provider': 'bg-purple-500',
   'dtx-startup': 'bg-orange-500',
-  'general': 'bg-gray-500'
+  'general': 'bg-neutral-500'
 };
 
 export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({
@@ -66,23 +66,27 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const formatNumber = (num: number) => {
     if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
     return num.toString();
   };
 
+  const getWorkspaceStatus = (hasActiveConversations: boolean, recentActivity: boolean) => {
     if (hasActiveConversations && recentActivity) return 'active';
     if (hasActiveConversations) return 'idle';
     return 'ready';
   };
 
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'text-green-500';
       case 'idle': return 'text-yellow-500';
-      case 'ready': return 'text-gray-400';
-      default: return 'text-gray-400';
+      case 'ready': return 'text-neutral-400';
+      default: return 'text-neutral-400';
     }
   };
 
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active': return <Activity className="h-3 w-3" />;
       case 'idle': return <Clock className="h-3 w-3" />;
@@ -101,7 +105,7 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({
           className="w-full justify-between h-auto p-3 hover:bg-muted/50 transition-all duration-200"
         >
           <div className="flex items-center gap-3">
-            <div className={`w-6 h-6 rounded-lg ${currentWorkspace ? workspaceColors[currentWorkspace.type] : 'bg-gray-500'} flex items-center justify-center text-white text-xs font-medium`}>
+            <div className={`w-6 h-6 rounded-lg ${currentWorkspace ? workspaceColors[currentWorkspace.type] : 'bg-neutral-500'} flex items-center justify-center text-white text-xs font-medium`}>
               {currentWorkspace ? workspaceIcons[currentWorkspace.type] : '🔬'}
             </div>
             <div className="text-left">
@@ -307,7 +311,10 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({
       {isOpen && (
         <div
           className="fixed inset-0 z-40"
-          onClick=() => setIsOpen(false) onKeyDown=() => setIsOpen(false) role="button" tabIndex={0}
+          onClick={() => setIsOpen(false)}
+          onKeyDown={() => setIsOpen(false)}
+          role="button"
+          tabIndex={0}
         />
       )}
     </div>

@@ -133,7 +133,7 @@ export function ChatHistorySidebar({ className = '' }: ChatHistorySidebarProps) 
       case 'automatic': return 'bg-green-100 text-green-800';
       case 'autonomous': return 'bg-purple-100 text-purple-800';
       case 'multi-expert': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -142,11 +142,11 @@ export function ChatHistorySidebar({ className = '' }: ChatHistorySidebarProps) 
   // ============================================================================
 
   return (
-    <div className={`flex flex-col h-full bg-white border-r border-gray-200 ${className}`}>
+    <div className={`flex flex-col h-full bg-white border-r border-neutral-200 ${className}`}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-neutral-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Chat History</h2>
+          <h2 className="text-lg font-semibold text-neutral-900">Chat History</h2>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -168,7 +168,7 @@ export function ChatHistorySidebar({ className = '' }: ChatHistorySidebarProps) 
         
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
           <Input
             placeholder="Search chats..."
             value={searchQuery}
@@ -186,8 +186,8 @@ export function ChatHistorySidebar({ className = '' }: ChatHistorySidebarProps) 
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             </div>
           ) : filteredSessions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+            <div className="text-center py-8 text-neutral-500">
+              <MessageSquare className="h-8 w-8 mx-auto mb-2 text-neutral-300" />
               <p className="text-sm">
                 {searchQuery ? 'No chats match your search' : 'No chat history yet'}
               </p>
@@ -210,7 +210,7 @@ export function ChatHistorySidebar({ className = '' }: ChatHistorySidebarProps) 
                   className={`group relative rounded-lg p-3 cursor-pointer transition-colors ${
                     currentSession?.id === session.id
                       ? 'bg-blue-50 border border-blue-200'
-                      : 'hover:bg-gray-50'
+                      : 'hover:bg-neutral-50'
                   }`}
                   onClick={() => handleSessionClick(session.id)}
                 >
@@ -248,7 +248,7 @@ export function ChatHistorySidebar({ className = '' }: ChatHistorySidebarProps) 
                           </Button>
                         </div>
                       ) : (
-                        <h3 className="text-sm font-medium text-gray-900 truncate mb-1">
+                        <h3 className="text-sm font-medium text-neutral-900 truncate mb-1">
                           {session.title}
                         </h3>
                       )}
@@ -256,7 +256,7 @@ export function ChatHistorySidebar({ className = '' }: ChatHistorySidebarProps) 
                       {/* Agent and Mode */}
                       <div className="flex items-center gap-2 mb-1">
                         {session.agent_name && (
-                          <span className="text-xs text-gray-600 truncate">
+                          <span className="text-xs text-neutral-600 truncate">
                             {session.agent_name}
                           </span>
                         )}
@@ -269,7 +269,7 @@ export function ChatHistorySidebar({ className = '' }: ChatHistorySidebarProps) 
                       </div>
                       
                       {/* Metadata */}
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 text-xs text-neutral-500">
                         <span>{session.message_count} messages</span>
                         <span>•</span>
                         <span>{formatDate(session.last_message_at)}</span>
@@ -321,8 +321,8 @@ export function ChatHistorySidebar({ className = '' }: ChatHistorySidebarProps) 
       </ScrollArea>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200">
-        <div className="text-xs text-gray-500 text-center">
+      <div className="p-4 border-t border-neutral-200">
+        <div className="text-xs text-neutral-500 text-center">
           {sessions.length} chat{sessions.length !== 1 ? 's' : ''} total
         </div>
       </div>

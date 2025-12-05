@@ -60,7 +60,7 @@ export function ChatWelcomeScreen({
   onStop,
 }: ChatWelcomeScreenProps) {
   return (
-    <div className="flex-1 flex flex-col h-full bg-white">
+    <div className="flex-1 flex flex-col h-full bg-canvas-surface">
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col items-center justify-center h-full px-6">
           {/* Orchestrator Avatar and Info - Show when in automatic mode */}
@@ -75,14 +75,14 @@ export function ChatWelcomeScreen({
                   className="object-contain"
                 />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-1">
                 AI Agent Orchestrator
               </h2>
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="text-sm text-neutral-600 mb-3">
                 Automatic agent selection and escalation
               </p>
               {escalationHistory.length > 0 && (
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-neutral-600">
                   <Badge variant="outline" className="mr-2">
                     Tier {currentTier === 'human' ? 'Human Expert' : currentTier}
                   </Badge>
@@ -94,10 +94,10 @@ export function ChatWelcomeScreen({
 
           {/* Welcome message */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-normal text-gray-900 mb-4">
+            <h1 className="text-3xl font-normal text-neutral-900 mb-4">
               What&apos;s on the agenda today?
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-neutral-600 mb-6">
               Ask me anything about digital health, clinical trials, regulatory compliance, and more.
             </p>
             {isSelectingAgent && (
@@ -112,10 +112,10 @@ export function ChatWelcomeScreen({
           {recommendedAgents.length > 0 ? (
             <div className="w-full max-w-3xl mb-6">
               <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">
                   Which expert would you like to consult?
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-neutral-600">
                   Your question: &quot;{pendingMessage}&quot;
                 </p>
               </div>
@@ -143,7 +143,7 @@ export function ChatWelcomeScreen({
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-gray-900">
+                          <h4 className="font-semibold text-neutral-900">
                             {agent.display_name || agent.name}
                           </h4>
                           {index === 0 && (
@@ -157,10 +157,10 @@ export function ChatWelcomeScreen({
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">
+                        <p className="text-sm text-neutral-600 mb-2">
                           {agent.description}
                         </p>
-                        <p className="text-xs text-gray-500 italic">
+                        <p className="text-xs text-neutral-500 italic">
                           {agent.reasoning}
                         </p>
                       </div>
@@ -173,7 +173,7 @@ export function ChatWelcomeScreen({
                 <Button
                   variant="ghost"
                   onClick={onCancelRecommendation}
-                  className="text-sm text-gray-600"
+                  className="text-sm text-neutral-600"
                 >
                   Cancel and edit question
                 </Button>

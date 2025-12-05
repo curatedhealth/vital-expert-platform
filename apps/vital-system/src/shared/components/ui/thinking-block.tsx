@@ -66,9 +66,9 @@ interface ThinkingBlockProps {
     case 'planning':
       return 'bg-yellow-50 text-yellow-700 border-yellow-200';
     case 'execution':
-      return 'bg-gray-50 text-gray-700 border-gray-200';
+      return 'bg-neutral-50 text-neutral-700 border-neutral-200';
     default:
-      return 'bg-gray-50 text-gray-700 border-gray-200';
+      return 'bg-neutral-50 text-neutral-700 border-neutral-200';
   }
 };
 
@@ -82,13 +82,13 @@ const ConfidenceIndicator: React.FC<{ confidence: number }> = ({ confidence }) =
 
   return (
     <div className="flex items-center gap-1">
-      <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+      <div className="w-12 h-1.5 bg-neutral-200 rounded-full overflow-hidden">
         <div
           className={cn('h-full transition-all duration-300', getConfidenceColor(confidence))}
           style={{ width: `${confidence * 100}%` }}
         />
       </div>
-      <span className="text-xs text-gray-500">
+      <span className="text-xs text-neutral-500">
         {(confidence * 100).toFixed(0)}%
       </span>
     </div>
@@ -108,7 +108,7 @@ const TimestampDisplay: React.FC<{ timestamp: Date }> = ({ timestamp }) => {
   };
 
   return (
-    <span className="text-xs text-gray-400 font-mono">
+    <span className="text-xs text-neutral-400 font-mono">
       {formatTime(timestamp)}
     </span>
   );
@@ -134,16 +134,16 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
       className
     )}>
       <Collapsible open={expanded} onOpenChange={setExpanded}>
-        <CollapsibleTrigger className="w-full p-4 hover:bg-gray-50/50 transition-colors">
+        <CollapsibleTrigger className="w-full p-4 hover:bg-neutral-50/50 transition-colors">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 {expanded ? (
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                  <ChevronDown className="h-4 w-4 text-neutral-500" />
                 ) : (
-                  <ChevronRight className="h-4 w-4 text-gray-500" />
+                  <ChevronRight className="h-4 w-4 text-neutral-500" />
                 )}
-                <span className="font-medium text-gray-900 text-left">
+                <span className="font-medium text-neutral-900 text-left">
                   {title}
                 </span>
               </div>
@@ -166,12 +166,12 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
                       step.type === 'decision' && 'bg-green-400',
                       step.type === 'agent_selection' && 'bg-orange-400',
                       step.type === 'planning' && 'bg-yellow-400',
-                      step.type === 'execution' && 'bg-gray-400'
+                      step.type === 'execution' && 'bg-neutral-400'
                     )}
                   />
                 ))}
                 {totalSteps > 3 && (
-                  <div className="w-2 h-2 rounded-full bg-gray-300" />
+                  <div className="w-2 h-2 rounded-full bg-neutral-300" />
                 )}
               </div>
             </div>
@@ -217,13 +217,13 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
                 </h4>
 
                 {/* Step Content */}
-                <div className="text-sm text-gray-600 leading-relaxed">
+                <div className="text-sm text-neutral-600 leading-relaxed">
                   {step.content}
                 </div>
 
                 {/* Step Metadata */}
                 {step.metadata && Object.keys(step.metadata).length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-gray-200/50">
+                  <div className="mt-2 pt-2 border-t border-neutral-200/50">
                     <div className="flex flex-wrap gap-1">
                       {Object.entries(step.metadata).map(([key, value]) => (
                         <Badge

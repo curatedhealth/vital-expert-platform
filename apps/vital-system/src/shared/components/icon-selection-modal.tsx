@@ -116,10 +116,10 @@ export function IconSelectionModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] overflow-hidden">
         {/* Header */}
-        <div className="border-b border-gray-200 p-4 flex items-center justify-between">
+        <div className="border-b border-neutral-200 p-4 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Choose Icon</h2>
-            <p className="text-sm text-gray-500">Select an icon for your {category}</p>
+            <h2 className="text-lg font-semibold text-neutral-900">Choose Icon</h2>
+            <p className="text-sm text-neutral-500">Select an icon for your {category}</p>
           </div>
           <Button
             variant="ghost"
@@ -132,9 +132,9 @@ export function IconSelectionModal({
         </div>
 
         {/* Search */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-neutral-200">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400 h-4 w-4" />
             <Input
               placeholder="Search icons..."
               value={searchQuery}
@@ -148,11 +148,11 @@ export function IconSelectionModal({
         <div className="p-4 overflow-y-auto max-h-96">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-gray-500">Loading icons...</div>
+              <div className="text-neutral-500">Loading icons...</div>
             </div>
           ) : filteredIcons.length === 0 ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-gray-500">
+              <div className="text-neutral-500">
                 {searchQuery ? 'No icons found matching your search.' : 'No icons available.'}
               </div>
             </div>
@@ -167,7 +167,7 @@ export function IconSelectionModal({
                     transition-all duration-200 hover:scale-105 hover:shadow-md
                     ${selectedIcon === icon.id || selectedIcon === icon.file_url
                       ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      : 'border-neutral-200 hover:border-neutral-300'
                     }
                   `}
                   title={icon.display_name}
@@ -180,7 +180,7 @@ export function IconSelectionModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-4 flex justify-end space-x-2">
+        <div className="border-t border-neutral-200 p-4 flex justify-end space-x-2">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>

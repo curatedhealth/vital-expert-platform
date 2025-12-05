@@ -38,7 +38,7 @@ export function AgentDetailsModal({
             <span className={`px-3 py-1 rounded-full text-sm ${
               agent.status === 'active'
                 ? 'bg-green-100 text-green-800'
-                : 'bg-gray-100 text-gray-800'
+                : 'bg-neutral-100 text-neutral-800'
             }`}>
               {agent.status}
             </span>
@@ -51,7 +51,7 @@ export function AgentDetailsModal({
         <div className="space-y-6">
           <div>
             <h3 className="text-lg font-medium mb-2">Description</h3>
-            <p className="text-gray-600">{agent.description}</p>
+            <p className="text-neutral-600">{agent.description}</p>
           </div>
 
           {agent.capabilities && agent.capabilities.length > 0 && (
@@ -73,13 +73,13 @@ export function AgentDetailsModal({
           {agent.configuration && Object.keys(agent.configuration).length > 0 && (
             <div>
               <h3 className="text-lg font-medium mb-2">Configuration</h3>
-              <pre className="bg-gray-100 p-3 rounded text-sm overflow-x-auto">
+              <pre className="bg-neutral-100 p-3 rounded text-sm overflow-x-auto">
                 {JSON.stringify(agent.configuration, null, 2)}
               </pre>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+          <div className="grid grid-cols-2 gap-4 text-sm text-neutral-600">
             {agent.created_at && (
               <div>
                 <span className="font-medium">Created:</span>

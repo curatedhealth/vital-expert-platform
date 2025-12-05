@@ -13,7 +13,9 @@ import {
   ChevronDown,
   MessageSquare
 } from 'lucide-react';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, KeyboardEvent } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 import { AgentAvatar } from '@vital/ui';
 import { Badge } from '@vital/ui';
@@ -21,6 +23,7 @@ import { Button } from '@vital/ui';
 import { Card, CardContent } from '@vital/ui';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@vital/ui';
 import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui';
+import { Skeleton } from '@vital/ui';
 import { DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { AgentEditFormEnhanced } from './agent-edit-form-enhanced';
@@ -30,6 +33,7 @@ import type { AgentWithCategories } from '@/lib/agents/agent-service';
 import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
 import { cn } from '@vital/ui/lib/utils';
 import type { HealthcareBusinessFunction } from '@/types/healthcare-compliance';
+import { useAgentComparison } from './agent-comparison-sidebar';
 
 // Use shared organizational structure configuration
 const staticDepartmentsByFunction = DEPARTMENTS_BY_FUNCTION;
@@ -173,8 +177,22 @@ export function AgentsBoard({
   viewMode: externalViewMode,
   onViewModeChange: externalOnViewModeChange,
 }: AgentsBoardProps) {
-  const { agents, createCustomAgent, updateAgent, deleteAgent, loadAgents } = useAgentsStore();
+  const { agents, createCustomAgent, updateAgent, deleteAgent, loadAgents, isLoading } = useAgentsStore();
   const { canEditAgent, canDeleteAgent, isSuperAdmin } = useUserRole();
+
+  // Agent comparison context - may not be available if not wrapped in provider
+  const comparisonContext = useAgentComparison();
+  const { addToComparison, removeFromComparison, isInComparison } = comparisonContext || {};
+
+  // Handler for compare button
+  const handleCompareAgent = useCallback((agent: Agent) => {
+    if (!addToComparison || !removeFromComparison || !isInComparison) return;
+    if (isInComparison(agent.id)) {
+      removeFromComparison(agent.id);
+    } else {
+      addToComparison(agent);
+    }
+  }, [addToComparison, removeFromComparison, isInComparison]);
 
   // Use external state if provided, otherwise use internal state
   const searchQuery = externalSearchQuery ?? '';
@@ -189,6 +207,17 @@ export function AgentsBoard({
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [savedAgents, setSavedAgents] = useState<Set<string>>(new Set());
   const [dbBusinessFunctions, setDbBusinessFunctions] = useState<HealthcareBusinessFunction[]>([]);
+
+  // Virtual scrolling refs and constants
+  const parentRef = useRef<HTMLDivElement>(null);
+  const COLUMNS = 3; // 3-column grid
+  const CARD_HEIGHT = 280; // Approximate height of agent card in pixels
+  const LIST_ITEM_HEIGHT = 80; // Approximate height of list item in pixels
+  const GAP = 16; // Gap between items
+
+  // Keyboard navigation state
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
+  const [isKeyboardNavigating, setIsKeyboardNavigating] = useState(false);
 
   // Helper function to get function name by ID
   const getFunctionName = (functionId?: string | null) => {
@@ -475,6 +504,168 @@ export function AgentsBoard({
     });
   }, [agents, searchQuery, selectedBusinessFunction, selectedDepartment, selectedRole, selectedAgentLevel, selectedStatus]);
 
+  // Calculate rows for grid view (3 columns)
+  const gridRows = useMemo(() => {
+    const rows: Agent[][] = [];
+    for (let i = 0; i < filteredAgents.length; i += COLUMNS) {
+      rows.push(filteredAgents.slice(i, i + COLUMNS));
+    }
+    return rows;
+  }, [filteredAgents]);
+
+  // Virtual scrolling for grid view (rows of 3)
+  const gridVirtualizer = useVirtualizer({
+    count: gridRows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => CARD_HEIGHT + GAP,
+    overscan: 3, // Render 3 extra rows above/below viewport
+  });
+
+  // Virtual scrolling for list view
+  const listVirtualizer = useVirtualizer({
+    count: filteredAgents.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => LIST_ITEM_HEIGHT + GAP / 2,
+    overscan: 5, // Render 5 extra items above/below viewport
+  });
+
+  // Reset focus when filters change
+  useEffect(() => {
+    setFocusedIndex(-1);
+    setIsKeyboardNavigating(false);
+  }, [filteredAgents.length, searchQuery, selectedBusinessFunction, selectedDepartment, selectedRole]);
+
+  // Keyboard navigation handlers
+  const handleKeyboardNavigation = useCallback((direction: 'up' | 'down' | 'left' | 'right') => {
+    if (filteredAgents.length === 0) return;
+
+    setIsKeyboardNavigating(true);
+
+    setFocusedIndex(prevIndex => {
+      let newIndex = prevIndex;
+      const maxIndex = filteredAgents.length - 1;
+
+      if (prevIndex === -1) {
+        // Start from first item
+        return 0;
+      }
+
+      if (viewMode === 'grid') {
+        // Grid navigation: 3 columns
+        const currentRow = Math.floor(prevIndex / COLUMNS);
+        const currentCol = prevIndex % COLUMNS;
+        const totalRows = Math.ceil(filteredAgents.length / COLUMNS);
+
+        switch (direction) {
+          case 'up':
+            if (currentRow > 0) {
+              newIndex = prevIndex - COLUMNS;
+            }
+            break;
+          case 'down':
+            if (currentRow < totalRows - 1) {
+              const targetIndex = prevIndex + COLUMNS;
+              newIndex = Math.min(targetIndex, maxIndex);
+            }
+            break;
+          case 'left':
+            if (currentCol > 0) {
+              newIndex = prevIndex - 1;
+            }
+            break;
+          case 'right':
+            if (currentCol < COLUMNS - 1 && prevIndex < maxIndex) {
+              newIndex = prevIndex + 1;
+            }
+            break;
+        }
+      } else {
+        // List navigation: single column
+        switch (direction) {
+          case 'up':
+            if (prevIndex > 0) {
+              newIndex = prevIndex - 1;
+            }
+            break;
+          case 'down':
+            if (prevIndex < maxIndex) {
+              newIndex = prevIndex + 1;
+            }
+            break;
+        }
+      }
+
+      return newIndex;
+    });
+  }, [filteredAgents.length, viewMode, COLUMNS]);
+
+  // Scroll focused item into view
+  useEffect(() => {
+    if (focusedIndex >= 0 && isKeyboardNavigating) {
+      if (viewMode === 'grid') {
+        const rowIndex = Math.floor(focusedIndex / COLUMNS);
+        gridVirtualizer.scrollToIndex(rowIndex, { align: 'auto' });
+      } else {
+        listVirtualizer.scrollToIndex(focusedIndex, { align: 'auto' });
+      }
+    }
+  }, [focusedIndex, viewMode, gridVirtualizer, listVirtualizer, isKeyboardNavigating, COLUMNS]);
+
+  // Handle Enter key to select focused agent
+  const handleSelectFocused = useCallback(() => {
+    if (focusedIndex >= 0 && focusedIndex < filteredAgents.length) {
+      const agent = filteredAgents[focusedIndex];
+      onAgentSelect?.(agent);
+    }
+  }, [focusedIndex, filteredAgents, onAgentSelect]);
+
+  // Handle Escape to clear focus
+  const handleClearFocus = useCallback(() => {
+    setFocusedIndex(-1);
+    setIsKeyboardNavigating(false);
+  }, []);
+
+  // Register keyboard shortcuts using react-hotkeys-hook
+  useHotkeys('up', (e) => {
+    e.preventDefault();
+    handleKeyboardNavigation('up');
+  }, { enableOnFormTags: false }, [handleKeyboardNavigation]);
+
+  useHotkeys('down', (e) => {
+    e.preventDefault();
+    handleKeyboardNavigation('down');
+  }, { enableOnFormTags: false }, [handleKeyboardNavigation]);
+
+  useHotkeys('left', (e) => {
+    if (viewMode === 'grid') {
+      e.preventDefault();
+      handleKeyboardNavigation('left');
+    }
+  }, { enableOnFormTags: false }, [handleKeyboardNavigation, viewMode]);
+
+  useHotkeys('right', (e) => {
+    if (viewMode === 'grid') {
+      e.preventDefault();
+      handleKeyboardNavigation('right');
+    }
+  }, { enableOnFormTags: false }, [handleKeyboardNavigation, viewMode]);
+
+  useHotkeys('enter', (e) => {
+    if (focusedIndex >= 0) {
+      e.preventDefault();
+      handleSelectFocused();
+    }
+  }, { enableOnFormTags: false }, [focusedIndex, handleSelectFocused]);
+
+  useHotkeys('escape', () => {
+    handleClearFocus();
+  }, { enableOnFormTags: false }, [handleClearFocus]);
+
+  // Handle mouse interaction to clear keyboard navigation state
+  const handleMouseEnter = useCallback(() => {
+    setIsKeyboardNavigating(false);
+  }, []);
+
   return (
     <div className="space-y-6">
       {!hiddenControls && (
@@ -537,335 +728,265 @@ export function AgentsBoard({
         </p>
       </div>
 
-      {/* Agents Grid/List */}
-      {viewMode === 'grid' ? (
-        <AgentCardGrid columns={3} className="gap-4">
-          {filteredAgents.map((agent) => {
-            const agentCanEdit = canEditAgent(agent);
-            const agentCanDelete = canDeleteAgent(agent);
-            
-            return (
-              <EnhancedAgentCard
-                key={agent.id}
-                agent={agent}
-                onClick={() => onAgentSelect?.(agent)}
-                onAddToChat={onAddToChat ? () => onAddToChat(agent) : undefined}
-                onDuplicate={() => handleDuplicateAgent(agent)}
-                onBookmark={() => handleSaveToLibrary(agent.id)}
-                onEdit={agentCanEdit ? () => handleEditAgent(agent) : undefined}
-                onDelete={agentCanDelete ? () => handleDeleteAgent(agent) : undefined}
-                canEdit={agentCanEdit}
-                canDelete={agentCanDelete}
-                isBookmarked={savedAgents.has(agent.id)}
-                showReasoning={false}
-                showTier={true}
-                showLevelName={true}
-                size="md"
-              />
-            );
-          })}
-        </AgentCardGrid>
-      ) : (
-        <div className="space-y-3">
-          {filteredAgents.map((agent) => (
-            <Card
-              key={agent.id}
-              className="hover:shadow-lg transition-all cursor-pointer group hover:bg-gray-50"
-              onClick={() => onAgentSelect?.(agent)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onAgentSelect?.(agent);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-              aria-label={`Select agent ${agent.display_name}`}
-            >
-            <CardContent className={cn(
-              'p-4',
-              viewMode === 'list' && 'flex items-center gap-4'
-            )}>
-              {/* Grid View Layout */}
-              {viewMode === 'grid' && (
-                <div className="flex flex-col h-full">
-                  {/* Header with Avatar and Actions */}
-                  <div className="flex items-start gap-3 mb-3">
-                    <AgentAvatar avatar={agent.avatar} name={agent.display_name || agent.name} size="card" className="flex-shrink-0" />
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-base text-deep-charcoal group-hover:text-progress-teal transition-colors truncate leading-tight">
-                            {agent.display_name}
-                          </h3>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            {agent.tier !== undefined && (
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  "text-[10px] font-bold px-1.5 py-0 h-4",
-                                  agent.tier === 1 && "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300",
-                                  agent.tier === 2 && "bg-blue-50 text-blue-700 border-blue-200",
-                                  agent.tier === 3 && "bg-green-50 text-green-700 border-green-200",
-                                  agent.tier === 4 && "bg-orange-50 text-orange-700 border-orange-200",
-                                  agent.tier === 5 && "bg-gray-50 text-gray-700 border-gray-200"
-                                )}
-                              >
-                                L{agent.tier}
-                              </Badge>
-                            )}
-                            {agent.status && (
-                              <Badge
-                                className={cn(
-                                  "text-[10px] font-medium px-1.5 py-0 h-4",
-                                  agent.status === 'active' && "bg-green-100 text-green-700 border-green-200",
-                                  agent.status === 'development' && "bg-blue-100 text-blue-700 border-blue-200",
-                                  agent.status === 'testing' && "bg-yellow-100 text-yellow-700 border-yellow-200",
-                                  agent.status === 'deprecated' && "bg-red-100 text-red-700 border-red-200",
-                                  agent.status === 'inactive' && "bg-gray-100 text-gray-600 border-gray-200"
-                                )}
-                              >
-                                {agent.status === 'active' ? 'Active' : agent.status === 'development' ? 'Dev' : agent.status === 'testing' ? 'Test' : agent.status}
-                              </Badge>
-                            )}
-                            {agent.is_custom && (
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-purple-50 text-purple-700 border-purple-200">
-                                Custom
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 -mt-1">
-                              <MoreVertical className="h-3.5 w-3.5" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              onAgentSelect?.(agent);
-                            }}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            {onAddToChat && (
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                onAddToChat(agent);
-                              }}>
-                                <MessageSquare className="h-4 w-4 mr-2" />
-                                Add to Chat
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditAgent(agent);
-                            }}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              handleDuplicateAgent(agent);
-                            }}>
-                              <Copy className="h-4 w-4 mr-2" />
-                              Duplicate
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              handleSaveToLibrary(agent.id);
-                            }}>
-                              <Heart className={cn(
-                                'h-4 w-4 mr-2',
-                                savedAgents.has(agent.id) && 'fill-current text-red-500'
-                              )} />
-                              {savedAgents.has(agent.id) ? 'Remove from Library' : 'Save to Library'}
-                            </DropdownMenuItem>
-                            {agent.is_custom && (
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteAgent(agent);
-                                }}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+      {/* Skeleton Loading State */}
+      {isLoading && (
+        <div className="space-y-4">
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <div key={i} className="rounded-xl border bg-card p-4 space-y-4">
+                  <div className="flex items-start gap-4">
+                    <Skeleton className="h-12 w-12 rounded-xl" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
                     </div>
+                    <Skeleton className="h-6 w-16 rounded-full" />
                   </div>
-
-                  {/* Description */}
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-3 leading-snug">
-                    {agent.description}
-                  </p>
-
-                  {/* Metadata Section */}
-                  <div className="space-y-2 flex-1">
-                    {/* Business Function */}
-                    {(() => {
-                      const functionName = getFunctionName(agent.function_id) ||
-                                          agent.business_function?.replace(/_/g, ' ');
-                      return functionName ? (
-                        <div className="flex items-center gap-1.5">
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 h-5 bg-indigo-50 text-indigo-700 border-indigo-200 font-medium">
-                            {functionName}
-                          </Badge>
-                          {savedAgents.has(agent.id) && (
-                            <Heart className="h-3.5 w-3.5 fill-current text-red-500" />
-                          )}
-                        </div>
-                      ) : savedAgents.has(agent.id) ? (
-                        <div className="flex items-center">
-                          <Heart className="h-3.5 w-3.5 fill-current text-red-500" />
-                        </div>
-                      ) : null;
-                    })()}
-
-                    {/* Capabilities Preview */}
-                    {agent.capabilities && agent.capabilities.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {agent.capabilities.slice(0, 2).map((capability) => (
-                          <Badge key={capability} variant="outline" className="text-[10px] px-1.5 py-0.5 h-5 bg-gray-50 text-gray-700 border-gray-200">
-                            {capability}
-                          </Badge>
-                        ))}
-                        {agent.capabilities.length > 2 && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 h-5 bg-gray-50 text-gray-600 border-gray-200">
-                            +{agent.capabilities.length - 2}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
+                  <Skeleton className="h-12 w-full" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-5 w-14 rounded-full" />
                   </div>
-
-                  {/* Footer with Model */}
-                  <div className="mt-auto pt-3 border-t border-gray-100">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                      <Brain className="h-3 w-3" />
-                      <span className="font-medium">{agent.model}</span>
-                    </div>
+                  <div className="flex items-center gap-3 pt-2">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-4 w-20" />
                   </div>
                 </div>
-              )}
-
-              {/* List View Layout */}
-              {viewMode === 'list' && (
-                <>
-                  <AgentAvatar avatar={agent.avatar} name={agent.display_name || agent.name} size="list" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-deep-charcoal group-hover:text-progress-teal transition-colors">
-                        {agent.display_name}
-                      </h3>
-                      {agent.is_custom && (
-                        <Badge variant="outline" className="text-xs">
-                          Custom
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-medical-gray truncate">
-                      {agent.description}
-                    </p>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="rounded-lg border bg-card p-4 flex items-center gap-4">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-96" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    {/* Business Function Badge */}
-                    {(() => {
-                      const functionName = getFunctionName(agent.function_id) ||
-                                          agent.business_function?.replace(/_/g, ' ');
-                      return functionName ? (
-                        <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                          {functionName.toUpperCase()}
-                        </Badge>
-                      ) : null;
-                    })()}
-                    {agent.knowledge_domains && agent.knowledge_domains.length > 0 && (
-                      <Badge className={cn('text-xs', getDomainColor(agent.knowledge_domains))}>
-                        {agent.knowledge_domains[0]}
-                      </Badge>
-                    )}
-                    {savedAgents.has(agent.id) && (
-                      <Heart className="h-4 w-4 fill-current text-red-500" />
-                    )}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => {
-                          e.stopPropagation();
-                          onAgentSelect?.(agent);
-                        }}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        {onAddToChat && (
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            onAddToChat(agent);
-                          }}>
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Add to Chat
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditAgent(agent);
-                        }}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => {
-                          e.stopPropagation();
-                          handleDuplicateAgent(agent);
-                        }}>
-                          <Copy className="h-4 w-4 mr-2" />
-                          Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => {
-                          e.stopPropagation();
-                          handleSaveToLibrary(agent.id);
-                        }}>
-                          <Heart className={cn(
-                            'h-4 w-4 mr-2',
-                            savedAgents.has(agent.id) && 'fill-current text-red-500'
-                          )} />
-                          {savedAgents.has(agent.id) ? 'Remove from Library' : 'Save to Library'}
-                        </DropdownMenuItem>
-                        {agent.is_custom && (
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteAgent(agent);
-                            }}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+                  <Skeleton className="h-5 w-24 rounded-full" />
+                  <Skeleton className="h-8 w-8 rounded" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
+      {/* Agents Grid/List with Virtual Scrolling */}
+      {!isLoading && viewMode === 'grid' ? (
+        <div
+          ref={parentRef}
+          className="h-[calc(100vh-320px)] overflow-auto"
+          style={{ contain: 'strict' }}
+          onMouseMove={handleMouseEnter}
+        >
+          <div
+            style={{
+              height: `${gridVirtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {gridVirtualizer.getVirtualItems().map((virtualRow) => {
+              const rowAgents = gridRows[virtualRow.index];
+              return (
+                <div
+                  key={virtualRow.key}
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 absolute left-0 right-0"
+                  style={{
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  {rowAgents.map((agent, colIndex) => {
+                    const agentCanEdit = canEditAgent(agent);
+                    const agentCanDelete = canDeleteAgent(agent);
+                    // Calculate flat index for focus comparison
+                    const flatIndex = virtualRow.index * COLUMNS + colIndex;
+                    const isFocused = isKeyboardNavigating && focusedIndex === flatIndex;
+
+                    return (
+                      <div
+                        key={agent.id}
+                        className={cn(
+                          'transition-all duration-150',
+                          isFocused && 'ring-2 ring-vital-primary-500 ring-offset-2 rounded-xl'
+                        )}
+                      >
+                        <EnhancedAgentCard
+                          agent={agent}
+                          onClick={() => onAgentSelect?.(agent)}
+                          onAddToChat={onAddToChat ? () => onAddToChat(agent) : undefined}
+                          onDuplicate={() => handleDuplicateAgent(agent)}
+                          onBookmark={() => handleSaveToLibrary(agent.id)}
+                          onEdit={agentCanEdit ? () => handleEditAgent(agent) : undefined}
+                          onDelete={agentCanDelete ? () => handleDeleteAgent(agent) : undefined}
+                          onCompare={comparisonContext ? () => handleCompareAgent(agent) : undefined}
+                          canEdit={agentCanEdit}
+                          canDelete={agentCanDelete}
+                          isBookmarked={savedAgents.has(agent.id)}
+                          isInComparison={isInComparison?.(agent.id) ?? false}
+                          showReasoning={false}
+                          showTier={true}
+                          showLevelName={true}
+                          size="md"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : !isLoading ? (
+        <div
+          ref={parentRef}
+          className="h-[calc(100vh-320px)] overflow-auto"
+          style={{ contain: 'strict' }}
+          onMouseMove={handleMouseEnter}
+        >
+          <div
+            style={{
+              height: `${listVirtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+          {listVirtualizer.getVirtualItems().map((virtualItem) => {
+              const agent = filteredAgents[virtualItem.index];
+              const isFocused = isKeyboardNavigating && focusedIndex === virtualItem.index;
+              return (
+                <Card
+                  key={virtualItem.key}
+                  className={cn(
+                    "hover:shadow-lg transition-all cursor-pointer group hover:bg-gray-50 absolute left-0 right-0",
+                    isFocused && "ring-2 ring-vital-primary-500 ring-offset-2 bg-vital-primary-50/50"
+                  )}
+                  style={{
+                    height: `${virtualItem.size - GAP / 2}px`,
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                  onClick={() => onAgentSelect?.(agent)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onAgentSelect?.(agent);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Select agent ${agent.display_name}`}
+                >
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <AgentAvatar avatar={agent.avatar} name={agent.display_name || agent.name} size="list" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-deep-charcoal group-hover:text-progress-teal transition-colors">
+                          {agent.display_name}
+                        </h3>
+                        {agent.is_custom && (
+                          <Badge variant="outline" className="text-xs">
+                            Custom
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-medical-gray truncate">
+                        {agent.description}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const functionName = getFunctionName(agent.function_id) ||
+                                            agent.business_function?.replace(/_/g, ' ');
+                        return functionName ? (
+                          <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                            {functionName.toUpperCase()}
+                          </Badge>
+                        ) : null;
+                      })()}
+                      {agent.knowledge_domains && agent.knowledge_domains.length > 0 && (
+                        <Badge className={cn('text-xs', getDomainColor(agent.knowledge_domains))}>
+                          {agent.knowledge_domains[0]}
+                        </Badge>
+                      )}
+                      {savedAgents.has(agent.id) && (
+                        <Heart className="h-4 w-4 fill-current text-red-500" />
+                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            onAgentSelect?.(agent);
+                          }}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          {onAddToChat && (
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              onAddToChat(agent);
+                            }}>
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Add to Chat
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditAgent(agent);
+                          }}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            handleDuplicateAgent(agent);
+                          }}>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            handleSaveToLibrary(agent.id);
+                          }}>
+                            <Heart className={cn(
+                              'h-4 w-4 mr-2',
+                              savedAgents.has(agent.id) && 'fill-current text-red-500'
+                            )} />
+                            {savedAgents.has(agent.id) ? 'Remove from Library' : 'Save to Library'}
+                          </DropdownMenuItem>
+                          {agent.is_custom && (
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteAgent(agent);
+                              }}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       {/* Empty State */}
-      {filteredAgents.length === 0 && (
+      {!isLoading && filteredAgents.length === 0 && (
         <Card>
           <CardContent className="p-12 text-center">
             <Brain className="h-12 w-12 text-medical-gray mx-auto mb-4" />

@@ -25,17 +25,14 @@ logger = logging.getLogger(__name__)
 
 # Make langfuse imports optional
 try:
-    from langfuse import Langfuse
-    from langfuse.decorators import langfuse_context, observe
-    from langfuse.client import StatefulGenerationClient
+    from langfuse import Langfuse, observe
     LANGFUSE_AVAILABLE = True
+    logger.info("LangFuse v3.x imports successful")
 except ImportError:
     logger.warning("langfuse not installed - monitoring features disabled")
     LANGFUSE_AVAILABLE = False
     Langfuse = None
-    langfuse_context = None
     observe = None
-    StatefulGenerationClient = None
 
 
 # ============================================================================

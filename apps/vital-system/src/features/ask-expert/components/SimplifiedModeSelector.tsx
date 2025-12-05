@@ -150,10 +150,10 @@ export function SimplifiedModeSelector({
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl font-bold text-neutral-900 mb-2">
           Choose Your Consultation Style
         </h2>
-        <p className="text-gray-600">
+        <p className="text-neutral-600">
           Two simple choices determine how you'll work with our AI experts
         </p>
       </div>
@@ -191,11 +191,11 @@ export function SimplifiedModeSelector({
             <div className={`p-3 rounded-lg transition-all ${
               !isAutonomous
                 ? 'bg-blue-100 border-2 border-blue-400'
-                : 'bg-white border border-gray-200'
+                : 'bg-canvas-surface border border-neutral-200'
             }`}>
               <div className="flex items-center space-x-2 mb-1">
                 <MessageSquare className="h-4 w-4 text-blue-600" />
-                <span className="font-medium text-sm text-gray-900">
+                <span className="font-medium text-sm text-neutral-900">
                   Interactive
                 </span>
                 {!isAutonomous && (
@@ -204,7 +204,7 @@ export function SimplifiedModeSelector({
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-neutral-600">
                 Back-and-forth conversation. Ask questions, get answers, explore ideas.
               </p>
             </div>
@@ -212,11 +212,11 @@ export function SimplifiedModeSelector({
             <div className={`p-3 rounded-lg transition-all ${
               isAutonomous
                 ? 'bg-amber-100 border-2 border-amber-400'
-                : 'bg-white border border-gray-200'
+                : 'bg-canvas-surface border border-neutral-200'
             }`}>
               <div className="flex items-center space-x-2 mb-1">
                 <Zap className="h-4 w-4 text-amber-600" />
-                <span className="font-medium text-sm text-gray-900">
+                <span className="font-medium text-sm text-neutral-900">
                   Autonomous
                 </span>
                 {isAutonomous && (
@@ -225,7 +225,7 @@ export function SimplifiedModeSelector({
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-neutral-600">
                 Goal-driven execution. Set a goal, experts work autonomously with checkpoints.
               </p>
             </div>
@@ -263,11 +263,11 @@ export function SimplifiedModeSelector({
             <div className={`p-3 rounded-lg transition-all ${
               !isAutomatic
                 ? 'bg-green-100 border-2 border-green-400'
-                : 'bg-white border border-gray-200'
+                : 'bg-canvas-surface border border-neutral-200'
             }`}>
               <div className="flex items-center space-x-2 mb-1">
                 <User className="h-4 w-4 text-green-600" />
-                <span className="font-medium text-sm text-gray-900">
+                <span className="font-medium text-sm text-neutral-900">
                   Manual
                 </span>
                 {!isAutomatic && (
@@ -276,7 +276,7 @@ export function SimplifiedModeSelector({
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-neutral-600">
                 You choose the expert. Best when you know who to ask.
               </p>
             </div>
@@ -284,11 +284,11 @@ export function SimplifiedModeSelector({
             <div className={`p-3 rounded-lg transition-all ${
               isAutomatic
                 ? 'bg-purple-100 border-2 border-purple-400'
-                : 'bg-white border border-gray-200'
+                : 'bg-canvas-surface border border-neutral-200'
             }`}>
               <div className="flex items-center space-x-2 mb-1">
                 <Sparkles className="h-4 w-4 text-purple-600" />
-                <span className="font-medium text-sm text-gray-900">
+                <span className="font-medium text-sm text-neutral-900">
                   Automatic
                 </span>
                 {isAutomatic && (
@@ -297,7 +297,7 @@ export function SimplifiedModeSelector({
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-neutral-600">
                 AI picks the best expert(s). Best for complex or unknown problems.
               </p>
             </div>
@@ -390,9 +390,9 @@ export function SimplifiedModeSelector({
       </AnimatePresence>
 
       {/* Visual Mode Matrix (Optional Reference) */}
-      <Card className="p-4 bg-gray-50">
+      <Card className="p-4 bg-neutral-50">
         <details>
-          <summary className="cursor-pointer font-medium text-sm text-gray-700 flex items-center space-x-2">
+          <summary className="cursor-pointer font-medium text-sm text-neutral-700 flex items-center space-x-2">
             <Info className="h-4 w-4" />
             <span>View All 4 Modes (Matrix View)</span>
           </summary>
@@ -412,18 +412,18 @@ export function SimplifiedModeSelector({
                   className={`p-3 rounded-lg text-left transition-all ${
                     isSelected
                       ? `bg-gradient-to-br ${mode.gradient} text-white shadow-lg scale-105`
-                      : 'bg-white border-2 border-gray-200 hover:border-gray-300'
+                      : 'bg-canvas-surface border-2 border-neutral-200 hover:border-neutral-300'
                   }`}
                 >
                   <div className="flex items-center space-x-2 mb-1">
-                    <div className={`p-1 rounded ${isSelected ? 'bg-white/20' : 'bg-gray-100'}`}>
+                    <div className={`p-1 rounded ${isSelected ? 'bg-white/20' : 'bg-neutral-100'}`}>
                       {mode.icon}
                     </div>
-                    <span className={`font-semibold text-xs ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                    <span className={`font-semibold text-xs ${isSelected ? 'text-white' : 'text-neutral-900'}`}>
                       {mode.title}
                     </span>
                   </div>
-                  <p className={`text-xs ${isSelected ? 'text-white/90' : 'text-gray-600'}`}>
+                  <p className={`text-xs ${isSelected ? 'text-white/90' : 'text-neutral-600'}`}>
                     {mode.description.substring(0, 60)}...
                   </p>
                 </button>

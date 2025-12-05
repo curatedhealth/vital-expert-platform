@@ -501,8 +501,11 @@ class SupabaseClient:
 
             if all_results.data:
                 for doc in all_results.data:
-                    content_lower = (doc.get("content", "") + " " + doc.get("title", "")).lower()
-                    title_lower = doc.get("title", "").lower()
+                    # Fix: Handle None values explicitly (not just empty strings)
+                    content = doc.get("content") or ""
+                    title = doc.get("title") or ""
+                    content_lower = (content + " " + title).lower()
+                    title_lower = title.lower()
                     
                     # Simple keyword matching
                     matches = sum(1 for term in search_terms if term.lower() in content_lower)

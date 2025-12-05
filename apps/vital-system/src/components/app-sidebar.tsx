@@ -26,6 +26,8 @@ import {
   SidebarPersonasContent,
   SidebarDesignerContent,
   SidebarValueContent,
+  SidebarKnowledgeBuilderContent,
+  SidebarMedicalStrategyContent,
 } from "@/components/sidebar-view-content"
 
 export function AppSidebar({
@@ -63,6 +65,10 @@ export function AppSidebar({
     if (pathname.startsWith("/admin")) {
       return <SidebarAdminContent />
     }
+    // Check specific designer paths before general /designer
+    if (pathname.startsWith("/designer/knowledge")) {
+      return <SidebarKnowledgeBuilderContent />
+    }
     if (pathname.startsWith("/designer")) {
       return <SidebarDesignerContent />
     }
@@ -92,6 +98,12 @@ export function AppSidebar({
     }
     if (pathname.startsWith("/value")) {
       return <SidebarValueContent />
+    }
+    if (pathname.startsWith("/medical-strategy")) {
+      return <SidebarMedicalStrategyContent />
+    }
+    if (pathname.startsWith("/ontology-explorer")) {
+      return <SidebarMedicalStrategyContent />
     }
     return <SidebarDashboardContent />
   }

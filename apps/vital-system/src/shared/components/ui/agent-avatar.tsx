@@ -110,7 +110,7 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
   // For emoji avatars, display them with proper sizing
   return (
     <div className={cn(
-      'flex items-center justify-center rounded-sm bg-gray-50 border border-gray-200',
+      'flex items-center justify-center rounded-sm bg-neutral-50 border border-neutral-200',
       sizeClasses[size],
       className
     )}>

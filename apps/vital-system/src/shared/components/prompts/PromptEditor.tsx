@@ -335,7 +335,7 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
                   className={`font-mono text-sm ${errors.user_prompt_template ? 'border-red-500' : ''}`}
                 />
                 {errors.user_prompt_template && <p className="text-sm text-red-500">{errors.user_prompt_template}</p>}
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-neutral-500">
                   Use {"{variable_name}"} for dynamic content that users can customize
                 </p>
               </div>
@@ -344,14 +344,14 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
 
           {showPreview && (
             <TabsContent value="preview" className="space-y-4">
-              <div className="border rounded-lg p-4 bg-gray-50">
+              <div className="border rounded-lg p-4 bg-neutral-50">
                 <h3 className="font-medium mb-2">System Prompt Preview</h3>
                 <div className="bg-white border rounded p-3 font-mono text-sm whitespace-pre-wrap">
                   {formData.system_prompt || 'No system prompt entered...'}
                 </div>
               </div>
 
-              <div className="border rounded-lg p-4 bg-gray-50">
+              <div className="border rounded-lg p-4 bg-neutral-50">
                 <h3 className="font-medium mb-2">User Prompt Template Preview</h3>
                 <div className="bg-white border rounded p-3 font-mono text-sm whitespace-pre-wrap">
                   {formData.user_prompt_template || 'No user prompt template entered...'}
@@ -367,7 +367,7 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
                     </Badge>
                   ))}
                   {!(formData.user_prompt_template.match(/{[^}]+}/g) || []).length && (
-                    <p className="text-sm text-gray-500">No variables found</p>
+                    <p className="text-sm text-neutral-500">No variables found</p>
                   )}
                 </div>
               </div>

@@ -223,7 +223,7 @@ export function AuditLogs() {
     if (operation.includes('create')) return <CheckCircle className="h-4 w-4 text-green-600" />;
     if (operation.includes('delete')) return <XCircle className="h-4 w-4 text-red-600" />;
     if (operation.includes('update')) return <Activity className="h-4 w-4 text-blue-600" />;
-    return <Eye className="h-4 w-4 text-gray-600" />;
+    return <Eye className="h-4 w-4 text-neutral-600" />;
   };
 
   const formatDate = (dateString: string) => {

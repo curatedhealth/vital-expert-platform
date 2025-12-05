@@ -161,20 +161,20 @@ export function EnhancedSidebar({
       initial={{ x: -300 }}
       animate={{ x: 0 }}
       exit={{ x: -300 }}
-      className="w-80 border-r border-gray-200 dark:border-gray-800 flex flex-col bg-gray-50 dark:bg-gray-900 h-screen"
+      className="w-80 border-r border-neutral-200 dark:border-neutral-800 flex flex-col bg-neutral-50 dark:bg-neutral-900 h-screen"
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+      <div className="p-4 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Users className="w-6 h-6 text-blue-500" />
-            <span className="font-semibold text-gray-900 dark:text-white">My Agents</span>
+            <span className="font-semibold text-neutral-900 dark:text-white">My Agents</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <X className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
           </button>
         </div>
 
@@ -193,15 +193,15 @@ export function EnhancedSidebar({
         {/* Remove tabs - show only agents */}
         <div className="h-full flex flex-col">
           {/* Search & Filter */}
-          <div className="p-3 space-y-2 border-b border-gray-200 dark:border-gray-800">
+          <div className="p-3 space-y-2 border-b border-neutral-200 dark:border-neutral-800">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
               <input
                 type="text"
                 placeholder="Search agents..."
                 value={agentSearch}
                 onChange={(e) => setAgentSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2 text-sm bg-canvas-surface dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
@@ -212,7 +212,7 @@ export function EnhancedSidebar({
                 className={`flex-1 px-2 py-1.5 text-xs font-medium rounded transition-colors ${
                   filterTier === null
                     ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                    : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600'
                 }`}
               >
                 All
@@ -224,7 +224,7 @@ export function EnhancedSidebar({
                   className={`flex-1 px-2 py-1.5 text-xs font-medium rounded transition-colors ${
                     filterTier === tier
                       ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                      : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600'
                   }`}
                 >
                   Tier {tier}
@@ -232,7 +232,7 @@ export function EnhancedSidebar({
               ))}
             </div>
 
-            <div className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="text-xs text-neutral-500 dark:text-neutral-400">
               {selectedAgents.length} agent{selectedAgents.length !== 1 ? 's' : ''} selected
             </div>
           </div>
@@ -243,7 +243,7 @@ export function EnhancedSidebar({
               .sort(([a], [b]) => Number(b) - Number(a))
               .map(([tier, tierAgents]) => (
                 <div key={tier} className="mb-4">
-                  <div className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
                     <Star className={`w-3 h-3 ${Number(tier) === 1 ? 'text-yellow-500' : ''}`} />
                     Tier {tier} ({tierAgents.length})
                   </div>
@@ -261,11 +261,11 @@ export function EnhancedSidebar({
 
             {filteredAgents.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center py-12 px-4">
-                <Users className="w-12 h-12 text-gray-300 dark:text-gray-700 mb-3" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <Users className="w-12 h-12 text-neutral-300 dark:text-neutral-700 mb-3" />
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">
                   No agents found
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-2">
                   Click "Browse Agent Store" to add agents
                 </p>
               </div>
@@ -296,7 +296,7 @@ function AgentItem({ agent, isSelected, onToggle, darkMode }: AgentItemProps) {
       className={`w-full px-3 py-2.5 rounded-lg transition-all mb-1 ${
         isSelected
           ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-800 border-2 border-transparent'
+          : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 border-2 border-transparent'
       }`}
     >
       <div className="flex items-start gap-2.5">
@@ -305,7 +305,7 @@ function AgentItem({ agent, isSelected, onToggle, darkMode }: AgentItemProps) {
         )}
         <div className="flex-1 text-left min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+            <span className="text-sm font-medium text-neutral-900 dark:text-white truncate">
               {agent.displayName}
             </span>
             <span className={`px-1.5 py-0.5 text-xs rounded ${
@@ -313,12 +313,12 @@ function AgentItem({ agent, isSelected, onToggle, darkMode }: AgentItemProps) {
                 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
                 : agent.tier === 2
                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-400'
             }`}>
               T{agent.tier}
             </span>
           </div>
-          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+          <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2">
             {agent.description}
           </p>
           {agent.capabilities && agent.capabilities.length > 0 && (
@@ -326,13 +326,13 @@ function AgentItem({ agent, isSelected, onToggle, darkMode }: AgentItemProps) {
               {agent.capabilities.slice(0, 2).map((cap, idx) => (
                 <span
                   key={idx}
-                  className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded"
+                  className="px-1.5 py-0.5 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 rounded"
                 >
                   {cap}
                 </span>
               ))}
               {agent.capabilities.length > 2 && (
-                <span className="text-xs text-gray-500 dark:text-gray-500">
+                <span className="text-xs text-neutral-500 dark:text-neutral-500">
                   +{agent.capabilities.length - 2}
                 </span>
               )}

@@ -115,7 +115,7 @@ export function StateInspector({
     return (
       <Card className="h-full">
         <CardContent className="flex items-center justify-center h-full">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-neutral-500">
             <Database className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p className="text-sm">No execution state available</p>
             <p className="text-xs mt-1">Start a workflow execution to see state updates</p>
@@ -204,9 +204,9 @@ export function StateInspector({
                             >
                               {nodeState.status}
                             </Badge>
-                            <span className="font-mono text-xs text-gray-700">{nodeId}</span>
+                            <span className="font-mono text-xs text-neutral-700">{nodeId}</span>
                             {nodeState.duration && (
-                              <span className="text-xs text-gray-500 ml-auto">
+                              <span className="text-xs text-neutral-500 ml-auto">
                                 {nodeState.duration}ms
                               </span>
                             )}
@@ -216,28 +216,28 @@ export function StateInspector({
                           <div className="space-y-2 text-xs">
                             {nodeState.startTime && (
                               <div>
-                                <span className="font-semibold text-gray-600">Start:</span>{' '}
+                                <span className="font-semibold text-neutral-600">Start:</span>{' '}
                                 <span className="font-mono">{new Date(nodeState.startTime).toLocaleTimeString()}</span>
                               </div>
                             )}
                             {nodeState.endTime && (
                               <div>
-                                <span className="font-semibold text-gray-600">End:</span>{' '}
+                                <span className="font-semibold text-neutral-600">End:</span>{' '}
                                 <span className="font-mono">{new Date(nodeState.endTime).toLocaleTimeString()}</span>
                               </div>
                             )}
                             {nodeState.input && (
                               <div>
-                                <span className="font-semibold text-gray-600">Input:</span>
-                                <pre className="mt-1 p-2 bg-gray-50 rounded text-xs overflow-x-auto">
+                                <span className="font-semibold text-neutral-600">Input:</span>
+                                <pre className="mt-1 p-2 bg-neutral-50 rounded text-xs overflow-x-auto">
                                   {JSON.stringify(nodeState.input, null, 2)}
                                 </pre>
                               </div>
                             )}
                             {nodeState.output && (
                               <div>
-                                <span className="font-semibold text-gray-600">Output:</span>
-                                <pre className="mt-1 p-2 bg-gray-50 rounded text-xs overflow-x-auto">
+                                <span className="font-semibold text-neutral-600">Output:</span>
+                                <pre className="mt-1 p-2 bg-neutral-50 rounded text-xs overflow-x-auto">
                                   {JSON.stringify(nodeState.output, null, 2)}
                                 </pre>
                               </div>
@@ -252,8 +252,8 @@ export function StateInspector({
                             )}
                             {nodeState.metadata && Object.keys(nodeState.metadata).length > 0 && (
                               <div>
-                                <span className="font-semibold text-gray-600">Metadata:</span>
-                                <pre className="mt-1 p-2 bg-gray-50 rounded text-xs overflow-x-auto">
+                                <span className="font-semibold text-neutral-600">Metadata:</span>
+                                <pre className="mt-1 p-2 bg-neutral-50 rounded text-xs overflow-x-auto">
                                   {JSON.stringify(nodeState.metadata, null, 2)}
                                 </pre>
                               </div>
@@ -278,15 +278,15 @@ export function StateInspector({
                           <Badge variant={message.role === 'user' ? 'default' : 'secondary'}>
                             {message.role}
                           </Badge>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-neutral-500">
                             {new Date(message.timestamp).toLocaleTimeString()}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{message.content}</p>
+                        <p className="text-sm text-neutral-700 whitespace-pre-wrap">{message.content}</p>
                       </div>
                     ))
                   ) : (
-                    <div className="text-center text-gray-500 py-8">
+                    <div className="text-center text-neutral-500 py-8">
                       <MessageSquare className="w-10 h-10 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">No messages yet</p>
                     </div>
@@ -318,21 +318,21 @@ export function StateInspector({
                             </Button>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-neutral-500">
                           {new Date(checkpoint.timestamp).toLocaleString()}
                         </p>
                         <details className="text-xs">
-                          <summary className="cursor-pointer text-gray-600 hover:text-gray-900">
+                          <summary className="cursor-pointer text-neutral-600 hover:text-neutral-900">
                             View State
                           </summary>
-                          <pre className="mt-2 p-2 bg-gray-50 rounded text-xs overflow-x-auto">
+                          <pre className="mt-2 p-2 bg-neutral-50 rounded text-xs overflow-x-auto">
                             {JSON.stringify(checkpoint.state, null, 2)}
                           </pre>
                         </details>
                       </div>
                     ))
                   ) : (
-                    <div className="text-center text-gray-500 py-8">
+                    <div className="text-center text-neutral-500 py-8">
                       <GitBranch className="w-10 h-10 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">No checkpoints saved</p>
                     </div>
@@ -349,16 +349,16 @@ export function StateInspector({
                     Object.entries(executionState.variables).map(([key, value]) => (
                       <div key={key} className="border rounded-lg p-3 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-mono text-sm text-gray-700">{key}</span>
+                          <span className="font-mono text-sm text-neutral-700">{key}</span>
                           <Badge variant="outline">{typeof value}</Badge>
                         </div>
-                        <pre className="p-2 bg-gray-50 rounded text-xs overflow-x-auto">
+                        <pre className="p-2 bg-neutral-50 rounded text-xs overflow-x-auto">
                           {JSON.stringify(value, null, 2)}
                         </pre>
                       </div>
                     ))
                   ) : (
-                    <div className="text-center text-gray-500 py-8">
+                    <div className="text-center text-neutral-500 py-8">
                       <Database className="w-10 h-10 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">No variables defined</p>
                     </div>

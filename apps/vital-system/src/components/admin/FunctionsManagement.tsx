@@ -89,7 +89,7 @@ export function FunctionsManagement() {
             <Layers className="h-8 w-8" />
             Functions Management
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-neutral-600 mt-1">
             Manage business functions across all organizations
           </p>
         </div>
@@ -122,7 +122,7 @@ export function FunctionsManagement() {
             <CardTitle>Business Functions</CardTitle>
             <div className="flex items-center gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
                 <Input
                   placeholder="Search functions..."
                   value={searchQuery}
@@ -153,7 +153,7 @@ export function FunctionsManagement() {
                 <TableRow key={func.id}>
                   <TableCell className="font-medium">{func.department_name}</TableCell>
                   <TableCell>
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                    <code className="text-sm bg-neutral-100 px-2 py-1 rounded">
                       {func.unique_id}
                     </code>
                   </TableCell>

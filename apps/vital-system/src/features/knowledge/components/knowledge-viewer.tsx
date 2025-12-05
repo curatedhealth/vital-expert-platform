@@ -197,7 +197,7 @@ export function KnowledgeViewer() {
       'quality-assurance': 'bg-amber-100 text-amber-800 border-amber-200',
       'health-economics': 'bg-rose-100 text-rose-800 border-rose-200',
     };
-    return colors[domain as keyof typeof colors] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return colors[domain as keyof typeof colors] || 'bg-neutral-100 text-neutral-800 border-neutral-200';
   };
 
   const highlightText = (text: string, query: string) => {
@@ -255,7 +255,7 @@ export function KnowledgeViewer() {
           <select
             value={selectedDomain}
             onChange={(e) => setSelectedDomain(e.target.value)}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-1 border border-neutral-300 rounded-md text-sm"
           >
             {domains.map((domain: any) => (
               <option key={domain.value} value={domain.value}>
@@ -267,7 +267,7 @@ export function KnowledgeViewer() {
           <select
             value={selectedScope}
             onChange={(e) => setSelectedScope(e.target.value)}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-1 border border-neutral-300 rounded-md text-sm"
           >
             <option value="all">All Knowledge</option>
             <option value="global">Global Only</option>
@@ -351,7 +351,7 @@ export function KnowledgeViewer() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                      <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
                         <div className="flex items-center gap-2">
                           <Button
                             variant="ghost"
@@ -418,16 +418,16 @@ export function KnowledgeViewer() {
             <div className="text-sm text-medical-gray">
               <p className="mb-2"><strong>Example searches:</strong></p>
               <div className="flex flex-wrap gap-2 justify-center">
-                <Badge variant="outline" className="cursor-pointer hover:bg-gray-50" onClick={() => setQuery('FDA approval process')}>
+                <Badge variant="outline" className="cursor-pointer hover:bg-neutral-50" onClick={() => setQuery('FDA approval process')}>
                   FDA approval process
                 </Badge>
-                <Badge variant="outline" className="cursor-pointer hover:bg-gray-50" onClick={() => setQuery('clinical trial design')}>
+                <Badge variant="outline" className="cursor-pointer hover:bg-neutral-50" onClick={() => setQuery('clinical trial design')}>
                   clinical trial design
                 </Badge>
-                <Badge variant="outline" className="cursor-pointer hover:bg-gray-50" onClick={() => setQuery('market access')}>
+                <Badge variant="outline" className="cursor-pointer hover:bg-neutral-50" onClick={() => setQuery('market access')}>
                   market access
                 </Badge>
-                <Badge variant="outline" className="cursor-pointer hover:bg-gray-50" onClick={() => setQuery('digital therapeutics')}>
+                <Badge variant="outline" className="cursor-pointer hover:bg-neutral-50" onClick={() => setQuery('digital therapeutics')}>
                   digital therapeutics
                 </Badge>
               </div>

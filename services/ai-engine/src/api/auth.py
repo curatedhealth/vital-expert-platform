@@ -104,6 +104,43 @@ async def get_current_user(
     return user
 
 
+async def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(
+        HTTPBearer(auto_error=False)
+    )
+) -> Optional[dict]:
+    """
+    Get current user if authenticated, otherwise return None.
+
+    Unlike get_current_user, this doesn't raise an exception if no token
+    is provided. Useful for endpoints that support both authenticated
+    and unauthenticated access (e.g., HITL checkpoints in Mode 3).
+
+    Returns:
+        User dict if valid token provided, None otherwise
+    """
+    if credentials is None:
+        return None
+
+    try:
+        token = credentials.credentials
+
+        # Get Supabase client
+        supabase = get_supabase()
+
+        # Verify token with Supabase
+        user = supabase.auth.get_user(token)
+
+        if not user:
+            return None
+
+        return user.user
+
+    except Exception:
+        # Return None instead of raising exception for optional auth
+        return None
+
+
 # ============================================================================
 # AUTHENTICATION ENDPOINTS
 # ============================================================================

@@ -83,7 +83,7 @@ export function LifecycleBadge({
       return (
         <Badge 
           className={cn(
-            'bg-gray-100 text-gray-800 border-gray-200',
+            'bg-neutral-100 text-neutral-800 border-neutral-200',
             sizeClasses[size],
             className
           )}
@@ -109,7 +109,7 @@ export function LifecycleBadge({
       return (
         <Badge 
           className={cn(
-            'bg-gray-100 text-gray-600 border-gray-200',
+            'bg-neutral-100 text-neutral-600 border-neutral-200',
             sizeClasses[size],
             className
           )}

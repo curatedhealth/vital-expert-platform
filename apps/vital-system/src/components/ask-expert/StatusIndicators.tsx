@@ -23,7 +23,7 @@ export const TierBadge: React.FC<TierBadgeProps> = ({ tier }) => {
       case 'tier_3':
         return { label: 'Tier 3: Deep Reasoning', color: 'bg-purple-100 text-purple-800', icon: Shield };
       default:
-        return { label: 'Unknown', color: 'bg-gray-100 text-gray-800', icon: Zap };
+        return { label: 'Unknown', color: 'bg-neutral-100 text-neutral-800', icon: Zap };
     }
   };
 
@@ -107,6 +107,8 @@ export const SafetyIndicator: React.FC<SafetyIndicatorProps> = ({
     </div>
   );
 };
+
+
 
 
 

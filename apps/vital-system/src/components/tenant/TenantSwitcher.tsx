@@ -61,7 +61,7 @@ export function TenantSwitcher() {
       case 'industry':
         return 'bg-orange-100 text-orange-800 border-orange-300';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
+        return 'bg-neutral-100 text-neutral-800 border-neutral-300';
     }
   };
 
@@ -158,14 +158,14 @@ export function TenantBadge() {
       case 'industry':
         return 'bg-orange-500';
       default:
-        return 'bg-gray-500';
+        return 'bg-neutral-500';
     }
   };
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-100 border border-gray-200">
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-neutral-100 border border-neutral-200">
       <div className={`h-2 w-2 rounded-full ${getTenantColor(currentTenant.type)}`} />
-      <span className="text-sm font-medium text-gray-700">
+      <span className="text-sm font-medium text-neutral-700">
         {currentTenant.name}
       </span>
       <Badge variant="outline" className="text-xs">

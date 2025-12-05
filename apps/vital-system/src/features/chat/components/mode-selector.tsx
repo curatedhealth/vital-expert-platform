@@ -22,7 +22,7 @@ export function ModeSelector() {
     <div className="p-4 space-y-4">
       {/* Agent Selection Mode */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Agent Selection</h3>
+        <h3 className="text-sm font-medium text-neutral-700 mb-3">Agent Selection</h3>
         <div className="grid grid-cols-2 gap-3">
           {/* Automatic */}
           <Card
@@ -80,7 +80,7 @@ export function ModeSelector() {
 
       {/* Autonomous Mode Toggle */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Chat Mode</h3>
+        <h3 className="text-sm font-medium text-neutral-700 mb-3">Chat Mode</h3>
         <Card className={cn(
           'transition-all',
           autonomousMode && 'ring-2 ring-blue-500 bg-blue-50/50'
@@ -113,7 +113,7 @@ export function ModeSelector() {
               />
             </div>
             {autonomousMode && (
-              <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="mt-3 pt-3 border-t border-neutral-200">
                 <div className="flex flex-wrap gap-2 text-xs">
                   <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
                     FDA Tools

@@ -159,7 +159,7 @@ export const ConversationScrollButton: React.FC<ConversationScrollButtonProps> =
         variant="secondary"
         size="sm"
         className={cn(
-          "h-8 w-8 rounded-full p-0 shadow-lg border border-gray-200 bg-white hover:bg-gray-50",
+          "h-8 w-8 rounded-full p-0 shadow-lg border border-neutral-200 bg-white hover:bg-neutral-50",
           "animate-in fade-in-0 zoom-in-95 duration-200",
           className
         )}
@@ -255,11 +255,11 @@ export const MessageContent: React.FC<MessageContentProps> = ({
         return 'bg-blue-600 text-white rounded-br-md';
       case 'ai':
       case 'assistant':
-        return 'bg-gray-100 text-gray-900 rounded-bl-md';
+        return 'bg-neutral-100 text-neutral-900 rounded-bl-md';
       case 'system':
         return 'bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-md';
       default:
-        return 'bg-gray-100 text-gray-900 rounded-bl-md';
+        return 'bg-neutral-100 text-neutral-900 rounded-bl-md';
     }
   };
 

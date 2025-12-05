@@ -358,7 +358,7 @@ export function ToolManagement() {
 
   const getStatusBadge = (tool: Tool) => {
     if (!tool.is_active) {
-      return <Badge className="bg-gray-100 text-gray-800">Inactive</Badge>;
+      return <Badge className="bg-neutral-100 text-neutral-800">Inactive</Badge>;
     }
     if (tool.lifecycle_stage === 'deprecated') {
       return <Badge className="bg-red-100 text-red-800">Deprecated</Badge>;
@@ -447,7 +447,7 @@ export function ToolManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Inactive</CardTitle>
-            <XCircle className="h-4 w-4 text-gray-600" />
+            <XCircle className="h-4 w-4 text-neutral-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.inactive}</div>

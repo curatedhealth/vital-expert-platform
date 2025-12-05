@@ -18,6 +18,7 @@ import {
   Sparkles,
   Brain,
   Wrench,
+  Target,
 } from 'lucide-react';
 
 interface PromptInputProps {
@@ -61,6 +62,9 @@ interface PromptInputProps {
   // LangGraph (NEW)
   useLangGraph?: boolean;
   onUseLangGraphChange?: (value: boolean) => void;
+
+  // Define Goal button for autonomous mode (Scenario 3)
+  onDefineGoalClick?: () => void;
 }
 
 export function PromptInput({
@@ -98,6 +102,7 @@ export function PromptInput({
   onSelectedRagDomainsChange,
   useLangGraph = false,
   onUseLangGraphChange,
+  onDefineGoalClick,
 }: PromptInputProps) {
   const fallbackTextareaRef = useRef<HTMLTextAreaElement>(null);
   const internalTextareaRef = textareaRef ?? fallbackTextareaRef;
@@ -258,17 +263,17 @@ export function PromptInput({
                 ) : (
                   <FileText className="w-3.5 h-3.5 text-blue-500" />
                 )}
-                <span className="text-gray-700 dark:text-gray-300 max-w-[150px] truncate">
+                <span className="text-neutral-700 dark:text-neutral-300 max-w-[150px] truncate">
                   {file.name}
                 </span>
-                <span className="text-gray-500 dark:text-gray-400">
+                <span className="text-neutral-500 dark:text-neutral-400">
                   ({Math.round(file.size / 1024)}KB)
                 </span>
                 <button
                   onClick={() => removeAttachment(index)}
                   className="p-0.5 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded transition-colors"
                 >
-                  <X className="w-3 h-3 text-gray-500" />
+                  <X className="w-3 h-3 text-neutral-500" />
                 </button>
               </motion.div>
             ))}
@@ -279,12 +284,12 @@ export function PromptInput({
       {/* Main Input Container */}
       <div className="relative">
         {/* Top Controls Bar */}
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-t-2xl">
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 rounded-t-2xl">
           {/* Model Selector */}
           <div className="relative">
             <button
               onClick={() => setShowModelDropdown(!showModelDropdown)}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600"
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors border border-neutral-300 dark:border-neutral-600"
             >
               <Sparkles className="w-3 h-3" />
               {currentModel?.label || 'Select Model'}
@@ -305,11 +310,11 @@ export function PromptInput({
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 overflow-hidden"
+                    className="absolute top-full left-0 mt-1 w-56 bg-canvas-surface dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-20 overflow-hidden"
                   >
                     {Object.entries(groupedModels).map(([group, groupModels]) => (
                       <div key={group}>
-                        <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
+                        <div className="px-3 py-1.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400 bg-neutral-50 dark:bg-neutral-900">
                           {group}
                         </div>
                         {groupModels.map((model) => (
@@ -319,10 +324,10 @@ export function PromptInput({
                               onModelChange(model.value);
                               setShowModelDropdown(false);
                             }}
-                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors ${
                               selectedModel === model.value
                                 ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                : 'text-gray-700 dark:text-gray-300'
+                                : 'text-neutral-700 dark:text-neutral-300'
                             }`}
                           >
                             {model.label}
@@ -337,7 +342,7 @@ export function PromptInput({
           </div>
 
           {/* Separator */}
-          <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
+          <div className="h-4 w-px bg-neutral-300 dark:bg-neutral-600" />
 
           {/* Automatic Toggle */}
           <button
@@ -345,7 +350,7 @@ export function PromptInput({
             className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
               isAutomatic
                 ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600'
             }`}
           >
             <Zap className="w-3 h-3" />
@@ -358,12 +363,24 @@ export function PromptInput({
             className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
               isAutonomous
                 ? 'bg-purple-500 text-white hover:bg-purple-600'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600'
             }`}
           >
             <Bot className="w-3 h-3" />
             Autonomous
           </button>
+
+          {/* Define Goal Button - Appears when autonomous mode is active (Scenario 3) */}
+          {isAutonomous && onDefineGoalClick && (
+            <button
+              onClick={onDefineGoalClick}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 shadow-sm animate-pulse hover:animate-none"
+              title="Define your goal for autonomous execution"
+            >
+              <Target className="w-3 h-3" />
+              Define Goal
+            </button>
+          )}
 
           {/* LangGraph Toggle (NEW) */}
           {onUseLangGraphChange && (
@@ -372,7 +389,7 @@ export function PromptInput({
               className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all border ${
                 useLangGraph
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-emerald-600 hover:from-emerald-600 hover:to-teal-600 shadow-sm'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-600 hover:bg-neutral-300 dark:hover:bg-neutral-600'
               }`}
               title={useLangGraph ? 'LangGraph: ON - Workflow orchestration with state management' : 'LangGraph: OFF - Standard mode'}
             >
@@ -390,7 +407,7 @@ export function PromptInput({
                   className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                     enableRAG
                       ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                      : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600'
                   }`}
                 >
                   <Brain className="w-3 h-3" />
@@ -412,21 +429,21 @@ export function PromptInput({
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-40 overflow-hidden"
+                        className="absolute top-full left-0 mt-1 w-64 bg-canvas-surface dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-40 overflow-hidden"
                       >
-                        <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+                        <div className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-700">
                           <button
                             onClick={() => onEnableRAGChange?.(!enableRAG)}
-                            className="w-full flex items-center justify-between text-xs font-semibold text-gray-700 dark:text-gray-200"
+                            className="w-full flex items-center justify-between text-xs font-semibold text-neutral-700 dark:text-neutral-200"
                           >
                             <span>Enable RAG</span>
                             <span
                               className={`inline-flex h-4 w-8 items-center rounded-full transition-colors ${
-                                enableRAG ? 'bg-emerald-500' : 'bg-gray-400'
+                                enableRAG ? 'bg-emerald-500' : 'bg-neutral-400'
                               }`}
                             >
                               <span
-                                className={`h-3 w-3 rounded-full bg-white transition-transform ${
+                                className={`h-3 w-3 rounded-full bg-canvas-surface transition-transform ${
                                   enableRAG ? 'translate-x-4' : 'translate-x-1'
                                 }`}
                               />
@@ -441,16 +458,16 @@ export function PromptInput({
                               <button
                                 key={domain}
                                 onClick={() => handleRagSelection(domain)}
-                                className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                                className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors text-left hover:bg-neutral-100 dark:hover:bg-neutral-700 ${
                                   isSelected ? 'bg-emerald-50 dark:bg-emerald-900/30' : ''
                                 }`}
                               >
-                                <span className="text-gray-700 dark:text-gray-200">
+                                <span className="text-neutral-700 dark:text-neutral-200">
                                   {formatLabel(domain)}
                                 </span>
                                 <span
                                   className={`h-3 w-3 rounded-full border ${
-                                    isSelected ? 'bg-emerald-500 border-emerald-500' : 'border-gray-400'
+                                    isSelected ? 'bg-emerald-500 border-emerald-500' : 'border-neutral-400'
                                   }`}
                                 />
                               </button>
@@ -468,7 +485,7 @@ export function PromptInput({
                 className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                   enableRAG
                     ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                    : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600'
                 }`}
               >
                 <Brain className="w-3 h-3" />
@@ -485,7 +502,7 @@ export function PromptInput({
                 className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                   enableTools
                     ? 'bg-teal-500 text-white hover:bg-teal-600'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                    : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600'
                 } ${!formattedTools.length ? 'opacity-60 cursor-not-allowed' : ''}`}
                 disabled={!formattedTools.length}
               >
@@ -508,21 +525,21 @@ export function PromptInput({
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-40 overflow-hidden"
+                      className="absolute top-full left-0 mt-1 w-64 bg-canvas-surface dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-40 overflow-hidden"
                     >
-                      <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <div className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-700">
                         <button
                           onClick={() => onEnableToolsChange?.(!enableTools)}
-                          className="w-full flex items-center justify-between text-xs font-semibold text-gray-700 dark:text-gray-200"
+                          className="w-full flex items-center justify-between text-xs font-semibold text-neutral-700 dark:text-neutral-200"
                         >
                           <span>Enable tools</span>
                           <span
                             className={`inline-flex h-4 w-8 items-center rounded-full transition-colors ${
-                              enableTools ? 'bg-teal-500' : 'bg-gray-400'
+                              enableTools ? 'bg-teal-500' : 'bg-neutral-400'
                             }`}
                           >
                             <span
-                              className={`h-3 w-3 rounded-full bg-white transition-transform ${
+                              className={`h-3 w-3 rounded-full bg-canvas-surface transition-transform ${
                                 enableTools ? 'translate-x-4' : 'translate-x-1'
                               }`}
                             />
@@ -537,16 +554,16 @@ export function PromptInput({
                             <button
                               key={tool}
                               onClick={() => handleToolSelection(tool)}
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors text-left hover:bg-neutral-100 dark:hover:bg-neutral-700 ${
                                 isSelected ? 'bg-teal-50 dark:bg-teal-900/30' : ''
                               }`}
                             >
-                              <span className="text-gray-700 dark:text-gray-200">
+                              <span className="text-neutral-700 dark:text-neutral-200">
                                 {formatLabel(tool)}
                               </span>
                               <span
                                 className={`h-3 w-3 rounded-full border ${
-                                  isSelected ? 'bg-teal-500 border-teal-500' : 'border-gray-400'
+                                  isSelected ? 'bg-teal-500 border-teal-500' : 'border-neutral-400'
                                 }`}
                               />
                             </button>
@@ -563,8 +580,8 @@ export function PromptInput({
           {/* Token Count */}
           {tokenCount !== undefined && (
             <>
-              <div className="h-4 w-px bg-gray-300 dark:bg-gray-600 ml-auto" />
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <div className="h-4 w-px bg-neutral-300 dark:bg-neutral-600 ml-auto" />
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">
                 ~{tokenCount} tokens
               </span>
             </>
@@ -572,7 +589,7 @@ export function PromptInput({
         </div>
 
         {/* Textarea */}
-        <div className="relative bg-white dark:bg-gray-800">
+        <div className="relative bg-canvas-surface dark:bg-neutral-800">
           <textarea
             ref={internalTextareaRef}
             value={value}
@@ -580,7 +597,7 @@ export function PromptInput({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             rows={1}
-            className="w-full px-4 py-3 pr-24 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none resize-none text-sm"
+            className="w-full px-4 py-3 pr-24 bg-transparent text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none resize-none text-sm"
             style={{
               minHeight: '52px',
               maxHeight: '200px',
@@ -600,17 +617,17 @@ export function PromptInput({
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
               title="Attach file"
             >
-              <Paperclip className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <Paperclip className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
             </button>
 
             {/* Send Button */}
             <button
               onClick={onSubmit}
               disabled={!value.trim() || isLoading}
-              className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-all shadow-sm hover:shadow-md"
+              className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-neutral-200 dark:disabled:bg-neutral-700 disabled:cursor-not-allowed text-white rounded-lg transition-all shadow-sm hover:shadow-md"
             >
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -622,7 +639,7 @@ export function PromptInput({
         </div>
 
         {/* Bottom border */}
-        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent" />
+        <div className="h-px bg-gradient-to-r from-transparent via-neutral-300 dark:via-neutral-700 to-transparent" />
       </div>
     </div>
   );

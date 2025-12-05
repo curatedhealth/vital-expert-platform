@@ -60,7 +60,7 @@ function LangGraphNode({ data }: { data: any }) {
       case 'error':
         return 'border-red-500 bg-red-50';
       case 'pending':
-        return 'border-gray-300 bg-gray-50';
+        return 'border-neutral-300 bg-neutral-50';
       default:
         return 'border-purple-500 bg-purple-50';
     }
@@ -75,7 +75,7 @@ function LangGraphNode({ data }: { data: any }) {
       case 'error':
         return <XCircle className="w-4 h-4 text-red-600" />;
       default:
-        return <Square className="w-4 h-4 text-gray-400" />;
+        return <Square className="w-4 h-4 text-neutral-400" />;
     }
   };
 
@@ -100,20 +100,20 @@ function LangGraphNode({ data }: { data: any }) {
 
       {/* Node Description */}
       {data.description && (
-        <p className="text-xs text-gray-600 mb-2">{data.description}</p>
+        <p className="text-xs text-neutral-600 mb-2">{data.description}</p>
       )}
 
       {/* Node Metadata */}
       {data.metadata && (
-        <div className="space-y-1 mt-2 pt-2 border-t border-gray-200">
+        <div className="space-y-1 mt-2 pt-2 border-t border-neutral-200">
           {data.metadata.tokens && (
-            <div className="flex items-center gap-1 text-xs text-gray-600">
+            <div className="flex items-center gap-1 text-xs text-neutral-600">
               <Brain className="w-3 h-3" />
               <span>{data.metadata.tokens} tokens</span>
             </div>
           )}
           {data.metadata.sources && (
-            <div className="flex items-center gap-1 text-xs text-gray-600">
+            <div className="flex items-center gap-1 text-xs text-neutral-600">
               <Database className="w-3 h-3" />
               <span>{data.metadata.sources} sources</span>
             </div>
@@ -297,7 +297,7 @@ export function LangGraphWorkflowVisualizer({
         <CardContent className="flex items-center justify-center h-[600px]">
           <div className="text-center">
             <Clock className="w-8 h-8 animate-spin mx-auto mb-2" />
-            <p className="text-gray-600">Loading workflow state...</p>
+            <p className="text-neutral-600">Loading workflow state...</p>
           </div>
         </CardContent>
       </Card>
@@ -314,7 +314,7 @@ export function LangGraphWorkflowVisualizer({
               <GitBranch className="w-6 h-6 text-purple-600" />
               <div>
                 <CardTitle>LangGraph Workflow Visualizer</CardTitle>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-neutral-600 mt-1">
                   {mode === 'editor' ? 'Interactive workflow designer' : 'Real-time workflow visualization'}
                 </p>
               </div>
@@ -341,19 +341,19 @@ export function LangGraphWorkflowVisualizer({
           <CardContent className="p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <p className="text-xs text-gray-600 mb-1">Current Step</p>
+                <p className="text-xs text-neutral-600 mb-1">Current Step</p>
                 <Badge variant="secondary">{state.currentStep || 'Idle'}</Badge>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1">Mode</p>
+                <p className="text-xs text-neutral-600 mb-1">Mode</p>
                 <Badge>{state.mode || 'N/A'}</Badge>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1">Total Tokens</p>
+                <p className="text-xs text-neutral-600 mb-1">Total Tokens</p>
                 <p className="font-semibold">{state.totalTokens || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1">Duration</p>
+                <p className="text-xs text-neutral-600 mb-1">Duration</p>
                 <p className="font-semibold">
                   {state.endTime && state.startTime
                     ? `${state.endTime - state.startTime}ms`
@@ -366,9 +366,9 @@ export function LangGraphWorkflowVisualizer({
       )}
 
       {/* Workflow Canvas */}
-      <Card className="border-2 border-gray-200">
+      <Card className="border-2 border-neutral-200">
         <CardContent className="p-0">
-          <div className="w-full h-[600px] bg-gray-50">
+          <div className="w-full h-[600px] bg-neutral-50">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -408,7 +408,7 @@ export function LangGraphWorkflowVisualizer({
                 <div className="space-y-2">
                   <p className="font-semibold text-sm mb-3">Legend</p>
                   <div className="flex items-center gap-2 text-xs">
-                    <Square className="w-3 h-3 text-gray-400" />
+                    <Square className="w-3 h-3 text-neutral-400" />
                     <span>Pending</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs">
@@ -437,8 +437,8 @@ export function LangGraphWorkflowVisualizer({
             <CardTitle className="text-sm">Final Response</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="bg-gray-50 p-4 rounded-lg text-sm">
-              <p className="text-gray-700 whitespace-pre-wrap">
+            <div className="bg-neutral-50 p-4 rounded-lg text-sm">
+              <p className="text-neutral-700 whitespace-pre-wrap">
                 {state.finalResponse.substring(0, 500)}
                 {state.finalResponse.length > 500 && '...'}
               </p>

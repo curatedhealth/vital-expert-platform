@@ -164,7 +164,7 @@ export function AdvancedChatInput({
       : "Ask a question or start a conversation...");
 
   return (
-    <div className="w-full border-t bg-white dark:bg-gray-950">
+    <div className="w-full border-t bg-canvas-surface dark:bg-neutral-950">
       {/* Mode Settings Panel - Collapsible */}
       <AnimatePresence>
         {showModeSettings && (
@@ -175,10 +175,10 @@ export function AdvancedChatInput({
             transition={{ duration: 0.2 }}
             className="border-b overflow-hidden"
           >
-            <div className="p-4 bg-gray-50 dark:bg-gray-900">
+            <div className="p-4 bg-neutral-50 dark:bg-neutral-900">
               <div className="max-w-4xl mx-auto">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
                     Consultation Mode
                   </h3>
                   <Button
@@ -208,7 +208,7 @@ export function AdvancedChatInput({
                         disabled={disabled}
                       />
                     </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <div className="text-xs text-neutral-600 dark:text-neutral-400">
                       {isAutonomous ? (
                         <div>
                           <span className="font-medium text-amber-700 dark:text-amber-400">Autonomous:</span> I'll work independently to achieve your goal
@@ -237,7 +237,7 @@ export function AdvancedChatInput({
                         disabled={disabled}
                       />
                     </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <div className="text-xs text-neutral-600 dark:text-neutral-400">
                       {isAutomatic ? (
                         <div>
                           <span className="font-medium text-purple-700 dark:text-purple-400">Automatic:</span> AI selects best expert for your query
@@ -265,7 +265,7 @@ export function AdvancedChatInput({
             exit={{ height: 0, opacity: 0 }}
             className="border-b overflow-hidden"
           >
-            <div className="p-3 bg-gray-50 dark:bg-gray-900">
+            <div className="p-3 bg-neutral-50 dark:bg-neutral-900">
               <div className="max-w-4xl mx-auto flex flex-wrap gap-2">
                 {attachedFiles.map((file, index) => (
                   <Badge key={index} variant="secondary" className="pl-2 pr-1 py-1">
@@ -274,7 +274,7 @@ export function AdvancedChatInput({
                       variant="ghost"
                       size="sm"
                       onClick={() => removeFile(index)}
-                      className="h-4 w-4 p-0 hover:bg-gray-300 dark:hover:bg-gray-700"
+                      className="h-4 w-4 p-0 hover:bg-neutral-300 dark:hover:bg-neutral-700"
                     >
                       <X className="h-3 w-3" />
                     </Button>
@@ -290,7 +290,7 @@ export function AdvancedChatInput({
       <div className="p-4">
         <div className="max-w-4xl mx-auto">
           {/* Context Bar */}
-          <div className="flex items-center gap-2 mb-2 text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-2 mb-2 text-xs text-neutral-500 dark:text-neutral-400">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -323,9 +323,9 @@ export function AdvancedChatInput({
           {/* Input Container */}
           <div className={cn(
             "relative rounded-2xl border-2 transition-all duration-200",
-            isFocused ? "border-blue-500 shadow-lg shadow-blue-500/10" : "border-gray-200 dark:border-gray-800",
+            isFocused ? "border-blue-500 shadow-lg shadow-blue-500/10" : "border-neutral-200 dark:border-neutral-800",
             isOverLimit && "border-red-500",
-            "bg-white dark:bg-gray-900"
+            "bg-canvas-surface dark:bg-neutral-900"
           )}>
             <Textarea
               ref={textareaRef}
@@ -339,9 +339,9 @@ export function AdvancedChatInput({
               maxLength={maxLength}
               className={cn(
                 "min-h-[56px] max-h-[144px] w-full resize-none border-0 bg-transparent px-4 py-4 pr-32",
-                "text-base placeholder:text-gray-400 dark:placeholder:text-gray-600",
+                "text-base placeholder:text-neutral-400 dark:placeholder:text-neutral-600",
                 "focus-visible:outline-none focus-visible:ring-0",
-                "scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700"
+                "scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700"
               )}
             />
 
@@ -357,9 +357,9 @@ export function AdvancedChatInput({
                       disabled={disabled || isLoading}
                       className={cn(
                         "h-8 px-2 text-xs rounded-lg border transition-colors",
-                        "border-gray-300 dark:border-gray-700",
-                        "bg-white dark:bg-gray-900",
-                        "hover:bg-gray-50 dark:hover:bg-gray-800",
+                        "border-neutral-300 dark:border-neutral-700",
+                        "bg-canvas-surface dark:bg-neutral-900",
+                        "hover:bg-neutral-50 dark:hover:bg-neutral-800",
                         "focus:outline-none focus:ring-2 focus:ring-blue-500",
                         "disabled:opacity-50 disabled:cursor-not-allowed"
                       )}
@@ -388,7 +388,7 @@ export function AdvancedChatInput({
                       disabled={disabled || isLoading}
                       className={cn(
                         "h-8 w-8 p-0",
-                        showModeSettings && "bg-gray-100 dark:bg-gray-800"
+                        showModeSettings && "bg-neutral-100 dark:bg-neutral-800"
                       )}
                     >
                       <Settings2 className={cn(
@@ -458,7 +458,7 @@ export function AdvancedChatInput({
                   "h-8 w-8 p-0 rounded-lg transition-all",
                   value.trim() && !isOverLimit && !isLoading
                     ? "bg-blue-600 hover:bg-blue-700 text-white"
-                    : "bg-gray-200 dark:bg-gray-800 text-gray-400"
+                    : "bg-neutral-200 dark:bg-neutral-800 text-neutral-400"
                 )}
               >
                 {isLoading ? (
@@ -476,14 +476,14 @@ export function AdvancedChatInput({
           </div>
 
           {/* Footer Info */}
-          <div className="flex items-center justify-between mt-2 px-1 text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex items-center justify-between mt-2 px-1 text-xs text-neutral-500 dark:text-neutral-400">
             <div className="flex items-center gap-3">
               <span>
-                Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border">Enter</kbd> to send
+                Press <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 border">Enter</kbd> to send
               </span>
               <span className="hidden sm:inline">
-                <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border">Shift</kbd> +
-                <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border ml-1">Enter</kbd> for new line
+                <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 border">Shift</kbd> +
+                <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 border ml-1">Enter</kbd> for new line
               </span>
             </div>
 

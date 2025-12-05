@@ -2678,11 +2678,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     <div className="flex flex-col items-center">
       <div className={cn(
         "w-10 h-10 rounded-full flex items-center justify-center font-semibold",
-        active ? "bg-market-purple text-white" : completed ? "bg-green-500 text-white" : "bg-gray-200 text-gray-600"
+        active ? "bg-market-purple text-white" : completed ? "bg-green-500 text-white" : "bg-neutral-200 text-neutral-600"
       )}>
         {completed ? <Check className="h-5 w-5" /> : step}
       </div>
-      <span className="text-xs mt-1 text-gray-600">{label}</span>
+      <span className="text-xs mt-1 text-neutral-600">{label}</span>
     </div>
   );
 
@@ -2708,9 +2708,9 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+      <div className="bg-canvas-surface rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-6 border-b border-neutral-200 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-market-purple/10 to-innovation-orange/10 rounded-lg flex items-center justify-center">
               <Star className="h-5 w-5 text-market-purple" />
@@ -2748,9 +2748,9 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             <div className="max-w-3xl mx-auto mb-6">
               <div className="flex items-center justify-between">
                 <StepIndicator step={1} active={personaWizardStep === 'organization'} completed={personaWizardStep !== 'organization'} label="Organization" />
-                <div className="flex-1 h-0.5 bg-gray-200 mx-2" />
+                <div className="flex-1 h-0.5 bg-neutral-200 mx-2" />
                 <StepIndicator step={2} active={personaWizardStep === 'intent'} completed={personaWizardStep === 'suggestions'} label="Intent" />
-                <div className="flex-1 h-0.5 bg-gray-200 mx-2" />
+                <div className="flex-1 h-0.5 bg-neutral-200 mx-2" />
                 <StepIndicator step={3} active={personaWizardStep === 'suggestions'} label="Review" />
               </div>
             </div>
@@ -2770,7 +2770,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                       value={formData.businessFunction}
                       onChange={handleBusinessFunctionChange}
                       disabled={loadingMedicalData}
-                      className="w-full p-3 border rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="w-full p-3 border rounded-lg disabled:bg-neutral-100 disabled:cursor-not-allowed"
                     >
                       <option value="">
                         {loadingMedicalData ? 'Loading...' : 'Select Business Function'}
@@ -2789,7 +2789,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                     <select
                       value={formData.department}
                       onChange={handleDepartmentChange}
-                      className="w-full p-3 border rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="w-full p-3 border rounded-lg disabled:bg-neutral-100 disabled:cursor-not-allowed"
                       disabled={!formData.businessFunction || loadingMedicalData}
                     >
                       <option value="">
@@ -2813,7 +2813,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                     <select
                       value={formData.role}
                       onChange={(e) => setFormData(prev => ({...prev, role: e.target.value}))}
-                      className="w-full p-3 border rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="w-full p-3 border rounded-lg disabled:bg-neutral-100 disabled:cursor-not-allowed"
                       disabled={!formData.department || loadingMedicalData}
                     >
                       <option value="">
@@ -3033,7 +3033,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         {/* Main Content with Sidebar */}
         <div className="flex flex-1 overflow-hidden">
           {/* Vertical Tabs Sidebar */}
-          <div className="w-56 border-r border-gray-200 bg-gray-50 overflow-y-auto flex-shrink-0">
+          <div className="w-56 border-r border-neutral-200 bg-neutral-50 overflow-y-auto flex-shrink-0">
             <nav className="flex flex-col p-3 space-y-1" aria-label="Form sections">
             <button
               type="button"
@@ -3042,7 +3042,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                 "py-2.5 px-3 rounded-lg font-medium text-sm transition-all flex items-center gap-2.5 text-left",
                 activeTab === 'basic'
                   ? "bg-market-purple text-white shadow-sm"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
               )}
             >
               <User className="h-4 w-4 flex-shrink-0" />
@@ -3055,7 +3055,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                 "py-2.5 px-3 rounded-lg font-medium text-sm transition-all flex items-center gap-2.5 text-left",
                 activeTab === 'organization'
                   ? "bg-market-purple text-white shadow-sm"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
               )}
             >
               <Building2 className="h-4 w-4 flex-shrink-0" />
@@ -3068,7 +3068,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                 "py-2.5 px-3 rounded-lg font-medium text-sm transition-all flex items-center gap-2.5 text-left",
                 activeTab === 'capabilities'
                   ? "bg-market-purple text-white shadow-sm"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
               )}
             >
               <Zap className="h-4 w-4 flex-shrink-0" />
@@ -3081,7 +3081,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                 "py-2.5 px-3 rounded-lg font-medium text-sm transition-all flex items-center gap-2.5 text-left",
                 activeTab === 'prompts'
                   ? "bg-market-purple text-white shadow-sm"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
               )}
             >
               <MessageSquare className="h-4 w-4 flex-shrink-0" />
@@ -3094,7 +3094,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                 "py-2.5 px-3 rounded-lg font-medium text-sm transition-all flex items-center gap-2.5 text-left",
                 activeTab === 'knowledge'
                   ? "bg-market-purple text-white shadow-sm"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
               )}
             >
               <BookOpen className="h-4 w-4 flex-shrink-0" />
@@ -3107,7 +3107,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                 "py-2.5 px-3 rounded-lg font-medium text-sm transition-all flex items-center gap-2.5 text-left",
                 activeTab === 'tools'
                   ? "bg-market-purple text-white shadow-sm"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
               )}
             >
               <Wrench className="h-4 w-4 flex-shrink-0" />
@@ -3120,7 +3120,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                 "py-2.5 px-3 rounded-lg font-medium text-sm transition-all flex items-center gap-2.5 text-left",
                 activeTab === 'models'
                   ? "bg-market-purple text-white shadow-sm"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
               )}
             >
               <Cpu className="h-4 w-4 flex-shrink-0" />
@@ -3133,7 +3133,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                 "py-2.5 px-3 rounded-lg font-medium text-sm transition-all flex items-center gap-2.5 text-left",
                 activeTab === 'reasoning'
                   ? "bg-market-purple text-white shadow-sm"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
               )}
             >
               <Brain className="h-4 w-4 flex-shrink-0" />
@@ -3146,7 +3146,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                 "py-2.5 px-3 rounded-lg font-medium text-sm transition-all flex items-center gap-2.5 text-left",
                 activeTab === 'safety'
                   ? "bg-market-purple text-white shadow-sm"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
               )}
             >
               <CheckCircle className="h-4 w-4 flex-shrink-0" />
@@ -3159,7 +3159,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                 "py-2.5 px-3 rounded-lg font-medium text-sm transition-all flex items-center gap-2.5 text-left",
                 activeTab === 'generate'
                   ? "bg-market-purple text-white shadow-sm"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
               )}
             >
               <Sparkles className="h-4 w-4 flex-shrink-0" />
@@ -3193,7 +3193,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                     <div>
                       <Label htmlFor="avatar">Avatar</Label>
                       <div className="flex items-center gap-3 mt-2">
-                        <div className="flex items-center justify-center w-16 h-16 border-2 border-gray-200 rounded-lg bg-gray-50">
+                        <div className="flex items-center justify-center w-16 h-16 border-2 border-neutral-200 rounded-lg bg-neutral-50">
                           <AgentAvatar
                             avatar={formData.avatar}
                             name="Selected Avatar"
@@ -3228,14 +3228,14 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                   </div>
 
                   {/* Agent Classification */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
                     <div>
                       <Label htmlFor="agent_level_id">Agent Level *</Label>
                       <select
                         id="agent_level_id"
                         value={formData.agent_level_id}
                         onChange={(e) => setFormData(prev => ({ ...prev, agent_level_id: e.target.value }))}
-                        className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
+                        className="w-full p-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
                       >
                         <option value="5e27905e-6f58-462e-93a4-6fad5388ebaf">Master - Top-level orchestrator</option>
                         <option value="a6e394b0-6ca1-4cb1-8097-719523ee6782">Expert - Deep domain specialist</option>
@@ -3243,7 +3243,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         <option value="c6f7eec5-3fc5-4f10-b030-bce0d22480e8">Worker - Task execution agent</option>
                         <option value="45420d67-67bf-44cf-a842-44bbaf3145e7">Tool - API/Tool wrapper</option>
                       </select>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-neutral-500 mt-1">
                         {formData.agent_level_id === '5e27905e-6f58-462e-93a4-6fad5388ebaf' && 'Manages entire domains or functions'}
                         {formData.agent_level_id === 'a6e394b0-6ca1-4cb1-8097-719523ee6782' && 'Advanced analytical capabilities'}
                         {formData.agent_level_id === '5a3647eb-a2bd-43f2-9c8b-6413d39ed0fb' && 'Specific sub-domain or technical tasks'}
@@ -3258,7 +3258,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         id="status"
                         value={formData.status}
                         onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as typeof formData.status }))}
-                        className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
+                        className="w-full p-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
                       >
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
@@ -3266,7 +3266,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         <option value="development">Development</option>
                         <option value="deprecated">Deprecated</option>
                       </select>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-neutral-500 mt-1">
                         {formData.status === 'active' && 'Ready for production use'}
                         {formData.status === 'inactive' && 'Not currently available'}
                         {formData.status === 'testing' && 'Under quality assurance'}
@@ -3287,7 +3287,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         placeholder="1-10"
                         className="w-full"
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-neutral-500 mt-1">
                         Display priority (1-10, higher = more prominent)
                       </p>
                     </div>
@@ -3343,11 +3343,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         value={formData.systemPrompt}
                         onChange={(e) => setFormData(prev => ({ ...prev, systemPrompt: e.target.value }))}
                         placeholder="Define the agent's role, expertise, and behavior..."
-                        className="w-full min-h-[400px] p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple font-mono text-sm"
+                        className="w-full min-h-[400px] p-3 border border-neutral-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple font-mono text-sm"
                         required
                       />
                     ) : (
-                      <div className="w-full min-h-[400px] max-h-[600px] overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50 prose prose-sm max-w-none prose-headings:font-semibold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-code:text-progress-teal prose-code:bg-progress-teal/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100">
+                      <div className="w-full min-h-[400px] max-h-[600px] overflow-y-auto p-4 border border-neutral-200 rounded-lg bg-neutral-50 prose prose-sm max-w-none prose-headings:font-semibold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-p:text-neutral-700 prose-li:text-neutral-700 prose-strong:text-neutral-900 prose-code:text-progress-teal prose-code:bg-progress-teal/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-neutral-900 prose-pre:text-neutral-100">
                         <ReactMarkdown>
                           {formData.systemPrompt || '*No system prompt defined*'}
                         </ReactMarkdown>
@@ -3381,7 +3381,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         }));
                       }}
                       disabled={loadingMedicalData}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-progress-teal disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-progress-teal disabled:bg-neutral-100 disabled:cursor-not-allowed"
                     >
                       <option value="">
                         {loadingMedicalData ? 'Loading...' : `Select Business Function (${businessFunctions.length} available)`}
@@ -3407,7 +3407,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         }));
                       }}
                       disabled={!formData.businessFunction}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
                       required
                     >
                       <option value="">
@@ -3432,7 +3432,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                       value={formData.role}
                       onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
                       disabled={!formData.businessFunction || (!formData.department && businessFunctions.length === 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
                     >
                       <option value="">
                         {!formData.businessFunction
@@ -3476,7 +3476,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         })()
                       ) : null}
                     </select>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-neutral-500 mt-1">
                       {formData.department
                         ? `Showing roles for ${formData.department}`
                         : 'Select a department to see available roles'}
@@ -3527,7 +3527,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                   {formData.promptStarters.length > 0 && (
                     <div className="space-y-4 max-h-96 overflow-y-auto">
                       {formData.promptStarters.map((prompt, index) => (
-                        <Card key={prompt.id} className="relative border border-gray-200">
+                        <Card key={prompt.id} className="relative border border-neutral-200">
                           <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
                               <CardTitle className="text-sm font-medium">Prompt Starter {index + 1}</CardTitle>
@@ -3574,7 +3574,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                                 value={prompt.prompt}
                                 onChange={(e) => updatePromptStarter(prompt.id, 'prompt', e.target.value)}
                                 placeholder="The prompt that will be sent to the AI"
-                                className="w-full min-h-[60px] p-2 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple text-sm"
+                                className="w-full min-h-[60px] p-2 border border-neutral-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple text-sm"
                                 rows={2}
                               />
                             </div>
@@ -3582,7 +3582,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                             <div>
                               <Label>Icon</Label>
                               <div className="flex items-center gap-3 mt-2">
-                                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center border">
+                                <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center border">
                                   {prompt.iconUrl ? (
                                     prompt.iconUrl.startsWith('http') || prompt.iconUrl.startsWith('/') ? (
                                       <Image
@@ -3596,7 +3596,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                                       <span className="text-lg">{prompt.iconUrl}</span>
                                     )
                                   ) : (
-                                    <MessageSquare className="w-5 h-5 text-gray-400" />
+                                    <MessageSquare className="w-5 h-5 text-neutral-400" />
                                   )}
                                 </div>
                                 <Button
@@ -3672,11 +3672,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
+                    <div className="flex items-start gap-3 p-3 bg-canvas-surface rounded-lg border border-green-200">
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-700 mb-1">Recommended Chat Model</p>
+                        <p className="text-sm font-semibold text-neutral-700 mb-1">Recommended Chat Model</p>
                         <code className="text-sm bg-green-100 px-3 py-1 rounded">{recommendedModels.chat}</code>
-                        <p className="text-xs text-gray-600 mt-2">
+                        <p className="text-xs text-neutral-600 mt-2">
                           Based on your selected knowledge domains (prioritizing Tier 1 domains)
                         </p>
                       </div>
@@ -3690,11 +3690,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                       </Button>
                     </div>
                     {recommendedModels.embedding && (
-                      <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-200">
+                      <div className="flex items-start gap-3 p-3 bg-canvas-surface rounded-lg border border-green-200">
                         <div className="flex-1">
-                          <p className="text-sm font-semibold text-gray-700 mb-1">Recommended Embedding Model</p>
+                          <p className="text-sm font-semibold text-neutral-700 mb-1">Recommended Embedding Model</p>
                           <code className="text-sm bg-green-100 px-3 py-1 rounded">{recommendedModels.embedding}</code>
-                          <p className="text-xs text-gray-600 mt-2">
+                          <p className="text-xs text-neutral-600 mt-2">
                             For RAG knowledge base embeddings and document search
                           </p>
                         </div>
@@ -3703,7 +3703,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         </Badge>
                       </div>
                     )}
-                    <p className="text-xs text-gray-500 italic">
+                    <p className="text-xs text-neutral-500 italic">
                       💡 These models are optimized for the knowledge domains you selected
                     </p>
                   </CardContent>
@@ -3744,7 +3744,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           calculateModelFitness(e.target.value);
                         }}
                         disabled={loadingModels}
-                        className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full p-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {loadingModels ? (
                           <option>Loading available models...</option>
@@ -3767,7 +3767,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                       {modelFitnessScore && (
                         <div className="mt-3 p-3 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700">Model Fitness Score</span>
+                            <span className="text-sm font-medium text-neutral-700">Model Fitness Score</span>
                             <div className="flex items-center gap-2">
                               <div className={cn(
                                 "px-2 py-1 rounded-full text-xs font-bold",
@@ -3798,8 +3798,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                               'Compliance': modelFitnessScore.breakdown.complianceMatch,
                             }).map(([label, score]) => (
                               <div key={label} className="flex items-center gap-2">
-                                <span className="text-xs text-gray-600 w-24">{label}:</span>
-                                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <span className="text-xs text-neutral-600 w-24">{label}:</span>
+                                <div className="flex-1 h-2 bg-neutral-200 rounded-full overflow-hidden">
                                   <div
                                     className={cn(
                                       "h-full rounded-full transition-all",
@@ -3810,13 +3810,13 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                                     style={{ width: `${score}%` }}
                                   />
                                 </div>
-                                <span className="text-xs text-gray-500 w-8 text-right">{score}</span>
+                                <span className="text-xs text-neutral-500 w-8 text-right">{score}</span>
                               </div>
                             ))}
                           </div>
 
                           {/* Reasoning */}
-                          <p className="text-xs text-gray-600 mt-2 italic">{modelFitnessScore.reasoning}</p>
+                          <p className="text-xs text-neutral-600 mt-2 italic">{modelFitnessScore.reasoning}</p>
 
                           {/* Strengths and Weaknesses */}
                           {(modelFitnessScore.strengths.length > 0 || modelFitnessScore.weaknesses.length > 0) && (
@@ -3846,8 +3846,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
                           {/* Alternative Suggestions */}
                           {modelFitnessScore.alternativeSuggestions && modelFitnessScore.alternativeSuggestions.length > 0 && (
-                            <div className="mt-2 p-2 bg-white rounded border border-gray-200">
-                              <p className="text-xs font-semibold text-gray-700 mb-1">💡 Better Alternatives:</p>
+                            <div className="mt-2 p-2 bg-canvas-surface rounded border border-neutral-200">
+                              <p className="text-xs font-semibold text-neutral-700 mb-1">💡 Better Alternatives:</p>
                               <ul className="text-xs text-blue-600 space-y-0.5">
                                 {modelFitnessScore.alternativeSuggestions.map((suggestion, i) => (
                                   <li key={i}>• {suggestion}</li>
@@ -3874,7 +3874,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         step="0.1"
                         value={formData.temperature}
                         onChange={(e) => setFormData(prev => ({ ...prev, temperature: parseFloat(e.target.value) }))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer"
                       />
                       <div className="flex justify-between text-xs text-medical-gray mt-1">
                         <span>Focused</span>
@@ -3916,7 +3916,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           id="architecturePattern"
                           value={formData.architecturePattern || 'REACTIVE'}
                           onChange={(e) => setFormData(prev => ({ ...prev, architecturePattern: e.target.value }))}
-                          className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
+                          className="w-full p-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
                           required
                         >
                           <option value="REACTIVE">Reactive (Tier 1) - Simple stimulus-response</option>
@@ -3935,7 +3935,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           id="reasoningMethod"
                           value={formData.reasoningMethod || 'DIRECT'}
                           onChange={(e) => setFormData(prev => ({ ...prev, reasoningMethod: e.target.value }))}
-                          className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
+                          className="w-full p-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
                           required
                         >
                           <option value="DIRECT">Direct (Tier 1) - Immediate answers</option>
@@ -3992,7 +3992,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         value={formData.primaryMission || ''}
                         onChange={(e) => setFormData(prev => ({ ...prev, primaryMission: e.target.value }))}
                         placeholder="Core mission statement for this agent"
-                        className="w-full min-h-[80px] p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple text-sm"
+                        className="w-full min-h-[80px] p-3 border border-neutral-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple text-sm"
                       />
                     </div>
 
@@ -4003,7 +4003,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         value={formData.valueProposition || ''}
                         onChange={(e) => setFormData(prev => ({ ...prev, valueProposition: e.target.value }))}
                         placeholder="What unique value does this agent provide?"
-                        className="w-full min-h-[80px] p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple text-sm"
+                        className="w-full min-h-[80px] p-3 border border-neutral-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple text-sm"
                       />
                     </div>
                   </CardContent>
@@ -4043,7 +4043,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                               id="medicalSpecialty"
                               value={formData.medicalSpecialty}
                               onChange={(e) => setFormData(prev => ({ ...prev, medicalSpecialty: e.target.value }))}
-                              className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
+                              className="w-full p-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
                             >
                               <option value="">Select Medical Specialty</option>
                               <option value="Regulatory Affairs">Regulatory Affairs</option>
@@ -4062,7 +4062,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                               id="fdaSamdClass"
                               value={formData.fdaSamdClass}
                               onChange={(e) => setFormData(prev => ({ ...prev, fdaSamdClass: e.target.value }))}
-                              className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
+                              className="w-full p-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
                             >
                               <option value="">Select FDA SaMD Class</option>
                               <option value="I">Class I - Low Risk</option>
@@ -4082,7 +4082,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                               id="hipaaCompliant"
                               checked={formData.hipaaCompliant}
                               onChange={(e) => setFormData(prev => ({ ...prev, hipaaCompliant: e.target.checked }))}
-                              className="rounded border-gray-300 text-market-purple focus:ring-market-purple"
+                              className="rounded border-neutral-300 text-market-purple focus:ring-market-purple"
                             />
                             <Label htmlFor="hipaaCompliant" className="text-sm font-medium">
                               HIPAA Compliant
@@ -4094,7 +4094,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                               id="pharmaEnabled"
                               checked={formData.pharmaEnabled}
                               onChange={(e) => setFormData(prev => ({ ...prev, pharmaEnabled: e.target.checked }))}
-                              className="rounded border-gray-300 text-market-purple focus:ring-market-purple"
+                              className="rounded border-neutral-300 text-market-purple focus:ring-market-purple"
                             />
                             <Label htmlFor="pharmaEnabled" className="text-sm font-medium">
                               PHARMA Protocol
@@ -4106,7 +4106,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                               id="verifyEnabled"
                               checked={formData.verifyEnabled}
                               onChange={(e) => setFormData(prev => ({ ...prev, verifyEnabled: e.target.checked }))}
-                              className="rounded border-gray-300 text-market-purple focus:ring-market-purple"
+                              className="rounded border-neutral-300 text-market-purple focus:ring-market-purple"
                             />
                             <Label htmlFor="verifyEnabled" className="text-sm font-medium">
                               VERIFY Protocol
@@ -4127,7 +4127,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                             step="0.01"
                             value={formData.accuracyThreshold}
                             onChange={(e) => setFormData(prev => ({ ...prev, accuracyThreshold: parseFloat(e.target.value) }))}
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                            className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer"
                           />
                           <div className="flex justify-between text-xs text-medical-gray mt-1">
                             <span>90% (Standard)</span>
@@ -4149,7 +4149,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           ) : (
                             <div className="space-y-4">
                               {medicalCapabilities.map((capability) => (
-                                <div key={capability.id} className="border border-gray-200 rounded-lg p-4">
+                                <div key={capability.id} className="border border-neutral-200 rounded-lg p-4">
                                   <div className="flex items-start justify-between">
                                     <div className="flex items-start space-x-3">
                                       <input
@@ -4157,7 +4157,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                                         id={`capability-${capability.id}`}
                                         checked={(formData.selectedMedicalCapabilities || []).includes(capability.id)}
                                         onChange={() => handleMedicalCapabilityToggle(capability.id)}
-                                        className="mt-1 rounded border-gray-300 text-market-purple focus:ring-market-purple"
+                                        className="mt-1 rounded border-neutral-300 text-market-purple focus:ring-market-purple"
                                       />
                                       <div className="flex-1">
                                         <Label
@@ -4193,7 +4193,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
                                   {/* Competencies for this capability */}
                                   {(formData.selectedMedicalCapabilities || []).includes(capability.id) && competencies[capability.id] && (
-                                    <div className="mt-4 pl-6 border-l-2 border-gray-100">
+                                    <div className="mt-4 pl-6 border-l-2 border-neutral-100">
                                       <Label className="text-sm font-medium text-deep-charcoal">
                                         Select Competencies
                                       </Label>
@@ -4205,7 +4205,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                                               id={`competency-${competency.id}`}
                                               checked={((formData.competencySelection || { /* TODO: implement */ })[capability.id] || []).includes(competency.id)}
                                               onChange={() => handleCompetencySelection(capability.id, competency.id)}
-                                              className="mt-1 rounded border-gray-300 text-market-purple focus:ring-market-purple"
+                                              className="mt-1 rounded border-neutral-300 text-market-purple focus:ring-market-purple"
                                             />
                                             <div className="flex-1">
                                               <Label
@@ -4262,7 +4262,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         )}
 
                         {/* Dynamic Prompt Generation */}
-                        <div className="border-t border-gray-200 pt-6">
+                        <div className="border-t border-neutral-200 pt-6">
                           <div className="flex items-center justify-between mb-4">
                             <div>
                               <Label className="text-base font-medium">Dynamic System Prompt</Label>
@@ -4294,21 +4294,21 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           {generatedPrompt && (
                             <div className="space-y-3">
                               {/* Prompt Metadata */}
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-3 bg-gray-50 rounded-lg">
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-3 bg-neutral-50 rounded-lg">
                                 <div>
-                                  <Label className="text-xs font-medium text-gray-600">Token Count</Label>
+                                  <Label className="text-xs font-medium text-neutral-600">Token Count</Label>
                                   <p className="text-sm font-medium">{generatedPrompt.metadata.tokenCount}</p>
                                 </div>
                                 <div>
-                                  <Label className="text-xs font-medium text-gray-600">Capabilities</Label>
+                                  <Label className="text-xs font-medium text-neutral-600">Capabilities</Label>
                                   <p className="text-sm font-medium">{generatedPrompt.metadata.capabilities.length}</p>
                                 </div>
                                 <div>
-                                  <Label className="text-xs font-medium text-gray-600">Compliance Level</Label>
+                                  <Label className="text-xs font-medium text-neutral-600">Compliance Level</Label>
                                   <p className="text-sm font-medium">{generatedPrompt.metadata.complianceLevel}</p>
                                 </div>
                                 <div>
-                                  <Label className="text-xs font-medium text-gray-600">Validation Required</Label>
+                                  <Label className="text-xs font-medium text-neutral-600">Validation Required</Label>
                                   <p className="text-sm font-medium">{generatedPrompt.validationRequired ? 'Yes' : 'No'}</p>
                                 </div>
                               </div>
@@ -4345,12 +4345,12 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
                               {/* Prompt Preview */}
                               {showPromptPreview && (
-                                <div className="border border-gray-200 rounded-lg">
-                                  <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
-                                    <Label className="text-xs font-medium text-gray-600">Generated System Prompt Preview</Label>
+                                <div className="border border-neutral-200 rounded-lg">
+                                  <div className="bg-neutral-50 px-3 py-2 border-b border-neutral-200">
+                                    <Label className="text-xs font-medium text-neutral-600">Generated System Prompt Preview</Label>
                                   </div>
                                   <div className="p-3 max-h-64 overflow-y-auto">
-                                    <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">
+                                    <pre className="text-xs text-neutral-700 whitespace-pre-wrap font-mono">
                                       {generatedPrompt.content}
                                     </pre>
                                   </div>
@@ -4383,7 +4383,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           }));
                         }}
                         placeholder="One prohibition per line, e.g.:\nNever diagnose medical conditions\nNo controlled substance advice"
-                        className="w-full min-h-[100px] p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple text-sm font-mono"
+                        className="w-full min-h-[100px] p-3 border border-neutral-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple text-sm font-mono"
                       />
                     </div>
 
@@ -4408,7 +4408,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           }));
                         }}
                         placeholder="One protection per line, e.g.:\nPatient privacy protection\nData security measures"
-                        className="w-full min-h-[100px] p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple text-sm font-mono"
+                        className="w-full min-h-[100px] p-3 border border-neutral-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple text-sm font-mono"
                       />
                     </div>
 
@@ -4433,11 +4433,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           }));
                         }}
                         placeholder="One standard per line, e.g.:\nHIPAA\nFDA 21 CFR Part 11\nICH-GCP"
-                        className="w-full min-h-[100px] p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple text-sm font-mono"
+                        className="w-full min-h-[100px] p-3 border border-neutral-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple text-sm font-mono"
                       />
                     </div>
 
-                    <div className="border-t border-gray-200 pt-4">
+                    <div className="border-t border-neutral-200 pt-4">
                       <h4 className="font-medium text-deep-charcoal mb-3">Confidence Thresholds</h4>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
@@ -4558,7 +4558,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
                           {/* Mode Selection */}
                           <div className="mb-4 space-y-3">
-                            <label className="flex items-start gap-3 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-market-purple/30 transition-colors">
+                            <label className="flex items-start gap-3 p-3 border-2 border-neutral-200 rounded-lg cursor-pointer hover:border-market-purple/30 transition-colors">
                               <input
                                 type="radio"
                                 name="promptMode"
@@ -4578,7 +4578,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                               </div>
                             </label>
 
-                            <label className="flex items-start gap-3 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-market-purple/30 transition-colors">
+                            <label className="flex items-start gap-3 p-3 border-2 border-neutral-200 rounded-lg cursor-pointer hover:border-market-purple/30 transition-colors">
                               <input
                                 type="radio"
                                 name="promptMode"
@@ -4632,7 +4632,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-background-gray flex-shrink-0">
+        <div className="flex items-center justify-between p-6 border-t border-neutral-200 bg-background-gray flex-shrink-0">
           <div className="flex items-center gap-3">
             <p className="text-sm text-medical-gray">
               * Required fields

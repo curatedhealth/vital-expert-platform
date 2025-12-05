@@ -261,8 +261,8 @@ export class OutcomeTracker {
       case 'passed': return 'text-green-600 bg-green-100';
       case 'failed': return 'text-red-600 bg-red-100';
       case 'warning': return 'text-yellow-600 bg-yellow-100';
-      case 'pending': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'pending': return 'text-neutral-600 bg-neutral-100';
+      default: return 'text-neutral-600 bg-neutral-100';
     }
   };
 
@@ -271,7 +271,7 @@ export class OutcomeTracker {
       case 'high': return 'text-orange-600';
       case 'medium': return 'text-yellow-600';
       case 'low': return 'text-blue-600';
-      default: return 'text-gray-600';
+      default: return 'text-neutral-600';
     }
   };
 
@@ -280,17 +280,17 @@ export class OutcomeTracker {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-canvas-surface border-b border-neutral-200 px-6 py-4">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900">DTx Development Framework</h1>
-          <p className="text-gray-600 mt-1">{project.name} - FDA-Compliant Digital Therapeutic</p>
+          <h1 className="text-2xl font-bold text-neutral-900">DTx Development Framework</h1>
+          <p className="text-neutral-600 mt-1">{project.name} - FDA-Compliant Digital Therapeutic</p>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="bg-white border-b border-gray-200 px-6">
+      <div className="bg-canvas-surface border-b border-neutral-200 px-6">
         <div className="max-w-7xl mx-auto">
           <nav className="-mb-px flex space-x-8">
             {[
@@ -306,11 +306,11 @@ export class OutcomeTracker {
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.key
                     ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
                 }`}
               >
                 <div>{tab.label}</div>
-                <div className="text-xs text-gray-400">{tab.desc}</div>
+                <div className="text-xs text-neutral-400">{tab.desc}</div>
               </button>
             ))}
           </nav>
@@ -321,8 +321,8 @@ export class OutcomeTracker {
       <div className="max-w-7xl mx-auto px-6 py-6">
         {activeTab === 'design' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">DTx Architecture Components</h2>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">DTx Architecture Components</h2>
 
               <div className="space-y-4">
                 {[
@@ -331,15 +331,15 @@ export class OutcomeTracker {
                   { name: 'Outcome Tracking', status: 'complete', compliance: 'RWE Compatible' },
                   { name: 'Safety Monitoring', status: 'design', compliance: 'FDA Required' }
                 ].map((component, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg">
                     <div>
-                      <div className="font-medium text-gray-900">{component.name}</div>
+                      <div className="font-medium text-neutral-900">{component.name}</div>
                       <div className="text-sm text-green-600">{component.compliance}</div>
                     </div>
                     <div className={`px-2 py-1 rounded-full text-xs font-medium ${
                       component.status === 'complete' ? 'bg-green-100 text-green-800' :
                       component.status === 'development' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
+                      'bg-neutral-100 text-neutral-800'
                     }`}>
                       {component.status}
                     </div>
@@ -348,8 +348,8 @@ export class OutcomeTracker {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">FDA Requirements Checklist</h2>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">FDA Requirements Checklist</h2>
 
               <div className="space-y-3">
                 {[
@@ -363,9 +363,9 @@ export class OutcomeTracker {
                     <div className={`w-4 h-4 rounded-full ${
                       item.status === 'complete' ? 'bg-green-500' :
                       item.status === 'in_progress' ? 'bg-yellow-500' :
-                      'bg-gray-300'
+                      'bg-neutral-300'
                     }`} />
-                    <span className="text-sm text-gray-700">{item.requirement}</span>
+                    <span className="text-sm text-neutral-700">{item.requirement}</span>
                   </div>
                 ))}
               </div>
@@ -375,40 +375,40 @@ export class OutcomeTracker {
 
         {activeTab === 'develop' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Code Generation</h2>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">Code Generation</h2>
 
               <div className="space-y-3 mb-4">
                 <button
                   onClick={() => generateDTxCode('patient_onboarding')}
-                  className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="w-full text-left px-4 py-3 border border-neutral-200 rounded-lg hover:bg-neutral-50"
                 >
                   <div className="font-medium">Patient Onboarding Component</div>
-                  <div className="text-sm text-gray-600">HIPAA-compliant data collection</div>
+                  <div className="text-sm text-neutral-600">HIPAA-compliant data collection</div>
                 </button>
 
                 <button
                   onClick={() => generateDTxCode('intervention_engine')}
-                  className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="w-full text-left px-4 py-3 border border-neutral-200 rounded-lg hover:bg-neutral-50"
                 >
                   <div className="font-medium">Intervention Engine</div>
-                  <div className="text-sm text-gray-600">FDA-compliant therapeutic algorithm</div>
+                  <div className="text-sm text-neutral-600">FDA-compliant therapeutic algorithm</div>
                 </button>
 
                 <button
                   onClick={() => generateDTxCode('outcome_tracking')}
-                  className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="w-full text-left px-4 py-3 border border-neutral-200 rounded-lg hover:bg-neutral-50"
                 >
                   <div className="font-medium">Outcome Tracking</div>
-                  <div className="text-sm text-gray-600">Real-world evidence collection</div>
+                  <div className="text-sm text-neutral-600">Real-world evidence collection</div>
                 </button>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Generated Code</h2>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">Generated Code</h2>
 
-              <div className="bg-gray-900 rounded-lg p-4 text-green-400 font-mono text-sm max-h-96 overflow-y-auto">
+              <div className="bg-neutral-900 rounded-lg p-4 text-green-400 font-mono text-sm max-h-96 overflow-y-auto">
                 <pre>{generatedCode || '// Select a component to generate code'}</pre>
               </div>
             </div>
@@ -418,18 +418,18 @@ export class OutcomeTracker {
         {activeTab === 'test' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-900">Clinical & Technical Testing</h2>
+              <h2 className="text-lg font-semibold text-neutral-900">Clinical & Technical Testing</h2>
               <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                 Run All Tests
               </button>
             </div>
 
             {testSuites.map(suite => (
-              <div key={suite.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div key={suite.id} className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">{suite.name}</h3>
-                    <p className="text-sm text-gray-600">{suite.type} • {suite.tests.length} tests</p>
+                    <h3 className="text-lg font-medium text-neutral-900">{suite.name}</h3>
+                    <p className="text-sm text-neutral-600">{suite.type} • {suite.tests.length} tests</p>
                   </div>
                   <button className="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700">
                     Run Suite
@@ -438,10 +438,10 @@ export class OutcomeTracker {
 
                 <div className="space-y-3">
                   {suite.tests.map(test => (
-                    <div key={test.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                    <div key={test.id} className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg">
                       <div>
-                        <div className="font-medium text-gray-900">{test.name}</div>
-                        <div className="text-sm text-gray-600">{test.description}</div>
+                        <div className="font-medium text-neutral-900">{test.name}</div>
+                        <div className="text-sm text-neutral-600">{test.description}</div>
                       </div>
                       <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(test.status)}`}>
                         {test.status}
@@ -457,7 +457,7 @@ export class OutcomeTracker {
         {activeTab === 'validate' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-900">Regulatory Compliance Validation</h2>
+              <h2 className="text-lg font-semibold text-neutral-900">Regulatory Compliance Validation</h2>
               <button
                 onClick={runComplianceValidation}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -471,31 +471,31 @@ export class OutcomeTracker {
                 <div className="text-2xl font-bold text-green-600">
                   {validationResults.filter((r: any) => r.status === 'passed').length}
                 </div>
-                <div className="text-sm text-gray-600">Passed</div>
+                <div className="text-sm text-neutral-600">Passed</div>
               </div>
               <div className="bg-yellow-50 p-4 rounded-lg">
                 <div className="text-2xl font-bold text-yellow-600">
                   {validationResults.filter((r: any) => r.status === 'warning').length}
                 </div>
-                <div className="text-sm text-gray-600">Warnings</div>
+                <div className="text-sm text-neutral-600">Warnings</div>
               </div>
               <div className="bg-red-50 p-4 rounded-lg">
                 <div className="text-2xl font-bold text-red-600">
                   {validationResults.filter((r: any) => r.status === 'failed').length}
                 </div>
-                <div className="text-sm text-gray-600">Failed</div>
+                <div className="text-sm text-neutral-600">Failed</div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Validation Results</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Validation Results</h3>
 
               <div className="space-y-4">
                 {validationResults.map((result: any) => (
-                  <div key={result.id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={result.id} className="border border-neutral-200 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <div className="font-medium text-gray-900">{result.type.replace('_', ' ').toUpperCase()}</div>
+                        <div className="font-medium text-neutral-900">{result.type.replace('_', ' ').toUpperCase()}</div>
                         <div className={`text-sm font-medium ${getSeverityColor(result.severity)}`}>
                           {result.severity.toUpperCase()} SEVERITY
                         </div>
@@ -505,7 +505,7 @@ export class OutcomeTracker {
                       </div>
                     </div>
 
-                    <p className="text-sm text-gray-700 mb-2">{result.message}</p>
+                    <p className="text-sm text-neutral-700 mb-2">{result.message}</p>
                     <p className="text-sm text-blue-600">{result.recommendation}</p>
 
                     {result.fixable && (
@@ -522,44 +522,44 @@ export class OutcomeTracker {
 
         {activeTab === 'regulatory_optimizer' && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">🚀 AI-Powered Regulatory Pathway Optimization</h2>
+            <h2 className="text-lg font-semibold text-neutral-900">🚀 AI-Powered Regulatory Pathway Optimization</h2>
 
             {/* Regulatory Strategy Overview */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">📊 Optimized Regulatory Strategy</h3>
+              <h3 className="text-lg font-bold text-neutral-900 mb-4">📊 Optimized Regulatory Strategy</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="bg-white rounded-lg p-4 text-center">
+                <div className="bg-canvas-surface rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-blue-600 mb-1">De Novo</div>
-                  <div className="text-sm text-gray-600">Recommended Pathway</div>
+                  <div className="text-sm text-neutral-600">Recommended Pathway</div>
                   <div className="text-xs text-blue-600 mt-1">87% Success Rate</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
+                <div className="bg-canvas-surface rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-green-600 mb-1">14-16</div>
-                  <div className="text-sm text-gray-600">Months to Clearance</div>
+                  <div className="text-sm text-neutral-600">Months to Clearance</div>
                   <div className="text-xs text-green-600 mt-1">3 months faster</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
+                <div className="bg-canvas-surface rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-purple-600 mb-1">$2.1M</div>
-                  <div className="text-sm text-gray-600">Total Regulatory Cost</div>
+                  <div className="text-sm text-neutral-600">Total Regulatory Cost</div>
                   <div className="text-xs text-purple-600 mt-1">15% below average</div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-2">AI Optimization Insights</h4>
+              <div className="bg-canvas-surface rounded-lg p-4">
+                <h4 className="font-semibold text-neutral-900 mb-2">AI Optimization Insights</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center">
                     <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                    <span className="text-gray-700">Clinical evidence package optimized for FDA expectations</span>
+                    <span className="text-neutral-700">Clinical evidence package optimized for FDA expectations</span>
                   </div>
                   <div className="flex items-center">
                     <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                    <span className="text-gray-700">Pre-submission strategy aligned with similar approvals</span>
+                    <span className="text-neutral-700">Pre-submission strategy aligned with similar approvals</span>
                   </div>
                   <div className="flex items-center">
                     <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
-                    <span className="text-gray-700">Risk mitigation plan based on 15,000+ regulatory decisions</span>
+                    <span className="text-neutral-700">Risk mitigation plan based on 15,000+ regulatory decisions</span>
                   </div>
                 </div>
               </div>
@@ -567,8 +567,8 @@ export class OutcomeTracker {
 
             {/* Automated Regulatory Planning */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">📋 Automated Regulatory Plan</h3>
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">📋 Automated Regulatory Plan</h3>
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
@@ -577,13 +577,13 @@ export class OutcomeTracker {
                         <span className="text-green-600 text-sm font-bold">1</span>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">Pre-Submission Meeting</div>
-                        <div className="text-sm text-gray-600">Q-Sub with FDA CDRH</div>
+                        <div className="font-medium text-neutral-900">Pre-Submission Meeting</div>
+                        <div className="text-sm text-neutral-600">Q-Sub with FDA CDRH</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-green-600">Month 6</div>
-                      <div className="text-xs text-gray-500">Optimal timing</div>
+                      <div className="text-xs text-neutral-500">Optimal timing</div>
                     </div>
                   </div>
 
@@ -593,13 +593,13 @@ export class OutcomeTracker {
                         <span className="text-blue-600 text-sm font-bold">2</span>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">Clinical Study Completion</div>
-                        <div className="text-sm text-gray-600">RCT with HEOR endpoints</div>
+                        <div className="font-medium text-neutral-900">Clinical Study Completion</div>
+                        <div className="text-sm text-neutral-600">RCT with HEOR endpoints</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-blue-600">Month 12</div>
-                      <div className="text-xs text-gray-500">Evidence package</div>
+                      <div className="text-xs text-neutral-500">Evidence package</div>
                     </div>
                   </div>
 
@@ -609,13 +609,13 @@ export class OutcomeTracker {
                         <span className="text-purple-600 text-sm font-bold">3</span>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">De Novo Submission</div>
-                        <div className="text-sm text-gray-600">Complete regulatory dossier</div>
+                        <div className="font-medium text-neutral-900">De Novo Submission</div>
+                        <div className="text-sm text-neutral-600">Complete regulatory dossier</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-purple-600">Month 18</div>
-                      <div className="text-xs text-gray-500">FDA submission</div>
+                      <div className="text-xs text-neutral-500">FDA submission</div>
                     </div>
                   </div>
 
@@ -625,13 +625,13 @@ export class OutcomeTracker {
                         <span className="text-orange-600 text-sm font-bold">4</span>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">FDA Clearance</div>
-                        <div className="text-sm text-gray-600">Device authorization</div>
+                        <div className="font-medium text-neutral-900">FDA Clearance</div>
+                        <div className="text-sm text-neutral-600">Device authorization</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-orange-600">Month 28</div>
-                      <div className="text-xs text-gray-500">Target approval</div>
+                      <div className="text-xs text-neutral-500">Target approval</div>
                     </div>
                   </div>
                 </div>
@@ -641,16 +641,16 @@ export class OutcomeTracker {
                 </button>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">🎯 Risk Optimization</h3>
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">🎯 Risk Optimization</h3>
 
                 <div className="space-y-4">
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium text-gray-900">Clinical Evidence Risk</h4>
+                      <h4 className="font-medium text-neutral-900">Clinical Evidence Risk</h4>
                       <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">High</span>
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">
+                    <div className="text-sm text-neutral-600 mb-2">
                       Current study design may not meet FDA expectations for novel algorithm
                     </div>
                     <div className="text-xs text-red-600">
@@ -660,10 +660,10 @@ export class OutcomeTracker {
 
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium text-gray-900">Cybersecurity Requirements</h4>
+                      <h4 className="font-medium text-neutral-900">Cybersecurity Requirements</h4>
                       <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Medium</span>
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">
+                    <div className="text-sm text-neutral-600 mb-2">
                       New FDA cybersecurity guidelines require enhanced documentation
                     </div>
                     <div className="text-xs text-yellow-600">
@@ -673,10 +673,10 @@ export class OutcomeTracker {
 
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium text-gray-900">Predicate Device Strategy</h4>
+                      <h4 className="font-medium text-neutral-900">Predicate Device Strategy</h4>
                       <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Low</span>
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">
+                    <div className="text-sm text-neutral-600 mb-2">
                       Strong predicate devices identified for substantial equivalence
                     </div>
                     <div className="text-xs text-green-600">
@@ -692,13 +692,13 @@ export class OutcomeTracker {
             </div>
 
             {/* Real-time Regulatory Intelligence */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">🤖 Real-time Regulatory Intelligence</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">🤖 Real-time Regulatory Intelligence</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">FDA Activity Monitor</h4>
-                  <div className="space-y-2 text-sm text-gray-600">
+                  <h4 className="font-medium text-neutral-900 mb-2">FDA Activity Monitor</h4>
+                  <div className="space-y-2 text-sm text-neutral-600">
                     <div>• 3 new AI/ML guidance documents released</div>
                     <div>• 12 similar device approvals this quarter</div>
                     <div>• 2 relevant FDA workshops scheduled</div>
@@ -706,8 +706,8 @@ export class OutcomeTracker {
                 </div>
 
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Competitive Analysis</h4>
-                  <div className="space-y-2 text-sm text-gray-600">
+                  <h4 className="font-medium text-neutral-900 mb-2">Competitive Analysis</h4>
+                  <div className="space-y-2 text-sm text-neutral-600">
                     <div>• 4 competitors in clinical trials</div>
                     <div>• 2 recent De Novo approvals in space</div>
                     <div>• Average approval time: 16.2 months</div>
@@ -715,8 +715,8 @@ export class OutcomeTracker {
                 </div>
 
                 <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Success Predictions</h4>
-                  <div className="space-y-2 text-sm text-gray-600">
+                  <h4 className="font-medium text-neutral-900 mb-2">Success Predictions</h4>
+                  <div className="space-y-2 text-sm text-neutral-600">
                     <div>• 87% probability of first-round approval</div>
                     <div>• 94% chance of eventual clearance</div>
                     <div>• 73% likelihood of premium pricing</div>
@@ -725,27 +725,27 @@ export class OutcomeTracker {
               </div>
 
               {/* AI-Powered Action Items */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-3">🎯 AI-Generated Action Items</h4>
+              <div className="bg-neutral-50 rounded-lg p-4">
+                <h4 className="font-semibold text-neutral-900 mb-3">🎯 AI-Generated Action Items</h4>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <div className="flex items-center justify-between p-2 bg-canvas-surface rounded border">
                     <div className="flex items-center">
                       <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
-                      <span className="text-sm text-gray-700">Update software bill of materials for cybersecurity submission</span>
+                      <span className="text-sm text-neutral-700">Update software bill of materials for cybersecurity submission</span>
                     </div>
                     <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">High Priority</span>
                   </div>
-                  <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <div className="flex items-center justify-between p-2 bg-canvas-surface rounded border">
                     <div className="flex items-center">
                       <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
-                      <span className="text-sm text-gray-700">Schedule pre-submission meeting with FDA CDRH</span>
+                      <span className="text-sm text-neutral-700">Schedule pre-submission meeting with FDA CDRH</span>
                     </div>
                     <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Medium Priority</span>
                   </div>
-                  <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <div className="flex items-center justify-between p-2 bg-canvas-surface rounded border">
                     <div className="flex items-center">
                       <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                      <span className="text-sm text-gray-700">Begin clinical protocol optimization based on FDA feedback patterns</span>
+                      <span className="text-sm text-neutral-700">Begin clinical protocol optimization based on FDA feedback patterns</span>
                     </div>
                     <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Low Priority</span>
                   </div>

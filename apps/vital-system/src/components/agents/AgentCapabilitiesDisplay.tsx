@@ -66,7 +66,7 @@ const complexityLevelStyles: Record<string, string> = {
 };
 
 const proficiencyLevelStyles: Record<string, string> = {
-  basic: 'bg-gray-100 text-gray-700',
+  basic: 'bg-neutral-100 text-neutral-700',
   intermediate: 'bg-yellow-100 text-yellow-800',
   advanced: 'bg-orange-100 text-orange-800',
   expert: 'bg-emerald-100 text-emerald-800'
@@ -136,10 +136,10 @@ export const AgentCapabilitiesDisplay: React.FC<AgentCapabilitiesDisplayProps> =
     return (
       <div className={cn("space-y-4", className)}>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded mb-4"></div>
+          <div className="h-6 bg-neutral-200 rounded mb-4"></div>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 bg-gray-100 rounded"></div>
+              <div key={i} className="h-20 bg-neutral-100 rounded"></div>
             ))}
           </div>
         </div>

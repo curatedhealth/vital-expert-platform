@@ -15,7 +15,7 @@ export function Toaster() {
             animate-in slide-in-from-top-5 fade-in
             ${toast.variant === 'destructive' ? 'bg-red-600 text-white' : ''}
             ${toast.variant === 'success' ? 'bg-green-600 text-white' : ''}
-            ${toast.variant === 'default' ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700' : ''}
+            ${toast.variant === 'default' ? 'bg-canvas-surface dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700' : ''}
           `}
         >
           <div className="flex items-start justify-between gap-3">

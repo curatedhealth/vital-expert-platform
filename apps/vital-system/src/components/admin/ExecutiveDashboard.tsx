@@ -187,7 +187,7 @@ export default function ExecutiveDashboard() {
       case 'critical':
         return 'text-red-500';
       default:
-        return 'text-gray-500';
+        return 'text-neutral-500';
     }
   };
 
@@ -200,7 +200,7 @@ export default function ExecutiveDashboard() {
       case 'critical':
         return <XCircle className="h-5 w-5 text-red-500" />;
       default:
-        return <Activity className="h-5 w-5 text-gray-500" />;
+        return <Activity className="h-5 w-5 text-neutral-500" />;
     }
   };
 

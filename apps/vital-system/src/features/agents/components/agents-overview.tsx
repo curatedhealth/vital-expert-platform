@@ -14,11 +14,12 @@
 
 'use client';
 
-import { Crown, Star, Shield, Wrench, Cog, Users, Zap, TrendingUp, Activity } from 'lucide-react';
+import { Crown, Star, Shield, Wrench, Cog, Users, Zap, TrendingUp, Activity, Filter } from 'lucide-react';
 import { useMemo, useEffect } from 'react';
 
 import { Badge } from '@vital/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
+import { useAgentsFilter } from '@/contexts/agents-filter-context';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 
 // ============================================================================
@@ -57,6 +58,7 @@ const levelConfig = {
 
 export function AgentsOverview() {
   const { agents, loadAgents, isLoading, error } = useAgentsStore();
+  const { searchQuery, multiFilters, activeFilterCount } = useAgentsFilter();
 
   useEffect(() => {
     if (agents.length === 0) {
@@ -64,29 +66,70 @@ export function AgentsOverview() {
     }
   }, []);
 
+  // Filter agents based on multi-select filters from context
+  const filteredAgents = useMemo(() => {
+    return agents.filter((agent: any) => {
+      // Search filter
+      const matchesSearch = !searchQuery ||
+        (agent.display_name || agent.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (agent.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Multi-select function filter
+      const matchesFunction = multiFilters.functions.size === 0 ||
+        multiFilters.functions.has(agent.function_id) ||
+        multiFilters.functions.has(agent.business_function) ||
+        multiFilters.functions.has(agent.function_name);
+
+      // Multi-select department filter
+      const matchesDepartment = multiFilters.departments.size === 0 ||
+        multiFilters.departments.has(agent.department_id) ||
+        multiFilters.departments.has(agent.department) ||
+        multiFilters.departments.has(agent.department_name);
+
+      // Multi-select role filter
+      const matchesRole = multiFilters.roles.size === 0 ||
+        multiFilters.roles.has(agent.role_id) ||
+        multiFilters.roles.has(agent.role) ||
+        multiFilters.roles.has(agent.role_name);
+
+      // Multi-select level filter
+      const matchesLevel = multiFilters.levels.size === 0 ||
+        multiFilters.levels.has(agent.agent_level_id) ||
+        multiFilters.levels.has(String(agent.agent_level)) ||
+        multiFilters.levels.has(agent.agent_level_name) ||
+        multiFilters.levels.has(String(agent.tier));
+
+      // Multi-select status filter
+      const matchesStatus = multiFilters.statuses.size === 0 ||
+        multiFilters.statuses.has(agent.status);
+
+      return matchesSearch && matchesFunction && matchesDepartment && matchesRole && matchesLevel && matchesStatus;
+    });
+  }, [agents, searchQuery, multiFilters]);
+
   const statistics = useMemo(() => {
-    const total = agents.length;
-    const active = agents.filter((a: any) => a.status === 'active').length;
-    const canSpawn = agents.filter((a: any) => (a.tier || 2) <= 3).length;
-    
+    const total = filteredAgents.length;
+    const active = filteredAgents.filter((a: any) => a.status === 'active').length;
+    const canSpawn = filteredAgents.filter((a: any) => (a.tier || 2) <= 3).length;
+
     // Count by level (L1-L5)
     const byLevel = {
-      1: agents.filter((a: any) => a.tier === 1).length,
-      2: agents.filter((a: any) => a.tier === 2 || !a.tier).length, // Default to L2
-      3: agents.filter((a: any) => a.tier === 3).length,
-      4: agents.filter((a: any) => a.tier === 4).length,
-      5: agents.filter((a: any) => a.tier === 5).length,
+      1: filteredAgents.filter((a: any) => a.tier === 1).length,
+      2: filteredAgents.filter((a: any) => a.tier === 2 || !a.tier).length, // Default to L2
+      3: filteredAgents.filter((a: any) => a.tier === 3).length,
+      4: filteredAgents.filter((a: any) => a.tier === 4).length,
+      5: filteredAgents.filter((a: any) => a.tier === 5).length,
     };
-    
+
     const byStatus = {
-      active: agents.filter((a: any) => a.status === 'active').length,
-      development: agents.filter((a: any) => a.status === 'development').length,
-      testing: agents.filter((a: any) => a.status === 'testing').length,
-      inactive: agents.filter((a: any) => a.status === 'inactive').length,
+      active: filteredAgents.filter((a: any) => a.status === 'active').length,
+      development: filteredAgents.filter((a: any) => a.status === 'development').length,
+      testing: filteredAgents.filter((a: any) => a.status === 'testing').length,
+      inactive: filteredAgents.filter((a: any) => a.status === 'inactive').length,
     };
-    
-    const byFunction = agents.reduce((acc, agent) => {
-      const func = agent.business_function || 'Unassigned';
+
+    const byFunction = filteredAgents.reduce((acc, agent) => {
+      const func = agent.business_function || agent.function_name || 'Unassigned';
       acc[func] = (acc[func] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -96,7 +139,7 @@ export function AgentsOverview() {
       .slice(0, 5);
 
     return { total, active, canSpawn, byLevel, byStatus, topFunctions };
-  }, [agents]);
+  }, [filteredAgents]);
 
   if (isLoading) {
     return (
@@ -125,6 +168,43 @@ export function AgentsOverview() {
 
   return (
     <div className="space-y-6">
+      {/* Active Filters Indicator */}
+      {activeFilterCount > 0 && (
+        <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/50">
+          <Filter className="w-4 h-4" style={{ color: COLORS.expertPurple }} />
+          <span className="text-sm text-[#555555]">
+            Showing filtered results ({activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''})
+          </span>
+          <div className="flex flex-wrap gap-2 ml-2">
+            {Array.from(multiFilters.functions).map(func => (
+              <Badge key={`func-${func}`} variant="secondary" className="text-xs">
+                {func}
+              </Badge>
+            ))}
+            {Array.from(multiFilters.departments).map(dept => (
+              <Badge key={`dept-${dept}`} variant="secondary" className="text-xs">
+                {dept}
+              </Badge>
+            ))}
+            {Array.from(multiFilters.roles).map(role => (
+              <Badge key={`role-${role}`} variant="secondary" className="text-xs">
+                {role}
+              </Badge>
+            ))}
+            {Array.from(multiFilters.levels).map(level => (
+              <Badge key={`level-${level}`} variant="secondary" className="text-xs">
+                Level {level}
+              </Badge>
+            ))}
+            {Array.from(multiFilters.statuses).map(status => (
+              <Badge key={`status-${status}`} variant="secondary" className="text-xs">
+                {status}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Key Metrics - Clean cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Agents */}

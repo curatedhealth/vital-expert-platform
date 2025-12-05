@@ -391,7 +391,7 @@ export const AgentImport: React.FC = () => {
                       <SelectItem value="upsert">Upsert (Create or Update)</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-neutral-500 mt-1">
                     {importMode === 'create' && 'Creates new agents, fails if agent name already exists'}
                     {importMode === 'update' && 'Updates existing agents, fails if agent doesn\'t exist'}
                     {importMode === 'upsert' && 'Creates new agents or updates existing ones'}
@@ -442,7 +442,7 @@ export const AgentImport: React.FC = () => {
               {importing && (
                 <div className="space-y-2">
                   <Progress value={progress} />
-                  <p className="text-sm text-gray-600 text-center">
+                  <p className="text-sm text-neutral-600 text-center">
                     {progress < 30 && 'Reading file...'}
                     {progress >= 30 && progress < 60 && 'Validating agents...'}
                     {progress >= 60 && progress < 100 && 'Importing agents...'}
@@ -458,7 +458,7 @@ export const AgentImport: React.FC = () => {
                 <Card>
                   <CardContent className="p-4">
                     <h3 className="font-medium mb-2">Complete Template</h3>
-                    <p className="text-sm text-gray-600 mb-3">
+                    <p className="text-sm text-neutral-600 mb-3">
                       Full template with examples for all domain types and required fields
                     </p>
                     <Button onClick={downloadTemplate} variant="outline" className="w-full">
@@ -471,7 +471,7 @@ export const AgentImport: React.FC = () => {
                 <Card>
                   <CardContent className="p-4">
                     <h3 className="font-medium mb-2">JSON Schema</h3>
-                    <p className="text-sm text-gray-600 mb-3">
+                    <p className="text-sm text-neutral-600 mb-3">
                       Download the JSON schema for validation and IDE support
                     </p>
                     <Button variant="outline" className="w-full" disabled>
@@ -490,7 +490,7 @@ export const AgentImport: React.FC = () => {
                   <Card key={domain}>
                     <CardContent className="p-4">
                       <h3 className="font-medium mb-2 capitalize">{domain} Agent</h3>
-                      <p className="text-sm text-gray-600 mb-3">
+                      <p className="text-sm text-neutral-600 mb-3">
                         Example configuration for {domain} domain agents
                       </p>
                       <Button
@@ -537,19 +537,19 @@ export const AgentImport: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">{result.imported}</div>
-                  <div className="text-sm text-gray-600">Imported</div>
+                  <div className="text-sm text-neutral-600">Imported</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold">{result.total}</div>
-                  <div className="text-sm text-gray-600">Total</div>
+                  <div className="text-sm text-neutral-600">Total</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-600">{result.errors.length}</div>
-                  <div className="text-sm text-gray-600">Errors</div>
+                  <div className="text-sm text-neutral-600">Errors</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-yellow-600">{result.warnings?.length || 0}</div>
-                  <div className="text-sm text-gray-600">Warnings</div>
+                  <div className="text-sm text-neutral-600">Warnings</div>
                 </div>
               </div>
 

@@ -11,6 +11,7 @@ export { OpportunityDetailPanel } from './OpportunityDetailPanel'
 export { ValueMetrics } from './ValueMetrics'
 export { OntologyFilterStack } from './OntologyFilterStack'
 export { GlobalFilters } from './GlobalFilters'
+export { AIPoweredInsight } from './AIPoweredInsight'
 
 // Re-export types from store for convenience
 export type {

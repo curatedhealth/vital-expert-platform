@@ -50,7 +50,7 @@ const STATUS_COLORS = {
   compliant: 'bg-green-500',
   partial: 'bg-yellow-500',
   non_compliant: 'bg-red-500',
-  not_applicable: 'bg-gray-500',
+  not_applicable: 'bg-neutral-500',
   pending_review: 'bg-blue-500'
 }
 

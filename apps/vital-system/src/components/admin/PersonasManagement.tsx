@@ -95,7 +95,7 @@ export function PersonasManagement() {
             <User className="h-8 w-8" />
             Personas Management
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-neutral-600 mt-1">
             Manage user personas and their characteristics
           </p>
         </div>
@@ -134,7 +134,7 @@ export function PersonasManagement() {
             <CardTitle>User Personas</CardTitle>
             <div className="flex items-center gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
                 <Input
                   placeholder="Search personas..."
                   value={searchQuery}
@@ -167,7 +167,7 @@ export function PersonasManagement() {
                 <TableRow key={persona.id}>
                   <TableCell className="font-medium">{persona.name}</TableCell>
                   <TableCell>
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                    <code className="text-sm bg-neutral-100 px-2 py-1 rounded">
                       {persona.code}
                     </code>
                   </TableCell>

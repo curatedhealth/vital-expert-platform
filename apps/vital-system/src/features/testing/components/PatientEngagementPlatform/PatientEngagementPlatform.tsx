@@ -403,7 +403,7 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
       case 'social': return <Users className="h-4 w-4 text-purple-600" />;
       case 'gamification': return <Award className="h-4 w-4 text-orange-600" />;
       case 'personalized': return <Target className="h-4 w-4 text-red-600" />;
-      default: return <Activity className="h-4 w-4 text-gray-600" />;
+      default: return <Activity className="h-4 w-4 text-neutral-600" />;
     }
   };
 
@@ -426,7 +426,7 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
       case 'quiz': return <CheckCircle className="h-5 w-5 text-green-600" />;
       case 'article': return <BookOpen className="h-5 w-5 text-orange-600" />;
       case 'infographic': return <Eye className="h-5 w-5 text-teal-600" />;
-      default: return <Activity className="h-5 w-5 text-gray-600" />;
+      default: return <Activity className="h-5 w-5 text-neutral-600" />;
     }
   };
 
@@ -445,15 +445,15 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Patient Engagement Platform</h1>
-          <p className="text-gray-600 mt-2">Personalized interventions and patient-centric experiences</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Patient Engagement Platform</h1>
+          <p className="text-neutral-600 mt-2">Personalized interventions and patient-centric experiences</p>
         </div>
         <div className="flex space-x-3">
           <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             <Plus className="h-4 w-4 mr-2" />
             New Cohort
           </button>
-          <button className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors">
             <Settings className="h-4 w-4 mr-2" />
             Configure
           </button>
@@ -465,11 +465,11 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Patients</p>
+              <p className="text-sm text-neutral-600">Total Patients</p>
               <p className="text-2xl font-bold text-blue-600">{(metrics.totalPatients / 1000).toFixed(1)}K</p>
             </div>
             <Users className="h-8 w-8 text-blue-600" />
@@ -480,11 +480,11 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active Users</p>
+              <p className="text-sm text-neutral-600">Active Users</p>
               <p className="text-2xl font-bold text-green-600">{(metrics.activeUsers / 1000).toFixed(1)}K</p>
             </div>
             <Activity className="h-8 w-8 text-green-600" />
@@ -495,11 +495,11 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Avg Engagement</p>
+              <p className="text-sm text-neutral-600">Avg Engagement</p>
               <p className="text-2xl font-bold text-purple-600">{metrics.averageEngagement}%</p>
             </div>
             <TrendingUp className="h-8 w-8 text-purple-600" />
@@ -510,11 +510,11 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Completion</p>
+              <p className="text-sm text-neutral-600">Completion</p>
               <p className="text-2xl font-bold text-teal-600">{metrics.completionRate}%</p>
             </div>
             <CheckCircle className="h-8 w-8 text-teal-600" />
@@ -525,11 +525,11 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Satisfaction</p>
+              <p className="text-sm text-neutral-600">Satisfaction</p>
               <p className="text-2xl font-bold text-orange-600">{metrics.satisfactionScore}/5</p>
             </div>
             <Star className="h-8 w-8 text-orange-600" />
@@ -540,11 +540,11 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Retention</p>
+              <p className="text-sm text-neutral-600">Retention</p>
               <p className="text-2xl font-bold text-indigo-600">{metrics.retentionRate}%</p>
             </div>
             <Heart className="h-8 w-8 text-indigo-600" />
@@ -555,11 +555,11 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Interventions</p>
+              <p className="text-sm text-neutral-600">Interventions</p>
               <p className="text-2xl font-bold text-pink-600">{(metrics.interventionsDelivered / 1000).toFixed(0)}K</p>
             </div>
             <Zap className="h-8 w-8 text-pink-600" />
@@ -570,11 +570,11 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Adherence ↗</p>
+              <p className="text-sm text-neutral-600">Adherence ↗</p>
               <p className="text-2xl font-bold text-red-600">+{metrics.adherenceImprovement}%</p>
             </div>
             <Target className="h-8 w-8 text-red-600" />
@@ -583,7 +583,7 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-neutral-200">
         <nav className="-mb-px flex space-x-8">
           {[
             { key: 'overview', label: 'Engagement Overview', icon: Activity },
@@ -598,7 +598,7 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
               className={`flex items-center px-3 py-2 border-b-2 font-medium text-sm ${
                 activeTab === key
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               <Icon className="h-4 w-4 mr-2" />
@@ -613,34 +613,34 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
         <div className="space-y-6">
           {/* Engagement Highlights */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Platform Capabilities</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">Platform Capabilities</h3>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <Smartphone className="h-5 w-5 text-blue-600" />
-                  <span className="text-gray-700">Multi-channel intervention delivery</span>
+                  <span className="text-neutral-700">Multi-channel intervention delivery</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Target className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">AI-powered personalization engine</span>
+                  <span className="text-neutral-700">AI-powered personalization engine</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Award className="h-5 w-5 text-purple-600" />
-                  <span className="text-gray-700">Gamification and behavioral nudges</span>
+                  <span className="text-neutral-700">Gamification and behavioral nudges</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Users className="h-5 w-5 text-orange-600" />
-                  <span className="text-gray-700">Peer support and social features</span>
+                  <span className="text-neutral-700">Peer support and social features</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <TrendingUp className="h-5 w-5 text-red-600" />
-                  <span className="text-gray-700">Real-time engagement analytics</span>
+                  <span className="text-neutral-700">Real-time engagement analytics</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Engagement Performance</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">Engagement Performance</h3>
               <div className="space-y-4">
                 {[
                   { label: 'User Activation Rate', value: 94.2, color: 'bg-green-600' },
@@ -650,9 +650,9 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
                   { label: 'Long-term Retention', value: 89.2, color: 'bg-teal-600' }
                 ].map((metric, index) => (
                   <div key={index} className="flex justify-between items-center">
-                    <span className="text-gray-600">{metric.label}</span>
+                    <span className="text-neutral-600">{metric.label}</span>
                     <div className="flex items-center">
-                      <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                      <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                         <div
                           className={`h-2 rounded-full ${metric.color}`}
                           style={{width: `${metric.value}%`}}
@@ -667,8 +667,8 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
           </div>
 
           {/* Recent Engagement Activities */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent High-Impact Interventions</h3>
+          <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+            <h3 className="text-lg font-semibold text-neutral-900 mb-4">Recent High-Impact Interventions</h3>
             <div className="space-y-3">
               {[
                 {
@@ -700,13 +700,13 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
                   type: 'educational'
                 }
               ].map((activity, index) => (
-                <div key={index} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+                <div key={index} className="flex items-start justify-between p-4 bg-neutral-50 rounded-lg">
                   <div className="flex items-start space-x-3">
                     {getInterventionIcon(activity.type)}
                     <div>
-                      <p className="font-medium text-gray-900">{activity.intervention}</p>
+                      <p className="font-medium text-neutral-900">{activity.intervention}</p>
                       <p className="text-sm text-green-600 font-medium">{activity.impact}</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-neutral-500 mt-1">
                         {activity.patients} patients affected • {activity.time}
                       </p>
                     </div>
@@ -724,11 +724,11 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
       {activeTab === 'cohorts' && (
         <div className="space-y-6">
           {cohorts.map((cohort) => (
-            <div key={cohort.id} className="bg-white rounded-lg border border-gray-200 p-6">
+            <div key={cohort.id} className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{cohort.name}</h3>
-                  <p className="text-gray-600 mt-1">
+                  <h3 className="text-lg font-semibold text-neutral-900">{cohort.name}</h3>
+                  <p className="text-neutral-600 mt-1">
                     {cohort.condition} • {cohort.size.toLocaleString()} patients
                   </p>
                 </div>
@@ -760,15 +760,15 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
               {/* Interventions and Outcomes */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Active Interventions</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Active Interventions</h4>
                   <div className="space-y-2">
                     {cohort.interventions.slice(0, 3).map((intervention) => (
-                      <div key={intervention.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={intervention.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                         <div className="flex items-center space-x-3">
                           {getInterventionIcon(intervention.type)}
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{intervention.name}</p>
-                            <div className="flex items-center space-x-2 text-xs text-gray-500">
+                            <p className="text-sm font-medium text-neutral-900">{intervention.name}</p>
+                            <div className="flex items-center space-x-2 text-xs text-neutral-500">
                               {getChannelIcon(intervention.channel)}
                               <span>{intervention.frequency}</span>
                             </div>
@@ -776,7 +776,7 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium text-green-600">{intervention.effectiveness}%</p>
-                          <p className="text-xs text-gray-500">effectiveness</p>
+                          <p className="text-xs text-neutral-500">effectiveness</p>
                         </div>
                       </div>
                     ))}
@@ -784,21 +784,21 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Key Outcomes</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Key Outcomes</h4>
                   <div className="space-y-2">
                     {cohort.outcomes.map((outcome) => (
-                      <div key={outcome.id} className="p-3 bg-gray-50 rounded-lg">
+                      <div key={outcome.id} className="p-3 bg-neutral-50 rounded-lg">
                         <div className="flex justify-between items-center mb-2">
-                          <p className="text-sm font-medium text-gray-900">{outcome.name}</p>
+                          <p className="text-sm font-medium text-neutral-900">{outcome.name}</p>
                           <span className={`text-xs px-2 py-1 rounded-full font-medium ${
                             outcome.significance === 'high' ? 'bg-green-100 text-green-800' :
                             outcome.significance === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
+                            'bg-neutral-100 text-neutral-800'
                           }`}>
                             {outcome.significance}
                           </span>
                         </div>
-                        <div className="flex justify-between text-xs text-gray-600">
+                        <div className="flex justify-between text-xs text-neutral-600">
                           <span>Baseline: {outcome.baseline}</span>
                           <span>Current: {outcome.current}</span>
                           <span className="text-green-600 font-medium">↗ {outcome.improvement}%</span>
@@ -810,7 +810,7 @@ const PatientEngagementPlatform: React.FC<PatientEngagementPlatformProps> = ({ c
               </div>
 
               <div className="mt-6 flex justify-end space-x-3">
-                <button className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                <button className="px-4 py-2 text-sm border border-neutral-300 text-neutral-700 rounded hover:bg-neutral-50">
                   View Analytics
                 </button>
                 <button className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">

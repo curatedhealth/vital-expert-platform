@@ -188,7 +188,7 @@ const ragCategoryColors = {
   research: 'text-purple-600 bg-purple-100',
   reimbursement: 'text-orange-600 bg-orange-100',
   technology: 'text-indigo-600 bg-indigo-100',
-  other: 'text-gray-600 bg-gray-100'
+  other: 'text-neutral-600 bg-neutral-100'
 };
 
 const CHART_COLORS = {
@@ -281,7 +281,7 @@ export function KnowledgeAnalyticsDashboard({
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
-                <div className="h-20 bg-gray-200 rounded"></div>
+                <div className="h-20 bg-neutral-200 rounded"></div>
               </CardContent>
             </Card>
           ))}
@@ -290,7 +290,7 @@ export function KnowledgeAnalyticsDashboard({
           {[1, 2].map((i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
-                <div className="h-64 bg-gray-200 rounded"></div>
+                <div className="h-64 bg-neutral-200 rounded"></div>
               </CardContent>
             </Card>
           ))}
@@ -641,19 +641,19 @@ export function KnowledgeAnalyticsDashboard({
                 if (stats.documents === 0) return null;
 
                 return (
-                  <div key={category} className="group flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200">
+                  <div key={category} className="group flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200">
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-full ${colorClass} group-hover:scale-110 transition-transform duration-200`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <div>
                         <p className="font-medium capitalize">{category}</p>
-                        <p className="text-sm text-gray-600">{stats.documents} docs • {formatBytes(stats.size)}</p>
+                        <p className="text-sm text-neutral-600">{stats.documents} docs • {formatBytes(stats.size)}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-lg">{stats.chunks}</p>
-                      <p className="text-xs text-gray-500">chunks</p>
+                      <p className="text-xs text-neutral-500">chunks</p>
                     </div>
                   </div>
                 );
@@ -672,19 +672,19 @@ export function KnowledgeAnalyticsDashboard({
             </CardHeader>
             <CardContent className="space-y-4">
               {Object.entries(analytics.agentStats).map(([agent, stats]) => (
-                <div key={agent} className="group flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200">
+                <div key={agent} className="group flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-full bg-green-100 group-hover:bg-green-200 group-hover:scale-110 transition-all duration-200">
                       <Brain className="w-4 h-4 text-green-600" />
                     </div>
                     <div>
                       <p className="font-medium">{agent}</p>
-                      <p className="text-sm text-gray-600">{stats.domains.join(', ')}</p>
+                      <p className="text-sm text-neutral-600">{stats.domains.join(', ')}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="font-bold">{stats.documents} docs</p>
-                    <p className="text-xs text-gray-500">{stats.chunks} chunks</p>
+                    <p className="text-xs text-neutral-500">{stats.chunks} chunks</p>
                   </div>
                 </div>
               ))}
@@ -792,7 +792,7 @@ export function KnowledgeAnalyticsDashboard({
                       .sort((a: any, b: any) => b.documents - a.documents)
                       .slice(0, 5)
                       .map((domain: any) => (
-                        <div key={domain.domain} className="flex items-center justify-between p-2 bg-white rounded">
+                        <div key={domain.domain} className="flex items-center justify-between p-2 bg-canvas-surface rounded">
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-teal-900 truncate">
                               {domain.domainName}
@@ -855,21 +855,21 @@ export function KnowledgeAnalyticsDashboard({
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-gray-900">Recent Documents</h4>
+                  <h4 className="font-medium text-neutral-900">Recent Documents</h4>
                   <Badge variant="secondary" className="text-xs">
                     {analytics.recentActivity.recentDocuments.length} items
                   </Badge>
                 </div>
                 {analytics.recentActivity.recentDocuments.map((doc) => (
-                  <div key={doc.id} className="group flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all duration-200">
+                  <div key={doc.id} className="group flex items-center justify-between p-3 bg-neutral-50 hover:bg-neutral-100 rounded-lg transition-all duration-200">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <FileText className="w-4 h-4 text-gray-500 group-hover:text-gray-700 transition-colors" />
+                      <FileText className="w-4 h-4 text-neutral-500 group-hover:text-neutral-700 transition-colors" />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate group-hover:text-blue-600 transition-colors">{doc.name}</p>
-                        <p className="text-sm text-gray-600">{formatBytes(doc.size)} • {doc.chunks} chunks</p>
+                        <p className="text-sm text-neutral-600">{formatBytes(doc.size)} • {doc.chunks} chunks</p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="ml-2 group-hover:border-gray-400 transition-colors">
+                    <Badge variant="outline" className="ml-2 group-hover:border-neutral-400 transition-colors">
                       {formatTimeAgo(doc.uploadedAt)}
                     </Badge>
                   </div>
@@ -903,26 +903,26 @@ export function KnowledgeAnalyticsDashboard({
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 flex items-center gap-2">
+                  <span className="text-sm text-neutral-600 flex items-center gap-2">
                     <Zap className="w-4 h-4" />
                     Content Quality Score
                   </span>
                   <span className="font-bold text-lg">{(analytics.contentStats.avgChunkQuality * 100).toFixed(1)}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div className="w-full bg-neutral-200 rounded-full h-3 overflow-hidden">
                   <div
                     className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${analytics.contentStats.avgChunkQuality * 100}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-gray-500 text-center">Based on semantic coherence and chunk optimization</p>
+                <p className="text-xs text-neutral-500 text-center">Based on semantic coherence and chunk optimization</p>
               </div>
 
               <Separator />
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                  <h4 className="font-medium text-neutral-900 flex items-center gap-2">
                     <Globe className="w-4 h-4" />
                     Knowledge Domains
                   </h4>
@@ -930,7 +930,7 @@ export function KnowledgeAnalyticsDashboard({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {analytics.contentStats.domains.map((domain) => (
-                    <Badge key={domain} variant="outline" className="capitalize hover:bg-gray-100 transition-colors">
+                    <Badge key={domain} variant="outline" className="capitalize hover:bg-neutral-100 transition-colors">
                       {domain.replace('-', ' ')}
                     </Badge>
                   ))}

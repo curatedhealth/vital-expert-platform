@@ -727,29 +727,5 @@ async def websocket_search(websocket: WebSocket, client_id: str):
 # ============================================================================
 # ERROR HANDLERS
 # ============================================================================
-
-@router.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
-    """Handle HTTP exceptions with consistent format"""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "error": exc.detail,
-            "status_code": exc.status_code,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-    )
-
-
-@router.exception_handler(Exception)
-async def general_exception_handler(request, exc):
-    """Handle unexpected exceptions"""
-    logger.error(f"Unexpected error: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": "An unexpected error occurred",
-            "status_code": 500,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-    )
+# Note: Exception handlers must be registered on FastAPI app, not APIRouter.
+# These are now handled in main.py or via FastAPI's default handlers.

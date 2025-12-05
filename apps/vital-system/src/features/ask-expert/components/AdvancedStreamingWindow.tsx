@@ -95,7 +95,7 @@ export function AdvancedStreamingWindow({
       case 'error':
         return <AlertCircle className="h-4 w-4 text-red-600" />;
       default:
-        return <Circle className="h-4 w-4 text-gray-400" />;
+        return <Circle className="h-4 w-4 text-neutral-400" />;
     }
   };
 
@@ -194,7 +194,7 @@ export function AdvancedStreamingWindow({
             <Button
               variant="ghost"
               onClick={() => setShowWorkflow(!showWorkflow)}
-              className="w-full justify-between p-4 hover:bg-gray-50"
+              className="w-full justify-between p-4 hover:bg-neutral-50"
             >
               <span className="text-sm font-medium">Workflow Steps</span>
               {showWorkflow ? (
@@ -222,13 +222,13 @@ export function AdvancedStreamingWindow({
                           <div className="flex items-center justify-between mb-1">
                             <h4 className="text-sm font-medium">{step.name}</h4>
                             {step.status === 'running' && step.progress !== undefined && (
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-neutral-500">
                                 {step.progress}%
                               </span>
                             )}
                           </div>
                           {step.description && (
-                            <p className="text-xs text-gray-600 mb-2">
+                            <p className="text-xs text-neutral-600 mb-2">
                               {step.description}
                             </p>
                           )}
@@ -236,7 +236,7 @@ export function AdvancedStreamingWindow({
                             <Progress value={step.progress} className="h-1" />
                           )}
                           {step.status === 'completed' && step.startTime && step.endTime && (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-neutral-500">
                               Completed in{' '}
                               {formatDuration(
                                 step.endTime.getTime() - step.startTime.getTime()
@@ -261,7 +261,7 @@ export function AdvancedStreamingWindow({
             <Button
               variant="ghost"
               onClick={() => setShowReasoning(!showReasoning)}
-              className="w-full justify-between p-4 hover:bg-gray-50"
+              className="w-full justify-between p-4 hover:bg-neutral-50"
             >
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-purple-600" />
@@ -317,12 +317,12 @@ export function AdvancedStreamingWindow({
                                 {step.type}
                               </Badge>
                               {step.confidence !== undefined && (
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-neutral-500">
                                   {Math.round(step.confidence * 100)}% confident
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm text-gray-800">{step.content}</p>
+                            <p className="text-sm text-neutral-800">{step.content}</p>
                           </div>
                         </motion.div>
                       ))}
@@ -342,7 +342,7 @@ export function AdvancedStreamingWindow({
             <Button
               variant="ghost"
               onClick={() => setShowMetrics(!showMetrics)}
-              className="w-full justify-between p-4 hover:bg-gray-50"
+              className="w-full justify-between p-4 hover:bg-neutral-50"
             >
               <span className="text-sm font-medium">Performance Metrics</span>
               {showMetrics ? (
@@ -362,20 +362,20 @@ export function AdvancedStreamingWindow({
                 >
                   <div className="p-4 grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-600">Tokens Generated</span>
+                      <span className="text-neutral-600">Tokens Generated</span>
                       <p className="font-medium">{metrics.tokensGenerated.toLocaleString()}</p>
                     </div>
                     <div>
-                      <span className="text-gray-600">Speed</span>
+                      <span className="text-neutral-600">Speed</span>
                       <p className="font-medium">{metrics.tokensPerSecond.toFixed(1)} tok/s</p>
                     </div>
                     <div>
-                      <span className="text-gray-600">Elapsed Time</span>
+                      <span className="text-neutral-600">Elapsed Time</span>
                       <p className="font-medium">{formatDuration(metrics.elapsedTime)}</p>
                     </div>
                     {metrics.estimatedTimeRemaining !== undefined && (
                       <div>
-                        <span className="text-gray-600">Est. Remaining</span>
+                        <span className="text-neutral-600">Est. Remaining</span>
                         <p className="font-medium">
                           {formatDuration(metrics.estimatedTimeRemaining)}
                         </p>

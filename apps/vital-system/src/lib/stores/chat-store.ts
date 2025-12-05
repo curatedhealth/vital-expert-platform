@@ -418,10 +418,78 @@ const _useChatStore = create<ChatStore>()(
                           : msg
                       ),
                     }));
+                  } else if (data.type === 'chunk') {
+                    // Handle chunks from orchestrate route (Mode 1 SSE streaming)
+                    const chunkContent = data.content || '';
+
+                    // Check for metadata chunks (prefixed with __mode1_meta__)
+                    if (chunkContent.startsWith('__mode1_meta__')) {
+                      try {
+                        const metaData = JSON.parse(chunkContent.slice(14));
+
+                        if (metaData.event === 'thinking') {
+                          // Workflow step progress - show in reasoning panel
+                          const reasoningText = metaData.message || `${metaData.step}: ${metaData.status}`;
+                          set((state) => ({
+                            liveReasoning: state.liveReasoning
+                              ? `${state.liveReasoning}\n${reasoningText}`
+                              : reasoningText,
+                            isReasoningActive: metaData.status === 'running',
+                          }));
+                        } else if (metaData.event === 'rag_sources' || metaData.event === 'sources') {
+                          // RAG sources retrieved - store in metadata
+                          metadata = {
+                            ...(metadata as Record<string, unknown> || {}),
+                            sources: metaData.sources,
+                            ragTotal: metaData.total,
+                          };
+                        } else if (metaData.event === 'tool_execution') {
+                          // Tool execution - show in reasoning panel
+                          const toolText = metaData.action === 'start'
+                            ? `Using tool: ${metaData.tool}`
+                            : `Tool ${metaData.tool} completed`;
+                          set((state) => ({
+                            liveReasoning: state.liveReasoning
+                              ? `${state.liveReasoning}\n${toolText}`
+                              : toolText,
+                            isReasoningActive: metaData.action === 'start',
+                          }));
+                        } else if (metaData.event === 'final') {
+                          // Final metadata from streaming
+                          metadata = {
+                            ...(metadata as Record<string, unknown> || {}),
+                            confidence: metaData.confidence,
+                            rag: metaData.rag,
+                            tools: metaData.tools,
+                            citations: metaData.citations,
+                            reasoning: metaData.reasoning,
+                            metrics: metaData.metrics,
+                          };
+                          set({ isReasoningActive: false });
+                        }
+                      } catch (metaParseError) {
+                        console.warn('Failed to parse metadata chunk:', metaParseError);
+                      }
+                    } else {
+                      // Regular content chunk - accumulate for display
+                      fullContent += chunkContent;
+
+                      // Update message with streaming content
+                      set((state) => ({
+                        messages: state.messages.map((msg) =>
+                          msg.id === assistantMessage.id
+                            ? { ...msg, content: fullContent, isLoading: true }
+                            : msg
+                        ),
+                      }));
+                    }
                   } else if (data.type === 'metadata') {
                     metadata = data.metadata;
+                  } else if (data.type === 'done') {
+                    // Stream completion - handled in finally block
+                    console.log('📥 [streaming] Stream done signal received');
                   } else if (data.type === 'error') {
-                    throw new Error(data.error);
+                    throw new Error(data.error || data.message || 'Unknown streaming error');
                   }
                 } catch (parseError) {
                   console.warn('Failed to parse SSE data:', parseError);

@@ -12,7 +12,7 @@ const SAMD_OPTIONS = [
     label: 'No Classification',
     description: 'Not classified as medical device software',
     icon: Shield,
-    color: 'bg-gray-100 text-gray-800',
+    color: 'bg-neutral-100 text-neutral-800',
     riskLevel: 'None'
   },
   {
@@ -79,7 +79,7 @@ export function FDASaMDSelector({
                 <selectedOption.icon className="w-4 h-4" />
                 {selectedOption.label}
                 {showRiskLevel && (
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-neutral-500">
                     ({selectedOption.riskLevel} Risk)
                   </span>
                 )}
@@ -95,12 +95,12 @@ export function FDASaMDSelector({
                 <div>
                   <div className="font-medium flex items-center gap-2">
                     {option.label}
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-neutral-500">
                       ({option.riskLevel} Risk)
                     </span>
                   </div>
                   {showDescription && (
-                    <div className="text-xs text-gray-500">{option.description}</div>
+                    <div className="text-xs text-neutral-500">{option.description}</div>
                   )}
                 </div>
               </div>
@@ -117,7 +117,7 @@ export function FDASaMDSelector({
       )}
 
       {selectedOption && selectedOption.value !== FDASaMDClass.NONE && (
-        <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded-md">
+        <div className="text-xs text-neutral-600 bg-blue-50 p-2 rounded-md">
           <div className="font-medium text-blue-800 mb-1">FDA SaMD Class {selectedOption.value} Requirements:</div>
           <ul className="list-disc list-inside space-y-1 text-blue-700">
             {selectedOption.value === FDASaMDClass.CLASS_I && (

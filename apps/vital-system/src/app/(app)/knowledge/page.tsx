@@ -3,17 +3,19 @@
 import {
   Upload,
   FileText,
-  Trash2,
   Search,
   AlertCircle,
   MoreHorizontal,
   Grid3X3,
   List,
   Eye,
-  Edit,
   Copy,
-  BookOpen
+  BookOpen,
+  ExternalLink,
+  Settings,
+  Wrench,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState, useCallback, useEffect, Suspense } from 'react';
 
@@ -39,7 +41,6 @@ import {
   TableRow
 } from '@vital/ui';
 import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
-import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
 import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
 import { DocumentsLibraryView } from '@/features/knowledge/components/documents-library-view';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
@@ -199,8 +200,24 @@ function KnowledgePageContent() {
       {/* Page Header */}
       <PageHeader
         icon={BookOpen}
-        title="Knowledge"
-        description="Manage documents and knowledge bases for AI agents"
+        title="Knowledge Library"
+        description="Browse and search your organization's knowledge bases"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/designer/knowledge">
+                <Wrench className="h-4 w-4 mr-2" />
+                Knowledge Builder
+              </Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link href="/designer/knowledge?tab=upload">
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Documents
+              </Link>
+            </Button>
+          </div>
+        }
       />
 
       {/* Main Content Area */}
@@ -208,15 +225,19 @@ function KnowledgePageContent() {
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           {/* Main Content */}
           {activeTab === 'upload' ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              Upload New Knowledge
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <KnowledgeUploader onUploadComplete={handleUploadComplete} />
+        <Card className="border-dashed">
+          <CardContent className="py-12 text-center">
+            <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">Upload Documents</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Document uploads have moved to the Knowledge Builder for a better experience with domain configuration and embedding options.
+            </p>
+            <Button asChild>
+              <Link href="/designer/knowledge?tab=upload">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Knowledge Builder
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       ) : activeTab === 'manage' ? (
@@ -226,10 +247,16 @@ function KnowledgePageContent() {
             <div>
               <h3 className="text-lg font-semibold">Documents</h3>
               <p className="text-sm text-muted-foreground">
-                Manage your knowledge documents and their settings.
+                Browse your knowledge documents. Use Knowledge Builder to add or edit.
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/designer/knowledge?tab=domains">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Manage Domains
+                </Link>
+              </Button>
               <div className="flex items-center rounded-md border">
                 <Button
                   variant={viewMode === 'table' ? 'default' : 'ghost'}
@@ -395,20 +422,18 @@ function KnowledgePageContent() {
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                 <DropdownMenuItem>
                                   <Eye className="mr-2 h-4 w-4" />
-                                  View
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  Edit
+                                  View Details
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <Copy className="mr-2 h-4 w-4" />
-                                  Duplicate
+                                  Copy ID
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive">
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/designer/knowledge?tab=domains&doc=${doc.id}`}>
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    Open in Builder
+                                  </Link>
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -486,20 +511,18 @@ function KnowledgePageContent() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem>
                               <Eye className="mr-2 h-4 w-4" />
-                              View
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
+                              View Details
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Copy className="mr-2 h-4 w-4" />
-                              Duplicate
+                              Copy ID
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
+                            <DropdownMenuItem asChild>
+                              <Link href={`/designer/knowledge?tab=domains&doc=${doc.id}`}>
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                Open in Builder
+                              </Link>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

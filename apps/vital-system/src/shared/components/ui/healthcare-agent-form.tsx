@@ -215,7 +215,7 @@ export function HealthcareAgentForm({
             <div className="flex items-center justify-between">
               <div>
                 <Label>HIPAA Compliant</Label>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-neutral-500">
                   Agent meets HIPAA privacy and security requirements
                 </p>
               </div>
@@ -229,7 +229,7 @@ export function HealthcareAgentForm({
             <div className="flex items-center justify-between">
               <div>
                 <Label>Pharma Enabled</Label>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-neutral-500">
                   Agent can handle pharmaceutical industry use cases
                 </p>
               </div>
@@ -243,7 +243,7 @@ export function HealthcareAgentForm({
             <div className="flex items-center justify-between">
               <div>
                 <Label>Verification Required</Label>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-neutral-500">
                   Agent responses require human verification
                 </p>
               </div>

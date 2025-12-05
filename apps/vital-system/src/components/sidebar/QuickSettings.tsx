@@ -77,11 +77,13 @@ export function QuickSettings() {
     }
   ]);
 
+  const updateSetting = (id: string, value: unknown) => {
     setSettings(prev => prev.map(setting =>
       setting.id === id ? { ...setting, value } : setting
     ));
   };
 
+  const renderSettingControl = (setting: SettingItem) => {
     switch (setting.type) {
       case 'toggle':
         return (

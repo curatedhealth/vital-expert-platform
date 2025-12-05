@@ -127,13 +127,13 @@ export function AvatarPickerModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="border-b border-gray-200 p-6 flex items-center justify-between">
+        <div className="border-b border-neutral-200 p-6 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-neutral-900 flex items-center gap-2">
               <User className="h-5 w-5" />
               {title}
             </h2>
-            <p className="text-sm text-gray-500 mt-1">{description}</p>
+            <p className="text-sm text-neutral-500 mt-1">{description}</p>
           </div>
           <Button
             variant="ghost"
@@ -146,10 +146,10 @@ export function AvatarPickerModal({
         </div>
 
         {/* Controls */}
-        <div className="p-4 border-b border-gray-200 space-y-4">
+        <div className="p-4 border-b border-neutral-200 space-y-4">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400 h-4 w-4" />
             <Input
               placeholder="Search avatars..."
               value={searchQuery}
@@ -162,7 +162,7 @@ export function AvatarPickerModal({
           <div className="flex items-center justify-between">
             {/* Category Filter */}
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">Category:</span>
+              <span className="text-sm font-medium text-neutral-700">Category:</span>
               <div className="flex gap-1">
                 {categories.map((category) => (
                   <Button
@@ -179,7 +179,7 @@ export function AvatarPickerModal({
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 border border-gray-200 rounded-lg p-1">
+            <div className="flex items-center gap-1 border border-neutral-200 rounded-lg p-1">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
@@ -206,14 +206,14 @@ export function AvatarPickerModal({
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                <div className="text-gray-500">Loading avatars...</div>
+                <div className="text-neutral-500">Loading avatars...</div>
               </div>
             </div>
           ) : filteredIcons.length === 0 ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <User className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <div className="text-gray-500">
+                <User className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
+                <div className="text-neutral-500">
                   {searchQuery ? 'No avatars found matching your search.' : 'No avatars available.'}
                 </div>
               </div>
@@ -230,12 +230,12 @@ export function AvatarPickerModal({
                   className={`
                     ${viewMode === 'grid' 
                       ? 'w-16 h-16 rounded-full border-2 flex items-center justify-center overflow-hidden' 
-                      : 'w-full flex items-center gap-3 p-3 rounded-lg border-2 hover:bg-gray-50'
+                      : 'w-full flex items-center gap-3 p-3 rounded-lg border-2 hover:bg-neutral-50'
                     }
                     transition-all duration-200 hover:scale-105 hover:shadow-md
                     ${isSelected(icon)
                       ? 'border-blue-500 bg-blue-50 shadow-md'
-                      : 'border-gray-200 hover:border-gray-300'
+                      : 'border-neutral-200 hover:border-neutral-300'
                     }
                   `}
                   title={icon.display_name}
@@ -244,12 +244,12 @@ export function AvatarPickerModal({
                     renderAvatar(icon)
                   ) : (
                     <>
-                      <div className="w-10 h-10 rounded-full border border-gray-200 overflow-hidden flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full border border-neutral-200 overflow-hidden flex-shrink-0">
                         {renderAvatar(icon)}
                       </div>
                       <div className="flex-1 text-left">
-                        <div className="font-medium text-sm text-gray-900">{icon.display_name}</div>
-                        <div className="text-xs text-gray-500">{icon.subcategory || icon.category}</div>
+                        <div className="font-medium text-sm text-neutral-900">{icon.display_name}</div>
+                        <div className="text-xs text-neutral-500">{icon.subcategory || icon.category}</div>
                         {icon.tags && icon.tags.length > 0 && (
                           <div className="flex gap-1 mt-1">
                             {icon.tags.slice(0, 2).map((tag, index) => (
@@ -269,8 +269,8 @@ export function AvatarPickerModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-4 flex justify-between items-center">
-          <div className="text-sm text-gray-500">
+        <div className="border-t border-neutral-200 p-4 flex justify-between items-center">
+          <div className="text-sm text-neutral-500">
             {filteredIcons.length} avatar{filteredIcons.length !== 1 ? 's' : ''} available
           </div>
           <div className="flex gap-2">

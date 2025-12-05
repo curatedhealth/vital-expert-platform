@@ -27,7 +27,7 @@ import {
   TooltipTrigger,
 } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
-import { Response as AIResponse } from '@/components/ai/response';
+import { StreamingResponse } from '@/components/ai/streaming-response';
 import {
   Sources,
   SourcesContent,
@@ -609,7 +609,9 @@ export function EnhancedMessageDisplay({
     return text;
   }, [displayContent]);
 
-  const deferredContent = useDeferredValue(normalizedContent);
+  // STREAMING FIX: Don't use useDeferredValue when streaming - it batches updates
+  // and causes content to appear all at once instead of streaming character by character
+  const deferredContent = isStreaming ? normalizedContent : useDeferredValue(normalizedContent);
 
   const citationRemarkPlugins = useMemo<PluggableList | undefined>(() => {
     if (!citationSources.length) {
@@ -704,8 +706,8 @@ export function EnhancedMessageDisplay({
         className={cn(
           "max-w-3xl rounded-2xl px-5 py-4 transition-colors",
           isUser
-            ? "bg-white text-gray-900 shadow-none"
-            : "bg-white text-gray-900 shadow-sm"
+            ? "bg-canvas-surface text-neutral-900 shadow-none"
+            : "bg-canvas-surface text-neutral-900 shadow-sm"
         )}
       >
         {/* Message Header */}
@@ -744,7 +746,7 @@ export function EnhancedMessageDisplay({
                 <span
                   className={cn(
                     "text-sm font-medium",
-                    isUser ? "text-gray-900" : "text-gray-900"
+                    isUser ? "text-neutral-900" : "text-neutral-900"
                   )}
                 >
                   {resolvedAgentName}
@@ -764,14 +766,14 @@ export function EnhancedMessageDisplay({
                   </TooltipProvider>
                 )}
               </div>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-neutral-500">
                 {formatTimestamp(timestamp)}
               </span>
             </div>
 
             {/* Reasoning Section */}
             {!isUser && metadata?.reasoning && metadata.reasoning.length > 0 && (
-              <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-900/40">
+              <div className="mt-3 rounded-xl border border-neutral-100 bg-neutral-50/80 p-3 dark:border-neutral-700 dark:bg-neutral-900/40">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -803,7 +805,7 @@ export function EnhancedMessageDisplay({
                       {metadata.reasoning.map((step, idx) => (
                         <div
                           key={idx}
-                          className="flex items-start gap-2 rounded-lg bg-white/90 p-2 text-xs text-gray-700 dark:bg-gray-800/70 dark:text-gray-200"
+                          className="flex items-start gap-2 rounded-lg bg-canvas-surface/90 p-2 text-xs text-neutral-700 dark:bg-neutral-800/70 dark:text-neutral-200"
                         >
                           <Info className="h-3 w-3 mt-0.5 text-blue-500 flex-shrink-0" />
                           <span>{step}</span>
@@ -818,7 +820,7 @@ export function EnhancedMessageDisplay({
             {/* Message Content */}
             <div ref={messageRef}>
               {isUser ? (
-                <div className="whitespace-pre-wrap text-sm text-gray-900 leading-relaxed">
+                <div className="whitespace-pre-wrap text-sm text-neutral-900 leading-relaxed">
                   {displayContent}
                 </div>
               ) : (
@@ -828,15 +830,17 @@ export function EnhancedMessageDisplay({
                       Assistant is typing
                     </span>
                   )}
-                  <AIResponse
+                  <StreamingResponse
                     className={cn(
-                      'prose prose-sm max-w-none dark:prose-invert leading-relaxed text-gray-800'
+                      'prose prose-sm max-w-none dark:prose-invert leading-relaxed text-neutral-800'
                     )}
                     remarkPlugins={citationRemarkPlugins}
                     components={citationComponents}
+                    isAnimating={isStreaming}
+                    parseIncompleteMarkdown={true}
                   >
                     {deferredContent}
-                  </AIResponse>
+                  </StreamingResponse>
                 </>
               )}
 
@@ -867,29 +871,29 @@ export function EnhancedMessageDisplay({
                   from="assistant"
                   aria-label="Alternate response selector"
                   aria-describedby={branchDescriptionTargetId}
-                  className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-2 text-xs text-muted-foreground dark:border-gray-700 dark:bg-gray-900/40"
+                  className="flex flex-col gap-2 rounded-xl border border-neutral-100 bg-neutral-50/80 px-3 py-2 text-xs text-muted-foreground dark:border-neutral-700 dark:bg-neutral-900/40"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <GitBranch className="h-3.5 w-3.5 text-blue-500 dark:text-blue-300" />
-                      <span className="font-medium text-gray-700 dark:text-gray-200">
+                      <span className="font-medium text-neutral-700 dark:text-neutral-200">
                         Alternate responses
                       </span>
-                      <BranchPage className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800/60 dark:text-gray-200" />
+                      <BranchPage className="rounded-full bg-canvas-surface px-2 py-0.5 text-[11px] font-medium text-neutral-600 dark:bg-neutral-800/60 dark:text-neutral-200" />
                     </div>
                     <div className="flex items-center gap-1">
                       <BranchPrevious
                         aria-label="View previous alternate response"
-                        className="h-7 w-7 rounded-full border border-gray-200 bg-white p-0 text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                        className="h-7 w-7 rounded-full border border-neutral-200 bg-canvas-surface p-0 text-neutral-600 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
                       />
                       <BranchNext
                         aria-label="View next alternate response"
-                        className="h-7 w-7 rounded-full border border-gray-200 bg-white p-0 text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                        className="h-7 w-7 rounded-full border border-neutral-200 bg-canvas-surface p-0 text-neutral-600 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
                       />
                     </div>
                   </div>
                   {(activeBranchMeta?.confidence !== undefined || activeBranchMeta?.createdAt) && (
-                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 dark:text-gray-300">
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-neutral-600 dark:text-neutral-300">
                       {activeBranchMeta?.confidence !== undefined && (
                         <span>
                           Confidence {Math.round(activeBranchMeta.confidence * 100)}%
@@ -905,9 +909,9 @@ export function EnhancedMessageDisplay({
                   {branchReasoningList.length > 0 && (
                     <div
                       id={branchDescriptorId}
-                      className="rounded-lg bg-white px-3 py-2 text-[11px] text-gray-600 dark:bg-gray-800/60 dark:text-gray-200"
+                      className="rounded-lg bg-canvas-surface px-3 py-2 text-[11px] text-neutral-600 dark:bg-neutral-800/60 dark:text-neutral-200"
                     >
-                      <p className="mb-1 font-medium text-gray-700 dark:text-gray-100">
+                      <p className="mb-1 font-medium text-neutral-700 dark:text-neutral-100">
                         How this branch differs
                       </p>
                       <ul className="space-y-1" role="list">
@@ -929,7 +933,7 @@ export function EnhancedMessageDisplay({
 
             {!isUser && ragSummary && metadata?.sources && metadata.sources.length > 0 && (
               <Sources
-                className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 text-xs dark:border-gray-700 dark:bg-gray-900/40"
+                className="mt-3 rounded-xl border border-neutral-100 bg-neutral-50/80 text-xs dark:border-neutral-700 dark:bg-neutral-900/40"
                 sources={metadata.sources.map((source, index) => ({
                   id: source.id || `source-${index}`,
                   title: source.title || `Source ${index + 1}`,
@@ -947,7 +951,7 @@ export function EnhancedMessageDisplay({
                       {ragSummary.strategy ? ` • ${ragSummary.strategy}` : ''}
                     </span>
                     {typeof ragSummary.retrievalTimeMs === 'number' && (
-                      <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                      <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
                         {Math.round(ragSummary.retrievalTimeMs)} ms
                       </span>
                     )}
@@ -958,13 +962,13 @@ export function EnhancedMessageDisplay({
                     )}
                   </div>
                 </SourcesTrigger>
-                <SourcesContent className="bg-white/95">
+                <SourcesContent className="bg-canvas-surface/95">
                   {Array.isArray(ragSummary.domains) && ragSummary.domains.length > 0 && (
-                    <div className="mb-3 flex flex-wrap gap-1 text-[11px] text-gray-500 dark:text-gray-400">
+                    <div className="mb-3 flex flex-wrap gap-1 text-[11px] text-neutral-500 dark:text-neutral-400">
                       {Array.from(new Set(ragSummary.domains.filter(Boolean))).map((domain) => (
                         <span
                           key={domain as string}
-                          className="rounded-full border border-gray-200 bg-white px-2 py-0.5 dark:border-gray-600 dark:bg-gray-900/70"
+                          className="rounded-full border border-neutral-200 bg-canvas-surface px-2 py-0.5 dark:border-neutral-600 dark:bg-neutral-900/70"
                         >
                           {domain as string}
                         </span>
@@ -977,7 +981,7 @@ export function EnhancedMessageDisplay({
                       <span>{ragSummary.warning || 'Evidence required: add supporting documents, broaden the query, or explicitly allow model-only answers.'}</span>
                     </div>
                   )}
-                  <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300">
+                  <div className="space-y-2 text-xs text-neutral-700 dark:text-neutral-300">
                     {metadata.sources.map((source, idx) => {
                       const evidenceLevelConfig = {
                         A: { badge: 'bg-green-100 text-green-700 border-green-200', label: 'High quality' },
@@ -988,10 +992,10 @@ export function EnhancedMessageDisplay({
 
                       const evidenceConfig = source.evidenceLevel
                         ? evidenceLevelConfig[source.evidenceLevel as keyof typeof evidenceLevelConfig] ?? {
-                            badge: 'bg-gray-100 text-gray-600 border-gray-200',
+                            badge: 'bg-neutral-100 text-neutral-600 border-neutral-200',
                             label: 'Unrated',
                           }
-                        : { badge: 'bg-gray-100 text-gray-600 border-gray-200', label: 'Unrated' };
+                        : { badge: 'bg-neutral-100 text-neutral-600 border-neutral-200', label: 'Unrated' };
                       const sourceTypePresentation = getSourceTypePresentation(source.sourceType);
 
                       return (
@@ -1004,7 +1008,7 @@ export function EnhancedMessageDisplay({
                               delete sourceRefs.current[source.id || `source-${idx}`];
                             }
                           }}
-                          className="border border-gray-100 bg-white/90 shadow-sm transition-all hover:shadow-md dark:border-gray-800 dark:bg-gray-900/50"
+                          className="border border-neutral-100 bg-canvas-surface/90 shadow-sm transition-all hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900/50"
                         >
                           <CardContent className="flex flex-col gap-2 p-3">
                             <div className="flex items-start justify-between gap-2">
@@ -1013,7 +1017,7 @@ export function EnhancedMessageDisplay({
                                   <Badge variant="outline" className="text-[11px]">
                                     [{idx + 1}]
                                   </Badge>
-                                  <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  <p className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
                                     {source.title || `Source ${idx + 1}`}
                                   </p>
                                   {(() => {
@@ -1029,7 +1033,7 @@ export function EnhancedMessageDisplay({
                                   })()}
                                 </div>
                                 {source.excerpt && (
-                                  <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-300">
+                                  <p className="mt-1 line-clamp-2 text-xs text-neutral-600 dark:text-neutral-300">
                                     {source.excerpt}
                                   </p>
                                 )}
@@ -1042,7 +1046,7 @@ export function EnhancedMessageDisplay({
                                 </Button>
                               )}
                             </div>
-                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-neutral-500 dark:text-neutral-400">
                               {sourceTypePresentation && (
                                 <Badge
                                   variant="outline"
@@ -1100,7 +1104,7 @@ export function EnhancedMessageDisplay({
                     {toolUsed.map((toolName) => (
                       <span
                         key={toolName}
-                        className="rounded-full border border-purple-200 bg-white px-2 py-0.5 dark:border-purple-800/60 dark:bg-purple-900/50"
+                        className="rounded-full border border-purple-200 bg-canvas-surface px-2 py-0.5 dark:border-purple-800/60 dark:bg-purple-900/50"
                       >
                         {toolName}
                       </span>
@@ -1146,7 +1150,7 @@ export function EnhancedMessageDisplay({
 
             {/* Token Usage */}
             {!isUser && metadata?.sources && metadata.sources.length > 0 && (
-              <div className="mt-3 text-xs text-gray-500 flex gap-2">
+              <div className="mt-3 text-xs text-neutral-500 flex gap-2">
                 <span>Sources cited: {metadata.sources.length}</span>
                 {metadata.citations && metadata.citations.length > 0 && (
                   <span>Inline citations: {metadata.citations.length}</span>
@@ -1155,7 +1159,7 @@ export function EnhancedMessageDisplay({
             )}
 
             {!isUser && metadata?.tokenUsage && (
-              <div className="mt-3 text-xs text-gray-500">
+              <div className="mt-3 text-xs text-neutral-500">
                 Tokens: {metadata.tokenUsage.total.toLocaleString()}
                 {' '}
                 ({metadata.tokenUsage.prompt.toLocaleString()} prompt +{' '}

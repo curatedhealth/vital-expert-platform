@@ -30,8 +30,8 @@ export const WorkflowCreator: React.FC<WorkflowCreatorProps> = ({ onCreateWorkfl
   const [showCreateMenu, setShowCreateMenu] = useState(false);
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-gray-200 w-56">
-      <div className="p-2 border-b border-gray-200">
+    <div className="flex flex-col h-full bg-white border-r border-neutral-200 w-56">
+      <div className="p-2 border-b border-neutral-200">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold">Workflows</h2>
           <Button
@@ -46,8 +46,8 @@ export const WorkflowCreator: React.FC<WorkflowCreatorProps> = ({ onCreateWorkfl
         </div>
 
         {showCreateMenu && (
-          <div className="mb-2 p-2 bg-gray-50 rounded border border-gray-200">
-            <h3 className="text-xs font-semibold mb-2 text-gray-700">Select Type</h3>
+          <div className="mb-2 p-2 bg-neutral-50 rounded border border-neutral-200">
+            <h3 className="text-xs font-semibold mb-2 text-neutral-700">Select Type</h3>
             <div className="space-y-1">
               {useCaseTypes.map((useCase) => (
                 <Card
@@ -63,7 +63,7 @@ export const WorkflowCreator: React.FC<WorkflowCreatorProps> = ({ onCreateWorkfl
                       <div className="text-primary text-sm">{useCase.icon}</div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-xs">{useCase.name}</div>
-                        <div className="text-[10px] text-gray-600 mt-0.5 line-clamp-1">{useCase.description}</div>
+                        <div className="text-[10px] text-neutral-600 mt-0.5 line-clamp-1">{useCase.description}</div>
                       </div>
                     </div>
                   </CardContent>
@@ -76,7 +76,7 @@ export const WorkflowCreator: React.FC<WorkflowCreatorProps> = ({ onCreateWorkfl
 
       <div className="flex-1 overflow-y-auto p-2">
         <div>
-          <h3 className="text-xs font-semibold text-gray-700 mb-2">Default</h3>
+          <h3 className="text-xs font-semibold text-neutral-700 mb-2">Default</h3>
           <div className="space-y-1">
             {useCaseTypes.map((useCase) => (
               <Card
@@ -92,7 +92,7 @@ export const WorkflowCreator: React.FC<WorkflowCreatorProps> = ({ onCreateWorkfl
                     <div className="text-primary text-sm">{useCase.icon}</div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-xs">{useCase.name}</div>
-                      <div className="text-[10px] text-gray-600 mt-0.5 line-clamp-1">{useCase.description}</div>
+                      <div className="text-[10px] text-neutral-600 mt-0.5 line-clamp-1">{useCase.description}</div>
                     </div>
                   </div>
                 </CardContent>

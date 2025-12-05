@@ -24,7 +24,12 @@ import {
   FileText,
   Zap,
   Palette,
-  Layers
+  Layers,
+  Building2,
+  Bot,
+  UsersRound,
+  GitBranch,
+  Network
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -63,8 +68,12 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { TenantSwitcher } from '@/components/tenant-switcher'
 import { cn } from '@/lib/utils'
 
-// Grouped navigation structure
-const servicesItems = [
+// ============================================
+// NAVIGATION STRUCTURE: Hub | Consult | Craft | Discover | Optimize
+// ============================================
+
+// CONSULT - AI consultation services
+const consultItems = [
   {
     label: 'Ask Expert',
     href: '/ask-expert',
@@ -78,10 +87,32 @@ const servicesItems = [
     icon: Users
   },
   {
-    label: 'Workflows',
+    label: 'Quick Chat',
+    href: '/ask-expert?mode=1',
+    description: 'Fast answers with Mode 1 (instant)',
+    icon: Zap
+  },
+]
+
+// CRAFT - Build and design tools
+const craftItems = [
+  {
+    label: 'Agent Builder',
+    href: '/designer/agent',
+    description: 'Design and configure custom AI agents',
+    icon: Bot
+  },
+  {
+    label: 'Workflow Studio',
     href: '/workflows',
-    description: 'Automated agent workflows',
-    icon: Workflow
+    description: 'Build automated workflows and processes',
+    icon: GitBranch
+  },
+  {
+    label: 'Panel Designer',
+    href: '/designer/panel',
+    description: 'Create multi-expert panel configurations',
+    icon: UsersRound
   },
   {
     label: 'Solution Builder',
@@ -89,20 +120,21 @@ const servicesItems = [
     description: 'Build custom solutions',
     icon: Wrench
   },
+  {
+    label: 'Knowledge Builder',
+    href: '/designer/knowledge',
+    description: 'Create and manage knowledge bases for RAG',
+    icon: BookOpen
+  },
 ]
 
-const libraryItems = [
+// DISCOVER - Browse and explore assets
+const discoverItems = [
   {
     label: 'Agents',
     href: '/agents',
     description: 'Browse expert AI agents',
     icon: Brain
-  },
-  {
-    label: 'Tools',
-    href: '/tools',
-    description: 'Explore available tools',
-    icon: Wrench
   },
   {
     label: 'Knowledge',
@@ -113,20 +145,48 @@ const libraryItems = [
   {
     label: 'Personas',
     href: '/personas',
-    description: 'User personas library',
+    description: 'User personas and organizational archetypes',
     icon: UserCircle
+  },
+  {
+    label: 'Ontology',
+    href: '/ontology-explorer',
+    description: 'Interactive graph visualization of the enterprise',
+    icon: Network
   },
   {
     label: 'Jobs-to-be-Done',
     href: '/jobs-to-be-done',
-    description: 'JTBD framework',
+    description: 'JTBD framework and outcome mapping',
     icon: Target
   },
   {
-    label: 'Prompt Prism',
+    label: 'Prompts',
     href: '/prism',
-    description: 'Prompt templates',
+    description: 'Prompt templates and patterns',
     icon: Lightbulb
+  },
+]
+
+// OPTIMIZE - Analytics and insights
+const optimizeItems = [
+  {
+    label: 'Value View',
+    href: '/value',
+    description: 'Value drivers and strategic priorities',
+    icon: Layers
+  },
+  {
+    label: 'Insights',
+    href: '/medical-strategy',
+    description: 'Evidence-based decision making and strategy',
+    icon: FileText
+  },
+  {
+    label: 'Tools',
+    href: '/tools',
+    description: 'Explore available tools',
+    icon: Wrench
   },
 ]
 
@@ -230,7 +290,7 @@ export function MainNavbar() {
         {/* Navigation Menu - Modern grouped design */}
         <NavigationMenu className="flex-1">
           <NavigationMenuList>
-            {/* Dashboard - Standalone */}
+            {/* HUB - Dashboard/Home */}
             <NavigationMenuItem>
               <Link
                 href="/dashboard"
@@ -240,26 +300,38 @@ export function MainNavbar() {
                 )}
               >
                 <LayoutDashboard className="mr-2 h-4 w-4" />
-                Dashboard
+                Hub
               </Link>
             </NavigationMenuItem>
 
-            {/* Services Group */}
+            {/* CONSULT - AI consultation services */}
             <NavigationMenuItem>
               <NavigationMenuTrigger
                 className={cn(
-                  servicesItems.some(item => isPathActive(item.href)) && 'bg-accent/50'
+                  consultItems.some(item => isPathActive(item.href.split('?')[0])) && 'bg-accent/50'
                 )}
               >
-                Services
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Consult
               </NavigationMenuTrigger>
               <NavigationMenuContent>
-                <div className="relative w-[400px] md:w-[500px] lg:w-[600px]">
-                  {/* Decorative gradient background */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none rounded-lg" />
+                <div className="relative w-[380px]">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 pointer-events-none rounded-lg" />
 
-                  <ul className="relative grid gap-3 p-6 md:grid-cols-2">
-                    {servicesItems.map((item) => (
+                  <div className="relative p-5 pb-3 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <MessageSquare className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold">Consult</h4>
+                        <p className="text-xs text-muted-foreground">AI-powered consultation services</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <ul className="relative grid gap-2 p-4">
+                    {consultItems.map((item) => (
                       <ListItem
                         key={item.href}
                         title={item.label}
@@ -270,28 +342,39 @@ export function MainNavbar() {
                     ))}
                   </ul>
 
-                  {/* Bottom decorative border */}
                   <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
                 </div>
               </NavigationMenuContent>
             </NavigationMenuItem>
 
-            {/* Library Group */}
+            {/* CRAFT - Build and design tools */}
             <NavigationMenuItem>
               <NavigationMenuTrigger
                 className={cn(
-                  libraryItems.some(item => isPathActive(item.href)) && 'bg-accent/50'
+                  craftItems.some(item => isPathActive(item.href)) && 'bg-accent/50'
                 )}
               >
-                Library
+                <Palette className="mr-2 h-4 w-4" />
+                Craft
               </NavigationMenuTrigger>
               <NavigationMenuContent>
-                <div className="relative w-[400px] md:w-[600px]">
-                  {/* Decorative gradient background */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 via-transparent to-primary/5 pointer-events-none rounded-lg" />
+                <div className="relative w-[450px]">
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-orange-500/5 pointer-events-none rounded-lg" />
 
-                  <ul className="relative grid gap-3 p-6 md:grid-cols-3">
-                    {libraryItems.map((item) => (
+                  <div className="relative p-5 pb-3 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-pink-500/20 to-orange-500/20">
+                        <Palette className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold">Craft</h4>
+                        <p className="text-xs text-muted-foreground">Build and design your AI solutions</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <ul className="relative grid gap-2 p-4">
+                    {craftItems.map((item) => (
                       <ListItem
                         key={item.href}
                         title={item.label}
@@ -302,38 +385,95 @@ export function MainNavbar() {
                     ))}
                   </ul>
 
-                  {/* Bottom decorative border */}
-                  <div className="h-1 w-full bg-gradient-to-r from-transparent via-secondary/20 to-transparent" />
+                  <div className="h-1 w-full bg-gradient-to-r from-pink-500/20 via-orange-500/20 to-transparent" />
                 </div>
               </NavigationMenuContent>
             </NavigationMenuItem>
 
-            {/* Designer - Standalone */}
+            {/* DISCOVER - Browse and explore */}
             <NavigationMenuItem>
-              <Link
-                href="/designer"
+              <NavigationMenuTrigger
                 className={cn(
-                  navigationMenuTriggerStyle(),
-                  isPathActive('/designer') && 'bg-accent text-accent-foreground'
+                  discoverItems.some(item => isPathActive(item.href)) && 'bg-accent/50'
                 )}
               >
-                <Palette className="mr-2 h-4 w-4" />
-                Designer
-              </Link>
+                <Search className="mr-2 h-4 w-4" />
+                Discover
+              </NavigationMenuTrigger>
+              <NavigationMenuContent>
+                <div className="relative w-[500px]">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5 pointer-events-none rounded-lg" />
+
+                  <div className="relative p-5 pb-3 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20">
+                        <Search className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold">Discover</h4>
+                        <p className="text-xs text-muted-foreground">Browse and explore platform assets</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <ul className="relative grid gap-2 p-4 md:grid-cols-2">
+                    {discoverItems.map((item) => (
+                      <ListItem
+                        key={item.href}
+                        title={item.label}
+                        href={item.href}
+                        icon={item.icon}
+                        description={item.description}
+                      />
+                    ))}
+                  </ul>
+
+                  <div className="h-1 w-full bg-gradient-to-r from-blue-500/20 via-cyan-500/20 to-transparent" />
+                </div>
+              </NavigationMenuContent>
             </NavigationMenuItem>
 
-            {/* Value - Standalone (Enterprise Ontology) */}
+            {/* OPTIMIZE - Analytics and insights */}
             <NavigationMenuItem>
-              <Link
-                href="/value"
+              <NavigationMenuTrigger
                 className={cn(
-                  navigationMenuTriggerStyle(),
-                  isPathActive('/value') && 'bg-accent text-accent-foreground'
+                  optimizeItems.some(item => isPathActive(item.href)) && 'bg-accent/50'
                 )}
               >
                 <Layers className="mr-2 h-4 w-4" />
-                Value
-              </Link>
+                Optimize
+              </NavigationMenuTrigger>
+              <NavigationMenuContent>
+                <div className="relative w-[380px]">
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-emerald-500/5 pointer-events-none rounded-lg" />
+
+                  <div className="relative p-5 pb-3 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20">
+                        <Layers className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold">Optimize</h4>
+                        <p className="text-xs text-muted-foreground">Analytics, insights and value tracking</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <ul className="relative grid gap-2 p-4">
+                    {optimizeItems.map((item) => (
+                      <ListItem
+                        key={item.href}
+                        title={item.label}
+                        href={item.href}
+                        icon={item.icon}
+                        description={item.description}
+                      />
+                    ))}
+                  </ul>
+
+                  <div className="h-1 w-full bg-gradient-to-r from-green-500/20 via-emerald-500/20 to-transparent" />
+                </div>
+              </NavigationMenuContent>
             </NavigationMenuItem>
 
             {/* Admin - Standalone */}
@@ -538,9 +678,9 @@ export function MainNavbar() {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
 
-          {/* Services */}
-          <CommandGroup heading="Services">
-            {servicesItems.map((item) => (
+          {/* Consult */}
+          <CommandGroup heading="Consult">
+            {consultItems.map((item) => (
               <CommandItem
                 key={item.href}
                 onSelect={() => handleCommandSelect(() => router.push(item.href))}
@@ -553,9 +693,9 @@ export function MainNavbar() {
 
           <CommandSeparator />
 
-          {/* Library */}
-          <CommandGroup heading="Library">
-            {libraryItems.map((item) => (
+          {/* Craft */}
+          <CommandGroup heading="Craft">
+            {craftItems.map((item) => (
               <CommandItem
                 key={item.href}
                 onSelect={() => handleCommandSelect(() => router.push(item.href))}
@@ -568,20 +708,32 @@ export function MainNavbar() {
 
           <CommandSeparator />
 
-          {/* Quick Actions */}
-          <CommandGroup heading="Actions">
-            <CommandItem onSelect={() => handleCommandSelect(() => router.push('/ask-expert'))}>
-              <MessageSquare className="mr-2 h-4 w-4" />
-              <span>New Expert Chat</span>
-            </CommandItem>
-            <CommandItem onSelect={() => handleCommandSelect(() => router.push('/ask-panel'))}>
-              <Users className="mr-2 h-4 w-4" />
-              <span>New Panel</span>
-            </CommandItem>
-            <CommandItem onSelect={() => handleCommandSelect(() => router.push('/workflows'))}>
-              <Workflow className="mr-2 h-4 w-4" />
-              <span>New Workflow</span>
-            </CommandItem>
+          {/* Discover */}
+          <CommandGroup heading="Discover">
+            {discoverItems.map((item) => (
+              <CommandItem
+                key={item.href}
+                onSelect={() => handleCommandSelect(() => router.push(item.href))}
+              >
+                <item.icon className="mr-2 h-4 w-4" />
+                <span>{item.label}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+
+          <CommandSeparator />
+
+          {/* Optimize */}
+          <CommandGroup heading="Optimize">
+            {optimizeItems.map((item) => (
+              <CommandItem
+                key={item.href}
+                onSelect={() => handleCommandSelect(() => router.push(item.href))}
+              >
+                <item.icon className="mr-2 h-4 w-4" />
+                <span>{item.label}</span>
+              </CommandItem>
+            ))}
           </CommandGroup>
 
           <CommandSeparator />
@@ -590,11 +742,7 @@ export function MainNavbar() {
           <CommandGroup heading="Navigation">
             <CommandItem onSelect={() => handleCommandSelect(() => router.push('/dashboard'))}>
               <LayoutDashboard className="mr-2 h-4 w-4" />
-              <span>Dashboard</span>
-            </CommandItem>
-            <CommandItem onSelect={() => handleCommandSelect(() => router.push('/value'))}>
-              <Layers className="mr-2 h-4 w-4" />
-              <span>Value & Ontology</span>
+              <span>Hub</span>
             </CommandItem>
             <CommandItem onSelect={() => handleCommandSelect(() => router.push('/admin'))}>
               <Shield className="mr-2 h-4 w-4" />

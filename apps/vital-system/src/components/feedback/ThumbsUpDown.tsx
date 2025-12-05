@@ -119,7 +119,7 @@ export function ThumbsUpDown({
           className={`p-2 rounded-lg transition-all ${
             vote === 'up'
               ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+              : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
           } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
           aria-label="Thumbs up"
         >
@@ -132,7 +132,7 @@ export function ThumbsUpDown({
           className={`p-2 rounded-lg transition-all ${
             vote === 'down'
               ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+              : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
           } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
           aria-label="Thumbs down"
         >
@@ -140,7 +140,7 @@ export function ThumbsUpDown({
         </button>
 
         {vote && (
-          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+          <span className="text-xs text-neutral-500 dark:text-neutral-400 ml-2">
             {isSubmitting ? 'Submitting...' : 'Thanks for your feedback!'}
           </span>
         )}
@@ -150,15 +150,15 @@ export function ThumbsUpDown({
       {showDetailedForm && vote === 'down' && (
         <form
           onSubmit={handleDetailedSubmit}
-          className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+          className="mt-4 p-4 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700"
         >
-          <h4 className="text-sm font-semibold mb-3 text-gray-900 dark:text-gray-100">
+          <h4 className="text-sm font-semibold mb-3 text-neutral-900 dark:text-neutral-100">
             Help us improve
           </h4>
 
           {/* Star Rating */}
           <div className="mb-3">
-            <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs text-neutral-700 dark:text-neutral-300 mb-1">
               Rate this response (1-5 stars)
             </label>
             <div className="flex gap-1">
@@ -170,7 +170,7 @@ export function ThumbsUpDown({
                   className={`text-2xl ${
                     star <= rating
                       ? 'text-yellow-500'
-                      : 'text-gray-300 dark:text-gray-600'
+                      : 'text-neutral-300 dark:text-neutral-600'
                   } hover:text-yellow-400 transition-colors`}
                 >
                   ★
@@ -183,7 +183,7 @@ export function ThumbsUpDown({
           <div className="mb-3">
             <label
               htmlFor="feedback-category"
-              className="block text-xs text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-xs text-neutral-700 dark:text-neutral-300 mb-1"
             >
               What went wrong?
             </label>
@@ -191,7 +191,7 @@ export function ThumbsUpDown({
               id="feedback-category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+              className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
             >
               <option value="">Select an issue</option>
               <option value="irrelevant">Response was irrelevant</option>
@@ -209,7 +209,7 @@ export function ThumbsUpDown({
           <div className="mb-3">
             <label
               htmlFor="feedback-comment"
-              className="block text-xs text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-xs text-neutral-700 dark:text-neutral-300 mb-1"
             >
               Additional details (optional)
             </label>
@@ -219,7 +219,7 @@ export function ThumbsUpDown({
               onChange={(e) => setComment(e.target.value)}
               placeholder="Tell us more about what could be improved..."
               rows={3}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 resize-none"
+              className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 resize-none"
             />
           </div>
 

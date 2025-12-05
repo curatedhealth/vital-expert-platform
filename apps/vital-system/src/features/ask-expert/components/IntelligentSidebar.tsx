@@ -173,7 +173,7 @@ export function IntelligentSidebar({
                   )}
                 </div>
 
-                <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+                <p className="text-xs text-neutral-600 line-clamp-2 mb-2">
                   {conversation.preview}
                 </p>
 
@@ -182,11 +182,11 @@ export function IntelligentSidebar({
                     <Badge variant="outline" className="text-xs">
                       {conversation.mode}
                     </Badge>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-neutral-500">
                       {conversation.messageCount} messages
                     </span>
                   </div>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-neutral-500">
                     {formatTimestamp(conversation.timestamp)}
                   </span>
                 </div>
@@ -238,7 +238,7 @@ export function IntelligentSidebar({
   };
 
   return (
-    <div className={cn("h-full flex flex-col bg-white", className)}>
+    <div className={cn("h-full flex flex-col bg-canvas-surface", className)}>
       {/* Header */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
@@ -251,7 +251,7 @@ export function IntelligentSidebar({
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -302,7 +302,7 @@ export function IntelligentSidebar({
 
               return (
                 <div key={group}>
-                  <h3 className="text-xs font-medium text-gray-500 mb-2 uppercase">
+                  <h3 className="text-xs font-medium text-neutral-500 mb-2 uppercase">
                     {groupLabels[group as keyof typeof groupLabels]}
                   </h3>
                   <AnimatePresence>
@@ -316,8 +316,8 @@ export function IntelligentSidebar({
 
             {filteredConversations.length === 0 && (
               <div className="text-center py-12">
-                <Search className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-sm text-gray-600">No conversations found</p>
+                <Search className="h-12 w-12 text-neutral-400 mx-auto mb-3" />
+                <p className="text-sm text-neutral-600">No conversations found</p>
                 {searchQuery && (
                   <Button
                     variant="link"
@@ -341,9 +341,9 @@ export function IntelligentSidebar({
 
             {filteredConversations.length === 0 && (
               <div className="text-center py-12">
-                <Bookmark className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-sm text-gray-600">No bookmarked conversations</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <Bookmark className="h-12 w-12 text-neutral-400 mx-auto mb-3" />
+                <p className="text-sm text-neutral-600">No bookmarked conversations</p>
+                <p className="text-xs text-neutral-500 mt-1">
                   Bookmark conversations to find them easily later
                 </p>
               </div>
@@ -358,15 +358,15 @@ export function IntelligentSidebar({
                     <h3 className="text-sm font-medium mb-3">Session Overview</h3>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-xs text-gray-600">Total Conversations</span>
+                        <span className="text-xs text-neutral-600">Total Conversations</span>
                         <span className="text-sm font-medium">{sessionStats.totalConversations}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-xs text-gray-600">Total Messages</span>
+                        <span className="text-xs text-neutral-600">Total Messages</span>
                         <span className="text-sm font-medium">{sessionStats.totalMessages}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-xs text-gray-600">Avg. Session Duration</span>
+                        <span className="text-xs text-neutral-600">Avg. Session Duration</span>
                         <span className="text-sm font-medium">{sessionStats.avgSessionDuration}</span>
                       </div>
                     </div>
@@ -379,7 +379,7 @@ export function IntelligentSidebar({
                     <div className="space-y-3">
                       <div>
                         <div className="flex justify-between text-xs mb-1">
-                          <span className="text-gray-600">Mode</span>
+                          <span className="text-neutral-600">Mode</span>
                           <Badge variant="outline" className="text-xs">
                             {sessionStats.mostUsedMode}
                           </Badge>
@@ -387,7 +387,7 @@ export function IntelligentSidebar({
                       </div>
                       <div>
                         <div className="flex justify-between text-xs mb-1">
-                          <span className="text-gray-600">Expert</span>
+                          <span className="text-neutral-600">Expert</span>
                           <span className="font-medium">{sessionStats.mostUsedAgent}</span>
                         </div>
                       </div>

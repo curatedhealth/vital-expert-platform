@@ -547,25 +547,25 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
 
     switch (status) {
       case 'active': return <Play className="h-4 w-4 text-green-600" />;
-      case 'inactive': return <Pause className="h-4 w-4 text-gray-600" />;
+      case 'inactive': return <Pause className="h-4 w-4 text-neutral-600" />;
       case 'testing': return <Clock className="h-4 w-4 text-yellow-600" />;
       case 'error': return <AlertTriangle className="h-4 w-4 text-red-600" />;
       case 'running': return <Activity className="h-4 w-4 text-blue-600 animate-pulse" />;
       case 'completed': return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'failed': return <AlertTriangle className="h-4 w-4 text-red-600" />;
-      default: return <Activity className="h-4 w-4 text-gray-600" />;
+      default: return <Activity className="h-4 w-4 text-neutral-600" />;
     }
   };
 
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
+      case 'inactive': return 'bg-neutral-100 text-neutral-800';
       case 'testing': return 'bg-yellow-100 text-yellow-800';
       case 'error': return 'bg-red-100 text-red-800';
       case 'running': return 'bg-blue-100 text-blue-800';
       case 'completed': return 'bg-green-100 text-green-800';
       case 'failed': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -576,7 +576,7 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
       case 'safety': return <AlertTriangle className="h-5 w-5 text-red-600" />;
       case 'regulatory': return <FileText className="h-5 w-5 text-orange-600" />;
       case 'research': return <Brain className="h-5 w-5 text-teal-600" />;
-      default: return <Workflow className="h-5 w-5 text-gray-600" />;
+      default: return <Workflow className="h-5 w-5 text-neutral-600" />;
     }
   };
 
@@ -584,7 +584,7 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
       case 'simple': return 'bg-green-100 text-green-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -603,15 +603,15 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Workflow Automation Engine</h1>
-          <p className="text-gray-600 mt-2">Intelligent process automation for clinical operations</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Workflow Automation Engine</h1>
+          <p className="text-neutral-600 mt-2">Intelligent process automation for clinical operations</p>
         </div>
         <div className="flex space-x-3">
           <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             <Plus className="h-4 w-4 mr-2" />
             New Workflow
           </button>
-          <button className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors">
             <Settings className="h-4 w-4 mr-2" />
             Configure
           </button>
@@ -623,11 +623,11 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Workflows</p>
+              <p className="text-sm text-neutral-600">Total Workflows</p>
               <p className="text-2xl font-bold text-blue-600">{metrics.totalWorkflows}</p>
             </div>
             <Workflow className="h-8 w-8 text-blue-600" />
@@ -638,11 +638,11 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active</p>
+              <p className="text-sm text-neutral-600">Active</p>
               <p className="text-2xl font-bold text-green-600">{metrics.activeWorkflows}</p>
             </div>
             <Activity className="h-8 w-8 text-green-600" />
@@ -653,11 +653,11 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Executions Today</p>
+              <p className="text-sm text-neutral-600">Executions Today</p>
               <p className="text-2xl font-bold text-purple-600">{metrics.executionsToday}</p>
             </div>
             <Play className="h-8 w-8 text-purple-600" />
@@ -668,11 +668,11 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Success Rate</p>
+              <p className="text-sm text-neutral-600">Success Rate</p>
               <p className="text-2xl font-bold text-teal-600">{metrics.successRate}%</p>
             </div>
             <CheckCircle className="h-8 w-8 text-teal-600" />
@@ -683,11 +683,11 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Avg Time</p>
+              <p className="text-sm text-neutral-600">Avg Time</p>
               <p className="text-2xl font-bold text-orange-600">{metrics.avgExecutionTime}s</p>
             </div>
             <Timer className="h-8 w-8 text-orange-600" />
@@ -698,11 +698,11 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Time Saved</p>
+              <p className="text-sm text-neutral-600">Time Saved</p>
               <p className="text-2xl font-bold text-indigo-600">{metrics.timeSaved}h</p>
             </div>
             <Clock className="h-8 w-8 text-indigo-600" />
@@ -713,11 +713,11 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Error Reduction</p>
+              <p className="text-sm text-neutral-600">Error Reduction</p>
               <p className="text-2xl font-bold text-pink-600">{metrics.errorReduction}%</p>
             </div>
             <TrendingUp className="h-8 w-8 text-pink-600" />
@@ -728,11 +728,11 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Cost Savings</p>
+              <p className="text-sm text-neutral-600">Cost Savings</p>
               <p className="text-2xl font-bold text-red-600">${metrics.costSavings}M</p>
             </div>
             <TrendingUp className="h-8 w-8 text-red-600" />
@@ -741,7 +741,7 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-neutral-200">
         <nav className="-mb-px flex space-x-8">
           {[
             { key: 'overview', label: 'Automation Overview', icon: Workflow },
@@ -756,7 +756,7 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
               className={`flex items-center px-3 py-2 border-b-2 font-medium text-sm ${
                 activeTab === key
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               <Icon className="h-4 w-4 mr-2" />
@@ -771,34 +771,34 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
         <div className="space-y-6">
           {/* Automation Capabilities */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Automation Capabilities</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">Automation Capabilities</h3>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <Bot className="h-5 w-5 text-blue-600" />
-                  <span className="text-gray-700">Intelligent process automation with AI</span>
+                  <span className="text-neutral-700">Intelligent process automation with AI</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <GitBranch className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">Complex workflow orchestration</span>
+                  <span className="text-neutral-700">Complex workflow orchestration</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Database className="h-5 w-5 text-purple-600" />
-                  <span className="text-gray-700">Multi-system integration and data flow</span>
+                  <span className="text-neutral-700">Multi-system integration and data flow</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Shield className="h-5 w-5 text-orange-600" />
-                  <span className="text-gray-700">Compliance-aware automation rules</span>
+                  <span className="text-neutral-700">Compliance-aware automation rules</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <MonitorSpeaker className="h-5 w-5 text-teal-600" />
-                  <span className="text-gray-700">Real-time monitoring and alerting</span>
+                  <span className="text-neutral-700">Real-time monitoring and alerting</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Process Efficiency Gains</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">Process Efficiency Gains</h3>
               <div className="space-y-4">
                 {[
                   { label: 'Time Savings', value: 78.3, color: 'bg-green-600', metric: '845 hours' },
@@ -808,7 +808,7 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
                   { label: 'User Satisfaction', value: 89.1, color: 'bg-teal-600', metric: '4.5/5 rating' }
                 ].map((metric, index) => (
                   <div key={index} className="flex justify-between items-center">
-                    <span className="text-gray-600">{metric.label}</span>
+                    <span className="text-neutral-600">{metric.label}</span>
                     <div className="flex items-center">
                       <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
                         <div
@@ -825,8 +825,8 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
           </div>
 
           {/* Recent Workflow Activity */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent High-Impact Automations</h3>
+          <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+            <h3 className="text-lg font-semibold text-neutral-900 mb-4">Recent High-Impact Automations</h3>
             <div className="space-y-3">
               {[
                 {
@@ -858,13 +858,13 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
                   time: '1 day ago'
                 }
               ].map((activity, index) => (
-                <div key={index} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+                <div key={index} className="flex items-start justify-between p-4 bg-neutral-50 rounded-lg">
                   <div className="flex items-start space-x-3">
                     {getStatusIcon(activity.status)}
                     <div>
-                      <p className="font-medium text-gray-900">{activity.workflow}</p>
+                      <p className="font-medium text-neutral-900">{activity.workflow}</p>
                       <p className="text-sm text-green-600 font-medium">{activity.impact}</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-neutral-500 mt-1">
                         Time saved: {activity.timeSaved} • {activity.time}
                       </p>
                     </div>
@@ -885,11 +885,11 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
                 <input
                   type="text"
                   placeholder="Search workflows..."
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 w-full border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -897,7 +897,7 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Categories</option>
                 <option value="clinical">Clinical</option>
@@ -906,7 +906,7 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
                 <option value="quality">Quality</option>
                 <option value="administrative">Administrative</option>
               </select>
-              <button className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              <button className="flex items-center px-3 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50">
                 <Filter className="h-4 w-4 mr-2" />
                 More Filters
               </button>
@@ -916,13 +916,13 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
           {/* Workflows List */}
           <div className="space-y-4">
             {workflows.map((workflow) => (
-              <div key={workflow.id} className="bg-white rounded-lg border border-gray-200 p-6">
+              <div key={workflow.id} className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start space-x-3">
                     {getCategoryIcon(workflow.category)}
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{workflow.name}</h3>
-                      <p className="text-gray-600 mt-1">{workflow.description}</p>
+                      <h3 className="text-lg font-semibold text-neutral-900">{workflow.name}</h3>
+                      <p className="text-neutral-600 mt-1">{workflow.description}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
@@ -957,28 +957,28 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
 
                 {/* Workflow Steps Preview */}
                 <div className="mb-4">
-                  <h4 className="font-medium text-gray-900 mb-3">Workflow Steps ({workflow.steps.length})</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Workflow Steps ({workflow.steps.length})</h4>
                   <div className="flex items-center space-x-2 overflow-x-auto">
                     {workflow.steps.slice(0, 4).map((step, index) => (
                       <React.Fragment key={step.id}>
-                        <div className="flex-shrink-0 bg-gray-100 rounded-lg p-2 min-w-[120px]">
-                          <p className="text-xs font-medium text-gray-700">{step.name}</p>
-                          <p className="text-xs text-gray-500">{step.type}</p>
+                        <div className="flex-shrink-0 bg-neutral-100 rounded-lg p-2 min-w-[120px]">
+                          <p className="text-xs font-medium text-neutral-700">{step.name}</p>
+                          <p className="text-xs text-neutral-500">{step.type}</p>
                         </div>
                         {index < Math.min(workflow.steps.length - 1, 3) && (
-                          <ArrowRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <ArrowRight className="h-4 w-4 text-neutral-400 flex-shrink-0" />
                         )}
                       </React.Fragment>
                     ))}
                     {workflow.steps.length > 4 && (
-                      <div className="flex-shrink-0 text-sm text-gray-500">
+                      <div className="flex-shrink-0 text-sm text-neutral-500">
                         +{workflow.steps.length - 4} more
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center text-sm text-gray-500">
+                <div className="flex justify-between items-center text-sm text-neutral-500">
                   <div>
                     <span>Created by {workflow.createdBy} • </span>
                     <span>Last modified {workflow.lastModified.toLocaleDateString()}</span>
@@ -986,7 +986,7 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
                   <div className="flex space-x-3">
                     <button className="text-blue-600 hover:text-blue-800 font-medium">Edit</button>
                     <button className="text-green-600 hover:text-green-800 font-medium">Run Now</button>
-                    <button className="text-gray-600 hover:text-gray-800 font-medium">View Logs</button>
+                    <button className="text-neutral-600 hover:text-neutral-800 font-medium">View Logs</button>
                   </div>
                 </div>
               </div>

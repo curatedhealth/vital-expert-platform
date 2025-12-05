@@ -236,7 +236,7 @@ export function Mode4Documentation({ isOpen, onClose }: Mode4DocumentationProps)
                   {
                     phase: 'Phase 9: Persistence',
                     icon: Database,
-                    color: 'bg-gray-500',
+                    color: 'bg-neutral-500',
                     nodes: ['update_memory', 'save_artifacts'],
                     description: 'Save workflow results, all artifacts, and session data'
                   }

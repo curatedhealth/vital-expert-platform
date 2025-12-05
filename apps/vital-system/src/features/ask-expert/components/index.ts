@@ -1,8 +1,18 @@
-export { EnhancedModeSelector } from './EnhancedModeSelector';
-export { ExpertAgentCard } from './ExpertAgentCard';
-export { EnhancedMessageDisplay } from './EnhancedMessageDisplay';
-export { InlineArtifactGenerator } from './InlineArtifactGenerator';
-export { InlineDocumentGenerator } from './InlineDocumentGenerator';
-export { NextGenChatInput } from './NextGenChatInput';
-export { IntelligentSidebar } from './IntelligentSidebar';
-export { AdvancedStreamingWindow } from './AdvancedStreamingWindow';
+/**
+ * Ask Expert Components Index
+ *
+ * Exports all HITL and mode selection components for ask-expert-v2
+ */
+
+// Mode Selection
+export { ModeSelectionModal } from './ModeSelectionModal';
+export { UserPromptModal } from './UserPromptModal';
+
+// Progress Tracking
+export { ProgressTracker } from './ProgressTracker';
+
+// HITL Approval Components
+export { PlanApprovalModal } from './PlanApprovalModal';
+export { ToolExecutionCard } from './ToolExecutionCard';
+export { SubAgentApprovalCard } from './SubAgentApprovalCard';
+export { FinalReviewPanel } from './FinalReviewPanel';

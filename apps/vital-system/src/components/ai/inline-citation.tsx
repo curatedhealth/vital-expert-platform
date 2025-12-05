@@ -254,7 +254,7 @@ export function InlineCitationCardBody({
     <div
       ref={cardRef}
       className={cn(
-        'absolute left-0 top-full z-50 mt-2 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-lg ring-1 ring-black/5 dark:border-gray-700 dark:bg-gray-900',
+        'absolute left-0 top-full z-50 mt-2 w-72 rounded-xl border border-neutral-200 bg-white p-3 shadow-lg ring-1 ring-black/5 dark:border-neutral-700 dark:bg-neutral-900',
         className
       )}
       onMouseEnter={() => {
@@ -270,7 +270,7 @@ export function InlineCitationCardBody({
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-gray-400 hover:text-gray-600"
+          className="h-6 w-6 text-neutral-400 hover:text-neutral-600"
           onClick={() => toggle(false)}
         >
           <X className="h-3 w-3" />
@@ -490,12 +490,12 @@ export function InlineCitationSource({
 
   return (
     <div
-      className={cn('rounded-lg border border-gray-200 p-3 dark:border-gray-700', className)}
+      className={cn('rounded-lg border border-neutral-200 p-3 dark:border-neutral-700', className)}
       {...props}
     >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             {title}
           </p>
           <p className="text-xs text-muted-foreground">{hostname}</p>
@@ -512,7 +512,7 @@ export function InlineCitationSource({
         </Button>
       </div>
       {description && (
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
           {description}
         </p>
       )}

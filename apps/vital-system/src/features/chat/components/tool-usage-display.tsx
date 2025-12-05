@@ -34,7 +34,7 @@ const TOOL_COLORS: Record<string, string> = {
   search_clinical_trials: 'bg-purple-100 text-purple-800 border-purple-300',
   search_fda_approvals: 'bg-red-100 text-red-800 border-red-300',
   search_ich_guidelines: 'bg-orange-100 text-orange-800 border-orange-300',
-  calculator: 'bg-gray-100 text-gray-800 border-gray-300',
+  calculator: 'bg-neutral-100 text-neutral-800 border-neutral-300',
   knowledge_base: 'bg-indigo-100 text-indigo-800 border-indigo-300'
 };
 
@@ -49,7 +49,7 @@ export function ToolUsageDisplay({ toolCalls, compact = false }: ToolUsageDispla
         <span className="text-xs text-muted-foreground font-medium">🔧 Tools:</span>
         {toolCalls.map((toolCall, idx) => {
           const Icon = TOOL_ICONS[toolCall.toolName] || Search;
-          const colorClass = TOOL_COLORS[toolCall.toolName] || 'bg-gray-100 text-gray-800';
+          const colorClass = TOOL_COLORS[toolCall.toolName] || 'bg-neutral-100 text-neutral-800';
 
           return (
             <Badge key={idx} variant="outline" className={`${colorClass} text-xs`}>
@@ -91,10 +91,10 @@ export function ToolUsageDisplay({ toolCalls, compact = false }: ToolUsageDispla
       <CardContent className="space-y-2">
         {toolCalls.map((toolCall, idx) => {
           const Icon = TOOL_ICONS[toolCall.toolName] || Search;
-          const colorClass = TOOL_COLORS[toolCall.toolName] || 'bg-gray-100 text-gray-800';
+          const colorClass = TOOL_COLORS[toolCall.toolName] || 'bg-neutral-100 text-neutral-800';
 
           return (
-            <div key={idx} className="bg-white rounded-lg p-3 border shadow-sm">
+            <div key={idx} className="bg-canvas-surface rounded-lg p-3 border shadow-sm">
               <div className="flex items-start gap-3">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${colorClass}`}>
                   <Icon className="h-4 w-4" />
@@ -116,7 +116,7 @@ export function ToolUsageDisplay({ toolCalls, compact = false }: ToolUsageDispla
                           <summary className="text-xs text-blue-600 cursor-pointer hover:text-blue-800 font-medium">
                             View results
                           </summary>
-                          <div className="mt-2 text-xs bg-gray-50 p-2 rounded max-h-32 overflow-y-auto font-mono">
+                          <div className="mt-2 text-xs bg-neutral-50 p-2 rounded max-h-32 overflow-y-auto font-mono">
                             <pre className="whitespace-pre-wrap">
                               {toolCall.output.substring(0, 500)}
                               {toolCall.output.length > 500 && '... (truncated)'}

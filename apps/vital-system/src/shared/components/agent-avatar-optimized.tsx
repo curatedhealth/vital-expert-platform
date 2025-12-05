@@ -84,7 +84,7 @@ export function AgentAvatarOptimized({
 
     return (
       <div className={cn(
-        'flex items-center justify-center rounded-lg overflow-hidden bg-white border border-gray-200 relative',
+        'flex items-center justify-center rounded-lg overflow-hidden bg-white border border-neutral-200 relative',
         sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md,
         className
       )}>
@@ -107,7 +107,7 @@ export function AgentAvatarOptimized({
   // For emoji avatars or when image fails, display them with proper sizing
   return (
     <div className={cn(
-      'flex items-center justify-center rounded-sm bg-gray-50 border border-gray-200',
+      'flex items-center justify-center rounded-sm bg-neutral-50 border border-neutral-200',
       sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md,
       className
     )}>

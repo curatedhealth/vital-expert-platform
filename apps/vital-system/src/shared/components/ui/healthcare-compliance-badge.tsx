@@ -34,7 +34,7 @@ export function HealthcareComplianceBadge({
             icon: Shield,
             text: 'No FDA Classification',
             variant: 'secondary' as const,
-            color: 'bg-gray-100 text-gray-800'
+            color: 'bg-neutral-100 text-neutral-800'
           };
         }
         return {
@@ -73,7 +73,7 @@ export function HealthcareComplianceBadge({
               icon: Clock,
               text: 'Pending Clinical Validation',
               variant: 'outline' as const,
-              color: 'bg-gray-100 text-gray-800'
+              color: 'bg-neutral-100 text-neutral-800'
             };
         }
 
@@ -82,7 +82,7 @@ export function HealthcareComplianceBadge({
           icon: Shield,
           text: status ? 'Pharma Enabled' : 'Pharma Disabled',
           variant: status ? 'default' : 'secondary' as const,
-          color: status ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+          color: status ? 'bg-purple-100 text-purple-800' : 'bg-neutral-100 text-neutral-800'
         };
 
       case 'verify':
@@ -90,7 +90,7 @@ export function HealthcareComplianceBadge({
           icon: CheckCircle,
           text: status ? 'Verification Required' : 'No Verification',
           variant: status ? 'default' : 'secondary' as const,
-          color: status ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800'
+          color: status ? 'bg-orange-100 text-orange-800' : 'bg-neutral-100 text-neutral-800'
         };
 
       case 'medical_accuracy':
@@ -108,7 +108,7 @@ export function HealthcareComplianceBadge({
           icon: Shield,
           text: 'Unknown',
           variant: 'secondary' as const,
-          color: 'bg-gray-100 text-gray-800'
+          color: 'bg-neutral-100 text-neutral-800'
         };
     }
   };
@@ -144,7 +144,7 @@ interface HealthcareCompliancePanelProps {
 export function HealthcareCompliancePanel({ agent, className }: HealthcareCompliancePanelProps) {
   return (
     <div className={`space-y-2 ${className}`}>
-      <h4 className="text-sm font-semibold text-gray-900">Healthcare Compliance</h4>
+      <h4 className="text-sm font-semibold text-neutral-900">Healthcare Compliance</h4>
       <div className="flex flex-wrap gap-2">
         <HealthcareComplianceBadge
           type="hipaa"
@@ -186,7 +186,7 @@ export function HealthcareCompliancePanel({ agent, className }: HealthcareCompli
       {(agent.medical_error_rate !== undefined ||
         agent.hallucination_rate !== undefined ||
         agent.citation_accuracy !== undefined) && (
-        <div className="mt-3 text-xs text-gray-600">
+        <div className="mt-3 text-xs text-neutral-600">
           <div className="font-medium mb-1">Performance Metrics:</div>
           {agent.medical_error_rate !== undefined && (
             <div>Medical Error Rate: {(agent.medical_error_rate * 100).toFixed(2)}%</div>

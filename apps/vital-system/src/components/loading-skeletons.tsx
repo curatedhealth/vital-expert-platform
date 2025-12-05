@@ -99,16 +99,16 @@ export function WorkflowFlowSkeleton() {
       </Card>
 
       {/* Flow Canvas Skeleton */}
-      <Card className="border-2 border-gray-200">
+      <Card className="border-2 border-neutral-200">
         <CardContent className="p-0">
-          <div className="w-full h-[800px] bg-gray-50 flex items-center justify-center">
+          <div className="w-full h-[800px] bg-neutral-50 flex items-center justify-center">
             <div className="text-center space-y-4">
               <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent" />
               <div className="space-y-2">
-                <p className="text-lg font-semibold text-gray-700">
+                <p className="text-lg font-semibold text-neutral-700">
                   Loading workflow visualization...
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-neutral-500">
                   Preparing nodes and connections
                 </p>
               </div>

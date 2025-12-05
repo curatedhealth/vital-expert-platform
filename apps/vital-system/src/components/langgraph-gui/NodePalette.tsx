@@ -200,9 +200,9 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full w-64 bg-white border-r border-gray-200" style={{ maxHeight: '100%', overflow: 'hidden' }}>
+    <div className="flex flex-col h-full w-64 bg-white border-r border-neutral-200" style={{ maxHeight: '100%', overflow: 'hidden' }}>
       {/* Header */}
-      <div className="p-2 border-b border-gray-200 space-y-2 flex-shrink-0">
+      <div className="p-2 border-b border-neutral-200 space-y-2 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Sparkles className="text-primary" size={16} />
@@ -217,7 +217,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
         
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
+          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-neutral-400" size={14} />
           <Input
             type="text"
             placeholder="Search..."
@@ -323,9 +323,9 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-1 mb-0.5">
-                        <p className="font-medium text-xs text-gray-900 truncate">{task.name}</p>
+                        <p className="font-medium text-xs text-neutral-900 truncate">{task.name}</p>
                       </div>
-                      <p className="text-[10px] text-gray-600 line-clamp-1">{task.description}</p>
+                      <p className="text-[10px] text-neutral-600 line-clamp-1">{task.description}</p>
                       <Badge 
                         variant="outline"
                         className="text-[10px] mt-0.5 px-1 py-0 h-4"
@@ -344,7 +344,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
           })}
 
           {filteredTasks.length === 0 && (
-            <div className="text-center py-4 text-gray-500">
+            <div className="text-center py-4 text-neutral-500">
               <p className="font-medium text-xs">No nodes found</p>
               <p className="text-[10px] mt-1">Try a different search</p>
             </div>
@@ -391,7 +391,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
                 value={configData.userPrompt}
                 onChange={(e) => setConfigData({ ...configData, userPrompt: e.target.value })}
               />
-              <p className="text-xs text-gray-500">Controls output format and specific instructions for this task</p>
+              <p className="text-xs text-neutral-500">Controls output format and specific instructions for this task</p>
             </div>
 
             <div className="space-y-2">

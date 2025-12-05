@@ -83,19 +83,19 @@ export const ReasoningTrigger: React.FC<ReasoningTriggerProps> = ({
 
   return (
     <CollapsibleTrigger className={cn(
-      "w-full p-4 hover:bg-gray-50/50 transition-colors",
+      "w-full p-4 hover:bg-neutral-50/50 transition-colors",
       className
     )}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             {isOpen ? (
-              <ChevronDown className="h-4 w-4 text-gray-500" />
+              <ChevronDown className="h-4 w-4 text-neutral-500" />
             ) : (
-              <ChevronRight className="h-4 w-4 text-gray-500" />
+              <ChevronRight className="h-4 w-4 text-neutral-500" />
             )}
             <Brain className="h-4 w-4 text-blue-500" />
-            <span className="font-medium text-gray-900 text-left">
+            <span className="font-medium text-neutral-900 text-left">
               {title}
             </span>
           </div>
@@ -124,7 +124,7 @@ export const ReasoningTrigger: React.FC<ReasoningTriggerProps> = ({
   if (typeof text !== 'string') return text;
 
   // Convert **text** to <strong>text</strong>
-  return text.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>');
+  return text.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-neutral-900">$1</strong>');
 };
 
 // 📝 Reasoning Content Component
@@ -139,7 +139,7 @@ export const ReasoningContent: React.FC<ReasoningContentProps> = ({
       <CollapsibleContent>
         <div
           className={cn(
-            "px-4 pb-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap",
+            "px-4 pb-4 text-sm text-neutral-700 leading-relaxed whitespace-pre-wrap",
             className
           )}
           dangerouslySetInnerHTML={{ __html: formattedHTML }}
@@ -152,7 +152,7 @@ export const ReasoningContent: React.FC<ReasoningContentProps> = ({
   return (
     <CollapsibleContent>
       <div className={cn(
-        "px-4 pb-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap",
+        "px-4 pb-4 text-sm text-neutral-700 leading-relaxed whitespace-pre-wrap",
         className
       )}>
         {children}

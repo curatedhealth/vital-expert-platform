@@ -25,7 +25,15 @@ from uuid import UUID
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
-from langchain_anthropic import ChatAnthropic
+
+# Try to import Anthropic, fallback to OpenAI if not available
+try:
+    from langchain_anthropic import ChatAnthropic
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
+    ChatAnthropic = None
+
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 

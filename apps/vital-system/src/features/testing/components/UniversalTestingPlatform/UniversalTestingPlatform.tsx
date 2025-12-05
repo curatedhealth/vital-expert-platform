@@ -476,7 +476,7 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
       case 'paused': return <Pause className="h-4 w-4 text-yellow-600" />;
       case 'completed': return <CheckCircle className="h-4 w-4 text-blue-600" />;
       case 'terminated': return <XCircle className="h-4 w-4 text-red-600" />;
-      default: return <Clock className="h-4 w-4 text-gray-600" />;
+      default: return <Clock className="h-4 w-4 text-neutral-600" />;
     }
   };
 
@@ -485,7 +485,7 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
       case 'paused': return 'bg-yellow-100 text-yellow-800';
       case 'completed': return 'bg-blue-100 text-blue-800';
       case 'terminated': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -504,15 +504,15 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Universal Testing Platform</h1>
-          <p className="text-gray-600 mt-2">Comprehensive clinical trial and testing infrastructure</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Universal Testing Platform</h1>
+          <p className="text-neutral-600 mt-2">Comprehensive clinical trial and testing infrastructure</p>
         </div>
         <div className="flex space-x-3">
           <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             <Plus className="h-4 w-4 mr-2" />
             New Protocol
           </button>
-          <button className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors">
             <Upload className="h-4 w-4 mr-2" />
             Import
           </button>
@@ -524,12 +524,12 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Protocols</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalProtocols}</p>
+              <p className="text-sm text-neutral-600">Total Protocols</p>
+              <p className="text-2xl font-bold text-neutral-900">{stats.totalProtocols}</p>
             </div>
             <FlaskConical className="h-8 w-8 text-blue-600" />
           </div>
@@ -539,11 +539,11 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active Trials</p>
+              <p className="text-sm text-neutral-600">Active Trials</p>
               <p className="text-2xl font-bold text-green-600">{stats.activeTrials}</p>
             </div>
             <Activity className="h-8 w-8 text-green-600" />
@@ -554,11 +554,11 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Completed Trials</p>
+              <p className="text-sm text-neutral-600">Completed Trials</p>
               <p className="text-2xl font-bold text-blue-600">{stats.completedTrials}</p>
             </div>
             <CheckCircle className="h-8 w-8 text-blue-600" />
@@ -569,11 +569,11 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Participants</p>
+              <p className="text-sm text-neutral-600">Participants</p>
               <p className="text-2xl font-bold text-purple-600">{stats.participantsEnrolled.toLocaleString()}</p>
             </div>
             <Users className="h-8 w-8 text-purple-600" />
@@ -584,11 +584,11 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Digital Trials</p>
+              <p className="text-sm text-neutral-600">Digital Trials</p>
               <p className="text-2xl font-bold text-indigo-600">{stats.digitalTrials}</p>
             </div>
             <Smartphone className="h-8 w-8 text-indigo-600" />
@@ -599,11 +599,11 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">DCT Trials</p>
+              <p className="text-sm text-neutral-600">DCT Trials</p>
               <p className="text-2xl font-bold text-teal-600">{stats.decentralizedTrials}</p>
             </div>
             <Globe className="h-8 w-8 text-teal-600" />
@@ -612,7 +612,7 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-neutral-200">
         <nav className="-mb-px flex space-x-8">
           {[
             { key: 'overview', label: 'Overview', icon: BarChart3 },
@@ -627,7 +627,7 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
               className={`flex items-center px-3 py-2 border-b-2 font-medium text-sm ${
                 activeTab === key
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               <Icon className="h-4 w-4 mr-2" />
@@ -642,21 +642,21 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Recent Protocols */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Recent Protocols</h3>
+                <h3 className="text-lg font-semibold text-neutral-900">Recent Protocols</h3>
                 <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
                   View All
                 </button>
               </div>
               <div className="space-y-3">
                 {protocols.slice(0, 3).map((protocol) => (
-                  <div key={protocol.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={protocol.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                     <div className="flex items-center space-x-3">
                       {getStatusIcon(protocol.status)}
                       <div>
-                        <p className="font-medium text-gray-900">{protocol.name}</p>
-                        <p className="text-sm text-gray-600">{protocol.principalInvestigator}</p>
+                        <p className="font-medium text-neutral-900">{protocol.name}</p>
+                        <p className="text-sm text-neutral-600">{protocol.principalInvestigator}</p>
                       </div>
                     </div>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(protocol.status)}`}>
@@ -668,28 +668,28 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
             </div>
 
             {/* Platform Capabilities */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Platform Capabilities</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">Platform Capabilities</h3>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <Shield className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">HIPAA Compliant Infrastructure</span>
+                  <span className="text-neutral-700">HIPAA Compliant Infrastructure</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Smartphone className="h-5 w-5 text-blue-600" />
-                  <span className="text-gray-700">Digital Therapeutic Trials</span>
+                  <span className="text-neutral-700">Digital Therapeutic Trials</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Globe className="h-5 w-5 text-purple-600" />
-                  <span className="text-gray-700">Decentralized Clinical Trials</span>
+                  <span className="text-neutral-700">Decentralized Clinical Trials</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Stethoscope className="h-5 w-5 text-teal-600" />
-                  <span className="text-gray-700">Real-World Evidence Generation</span>
+                  <span className="text-neutral-700">Real-World Evidence Generation</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Activity className="h-5 w-5 text-orange-600" />
-                  <span className="text-gray-700">Real-Time Monitoring</span>
+                  <span className="text-neutral-700">Real-Time Monitoring</span>
                 </div>
               </div>
             </div>
@@ -703,13 +703,13 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
                 <input
                   type="text"
                   placeholder="Search protocols..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 w-full border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -717,14 +717,14 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
               <select
                 value={selectedProtocolType}
                 onChange={(e) => setSelectedProtocolType(e.target.value as unknown)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Types</option>
                 <option value="clinical-trial">Clinical Trials</option>
                 <option value="diagnostic">Diagnostic</option>
                 <option value="therapeutic">Therapeutic</option>
               </select>
-              <button className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              <button className="flex items-center px-3 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50">
                 <Filter className="h-4 w-4 mr-2" />
                 Filters
               </button>
@@ -732,38 +732,38 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
           </div>
 
           {/* Protocols List */}
-          <div className="bg-white rounded-lg border border-gray-200">
+          <div className="bg-canvas-surface rounded-lg border border-neutral-200">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-neutral-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Protocol
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Phase
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       PI
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredProtocols.map((protocol) => (
-                    <tr key={protocol.id} className="hover:bg-gray-50">
+                    <tr key={protocol.id} className="hover:bg-neutral-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{protocol.name}</div>
-                          <div className="text-sm text-gray-500">Version {protocol.version}</div>
+                          <div className="text-sm font-medium text-neutral-900">{protocol.name}</div>
+                          <div className="text-sm text-neutral-500">Version {protocol.version}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -784,13 +784,13 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
                         {protocol.principalInvestigator}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex space-x-2">
                           <button className="text-blue-600 hover:text-blue-900">View</button>
-                          <button className="text-gray-600 hover:text-gray-900">Edit</button>
+                          <button className="text-neutral-600 hover:text-neutral-900">Edit</button>
                           <button className="text-red-600 hover:text-red-900">Archive</button>
                         </div>
                       </td>
@@ -805,15 +805,15 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
 
       {activeTab === 'trials' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Digital Therapeutic Trials</h3>
+          <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+            <h3 className="text-lg font-semibold text-neutral-900 mb-4">Digital Therapeutic Trials</h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {digitalTrials.map((trial) => (
-                <div key={trial.id} className="border border-gray-200 rounded-lg p-4">
+                <div key={trial.id} className="border border-neutral-200 rounded-lg p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h4 className="font-medium text-gray-900">{trial.name}</h4>
-                      <p className="text-sm text-gray-600 mt-1">Digital Components: {trial.digitalComponents.length}</p>
+                      <h4 className="font-medium text-neutral-900">{trial.name}</h4>
+                      <p className="text-sm text-neutral-600 mt-1">Digital Components: {trial.digitalComponents.length}</p>
                     </div>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(trial.status)}`}>
                       {trial.status}
@@ -821,15 +821,15 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-neutral-600">
                       <Activity className="h-4 w-4 mr-2" />
                       Real-time monitoring: {trial.remoteMonitoring.enabled ? 'Enabled' : 'Disabled'}
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-neutral-600">
                       <Smartphone className="h-4 w-4 mr-2" />
                       Patient app features: {trial.patientApp.features.length}
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-neutral-600">
                       <Shield className="h-4 w-4 mr-2" />
                       Data sources: {trial.dataCollection.sources.length}
                     </div>
@@ -839,7 +839,7 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
                     <button className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
                       Monitor
                     </button>
-                    <button className="flex-1 px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                    <button className="flex-1 px-3 py-2 text-sm border border-neutral-300 text-neutral-700 rounded hover:bg-neutral-50">
                       Configure
                     </button>
                   </div>

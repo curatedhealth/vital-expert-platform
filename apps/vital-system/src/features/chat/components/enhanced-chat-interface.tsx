@@ -283,8 +283,8 @@ export function EnhancedChatInterface({
     switch (status) {
       case 'active': return 'text-green-600';
       case 'busy': return 'text-yellow-600';
-      case 'idle': return 'text-gray-400';
-      default: return 'text-gray-400';
+      case 'idle': return 'text-neutral-400';
+      default: return 'text-neutral-400';
     }
   };
 
@@ -396,7 +396,7 @@ export function EnhancedChatInterface({
                               <p className="font-medium text-sm truncate">{agent.name}</p>
                               <div className={cn("w-2 h-2 rounded-full",
                                 agent.status === 'active' ? 'bg-green-500' :
-                                agent.status === 'busy' ? 'bg-yellow-500' : 'bg-gray-400'
+                                agent.status === 'busy' ? 'bg-yellow-500' : 'bg-neutral-400'
                               )} />
                             </div>
                             <p className="text-xs text-muted-foreground mb-2">{agent.role}</p>

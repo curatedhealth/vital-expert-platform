@@ -12,7 +12,7 @@ const VALIDATION_OPTIONS = [
     label: 'Pending',
     description: 'Awaiting clinical validation',
     icon: Clock,
-    color: 'bg-gray-100 text-gray-800'
+    color: 'bg-neutral-100 text-neutral-800'
   },
   {
     value: ClinicalValidationStatus.IN_REVIEW,
@@ -76,7 +76,7 @@ export function ClinicalValidationSelector({
                 <div>
                   <div className="font-medium">{option.label}</div>
                   {showDescription && (
-                    <div className="text-xs text-gray-500">{option.description}</div>
+                    <div className="text-xs text-neutral-500">{option.description}</div>
                   )}
                 </div>
               </div>

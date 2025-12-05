@@ -50,18 +50,18 @@ interface StreamingMarkdownProps {
   // Convert completed markdown to HTML
 
   // 1. Bold text **text**
-  processedText = processedText.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>');
+  processedText = processedText.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-neutral-900">$1</strong>');
 
   // 2. Italic text *text*
   processedText = processedText.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
 
   // 3. Inline code `code`
-  processedText = processedText.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
+  processedText = processedText.replace(/`([^`]+)`/g, '<code class="bg-neutral-100 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
 
   // 4. Code blocks ```language\ncode\n```
   processedText = processedText.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
 
-    return `<pre class="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto my-4"><code class="language-${language}">${code.trim()}</code></pre>`;
+    return `<pre class="bg-neutral-900 text-neutral-100 p-4 rounded-md overflow-x-auto my-4"><code class="language-${language}">${code.trim()}</code></pre>`;
   });
 
   // 5. Links [text](url)
@@ -93,9 +93,9 @@ export const StreamingMarkdown: React.FC<StreamingMarkdownProps> = ({
   return (
     <div
       className={cn(
-        "prose prose-sm max-w-none text-gray-700 leading-relaxed",
-        "prose-headings:text-gray-900 prose-strong:text-gray-900",
-        "prose-code:text-gray-800 prose-pre:bg-gray-900",
+        "prose prose-sm max-w-none text-neutral-700 leading-relaxed",
+        "prose-headings:text-neutral-900 prose-strong:text-neutral-900",
+        "prose-code:text-neutral-800 prose-pre:bg-neutral-900",
         "prose-a:text-blue-600 hover:prose-a:text-blue-800",
         className
       )}

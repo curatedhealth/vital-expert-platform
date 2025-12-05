@@ -223,7 +223,7 @@ export function EnhancedVirtualPanel({
       case 'voted': case 'completed': return 'text-green-600';
       case 'voting': case 'contributing': return 'text-blue-600';
       case 'ready': return 'text-yellow-600';
-      default: return 'text-gray-600';
+      default: return 'text-neutral-600';
     }
   };
 
@@ -410,7 +410,7 @@ export function EnhancedVirtualPanel({
                         <div className={cn(
                           "p-2 rounded-lg",
                           phase.status === 'completed' ? "bg-green-500" :
-                          phase.status === 'active' ? "bg-blue-500" : "bg-gray-400"
+                          phase.status === 'active' ? "bg-blue-500" : "bg-neutral-400"
                         )}>
                           <PhaseIcon className="h-4 w-4 text-white" />
                         </div>

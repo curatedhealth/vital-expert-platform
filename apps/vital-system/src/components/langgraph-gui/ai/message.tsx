@@ -161,7 +161,7 @@ const MessageContent = React.forwardRef<HTMLDivElement, MessageContentProps>(
         className={cn(
           "rounded-lg px-4 py-3 text-sm",
           isUser
-            ? "bg-gradient-to-r from-primary to-gray-900 text-primary-foreground rounded-br-sm"
+            ? "bg-gradient-to-r from-primary to-neutral-900 text-primary-foreground rounded-br-sm"
             : "bg-muted text-foreground rounded-bl-sm",
           className
         )}

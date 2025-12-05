@@ -64,6 +64,24 @@ export default function PersonasPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const [sortKey, setSortKey] = useState<'priority' | 'ai' | 'work' | 'jtbd' | 'name'>('priority');
+
+  // Derived helper: normalized priority score to drive focus tab + card cues
+  const computePriorityScore = (persona: Persona, maxJtbd: number) => {
+    const ai = typeof persona.ai_readiness_score === 'number'
+      ? persona.ai_readiness_score
+      : typeof persona.ai_readiness_score === 'string'
+        ? parseFloat(persona.ai_readiness_score)
+        : 0;
+    const work = typeof persona.work_complexity_score === 'number'
+      ? persona.work_complexity_score
+      : typeof persona.work_complexity_score === 'string'
+        ? parseFloat(persona.work_complexity_score)
+        : 0;
+    const jtbdWeight = maxJtbd > 0 ? Math.min((persona.jtbds_count || 0) / maxJtbd, 1) : 0;
+    // Weighted mix: AI maturity and work complexity dominate; JTBD count nudges tie-breakers
+    return (ai * 0.5) + (work * 0.35) + (jtbdWeight * 0.15);
+  };
 
   useEffect(() => {
     console.log('[PersonasPage] Component mounted, loading personas...');
@@ -153,6 +171,28 @@ export default function PersonasPage() {
 
     return filtered;
   }, [personas, filters]);
+
+  // Derived sorted personas for focus/order views
+  const sortedPersonas = useMemo(() => {
+    const maxJtbd = Math.max(...filteredPersonas.map(p => p.jtbds_count || 0), 0);
+    const scored = filteredPersonas.map(p => ({
+      persona: p,
+      score: computePriorityScore(p, maxJtbd),
+      ai: typeof p.ai_readiness_score === 'number' ? p.ai_readiness_score : parseFloat(String(p.ai_readiness_score || 0)),
+      work: typeof p.work_complexity_score === 'number' ? p.work_complexity_score : parseFloat(String(p.work_complexity_score || 0)),
+      jtbd: p.jtbds_count || 0,
+    }));
+
+    const comparator: Record<typeof sortKey, (a: any, b: any) => number> = {
+      priority: (a, b) => b.score - a.score,
+      ai: (a, b) => b.ai - a.ai,
+      work: (a, b) => b.work - a.work,
+      jtbd: (a, b) => b.jtbd - a.jtbd,
+      name: (a, b) => a.persona.name.localeCompare(b.persona.name),
+    };
+
+    return scored.sort(comparator[sortKey]).map(entry => entry.persona);
+  }, [filteredPersonas, sortKey]);
 
   // Notify sidebar of filter updates
   useEffect(() => {
@@ -291,8 +331,8 @@ export default function PersonasPage() {
             <Card>
               <CardContent className="py-12 text-center">
                 <div className="flex flex-col items-center gap-4">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-                  <p className="text-gray-500">Loading personas...</p>
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-neutral-300 border-t-blue-600"></div>
+                  <p className="text-neutral-500">Loading personas...</p>
                 </div>
               </CardContent>
             </Card>
@@ -314,6 +354,29 @@ export default function PersonasPage() {
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
+          {/* Controls Row */}
+          {!loading && !error && (
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="text-sm text-neutral-600">
+                Showing <span className="font-semibold">{filteredPersonas.length}</span> of <span className="font-semibold">{stats.total}</span> personas
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-neutral-500">Sort by</span>
+                <select
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value as any)}
+                  className="px-3 py-2 border rounded-md bg-canvas-surface dark:bg-neutral-900 text-sm"
+                >
+                  <option value="priority">Priority (AI + Work + JTBDs)</option>
+                  <option value="ai">AI Readiness</option>
+                  <option value="work">Work Complexity</option>
+                  <option value="jtbd">JTBD Count</option>
+                  <option value="name">Name</option>
+                </select>
+              </div>
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
             <Card className="border-red-200 bg-red-50">
@@ -354,8 +417,8 @@ export default function PersonasPage() {
             <Card>
               <CardContent className="py-12 text-center">
                 <div className="flex flex-col items-center gap-4">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-                  <p className="text-gray-500">Loading personas...</p>
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-neutral-300 border-t-blue-600"></div>
+                  <p className="text-neutral-500">Loading personas...</p>
                 </div>
               </CardContent>
             </Card>
@@ -372,11 +435,12 @@ export default function PersonasPage() {
               <TabsTrigger value="list">List View</TabsTrigger>
               <TabsTrigger value="archetypes">By Archetype</TabsTrigger>
               <TabsTrigger value="departments">By Department</TabsTrigger>
+              <TabsTrigger value="focus">Focus</TabsTrigger>
             </TabsList>
 
             <TabsContent value="grid">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPersonas.map((persona) => (
+                {sortedPersonas.map((persona) => (
                   <PersonaCard 
                     key={persona.id} 
                     persona={persona} 
@@ -388,7 +452,7 @@ export default function PersonasPage() {
 
             <TabsContent value="list">
               <div className="space-y-4">
-                {filteredPersonas.map((persona) => (
+                {sortedPersonas.map((persona) => (
                   <PersonaListItem 
                     key={persona.id} 
                     persona={persona} 
@@ -415,7 +479,7 @@ export default function PersonasPage() {
                           {archetypePersonas.length}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 mb-4">{config.description}</p>
+                      <p className="text-sm text-neutral-600 mb-4">{config.description}</p>
                       {archetypePersonas.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {archetypePersonas.map((persona) => (
@@ -428,7 +492,7 @@ export default function PersonasPage() {
                           ))}
                         </div>
                       ) : (
-                        <div className="text-sm text-gray-500 italic py-4 border-l-4 border-gray-200 pl-4">
+                        <div className="text-sm text-neutral-500 italic py-4 border-l-4 border-neutral-200 pl-4">
                           No personas with this archetype
                         </div>
                       )}
@@ -446,11 +510,11 @@ export default function PersonasPage() {
                   return (
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <Users className="h-6 w-6 text-gray-500" />
-                        <h2 className="text-2xl font-bold text-gray-500">Unassigned</h2>
+                        <Users className="h-6 w-6 text-neutral-500" />
+                        <h2 className="text-2xl font-bold text-neutral-500">Unassigned</h2>
                         <Badge variant="secondary">{unknownPersonas.length}</Badge>
                       </div>
-                      <p className="text-sm text-gray-600 mb-4">Personas without MECE archetype assignment</p>
+                      <p className="text-sm text-neutral-600 mb-4">Personas without MECE archetype assignment</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {unknownPersonas.map((persona) => (
                           <PersonaCard 
@@ -497,7 +561,7 @@ export default function PersonasPage() {
                           ))}
                         </div>
                       ) : (
-                        <div className="text-sm text-gray-500 italic py-4">
+                        <div className="text-sm text-neutral-500 italic py-4">
                           No personas in this department
                         </div>
                       )}
@@ -506,13 +570,76 @@ export default function PersonasPage() {
                 })}
               </div>
             </TabsContent>
+
+            <TabsContent value="focus">
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {sortedPersonas.slice(0, 3).map((persona, idx) => (
+                    <PersonaCard
+                      key={persona.id}
+                      persona={persona}
+                      onClick={(p) => router.push(`/personas/${p.slug}`)}
+                      compact={false}
+                    />
+                  ))}
+                </div>
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="text-sm text-neutral-500">Top opportunities</p>
+                        <h3 className="text-xl font-bold text-neutral-900">Focus Order</h3>
+                        <p className="text-sm text-neutral-500">Sorted by composite priority (AI readiness, work complexity, JTBD load)</p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => setSortKey('priority')}>
+                        Reset priority sort
+                      </Button>
+                    </div>
+                    <div className="space-y-3">
+                      {sortedPersonas.slice(0, 12).map((persona, index) => (
+                        <div
+                          key={persona.id}
+                          className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-neutral-50"
+                          onClick={() => router.push(`/personas/${persona.slug}`)}
+                        >
+                          {(() => {
+                            const aiScore = Number(persona.ai_readiness_score ?? 0);
+                            const workScore = Number(persona.work_complexity_score ?? 0);
+                            const aiLabel = Number.isFinite(aiScore) && aiScore > 0 ? `${Math.round(aiScore * 100)}% AI` : 'AI —';
+                            const workLabel = Number.isFinite(workScore) && workScore > 0 ? `${Math.round(workScore * 100)}% Work` : 'Work —';
+                            return (
+                              <>
+                              <div className="flex items-center gap-3">
+                                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold flex items-center justify-center">
+                                  {index + 1}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-neutral-900">{persona.name}</p>
+                                  <p className="text-xs text-neutral-500">{persona.title || persona.function_name || persona.role_name}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4 text-sm">
+                                  <div className="text-blue-600 font-semibold">{aiLabel}</div>
+                                  <div className="text-purple-600 font-semibold">{workLabel}</div>
+                                  <div className="text-neutral-600 font-medium">{persona.jtbds_count || 0} JTBDs</div>
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
           </Tabs>
           )}
 
           {filteredPersonas.length === 0 && !loading && !error && (
             <Card>
               <CardContent className="py-12 text-center">
-                <p className="text-gray-500">No personas found matching your filters.</p>
+                <p className="text-neutral-500">No personas found matching your filters.</p>
               </CardContent>
             </Card>
           )}

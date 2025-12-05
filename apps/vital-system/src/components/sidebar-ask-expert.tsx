@@ -89,13 +89,18 @@ export function SidebarAskExpert() {
 
   const { user } = useAuth()
 
-  console.log('🔍 [SidebarAskExpert] Component render:', {
-    agentsCount: agents.length,
-    agentsLoading,
-    hasUser: !!user,
-    userEmail: user?.email,
-    agents: agents.map(a => ({ id: a.id, name: a.displayName, isUserAdded: a.isUserAdded }))
-  });
+  // Debug logging moved to useEffect to avoid logging on every render
+  // Only logs when agents.length changes
+  const prevAgentsLengthRef = useRef<number>(0);
+  useEffect(() => {
+    if (prevAgentsLengthRef.current !== agents.length) {
+      console.log('🔍 [SidebarAskExpert] Agents updated:', {
+        agentsCount: agents.length,
+        hasUser: !!user,
+      });
+      prevAgentsLengthRef.current = agents.length;
+    }
+  }, [agents.length, user]);
 
   const router = useRouter()
   const { isMobile } = useSidebar()
@@ -169,21 +174,7 @@ export function SidebarAskExpert() {
       const matchesTier = filterTier === null || agent.tier === filterTier
       return matchesSearch && matchesTier && agent.status === "active"
     })
-
-    console.log('🔍 [Sidebar Debug] Filtered agents:', {
-      totalAgents: agents.length,
-      filteredCount: filtered.length,
-      searchQuery,
-      filterTier,
-      agents: filtered.map(a => ({ 
-        id: a.id, 
-        name: a.displayName, 
-        isUserAdded: a.isUserAdded,
-        tier: a.tier,
-        status: a.status
-      }))
-    });
-
+    // Debug logging removed to reduce console noise
     return filtered;
   }, [agents, searchQuery, filterTier])
 
@@ -751,9 +742,10 @@ export function SidebarAskExpert() {
                                 agent={agent}
                                 isSelected={isSelected}
                                 onSelect={() => {
-                                  const nextSelection = isSelected
-                                    ? selectedAgents.filter((id) => id !== agent.id)
-                                    : [...selectedAgents, agent.id]
+                                  // Single-select: clicking replaces selection (not appends)
+                                  // If clicking already-selected agent, deselect it
+                                  const nextSelection = isSelected ? [] : [agent.id]
+                                  console.log('🔄 [Sidebar] Agent selection changed:', { agentId: agent.id, isSelected, nextSelection })
                                   setSelectedAgents(nextSelection)
                                 }}
                                 stats={{
@@ -765,9 +757,8 @@ export function SidebarAskExpert() {
                                 <SidebarMenuButton
                                   isActive={isSelected}
                                   onClick={() => {
-                                    const nextSelection = isSelected
-                                      ? selectedAgents.filter((id) => id !== agent.id)
-                                      : [...selectedAgents, agent.id]
+                                    // Single-select: clicking replaces selection (not appends)
+                                    const nextSelection = isSelected ? [] : [agent.id]
                                     setSelectedAgents(nextSelection)
                                   }}
                                 >

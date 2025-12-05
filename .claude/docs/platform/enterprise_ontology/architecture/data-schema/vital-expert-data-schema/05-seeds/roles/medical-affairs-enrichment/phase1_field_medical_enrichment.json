@@ -1,0 +1,1117 @@
+{
+  "metadata": {
+    "phase": "Phase 1 - Field Medical Enrichment",
+    "created_date": "2025-11-22",
+    "total_roles": 15,
+    "department_id": "ca5503b6-7821-4f65-8162-2b75952d5363",
+    "department_name": "Field Medical",
+    "function_id": "06127088-4d52-40aa-88c9-93f4e79e085a",
+    "function_name": "Medical Affairs",
+    "description": "Enrichment data for 15 Field Medical roles including MSLs, Field Team Leads, Medical Scientific Managers, and Field Medical Directors",
+    "prerequisites": "Run database/seeds/00_run_all_reference_data_seeds.sql first to populate reference tables"
+  },
+
+  "roles": [
+    {
+      "role_id": "f7547f96-8e01-48ad-9c25-609050bd8f68",
+      "role_name": "Global Medical Science Liaison (MSL)",
+      "geographic_scope": "global",
+      "seniority_level": "mid",
+      "role_category": "field",
+
+      "enrichment": {
+        "description": "Field-based medical professional who serves as a scientific peer and resource to key healthcare providers. Engages in scientific exchange with KOLs, provides medical education, supports clinical research, and gathers medical insights. Requires deep therapeutic area expertise and excellent communication skills.",
+
+        "required_skills": [
+          "Therapeutic area expertise (Oncology/Immunology/Neurology/Cardiology)",
+          "Scientific communication and presentation",
+          "Key Opinion Leader (KOL) identification and engagement",
+          "Clinical trial design and methodology",
+          "Medical literature review and critical appraisal",
+          "Peer-to-peer medical dialogue",
+          "Adverse event recognition and reporting (24-hour expedited reporting)",
+          "Data interpretation and analysis",
+          "CRM systems (Veeva, Salesforce)",
+          "Stakeholder relationship management"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD, or equivalent)",
+          "Board certification in relevant therapeutic area (preferred)",
+          "GCP certification (ICH E6 R2)",
+          "PhRMA Code compliance certification"
+        ],
+
+        "years_experience_min": 3,
+        "years_experience_max": 7,
+
+        "gxp_role_type": "gcp",
+        "regulatory_inspection_role": false,
+        "sox_critical": false,
+        "cfr_part_11_required": false,
+        "pharmacovigilance_responsibility": true,
+
+        "clinical_trial_phase_focus": ["Phase 2", "Phase 3", "Phase 4"],
+        "drug_lifecycle_stage": ["Clinical Development", "Launch", "Growth", "Maturity"],
+        "patient_facing": false,
+        "hcp_facing": true,
+
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "high",
+        "typical_entry_point": false,
+
+        "typical_meeting_hours_per_week": 15,
+        "administrative_load_percent": 20,
+        "strategic_vs_tactical": "balanced",
+        "innovation_vs_execution": "balanced",
+
+        "travel_percentage_min": 60,
+        "travel_percentage_max": 80,
+        "international_travel": true,
+        "overnight_travel_frequency": "weekly",
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "advanced"},
+          {"name": "PhRMA Code on Interactions with Healthcare Professionals", "proficiency_level": "expert"},
+          {"name": "FDA Physician Payments Sunshine Act (PPSA)", "proficiency_level": "working_knowledge"},
+          {"name": "ICH E2A", "proficiency_level": "working_knowledge"},
+          {"name": "FDA 21 CFR Part 314.80", "proficiency_level": "awareness"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "GCP Fundamentals", "is_mandatory": true, "due_within_days_of_hire": 90},
+          {"name": "Pharmacovigilance Basics", "is_mandatory": true, "due_within_days_of_hire": 90},
+          {"name": "Adverse Event Reporting for MSLs", "is_mandatory": true, "due_within_days_of_hire": 30},
+          {"name": "PhRMA Code Compliance for Field Medical", "is_mandatory": true, "due_within_days_of_hire": 30},
+          {"name": "Sunshine Act & Transparency Reporting", "is_mandatory": true, "due_within_days_of_hire": 90},
+          {"name": "Scientific Communication Skills for MSLs", "is_mandatory": false, "due_within_days_of_hire": 180}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Therapeutic Area Expertise", "proficiency_level": "expert"},
+          {"name": "Scientific Communication & Presentation", "proficiency_level": "advanced"},
+          {"name": "Peer-to-Peer Medical Dialogue", "proficiency_level": "advanced"},
+          {"name": "KOL (Key Opinion Leader) Identification & Engagement", "proficiency_level": "advanced"},
+          {"name": "Medical Literature Review & Critical Appraisal", "proficiency_level": "advanced"},
+          {"name": "Clinical Trial Design & Methodology", "proficiency_level": "intermediate"},
+          {"name": "Data Interpretation & Analysis", "proficiency_level": "intermediate"},
+          {"name": "Adverse Event Recognition & Reporting", "proficiency_level": "advanced"},
+          {"name": "CRM & Field Force Tools", "proficiency_level": "intermediate"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Tier 1 KOL interactions", "target_value": "100-120 per year", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Scientific exchange quality score", "target_value": "85%+", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Medical insights submitted", "target_value": "8-12 per quarter", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Advisory board attendance", "target_value": "4-6 per year", "measurement_frequency": "annually"},
+          {"kpi_name": "Medical education programs supported", "target_value": "10-15 per year", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Clinical trial enrollment support", "target_value": "2-4 sites per year", "measurement_frequency": "semi-annually"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "f0eb9ede-d72d-4359-b969-35f96e646c0e",
+      "role_name": "Regional Medical Science Liaison (MSL)",
+      "geographic_scope": "regional",
+      "seniority_level": "mid",
+      "role_category": "field",
+
+      "enrichment": {
+        "description": "Regional-focused MSL providing scientific support within a defined geographic territory. Builds relationships with regional KOLs, supports local clinical research activities, and adapts global medical strategies to regional healthcare landscapes. Similar responsibilities to Global MSL but with regional focus.",
+
+        "required_skills": [
+          "Therapeutic area expertise",
+          "Scientific communication and presentation",
+          "Regional KOL mapping and engagement",
+          "Clinical trial design fundamentals",
+          "Medical literature review",
+          "Regional healthcare system knowledge",
+          "Adverse event reporting",
+          "Cross-cultural communication",
+          "Local language proficiency (preferred)",
+          "CRM systems proficiency"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD, or equivalent)",
+          "GCP certification (ICH E6 R2)",
+          "Regional regulatory compliance training"
+        ],
+
+        "years_experience_min": 2,
+        "years_experience_max": 6,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "clinical_trial_phase_focus": ["Phase 2", "Phase 3", "Phase 4"],
+        "drug_lifecycle_stage": ["Clinical Development", "Launch", "Growth"],
+
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "high",
+
+        "travel_percentage_min": 50,
+        "travel_percentage_max": 70,
+        "international_travel": false,
+        "overnight_travel_frequency": "weekly",
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "advanced"},
+          {"name": "PhRMA Code on Interactions with Healthcare Professionals", "proficiency_level": "expert"},
+          {"name": "ICH E2A", "proficiency_level": "working_knowledge"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "GCP Fundamentals", "is_mandatory": true, "due_within_days_of_hire": 90},
+          {"name": "Pharmacovigilance Basics", "is_mandatory": true, "due_within_days_of_hire": 90},
+          {"name": "Adverse Event Reporting for MSLs", "is_mandatory": true, "due_within_days_of_hire": 30},
+          {"name": "PhRMA Code Compliance for Field Medical", "is_mandatory": true, "due_within_days_of_hire": 30}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Therapeutic Area Expertise", "proficiency_level": "advanced"},
+          {"name": "Scientific Communication & Presentation", "proficiency_level": "advanced"},
+          {"name": "KOL (Key Opinion Leader) Identification & Engagement", "proficiency_level": "intermediate"},
+          {"name": "Medical Literature Review & Critical Appraisal", "proficiency_level": "intermediate"},
+          {"name": "Adverse Event Recognition & Reporting", "proficiency_level": "advanced"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Regional KOL interactions", "target_value": "80-100 per year", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Regional medical insights", "target_value": "6-10 per quarter", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Regional medical education events", "target_value": "8-12 per year", "measurement_frequency": "quarterly"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "27bdd938-bae0-44cf-85b8-1396bdc24ce7",
+      "role_name": "Local Medical Science Liaison (MSL)",
+      "geographic_scope": "local",
+      "seniority_level": "mid",
+      "role_category": "field",
+
+      "enrichment": {
+        "description": "Local market-focused MSL with deep knowledge of local healthcare systems, reimbursement landscapes, and medical practice patterns. Engages with local KOLs, supports country-specific clinical activities, and ensures medical strategies align with local regulatory requirements.",
+
+        "required_skills": [
+          "Therapeutic area knowledge",
+          "Local healthcare system expertise",
+          "Local KOL engagement",
+          "Local regulatory knowledge",
+          "Scientific communication",
+          "Medical literature review",
+          "Local language fluency (required)",
+          "Cultural competence",
+          "Adverse event reporting"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "Local medical practice license (preferred)",
+          "GCP certification",
+          "Local regulatory compliance training"
+        ],
+
+        "years_experience_min": 2,
+        "years_experience_max": 5,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "clinical_trial_phase_focus": ["Phase 3", "Phase 4"],
+        "drug_lifecycle_stage": ["Launch", "Growth", "Maturity"],
+
+        "typical_time_in_role_years": 2,
+        "advancement_potential": "moderate",
+
+        "travel_percentage_min": 40,
+        "travel_percentage_max": 60,
+        "international_travel": false,
+        "overnight_travel_frequency": "monthly",
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "working_knowledge"},
+          {"name": "ICH E2A", "proficiency_level": "working_knowledge"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "GCP Fundamentals", "is_mandatory": true, "due_within_days_of_hire": 90},
+          {"name": "Pharmacovigilance Basics", "is_mandatory": true, "due_within_days_of_hire": 90},
+          {"name": "Adverse Event Reporting for MSLs", "is_mandatory": true, "due_within_days_of_hire": 30}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Therapeutic Area Expertise", "proficiency_level": "intermediate"},
+          {"name": "Scientific Communication & Presentation", "proficiency_level": "intermediate"},
+          {"name": "KOL (Key Opinion Leader) Identification & Engagement", "proficiency_level": "intermediate"},
+          {"name": "Adverse Event Recognition & Reporting", "proficiency_level": "advanced"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Local KOL interactions", "target_value": "60-80 per year", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Local market insights", "target_value": "4-8 per quarter", "measurement_frequency": "quarterly"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "2022d999-1167-4a37-a5c2-1acdfb36f2f9",
+      "role_name": "Global Senior MSL",
+      "geographic_scope": "global",
+      "seniority_level": "senior",
+      "role_category": "field",
+
+      "enrichment": {
+        "description": "Senior field medical professional with extensive therapeutic area expertise serving as a scientific expert and mentor. Engages with highest-tier KOLs, leads advisory boards, supports major clinical research initiatives, and mentors junior MSLs. Often designated as subject matter expert in specific disease states.",
+
+        "required_skills": [
+          "Deep therapeutic area expertise (multiple indications)",
+          "Advanced scientific communication",
+          "Strategic KOL relationship management",
+          "Advisory board facilitation",
+          "Clinical trial protocol review",
+          "Medical insight synthesis and analysis",
+          "Mentoring and coaching",
+          "Cross-functional collaboration",
+          "Publications planning support",
+          "Medical conference representation"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "Board certification (preferred)",
+          "GCP advanced certification",
+          "Therapeutic area specialty certification (preferred)"
+        ],
+
+        "years_experience_min": 7,
+        "years_experience_max": 15,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "clinical_trial_phase_focus": ["Phase 1", "Phase 2", "Phase 3", "Phase 4"],
+        "drug_lifecycle_stage": ["Early Development", "Clinical Development", "Launch", "Growth", "Maturity"],
+
+        "typical_time_in_role_years": 4,
+        "advancement_potential": "high",
+
+        "travel_percentage_min": 70,
+        "travel_percentage_max": 85,
+        "international_travel": true,
+        "overnight_travel_frequency": "weekly",
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "expert"},
+          {"name": "PhRMA Code on Interactions with Healthcare Professionals", "proficiency_level": "expert"},
+          {"name": "ICH E8", "proficiency_level": "advanced"},
+          {"name": "ICH E9", "proficiency_level": "working_knowledge"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "Advanced GCP: Medical Monitoring", "is_mandatory": true, "due_within_days_of_hire": 60},
+          {"name": "Pharmacovigilance Basics", "is_mandatory": true, "due_within_days_of_hire": 60},
+          {"name": "Scientific Communication Skills for MSLs", "is_mandatory": true, "due_within_days_of_hire": 90}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Therapeutic Area Expertise", "proficiency_level": "expert"},
+          {"name": "Scientific Communication & Presentation", "proficiency_level": "expert"},
+          {"name": "KOL (Key Opinion Leader) Identification & Engagement", "proficiency_level": "expert"},
+          {"name": "Advisory Board Planning & Execution", "proficiency_level": "advanced"},
+          {"name": "Clinical Trial Design & Methodology", "proficiency_level": "advanced"},
+          {"name": "Data Interpretation & Analysis", "proficiency_level": "advanced"},
+          {"name": "Cross-Functional Collaboration", "proficiency_level": "advanced"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Tier 1 KOL strategic partnerships", "target_value": "15-20 per year", "measurement_frequency": "semi-annually"},
+          {"kpi_name": "Advisory boards led/facilitated", "target_value": "6-10 per year", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Medical insights - strategic value", "target_value": "12-16 per year", "measurement_frequency": "quarterly"},
+          {"kpi_name": "MSL mentorship hours", "target_value": "40-60 hours per year", "measurement_frequency": "semi-annually"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "cb761a26-127b-4083-a590-d731161a23f4",
+      "role_name": "Regional Senior MSL",
+      "geographic_scope": "regional",
+      "seniority_level": "senior",
+      "role_category": "field",
+
+      "enrichment": {
+        "description": "Senior regional MSL with deep expertise in regional healthcare systems and therapeutic areas. Leads regional medical strategies, mentors regional MSL team, and serves as liaison between regional KOLs and global medical teams.",
+
+        "required_skills": [
+          "Advanced therapeutic area expertise",
+          "Regional healthcare systems knowledge",
+          "Strategic KOL engagement",
+          "Regional team mentoring",
+          "Cross-regional collaboration",
+          "Regional regulatory knowledge",
+          "Medical education leadership",
+          "Regional publications support"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "GCP advanced certification",
+          "Regional specialty certification (preferred)"
+        ],
+
+        "years_experience_min": 6,
+        "years_experience_max": 12,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "high",
+
+        "travel_percentage_min": 60,
+        "travel_percentage_max": 75,
+        "international_travel": false,
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "expert"},
+          {"name": "ICH E8", "proficiency_level": "advanced"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "Advanced GCP: Medical Monitoring", "is_mandatory": true, "due_within_days_of_hire": 60},
+          {"name": "Scientific Communication Skills for MSLs", "is_mandatory": true, "due_within_days_of_hire": 90}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Therapeutic Area Expertise", "proficiency_level": "expert"},
+          {"name": "Scientific Communication & Presentation", "proficiency_level": "expert"},
+          {"name": "KOL (Key Opinion Leader) Identification & Engagement", "proficiency_level": "advanced"},
+          {"name": "Cross-Functional Collaboration", "proficiency_level": "advanced"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Regional KOL partnerships", "target_value": "12-16 per year", "measurement_frequency": "semi-annually"},
+          {"kpi_name": "Regional medical insights", "target_value": "10-14 per year", "measurement_frequency": "quarterly"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "d37b94d1-ba0c-4fe5-9271-b784453ea928",
+      "role_name": "Local Senior MSL",
+      "geographic_scope": "local",
+      "seniority_level": "senior",
+      "role_category": "field",
+
+      "enrichment": {
+        "description": "Senior local MSL with deep knowledge of local market dynamics and healthcare systems. Leads local medical affairs activities, builds strategic relationships with local medical leaders, and ensures alignment with local regulatory requirements.",
+
+        "required_skills": [
+          "Local therapeutic area expertise",
+          "Local healthcare system mastery",
+          "Local KOL strategic engagement",
+          "Local regulatory expertise",
+          "Local medical education",
+          "Local team mentoring",
+          "Cross-cultural leadership"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "Local medical license (preferred)",
+          "GCP certification"
+        ],
+
+        "years_experience_min": 5,
+        "years_experience_max": 10,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "moderate",
+
+        "travel_percentage_min": 50,
+        "travel_percentage_max": 65,
+        "international_travel": false,
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "advanced"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "GCP Fundamentals", "is_mandatory": true, "due_within_days_of_hire": 90},
+          {"name": "Pharmacovigilance Basics", "is_mandatory": true, "due_within_days_of_hire": 90}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Therapeutic Area Expertise", "proficiency_level": "expert"},
+          {"name": "Scientific Communication & Presentation", "proficiency_level": "advanced"},
+          {"name": "KOL (Key Opinion Leader) Identification & Engagement", "proficiency_level": "advanced"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Local KOL strategic relationships", "target_value": "10-12 per year", "measurement_frequency": "semi-annually"},
+          {"kpi_name": "Local medical education events", "target_value": "12-16 per year", "measurement_frequency": "quarterly"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "ce2bbb1f-e494-4236-8def-b726aff9ceb6",
+      "role_name": "Global Field Team Lead",
+      "geographic_scope": "global",
+      "seniority_level": "senior",
+      "role_category": "field",
+
+      "enrichment": {
+        "description": "Field leadership role managing global MSL team performance and strategy. Responsible for MSL training, development, performance management, and ensuring consistent global field medical excellence. Balances field activities with team leadership responsibilities.",
+
+        "required_skills": [
+          "MSL team management and development",
+          "Performance management and coaching",
+          "Field force strategy development",
+          "Global KOL engagement planning",
+          "Cross-functional leadership",
+          "Medical insights synthesis",
+          "Budget management",
+          "Compliance oversight",
+          "Talent acquisition and retention",
+          "Change management"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "Management/leadership certification",
+          "GCP advanced certification"
+        ],
+
+        "years_experience_min": 8,
+        "years_experience_max": 15,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "typical_time_in_role_years": 4,
+        "advancement_potential": "high",
+
+        "travel_percentage_min": 50,
+        "travel_percentage_max": 70,
+        "international_travel": true,
+        "overnight_travel_frequency": "monthly",
+
+        "typical_meeting_hours_per_week": 20,
+        "administrative_load_percent": 40,
+        "strategic_vs_tactical": "strategic",
+
+        "team_size_min": 5,
+        "team_size_max": 12,
+        "direct_reports_min": 5,
+        "direct_reports_max": 10,
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "expert"},
+          {"name": "PhRMA Code on Interactions with Healthcare Professionals", "proficiency_level": "expert"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "Advanced GCP: Medical Monitoring", "is_mandatory": true, "due_within_days_of_hire": 60},
+          {"name": "PhRMA Code Compliance for Field Medical", "is_mandatory": true, "due_within_days_of_hire": 30}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Cross-Functional Collaboration", "proficiency_level": "expert"},
+          {"name": "Speaker Program Management", "proficiency_level": "advanced"},
+          {"name": "KOL (Key Opinion Leader) Identification & Engagement", "proficiency_level": "expert"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Team performance score", "target_value": "90%+", "measurement_frequency": "quarterly"},
+          {"kpi_name": "MSL retention rate", "target_value": "85%+", "measurement_frequency": "annually"},
+          {"kpi_name": "Global KOL coverage", "target_value": "95%+", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Team compliance score", "target_value": "100%", "measurement_frequency": "quarterly"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "7984ef59-98ca-4a48-bf82-3e857cb6c87d",
+      "role_name": "Regional Field Team Lead",
+      "geographic_scope": "regional",
+      "seniority_level": "senior",
+      "role_category": "field",
+
+      "enrichment": {
+        "description": "Regional field team leader managing MSL performance and regional medical strategies. Ensures regional team delivers medical excellence, develops regional KOL engagement plans, and aligns regional activities with global strategies.",
+
+        "required_skills": [
+          "Regional team management",
+          "Regional MSL development",
+          "Regional KOL strategy",
+          "Regional budget management",
+          "Performance management",
+          "Regional compliance oversight",
+          "Cross-regional collaboration"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "GCP certification",
+          "Management training"
+        ],
+
+        "years_experience_min": 7,
+        "years_experience_max": 12,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "high",
+
+        "travel_percentage_min": 40,
+        "travel_percentage_max": 60,
+        "international_travel": false,
+
+        "typical_meeting_hours_per_week": 18,
+        "administrative_load_percent": 35,
+        "strategic_vs_tactical": "balanced",
+
+        "team_size_min": 4,
+        "team_size_max": 8,
+        "direct_reports_min": 4,
+        "direct_reports_max": 8,
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "advanced"},
+          {"name": "PhRMA Code on Interactions with Healthcare Professionals", "proficiency_level": "expert"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "GCP Fundamentals", "is_mandatory": true, "due_within_days_of_hire": 90},
+          {"name": "PhRMA Code Compliance for Field Medical", "is_mandatory": true, "due_within_days_of_hire": 30}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Cross-Functional Collaboration", "proficiency_level": "advanced"},
+          {"name": "KOL (Key Opinion Leader) Identification & Engagement", "proficiency_level": "advanced"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Regional team performance", "target_value": "85%+", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Regional KOL coverage", "target_value": "90%+", "measurement_frequency": "quarterly"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "ec604519-194e-47e5-8ae4-a47ce207420a",
+      "role_name": "Local Field Team Lead",
+      "geographic_scope": "local",
+      "seniority_level": "senior",
+      "role_category": "field",
+
+      "enrichment": {
+        "description": "Local field team leader managing local MSL team and ensuring local medical affairs excellence. Responsible for local KOL engagement strategy, team development, and local compliance.",
+
+        "required_skills": [
+          "Local team management",
+          "Local MSL coaching",
+          "Local KOL strategy",
+          "Local compliance management",
+          "Performance management",
+          "Local market knowledge"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "Local regulatory training",
+          "GCP certification"
+        ],
+
+        "years_experience_min": 6,
+        "years_experience_max": 10,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "moderate",
+
+        "travel_percentage_min": 30,
+        "travel_percentage_max": 50,
+        "international_travel": false,
+
+        "typical_meeting_hours_per_week": 15,
+        "administrative_load_percent": 30,
+
+        "team_size_min": 3,
+        "team_size_max": 6,
+        "direct_reports_min": 3,
+        "direct_reports_max": 6,
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "advanced"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "GCP Fundamentals", "is_mandatory": true, "due_within_days_of_hire": 90}
+        ],
+
+        "clinical_competencies": [
+          {"name": "KOL (Key Opinion Leader) Identification & Engagement", "proficiency_level": "advanced"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Local team performance", "target_value": "85%+", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Local KOL coverage", "target_value": "90%+", "measurement_frequency": "quarterly"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "c72c1ff5-1a9a-42d6-9c5d-925bfccc7967",
+      "role_name": "Global Medical Scientific Manager",
+      "geographic_scope": "global",
+      "seniority_level": "senior",
+      "role_category": "hybrid",
+
+      "enrichment": {
+        "description": "Hybrid role combining field medical activities with strategic project management. Leads global medical initiatives, coordinates cross-functional projects, supports clinical research operations, and provides scientific expertise. Splits time between field activities (40%) and office-based strategic work (60%).",
+
+        "required_skills": [
+          "Medical project management",
+          "Cross-functional collaboration",
+          "Scientific strategy development",
+          "Clinical research support",
+          "Medical publications coordination",
+          "KOL engagement",
+          "Budget and resource management",
+          "Medical communications oversight",
+          "Data analysis and synthesis"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "Project management certification (PMP preferred)",
+          "GCP certification"
+        ],
+
+        "years_experience_min": 8,
+        "years_experience_max": 15,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "typical_time_in_role_years": 4,
+        "advancement_potential": "high",
+
+        "travel_percentage_min": 30,
+        "travel_percentage_max": 50,
+        "international_travel": true,
+        "overnight_travel_frequency": "monthly",
+
+        "typical_meeting_hours_per_week": 22,
+        "administrative_load_percent": 45,
+        "strategic_vs_tactical": "strategic",
+        "innovation_vs_execution": "balanced",
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "expert"},
+          {"name": "ICH E8", "proficiency_level": "advanced"},
+          {"name": "ICH E9", "proficiency_level": "advanced"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "Advanced GCP: Medical Monitoring", "is_mandatory": true, "due_within_days_of_hire": 60},
+          {"name": "Publication Planning & Medical Writing Ethics", "is_mandatory": true, "due_within_days_of_hire": 90}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Cross-Functional Collaboration", "proficiency_level": "expert"},
+          {"name": "Protocol Development & Review", "proficiency_level": "advanced"},
+          {"name": "Medical Writing & Publication Development", "proficiency_level": "advanced"},
+          {"name": "Data Interpretation & Analysis", "proficiency_level": "expert"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Medical projects delivered on time", "target_value": "90%+", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Cross-functional stakeholder satisfaction", "target_value": "85%+", "measurement_frequency": "semi-annually"},
+          {"kpi_name": "Publications supported", "target_value": "8-12 per year", "measurement_frequency": "quarterly"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "8110f590-a1e4-479e-8d13-143e416bf07c",
+      "role_name": "Regional Medical Scientific Manager",
+      "geographic_scope": "regional",
+      "seniority_level": "senior",
+      "role_category": "hybrid",
+
+      "enrichment": {
+        "description": "Regional hybrid role managing medical projects and field activities within a geographic region. Coordinates regional medical strategies, supports regional clinical research, and manages regional scientific initiatives.",
+
+        "required_skills": [
+          "Regional medical project management",
+          "Regional cross-functional collaboration",
+          "Regional clinical research coordination",
+          "Regional KOL management",
+          "Regional medical strategy",
+          "Regional budget management"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "GCP certification",
+          "Project management training"
+        ],
+
+        "years_experience_min": 7,
+        "years_experience_max": 12,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "high",
+
+        "travel_percentage_min": 25,
+        "travel_percentage_max": 45,
+        "international_travel": false,
+
+        "typical_meeting_hours_per_week": 20,
+        "administrative_load_percent": 40,
+        "strategic_vs_tactical": "balanced",
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "advanced"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "GCP Fundamentals", "is_mandatory": true, "due_within_days_of_hire": 90}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Cross-Functional Collaboration", "proficiency_level": "advanced"},
+          {"name": "Protocol Development & Review", "proficiency_level": "intermediate"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Regional projects delivered", "target_value": "85%+", "measurement_frequency": "quarterly"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "9d6eff76-a616-4f85-8c9f-6d72e9412e5c",
+      "role_name": "Local Medical Scientific Manager",
+      "geographic_scope": "local",
+      "seniority_level": "senior",
+      "role_category": "hybrid",
+
+      "enrichment": {
+        "description": "Local hybrid role managing medical projects and field support within a local market. Coordinates local medical activities, supports local research, and ensures local compliance.",
+
+        "required_skills": [
+          "Local medical project management",
+          "Local clinical research support",
+          "Local regulatory knowledge",
+          "Local KOL coordination",
+          "Local cross-functional collaboration"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "Local regulatory certification",
+          "GCP certification"
+        ],
+
+        "years_experience_min": 6,
+        "years_experience_max": 10,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "typical_time_in_role_years": 3,
+        "advancement_potential": "moderate",
+
+        "travel_percentage_min": 20,
+        "travel_percentage_max": 40,
+        "international_travel": false,
+
+        "typical_meeting_hours_per_week": 18,
+        "administrative_load_percent": 35,
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "working_knowledge"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "GCP Fundamentals", "is_mandatory": true, "due_within_days_of_hire": 90}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Cross-Functional Collaboration", "proficiency_level": "intermediate"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Local projects delivered", "target_value": "80%+", "measurement_frequency": "quarterly"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "2b4a64b9-7e2e-4a5f-b45a-b015a90044d4",
+      "role_name": "Global Field Medical Director",
+      "geographic_scope": "global",
+      "seniority_level": "director",
+      "role_category": "hybrid",
+
+      "enrichment": {
+        "description": "Senior leadership role overseeing global field medical operations and strategy. Responsible for global MSL teams, field medical excellence, KOL engagement strategy, medical education programs, and cross-functional medical leadership. Combines strategic leadership with selective field engagement.",
+
+        "required_skills": [
+          "Global medical strategy development",
+          "Field force leadership and management",
+          "Global KOL strategy",
+          "Medical affairs budget management ($2M-$10M)",
+          "Cross-functional executive collaboration",
+          "Talent development and succession planning",
+          "Medical education strategy",
+          "Publications strategy",
+          "Regulatory and compliance oversight",
+          "Change management and transformation"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "Executive leadership certification",
+          "GCP expert certification"
+        ],
+
+        "years_experience_min": 12,
+        "years_experience_max": 20,
+
+        "gxp_role_type": "gcp",
+        "regulatory_inspection_role": true,
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "typical_time_in_role_years": 5,
+        "advancement_potential": "high",
+
+        "travel_percentage_min": 40,
+        "travel_percentage_max": 60,
+        "international_travel": true,
+        "overnight_travel_frequency": "monthly",
+
+        "typical_meeting_hours_per_week": 25,
+        "administrative_load_percent": 50,
+        "strategic_vs_tactical": "strategic",
+        "innovation_vs_execution": "innovation_focused",
+
+        "team_size_min": 15,
+        "team_size_max": 50,
+        "direct_reports_min": 5,
+        "direct_reports_max": 10,
+        "indirect_reports_min": 10,
+        "indirect_reports_max": 40,
+
+        "budget_min_usd": 2000000,
+        "budget_max_usd": 10000000,
+        "budget_authority_type": "discretionary",
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "expert"},
+          {"name": "PhRMA Code on Interactions with Healthcare Professionals", "proficiency_level": "expert"},
+          {"name": "FDA 21 CFR Part 312", "proficiency_level": "advanced"},
+          {"name": "ICH E8", "proficiency_level": "expert"},
+          {"name": "ICH E9", "proficiency_level": "advanced"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "Advanced GCP: Medical Monitoring", "is_mandatory": true, "due_within_days_of_hire": 30},
+          {"name": "Pharmacovigilance Basics", "is_mandatory": true, "due_within_days_of_hire": 60},
+          {"name": "Publication Planning & Medical Writing Ethics", "is_mandatory": true, "due_within_days_of_hire": 90}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Cross-Functional Collaboration", "proficiency_level": "expert"},
+          {"name": "KOL (Key Opinion Leader) Identification & Engagement", "proficiency_level": "expert"},
+          {"name": "Advisory Board Planning & Execution", "proficiency_level": "expert"},
+          {"name": "Speaker Program Management", "proficiency_level": "expert"},
+          {"name": "Regulatory Affairs Knowledge", "proficiency_level": "advanced"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Global field medical strategy execution", "target_value": "90%+", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Global KOL engagement coverage", "target_value": "95%+", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Field medical team retention", "target_value": "85%+", "measurement_frequency": "annually"},
+          {"kpi_name": "Cross-functional stakeholder satisfaction", "target_value": "90%+", "measurement_frequency": "semi-annually"},
+          {"kpi_name": "Budget variance", "target_value": "<5%", "measurement_frequency": "quarterly"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "a26052c2-c972-426b-88f8-135d46cdc556",
+      "role_name": "Regional Field Medical Director",
+      "geographic_scope": "regional",
+      "seniority_level": "director",
+      "role_category": "hybrid",
+
+      "enrichment": {
+        "description": "Regional director leading field medical operations within a geographic region. Manages regional MSL teams, develops regional medical strategies, and ensures regional medical excellence.",
+
+        "required_skills": [
+          "Regional medical strategy",
+          "Regional field force management",
+          "Regional KOL strategy",
+          "Regional budget management ($1M-$5M)",
+          "Regional talent development",
+          "Regional compliance oversight",
+          "Cross-regional collaboration"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "Leadership certification",
+          "GCP certification"
+        ],
+
+        "years_experience_min": 10,
+        "years_experience_max": 16,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "typical_time_in_role_years": 4,
+        "advancement_potential": "high",
+
+        "travel_percentage_min": 35,
+        "travel_percentage_max": 55,
+        "international_travel": false,
+
+        "typical_meeting_hours_per_week": 22,
+        "administrative_load_percent": 45,
+        "strategic_vs_tactical": "strategic",
+
+        "team_size_min": 10,
+        "team_size_max": 30,
+        "direct_reports_min": 4,
+        "direct_reports_max": 8,
+
+        "budget_min_usd": 1000000,
+        "budget_max_usd": 5000000,
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "expert"},
+          {"name": "PhRMA Code on Interactions with Healthcare Professionals", "proficiency_level": "expert"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "Advanced GCP: Medical Monitoring", "is_mandatory": true, "due_within_days_of_hire": 60}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Cross-Functional Collaboration", "proficiency_level": "expert"},
+          {"name": "KOL (Key Opinion Leader) Identification & Engagement", "proficiency_level": "expert"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Regional field medical execution", "target_value": "85%+", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Regional KOL coverage", "target_value": "90%+", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Regional team retention", "target_value": "80%+", "measurement_frequency": "annually"}
+        ]
+      }
+    },
+
+    {
+      "role_id": "abbc627d-6e89-46dd-9f4b-a561da38e6b2",
+      "role_name": "Local Field Medical Director",
+      "geographic_scope": "local",
+      "seniority_level": "director",
+      "role_category": "hybrid",
+
+      "enrichment": {
+        "description": "Local director leading field medical operations within a local market. Manages local MSL teams, develops local medical strategies aligned with global direction, and ensures local compliance.",
+
+        "required_skills": [
+          "Local medical strategy",
+          "Local field force management",
+          "Local KOL strategy",
+          "Local budget management",
+          "Local compliance oversight",
+          "Local market expertise",
+          "Local regulatory knowledge"
+        ],
+
+        "required_certifications": [
+          "Advanced degree (MD, PhD, PharmD)",
+          "Local leadership certification",
+          "Local regulatory certification"
+        ],
+
+        "years_experience_min": 9,
+        "years_experience_max": 14,
+
+        "gxp_role_type": "gcp",
+        "pharmacovigilance_responsibility": true,
+        "hcp_facing": true,
+
+        "typical_time_in_role_years": 4,
+        "advancement_potential": "moderate",
+
+        "travel_percentage_min": 30,
+        "travel_percentage_max": 50,
+        "international_travel": false,
+
+        "typical_meeting_hours_per_week": 20,
+        "administrative_load_percent": 40,
+        "strategic_vs_tactical": "balanced",
+
+        "team_size_min": 6,
+        "team_size_max": 15,
+        "direct_reports_min": 3,
+        "direct_reports_max": 6,
+
+        "budget_min_usd": 500000,
+        "budget_max_usd": 2000000,
+
+        "regulatory_frameworks": [
+          {"name": "ICH GCP E6(R2)", "proficiency_level": "advanced"}
+        ],
+
+        "gxp_training_modules": [
+          {"name": "GCP Fundamentals", "is_mandatory": true, "due_within_days_of_hire": 90}
+        ],
+
+        "clinical_competencies": [
+          {"name": "Cross-Functional Collaboration", "proficiency_level": "advanced"},
+          {"name": "KOL (Key Opinion Leader) Identification & Engagement", "proficiency_level": "advanced"}
+        ],
+
+        "kpis": [
+          {"kpi_name": "Local field medical execution", "target_value": "85%+", "measurement_frequency": "quarterly"},
+          {"kpi_name": "Local KOL coverage", "target_value": "90%+", "measurement_frequency": "quarterly"}
+        ]
+      }
+    }
+  ]
+}

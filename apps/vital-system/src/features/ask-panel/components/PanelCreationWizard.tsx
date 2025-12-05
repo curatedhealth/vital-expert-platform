@@ -185,17 +185,17 @@ export function PanelCreationWizard({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-5xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-5xl bg-canvas-surface dark:bg-neutral-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
                 <Users className="w-6 h-6 text-blue-500" />
                 Create Your Expert Panel
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
                 {currentStep === 'start' && 'How would you like to start?'}
                 {currentStep === 'agents' && 'Select your expert agents'}
                 {currentStep === 'settings' && 'Configure panel behavior'}
@@ -205,9 +205,9 @@ export function PanelCreationWizard({
             
             <button
               onClick={onCancel}
-              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors"
             >
-              <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <X className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
             </button>
           </div>
 
@@ -224,7 +224,7 @@ export function PanelCreationWizard({
                   <div
                     className={`
                       flex-1 h-2 rounded-full transition-all
-                      ${isCompleted ? 'bg-blue-500' : isActive ? 'bg-blue-300' : 'bg-gray-200 dark:bg-gray-700'}
+                      ${isCompleted ? 'bg-blue-500' : isActive ? 'bg-blue-300' : 'bg-neutral-200 dark:bg-neutral-700'}
                     `}
                   />
                 </React.Fragment>
@@ -246,7 +246,7 @@ export function PanelCreationWizard({
                 className="p-6"
               >
                 <div className="max-w-4xl mx-auto">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 text-center">
+                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-white mb-6 text-center">
                     How would you like to create your panel?
                   </h3>
 
@@ -260,7 +260,7 @@ export function PanelCreationWizard({
                         p-6 rounded-xl border-2 transition-all text-left
                         ${startOption === 'ai-suggest'
                           ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                          : 'border-neutral-200 dark:border-neutral-700 hover:border-blue-300 dark:hover:border-blue-600'
                         }
                       `}
                     >
@@ -268,10 +268,10 @@ export function PanelCreationWizard({
                         <Wand2 className="w-6 h-6 text-white" />
                       </div>
                       
-                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      <h4 className="font-semibold text-neutral-900 dark:text-white mb-2">
                         AI Suggestion
                       </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
                         Describe your question and let AI recommend the perfect expert panel
                       </p>
                       
@@ -282,7 +282,7 @@ export function PanelCreationWizard({
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder="E.g., I need help designing a clinical trial for a digital therapeutic..."
-                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                            className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-canvas-surface dark:bg-neutral-800 text-neutral-900 dark:text-white placeholder-neutral-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                             rows={3}
                           />
                         </div>
@@ -298,7 +298,7 @@ export function PanelCreationWizard({
                         p-6 rounded-xl border-2 transition-all text-left
                         ${startOption === 'template'
                           ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-lg'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
+                          : 'border-neutral-200 dark:border-neutral-700 hover:border-purple-300 dark:hover:border-purple-600'
                         }
                       `}
                     >
@@ -306,10 +306,10 @@ export function PanelCreationWizard({
                         <LayoutGrid className="w-6 h-6 text-white" />
                       </div>
                       
-                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      <h4 className="font-semibold text-neutral-900 dark:text-white mb-2">
                         Use Template
                       </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
                         Start with a pre-configured panel for common scenarios
                       </p>
                     </motion.button>
@@ -323,7 +323,7 @@ export function PanelCreationWizard({
                         p-6 rounded-xl border-2 transition-all text-left
                         ${startOption === 'custom'
                           ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 shadow-lg'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-600'
+                          : 'border-neutral-200 dark:border-neutral-700 hover:border-emerald-300 dark:hover:border-emerald-600'
                         }
                       `}
                     >
@@ -331,10 +331,10 @@ export function PanelCreationWizard({
                         <Sliders className="w-6 h-6 text-white" />
                       </div>
                       
-                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      <h4 className="font-semibold text-neutral-900 dark:text-white mb-2">
                         Custom Panel
                       </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
                         Manually select agents and configure every detail
                       </p>
                     </motion.button>
@@ -347,7 +347,7 @@ export function PanelCreationWizard({
                       animate={{ opacity: 1, height: 'auto' }}
                       className="mt-6"
                     >
-                      <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+                      <h4 className="font-semibold text-neutral-900 dark:text-white mb-4">
                         Choose a Template
                       </h4>
                       
@@ -361,24 +361,24 @@ export function PanelCreationWizard({
                               p-4 rounded-lg border-2 transition-all text-left
                               ${selectedTemplate?.id === template.id
                                 ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                                : 'border-neutral-200 dark:border-neutral-700 hover:border-purple-300'
                               }
                             `}
                           >
                             <div className="flex items-start gap-3">
                               <div className="text-2xl">{template.icon}</div>
                               <div className="flex-1 min-w-0">
-                                <h5 className="font-medium text-gray-900 dark:text-white text-sm mb-1">
+                                <h5 className="font-medium text-neutral-900 dark:text-white text-sm mb-1">
                                   {template.name}
                                 </h5>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                                <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2">
                                   {template.description}
                                 </p>
                                 <div className="flex items-center gap-2 mt-2">
-                                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 capitalize">
+                                  <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 capitalize">
                                     {template.category}
                                   </span>
-                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  <span className="text-xs text-neutral-500 dark:text-neutral-400">
                                     {template.suggestedAgents.length} agents
                                   </span>
                                 </div>
@@ -407,7 +407,7 @@ export function PanelCreationWizard({
                   {selectedAgents.length > 0 && (
                     <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <h4 className="font-semibold text-neutral-900 dark:text-white flex items-center gap-2">
                           <CheckCircle className="w-4 h-4 text-blue-500" />
                           Selected Agents ({selectedAgents.length})
                         </h4>
@@ -422,16 +422,16 @@ export function PanelCreationWizard({
                         {selectedAgents.map((agent) => (
                           <div
                             key={agent.id}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-700"
+                            className="flex items-center gap-2 px-3 py-1.5 bg-canvas-surface dark:bg-neutral-800 rounded-lg border border-blue-200 dark:border-blue-700"
                           >
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            <span className="text-sm font-medium text-neutral-900 dark:text-white">
                               {agent.title}
                             </span>
                             <button
                               onClick={() => setSelectedAgents(selectedAgents.filter(a => a.id !== agent.id))}
                               className="p-0.5 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded transition-colors"
                             >
-                              <X className="w-3 h-3 text-gray-500" />
+                              <X className="w-3 h-3 text-neutral-500" />
                             </button>
                           </div>
                         ))}
@@ -442,7 +442,7 @@ export function PanelCreationWizard({
                   {/* AI Recommendations */}
                   {startOption === 'ai-suggest' && recommendations.length > 0 && (
                     <div className="mb-6">
-                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                      <h4 className="font-semibold text-neutral-900 dark:text-white mb-3 flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-blue-500" />
                         AI Recommended Agents
                       </h4>
@@ -478,19 +478,19 @@ export function PanelCreationWizard({
                   {/* Browse all agents */}
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-semibold text-gray-900 dark:text-white">
+                      <h4 className="font-semibold text-neutral-900 dark:text-white">
                         {startOption === 'ai-suggest' ? 'Or Browse All Agents' : 'Browse All Agents'}
                       </h4>
                       
                       {/* Search */}
                       <div className="relative w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                         <input
                           type="text"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Search agents..."
-                          className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-canvas-surface dark:bg-neutral-800 text-neutral-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
                     </div>
@@ -529,7 +529,7 @@ export function PanelCreationWizard({
                 <div className="max-w-4xl mx-auto space-y-6">
                   {/* Panel Mode */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                    <label className="block text-sm font-semibold text-neutral-900 dark:text-white mb-3">
                       Panel Mode
                     </label>
                     
@@ -540,15 +540,15 @@ export function PanelCreationWizard({
                           p-4 rounded-lg border-2 transition-all text-left
                           ${panelMode === 'sequential'
                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                            : 'border-neutral-200 dark:border-neutral-700 hover:border-blue-300'
                           }
                         `}
                       >
                         <div className="flex items-center gap-2 mb-2">
                           <GitBranch className="w-4 h-4 text-blue-500" />
-                          <span className="font-medium text-gray-900 dark:text-white">Sequential</span>
+                          <span className="font-medium text-neutral-900 dark:text-white">Sequential</span>
                         </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400">
                           Experts provide advice one at a time
                         </p>
                       </button>
@@ -559,15 +559,15 @@ export function PanelCreationWizard({
                           p-4 rounded-lg border-2 transition-all text-left
                           ${panelMode === 'collaborative'
                             ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                            : 'border-neutral-200 dark:border-neutral-700 hover:border-purple-300'
                           }
                         `}
                       >
                         <div className="flex items-center gap-2 mb-2">
                           <MessageSquare className="w-4 h-4 text-purple-500" />
-                          <span className="font-medium text-gray-900 dark:text-white">Collaborative</span>
+                          <span className="font-medium text-neutral-900 dark:text-white">Collaborative</span>
                         </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400">
                           Experts discuss and build consensus
                         </p>
                       </button>
@@ -578,15 +578,15 @@ export function PanelCreationWizard({
                           p-4 rounded-lg border-2 transition-all text-left
                           ${panelMode === 'hybrid'
                             ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-emerald-300'
+                            : 'border-neutral-200 dark:border-neutral-700 hover:border-emerald-300'
                           }
                         `}
                       >
                         <div className="flex items-center gap-2 mb-2">
                           <Zap className="w-4 h-4 text-emerald-500" />
-                          <span className="font-medium text-gray-900 dark:text-white">Hybrid</span>
+                          <span className="font-medium text-neutral-900 dark:text-white">Hybrid</span>
                         </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400">
                           Adaptive mode based on context
                         </p>
                       </button>
@@ -595,7 +595,7 @@ export function PanelCreationWizard({
 
                   {/* Framework */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                    <label className="block text-sm font-semibold text-neutral-900 dark:text-white mb-3">
                       Execution Framework
                     </label>
                     
@@ -608,11 +608,11 @@ export function PanelCreationWizard({
                             p-3 rounded-lg border-2 transition-all
                             ${framework === fw
                               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                              : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                              : 'border-neutral-200 dark:border-neutral-700 hover:border-blue-300'
                             }
                           `}
                         >
-                          <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
+                          <span className="text-sm font-medium text-neutral-900 dark:text-white capitalize">
                             {fw === 'auto' ? '🤖 Auto' : fw}
                           </span>
                         </button>
@@ -621,14 +621,14 @@ export function PanelCreationWizard({
                   </div>
 
                   {/* Advanced settings */}
-                  <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
+                    <h4 className="text-sm font-semibold text-neutral-900 dark:text-white">
                       Advanced Settings
                     </h4>
 
                     {/* User Guidance */}
                     <div>
-                      <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm text-neutral-700 dark:text-neutral-300 mb-2">
                         User Guidance Level
                       </label>
                       <div className="flex gap-2">
@@ -640,7 +640,7 @@ export function PanelCreationWizard({
                               flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all
                               ${userGuidance === level
                                 ? 'bg-blue-500 text-white'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                : 'bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600'
                               }
                             `}
                           >
@@ -652,8 +652,8 @@ export function PanelCreationWizard({
 
                     {/* Toggles */}
                     <div className="grid grid-cols-2 gap-4">
-                      <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer">
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Allow Debate</span>
+                      <label className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg cursor-pointer">
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300">Allow Debate</span>
                         <input
                           type="checkbox"
                           checked={allowDebate}
@@ -662,8 +662,8 @@ export function PanelCreationWizard({
                         />
                       </label>
 
-                      <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer">
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Require Consensus</span>
+                      <label className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg cursor-pointer">
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300">Require Consensus</span>
                         <input
                           type="checkbox"
                           checked={requireConsensus}
@@ -675,7 +675,7 @@ export function PanelCreationWizard({
 
                     {/* Max Rounds */}
                     <div>
-                      <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm text-neutral-700 dark:text-neutral-300 mb-2">
                         Max Discussion Rounds: {maxRounds}
                       </label>
                       <input
@@ -684,7 +684,7 @@ export function PanelCreationWizard({
                         max="20"
                         value={maxRounds}
                         onChange={(e) => setMaxRounds(parseInt(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                        className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer dark:bg-neutral-700"
                       />
                     </div>
                   </div>
@@ -704,36 +704,36 @@ export function PanelCreationWizard({
                 <div className="max-w-4xl mx-auto space-y-6">
                   {/* Summary */}
                   <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-white mb-4 flex items-center gap-2">
                       <CheckCircle className="w-5 h-5 text-green-500" />
                       Panel Configuration Summary
                     </h3>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Agents</div>
-                        <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                        <div className="text-xs text-neutral-600 dark:text-neutral-400 mb-1">Agents</div>
+                        <div className="text-2xl font-bold text-neutral-900 dark:text-white">
                           {selectedAgents.length}
                         </div>
                       </div>
                       
                       <div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Mode</div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
+                        <div className="text-xs text-neutral-600 dark:text-neutral-400 mb-1">Mode</div>
+                        <div className="text-sm font-semibold text-neutral-900 dark:text-white capitalize">
                           {panelMode}
                         </div>
                       </div>
                       
                       <div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Framework</div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
+                        <div className="text-xs text-neutral-600 dark:text-neutral-400 mb-1">Framework</div>
+                        <div className="text-sm font-semibold text-neutral-900 dark:text-white capitalize">
                           {framework}
                         </div>
                       </div>
                       
                       <div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Max Rounds</div>
-                        <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                        <div className="text-xs text-neutral-600 dark:text-neutral-400 mb-1">Max Rounds</div>
+                        <div className="text-2xl font-bold text-neutral-900 dark:text-white">
                           {maxRounds}
                         </div>
                       </div>
@@ -742,7 +742,7 @@ export function PanelCreationWizard({
 
                   {/* Selected Agents */}
                   <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
+                    <h4 className="font-semibold text-neutral-900 dark:text-white mb-3">
                       Selected Agents ({selectedAgents.length})
                     </h4>
                     
@@ -760,23 +760,23 @@ export function PanelCreationWizard({
                   </div>
 
                   {/* Settings Summary */}
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
+                  <div className="p-4 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
+                    <h4 className="font-semibold text-neutral-900 dark:text-white mb-3">
                       Configuration Details
                     </h4>
                     
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">User Guidance:</span>
-                        <span className="font-medium text-gray-900 dark:text-white capitalize">{userGuidance}</span>
+                        <span className="text-neutral-600 dark:text-neutral-400">User Guidance:</span>
+                        <span className="font-medium text-neutral-900 dark:text-white capitalize">{userGuidance}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Allow Debate:</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{allowDebate ? 'Yes' : 'No'}</span>
+                        <span className="text-neutral-600 dark:text-neutral-400">Allow Debate:</span>
+                        <span className="font-medium text-neutral-900 dark:text-white">{allowDebate ? 'Yes' : 'No'}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Require Consensus:</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{requireConsensus ? 'Yes' : 'No'}</span>
+                        <span className="text-neutral-600 dark:text-neutral-400">Require Consensus:</span>
+                        <span className="font-medium text-neutral-900 dark:text-white">{requireConsensus ? 'Yes' : 'No'}</span>
                       </div>
                     </div>
                   </div>
@@ -787,12 +787,12 @@ export function PanelCreationWizard({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800">
           <div className="flex items-center justify-between">
             <button
               onClick={prevStep}
               disabled={currentStep === 'start'}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ArrowLeft className="w-4 h-4" />
               Back
@@ -801,7 +801,7 @@ export function PanelCreationWizard({
             <div className="flex items-center gap-3">
               <button
                 onClick={onCancel}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors"
               >
                 Cancel
               </button>

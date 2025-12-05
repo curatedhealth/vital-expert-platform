@@ -125,8 +125,8 @@ export function PersonaFiltersSidebar({
     <div className="space-y-6 p-4">
       {/* Header */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Filters</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-1">Filters</h2>
+        <p className="text-sm text-neutral-500">
           {filteredCount} of {totalCount} personas
         </p>
       </div>
@@ -135,7 +135,7 @@ export function PersonaFiltersSidebar({
       <div className="space-y-2">
         <Label className="text-sm font-medium">Search</Label>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
           <Input
             placeholder="Search personas..."
             value={filters.searchQuery}
@@ -145,7 +145,7 @@ export function PersonaFiltersSidebar({
           {filters.searchQuery && (
             <button
               onClick={() => onFiltersChange({ ...filters, searchQuery: '' })}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
             >
               <X className="h-4 w-4" />
             </button>
@@ -172,7 +172,7 @@ export function PersonaFiltersSidebar({
           loading={loadingOrgStructure}
         />
         {!loadingOrgStructure && orgStructure && (
-          <div className="text-xs text-gray-500 mt-2">
+          <div className="text-xs text-neutral-500 mt-2">
             {orgStructure.functions.length} functions, {orgStructure.departments.length} departments, {orgStructure.roles.length} roles
           </div>
         )}

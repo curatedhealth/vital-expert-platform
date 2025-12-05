@@ -497,3 +497,5 @@ FROM personas WHERE is_active = true;
 -- SELECT * FROM v_persona_jtbd_mapping LIMIT 50;
 
 
+
+

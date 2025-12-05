@@ -133,7 +133,7 @@ export const TaskBuilder: React.FC<TaskBuilderProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-primary to-gray-900 text-white">
+        <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-primary to-neutral-900 text-white">
           <DialogTitle className="flex items-center gap-2 text-white">
             <Sparkles size={20} />
             {title}

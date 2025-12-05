@@ -361,7 +361,7 @@ export function ChatInput({
     <div className="relative">
       {/* Attachment Options */}
       {showAttachments && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 p-3 bg-white border border-gray-200 rounded-lg shadow-lg">
+        <div className="absolute bottom-full left-0 right-0 mb-2 p-3 bg-canvas-surface border border-neutral-200 rounded-lg shadow-lg">
           <h4 className="text-sm font-medium text-deep-charcoal mb-3">
             Attach files to enhance your query
           </h4>
@@ -459,7 +459,7 @@ export function ChatInput({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-7 gap-1 rounded-full border border-gray-200 bg-white px-3 text-xs font-medium hover:bg-gray-50"
+                  className="h-7 gap-1 rounded-full border border-neutral-200 bg-white px-3 text-xs font-medium hover:bg-neutral-50"
                 >
                   {selectedModel.name}
                   <ChevronDown className="h-3 w-3 opacity-50" />
@@ -467,7 +467,7 @@ export function ChatInput({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-72 max-h-96 overflow-y-auto">
                 {loadingModels && (
-                  <div className="p-4 text-center text-sm text-gray-500">
+                  <div className="p-4 text-center text-sm text-neutral-500">
                     Loading available models...
                   </div>
                 )}
@@ -477,7 +477,7 @@ export function ChatInput({
                     {/* OpenAI Models */}
                     {availableModels.filter((m: any) => m.category === 'OpenAI').length > 0 && (
                       <>
-                        <DropdownMenuLabel className="text-xs text-gray-500">OpenAI</DropdownMenuLabel>
+                        <DropdownMenuLabel className="text-xs text-neutral-500">OpenAI</DropdownMenuLabel>
                         {availableModels.filter((m: any) => m.category === 'OpenAI').map((model) => (
                   <DropdownMenuItem
                     key={model.id}
@@ -490,7 +490,7 @@ export function ChatInput({
                         <span className="text-xs text-blue-600 font-bold">✓</span>
                       )}
                     </div>
-                    <span className="text-xs text-gray-500">{model.description}</span>
+                    <span className="text-xs text-neutral-500">{model.description}</span>
                   </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
@@ -500,7 +500,7 @@ export function ChatInput({
                     {/* Anthropic Models */}
                     {availableModels.filter((m: any) => m.category === 'Anthropic').length > 0 && (
                       <>
-                        <DropdownMenuLabel className="text-xs text-gray-500">Anthropic</DropdownMenuLabel>
+                        <DropdownMenuLabel className="text-xs text-neutral-500">Anthropic</DropdownMenuLabel>
                         {availableModels.filter((m: any) => m.category === 'Anthropic').map((model) => (
                   <DropdownMenuItem
                     key={model.id}
@@ -513,7 +513,7 @@ export function ChatInput({
                         <span className="text-xs text-blue-600 font-bold">✓</span>
                       )}
                     </div>
-                    <span className="text-xs text-gray-500">{model.description}</span>
+                    <span className="text-xs text-neutral-500">{model.description}</span>
                   </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
@@ -523,7 +523,7 @@ export function ChatInput({
                     {/* Hugging Face Models */}
                     {availableModels.filter((m: any) => m.category === 'Hugging Face').length > 0 && (
                       <>
-                        <DropdownMenuLabel className="text-xs text-gray-500">Hugging Face (Open Source)</DropdownMenuLabel>
+                        <DropdownMenuLabel className="text-xs text-neutral-500">Hugging Face (Open Source)</DropdownMenuLabel>
                         {availableModels.filter((m: any) => m.category === 'Hugging Face').map((model) => (
                   <DropdownMenuItem
                     key={model.id}
@@ -536,7 +536,7 @@ export function ChatInput({
                         <span className="text-xs text-blue-600 font-bold">✓</span>
                       )}
                     </div>
-                    <span className="text-xs text-gray-500">{model.description}</span>
+                    <span className="text-xs text-neutral-500">{model.description}</span>
                   </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
@@ -546,7 +546,7 @@ export function ChatInput({
                     {/* CuratedHealth Custom Models */}
                     {availableModels.filter((m: any) => m.category === 'CuratedHealth').length > 0 && (
                       <>
-                        <DropdownMenuLabel className="text-xs text-gray-500">CuratedHealth (Custom Medical Models)</DropdownMenuLabel>
+                        <DropdownMenuLabel className="text-xs text-neutral-500">CuratedHealth (Custom Medical Models)</DropdownMenuLabel>
                         {availableModels.filter((m: any) => m.category === 'CuratedHealth').map((model) => (
                   <DropdownMenuItem
                     key={model.id}
@@ -559,7 +559,7 @@ export function ChatInput({
                         <span className="text-xs text-blue-600 font-bold">✓</span>
                       )}
                     </div>
-                    <span className="text-xs text-gray-500">{model.description}</span>
+                    <span className="text-xs text-neutral-500">{model.description}</span>
                   </DropdownMenuItem>
                         ))}
                       </>
@@ -567,7 +567,7 @@ export function ChatInput({
 
                     {/* Show count of total models */}
                     {availableModels.length > 0 && (
-                      <div className="px-2 py-2 text-xs text-gray-400 border-t mt-1">
+                      <div className="px-2 py-2 text-xs text-neutral-400 border-t mt-1">
                         {availableModels.length} model{availableModels.length !== 1 ? 's' : ''} available
                       </div>
                     )}

@@ -68,7 +68,7 @@ export const DrillDownFlowDiagram: React.FC<DrillDownFlowDiagramProps> = ({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Breadcrumb Navigation */}
-      <div className="flex items-center gap-2 p-4 border-b border-gray-200">
+      <div className="flex items-center gap-2 p-4 border-b border-neutral-200">
         <Button
           variant="outline"
           size="sm"
@@ -82,7 +82,7 @@ export const DrillDownFlowDiagram: React.FC<DrillDownFlowDiagramProps> = ({
         <div className="flex items-center gap-2 flex-1 overflow-x-auto">
           {breadcrumbs.map((crumb, index) => (
             <React.Fragment key={crumb.id}>
-              {index > 0 && <span className="text-gray-400">›</span>}
+              {index > 0 && <span className="text-neutral-400">›</span>}
               <Button
                 variant={index === breadcrumbs.length - 1 ? "default" : "ghost"}
                 size="sm"
@@ -100,11 +100,11 @@ export const DrillDownFlowDiagram: React.FC<DrillDownFlowDiagramProps> = ({
       {/* Current Level Tasks */}
       <div className="flex-1 overflow-y-auto p-6">
         {currentLevelNodes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
-            <Workflow size={48} className="mb-4 text-gray-400" />
+          <div className="flex flex-col items-center justify-center h-full text-center text-neutral-500">
+            <Workflow size={48} className="mb-4 text-neutral-400" />
             <p className="font-medium">No tasks at this level</p>
             {currentPath.length > 0 && (
-              <p className="text-sm mt-2 text-gray-400">This task doesn't have any sub-tasks yet.</p>
+              <p className="text-sm mt-2 text-neutral-400">This task doesn't have any sub-tasks yet.</p>
             )}
           </div>
         ) : (
@@ -146,7 +146,7 @@ export const DrillDownFlowDiagram: React.FC<DrillDownFlowDiagramProps> = ({
                     </div>
 
                     {taskDescription && (
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{taskDescription}</p>
+                      <p className="text-sm text-neutral-600 mb-3 line-clamp-2">{taskDescription}</p>
                     )}
                     {task?.config?.model && (
                       <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -159,7 +159,7 @@ export const DrillDownFlowDiagram: React.FC<DrillDownFlowDiagramProps> = ({
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2 pt-3 border-t border-gray-200">
+                    <div className="flex items-center gap-2 pt-3 border-t border-neutral-200">
                       <Button
                         variant="outline"
                         size="sm"
@@ -191,7 +191,7 @@ export const DrillDownFlowDiagram: React.FC<DrillDownFlowDiagramProps> = ({
                     </div>
 
                     {hasNested && (
-                      <div className="mt-3 text-xs text-gray-500 italic text-center pt-2 border-t border-gray-100">
+                      <div className="mt-3 text-xs text-neutral-500 italic text-center pt-2 border-t border-neutral-100">
                         Click to drill down into {nestedCount} sub-task{nestedCount !== 1 ? 's' : ''}
                       </div>
                     )}

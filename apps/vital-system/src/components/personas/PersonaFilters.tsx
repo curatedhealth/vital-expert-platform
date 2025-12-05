@@ -64,7 +64,7 @@ export function PersonaFilters({
         <div className="space-y-4">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
             <Input
               placeholder="Search personas by name, title, tagline, role, function, or tags..."
               value={filters.searchQuery}
@@ -81,7 +81,7 @@ export function PersonaFilters({
               <select
                 value={filters.selectedRole}
                 onChange={(e) => onFiltersChange({ ...filters, selectedRole: e.target.value })}
-                className="w-full px-4 py-2 border rounded-md bg-white dark:bg-gray-800"
+                className="w-full px-4 py-2 border rounded-md bg-canvas-surface dark:bg-neutral-800"
               >
                 <option value="all">All Roles</option>
                 {getUniqueRoles().map(role => (
@@ -96,7 +96,7 @@ export function PersonaFilters({
               <select
                 value={filters.selectedDepartment}
                 onChange={(e) => onFiltersChange({ ...filters, selectedDepartment: e.target.value })}
-                className="w-full px-4 py-2 border rounded-md bg-white dark:bg-gray-800"
+                className="w-full px-4 py-2 border rounded-md bg-canvas-surface dark:bg-neutral-800"
               >
                 <option value="all">All Departments</option>
                 {getUniqueDepartments().map(dept => (
@@ -111,7 +111,7 @@ export function PersonaFilters({
               <select
                 value={filters.selectedFunction}
                 onChange={(e) => onFiltersChange({ ...filters, selectedFunction: e.target.value })}
-                className="w-full px-4 py-2 border rounded-md bg-white dark:bg-gray-800"
+                className="w-full px-4 py-2 border rounded-md bg-canvas-surface dark:bg-neutral-800"
               >
                 <option value="all">All Functions</option>
                 {getUniqueFunctions().map(func => (
@@ -126,7 +126,7 @@ export function PersonaFilters({
               <select
                 value={filters.selectedSeniority}
                 onChange={(e) => onFiltersChange({ ...filters, selectedSeniority: e.target.value })}
-                className="w-full px-4 py-2 border rounded-md bg-white dark:bg-gray-800"
+                className="w-full px-4 py-2 border rounded-md bg-canvas-surface dark:bg-neutral-800"
               >
                 <option value="all">All Levels</option>
                 {getUniqueSeniorityLevels().map(level => (
@@ -144,7 +144,7 @@ export function PersonaFilters({
           </div>
         </div>
 
-        <div className="mt-4 text-sm text-gray-500">
+        <div className="mt-4 text-sm text-neutral-500">
           Showing {filteredCount} of {totalCount} personas
         </div>
       </CardContent>

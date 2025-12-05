@@ -649,15 +649,15 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Digital Therapeutic Platform</h1>
-          <p className="text-gray-600 mt-2">Advanced DTx trial management and patient monitoring</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Digital Therapeutic Platform</h1>
+          <p className="text-neutral-600 mt-2">Advanced DTx trial management and patient monitoring</p>
         </div>
         <div className="flex space-x-3">
           <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             <Play className="h-4 w-4 mr-2" />
             Start Trial
           </button>
-          <button className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors">
             <Settings className="h-4 w-4 mr-2" />
             Configure
           </button>
@@ -669,11 +669,11 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active DTx Trials</p>
+              <p className="text-sm text-neutral-600">Active DTx Trials</p>
               <p className="text-2xl font-bold text-blue-600">{metrics.activeTrials}</p>
             </div>
             <Smartphone className="h-8 w-8 text-blue-600" />
@@ -684,11 +684,11 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Patients</p>
+              <p className="text-sm text-neutral-600">Total Patients</p>
               <p className="text-2xl font-bold text-purple-600">{metrics.totalPatients.toLocaleString()}</p>
             </div>
             <Users className="h-8 w-8 text-purple-600" />
@@ -699,11 +699,11 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Avg Adherence</p>
+              <p className="text-sm text-neutral-600">Avg Adherence</p>
               <p className="text-2xl font-bold text-green-600">{metrics.averageAdherence}%</p>
             </div>
             <Target className="h-8 w-8 text-green-600" />
@@ -714,11 +714,11 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Data Points</p>
+              <p className="text-sm text-neutral-600">Data Points</p>
               <p className="text-2xl font-bold text-teal-600">{(metrics.dataPointsCollected / 1000000).toFixed(1)}M</p>
             </div>
             <Database className="h-8 w-8 text-teal-600" />
@@ -729,11 +729,11 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Alerts Triggered</p>
+              <p className="text-sm text-neutral-600">Alerts Triggered</p>
               <p className="text-2xl font-bold text-orange-600">{metrics.alertsTriggered}</p>
             </div>
             <Bell className="h-8 w-8 text-orange-600" />
@@ -744,11 +744,11 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Interventions</p>
+              <p className="text-sm text-neutral-600">Interventions</p>
               <p className="text-2xl font-bold text-indigo-600">{metrics.interventionsDelivered.toLocaleString()}</p>
             </div>
             <Zap className="h-8 w-8 text-indigo-600" />
@@ -757,7 +757,7 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-neutral-200">
         <nav className="-mb-px flex space-x-8">
           {[
             { key: 'overview', label: 'Platform Overview', icon: BarChart3 },
@@ -772,7 +772,7 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
               className={`flex items-center px-3 py-2 border-b-2 font-medium text-sm ${
                 activeTab === key
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               <Icon className="h-4 w-4 mr-2" />
@@ -787,68 +787,68 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
         <div className="space-y-6">
           {/* Platform Capabilities */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">DTx Platform Capabilities</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">DTx Platform Capabilities</h3>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <Shield className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">FDA-compliant DTx infrastructure</span>
+                  <span className="text-neutral-700">FDA-compliant DTx infrastructure</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Activity className="h-5 w-5 text-blue-600" />
-                  <span className="text-gray-700">Real-time patient monitoring</span>
+                  <span className="text-neutral-700">Real-time patient monitoring</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Zap className="h-5 w-5 text-purple-600" />
-                  <span className="text-gray-700">AI-powered interventions</span>
+                  <span className="text-neutral-700">AI-powered interventions</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Heart className="h-5 w-5 text-red-600" />
-                  <span className="text-gray-700">Digital biomarker collection</span>
+                  <span className="text-neutral-700">Digital biomarker collection</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Wifi className="h-5 w-5 text-teal-600" />
-                  <span className="text-gray-700">Multi-device integration</span>
+                  <span className="text-neutral-700">Multi-device integration</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Patient Engagement Metrics</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">Patient Engagement Metrics</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">App Usage Rate</span>
+                  <span className="text-neutral-600">App Usage Rate</span>
                   <div className="flex items-center">
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                       <div className="bg-blue-600 h-2 rounded-full" style={{width: `${engagement.appUsage}%`}}></div>
                     </div>
                     <span className="font-medium">{engagement.appUsage}%</span>
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Adherence Rate</span>
+                  <span className="text-neutral-600">Adherence Rate</span>
                   <div className="flex items-center">
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                       <div className="bg-green-600 h-2 rounded-full" style={{width: `${engagement.adherenceRate}%`}}></div>
                     </div>
                     <span className="font-medium">{engagement.adherenceRate}%</span>
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Satisfaction Score</span>
+                  <span className="text-neutral-600">Satisfaction Score</span>
                   <div className="flex items-center">
                     <div className="flex text-yellow-400">
                       {[...Array(5)].map((_, i) => (
-                        <span key={i} className={i < Math.floor(engagement.satisfactionScore) ? 'text-yellow-400' : 'text-gray-300'}>★</span>
+                        <span key={i} className={i < Math.floor(engagement.satisfactionScore) ? 'text-yellow-400' : 'text-neutral-300'}>★</span>
                       ))}
                     </div>
                     <span className="ml-2 font-medium">{engagement.satisfactionScore}/5</span>
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Completion Rate</span>
+                  <span className="text-neutral-600">Completion Rate</span>
                   <div className="flex items-center">
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                       <div className="bg-purple-600 h-2 rounded-full" style={{width: `${engagement.completionRate}%`}}></div>
                     </div>
                     <span className="font-medium">{engagement.completionRate}%</span>
@@ -859,8 +859,8 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Platform Activity</h3>
+          <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+            <h3 className="text-lg font-semibold text-neutral-900 mb-4">Recent Platform Activity</h3>
             <div className="space-y-3">
               {[
                 { type: 'success', message: 'Patient DTX-2847 achieved 95% medication adherence this week', time: '5 minutes ago' },
@@ -868,13 +868,13 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
                 { type: 'info', message: 'New digital biomarker pattern detected in diabetes cohort', time: '1 hour ago' },
                 { type: 'success', message: 'AI intervention successfully improved adherence for 15 patients', time: '2 hours ago' }
               ].map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                <div key={index} className="flex items-start space-x-3 p-3 bg-neutral-50 rounded-lg">
                   {activity.type === 'success' && <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />}
                   {activity.type === 'warning' && <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />}
                   {activity.type === 'info' && <Activity className="h-5 w-5 text-blue-600 mt-0.5" />}
                   <div className="flex-1">
-                    <p className="text-sm text-gray-900">{activity.message}</p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
+                    <p className="text-sm text-neutral-900">{activity.message}</p>
+                    <p className="text-xs text-neutral-500">{activity.time}</p>
                   </div>
                 </div>
               ))}
@@ -886,21 +886,21 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
       {activeTab === 'trials' && (
         <div className="space-y-6">
           {dtxTrials.map((trial) => (
-            <div key={trial.id} className="bg-white rounded-lg border border-gray-200 p-6">
+            <div key={trial.id} className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{trial.name}</h3>
-                  <p className="text-gray-600 mt-1">Version {trial.version} • {trial.type} • {trial.category}</p>
+                  <h3 className="text-lg font-semibold text-neutral-900">{trial.name}</h3>
+                  <p className="text-neutral-600 mt-1">Version {trial.version} • {trial.type} • {trial.category}</p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     trial.status === 'active' ? 'bg-green-100 text-green-800' :
                     trial.status === 'paused' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
+                    'bg-neutral-100 text-neutral-800'
                   }`}>
                     {trial.status}
                   </span>
-                  <button className="p-2 text-gray-400 hover:text-gray-600">
+                  <button className="p-2 text-neutral-400 hover:text-neutral-600">
                     <Settings className="h-4 w-4" />
                   </button>
                 </div>
@@ -939,10 +939,10 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Digital Components</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Digital Components</h4>
                   <div className="space-y-2">
                     {trial.digitalComponents.map((component) => (
-                      <div key={component.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={component.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 bg-blue-100 rounded">
                             {component.type === 'app' ? <Smartphone className="h-4 w-4 text-blue-600" /> :
@@ -950,8 +950,8 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
                              <Activity className="h-4 w-4 text-green-600" />}
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">{component.name}</p>
-                            <p className="text-sm text-gray-600">v{component.version}</p>
+                            <p className="font-medium text-neutral-900">{component.name}</p>
+                            <p className="text-sm text-neutral-600">v{component.version}</p>
                           </div>
                         </div>
                         <button className="text-blue-600 hover:text-blue-800 text-sm">Configure</button>
@@ -961,30 +961,30 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Monitoring Configuration</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Monitoring Configuration</h4>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Real-time Monitoring</span>
+                      <span className="text-sm text-neutral-600">Real-time Monitoring</span>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        trial.remoteMonitoring.enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        trial.remoteMonitoring.enabled ? 'bg-green-100 text-green-800' : 'bg-neutral-100 text-neutral-800'
                       }`}>
                         {trial.remoteMonitoring.enabled ? 'Enabled' : 'Disabled'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Alert Conditions</span>
-                      <span className="text-sm font-medium text-gray-900">{trial.remoteMonitoring.alerts.length} configured</span>
+                      <span className="text-sm text-neutral-600">Alert Conditions</span>
+                      <span className="text-sm font-medium text-neutral-900">{trial.remoteMonitoring.alerts.length} configured</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Dashboard Widgets</span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm text-neutral-600">Dashboard Widgets</span>
+                      <span className="text-sm font-medium text-neutral-900">
                         {trial.remoteMonitoring.dashboards.reduce((total, dashboard) => total + dashboard.widgets.length, 0)} active
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Offline Support</span>
+                      <span className="text-sm text-neutral-600">Offline Support</span>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        trial.patientApp.offline.enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        trial.patientApp.offline.enabled ? 'bg-green-100 text-green-800' : 'bg-neutral-100 text-neutral-800'
                       }`}>
                         {trial.patientApp.offline.enabled ? 'Enabled' : 'Disabled'}
                       </span>
@@ -994,7 +994,7 @@ const DigitalTherapeuticPlatform: React.FC<DigitalTherapeuticPlatformProps> = ({
               </div>
 
               <div className="mt-6 flex justify-end space-x-3">
-                <button className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                <button className="px-4 py-2 text-sm border border-neutral-300 text-neutral-700 rounded hover:bg-neutral-50">
                   View Details
                 </button>
                 <button className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">

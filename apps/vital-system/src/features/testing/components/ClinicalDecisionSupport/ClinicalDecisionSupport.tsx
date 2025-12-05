@@ -446,7 +446,7 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
       case 'high': return <AlertCircle className="h-4 w-4 text-orange-600" />;
       case 'medium': return <Clock className="h-4 w-4 text-yellow-600" />;
       case 'low': return <CheckCircle className="h-4 w-4 text-blue-600" />;
-      default: return <Activity className="h-4 w-4 text-gray-600" />;
+      default: return <Activity className="h-4 w-4 text-neutral-600" />;
     }
   };
 
@@ -455,7 +455,7 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
       case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'low': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-neutral-100 text-neutral-800 border-neutral-200';
     }
   };
 
@@ -467,7 +467,7 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
       case 'protocol': return <FileText className="h-5 w-5 text-purple-600" />;
       case 'safety': return <AlertTriangle className="h-5 w-5 text-yellow-600" />;
       case 'quality': return <Star className="h-5 w-5 text-teal-600" />;
-      default: return <Activity className="h-5 w-5 text-gray-600" />;
+      default: return <Activity className="h-5 w-5 text-neutral-600" />;
     }
   };
 
@@ -478,16 +478,16 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
       case 'lab': return <Target className="h-5 w-5 text-orange-600" />;
       case 'imaging': return <Eye className="h-5 w-5 text-teal-600" />;
       case 'monitoring': return <MonitorSpeaker className="h-5 w-5 text-red-600" />;
-      default: return <Database className="h-5 w-5 text-gray-600" />;
+      default: return <Database className="h-5 w-5 text-neutral-600" />;
     }
   };
 
     switch (status) {
       case 'connected': return 'text-green-600';
-      case 'disconnected': return 'text-gray-600';
+      case 'disconnected': return 'text-neutral-600';
       case 'error': return 'text-red-600';
       case 'maintenance': return 'text-yellow-600';
-      default: return 'text-gray-600';
+      default: return 'text-neutral-600';
     }
   };
 
@@ -506,15 +506,15 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Clinical Decision Support</h1>
-          <p className="text-gray-600 mt-2">AI-powered clinical intelligence and safety alerts</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Clinical Decision Support</h1>
+          <p className="text-neutral-600 mt-2">AI-powered clinical intelligence and safety alerts</p>
         </div>
         <div className="flex space-x-3">
           <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             <Plus className="h-4 w-4 mr-2" />
             New Rule
           </button>
-          <button className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors">
             <Settings className="h-4 w-4 mr-2" />
             Configure
           </button>
@@ -526,11 +526,11 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Rules</p>
+              <p className="text-sm text-neutral-600">Total Rules</p>
               <p className="text-2xl font-bold text-blue-600">{metrics.totalRules}</p>
             </div>
             <Brain className="h-8 w-8 text-blue-600" />
@@ -541,11 +541,11 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active Alerts</p>
+              <p className="text-sm text-neutral-600">Active Alerts</p>
               <p className="text-2xl font-bold text-orange-600">{metrics.activeAlerts}</p>
             </div>
             <Bell className="h-8 w-8 text-orange-600" />
@@ -556,11 +556,11 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Accuracy</p>
+              <p className="text-sm text-neutral-600">Accuracy</p>
               <p className="text-2xl font-bold text-green-600">{metrics.accuracyRate}%</p>
             </div>
             <Target className="h-8 w-8 text-green-600" />
@@ -571,11 +571,11 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Response Time</p>
+              <p className="text-sm text-neutral-600">Response Time</p>
               <p className="text-2xl font-bold text-purple-600">{metrics.responseTime}m</p>
             </div>
             <Clock className="h-8 w-8 text-purple-600" />
@@ -586,11 +586,11 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">User Adoption</p>
+              <p className="text-sm text-neutral-600">User Adoption</p>
               <p className="text-2xl font-bold text-teal-600">{metrics.userAdoption}%</p>
             </div>
             <Users className="h-8 w-8 text-teal-600" />
@@ -601,11 +601,11 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">False Positive</p>
+              <p className="text-sm text-neutral-600">False Positive</p>
               <p className="text-2xl font-bold text-red-600">{metrics.falsePositiveRate}%</p>
             </div>
             <AlertTriangle className="h-8 w-8 text-red-600" />
@@ -616,11 +616,11 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Clinical Impact</p>
+              <p className="text-sm text-neutral-600">Clinical Impact</p>
               <p className="text-2xl font-bold text-indigo-600">+{metrics.clinicalImpact}%</p>
             </div>
             <TrendingUp className="h-8 w-8 text-indigo-600" />
@@ -631,11 +631,11 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Cost Savings</p>
+              <p className="text-sm text-neutral-600">Cost Savings</p>
               <p className="text-2xl font-bold text-pink-600">${metrics.costSavings}M</p>
             </div>
             <TrendingUp className="h-8 w-8 text-pink-600" />
@@ -644,7 +644,7 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-neutral-200">
         <nav className="-mb-px flex space-x-8">
           {[
             { key: 'overview', label: 'CDS Overview', icon: Brain },
@@ -659,7 +659,7 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
               className={`flex items-center px-3 py-2 border-b-2 font-medium text-sm ${
                 activeTab === key
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               <Icon className="h-4 w-4 mr-2" />
@@ -674,34 +674,34 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
         <div className="space-y-6">
           {/* CDS Capabilities */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">CDS System Capabilities</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">CDS System Capabilities</h3>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <Brain className="h-5 w-5 text-blue-600" />
-                  <span className="text-gray-700">AI-powered clinical intelligence engine</span>
+                  <span className="text-neutral-700">AI-powered clinical intelligence engine</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Shield className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">Real-time safety monitoring and alerts</span>
+                  <span className="text-neutral-700">Real-time safety monitoring and alerts</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Pill className="h-5 w-5 text-purple-600" />
-                  <span className="text-gray-700">Drug interaction and dosing guidance</span>
+                  <span className="text-neutral-700">Drug interaction and dosing guidance</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Stethoscope className="h-5 w-5 text-red-600" />
-                  <span className="text-gray-700">Evidence-based diagnostic support</span>
+                  <span className="text-neutral-700">Evidence-based diagnostic support</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Workflow className="h-5 w-5 text-teal-600" />
-                  <span className="text-gray-700">Integrated clinical workflow optimization</span>
+                  <span className="text-neutral-700">Integrated clinical workflow optimization</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">System Performance</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">System Performance</h3>
               <div className="space-y-4">
                 {[
                   { label: 'Rule Accuracy', value: 91.2, color: 'bg-green-600' },
@@ -711,9 +711,9 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
                   { label: 'Alert Relevance', value: 82.1, color: 'bg-teal-600' }
                 ].map((metric, index) => (
                   <div key={index} className="flex justify-between items-center">
-                    <span className="text-gray-600">{metric.label}</span>
+                    <span className="text-neutral-600">{metric.label}</span>
                     <div className="flex items-center">
-                      <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                      <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                         <div
                           className={`h-2 rounded-full ${metric.color}`}
                           style={{width: `${metric.value}%`}}
@@ -728,17 +728,17 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
           </div>
 
           {/* Recent High-Priority Alerts */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent High-Priority Interventions</h3>
+          <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+            <h3 className="text-lg font-semibold text-neutral-900 mb-4">Recent High-Priority Interventions</h3>
             <div className="space-y-3">
               {alerts.slice(0, 4).map((alert) => (
-                <div key={alert.id} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+                <div key={alert.id} className="flex items-start justify-between p-4 bg-neutral-50 rounded-lg">
                   <div className="flex items-start space-x-3">
                     {getSeverityIcon(alert.severity)}
                     <div>
-                      <p className="font-medium text-gray-900">{alert.ruleName}</p>
-                      <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
-                      <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                      <p className="font-medium text-neutral-900">{alert.ruleName}</p>
+                      <p className="text-sm text-neutral-600 mt-1">{alert.message}</p>
+                      <div className="flex items-center space-x-4 mt-2 text-xs text-neutral-500">
                         <span>Patient: {alert.patientName}</span>
                         <span>Clinician: {alert.clinician}</span>
                         <span>Response: {alert.responseTime}m</span>
@@ -765,11 +765,11 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
                 <input
                   type="text"
                   placeholder="Search rules..."
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 w-full border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -777,7 +777,7 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
               <select
                 value={selectedSeverity}
                 onChange={(e) => setSelectedSeverity(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Severities</option>
                 <option value="critical">Critical</option>
@@ -785,7 +785,7 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
                 <option value="medium">Medium</option>
                 <option value="low">Low</option>
               </select>
-              <button className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              <button className="flex items-center px-3 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50">
                 <Filter className="h-4 w-4 mr-2" />
                 More Filters
               </button>
@@ -795,13 +795,13 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
           {/* Rules List */}
           <div className="space-y-4">
             {rules.map((rule) => (
-              <div key={rule.id} className="bg-white rounded-lg border border-gray-200 p-6">
+              <div key={rule.id} className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start space-x-3">
                     {getCategoryIcon(rule.category)}
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{rule.name}</h3>
-                      <p className="text-gray-600 mt-1">{rule.description}</p>
+                      <h3 className="text-lg font-semibold text-neutral-900">{rule.name}</h3>
+                      <p className="text-neutral-600 mt-1">{rule.description}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
@@ -811,7 +811,7 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                       rule.status === 'active' ? 'bg-green-100 text-green-800' :
                       rule.status === 'testing' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
+                      'bg-neutral-100 text-neutral-800'
                     }`}>
                       {rule.status}
                     </span>
@@ -839,12 +839,12 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Conditions</h4>
+                    <h4 className="font-medium text-neutral-900 mb-3">Conditions</h4>
                     <div className="space-y-2">
                       {rule.conditions.map((condition) => (
-                        <div key={condition.id} className="text-sm bg-gray-50 p-2 rounded">
+                        <div key={condition.id} className="text-sm bg-neutral-50 p-2 rounded">
                           <span className="font-medium">{condition.parameter}</span>
-                          <span className="mx-2 text-gray-500">{condition.operator}</span>
+                          <span className="mx-2 text-neutral-500">{condition.operator}</span>
                           <span>{condition.value} {condition.unit}</span>
                         </div>
                       ))}
@@ -852,22 +852,22 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
                   </div>
 
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Performance Metrics</h4>
+                    <h4 className="font-medium text-neutral-900 mb-3">Performance Metrics</h4>
                     <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div className="bg-gray-50 p-2 rounded">
-                        <p className="text-gray-600">Sensitivity</p>
+                      <div className="bg-neutral-50 p-2 rounded">
+                        <p className="text-neutral-600">Sensitivity</p>
                         <p className="font-medium">{rule.performance.sensitivity}%</p>
                       </div>
-                      <div className="bg-gray-50 p-2 rounded">
-                        <p className="text-gray-600">Specificity</p>
+                      <div className="bg-neutral-50 p-2 rounded">
+                        <p className="text-neutral-600">Specificity</p>
                         <p className="font-medium">{rule.performance.specificity}%</p>
                       </div>
-                      <div className="bg-gray-50 p-2 rounded">
-                        <p className="text-gray-600">Accepted</p>
+                      <div className="bg-neutral-50 p-2 rounded">
+                        <p className="text-neutral-600">Accepted</p>
                         <p className="font-medium">{rule.performance.accepted}</p>
                       </div>
-                      <div className="bg-gray-50 p-2 rounded">
-                        <p className="text-gray-600">Override Rate</p>
+                      <div className="bg-neutral-50 p-2 rounded">
+                        <p className="text-neutral-600">Override Rate</p>
                         <p className="font-medium">{Math.round((rule.performance.overridden / rule.performance.triggered) * 100)}%</p>
                       </div>
                     </div>
@@ -875,7 +875,7 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
                 </div>
 
                 <div className="mt-6 flex justify-end space-x-3">
-                  <button className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                  <button className="px-4 py-2 text-sm border border-neutral-300 text-neutral-700 rounded hover:bg-neutral-50">
                     Edit Rule
                   </button>
                   <button className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">

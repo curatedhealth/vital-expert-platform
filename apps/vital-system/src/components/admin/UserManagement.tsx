@@ -314,7 +314,7 @@ export function UserManagement() {
     const colors: Record<string, string> = {
       admin: 'bg-purple-100 text-purple-800',
       manager: 'bg-blue-100 text-blue-800',
-      user: 'bg-gray-100 text-gray-800',
+      user: 'bg-neutral-100 text-neutral-800',
     };
 
     return (

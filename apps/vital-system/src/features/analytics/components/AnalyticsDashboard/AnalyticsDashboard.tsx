@@ -259,15 +259,16 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading analytics...</p>
+          <p className="text-neutral-600">Loading analytics...</p>
         </div>
       </div>
     );
   }
 
+  const tabs = [
     { key: 'overview', label: 'Overview', icon: '📊' },
     { key: 'dashboards', label: 'Dashboards', icon: '📋' },
     { key: 'reports', label: 'Reports', icon: '📄' },
@@ -276,6 +277,7 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
     { key: 'exports', label: 'Exports', icon: '📤' }
   ];
 
+  const formatValue = (num: number, format: string) => {
     switch (format) {
       case 'currency':
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
@@ -286,6 +288,7 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
     }
   };
 
+  const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -295,38 +298,40 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
     });
   };
 
+  const getSignificanceColor = (significance: string) => {
     switch (significance) {
       case 'critical': return 'bg-red-100 text-red-800';
       case 'high': return 'bg-orange-100 text-orange-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'low': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'urgent': return 'bg-red-100 text-red-800';
       case 'high': return 'bg-orange-100 text-orange-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'low': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-canvas-surface border-b border-neutral-200">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Analytics & Reporting</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-2xl font-bold text-neutral-900">Analytics & Reporting</h1>
+              <p className="text-neutral-600 mt-1">
                 Business intelligence, reports, and insights for data-driven decisions
               </p>
             </div>
             <div className="flex gap-3">
-              <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+              <button className="px-4 py-2 text-sm font-medium text-neutral-700 bg-canvas-surface border border-neutral-300 rounded-md hover:bg-neutral-50">
                 Create Dashboard
               </button>
               <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
@@ -338,7 +343,7 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-canvas-surface border-b border-neutral-200">
         <div className="max-w-7xl mx-auto px-6">
           <nav className="flex space-x-8">
             {tabs.map(tab => (
@@ -348,7 +353,7 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.key
                     ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
                 }`}
               >
                 <span className="mr-2">{tab.icon}</span>
@@ -365,7 +370,7 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
           <div className="space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
@@ -373,8 +378,8 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Revenue (30d)</p>
-                    <p className="text-2xl font-semibold text-gray-900">
+                    <p className="text-sm font-medium text-neutral-500">Revenue (30d)</p>
+                    <p className="text-2xl font-semibold text-neutral-900">
                       {formatNumber(1125000, 'currency')}
                     </p>
                     <p className="text-sm text-green-600">↗ +12.3%</p>
@@ -382,7 +387,7 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -390,8 +395,8 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Active Users</p>
-                    <p className="text-2xl font-semibold text-gray-900">
+                    <p className="text-sm font-medium text-neutral-500">Active Users</p>
+                    <p className="text-2xl font-semibold text-neutral-900">
                       {formatNumber(usageData?.metrics.activeUsers || 0)}
                     </p>
                     <p className="text-sm text-blue-600">↗ +5.7%</p>
@@ -399,7 +404,7 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -407,8 +412,8 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">API Calls</p>
-                    <p className="text-2xl font-semibold text-gray-900">
+                    <p className="text-sm font-medium text-neutral-500">API Calls</p>
+                    <p className="text-2xl font-semibold text-neutral-900">
                       {formatNumber(2340000)}
                     </p>
                     <p className="text-sm text-purple-600">↗ +18.2%</p>
@@ -416,7 +421,7 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -424,8 +429,8 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Uptime</p>
-                    <p className="text-2xl font-semibold text-gray-900">
+                    <p className="text-sm font-medium text-neutral-500">Uptime</p>
+                    <p className="text-2xl font-semibold text-neutral-900">
                       {formatNumber(usageData?.metrics.performance.uptime || 0, 'percentage')}
                     </p>
                     <p className="text-sm text-orange-600">↗ SLA: 99.9%</p>
@@ -435,8 +440,8 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
             </div>
 
             {/* Quick Insights */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Insights</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Quick Insights</h3>
               <div className="space-y-4">
                 {insights?.insights.slice(0, 3).map(insight => (
                   <div key={insight.id} className="flex items-start">
@@ -446,9 +451,9 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                       </span>
                     </div>
                     <div className="ml-3">
-                      <h4 className="text-sm font-medium text-gray-900">{insight.title}</h4>
-                      <p className="text-sm text-gray-600">{insight.description}</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <h4 className="text-sm font-medium text-neutral-900">{insight.title}</h4>
+                      <p className="text-sm text-neutral-600">{insight.description}</p>
+                      <p className="text-xs text-neutral-400 mt-1">
                         Confidence: {formatNumber(insight.confidence, 'percentage')}
                       </p>
                     </div>
@@ -458,20 +463,20 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
             </div>
 
             {/* Feature Usage */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Feature Usage</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Feature Usage</h3>
               <div className="space-y-4">
                 {usageData?.metrics.features.map(feature => (
                   <div key={feature.feature} className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900">{feature.feature}</h4>
-                      <p className="text-sm text-gray-500">
+                      <h4 className="text-sm font-medium text-neutral-900">{feature.feature}</h4>
+                      <p className="text-sm text-neutral-500">
                         {formatNumber(feature.usage)} uses by {formatNumber(feature.users)} users
                       </p>
                     </div>
                     <div className="flex items-center">
                       <span className={`text-sm font-medium ${
-                        feature.trend > 0 ? 'text-green-600' : feature.trend < 0 ? 'text-red-600' : 'text-gray-600'
+                        feature.trend > 0 ? 'text-green-600' : feature.trend < 0 ? 'text-red-600' : 'text-neutral-600'
                       }`}>
                         {feature.trend > 0 ? '↗' : feature.trend < 0 ? '↘' : '→'} {formatNumber(Math.abs(feature.trend), 'percentage')}
                       </span>
@@ -487,7 +492,7 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
           <div className="space-y-6">
             {/* Dashboard Header */}
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Analytics Dashboards</h2>
+              <h2 className="text-xl font-semibold text-neutral-900">Analytics Dashboards</h2>
               <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                 Create Dashboard
               </button>
@@ -495,18 +500,18 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
 
             {/* Dashboard Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Executive Overview</h3>
+                  <h3 className="text-lg font-medium text-neutral-900">Executive Overview</h3>
                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     Default
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-neutral-600 mb-4">
                   Key performance indicators and business metrics for executive team
                 </p>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center text-sm text-gray-500">
+                  <div className="flex items-center text-sm text-neutral-500">
                     <span className="mr-1">📊</span>
                     {dashboard?.widgets.length} widgets
                   </div>
@@ -516,43 +521,43 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 opacity-75">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6 opacity-75">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Clinical Metrics</h3>
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  <h3 className="text-lg font-medium text-neutral-900">Clinical Metrics</h3>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
                     Coming Soon
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-neutral-600 mb-4">
                   Clinical trial outcomes, patient metrics, and regulatory compliance
                 </p>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center text-sm text-gray-500">
+                  <div className="flex items-center text-sm text-neutral-500">
                     <span className="mr-1">🏥</span>
                     Clinical focus
                   </div>
-                  <button className="text-gray-400 text-sm font-medium" disabled>
+                  <button className="text-neutral-400 text-sm font-medium" disabled>
                     Coming Soon
                   </button>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 opacity-75">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6 opacity-75">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Financial Analytics</h3>
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  <h3 className="text-lg font-medium text-neutral-900">Financial Analytics</h3>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
                     Coming Soon
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-neutral-600 mb-4">
                   Revenue tracking, cost analysis, and profitability metrics
                 </p>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center text-sm text-gray-500">
+                  <div className="flex items-center text-sm text-neutral-500">
                     <span className="mr-1">💰</span>
                     Financial focus
                   </div>
-                  <button className="text-gray-400 text-sm font-medium" disabled>
+                  <button className="text-neutral-400 text-sm font-medium" disabled>
                     Coming Soon
                   </button>
                 </div>
@@ -560,19 +565,19 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
             </div>
 
             {/* Widget Preview */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Dashboard Widgets</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Dashboard Widgets</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {dashboard?.widgets.map(widget => (
-                  <div key={widget.id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={widget.id} className="border border-neutral-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-medium text-gray-900">{widget.title}</h4>
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                      <h4 className="text-sm font-medium text-neutral-900">{widget.title}</h4>
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-neutral-100 text-neutral-700">
                         {widget.type.replace('_', ' ')}
                       </span>
                     </div>
-                    <div className="h-24 bg-gray-50 rounded flex items-center justify-center">
-                      <div className="text-center text-gray-500">
+                    <div className="h-24 bg-neutral-50 rounded flex items-center justify-center">
+                      <div className="text-center text-neutral-500">
                         <div className="text-2xl mb-1">
                           {widget.type === 'metric_card' ? '📊' :
                            widget.type === 'line_chart' ? '📈' : '📋'}
@@ -594,44 +599,44 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
           <div className="space-y-6">
             {/* Reports Header */}
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Automated Reports</h2>
+              <h2 className="text-xl font-semibold text-neutral-900">Automated Reports</h2>
               <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                 Create Report
               </button>
             </div>
 
             {/* Reports List */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
+              <table className="min-w-full divide-y divide-neutral-200">
+                <thead className="bg-neutral-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Report
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Schedule
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Last Generated
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-canvas-surface divide-y divide-neutral-200">
                   {reports.map(report => (
                     <tr key={report.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{report.name}</div>
-                          <div className="text-sm text-gray-500">{report.description}</div>
+                          <div className="text-sm font-medium text-neutral-900">{report.name}</div>
+                          <div className="text-sm text-neutral-500">{report.description}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -639,20 +644,20 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                           {report.category}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
                         {report.schedule.enabled ?
                           `${report.schedule.frequency} at ${report.schedule.timeOfDay}` :
                           'Manual'
                         }
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
                         {report.lastGenerated ? formatDate(report.lastGenerated) : 'Never'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           report.status === 'scheduled' ? 'bg-green-100 text-green-800' :
                           report.status === 'generating' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
+                          'bg-neutral-100 text-neutral-800'
                         }`}>
                           {report.status}
                         </span>
@@ -669,8 +674,8 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
             </div>
 
             {/* Report Templates */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Report Templates</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Report Templates</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
                   { name: 'Executive Summary', description: 'High-level business metrics and KPIs', icon: '📊' },
@@ -680,12 +685,12 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                   { name: 'Clinical Outcomes', description: 'Clinical trial results and patient data', icon: '🏥' },
                   { name: 'Custom Report', description: 'Build your own report template', icon: '🔧' }
                 ].map(template => (
-                  <div key={template.name} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 cursor-pointer">
+                  <div key={template.name} className="border border-neutral-200 rounded-lg p-4 hover:border-blue-300 cursor-pointer">
                     <div className="flex items-center mb-2">
                       <span className="text-2xl mr-3">{template.icon}</span>
-                      <h4 className="text-sm font-medium text-gray-900">{template.name}</h4>
+                      <h4 className="text-sm font-medium text-neutral-900">{template.name}</h4>
                     </div>
-                    <p className="text-sm text-gray-600">{template.description}</p>
+                    <p className="text-sm text-neutral-600">{template.description}</p>
                     <button className="mt-3 text-blue-600 hover:text-blue-700 text-sm font-medium">
                       Use Template
                     </button>
@@ -699,41 +704,41 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
         {activeTab === 'insights' && (
           <div className="space-y-6">
             {/* AI Insights */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">AI-Powered Insights</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">AI-Powered Insights</h3>
               <div className="space-y-4">
                 {insights?.insights.map(insight => (
-                  <div key={insight.id} className="border border-gray-100 rounded-lg p-4">
+                  <div key={insight.id} className="border border-neutral-100 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900">{insight.title}</h4>
+                        <h4 className="text-sm font-medium text-neutral-900">{insight.title}</h4>
                         <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getSignificanceColor(insight.significance)} mt-1`}>
                           {insight.significance.toUpperCase()}
                         </span>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-500">Confidence</p>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-xs text-neutral-500">Confidence</p>
+                        <p className="text-sm font-medium text-neutral-900">
                           {formatNumber(insight.confidence, 'percentage')}
                         </p>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{insight.description}</p>
-                    <p className="text-xs text-gray-400">Generated: {formatDate(insight.generated)}</p>
+                    <p className="text-sm text-neutral-600 mb-2">{insight.description}</p>
+                    <p className="text-xs text-neutral-400">Generated: {formatDate(insight.generated)}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Predictions */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Predictions</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Predictions</h3>
               <div className="space-y-4">
                 {insights?.predictions.map(prediction => (
-                  <div key={prediction.id} className="border border-gray-100 rounded-lg p-4">
+                  <div key={prediction.id} className="border border-neutral-100 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900">
+                        <h4 className="text-sm font-medium text-neutral-900">
                           {prediction.target.replace('_', ' ').toUpperCase()}
                         </h4>
                         <p className="text-lg font-semibold text-blue-600">
@@ -741,27 +746,27 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-500">Confidence</p>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-xs text-neutral-500">Confidence</p>
+                        <p className="text-sm font-medium text-neutral-900">
                           {formatNumber(prediction.confidence, 'percentage')}
                         </p>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-sm text-neutral-600 mb-2">
                       Forecast for {prediction.timeframe.replace('_', ' ')}
                     </p>
 
                     {/* Prediction Factors */}
                     <div className="mt-3">
-                      <p className="text-xs font-medium text-gray-700 mb-2">Key Factors:</p>
+                      <p className="text-xs font-medium text-neutral-700 mb-2">Key Factors:</p>
                       <div className="space-y-1">
                         {prediction.factors.map(factor => (
                           <div key={factor.name} className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600">{factor.name.replace('_', ' ')}</span>
+                            <span className="text-neutral-600">{factor.name.replace('_', ' ')}</span>
                             <span className={`font-medium ${
                               factor.direction === 'positive' ? 'text-green-600' :
                               factor.direction === 'negative' ? 'text-red-600' :
-                              'text-gray-600'
+                              'text-neutral-600'
                             }`}>
                               {factor.direction === 'positive' ? '↗' : factor.direction === 'negative' ? '↘' : '→'}
                               {formatNumber(Math.abs(factor.impact), 'percentage')}
@@ -776,14 +781,14 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
             </div>
 
             {/* Recommendations */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Recommendations</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Recommendations</h3>
               <div className="space-y-4">
                 {insights?.recommendations.map(rec => (
-                  <div key={rec.id} className="border border-gray-100 rounded-lg p-4">
+                  <div key={rec.id} className="border border-neutral-100 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900">{rec.title}</h4>
+                        <h4 className="text-sm font-medium text-neutral-900">{rec.title}</h4>
                         <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(rec.priority)} mt-1`}>
                           {rec.priority.toUpperCase()}
                         </span>
@@ -792,12 +797,12 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                         {rec.category.replace('_', ' ')}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">{rec.description}</p>
+                    <p className="text-sm text-neutral-600 mb-3">{rec.description}</p>
 
                     {/* Impact */}
-                    <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                      <p className="text-xs font-medium text-gray-700 mb-1">Expected Impact:</p>
-                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div className="bg-neutral-50 rounded-lg p-3 mb-3">
+                      <p className="text-xs font-medium text-neutral-700 mb-1">Expected Impact:</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-neutral-600">
                         {rec.impact.financial && (
                           <div>
                             <span className="font-medium">Financial:</span> {formatNumber(rec.impact.financial, 'currency')}
@@ -823,7 +828,7 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
 
                     {/* Actions */}
                     <div>
-                      <p className="text-xs font-medium text-gray-700 mb-2">Recommended Actions:</p>
+                      <p className="text-xs font-medium text-neutral-700 mb-2">Recommended Actions:</p>
                       <div className="space-y-2">
                         {rec.actions.map((action, index) => (
                           <div key={index} className="flex items-start">
@@ -831,16 +836,16 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                               <span className="text-blue-600 text-xs">•</span>
                             </div>
                             <div className="ml-2">
-                              <p className="text-xs font-medium text-gray-900">{action.title}</p>
-                              <p className="text-xs text-gray-600">{action.description}</p>
+                              <p className="text-xs font-medium text-neutral-900">{action.title}</p>
+                              <p className="text-xs text-neutral-600">{action.description}</p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className="px-1 py-0.5 rounded text-xs bg-gray-100 text-gray-600">
+                                <span className="px-1 py-0.5 rounded text-xs bg-neutral-100 text-neutral-600">
                                   {action.effort} effort
                                 </span>
-                                <span className="px-1 py-0.5 rounded text-xs bg-gray-100 text-gray-600">
+                                <span className="px-1 py-0.5 rounded text-xs bg-neutral-100 text-neutral-600">
                                   {action.complexity}
                                 </span>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-neutral-500">
                                   {action.timeline}
                                 </span>
                               </div>
@@ -860,7 +865,7 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
           <div className="space-y-6">
             {/* Usage Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -868,15 +873,15 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Active Users</p>
-                    <p className="text-2xl font-semibold text-gray-900">
+                    <p className="text-sm font-medium text-neutral-500">Active Users</p>
+                    <p className="text-2xl font-semibold text-neutral-900">
                       {formatNumber(usageData?.metrics.activeUsers || 0)}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
@@ -884,15 +889,15 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Sessions</p>
-                    <p className="text-2xl font-semibold text-gray-900">
+                    <p className="text-sm font-medium text-neutral-500">Sessions</p>
+                    <p className="text-2xl font-semibold text-neutral-900">
                       {formatNumber(usageData?.metrics.sessions || 0)}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -900,15 +905,15 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Page Views</p>
-                    <p className="text-2xl font-semibold text-gray-900">
+                    <p className="text-sm font-medium text-neutral-500">Page Views</p>
+                    <p className="text-2xl font-semibold text-neutral-900">
                       {formatNumber(usageData?.metrics.pageViews || 0)}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -916,8 +921,8 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Avg Response</p>
-                    <p className="text-2xl font-semibold text-gray-900">
+                    <p className="text-sm font-medium text-neutral-500">Avg Response</p>
+                    <p className="text-2xl font-semibold text-neutral-900">
                       {usageData?.metrics.performance.avgResponseTime}ms
                     </p>
                   </div>
@@ -926,45 +931,45 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
             </div>
 
             {/* Feature Usage Chart */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Feature Usage Trends</h3>
-              <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Feature Usage Trends</h3>
+              <div className="h-64 flex items-center justify-center bg-neutral-50 rounded-lg">
                 <div className="text-center">
                   <div className="text-4xl mb-2">📊</div>
-                  <p className="text-gray-500">Feature usage chart would be displayed here</p>
-                  <p className="text-sm text-gray-400">Interactive chart showing feature adoption and usage trends</p>
+                  <p className="text-neutral-500">Feature usage chart would be displayed here</p>
+                  <p className="text-sm text-neutral-400">Interactive chart showing feature adoption and usage trends</p>
                 </div>
               </div>
             </div>
 
             {/* Performance Metrics */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Performance Metrics</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Performance Metrics</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">System Performance</h4>
+                  <h4 className="text-sm font-medium text-neutral-700 mb-3">System Performance</h4>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Average Response Time</span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm text-neutral-600">Average Response Time</span>
+                      <span className="text-sm font-medium text-neutral-900">
                         {usageData?.metrics.performance.avgResponseTime}ms
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Error Rate</span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm text-neutral-600">Error Rate</span>
+                      <span className="text-sm font-medium text-neutral-900">
                         {formatNumber(usageData?.metrics.performance.errorRate || 0, 'percentage')}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Uptime</span>
+                      <span className="text-sm text-neutral-600">Uptime</span>
                       <span className="text-sm font-medium text-green-600">
                         {formatNumber(usageData?.metrics.performance.uptime || 0, 'percentage')}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Throughput</span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm text-neutral-600">Throughput</span>
+                      <span className="text-sm font-medium text-neutral-900">
                         {formatNumber(usageData?.metrics.performance.throughput || 0)} req/min
                       </span>
                     </div>
@@ -972,28 +977,28 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">User Engagement</h4>
+                  <h4 className="text-sm font-medium text-neutral-700 mb-3">User Engagement</h4>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">New Users</span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm text-neutral-600">New Users</span>
+                      <span className="text-sm font-medium text-neutral-900">
                         {formatNumber(usageData?.metrics.newUsers || 0)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Session Duration</span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm text-neutral-600">Session Duration</span>
+                      <span className="text-sm font-medium text-neutral-900">
                         12.5 min avg
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Bounce Rate</span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm text-neutral-600">Bounce Rate</span>
+                      <span className="text-sm font-medium text-neutral-900">
                         23.4%
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Feature Adoption</span>
+                      <span className="text-sm text-neutral-600">Feature Adoption</span>
                       <span className="text-sm font-medium text-green-600">
                         87.2%
                       </span>
@@ -1009,15 +1014,15 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
           <div className="space-y-6">
             {/* Export Header */}
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Data Exports</h2>
+              <h2 className="text-xl font-semibold text-neutral-900">Data Exports</h2>
               <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                 New Export
               </button>
             </div>
 
             {/* Quick Export Options */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Exports</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Quick Exports</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
                   { name: 'User Data', description: 'Export all user information and activity', format: 'CSV', icon: '👥' },
@@ -1027,15 +1032,15 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                   { name: 'Project Data', description: 'All project files and configurations', format: 'ZIP', icon: '📁' },
                   { name: 'Compliance Reports', description: 'Regulatory compliance documentation', format: 'PDF', icon: '⚖️' }
                 ].map(exportOption => (
-                  <div key={exportOption.name} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 cursor-pointer">
+                  <div key={exportOption.name} className="border border-neutral-200 rounded-lg p-4 hover:border-blue-300 cursor-pointer">
                     <div className="flex items-center mb-2">
                       <span className="text-2xl mr-3">{exportOption.icon}</span>
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900">{exportOption.name}</h4>
+                        <h4 className="text-sm font-medium text-neutral-900">{exportOption.name}</h4>
                         <span className="text-xs text-blue-600 font-medium">{exportOption.format}</span>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">{exportOption.description}</p>
+                    <p className="text-sm text-neutral-600 mb-3">{exportOption.description}</p>
                     <button className="w-full px-3 py-1.5 text-sm font-medium text-blue-600 border border-blue-300 rounded hover:bg-blue-50">
                       Export Now
                     </button>
@@ -1045,18 +1050,18 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
             </div>
 
             {/* Export History */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Export History</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Export History</h3>
               <div className="space-y-3">
                 {[
                   { name: 'Monthly Usage Report', format: 'CSV', size: '2.4 MB', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), status: 'completed' },
                   { name: 'User Analytics Export', format: 'JSON', size: '856 KB', date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), status: 'completed' },
                   { name: 'Financial Summary', format: 'PDF', size: '1.2 MB', date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), status: 'completed' }
                 ].map((export_, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900">{export_.name}</h4>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <h4 className="text-sm font-medium text-neutral-900">{export_.name}</h4>
+                      <div className="flex items-center gap-2 text-xs text-neutral-500">
                         <span>{export_.format}</span>
                         <span>•</span>
                         <span>{export_.size}</span>
@@ -1078,13 +1083,13 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
             </div>
 
             {/* Export Settings */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Export Settings</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Export Settings</h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Default Format</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Default Format</label>
+                    <select className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                       <option>CSV</option>
                       <option>JSON</option>
                       <option>Excel</option>
@@ -1092,8 +1097,8 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Compression</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Compression</label>
+                    <select className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                       <option>None</option>
                       <option>ZIP</option>
                       <option>GZIP</option>
@@ -1103,18 +1108,18 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
                 <div className="flex items-center">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-neutral-300 rounded"
                   />
-                  <label className="ml-2 block text-sm text-gray-900">
+                  <label className="ml-2 block text-sm text-neutral-900">
                     Encrypt exports with organization key
                   </label>
                 </div>
                 <div className="flex items-center">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-neutral-300 rounded"
                   />
-                  <label className="ml-2 block text-sm text-gray-900">
+                  <label className="ml-2 block text-sm text-neutral-900">
                     Email notification when export is ready
                   </label>
                 </div>

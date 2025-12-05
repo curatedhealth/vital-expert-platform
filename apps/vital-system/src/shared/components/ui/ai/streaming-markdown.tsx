@@ -53,10 +53,10 @@ export function StreamingMarkdown({
     parsed = parsed.replace(/\*(.*?)\*/g, '<em>$1</em>')
     
     // Handle code blocks
-    parsed = parsed.replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto"><code>$1</code></pre>')
+    parsed = parsed.replace(/```([\s\S]*?)```/g, '<pre class="bg-neutral-100 p-4 rounded-lg overflow-x-auto"><code>$1</code></pre>')
     
     // Handle inline code
-    parsed = parsed.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">$1</code>')
+    parsed = parsed.replace(/`([^`]+)`/g, '<code class="bg-neutral-100 px-1 py-0.5 rounded text-sm font-mono">$1</code>')
     
     // Handle links
     parsed = parsed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
@@ -91,14 +91,14 @@ export function StreamingMarkdown({
       <div
         className={cn(
           "prose prose-sm max-w-none",
-          "prose-headings:text-gray-900 prose-headings:font-semibold",
-          "prose-p:text-gray-700 prose-p:leading-relaxed",
-          "prose-strong:text-gray-900 prose-strong:font-semibold",
-          "prose-code:text-gray-800 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm",
-          "prose-pre:bg-gray-100 prose-pre:border prose-pre:rounded-lg",
+          "prose-headings:text-neutral-900 prose-headings:font-semibold",
+          "prose-p:text-neutral-700 prose-p:leading-relaxed",
+          "prose-strong:text-neutral-900 prose-strong:font-semibold",
+          "prose-code:text-neutral-800 prose-code:bg-neutral-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm",
+          "prose-pre:bg-neutral-100 prose-pre:border prose-pre:rounded-lg",
           "prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline",
           "prose-ul:list-disc prose-ul:ml-4",
-          "prose-li:text-gray-700",
+          "prose-li:text-neutral-700",
           className
         )}
         dangerouslySetInnerHTML={{ __html: parsed }}
@@ -156,57 +156,57 @@ export function StreamingMarkdownEnhanced({
     // Handle code blocks with language detection (do this first to avoid conflicts)
     parsed = parsed.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
 
-      return `<div class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4">
-        <div class="text-xs text-gray-400 mb-2 font-mono">${language}</div>
+      return `<div class="bg-neutral-900 text-neutral-100 p-4 rounded-lg overflow-x-auto my-4">
+        <div class="text-xs text-neutral-400 mb-2 font-mono">${language}</div>
         <pre><code class="language-${language}">${code.trim()}</code></pre>
       </div>`
     })
     
     // Handle inline code
-    parsed = parsed.replace(/`([^`]+)`/g, '<code class="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono border">$1</code>')
+    parsed = parsed.replace(/`([^`]+)`/g, '<code class="bg-neutral-100 text-neutral-800 px-1.5 py-0.5 rounded text-sm font-mono border">$1</code>')
     
     // Handle bold text
-    parsed = parsed.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+    parsed = parsed.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-neutral-900">$1</strong>')
     
     // Handle italic text
-    parsed = parsed.replace(/\*(.*?)\*/g, '<em class="italic text-gray-700">$1</em>')
+    parsed = parsed.replace(/\*(.*?)\*/g, '<em class="italic text-neutral-700">$1</em>')
     
     // Handle links with better styling
     parsed = parsed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:text-blue-800 underline decoration-blue-300 hover:decoration-blue-500 transition-colors" target="_blank" rel="noopener noreferrer">$1</a>')
     
     // Handle headers with better hierarchy
-    parsed = parsed.replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3 border-b border-gray-200 pb-1">$1</h3>')
-    parsed = parsed.replace(/^## (.*$)/gm, '<h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4 border-b border-gray-300 pb-2">$1</h2>')
-    parsed = parsed.replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold text-gray-900 mt-10 mb-6 border-b-2 border-purple-200 pb-3">$1</h1>')
+    parsed = parsed.replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold text-neutral-900 mt-6 mb-3 border-b border-neutral-200 pb-1">$1</h3>')
+    parsed = parsed.replace(/^## (.*$)/gm, '<h2 class="text-xl font-semibold text-neutral-900 mt-8 mb-4 border-b border-neutral-300 pb-2">$1</h2>')
+    parsed = parsed.replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold text-neutral-900 mt-10 mb-6 border-b-2 border-purple-200 pb-3">$1</h1>')
     
     // Handle numbered lists first
-    parsed = parsed.replace(/^(\d+)\. (.*$)/gm, '<li class="ml-4 text-gray-700 leading-relaxed mb-2">$1. $2</li>')
+    parsed = parsed.replace(/^(\d+)\. (.*$)/gm, '<li class="ml-4 text-neutral-700 leading-relaxed mb-2">$1. $2</li>')
     
     // Handle bullet lists
-    parsed = parsed.replace(/^[\*\-\+] (.*$)/gm, '<li class="ml-4 text-gray-700 leading-relaxed mb-2">• $1</li>')
+    parsed = parsed.replace(/^[\*\-\+] (.*$)/gm, '<li class="ml-4 text-neutral-700 leading-relaxed mb-2">• $1</li>')
     
     // Handle checkboxes
-    parsed = parsed.replace(/^- \[ \] (.*$)/gm, '<li class="ml-4 text-gray-700 leading-relaxed mb-2">☐ $1</li>')
-    parsed = parsed.replace(/^- \[x\] (.*$)/gm, '<li class="ml-4 text-gray-700 leading-relaxed mb-2">☑ $1</li>')
+    parsed = parsed.replace(/^- \[ \] (.*$)/gm, '<li class="ml-4 text-neutral-700 leading-relaxed mb-2">☐ $1</li>')
+    parsed = parsed.replace(/^- \[x\] (.*$)/gm, '<li class="ml-4 text-neutral-700 leading-relaxed mb-2">☑ $1</li>')
     
     // Handle blockquotes
-    parsed = parsed.replace(/^> (.*$)/gm, '<blockquote class="border-l-4 border-purple-300 pl-4 py-2 bg-purple-50 text-gray-700 italic my-4">$1</blockquote>')
+    parsed = parsed.replace(/^> (.*$)/gm, '<blockquote class="border-l-4 border-purple-300 pl-4 py-2 bg-purple-50 text-neutral-700 italic my-4">$1</blockquote>')
     
     // Handle horizontal rules
-    parsed = parsed.replace(/^---$/gm, '<hr class="my-8 border-gray-300" />')
+    parsed = parsed.replace(/^---$/gm, '<hr class="my-8 border-neutral-300" />')
     
     // Group consecutive list items into proper lists
-    parsed = parsed.replace(/(<li class="ml-4 text-gray-700 leading-relaxed mb-2">.*<\/li>)/g, (match) => {
+    parsed = parsed.replace(/(<li class="ml-4 text-neutral-700 leading-relaxed mb-2">.*<\/li>)/g, (match) => {
       return `<ul class="space-y-1 my-3">${match}</ul>`
     })
     
     // Handle line breaks and paragraphs
-    parsed = parsed.replace(/\n\n/g, '</p><p class="text-gray-700 leading-relaxed mb-4">')
+    parsed = parsed.replace(/\n\n/g, '</p><p class="text-neutral-700 leading-relaxed mb-4">')
     parsed = parsed.replace(/\n/g, '<br>')
     
     // Wrap in paragraphs if not already wrapped
     if (!parsed.startsWith('<')) {
-      parsed = `<p class="text-gray-700 leading-relaxed mb-4">${parsed}</p>`
+      parsed = `<p class="text-neutral-700 leading-relaxed mb-4">${parsed}</p>`
     }
 
     return parsed

@@ -31,13 +31,33 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
   // Use the mounted prop passed from parent instead of local state
   const safeAgents = mounted ? agents : [];
 
+  // Debug: Log agent data when component renders
+  React.useEffect(() => {
+    if (mounted && safeAgents.length > 0) {
+      console.log('🔍 [NavAiAgents] Agents in sidebar:', safeAgents.map(a => ({ id: a.id, name: a.name })));
+    }
+  }, [mounted, safeAgents]);
+
+  const handleAgentClick = (agent: Agent) => {
+    console.log('👆 [NavAiAgents] Clicked agent:', agent.name, 'id:', agent.id);
+    onAgentSelect?.(agent.id);
+  };
+
   return (
-    <div className="px-3">
-      <div className="space-y-1">
-        <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
-          {!isCollapsed && "My Agents"}
-        </h2>
-        <div className="space-y-1">
+    <div className="px-3 flex flex-col">
+      <div className="space-y-1 flex flex-col">
+        <div className="flex items-center justify-between mb-2 px-4">
+          <h2 className="text-lg font-semibold tracking-tight">
+            {!isCollapsed && "My Agents"}
+          </h2>
+          {!isCollapsed && safeAgents.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {safeAgents.length} agent{safeAgents.length !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        {/* Scrollable agent list with max height */}
+        <div className="space-y-1 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
           {!mounted || safeAgents.length === 0 ? (
             <div className="px-4 py-2 text-sm text-muted-foreground">
               {!isCollapsed && (mounted ? "No agents added yet. Visit Agent Store to add some." : "Loading agents...")}
@@ -59,7 +79,7 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
                           ? 'border-blue-300 bg-blue-100 text-blue-900'
                           : 'bg-blue-100 border border-blue-200 text-blue-900')
                     )}
-                    onClick={() => onAgentSelect?.(agent.id)}
+                    onClick={() => handleAgentClick(agent)}
                     aria-label={isCollapsed ? agent.name : undefined}
                   >
                     <div className={cn('relative flex-shrink-0', isCollapsed ? 'h-6 w-6' : 'h-5 w-5')}>
@@ -73,24 +93,27 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
                         />
                       ) : (
                         <div className={cn(
-                          'flex items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600',
+                          'flex items-center justify-center rounded-full bg-neutral-100 text-xs font-medium text-neutral-600',
                           isCollapsed ? 'h-6 w-6 text-sm' : 'h-5 w-5'
                         )}>
                           {(agent.avatar && agent.avatar.trim()) || '🤖'}
                         </div>
                       )}
                     </div>
-                    {!isCollapsed && <span className="ml-2 flex-1 text-left">{agent.name}</span>}
+                    {!isCollapsed && <span className="ml-2 flex-1 text-left truncate">{agent.name}</span>}
                   </Button>
+                  {/* Remove button - always visible on hover */}
                   {!isCollapsed && onAgentRemove && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100"
                       onClick={(e) => {
                         e.stopPropagation();
+                        console.log('🗑️ [NavAiAgents] Removing agent:', agent.name, 'id:', agent.id);
                         onAgentRemove(agent.id);
                       }}
+                      title="Remove from My Agents"
                     >
                       <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                     </Button>

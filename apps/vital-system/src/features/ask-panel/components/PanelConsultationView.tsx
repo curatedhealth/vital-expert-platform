@@ -184,17 +184,17 @@ export function PanelConsultationView({
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="h-full flex flex-col bg-neutral-50 dark:bg-neutral-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+      <div className="bg-canvas-surface dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {onBack && (
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <ArrowLeft className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
               </button>
             )}
             
@@ -203,12 +203,12 @@ export function PanelConsultationView({
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                   <Users className="w-6 h-6 text-white" />
                 </div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-xl font-bold text-neutral-900 dark:text-white">
                   Panel Consultation
                 </h1>
               </div>
               
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">
                 {configuration.selectedAgents.length} experts • {configuration.mode} mode
               </p>
             </div>
@@ -250,16 +250,16 @@ export function PanelConsultationView({
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
           {/* Initial Question */}
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+          <div className="p-6 bg-canvas-surface dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700">
             <div className="flex items-start gap-3 mb-3">
               <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
                 <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="flex-1">
-                <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+                <div className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">
                   Your Question
                 </div>
-                <p className="text-gray-900 dark:text-white leading-relaxed">
+                <p className="text-neutral-900 dark:text-white leading-relaxed">
                   {initialQuestion}
                 </p>
               </div>
@@ -281,7 +281,7 @@ export function PanelConsultationView({
                   className={`p-6 rounded-xl border ${
                     isModerator 
                       ? 'bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-purple-200 dark:border-purple-700' 
-                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                      : 'bg-canvas-surface dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700'
                   }`}
                 >
                   <div className="flex items-start gap-4">
@@ -306,14 +306,14 @@ export function PanelConsultationView({
                           <h3 className={`font-semibold ${
                             isModerator 
                               ? 'text-purple-900 dark:text-purple-100' 
-                              : 'text-gray-900 dark:text-white'
+                              : 'text-neutral-900 dark:text-white'
                           }`}>
                             {isModerator ? (message.title || 'Panel Moderator') : (message.agent?.title || 'Expert')}
                           </h3>
                           <p className={`text-sm capitalize ${
                             isModerator 
                               ? 'text-purple-600 dark:text-purple-300' 
-                              : 'text-gray-500 dark:text-gray-400'
+                              : 'text-neutral-500 dark:text-neutral-400'
                           }`}>
                             {isModerator ? 'Panel Synthesis & Summary' : (message.agent?.category || 'Expert')}
                           </p>
@@ -334,7 +334,7 @@ export function PanelConsultationView({
                         <p className={`leading-relaxed whitespace-pre-wrap ${
                           isModerator 
                             ? 'text-purple-800 dark:text-purple-200' 
-                            : 'text-gray-700 dark:text-gray-300'
+                            : 'text-neutral-700 dark:text-neutral-300'
                         }`}>
                           {message.content}
                         </p>
@@ -344,7 +344,7 @@ export function PanelConsultationView({
                       <div className={`flex items-center gap-1.5 mt-3 text-xs ${
                         isModerator 
                           ? 'text-purple-600 dark:text-purple-400' 
-                          : 'text-gray-500 dark:text-gray-400'
+                          : 'text-neutral-500 dark:text-neutral-400'
                       }`}>
                         <Clock className="w-3.5 h-3.5" />
                         <span>{message.timestamp.toLocaleTimeString()}</span>
@@ -377,10 +377,10 @@ export function PanelConsultationView({
                     <p className="text-xs uppercase tracking-wider text-indigo-500 dark:text-indigo-300 font-semibold">
                       {panelState.consensusReached ? 'Consensus Achieved' : 'Discussion Summary'}
                     </p>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">
                       {panelState.consensusReached ? 'Unified Recommendation' : 'Panel Closure'}
                     </h3>
-                    <p className="text-gray-800 dark:text-gray-100 mt-3 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-neutral-800 dark:text-neutral-100 mt-3 leading-relaxed whitespace-pre-wrap">
                       {panelState.finalRecommendation?.trim() ||
                         'The panel completed the discussion, but no summary was generated.'}
                     </p>
@@ -388,11 +388,11 @@ export function PanelConsultationView({
 
                   {panelState.dissenting && panelState.dissenting.length > 0 && (
                     <div className="pt-3 border-t border-indigo-100 dark:border-indigo-900/40">
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                      <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-2 flex items-center gap-2">
                         <AlertCircle className="w-4 h-4 text-amber-500" />
                         Dissenting Views
                       </p>
-                      <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                      <ul className="space-y-1 text-sm text-neutral-700 dark:text-neutral-300">
                         {panelState.dissenting.map((view, idx) => (
                           <li key={`dissent-${idx}`}>• {view}</li>
                         ))}
@@ -402,15 +402,15 @@ export function PanelConsultationView({
 
                   {panelState.evidenceSummary && (
                     <div className="pt-3 border-t border-indigo-100 dark:border-indigo-900/40">
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                      <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-2 flex items-center gap-2">
                         <ListChecks className="w-4 h-4 text-purple-500" />
                         Evidence Highlights
                       </p>
-                      <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-sans">
+                      <pre className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap font-sans">
                         {panelState.evidenceSummary}
                       </pre>
                       {panelState.evidenceSources && panelState.evidenceSources.length > 0 && (
-                        <ul className="mt-2 space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                        <ul className="mt-2 space-y-1 text-xs text-neutral-600 dark:text-neutral-400">
                           {panelState.evidenceSources.slice(0, 4).map((source, idx) => (
                             <li key={`source-${idx}`}>
                               <span className="text-indigo-500">{idx + 1}.</span> {source.title}
@@ -424,27 +424,27 @@ export function PanelConsultationView({
                   )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                    <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40">
-                      <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-canvas-surface dark:bg-neutral-900/40">
+                      <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                         Experts
                       </p>
-                      <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      <p className="text-lg font-semibold text-neutral-900 dark:text-white">
                         {configuration.selectedAgents.length}
                       </p>
                     </div>
-                    <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40">
-                      <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-canvas-surface dark:bg-neutral-900/40">
+                      <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                         Rounds
                       </p>
-                      <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      <p className="text-lg font-semibold text-neutral-900 dark:text-white">
                         {panelState.currentRound}
                       </p>
                     </div>
-                    <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/40">
-                      <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-canvas-surface dark:bg-neutral-900/40">
+                      <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                         Avg Confidence
                       </p>
-                      <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      <p className="text-lg font-semibold text-neutral-900 dark:text-white">
                         {panelState.messages.length
                           ? `${Math.round(
                               (panelState.messages.reduce(
@@ -499,7 +499,7 @@ export function PanelConsultationView({
 
       {/* Follow-up Input */}
       {(panelState.status === 'complete' || panelState.status === 'consensus') && (
-        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-4">
+        <div className="border-t border-neutral-200 dark:border-neutral-700 bg-canvas-surface dark:bg-neutral-800 px-6 py-4">
           <div className="max-w-5xl mx-auto">
             <div className="flex items-center gap-3">
               <div className="flex-1 relative">
@@ -512,7 +512,7 @@ export function PanelConsultationView({
                     }
                   }}
                   placeholder="Ask a follow-up question..."
-                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-neutral-200 dark:border-neutral-700 bg-canvas-surface dark:bg-neutral-800 text-neutral-900 dark:text-white placeholder-neutral-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   rows={2}
                 />
               </div>
@@ -526,7 +526,7 @@ export function PanelConsultationView({
               </button>
             </div>
             
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2">
               Press ⌘+Enter to submit
             </p>
           </div>

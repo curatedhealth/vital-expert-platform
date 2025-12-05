@@ -22,7 +22,7 @@ export const StartNode = memo(({ data }: NodeProps) => {
       </div>
       <div className="mt-4 text-center max-w-[200px]">
         <p className="text-sm font-bold text-emerald-700">Start Workflow</p>
-        <p className="text-xs text-gray-600 mt-1 line-clamp-2">{data.label}</p>
+        <p className="text-xs text-neutral-600 mt-1 line-clamp-2">{data.label}</p>
       </div>
       <Handle
         type="source"
@@ -53,7 +53,7 @@ export const EndNode = memo(({ data }: NodeProps) => {
       </div>
       <div className="mt-4 text-center">
         <p className="text-sm font-bold text-rose-700">Complete</p>
-        <p className="text-xs text-gray-600 mt-1">{data.label}</p>
+        <p className="text-xs text-neutral-600 mt-1">{data.label}</p>
       </div>
     </div>
   );
@@ -269,7 +269,7 @@ export const TaskNode = memo(({ data, selected }: NodeProps) => {
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm">
                     <Bot className="w-3.5 h-3.5 text-white" />
                   </div>
-                  <span className="text-xs font-semibold text-gray-700">
+                  <span className="text-xs font-semibold text-neutral-700">
                     {data.agents.length} Agent{data.agents.length !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -310,7 +310,7 @@ export const TaskNode = memo(({ data, selected }: NodeProps) => {
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-sm">
                     <Wrench className="w-3.5 h-3.5 text-white" />
                   </div>
-                  <span className="text-xs font-semibold text-gray-700">
+                  <span className="text-xs font-semibold text-neutral-700">
                     {data.tools.length} Tool{data.tools.length !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -343,7 +343,7 @@ export const TaskNode = memo(({ data, selected }: NodeProps) => {
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center shadow-sm">
                     <Database className="w-3.5 h-3.5 text-white" />
                   </div>
-                  <span className="text-xs font-semibold text-gray-700">
+                  <span className="text-xs font-semibold text-neutral-700">
                     {data.rags.length} Knowledge Source{data.rags.length !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -374,9 +374,9 @@ export const TaskNode = memo(({ data, selected }: NodeProps) => {
 
         {/* Empty state */}
         {!hasAssignments && (
-          <CardContent className="p-4 text-center bg-gray-50">
-            <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-xs text-gray-500">No resources assigned</p>
+          <CardContent className="p-4 text-center bg-neutral-50">
+            <AlertCircle className="w-8 h-8 text-neutral-300 mx-auto mb-2" />
+            <p className="text-xs text-neutral-500">No resources assigned</p>
           </CardContent>
         )}
       </Card>

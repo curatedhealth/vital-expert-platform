@@ -209,7 +209,7 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
 
         {/* Expert Recommendations - Role-based */}
         {metadata.alternativeAgents && metadata.alternativeAgents.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="mt-4 pt-4 border-t border-neutral-200">
             <h4 className="text-xs font-medium text-medical-gray mb-3 flex items-center gap-2">
               <span className="text-market-purple">💡</span>
               Would you like to discuss this with a specialist?
@@ -321,13 +321,24 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
               </div>
 
               {/* AI Reasoning Component - show ABOVE message content for assistant */}
-              {!isUser && message.metadata?.reasoning && (
+              {!isUser && (message.metadata?.aiReasoning || message.metadata?.reasoning) && (
                 <div className="mb-3">
                   <Reasoning isStreaming={false}>
                     <ReasoningTrigger title="I am thinking..." />
                     <ReasoningContent>
-                      <div className="text-sm text-gray-600 whitespace-pre-wrap">
-                        {message.metadata.reasoning}
+                      <div className="text-sm text-neutral-600 whitespace-pre-wrap">
+                        {/* Prioritize aiReasoning (actual LLM thinking) over reasoning array */}
+                        {message.metadata?.aiReasoning ||
+                          (Array.isArray(message.metadata?.reasoning)
+                            ? message.metadata.reasoning
+                                .map((r: { step?: string; message?: string; content?: string }) =>
+                                  r.message || r.content || r.step
+                                )
+                                .filter(Boolean)
+                                .join('\n\n')
+                            : message.metadata?.reasoning
+                          )
+                        }
                       </div>
                     </ReasoningContent>
                   </Reasoning>
@@ -340,7 +351,7 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
                   'relative p-4 rounded-lg',
                   isUser
                     ? 'bg-progress-teal text-white ml-12'
-                    : 'bg-white border border-gray-200 mr-12'
+                    : 'bg-white border border-neutral-200 mr-12'
                 )}
               >
                 {editingMessage === message.id ? (
@@ -436,7 +447,7 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
           <Reasoning isStreaming={isReasoningActive || false}>
             <ReasoningTrigger title="I am thinking..." />
             <ReasoningContent>
-              <div className="text-sm text-gray-600 whitespace-pre-wrap">
+              <div className="text-sm text-neutral-600 whitespace-pre-wrap">
                 {liveReasoning}
               </div>
             </ReasoningContent>

@@ -222,11 +222,11 @@ export const TaskFlowModal: React.FC<TaskFlowModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 gap-0">
-        <DialogHeader className="px-6 py-4 border-b border-gray-200">
+        <DialogHeader className="px-6 py-4 border-b border-neutral-200">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
-              <span className="text-gray-500">Workflow</span>
-              <span className="text-gray-400">›</span>
+              <span className="text-neutral-500">Workflow</span>
+              <span className="text-neutral-400">›</span>
               <span>{taskName}</span>
             </DialogTitle>
             <div className="flex items-center gap-2">
@@ -242,7 +242,7 @@ export const TaskFlowModal: React.FC<TaskFlowModalProps> = ({
         </DialogHeader>
 
         <div className="flex flex-1 overflow-hidden">
-          <div className="w-64 border-r border-gray-200 overflow-y-auto">
+          <div className="w-64 border-r border-neutral-200 overflow-y-auto">
             <TaskLibrary 
               onTaskDragStart={onTaskDragStart}
               onCreateTask={onCreateTask}

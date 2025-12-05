@@ -123,6 +123,7 @@ app.get('/', (req, res) => {
       'GET /v1/agents/:id',
       'POST /api/rag/query',
       'POST /api/mode1/manual',
+      'POST /api/mode1/manual/stream',  // SSE streaming endpoint
       'POST /api/mode2/automatic',
       'POST /api/mode3/autonomous-automatic',
       'POST /api/mode4/autonomous-manual',
@@ -485,6 +486,102 @@ app.post('/api/mode1/manual', async (req, res) => {
     } else {
       res.status(500).json({
         error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * POST /api/mode1/manual/stream
+ * Mode 1 Manual Interactive with SSE Streaming - routes to Python ai-engine
+ * Streams tokens in real-time for <3s first token latency
+ */
+app.post('/api/mode1/manual/stream', async (req, res) => {
+  try {
+    const { agent_id, message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, user_id, tenant_id, session_id, conversation_history, model } = req.body;
+    const tenantId = req.tenantId || tenant_id || 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
+
+    if (!agent_id || !message) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'agent_id and message are required',
+      });
+    }
+
+    console.log(`[Gateway] Mode 1 Stream - Tenant: ${tenantId}, Agent: ${agent_id}`);
+
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Tenant-ID');
+    res.flushHeaders();
+
+    // Forward to Python AI Engine with streaming
+    const response = await axios({
+      method: 'POST',
+      url: `${AI_ENGINE_URL}/api/mode1/manual/stream`,
+      data: {
+        agent_id,
+        message,
+        enable_rag: enable_rag !== false,
+        enable_tools: enable_tools ?? false,
+        selected_rag_domains: selected_rag_domains || [],
+        requested_tools: requested_tools || [],
+        temperature: temperature ?? 0.7,
+        max_tokens: max_tokens ?? 2000,
+        user_id,
+        tenant_id: tenantId,
+        session_id,
+        conversation_history: conversation_history || [],
+        model: model || 'gpt-4',
+      },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-tenant-id': tenantId,
+        'Accept': 'text/event-stream',
+      },
+      responseType: 'stream',
+      timeout: 120000, // 120 seconds for streaming
+    });
+
+    // Pipe the streaming response directly to the client
+    response.data.on('data', (chunk) => {
+      res.write(chunk);
+    });
+
+    response.data.on('end', () => {
+      console.log(`[Gateway] Mode 1 Stream completed - Agent: ${agent_id}`);
+      res.end();
+    });
+
+    response.data.on('error', (err) => {
+      console.error('[Gateway] Mode 1 Stream pipe error:', err.message);
+      res.end();
+    });
+
+    // Handle client disconnect
+    req.on('close', () => {
+      console.log('[Gateway] Mode 1 Stream - Client disconnected');
+      response.data.destroy();
+    });
+
+  } catch (error) {
+    console.error('[Gateway] Mode 1 Stream error:', error.message);
+
+    // If headers already sent (streaming started), just end
+    if (res.headersSent) {
+      const errorEvent = JSON.stringify({ event: 'error', message: error.message });
+      res.write(`data: ${errorEvent}\n\n`);
+      res.end();
+    } else if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway streaming error',
         message: error.message,
       });
     }

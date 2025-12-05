@@ -768,15 +768,15 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Decentralized Clinical Trial Platform</h1>
-          <p className="text-gray-600 mt-2">Virtual, home-based, and mobile clinical trial infrastructure</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Decentralized Clinical Trial Platform</h1>
+          <p className="text-neutral-600 mt-2">Virtual, home-based, and mobile clinical trial infrastructure</p>
         </div>
         <div className="flex space-x-3">
           <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             <Plus className="h-4 w-4 mr-2" />
             New DCT
           </button>
-          <button className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors">
             <Settings className="h-4 w-4 mr-2" />
             Configure
           </button>
@@ -788,11 +788,11 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active DCTs</p>
+              <p className="text-sm text-neutral-600">Active DCTs</p>
               <p className="text-2xl font-bold text-blue-600">{metrics.activeDCTs}</p>
             </div>
             <Globe className="h-8 w-8 text-blue-600" />
@@ -803,11 +803,11 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Virtual Sites</p>
+              <p className="text-sm text-neutral-600">Virtual Sites</p>
               <p className="text-2xl font-bold text-purple-600">{metrics.virtualSites}</p>
             </div>
             <Wifi className="h-8 w-8 text-purple-600" />
@@ -818,11 +818,11 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Home Visits</p>
+              <p className="text-sm text-neutral-600">Home Visits</p>
               <p className="text-2xl font-bold text-green-600">{metrics.homeVisits.toLocaleString()}</p>
             </div>
             <Home className="h-8 w-8 text-green-600" />
@@ -833,11 +833,11 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Mobile Units</p>
+              <p className="text-sm text-neutral-600">Mobile Units</p>
               <p className="text-2xl font-bold text-orange-600">{metrics.mobileUnits}</p>
             </div>
             <Truck className="h-8 w-8 text-orange-600" />
@@ -848,11 +848,11 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Telehealth Sessions</p>
+              <p className="text-sm text-neutral-600">Telehealth Sessions</p>
               <p className="text-2xl font-bold text-teal-600">{metrics.telehealthSessions.toLocaleString()}</p>
             </div>
             <Video className="h-8 w-8 text-teal-600" />
@@ -863,11 +863,11 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Retention Rate</p>
+              <p className="text-sm text-neutral-600">Retention Rate</p>
               <p className="text-2xl font-bold text-indigo-600">{metrics.participantRetention}%</p>
             </div>
             <HeartHandshake className="h-8 w-8 text-indigo-600" />
@@ -878,11 +878,11 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Geographic Reach</p>
+              <p className="text-sm text-neutral-600">Geographic Reach</p>
               <p className="text-2xl font-bold text-pink-600">{metrics.geographicReach}%</p>
             </div>
             <MapPin className="h-8 w-8 text-pink-600" />
@@ -893,11 +893,11 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Cost Reduction</p>
+              <p className="text-sm text-neutral-600">Cost Reduction</p>
               <p className="text-2xl font-bold text-red-600">{metrics.costReduction}%</p>
             </div>
             <TrendingUp className="h-8 w-8 text-red-600" />
@@ -906,7 +906,7 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-neutral-200">
         <nav className="-mb-px flex space-x-8">
           {[
             { key: 'overview', label: 'DCT Overview', icon: Globe },
@@ -921,7 +921,7 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
               className={`flex items-center px-3 py-2 border-b-2 font-medium text-sm ${
                 activeTab === key
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               <Icon className="h-4 w-4 mr-2" />
@@ -936,11 +936,11 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
         <div className="space-y-6">
           {/* Service Availability */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Availability by Region</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">Service Availability by Region</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 flex items-center">
+                  <span className="text-neutral-600 flex items-center">
                     <Home className="h-4 w-4 mr-2" />
                     Home Nursing
                   </span>
@@ -952,7 +952,7 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 flex items-center">
+                  <span className="text-neutral-600 flex items-center">
                     <Package className="h-4 w-4 mr-2" />
                     Phlebotomy
                   </span>
@@ -964,7 +964,7 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 flex items-center">
+                  <span className="text-neutral-600 flex items-center">
                     <Stethoscope className="h-4 w-4 mr-2" />
                     Mobile Imaging
                   </span>
@@ -976,7 +976,7 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 flex items-center">
+                  <span className="text-neutral-600 flex items-center">
                     <Video className="h-4 w-4 mr-2" />
                     Telemedicine
                   </span>
@@ -990,50 +990,50 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">DCT Platform Benefits</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">DCT Platform Benefits</h3>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">Increased patient accessibility and convenience</span>
+                  <span className="text-neutral-700">Increased patient accessibility and convenience</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">Reduced travel burden and associated costs</span>
+                  <span className="text-neutral-700">Reduced travel burden and associated costs</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">Higher patient retention and engagement</span>
+                  <span className="text-neutral-700">Higher patient retention and engagement</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">Real-time data collection and monitoring</span>
+                  <span className="text-neutral-700">Real-time data collection and monitoring</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">Broader geographic reach and diversity</span>
+                  <span className="text-neutral-700">Broader geographic reach and diversity</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">Faster recruitment and study completion</span>
+                  <span className="text-neutral-700">Faster recruitment and study completion</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Active DCT Trials Summary */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Active DCT Trials</h3>
+          <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+            <h3 className="text-lg font-semibold text-neutral-900 mb-4">Active DCT Trials</h3>
             <div className="space-y-3">
               {dctTrials.map((trial) => (
-                <div key={trial.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div key={trial.id} className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg">
                   <div className="flex items-center space-x-4">
                     <div className="p-2 bg-blue-100 rounded">
                       <Globe className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{trial.name}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="font-medium text-neutral-900">{trial.name}</p>
+                      <p className="text-sm text-neutral-600">
                         {trial.virtualComponents.length} virtual components •
                         {trial.locations.filter(loc => loc.type === 'virtual').length} virtual sites
                       </p>

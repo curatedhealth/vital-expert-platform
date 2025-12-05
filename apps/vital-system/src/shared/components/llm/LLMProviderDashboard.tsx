@@ -151,7 +151,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
       case ProviderStatus.MAINTENANCE:
         return <Settings className="h-4 w-4 text-yellow-500" />;
       default:
-        return <Activity className="h-4 w-4 text-gray-500" />;
+        return <Activity className="h-4 w-4 text-neutral-500" />;
     }
   };
 
@@ -160,7 +160,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
       [ProviderStatus.ACTIVE]: 'bg-green-100 text-green-800',
       [ProviderStatus.ERROR]: 'bg-red-100 text-red-800',
       [ProviderStatus.MAINTENANCE]: 'bg-yellow-100 text-yellow-800',
-      [ProviderStatus.DISABLED]: 'bg-gray-100 text-gray-800',
+      [ProviderStatus.DISABLED]: 'bg-neutral-100 text-neutral-800',
       [ProviderStatus.INITIALIZING]: 'bg-blue-100 text-blue-800'
     };
 
@@ -184,8 +184,8 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">LLM Provider Management</h1>
-          <p className="text-gray-600">Manage and monitor your LLM providers</p>
+          <h1 className="text-2xl font-bold text-neutral-900">LLM Provider Management</h1>
+          <p className="text-neutral-600">Manage and monitor your LLM providers</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -217,8 +217,8 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Providers</p>
-                <p className="text-2xl font-bold text-gray-900">{dashboardMetrics.totalProviders}</p>
+                <p className="text-sm font-medium text-neutral-600">Total Providers</p>
+                <p className="text-2xl font-bold text-neutral-900">{dashboardMetrics.totalProviders}</p>
               </div>
               <Server className="h-8 w-8 text-blue-500" />
             </div>
@@ -229,7 +229,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Providers</p>
+                <p className="text-sm font-medium text-neutral-600">Active Providers</p>
                 <p className="text-2xl font-bold text-green-600">{dashboardMetrics.activeProviders}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
@@ -241,7 +241,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Health Score</p>
+                <p className="text-sm font-medium text-neutral-600">Health Score</p>
                 <p className="text-2xl font-bold text-blue-600">
                   {dashboardMetrics.totalProviders > 0
                     ? Math.round((dashboardMetrics.healthyProviders / dashboardMetrics.totalProviders) * 100)
@@ -257,7 +257,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Avg Latency</p>
+                <p className="text-sm font-medium text-neutral-600">Avg Latency</p>
                 <p className="text-2xl font-bold text-yellow-600">{dashboardMetrics.avgLatency}ms</p>
               </div>
               <Zap className="h-8 w-8 text-yellow-500" />
@@ -314,7 +314,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
                             {getStatusIcon(provider.status)}
                             <div>
                               <div className="font-medium">{provider.provider_name}</div>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-sm text-neutral-500">
                                 Priority: {provider.priority_level}
                               </div>
                             </div>
@@ -331,7 +331,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
                           <div>
                             <div className="font-medium">{provider.model_id}</div>
                             {provider.model_version && (
-                              <div className="text-sm text-gray-500">v{provider.model_version}</div>
+                              <div className="text-sm text-neutral-500">v{provider.model_version}</div>
                             )}
                           </div>
                         </TableCell>
@@ -346,7 +346,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
                               value={provider.uptime_percentage}
                               className="w-16 h-2"
                             />
-                            <span className="text-sm text-gray-600">
+                            <span className="text-sm text-neutral-600">
                               {provider.uptime_percentage.toFixed(1)}%
                             </span>
                           </div>
@@ -429,9 +429,9 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
 
               {providers.length === 0 && !loading && (
                 <div className="text-center py-8">
-                  <Server className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No providers configured</h3>
-                  <p className="text-gray-600 mb-4">Get started by adding your first LLM provider</p>
+                  <Server className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-neutral-900 mb-2">No providers configured</h3>
+                  <p className="text-neutral-600 mb-4">Get started by adding your first LLM provider</p>
                   <Button onClick={() => setShowAddProvider(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Provider
@@ -448,7 +448,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
               <CardTitle>Usage Analytics</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center py-8 text-gray-500">
+              <div className="flex items-center justify-center py-8 text-neutral-500">
                 <TrendingUp className="h-12 w-12 mb-4" />
                 <p>Analytics dashboard coming soon...</p>
               </div>
@@ -462,7 +462,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
               <CardTitle>Global Settings</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center py-8 text-gray-500">
+              <div className="flex items-center justify-center py-8 text-neutral-500">
                 <Settings className="h-12 w-12 mb-4" />
                 <p>Settings panel coming soon...</p>
               </div>
@@ -502,7 +502,7 @@ interface ProviderDetailsModalProps {
 const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({ provider, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-canvas-surface rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Provider Details</h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -513,25 +513,25 @@ const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({ provider, o
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Name</label>
-              <p className="text-sm text-gray-900">{provider.provider_name}</p>
+              <label className="block text-sm font-medium text-neutral-700">Name</label>
+              <p className="text-sm text-neutral-900">{provider.provider_name}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Type</label>
-              <p className="text-sm text-gray-900">{PROVIDER_TYPE_LABELS[provider.provider_type]}</p>
+              <label className="block text-sm font-medium text-neutral-700">Type</label>
+              <p className="text-sm text-neutral-900">{PROVIDER_TYPE_LABELS[provider.provider_type]}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Model</label>
-              <p className="text-sm text-gray-900">{provider.model_id}</p>
+              <label className="block text-sm font-medium text-neutral-700">Model</label>
+              <p className="text-sm text-neutral-900">{provider.model_id}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <label className="block text-sm font-medium text-neutral-700">Status</label>
               <div className="mt-1">{getStatusBadge(provider.status)}</div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Capabilities</label>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Capabilities</label>
             <div className="flex flex-wrap gap-2">
               {Object.entries(provider.capabilities).map(([key, value]) => (
                 value && (
@@ -545,34 +545,34 @@ const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({ provider, o
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Input Cost (per 1K tokens)</label>
-              <p className="text-sm text-gray-900">${provider.cost_per_1k_input_tokens.toFixed(6)}</p>
+              <label className="block text-sm font-medium text-neutral-700">Input Cost (per 1K tokens)</label>
+              <p className="text-sm text-neutral-900">${provider.cost_per_1k_input_tokens.toFixed(6)}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Output Cost (per 1K tokens)</label>
-              <p className="text-sm text-gray-900">${provider.cost_per_1k_output_tokens.toFixed(6)}</p>
+              <label className="block text-sm font-medium text-neutral-700">Output Cost (per 1K tokens)</label>
+              <p className="text-sm text-neutral-900">${provider.cost_per_1k_output_tokens.toFixed(6)}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Rate Limit (RPM)</label>
-              <p className="text-sm text-gray-900">{provider.rate_limit_rpm}</p>
+              <label className="block text-sm font-medium text-neutral-700">Rate Limit (RPM)</label>
+              <p className="text-sm text-neutral-900">{provider.rate_limit_rpm}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Rate Limit (TPM)</label>
-              <p className="text-sm text-gray-900">{provider.rate_limit_tpm}</p>
+              <label className="block text-sm font-medium text-neutral-700">Rate Limit (TPM)</label>
+              <p className="text-sm text-neutral-900">{provider.rate_limit_tpm}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Max Tokens</label>
-              <p className="text-sm text-gray-900">{provider.max_tokens}</p>
+              <label className="block text-sm font-medium text-neutral-700">Max Tokens</label>
+              <p className="text-sm text-neutral-900">{provider.max_tokens}</p>
             </div>
           </div>
 
           {provider.metadata && Object.keys(provider.metadata).length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Metadata</label>
-              <pre className="text-xs bg-gray-100 p-2 rounded">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">Metadata</label>
+              <pre className="text-xs bg-neutral-100 p-2 rounded">
                 {JSON.stringify(provider.metadata, null, 2)}
               </pre>
             </div>
@@ -592,7 +592,7 @@ interface AddProviderModalProps {
 const AddProviderModal: React.FC<AddProviderModalProps> = ({ onClose, onSuccess }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
+      <div className="bg-canvas-surface rounded-lg p-6 max-w-lg w-full mx-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Add LLM Provider</h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -600,7 +600,7 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({ onClose, onSuccess 
           </Button>
         </div>
 
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-neutral-500">
           <Plus className="h-12 w-12 mx-auto mb-4" />
           <p>Add provider form coming soon...</p>
           <Button className="mt-4" onClick={onSuccess}>

@@ -381,7 +381,7 @@ const ComplianceTestingSuite: React.FC = () => {
       case 'failed': return 'bg-red-100 text-red-800';
       case 'running': return 'bg-blue-100 text-blue-800';
       case 'in_progress': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -390,24 +390,24 @@ const ComplianceTestingSuite: React.FC = () => {
       case 'high': return 'bg-orange-100 text-orange-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'low': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-canvas-surface border-b border-neutral-200 px-6 py-4">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900">Regulatory Compliance Testing Suite</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-neutral-900">Regulatory Compliance Testing Suite</h1>
+          <p className="text-neutral-600 mt-1">
             Automated testing and validation for HIPAA, FDA, GDPR, and other compliance standards
           </p>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="bg-white border-b border-gray-200 px-6">
+      <div className="bg-canvas-surface border-b border-neutral-200 px-6">
         <div className="max-w-7xl mx-auto">
           <nav className="-mb-px flex space-x-8">
             {[
@@ -423,11 +423,11 @@ const ComplianceTestingSuite: React.FC = () => {
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.key
                     ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
                 }`}
               >
                 <div>{tab.label}</div>
-                <div className="text-xs text-gray-400">{tab.desc}</div>
+                <div className="text-xs text-neutral-400">{tab.desc}</div>
               </button>
             ))}
           </nav>
@@ -438,7 +438,7 @@ const ComplianceTestingSuite: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 py-6">
         {activeTab === 'standards' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Compliance Standards</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">Compliance Standards</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               {complianceStandards.map(standard => (
@@ -448,30 +448,30 @@ const ComplianceTestingSuite: React.FC = () => {
                   className={`p-4 border rounded-lg text-left transition-all ${
                     selectedStandard === standard.id
                       ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                      : 'border-neutral-200 bg-canvas-surface hover:border-neutral-300'
                   }`}
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-gray-900">{standard.name}</h3>
+                    <h3 className="font-medium text-neutral-900">{standard.name}</h3>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(standard.status)}`}>
                       {standard.status.replace('_', ' ')}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600">{standard.category.replace('_', ' ')}</p>
-                  <p className="text-xs text-gray-500 mt-1">{standard.requirements.length} requirements</p>
+                  <p className="text-sm text-neutral-600">{standard.category.replace('_', ' ')}</p>
+                  <p className="text-xs text-neutral-500 mt-1">{standard.requirements.length} requirements</p>
                 </button>
               ))}
             </div>
 
             {/* Selected Standard Details */}
             {selectedStandard && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-lg font-medium text-neutral-900">
                       {complianceStandards.find((s: any) => s.id === selectedStandard)?.name}
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-neutral-600">
                       Version {complianceStandards.find((s: any) => s.id === selectedStandard)?.version}
                     </p>
                   </div>
@@ -486,12 +486,12 @@ const ComplianceTestingSuite: React.FC = () => {
 
                 <div className="space-y-4">
                   {complianceStandards.find((s: any) => s.id === selectedStandard)?.requirements.map(requirement => (
-                    <div key={requirement.id} className="border border-gray-200 rounded-lg p-4">
+                    <div key={requirement.id} className="border border-neutral-200 rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h4 className="font-medium text-gray-900">{requirement.title}</h4>
-                          <p className="text-sm text-gray-600">{requirement.description}</p>
-                          <p className="text-xs text-gray-500 mt-1">Section: {requirement.section}</p>
+                          <h4 className="font-medium text-neutral-900">{requirement.title}</h4>
+                          <p className="text-sm text-neutral-600">{requirement.description}</p>
+                          <p className="text-xs text-neutral-500 mt-1">Section: {requirement.section}</p>
                         </div>
                         <div className="flex items-center space-x-2">
                           {requirement.mandatory && (
@@ -505,7 +505,7 @@ const ComplianceTestingSuite: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-neutral-600">
                         {requirement.testCases.length} test cases
                       </div>
                     </div>
@@ -518,18 +518,18 @@ const ComplianceTestingSuite: React.FC = () => {
 
         {activeTab === 'testing' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Compliance Testing</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">Compliance Testing</h2>
 
             {/* eslint-disable-next-line security/detect-object-injection */}
             {testResults[selectedStandard] && testResults[selectedStandard].length > 0 ? (
               <div className="space-y-4">
                 {/* eslint-disable-next-line security/detect-object-injection */}
                 {testResults[selectedStandard].map(testCase => (
-                  <div key={testCase.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div key={testCase.id} className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="font-medium text-gray-900">{testCase.name}</h3>
-                        <p className="text-sm text-gray-600">{testCase.description}</p>
+                        <h3 className="font-medium text-neutral-900">{testCase.name}</h3>
+                        <p className="text-sm text-neutral-600">{testCase.description}</p>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(testCase.status)}`}>
                         {testCase.status}
@@ -538,13 +538,13 @@ const ComplianceTestingSuite: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Expected Result</h4>
-                        <p className="text-sm text-gray-600">{testCase.expectedResult}</p>
+                        <h4 className="font-medium text-neutral-900 mb-2">Expected Result</h4>
+                        <p className="text-sm text-neutral-600">{testCase.expectedResult}</p>
                       </div>
 
                       {testCase.actualResult && (
                         <div>
-                          <h4 className="font-medium text-gray-900 mb-2">Actual Result</h4>
+                          <h4 className="font-medium text-neutral-900 mb-2">Actual Result</h4>
                           <p className={`text-sm ${
                             testCase.status === 'passed' ? 'text-green-600' : 'text-red-600'
                           }`}>
@@ -556,10 +556,10 @@ const ComplianceTestingSuite: React.FC = () => {
 
                     {testCase.artifacts.length > 0 && (
                       <div className="mt-4">
-                        <h4 className="font-medium text-gray-900 mb-2">Artifacts</h4>
+                        <h4 className="font-medium text-neutral-900 mb-2">Artifacts</h4>
                         <div className="flex flex-wrap gap-2">
                           {testCase.artifacts.map((artifact, index) => (
-                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                            <span key={index} className="px-2 py-1 bg-neutral-100 text-neutral-700 text-xs rounded">
                               {artifact}
                             </span>
                           ))}
@@ -568,7 +568,7 @@ const ComplianceTestingSuite: React.FC = () => {
                     )}
 
                     {testCase.lastRun && (
-                      <div className="mt-2 text-xs text-gray-500">
+                      <div className="mt-2 text-xs text-neutral-500">
                         Last run: {testCase.lastRun.toLocaleString()}
                       </div>
                     )}
@@ -576,10 +576,10 @@ const ComplianceTestingSuite: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-12 text-center">
                 <div className="text-4xl mb-4">🧪</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Run Compliance Tests</h3>
-                <p className="text-gray-600 mb-4">
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">Run Compliance Tests</h3>
+                <p className="text-neutral-600 mb-4">
                   Select a compliance standard and run tests to validate your implementation
                 </p>
               </div>
@@ -589,15 +589,15 @@ const ComplianceTestingSuite: React.FC = () => {
 
         {activeTab === 'evidence' && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Supporting Evidence</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">Supporting Evidence</h2>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-8 text-center">
               <div className="text-4xl mb-4">📁</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Evidence Management</h3>
-              <p className="text-gray-600 mb-4">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-2">Evidence Management</h3>
+              <p className="text-neutral-600 mb-4">
                 Upload and manage supporting documentation for compliance requirements
               </p>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-neutral-500">
                 Coming soon - Document management and evidence tracking
               </div>
             </div>
@@ -607,7 +607,7 @@ const ComplianceTestingSuite: React.FC = () => {
         {activeTab === 'reports' && (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Compliance Reports</h2>
+              <h2 className="text-lg font-semibold text-neutral-900">Compliance Reports</h2>
               {/* eslint-disable-next-line security/detect-object-injection */}
               {testResults[selectedStandard] && testResults[selectedStandard].length > 0 && (
                 <button
@@ -627,25 +627,25 @@ const ComplianceTestingSuite: React.FC = () => {
                   return (
                     <div className="space-y-6">
                       {/* Summary */}
-                      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Compliance Summary</h3>
+                      <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                        <h3 className="text-lg font-medium text-neutral-900 mb-4">Compliance Summary</h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                           <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-900">{report.score}%</div>
-                            <div className="text-sm text-gray-600">Overall Score</div>
+                            <div className="text-2xl font-bold text-neutral-900">{report.score}%</div>
+                            <div className="text-sm text-neutral-600">Overall Score</div>
                           </div>
                           <div className="text-center">
                             <div className="text-2xl font-bold text-green-600">{report.requirementsSummary.passed}</div>
-                            <div className="text-sm text-gray-600">Passed</div>
+                            <div className="text-sm text-neutral-600">Passed</div>
                           </div>
                           <div className="text-center">
                             <div className="text-2xl font-bold text-red-600">{report.requirementsSummary.failed}</div>
-                            <div className="text-sm text-gray-600">Failed</div>
+                            <div className="text-sm text-neutral-600">Failed</div>
                           </div>
                           <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-600">{report.requirementsSummary.pending}</div>
-                            <div className="text-sm text-gray-600">Pending</div>
+                            <div className="text-2xl font-bold text-neutral-600">{report.requirementsSummary.pending}</div>
+                            <div className="text-sm text-neutral-600">Pending</div>
                           </div>
                         </div>
 
@@ -662,19 +662,19 @@ const ComplianceTestingSuite: React.FC = () => {
 
                       {/* Critical Findings */}
                       {report.criticalFindings.length > 0 && (
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                          <h3 className="text-lg font-medium text-gray-900 mb-4">Critical Findings</h3>
+                        <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                          <h3 className="text-lg font-medium text-neutral-900 mb-4">Critical Findings</h3>
 
                           <div className="space-y-3">
                             {report.criticalFindings.map(finding => (
-                              <div key={finding.id} className="border border-gray-200 rounded-lg p-4">
+                              <div key={finding.id} className="border border-neutral-200 rounded-lg p-4">
                                 <div className="flex justify-between items-start mb-2">
-                                  <h4 className="font-medium text-gray-900">{finding.requirement}</h4>
+                                  <h4 className="font-medium text-neutral-900">{finding.requirement}</h4>
                                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(finding.severity)}`}>
                                     {finding.severity}
                                   </span>
                                 </div>
-                                <p className="text-sm text-gray-600 mb-2">{finding.description}</p>
+                                <p className="text-sm text-neutral-600 mb-2">{finding.description}</p>
                                 <p className="text-sm text-blue-600">{finding.remediation}</p>
                               </div>
                             ))}
@@ -683,14 +683,14 @@ const ComplianceTestingSuite: React.FC = () => {
                       )}
 
                       {/* Recommendations */}
-                      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Recommendations</h3>
+                      <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                        <h3 className="text-lg font-medium text-neutral-900 mb-4">Recommendations</h3>
 
                         <div className="space-y-2">
                           {report.recommendations.map((recommendation, index) => (
                             <div key={index} className="flex items-start space-x-3">
                               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2" />
-                              <div className="text-sm text-gray-700">{recommendation}</div>
+                              <div className="text-sm text-neutral-700">{recommendation}</div>
                             </div>
                           ))}
                         </div>
@@ -700,10 +700,10 @@ const ComplianceTestingSuite: React.FC = () => {
                 })()}
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-12 text-center">
                 <div className="text-4xl mb-4">📊</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Generate Compliance Reports</h3>
-                <p className="text-gray-600">Run tests first to generate detailed compliance reports</p>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">Generate Compliance Reports</h3>
+                <p className="text-neutral-600">Run tests first to generate detailed compliance reports</p>
               </div>
             )}
           </div>
@@ -711,22 +711,22 @@ const ComplianceTestingSuite: React.FC = () => {
 
         {activeTab === 'regulatory_intelligence' && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Regulatory Intelligence & Market Monitoring</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">Regulatory Intelligence & Market Monitoring</h2>
 
             {/* Real-time Regulatory Updates */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">📡 Real-Time Regulatory Updates</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">📡 Real-Time Regulatory Updates</h3>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Recent FDA Updates</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Recent FDA Updates</h4>
                   <div className="space-y-3">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <div className="flex justify-between items-start mb-2">
-                        <div className="text-sm font-medium text-gray-900">FDA Digital Health Pre-Cert Program 2.0</div>
+                        <div className="text-sm font-medium text-neutral-900">FDA Digital Health Pre-Cert Program 2.0</div>
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Today</span>
                       </div>
-                      <div className="text-xs text-gray-600">New streamlined pathway for software-based medical devices</div>
+                      <div className="text-xs text-neutral-600">New streamlined pathway for software-based medical devices</div>
                       <div className="mt-2">
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Impact: High</span>
                       </div>
@@ -734,10 +734,10 @@ const ComplianceTestingSuite: React.FC = () => {
 
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                       <div className="flex justify-between items-start mb-2">
-                        <div className="text-sm font-medium text-gray-900">AI/ML Guidance Update</div>
+                        <div className="text-sm font-medium text-neutral-900">AI/ML Guidance Update</div>
                         <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">2 days ago</span>
                       </div>
-                      <div className="text-xs text-gray-600">Updated requirements for AI/ML-enabled medical devices</div>
+                      <div className="text-xs text-neutral-600">Updated requirements for AI/ML-enabled medical devices</div>
                       <div className="mt-2">
                         <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Impact: Medium</span>
                       </div>
@@ -746,14 +746,14 @@ const ComplianceTestingSuite: React.FC = () => {
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">CMS & Payer Updates</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">CMS & Payer Updates</h4>
                   <div className="space-y-3">
                     <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                       <div className="flex justify-between items-start mb-2">
-                        <div className="text-sm font-medium text-gray-900">Digital Therapeutics Coverage Decision</div>
+                        <div className="text-sm font-medium text-neutral-900">Digital Therapeutics Coverage Decision</div>
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">1 day ago</span>
                       </div>
-                      <div className="text-xs text-gray-600">CMS expands coverage for diabetes management DTx</div>
+                      <div className="text-xs text-neutral-600">CMS expands coverage for diabetes management DTx</div>
                       <div className="mt-2">
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Impact: High</span>
                       </div>
@@ -761,10 +761,10 @@ const ComplianceTestingSuite: React.FC = () => {
 
                     <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                       <div className="flex justify-between items-start mb-2">
-                        <div className="text-sm font-medium text-gray-900">Private Payer Policy Update</div>
+                        <div className="text-sm font-medium text-neutral-900">Private Payer Policy Update</div>
                         <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">3 days ago</span>
                       </div>
-                      <div className="text-xs text-gray-600">Anthem updates digital health reimbursement criteria</div>
+                      <div className="text-xs text-neutral-600">Anthem updates digital health reimbursement criteria</div>
                       <div className="mt-2">
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Impact: Medium</span>
                       </div>
@@ -775,53 +775,53 @@ const ComplianceTestingSuite: React.FC = () => {
             </div>
 
             {/* Competitive Intelligence */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">🔍 Competitive Intelligence</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">🔍 Competitive Intelligence</h3>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Recent FDA Approvals</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Recent FDA Approvals</h4>
                   <div className="space-y-2">
-                    <div className="border border-gray-200 rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-900">DigitalRx DTx</div>
-                      <div className="text-xs text-gray-600 mt-1">De Novo classification - Diabetes management</div>
+                    <div className="border border-neutral-200 rounded-lg p-3">
+                      <div className="text-sm font-medium text-neutral-900">DigitalRx DTx</div>
+                      <div className="text-xs text-neutral-600 mt-1">De Novo classification - Diabetes management</div>
                       <div className="text-xs text-blue-600 mt-1">Similar indication to your product</div>
                     </div>
-                    <div className="border border-gray-200 rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-900">MindHealth App</div>
-                      <div className="text-xs text-gray-600 mt-1">510(k) clearance - Mental health</div>
-                      <div className="text-xs text-gray-600 mt-1">Different therapeutic area</div>
+                    <div className="border border-neutral-200 rounded-lg p-3">
+                      <div className="text-sm font-medium text-neutral-900">MindHealth App</div>
+                      <div className="text-xs text-neutral-600 mt-1">510(k) clearance - Mental health</div>
+                      <div className="text-xs text-neutral-600 mt-1">Different therapeutic area</div>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Patent Landscape</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Patent Landscape</h4>
                   <div className="space-y-2">
-                    <div className="border border-gray-200 rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-900">New Patents Filed</div>
-                      <div className="text-xs text-gray-600 mt-1">47 diabetes-related DTx patents this month</div>
+                    <div className="border border-neutral-200 rounded-lg p-3">
+                      <div className="text-sm font-medium text-neutral-900">New Patents Filed</div>
+                      <div className="text-xs text-neutral-600 mt-1">47 diabetes-related DTx patents this month</div>
                       <div className="text-xs text-orange-600 mt-1">Monitor for potential conflicts</div>
                     </div>
-                    <div className="border border-gray-200 rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-900">Expired Patents</div>
-                      <div className="text-xs text-gray-600 mt-1">12 relevant patents entering public domain</div>
+                    <div className="border border-neutral-200 rounded-lg p-3">
+                      <div className="text-sm font-medium text-neutral-900">Expired Patents</div>
+                      <div className="text-xs text-neutral-600 mt-1">12 relevant patents entering public domain</div>
                       <div className="text-xs text-green-600 mt-1">Opportunities for implementation</div>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Clinical Trial Activity</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Clinical Trial Activity</h4>
                   <div className="space-y-2">
-                    <div className="border border-gray-200 rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-900">Active Trials</div>
-                      <div className="text-xs text-gray-600 mt-1">23 diabetes DTx trials currently recruiting</div>
+                    <div className="border border-neutral-200 rounded-lg p-3">
+                      <div className="text-sm font-medium text-neutral-900">Active Trials</div>
+                      <div className="text-xs text-neutral-600 mt-1">23 diabetes DTx trials currently recruiting</div>
                       <div className="text-xs text-blue-600 mt-1">Competitive landscape analysis</div>
                     </div>
-                    <div className="border border-gray-200 rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-900">Completed Studies</div>
-                      <div className="text-xs text-gray-600 mt-1">8 studies published this quarter</div>
+                    <div className="border border-neutral-200 rounded-lg p-3">
+                      <div className="text-sm font-medium text-neutral-900">Completed Studies</div>
+                      <div className="text-xs text-neutral-600 mt-1">8 studies published this quarter</div>
                       <div className="text-xs text-green-600 mt-1">Evidence base growing</div>
                     </div>
                   </div>
@@ -830,21 +830,21 @@ const ComplianceTestingSuite: React.FC = () => {
             </div>
 
             {/* Regulatory Pathway Analysis */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">🗺️ Regulatory Pathway Intelligence</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">🗺️ Regulatory Pathway Intelligence</h3>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Optimal Regulatory Strategy</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Optimal Regulatory Strategy</h4>
                   <div className="space-y-4">
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                       <div className="flex items-center mb-2">
                         <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
                           <span className="text-green-600 text-sm font-bold">1</span>
                         </div>
-                        <div className="font-medium text-gray-900">FDA De Novo Pathway</div>
+                        <div className="font-medium text-neutral-900">FDA De Novo Pathway</div>
                       </div>
-                      <div className="text-sm text-gray-600 ml-11">
+                      <div className="text-sm text-neutral-600 ml-11">
                         Recommended for novel diabetes DTx with AI/ML components
                       </div>
                       <div className="text-xs text-green-600 ml-11 mt-1">
@@ -857,9 +857,9 @@ const ComplianceTestingSuite: React.FC = () => {
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                           <span className="text-blue-600 text-sm font-bold">2</span>
                         </div>
-                        <div className="font-medium text-gray-900">Pre-Submission Meeting</div>
+                        <div className="font-medium text-neutral-900">Pre-Submission Meeting</div>
                       </div>
-                      <div className="text-sm text-gray-600 ml-11">
+                      <div className="text-sm text-neutral-600 ml-11">
                         Schedule Q-Sub meeting to discuss predicate devices and classification
                       </div>
                       <div className="text-xs text-blue-600 ml-11 mt-1">
@@ -872,9 +872,9 @@ const ComplianceTestingSuite: React.FC = () => {
                         <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
                           <span className="text-purple-600 text-sm font-bold">3</span>
                         </div>
-                        <div className="font-medium text-gray-900">Clinical Evidence Strategy</div>
+                        <div className="font-medium text-neutral-900">Clinical Evidence Strategy</div>
                       </div>
-                      <div className="text-sm text-gray-600 ml-11">
+                      <div className="text-sm text-neutral-600 ml-11">
                         RCT + real-world evidence package recommended
                       </div>
                       <div className="text-xs text-purple-600 ml-11 mt-1">
@@ -885,32 +885,32 @@ const ComplianceTestingSuite: React.FC = () => {
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Risk Assessment & Mitigation</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Risk Assessment & Mitigation</h4>
                   <div className="space-y-3">
                     <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                       <div className="flex justify-between items-start mb-2">
-                        <div className="text-sm font-medium text-gray-900">AI/ML Algorithm Changes</div>
+                        <div className="text-sm font-medium text-neutral-900">AI/ML Algorithm Changes</div>
                         <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">High Risk</span>
                       </div>
-                      <div className="text-xs text-gray-600">FDA requires predetermined change control plan for AI/ML modifications</div>
+                      <div className="text-xs text-neutral-600">FDA requires predetermined change control plan for AI/ML modifications</div>
                       <div className="text-xs text-red-600 mt-1">Mitigation: Implement SaMD framework early</div>
                     </div>
 
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                       <div className="flex justify-between items-start mb-2">
-                        <div className="text-sm font-medium text-gray-900">Cybersecurity Requirements</div>
+                        <div className="text-sm font-medium text-neutral-900">Cybersecurity Requirements</div>
                         <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Medium Risk</span>
                       </div>
-                      <div className="text-xs text-gray-600">Enhanced cybersecurity requirements for networked devices</div>
+                      <div className="text-xs text-neutral-600">Enhanced cybersecurity requirements for networked devices</div>
                       <div className="text-xs text-yellow-600 mt-1">Mitigation: Early security by design implementation</div>
                     </div>
 
                     <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                       <div className="flex justify-between items-start mb-2">
-                        <div className="text-sm font-medium text-gray-900">Clinical Evidence Base</div>
+                        <div className="text-sm font-medium text-neutral-900">Clinical Evidence Base</div>
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Low Risk</span>
                       </div>
-                      <div className="text-xs text-gray-600">Strong precedent for diabetes management DTx approvals</div>
+                      <div className="text-xs text-neutral-600">Strong precedent for diabetes management DTx approvals</div>
                       <div className="text-xs text-green-600 mt-1">Advantage: Clear regulatory pathway established</div>
                     </div>
                   </div>
@@ -920,24 +920,24 @@ const ComplianceTestingSuite: React.FC = () => {
 
             {/* AI-Powered Insights Dashboard */}
             <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">🤖 AI-Powered Regulatory Intelligence</h3>
+              <h3 className="text-xl font-bold text-neutral-900 mb-4">🤖 AI-Powered Regulatory Intelligence</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-lg p-4 text-center">
+                <div className="bg-canvas-surface rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-indigo-600 mb-1">94%</div>
-                  <div className="text-sm text-gray-600">Regulatory Success Probability</div>
+                  <div className="text-sm text-neutral-600">Regulatory Success Probability</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
+                <div className="bg-canvas-surface rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-green-600 mb-1">14</div>
-                  <div className="text-sm text-gray-600">Months to Market</div>
+                  <div className="text-sm text-neutral-600">Months to Market</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
+                <div className="bg-canvas-surface rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-purple-600 mb-1">$2.1M</div>
-                  <div className="text-sm text-gray-600">Estimated Regulatory Cost</div>
+                  <div className="text-sm text-neutral-600">Estimated Regulatory Cost</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
+                <div className="bg-canvas-surface rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-orange-600 mb-1">7</div>
-                  <div className="text-sm text-gray-600">Critical Action Items</div>
+                  <div className="text-sm text-neutral-600">Critical Action Items</div>
                 </div>
               </div>
 
@@ -945,7 +945,7 @@ const ComplianceTestingSuite: React.FC = () => {
                 <button className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 font-semibold mr-4">
                   Generate Regulatory Strategy Report →
                 </button>
-                <button className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 font-semibold">
+                <button className="px-6 py-3 bg-canvas-surface text-neutral-700 border border-neutral-300 rounded-lg hover:bg-neutral-50 font-semibold">
                   Schedule Expert Consultation
                 </button>
               </div>

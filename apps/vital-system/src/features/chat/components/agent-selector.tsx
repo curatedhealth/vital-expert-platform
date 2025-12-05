@@ -86,12 +86,12 @@ export function AgentSelector({ compact = false, onEditAgent }: AgentSelectorPro
             />
 
             {/* Dropdown */}
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
               {agents.map((agent) => (
                 <Button
                   key={agent.id}
                   variant="ghost"
-                  className="w-full justify-start h-auto p-3 border-b border-gray-100 last:border-b-0"
+                  className="w-full justify-start h-auto p-3 border-b border-neutral-100 last:border-b-0"
                   onClick={() => {
                     setSelectedAgent(agent);
                     setIsOpen(false);

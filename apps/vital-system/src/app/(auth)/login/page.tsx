@@ -56,20 +56,20 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent mb-2">
             VITAL Expert
           </h1>
-          <p className="text-gray-600 text-sm">Strategic Intelligence Platform</p>
+          <p className="text-neutral-600 text-sm">Strategic Intelligence Platform</p>
         </div>
 
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="text-center pb-6">
-            <CardTitle className="text-2xl font-semibold text-gray-900">Welcome back</CardTitle>
-            <CardDescription className="text-gray-600">
+            <CardTitle className="text-2xl font-semibold text-neutral-900">Welcome back</CardTitle>
+            <CardDescription className="text-neutral-600">
               Sign in to your account to continue your healthcare transformation journey
             </CardDescription>
           </CardHeader>
         <CardContent className="px-6 pb-6">
           <form action={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-neutral-700">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -77,11 +77,11 @@ export default function LoginPage() {
                 placeholder="Enter your email"
                 required
                 disabled={isPending}
-                className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="h-12 border-neutral-200 focus:border-blue-500 focus:ring-blue-500/20"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium text-neutral-700">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -90,13 +90,13 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                   required
                   disabled={isPending}
-                  className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 pr-12"
+                  className="h-12 border-neutral-200 focus:border-blue-500 focus:ring-blue-500/20 pr-12"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-neutral-400 hover:text-neutral-600"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isPending}
                 >
@@ -135,7 +135,7 @@ export default function LoginPage() {
           </form>
 
           <div className="text-center mt-6">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-neutral-600">
               Don't have an account?{' '}
               <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors">
                 Sign up
@@ -144,7 +144,7 @@ export default function LoginPage() {
           </div>
 
           <div className="text-center mt-4">
-            <Link href="/" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors">
+            <Link href="/" className="inline-flex items-center text-sm text-neutral-500 hover:text-neutral-700 transition-colors">
               <svg
                 className="mr-2 h-4 w-4"
                 fill="none"

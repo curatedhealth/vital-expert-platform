@@ -76,10 +76,10 @@ export default function SolutionSection() {
   ]
 
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-neutral-50">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-6">
             The VITAL Expert Platform: Your Infinite Healthcare Intelligence Team
           </h2>
         </div>
@@ -105,7 +105,7 @@ export default function SolutionSection() {
               <div className={`p-8 rounded-2xl border-2 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl ${
                 solution.popular 
                   ? 'border-vital-purple-200 shadow-lg' 
-                  : 'border-gray-200 hover:border-gray-300'
+                  : 'border-neutral-200 hover:border-neutral-300'
               } bg-white`}>
                 <div className="text-center mb-6">
                   <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl ${solution.bgColor} flex items-center justify-center overflow-hidden`}>
@@ -121,13 +121,13 @@ export default function SolutionSection() {
                       <span className="text-2xl">{solution.icon}</span>
                     )}
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-2xl font-bold text-neutral-900 mb-2">
                     {solution.title}
                   </h3>
                   <p className={`text-2xl font-bold ${solution.textColor} mb-2`}>
                     {solution.price}
                   </p>
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-neutral-600 text-sm">
                     {solution.description}
                   </p>
                 </div>
@@ -136,7 +136,7 @@ export default function SolutionSection() {
                   {solution.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start gap-3">
                       <Check className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-600 text-sm">{feature}</span>
+                      <span className="text-neutral-600 text-sm">{feature}</span>
                     </li>
                   ))}
                 </ul>

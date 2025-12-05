@@ -121,7 +121,7 @@ export const OpenAIUsageDashboard: React.FC = () => {
           <Brain className="h-6 w-6 text-blue-600" />
           <div>
             <h2 className="text-2xl font-bold">OpenAI Usage Dashboard</h2>
-            <p className="text-gray-600">Loading real-time usage data...</p>
+            <p className="text-neutral-600">Loading real-time usage data...</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -129,8 +129,8 @@ export const OpenAIUsageDashboard: React.FC = () => {
             <Card key={i}>
               <CardContent className="pt-6">
                 <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-neutral-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-8 bg-neutral-200 rounded w-1/2"></div>
                 </div>
               </CardContent>
             </Card>
@@ -147,7 +147,7 @@ export const OpenAIUsageDashboard: React.FC = () => {
           <Brain className="h-6 w-6 text-blue-600" />
           <div>
             <h2 className="text-2xl font-bold">OpenAI Usage Dashboard</h2>
-            <p className="text-gray-600">Real-time usage and billing information</p>
+            <p className="text-neutral-600">Real-time usage and billing information</p>
           </div>
         </div>
         <Alert className="border-red-200 bg-red-50">
@@ -175,7 +175,7 @@ export const OpenAIUsageDashboard: React.FC = () => {
           <Brain className="h-6 w-6 text-blue-600" />
           <div>
             <h2 className="text-2xl font-bold">OpenAI Usage Dashboard</h2>
-            <p className="text-gray-600">Real-time usage and billing information</p>
+            <p className="text-neutral-600">Real-time usage and billing information</p>
           </div>
         </div>
         <Button onClick={handleRefresh} disabled={refreshing} variant="outline">
@@ -280,7 +280,7 @@ export const OpenAIUsageDashboard: React.FC = () => {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm font-medium">Monthly Usage</span>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-neutral-600">
                   {formatCurrency(currentUsage?.totalCost || 0)} / {formatCurrency(billingInfo.soft_limit_usd)}
                 </span>
               </div>
@@ -292,11 +292,11 @@ export const OpenAIUsageDashboard: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-gray-600">Hard Limit</p>
+                <p className="text-neutral-600">Hard Limit</p>
                 <p className="font-semibold">{formatCurrency(billingInfo.hard_limit_usd)}</p>
               </div>
               <div>
-                <p className="text-gray-600">Payment Method</p>
+                <p className="text-neutral-600">Payment Method</p>
                 <Badge variant={billingInfo.has_payment_method ? 'default' : 'destructive'}>
                   {billingInfo.has_payment_method ? 'Active' : 'Not Set'}
                 </Badge>
@@ -325,12 +325,12 @@ export const OpenAIUsageDashboard: React.FC = () => {
                     <span className="font-medium">{model}</span>
                     <div className="text-right">
                       <span className="font-bold">{formatCurrency(data.cost)}</span>
-                      <span className="text-sm text-gray-600 ml-2">
+                      <span className="text-sm text-neutral-600 ml-2">
                         ({formatNumber(data.requests)} requests)
                       </span>
                     </div>
                   </div>
-                  <div className="text-xs text-gray-600">
+                  <div className="text-xs text-neutral-600">
                     {formatNumber(data.tokens)} tokens processed
                   </div>
                   <Progress
@@ -344,7 +344,7 @@ export const OpenAIUsageDashboard: React.FC = () => {
         </Card>
       )}
 
-      <div className="text-xs text-gray-500 text-center">
+      <div className="text-xs text-neutral-500 text-center">
         <Calendar className="h-3 w-3 inline mr-1" />
         Data refreshed: {new Date().toLocaleString()}
       </div>

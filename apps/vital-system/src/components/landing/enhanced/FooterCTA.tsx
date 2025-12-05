@@ -38,7 +38,7 @@ export default function FooterCTA() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button 
               size="lg" 
-              className="bg-white text-vital-blue-600 hover:bg-gray-100 px-8 py-6 text-lg font-semibold"
+              className="bg-white text-vital-blue-600 hover:bg-neutral-100 px-8 py-6 text-lg font-semibold"
             >
               Start 14-Day Free Trial
             </Button>

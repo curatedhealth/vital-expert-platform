@@ -61,7 +61,7 @@ export function InlineCitation({ sources, citationNumber, className }: InlineCit
         <div
           className={cn(
             "absolute bottom-full left-1/2 -translate-x-1/2 mb-2",
-            "w-80 p-4 bg-white rounded-lg shadow-xl border border-gray-200",
+            "w-80 p-4 bg-white rounded-lg shadow-xl border border-neutral-200",
             "z-50 animate-in fade-in-0 zoom-in-95 duration-200"
           )}
           onMouseEnter={() => setIsOpen(true)}
@@ -71,7 +71,7 @@ export function InlineCitation({ sources, citationNumber, className }: InlineCit
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-trust-blue" />
-              <span className="text-xs font-semibold text-gray-900">
+              <span className="text-xs font-semibold text-neutral-900">
                 Citation [{citationNumber}]
               </span>
             </div>
@@ -79,7 +79,7 @@ export function InlineCitation({ sources, citationNumber, className }: InlineCit
 
           {/* Content */}
           <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-gray-900 line-clamp-2">
+            <h4 className="text-sm font-semibold text-neutral-900 line-clamp-2">
               {currentSource.title}
             </h4>
 
@@ -89,7 +89,7 @@ export function InlineCitation({ sources, citationNumber, className }: InlineCit
                   {currentSource.category}
                 </span>
                 {currentSource.score && (
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-neutral-500">
                     {Math.round(currentSource.score * 100)}% match
                   </span>
                 )}
@@ -97,7 +97,7 @@ export function InlineCitation({ sources, citationNumber, className }: InlineCit
             )}
 
             {currentSource.excerpt && (
-              <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">
+              <p className="text-xs text-neutral-600 line-clamp-3 leading-relaxed">
                 {currentSource.excerpt}
               </p>
             )}

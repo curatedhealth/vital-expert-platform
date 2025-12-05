@@ -77,7 +77,7 @@ export function AskExpertSidebar({
       case 2:
         return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
       default:
-        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
+        return 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400';
     }
   };
 
@@ -117,12 +117,12 @@ export function AskExpertSidebar({
       <SidebarContent className={cn('p-4', isCollapsed && 'px-2')}>
         {!isCollapsed && (
           <div className="mb-4">
-            <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <div className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
               Search & Filter
             </div>
             <div className="space-y-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                 <Input
                   type="text"
                   placeholder="Search agents..."
@@ -154,7 +154,7 @@ export function AskExpertSidebar({
                 ))}
               </div>
 
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-neutral-500">
                 {selectedAgents.length} agent{selectedAgents.length !== 1 ? 's' : ''} selected
               </div>
             </div>
@@ -163,7 +163,7 @@ export function AskExpertSidebar({
 
         <div className={cn('mt-4', isCollapsed && 'mt-0')}>
           {!isCollapsed && (
-            <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <div className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
               Agents
             </div>
           )}
@@ -179,7 +179,7 @@ export function AskExpertSidebar({
                 .map(([tier, tierAgents]) => (
                   <div key={tier} className={cn('mb-4', isCollapsed && 'mb-2')}>
                     {!isCollapsed && (
-                      <div className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold text-gray-500">
+                      <div className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold text-neutral-500">
                         <Star className={cn('w-3 h-3', Number(tier) === 1 && 'text-yellow-500')} />
                         Tier {tier} ({tierAgents.length})
                       </div>
@@ -201,7 +201,7 @@ export function AskExpertSidebar({
                               'transition-all',
                               isCollapsed
                                 ? 'relative flex h-12 w-12 items-center justify-center rounded-full border border-transparent bg-transparent hover:border-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2'
-                                : 'w-full text-left p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800',
+                                : 'w-full text-left p-3 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800',
                               isSelected &&
                                 (isCollapsed
                                   ? 'border-blue-500 bg-blue-50 text-blue-600'
@@ -251,7 +251,7 @@ export function AskExpertSidebar({
                                       T{agent.tier}
                                     </Badge>
                                   </div>
-                                  <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                                  <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2">
                                     {agent.description}
                                   </p>
                                   {agent.capabilities && agent.capabilities.length > 0 && (
@@ -259,13 +259,13 @@ export function AskExpertSidebar({
                                       {agent.capabilities.slice(0, 2).map((cap, idx) => (
                                         <span
                                           key={idx}
-                                          className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded"
+                                          className="px-1.5 py-0.5 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 rounded"
                                         >
                                           {cap}
                                         </span>
                                       ))}
                                       {agent.capabilities.length > 2 && (
-                                        <span className="text-xs text-gray-500">
+                                        <span className="text-xs text-neutral-500">
                                           +{agent.capabilities.length - 2}
                                         </span>
                                       )}
@@ -283,11 +283,11 @@ export function AskExpertSidebar({
 
               {filteredAgents.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                  <Users className="w-12 h-12 text-gray-300 dark:text-gray-700 mb-3" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <Users className="w-12 h-12 text-neutral-300 dark:text-neutral-700 mb-3" />
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
                     No agents found
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                  <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-2">
                     Click &quot;Browse Agent Store&quot; to add agents
                   </p>
                 </div>
@@ -299,7 +299,7 @@ export function AskExpertSidebar({
 
       <SidebarFooter className={cn('border-t p-4', isCollapsed && 'p-2')}>
         {!isCollapsed && (
-          <div className="text-xs text-gray-500 text-center">
+          <div className="text-xs text-neutral-500 text-center">
             {agents.length} total agents
           </div>
         )}

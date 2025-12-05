@@ -47,7 +47,7 @@ export function ChatHeader({
   onToggleMode,
 }: ChatHeaderProps) {
   return (
-    <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="bg-white border-b border-neutral-200 px-6 py-4">
       <div className="flex items-center justify-between">
         {/* Left Section */}
         <div className="flex items-center gap-4">
@@ -110,18 +110,18 @@ export function ChatHeader({
         <div className="flex items-center gap-2">
           {/* Interaction Mode Toggle */}
           {onToggleMode && (
-            <div className="flex items-center gap-3 mr-4 px-3 py-1.5 border border-gray-200 rounded-lg bg-background-gray/30">
+            <div className="flex items-center gap-3 mr-4 px-3 py-1.5 border border-neutral-200 rounded-lg bg-background-gray/30">
               <div className="flex items-center gap-2">
-                <Sparkles className={`h-4 w-4 ${interactionMode === 'automatic' ? 'text-progress-teal' : 'text-gray-400'}`} />
-                <span className="text-sm font-medium text-gray-700">Auto</span>
+                <Sparkles className={`h-4 w-4 ${interactionMode === 'automatic' ? 'text-progress-teal' : 'text-neutral-400'}`} />
+                <span className="text-sm font-medium text-neutral-700">Auto</span>
               </div>
               <Switch
                 checked={interactionMode === 'manual'}
                 onCheckedChange={(checked) => onToggleMode(checked ? 'manual' : 'automatic')}
               />
               <div className="flex items-center gap-2">
-                <User className={`h-4 w-4 ${interactionMode === 'manual' ? 'text-market-purple' : 'text-gray-400'}`} />
-                <span className="text-sm font-medium text-gray-700">Manual</span>
+                <User className={`h-4 w-4 ${interactionMode === 'manual' ? 'text-market-purple' : 'text-neutral-400'}`} />
+                <span className="text-sm font-medium text-neutral-700">Manual</span>
               </div>
             </div>
           )}

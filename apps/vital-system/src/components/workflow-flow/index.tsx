@@ -369,10 +369,10 @@ export function WorkflowFlowVisualizer({
                 <GitBranch className="h-7 w-7 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900 tracking-tight">
+                <h3 className="text-xl font-bold text-neutral-900 tracking-tight">
                   Workflow Designer View
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-neutral-600">
                   Interactive visualization • Drag nodes to rearrange
                 </p>
               </div>
@@ -385,21 +385,21 @@ export function WorkflowFlowVisualizer({
                   <Layers className="h-4 w-4 text-indigo-500" />
                   <p className="text-2xl font-bold text-indigo-600">{workflows.length}</p>
                 </div>
-                <p className="text-xs text-gray-600 font-medium">Stages</p>
+                <p className="text-xs text-neutral-600 font-medium">Stages</p>
               </div>
               <div className="text-center px-4 py-2 bg-white/60 rounded-xl border border-purple-100">
                 <div className="flex items-center gap-2 justify-center">
                   <Grid3X3 className="h-4 w-4 text-purple-500" />
                   <p className="text-2xl font-bold text-purple-600">{totalTasks}</p>
                 </div>
-                <p className="text-xs text-gray-600 font-medium">Tasks</p>
+                <p className="text-xs text-neutral-600 font-medium">Tasks</p>
               </div>
               <div className="text-center px-4 py-2 bg-white/60 rounded-xl border border-blue-100">
                 <div className="flex items-center gap-2 justify-center">
                   <Bot className="h-4 w-4 text-blue-500" />
                   <p className="text-2xl font-bold text-blue-600">{totalAgents}</p>
                 </div>
-                <p className="text-xs text-gray-600 font-medium">Agents</p>
+                <p className="text-xs text-neutral-600 font-medium">Agents</p>
               </div>
               {estimatedTotalHours > 0 && (
                 <div className="text-center px-4 py-2 bg-white/60 rounded-xl border border-amber-100">
@@ -407,7 +407,7 @@ export function WorkflowFlowVisualizer({
                     <Clock className="h-4 w-4 text-amber-500" />
                     <p className="text-2xl font-bold text-amber-600">{estimatedTotalHours}h</p>
                   </div>
-                  <p className="text-xs text-gray-600 font-medium">Est. Duration</p>
+                  <p className="text-xs text-neutral-600 font-medium">Est. Duration</p>
                 </div>
               )}
             </div>
@@ -416,9 +416,9 @@ export function WorkflowFlowVisualizer({
       </Card>
 
       {/* React Flow Canvas */}
-      <Card className="border-2 border-gray-200 overflow-hidden">
+      <Card className="border-2 border-neutral-200 overflow-hidden">
         <CardContent className="p-0">
-          <div className="w-full h-[700px] bg-gradient-to-br from-slate-50 to-gray-100">
+          <div className="w-full h-[700px] bg-gradient-to-br from-slate-50 to-neutral-100">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -448,7 +448,7 @@ export function WorkflowFlowVisualizer({
                 showFitView
                 showInteractive
                 position="top-left"
-                className="!bg-white !border-2 !border-gray-200 !rounded-xl !shadow-lg"
+                className="!bg-white !border-2 !border-neutral-200 !rounded-xl !shadow-lg"
               />
               <MiniMap
                 nodeColor={(node) => {
@@ -459,7 +459,7 @@ export function WorkflowFlowVisualizer({
                   return '#3b82f6';
                 }}
                 maskColor="rgba(255, 255, 255, 0.9)"
-                className="!bg-white !border-2 !border-gray-200 !rounded-xl !shadow-lg"
+                className="!bg-white !border-2 !border-neutral-200 !rounded-xl !shadow-lg"
                 position="bottom-right"
                 pannable
                 zoomable
@@ -467,7 +467,7 @@ export function WorkflowFlowVisualizer({
               
               {/* Layout Toggle Panel */}
               <Panel position="top-right" className="!m-4">
-                <div className="bg-white border-2 border-gray-200 rounded-xl shadow-lg p-2 flex gap-2">
+                <div className="bg-white border-2 border-neutral-200 rounded-xl shadow-lg p-2 flex gap-2">
                   <Button
                     variant={layoutMode === 'vertical' ? 'default' : 'ghost'}
                     size="sm"
@@ -494,9 +494,9 @@ export function WorkflowFlowVisualizer({
       </Card>
 
       {/* Legend */}
-      <Card className="border border-gray-200">
+      <Card className="border border-neutral-200">
         <CardContent className="p-5">
-          <h4 className="font-semibold text-sm text-gray-900 mb-4 flex items-center gap-2">
+          <h4 className="font-semibold text-sm text-neutral-900 mb-4 flex items-center gap-2">
             <div className="w-1 h-4 bg-gradient-to-b from-indigo-500 to-purple-600 rounded" />
             Flow Legend
           </h4>
@@ -506,15 +506,15 @@ export function WorkflowFlowVisualizer({
                 <div className="w-0 h-0 border-l-[6px] border-l-white border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent ml-0.5" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-900">Start</p>
-                <p className="text-[10px] text-gray-500">Entry point</p>
+                <p className="text-xs font-semibold text-neutral-900">Start</p>
+                <p className="text-[10px] text-neutral-500">Entry point</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-md" />
               <div>
-                <p className="text-xs font-semibold text-gray-900">Stage</p>
-                <p className="text-[10px] text-gray-500">Major phase</p>
+                <p className="text-xs font-semibold text-neutral-900">Stage</p>
+                <p className="text-[10px] text-neutral-500">Major phase</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -522,8 +522,8 @@ export function WorkflowFlowVisualizer({
                 <div className="w-5 h-5 rounded bg-blue-100" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-900">Task</p>
-                <p className="text-[10px] text-gray-500">Work item</p>
+                <p className="text-xs font-semibold text-neutral-900">Task</p>
+                <p className="text-[10px] text-neutral-500">Work item</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -531,8 +531,8 @@ export function WorkflowFlowVisualizer({
                 <div className="w-3 h-3 bg-white rounded-sm" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-900">End</p>
-                <p className="text-[10px] text-gray-500">Complete</p>
+                <p className="text-xs font-semibold text-neutral-900">End</p>
+                <p className="text-[10px] text-neutral-500">Complete</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -542,8 +542,8 @@ export function WorkflowFlowVisualizer({
                 <div className="w-10 h-0.5 bg-gradient-to-r from-blue-500 to-cyan-400 rounded" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-900">Flow</p>
-                <p className="text-[10px] text-gray-500">Connections</p>
+                <p className="text-xs font-semibold text-neutral-900">Flow</p>
+                <p className="text-[10px] text-neutral-500">Connections</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -556,8 +556,8 @@ export function WorkflowFlowVisualizer({
                 </div>
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-900">Resources</p>
-                <p className="text-[10px] text-gray-500">Agents & Tools</p>
+                <p className="text-xs font-semibold text-neutral-900">Resources</p>
+                <p className="text-[10px] text-neutral-500">Agents & Tools</p>
               </div>
             </div>
           </div>

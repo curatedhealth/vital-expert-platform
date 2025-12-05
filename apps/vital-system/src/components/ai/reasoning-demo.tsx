@@ -45,7 +45,7 @@ export function ReasoningDemo() {
     <div className="space-y-4 max-w-2xl">
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">AI Reasoning Component Demo</h2>
-        <p className="text-gray-600 mb-4">
+        <p className="text-neutral-600 mb-4">
           Click the button below to simulate AI thinking process with auto-collapsing display.
         </p>
         <Button onClick={simulateThinking} disabled={isThinking}>

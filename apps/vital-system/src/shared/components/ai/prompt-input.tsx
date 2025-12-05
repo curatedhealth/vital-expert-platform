@@ -37,7 +37,7 @@ export function PromptInput({
       <form
         onSubmit={handleSubmit}
         className={cn(
-          'relative flex flex-col gap-2 rounded-3xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition-all focus-within:border-gray-300 focus-within:shadow-md',
+          'relative flex flex-col gap-2 rounded-3xl border border-neutral-200 bg-white px-4 py-3 shadow-sm transition-all focus-within:border-neutral-300 focus-within:shadow-md',
           className
         )}
         {...props}
@@ -101,7 +101,7 @@ export function PromptInputTextarea({
     <textarea
       ref={textareaRef}
       className={cn(
-        'flex w-full resize-none bg-transparent text-base text-gray-900 placeholder:text-gray-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+        'flex w-full resize-none bg-transparent text-base text-neutral-900 placeholder:text-neutral-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
         'min-h-[24px] max-h-[200px]',
         className
       )}
@@ -148,8 +148,8 @@ export function PromptInputSubmit({
       className={cn(
         'ml-auto h-8 w-8 rounded-full transition-colors',
         disabled
-          ? 'bg-gray-200 text-gray-400 hover:bg-gray-200'
-          : 'bg-black text-white hover:bg-gray-800',
+          ? 'bg-neutral-200 text-neutral-400 hover:bg-neutral-200'
+          : 'bg-black text-white hover:bg-neutral-800',
         className
       )}
       disabled={disabled}

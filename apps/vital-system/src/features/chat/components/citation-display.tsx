@@ -26,7 +26,7 @@ const CITATION_TYPE_INFO: Record<string, { label: string; icon: any; color: stri
   'dime-resource': { label: 'DiMe', icon: Activity, color: 'bg-pink-100 text-pink-800 border-pink-300' },
   'ichom-set': { label: 'ICHOM', icon: Activity, color: 'bg-teal-100 text-teal-800 border-teal-300' },
   'knowledge-base': { label: 'Internal KB', icon: Database, color: 'bg-indigo-100 text-indigo-800 border-indigo-300' },
-  'web-source': { label: 'Web', icon: ExternalLink, color: 'bg-gray-100 text-gray-800 border-gray-300' }
+  'web-source': { label: 'Web', icon: ExternalLink, color: 'bg-neutral-100 text-neutral-800 border-neutral-300' }
 };
 
 export function CitationDisplay({ citations, format = 'apa', compact = false }: CitationDisplayProps) {
@@ -175,7 +175,7 @@ export function CitationDisplay({ citations, format = 'apa', compact = false }: 
                         <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground font-medium">
                           Formatted citation ({citationFormat.toUpperCase()})
                         </summary>
-                        <div className="mt-2 text-xs bg-gray-50 p-2 rounded border-l-2 border-gray-300">
+                        <div className="mt-2 text-xs bg-neutral-50 p-2 rounded border-l-2 border-neutral-300">
                           {formatCitation(citation as any, citationFormat)}
                         </div>
                       </details>

@@ -47,7 +47,7 @@ export function Sources({ children, sources = [], className }: SourcesProps) {
     <SourcesContext.Provider value={value}>
       <div
         className={cn(
-          'rounded-xl border border-gray-100 bg-white/90 shadow-sm overflow-hidden transition-colors dark:border-gray-800 dark:bg-gray-900/50',
+          'rounded-xl border border-neutral-100 bg-white/90 shadow-sm overflow-hidden transition-colors dark:border-neutral-800 dark:bg-neutral-900/50',
           className
         )}
       >
@@ -82,9 +82,9 @@ export function SourcesTrigger({ className }: SourcesTriggerProps) {
         </span>
       </div>
       {isOpen ? (
-        <ChevronUp className="h-4 w-4 text-gray-500" />
+        <ChevronUp className="h-4 w-4 text-neutral-500" />
       ) : (
-        <ChevronDown className="h-4 w-4 text-gray-500" />
+        <ChevronDown className="h-4 w-4 text-neutral-500" />
       )}
     </button>
   );
@@ -128,7 +128,7 @@ export function SourcesContent({ children, className }: SourcesContentProps) {
       <div ref={contentRef}>
         <div
           className={cn(
-            'px-4 py-3 border-t border-gray-100 bg-white/95 dark:border-gray-800 dark:bg-gray-900/40',
+            'px-4 py-3 border-t border-neutral-100 bg-white/95 dark:border-neutral-800 dark:bg-neutral-900/40',
             className
           )}
         >
@@ -137,11 +137,11 @@ export function SourcesContent({ children, className }: SourcesContentProps) {
               {sources.map((source) => (
                 <div
                   key={source.id}
-                  className="flex items-start gap-2 p-2 rounded hover:bg-gray-50 transition-colors"
+                  className="flex items-start gap-2 p-2 rounded hover:bg-neutral-50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-medium text-gray-900 truncate">
+                      <h4 className="text-sm font-medium text-neutral-900 truncate">
                         {source.title}
                       </h4>
                       {source.url && (
@@ -157,12 +157,12 @@ export function SourcesContent({ children, className }: SourcesContentProps) {
                       )}
                     </div>
                     {source.excerpt && (
-                      <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                      <p className="text-xs text-neutral-600 mt-1 line-clamp-2">
                         {source.excerpt}
                       </p>
                     )}
                     {source.similarity && (
-                      <span className="text-xs text-gray-500 mt-1">
+                      <span className="text-xs text-neutral-500 mt-1">
                         {(source.similarity * 100).toFixed(1)}% match
                       </span>
                     )}

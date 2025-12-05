@@ -98,7 +98,7 @@ export const AgentNode: React.FC<AgentNodeProps> = ({
       case 3:
         return 'bg-purple-100 text-purple-700 border-purple-300';
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-300';
+        return 'bg-neutral-100 text-neutral-700 border-neutral-300';
     }
   };
 
@@ -171,7 +171,7 @@ export const AgentNode: React.FC<AgentNodeProps> = ({
         {/* Name and Status */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-1 mb-1">
-            <p className="font-bold text-sm text-gray-900 truncate leading-tight">{displayName}</p>
+            <p className="font-bold text-sm text-neutral-900 truncate leading-tight">{displayName}</p>
             {isConfigured && (
               <Check size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" title="Configured" />
             )}
@@ -190,9 +190,9 @@ export const AgentNode: React.FC<AgentNodeProps> = ({
       <div className="space-y-2">
         {/* Description or Domain */}
         {agent?.description ? (
-          <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{agent.description}</p>
+          <p className="text-xs text-neutral-600 leading-relaxed line-clamp-2">{agent.description}</p>
         ) : (
-          <p className="text-xs text-gray-500 italic">
+          <p className="text-xs text-neutral-500 italic">
             {isConfigured ? `Domain: ${agentDomain}` : 'Click to configure agent'}
           </p>
         )}
@@ -219,14 +219,14 @@ export const AgentNode: React.FC<AgentNodeProps> = ({
         {/* Model Info */}
         {agent?.model && (
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-[11px] bg-gray-100 text-gray-700 px-2 py-0.5 font-medium">
+            <Badge variant="outline" className="text-[11px] bg-neutral-100 text-neutral-700 px-2 py-0.5 font-medium">
               {agent.model}
             </Badge>
           </div>
         )}
 
         {/* Footer Hint */}
-        <div className="text-[11px] text-gray-500 italic text-center pt-2 border-t border-gray-200">
+        <div className="text-[11px] text-neutral-500 italic text-center pt-2 border-t border-neutral-200">
           {isConfigured ? 'Click to reconfigure' : 'Click to select agent'}
         </div>
       </div>

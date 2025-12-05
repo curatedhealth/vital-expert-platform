@@ -16,10 +16,10 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface BoardMember {
   id: string;
@@ -254,6 +254,7 @@ export default function VirtualAdvisoryBoards({
     }
   }, [initialBoards]);
 
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
@@ -264,10 +265,11 @@ export default function VirtualAdvisoryBoards({
       case 'pending':
         return <Eye className="h-4 w-4 text-blue-500" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
+        return <Clock className="h-4 w-4 text-neutral-500" />;
     }
   };
 
+  const getImpactColor = (impact: string) => {
     switch (impact) {
       case 'critical':
         return 'bg-red-100 text-red-800';
@@ -278,10 +280,11 @@ export default function VirtualAdvisoryBoards({
       case 'low':
         return 'bg-green-100 text-green-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 
+  const getRoleIcon = (role: string) => {
     switch (role) {
       case 'chair':
         return <Crown className="h-4 w-4 text-yellow-500" />;
@@ -290,12 +293,13 @@ export default function VirtualAdvisoryBoards({
       case 'advisor':
         return <MessageSquare className="h-4 w-4 text-green-500" />;
       case 'observer':
-        return <Eye className="h-4 w-4 text-gray-500" />;
+        return <Eye className="h-4 w-4 text-neutral-500" />;
       default:
-        return <Users className="h-4 w-4 text-gray-500" />;
+        return <Users className="h-4 w-4 text-neutral-500" />;
     }
   };
 
+  const BoardCard = ({ board }: { board: AdvisoryBoard }) => {
     return (
       <Card
         className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-indigo-500"
@@ -313,7 +317,7 @@ export default function VirtualAdvisoryBoards({
               variant={board.is_active ? "default" : "secondary"}
               className="flex items-center space-x-1"
             >
-              <div className={`w-2 h-2 rounded-full ${board.is_active ? 'bg-green-400' : 'bg-gray-400'}`} />
+              <div className={`w-2 h-2 rounded-full ${board.is_active ? 'bg-green-400' : 'bg-neutral-400'}`} />
               <span>{board.is_active ? 'Active' : 'Inactive'}</span>
             </Badge>
           </div>
@@ -347,7 +351,7 @@ export default function VirtualAdvisoryBoards({
                   {chairMember ? chairMember.name : 'No Chair Assigned'}
                 </span>
               </div>
-              <div className="flex items-center space-x-1 text-sm text-gray-600">
+              <div className="flex items-center space-x-1 text-sm text-neutral-600">
                 <Users className="h-4 w-4" />
                 <span>{totalMembers} members</span>
               </div>
@@ -357,22 +361,22 @@ export default function VirtualAdvisoryBoards({
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-lg font-semibold text-blue-600">{activeDecisions}</div>
-                <div className="text-xs text-gray-600">Active Decisions</div>
+                <div className="text-xs text-neutral-600">Active Decisions</div>
               </div>
               <div>
                 <div className="text-lg font-semibold text-green-600">{board.upcoming_meetings.length}</div>
-                <div className="text-xs text-gray-600">Upcoming Meetings</div>
+                <div className="text-xs text-neutral-600">Upcoming Meetings</div>
               </div>
               <div>
                 <div className="text-lg font-semibold text-purple-600">{board.quorum_requirement}</div>
-                <div className="text-xs text-gray-600">Quorum Required</div>
+                <div className="text-xs text-neutral-600">Quorum Required</div>
               </div>
             </div>
 
             {/* Consensus Method */}
             <div className="flex items-center space-x-2">
-              <Vote className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-600">
+              <Vote className="h-4 w-4 text-neutral-500" />
+              <span className="text-sm text-neutral-600">
                 Consensus: {board.consensus_method.charAt(0).toUpperCase() + board.consensus_method.slice(1)}
               </span>
             </div>
@@ -382,20 +386,21 @@ export default function VirtualAdvisoryBoards({
     );
   };
 
+  const BoardDetailModal = ({ board }: { board: Board }) => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-canvas-surface rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
           <div className="p-6">
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h2 className="text-3xl font-bold">{board.name}</h2>
-                <p className="text-gray-600 mt-2">{board.description}</p>
+                <p className="text-neutral-600 mt-2">{board.description}</p>
                 <div className="flex items-center space-x-4 mt-4">
                   <Badge variant="outline">{board.board_type}</Badge>
                   <Badge variant={board.is_active ? "default" : "secondary"}>
                     {board.is_active ? 'Active' : 'Inactive'}
                   </Badge>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-neutral-500">
                     Created {new Date(board.created_at).toLocaleDateString()}
                   </span>
                 </div>
@@ -403,7 +408,7 @@ export default function VirtualAdvisoryBoards({
               <Button
                 variant="ghost"
                 onClick={() => setSelectedBoard(null)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-neutral-500 hover:text-neutral-700"
               >
                 ✕
               </Button>
@@ -463,19 +468,19 @@ export default function VirtualAdvisoryBoards({
                     <CardContent>
                       <div className="space-y-3">
                         {board.recent_decisions.slice(0, 3).map((decision) => (
-                          <div key={decision.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div key={decision.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                             <div className="flex items-center space-x-3">
                               {getStatusIcon(decision.status)}
                               <div>
                                 <div className="font-medium">{decision.title}</div>
-                                <div className="text-sm text-gray-600">{decision.description}</div>
+                                <div className="text-sm text-neutral-600">{decision.description}</div>
                               </div>
                             </div>
                             <div className="text-right">
                               <Badge className={getImpactColor(decision.impact_level)}>
                                 {decision.impact_level}
                               </Badge>
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="text-xs text-neutral-500 mt-1">
                                 {new Date(decision.created_at).toLocaleDateString()}
                               </div>
                             </div>
@@ -499,8 +504,8 @@ export default function VirtualAdvisoryBoards({
                               <h3 className="font-semibold">{member.name}</h3>
                               {getRoleIcon(member.role)}
                             </div>
-                            <p className="text-sm text-gray-600">{member.title}</p>
-                            <p className="text-xs text-gray-500">{member.organization}</p>
+                            <p className="text-sm text-neutral-600">{member.title}</p>
+                            <p className="text-xs text-neutral-500">{member.organization}</p>
 
                             <div className="mt-3 space-y-2">
                               <div className="flex items-center justify-between text-sm">
@@ -518,7 +523,7 @@ export default function VirtualAdvisoryBoards({
                             </div>
 
                             <div className="mt-3">
-                              <p className="text-xs font-medium text-gray-700 mb-1">Expertise:</p>
+                              <p className="text-xs font-medium text-neutral-700 mb-1">Expertise:</p>
                               <div className="flex flex-wrap gap-1">
                                 {member.expertise_areas.slice(0, 2).map((area, index) => (
                                   <Badge key={index} variant="outline" className="text-xs">
@@ -550,11 +555,11 @@ export default function VirtualAdvisoryBoards({
                             {getStatusIcon(decision.status)}
                             <div>
                               <h3 className="font-semibold">{decision.title}</h3>
-                              <p className="text-sm text-gray-600 mt-1">{decision.description}</p>
+                              <p className="text-sm text-neutral-600 mt-1">{decision.description}</p>
                               <div className="flex items-center space-x-4 mt-3 text-sm">
                                 <span className="text-green-600">👍 {decision.votes_for}</span>
                                 <span className="text-red-600">👎 {decision.votes_against}</span>
-                                <span className="text-gray-600">⚖️ {decision.abstentions}</span>
+                                <span className="text-neutral-600">⚖️ {decision.abstentions}</span>
                                 <span className="text-blue-600">📊 {decision.consensus_level}% consensus</span>
                               </div>
                             </div>
@@ -566,11 +571,11 @@ export default function VirtualAdvisoryBoards({
                             <Badge variant="outline" className="ml-2">
                               {decision.status}
                             </Badge>
-                            <div className="text-xs text-gray-500 mt-2">
+                            <div className="text-xs text-neutral-500 mt-2">
                               Created: {new Date(decision.created_at).toLocaleDateString()}
                             </div>
                             {decision.decision_date && (
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-neutral-500">
                                 Decided: {new Date(decision.decision_date).toLocaleDateString()}
                               </div>
                             )}
@@ -590,7 +595,7 @@ export default function VirtualAdvisoryBoards({
                         <div className="flex items-start justify-between">
                           <div>
                             <h3 className="font-semibold">{meeting.title}</h3>
-                            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+                            <div className="flex items-center space-x-4 mt-2 text-sm text-neutral-600">
                               <div className="flex items-center space-x-1">
                                 <Calendar className="h-4 w-4" />
                                 <span>{new Date(meeting.scheduled_at).toLocaleDateString()}</span>
@@ -605,8 +610,8 @@ export default function VirtualAdvisoryBoards({
                               </div>
                             </div>
                             <div className="mt-3">
-                              <p className="text-sm font-medium text-gray-700 mb-1">Agenda:</p>
-                              <ul className="text-sm text-gray-600 space-y-1">
+                              <p className="text-sm font-medium text-neutral-700 mb-1">Agenda:</p>
+                              <ul className="text-sm text-neutral-600 space-y-1">
                                 {meeting.agenda.map((item, index) => (
                                   <li key={index} className="flex items-center space-x-2">
                                     <Target className="h-3 w-3" />
@@ -620,7 +625,7 @@ export default function VirtualAdvisoryBoards({
                             <Badge variant="outline">
                               {meeting.meeting_type}
                             </Badge>
-                            <div className="text-xs text-gray-500 mt-2">
+                            <div className="text-xs text-neutral-500 mt-2">
                               {new Date(meeting.scheduled_at).toLocaleTimeString()}
                             </div>
                           </div>
@@ -638,12 +643,12 @@ export default function VirtualAdvisoryBoards({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-neutral-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Virtual Advisory Boards</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-neutral-900">Virtual Advisory Boards</h1>
+          <p className="text-neutral-600 mt-2">
             Expert governance and decision-making for digital health capabilities
           </p>
         </div>
@@ -654,7 +659,7 @@ export default function VirtualAdvisoryBoards({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Active Boards</p>
+                  <p className="text-sm font-medium text-neutral-600">Active Boards</p>
                   <p className="text-2xl font-bold text-blue-600">
                     {boards.filter((b: any) => b.is_active).length}
                   </p>
@@ -668,7 +673,7 @@ export default function VirtualAdvisoryBoards({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Expert Members</p>
+                  <p className="text-sm font-medium text-neutral-600">Expert Members</p>
                   <p className="text-2xl font-bold text-green-600">
                     {boards.reduce((total, board) => total + board.members.length, 0)}
                   </p>
@@ -682,7 +687,7 @@ export default function VirtualAdvisoryBoards({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Pending Decisions</p>
+                  <p className="text-sm font-medium text-neutral-600">Pending Decisions</p>
                   <p className="text-2xl font-bold text-yellow-600">
                     {boards.reduce((total, board) =>
                       total + board.recent_decisions.filter((d: any) => d.status === 'pending' || d.status === 'in_review').length, 0
@@ -698,7 +703,7 @@ export default function VirtualAdvisoryBoards({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Upcoming Meetings</p>
+                  <p className="text-sm font-medium text-neutral-600">Upcoming Meetings</p>
                   <p className="text-2xl font-bold text-purple-600">
                     {boards.reduce((total, board) => total + board.upcoming_meetings.length, 0)}
                   </p>

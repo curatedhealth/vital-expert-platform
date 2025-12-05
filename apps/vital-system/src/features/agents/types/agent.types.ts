@@ -236,6 +236,15 @@ export interface Agent {
   response_format?: 'markdown' | 'json' | 'text' | 'html';
   cost_per_query?: number;
 
+  // Mode 3 Autonomous Configuration (normalized columns)
+  websearch_enabled?: boolean;
+  tools_enabled?: string[];
+  knowledge_namespaces?: string[];
+  confidence_threshold?: number;
+  max_goal_iterations?: number;
+  hitl_enabled?: boolean;
+  hitl_safety_level?: 'minimal' | 'balanced' | 'strict';
+
   // Token Budget (normalized columns)
   token_budget_min?: number;
   token_budget_max?: number;
@@ -401,6 +410,121 @@ export interface Agent {
   created_by?: string;
   updated_by?: string;
   metadata?: Record<string, unknown>;
+
+  // Enriched Junction Table Data (from API joins)
+  enriched_capabilities?: EnrichedCapability[];
+  enriched_skills?: EnrichedSkill[];
+  responsibilities?: AgentResponsibility[];
+  prompt_starters?: AgentPromptStarter[];
+  assigned_tools?: AgentToolAssignment[];
+  enriched_knowledge_domains?: EnrichedKnowledgeDomain[];
+}
+
+// ============================================================================
+// Enriched Junction Table Data Types
+// ============================================================================
+
+/**
+ * Capability entity from capabilities table
+ */
+export interface CapabilityEntity {
+  id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  category?: string;
+}
+
+/**
+ * Skill entity from skills table
+ */
+export interface SkillEntity {
+  id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+}
+
+/**
+ * Responsibility entity from org_responsibilities table
+ */
+export interface ResponsibilityEntity {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+/**
+ * Tool entity from tools table
+ */
+export interface ToolEntity {
+  id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  tool_type?: string;
+}
+
+/**
+ * Enriched capability from agent_capabilities junction
+ */
+export interface EnrichedCapability {
+  id: string;
+  proficiency_level?: 'familiar' | 'proficient' | 'expert';
+  is_primary?: boolean;
+  capability: CapabilityEntity | null;
+}
+
+/**
+ * Enriched skill from agent_skill_assignments junction
+ */
+export interface EnrichedSkill {
+  id: string;
+  proficiency_level?: 'familiar' | 'proficient' | 'expert';
+  is_primary?: boolean;
+  skill: SkillEntity | null;
+}
+
+/**
+ * Agent responsibility from agent_responsibilities junction
+ */
+export interface AgentResponsibility {
+  id: string;
+  is_primary?: boolean;
+  weight?: number;
+  responsibility: ResponsibilityEntity | null;
+}
+
+/**
+ * Agent prompt starter from agent_prompt_starters table
+ */
+export interface AgentPromptStarter {
+  id: string;
+  text: string;
+  icon?: string;
+  category?: string;
+  sequence_order?: number;
+}
+
+/**
+ * Agent tool assignment from agent_tool_assignments junction
+ */
+export interface AgentToolAssignment {
+  id: string;
+  is_enabled?: boolean;
+  priority?: number;
+  tool: ToolEntity | null;
+}
+
+/**
+ * Enriched knowledge domain from agent_knowledge_domains table
+ */
+export interface EnrichedKnowledgeDomain {
+  id: string;
+  domain_name: string;
+  proficiency_level?: 'familiar' | 'proficient' | 'expert';
+  is_primary_domain?: boolean;
+  expertise_level?: string;
 }
 
 // Supporting interfaces
@@ -1158,4 +1282,163 @@ export const PERSONA_ARCHETYPE_DESCRIPTIONS: Record<PersonaArchetypeCode, string
   compliance_guardian: 'Legal and regulatory compliance specialists with risk-averse, policy-focused communication',
   innovation_advisor: 'Digital health and technology specialists with forward-thinking, solution-oriented communication',
   patient_advocate: 'Patient engagement specialists with accessible, empathetic, health-literacy focused communication'
+};
+
+// ============================================================================
+// Agent Hierarchy & Subagent Configuration Types
+// ============================================================================
+
+/**
+ * Represents a recommended subagent based on domain matching
+ */
+export interface RecommendedSubagent {
+  agent_id: string;
+  agent_name: string;
+  agent_level: AgentLevelNumber;
+  domain_expertise?: DomainExpertise;
+  match_score: number; // 0-1 confidence score
+  match_reasons: string[]; // Why this agent was recommended
+}
+
+/**
+ * Represents a configured subagent assignment
+ */
+export interface ConfiguredSubagent {
+  agent_id: string;
+  agent_name: string;
+  agent_level: AgentLevelNumber;
+  priority: number; // 1 = primary, 2+ = fallback
+  is_enabled: boolean;
+  assignment_type: 'recommended' | 'manual'; // How it was assigned
+  configured_at?: string;
+}
+
+/**
+ * Configuration for L4 Worker agents
+ */
+export interface L4WorkersConfig {
+  recommended: RecommendedSubagent[];
+  configured: ConfiguredSubagent[];
+  use_pool: boolean; // Whether to use worker pool for load balancing
+  max_concurrent: number; // Max concurrent worker invocations
+}
+
+/**
+ * Configuration for L5 Tool agents
+ */
+export interface L5ToolsConfig {
+  recommended: RecommendedSubagent[];
+  configured: ConfiguredSubagent[];
+}
+
+/**
+ * Context Engineer configuration for deep agent workflows
+ */
+export interface ContextEngineerConfig {
+  agent_id?: string;
+  agent_name?: string;
+  is_enabled: boolean;
+  context_strategy: 'full' | 'summarize' | 'selective'; // How context is managed
+}
+
+/**
+ * Complete subagent hierarchy configuration stored in agent.metadata
+ * This structure enables the modal UI to configure and LangGraph to read
+ */
+export interface SubagentHierarchyConfig {
+  // L4 Worker agents this agent can spawn
+  l4_workers: L4WorkersConfig;
+
+  // L5 Tool agents this agent can use
+  l5_tools: L5ToolsConfig;
+
+  // Context Engineer for managing context in deep workflows
+  context_engineer: ContextEngineerConfig;
+
+  // Additional L2/L3 experts this agent can escalate to or consult
+  expert_consultants?: {
+    recommended: RecommendedSubagent[];
+    configured: ConfiguredSubagent[];
+  };
+
+  // Metadata about when hierarchy was last configured
+  last_configured_at?: string;
+  configured_by?: string;
+}
+
+/**
+ * Extended Agent interface with spawning relationships
+ * Used when fetching agent with full hierarchy data
+ */
+export interface AgentWithRelationships extends Agent {
+  // Parent relationships (agents that can spawn this one)
+  spawning_relationships_parent?: SpawningRelationship[];
+
+  // Child relationships (agents this one can spawn)
+  spawning_relationships_child?: SpawningRelationship[];
+
+  // Parsed hierarchy config from metadata
+  hierarchy_config?: SubagentHierarchyConfig;
+}
+
+/**
+ * Spawning relationship between agents
+ */
+export interface SpawningRelationship {
+  id: string;
+  parent_agent_id: string;
+  child_agent_id: string;
+  relationship_type: 'spawn' | 'delegate' | 'escalate' | 'consult';
+  is_enabled: boolean;
+  priority: number;
+  created_at?: string;
+
+  // Populated via join
+  parent_agent?: Pick<Agent, 'id' | 'name' | 'agent_levels'>;
+  child_agent?: Pick<Agent, 'id' | 'name' | 'agent_levels'>;
+}
+
+/**
+ * Request to fetch recommended subagents based on parent agent's domain
+ */
+export interface RecommendSubagentsRequest {
+  parent_agent_id: string;
+  target_level: AgentLevelNumber;
+  domain_expertise?: DomainExpertise;
+  department_name?: string;
+  function_name?: string;
+  limit?: number;
+}
+
+/**
+ * Response containing recommended subagents
+ */
+export interface RecommendSubagentsResponse {
+  recommendations: RecommendedSubagent[];
+  total_available: number;
+  match_criteria: {
+    domain_match: boolean;
+    department_match: boolean;
+    function_match: boolean;
+  };
+}
+
+/**
+ * Default hierarchy config for new agents
+ */
+export const DEFAULT_HIERARCHY_CONFIG: SubagentHierarchyConfig = {
+  l4_workers: {
+    recommended: [],
+    configured: [],
+    use_pool: true,
+    max_concurrent: 3,
+  },
+  l5_tools: {
+    recommended: [],
+    configured: [],
+  },
+  context_engineer: {
+    is_enabled: false,
+    context_strategy: 'summarize',
+  },
 };

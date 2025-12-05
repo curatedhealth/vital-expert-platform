@@ -183,7 +183,7 @@ export function OverviewDashboard() {
       case 'warning': return 'text-yellow-600';
       case 'down':
       case 'critical': return 'text-red-600';
-      default: return 'text-gray-400';
+      default: return 'text-neutral-400';
     }
   };
 

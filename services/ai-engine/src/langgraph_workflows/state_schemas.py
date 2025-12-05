@@ -486,6 +486,110 @@ class UnifiedWorkflowState(TypedDict):
     # IMPORTANT: Each node MUST return {'nodes_executed': ['node_name']} to populate this
     nodes_executed: Annotated[List[str], operator.add]
 
+    # =========================================================================
+    # MODE 3: AUTONOMOUS WORKFLOW STATE (CRITICAL - DO NOT REMOVE)
+    # =========================================================================
+    # These fields MUST be defined or LangGraph TypedDict enforcement will
+    # silently drop them from the state, causing empty reasoning data!
+
+    # Autonomous reasoning metadata (returned from format_output_node)
+    autonomous_reasoning: NotRequired[Dict[str, Any]]
+
+    # HITL checkpoint status (5 checkpoints per PRD)
+    hitl_checkpoints: NotRequired[Dict[str, Any]]
+
+    # Autonomy metadata (Phase 5 enhancements)
+    autonomy_metadata: NotRequired[Dict[str, Any]]
+
+    # Goal-driven loop state
+    goal_achieved: NotRequired[bool]
+    goal_loop_iteration: NotRequired[int]
+    max_goal_iterations: NotRequired[int]
+    confidence_threshold: NotRequired[float]
+    loop_status: NotRequired[str]  # 'continue', 'complete', 'max_iterations_reached', 'error'
+    termination_reason: NotRequired[str]
+
+    # ReAct pattern state
+    # NOTE: NOT using operator.add because workflow already does manual accumulation
+    # Using Annotated would cause duplication (workflow returns full list, not delta)
+    reasoning_steps: NotRequired[List[Dict[str, Any]]]
+    step_results: NotRequired[List[Dict[str, Any]]]
+    reasoning_pattern: NotRequired[str]  # 'react', 'tot', 'cot', 'self_reflection'
+    pattern_applied: NotRequired[str]
+    react_iterations: NotRequired[int]
+    react_converged: NotRequired[bool]
+    observations: NotRequired[List[Dict[str, Any]]]
+
+    # Tree-of-Thoughts state
+    thought_tree: NotRequired[List[Dict[str, Any]]]
+    selected_strategy: NotRequired[Dict[str, Any]]
+    alternative_strategies: NotRequired[List[Dict[str, Any]]]
+
+    # Self-reflection state
+    self_reflections: NotRequired[List[Dict[str, Any]]]
+    corrections_applied: NotRequired[List[Dict[str, Any]]]
+
+    # Tier and confidence state
+    tier: NotRequired[int]
+    tier_reasoning: NotRequired[str]
+    plan: NotRequired[Dict[str, Any]]
+    execution_plan: NotRequired[Dict[str, Any]]
+    plan_confidence: NotRequired[float]
+    response_confidence: NotRequired[float]
+    confidence_calibrated: NotRequired[bool]
+    confidence_factors: NotRequired[Dict[str, Any]]
+
+    # Tool execution state (Mode 3 autonomous tools)
+    # NOTE: NOT using operator.add - workflow handles accumulation manually
+    tools_executed: NotRequired[List[Dict[str, Any]]]
+    code_executed: NotRequired[List[Dict[str, Any]]]
+
+    # Sub-agent coordination
+    sub_agents_spawned: NotRequired[List[str]]
+    active_l3_agents: NotRequired[int]
+    active_l4_agents: NotRequired[int]
+
+    # HITL control flags
+    hitl_initialized: NotRequired[bool]
+    hitl_safety_level: NotRequired[str]  # 'minimal', 'balanced', 'strict'
+    hitl_pending: NotRequired[bool]
+    current_hitl_checkpoint: NotRequired[str]
+    requires_human_review: NotRequired[bool]
+    plan_approved: NotRequired[Optional[bool]]
+    tool_approved: NotRequired[Optional[bool]]
+    subagent_approved: NotRequired[Optional[bool]]
+    decision_approved: NotRequired[Optional[bool]]
+    final_approved: NotRequired[Optional[bool]]
+    approval_timeout: NotRequired[bool]
+    rejection_reason: NotRequired[Optional[str]]
+
+    # Autonomy level and task decomposition
+    autonomy_level: NotRequired[str]  # 'A', 'B', 'C', 'D'
+    decomposition_type: NotRequired[str]
+    task_tree: NotRequired[List[Dict[str, Any]]]
+    task_type: NotRequired[str]
+    completed_tasks: NotRequired[List[str]]
+    pending_tasks: NotRequired[List[str]]
+    recovery_applied: NotRequired[bool]
+    collaboration_enabled: NotRequired[bool]
+
+    # Reasoning trace for frontend display
+    # NOTE: NOT using operator.add - workflow handles accumulation manually
+    reasoning_trace: NotRequired[List[Dict[str, Any]]]
+    thinking_steps: NotRequired[List[Dict[str, Any]]]
+
+    # Artifacts generated
+    artifacts: NotRequired[List[Dict[str, Any]]]
+
+    # Agent selection metadata (for API response)
+    agent_selection_confidence: NotRequired[float]
+    agent_name: NotRequired[str]
+
+    # Final response aliases (frontend compatibility)
+    content: NotRequired[str]  # Alias for response
+    final_response: NotRequired[str]  # Alias for response
+    rag_sources: NotRequired[List[Dict[str, Any]]]  # Alias for sources
+
 
 # =============================================================================
 # STATE FACTORY FUNCTIONS
@@ -556,7 +660,17 @@ def create_initial_state(
         agent_responses=[],
         errors=[],
         nodes_executed=[],  # CRITICAL: Track which nodes are executed
-        
+
+        # MODE 3: Annotated list fields (MUST initialize for LangGraph reducers)
+        reasoning_steps=[],
+        step_results=[],
+        observations=[],
+        tools_executed=[],
+        code_executed=[],
+        reasoning_trace=[],
+        thinking_steps=[],
+        artifacts=[],
+
         # Configuration from kwargs
         enable_rag=kwargs.get('enable_rag', True),
         enable_tools=kwargs.get('enable_tools', False),
@@ -567,6 +681,17 @@ def create_initial_state(
         # Agent preferences (citation style, etc.)
         citation_style=kwargs.get('citation_style', 'apa'),
         include_citations=kwargs.get('include_citations', True),
+
+        # MODE 3: Goal loop initialization
+        goal_achieved=False,
+        goal_loop_iteration=0,
+        max_goal_iterations=kwargs.get('max_iterations', 5),
+        confidence_threshold=kwargs.get('confidence_threshold', 0.95),
+
+        # MODE 3: HITL initialization
+        hitl_initialized=kwargs.get('hitl_enabled', True),
+        hitl_safety_level=kwargs.get('hitl_safety_level', 'balanced'),
+        hitl_pending=False,
     )
 
 

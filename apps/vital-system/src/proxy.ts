@@ -64,13 +64,15 @@ export default async function proxy(request: NextRequest) {
   // Allow Ask Expert API routes without authentication (uses service role key internally)
   // Also allow monitoring/metrics endpoints for internal use
   const publicApiRoutes = [
-    '/api/ask-expert/chat', 
+    '/api/ask-expert/chat',
     '/api/ask-expert/generate-document',
     '/api/ask-expert/orchestrate',  // Main Ask Expert orchestration endpoint
+    '/api/ask-expert/stream',  // Streaming endpoint for Mode 1/3 (proxies to Python backend)
+    '/api/ask-expert/hitl-response',  // HITL response endpoint for Mode 3
     '/api/prompt-starters',  // Prompt starters for Ask Expert
-    '/api/user-agents', 
-    '/api/chat/conversations', 
-    '/api/chat/sessions', 
+    '/api/user-agents',
+    '/api/chat/conversations',
+    '/api/chat/sessions',
     '/api/chat/messages',
     '/api/agents-crud',  // Agents CRUD endpoint (uses service role internally)
     '/api/knowledge',    // Knowledge management endpoints (uses service role internally)

@@ -296,19 +296,19 @@ const ClinicalTrialDesigner: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-canvas-surface border-b border-neutral-200 px-6 py-4">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900">Clinical Trial Design & Simulation</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-neutral-900">Clinical Trial Design & Simulation</h1>
+          <p className="text-neutral-600 mt-1">
             Design, simulate, and optimize digital clinical trials with AI-powered insights
           </p>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="bg-white border-b border-gray-200 px-6">
+      <div className="bg-canvas-surface border-b border-neutral-200 px-6">
         <div className="max-w-7xl mx-auto">
           <nav className="-mb-px flex space-x-8">
             {[
@@ -324,11 +324,11 @@ const ClinicalTrialDesigner: React.FC = () => {
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.key
                     ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
                 }`}
               >
                 <div>{tab.label}</div>
-                <div className="text-xs text-gray-400">{tab.desc}</div>
+                <div className="text-xs text-neutral-400">{tab.desc}</div>
               </button>
             ))}
           </nav>
@@ -340,27 +340,27 @@ const ClinicalTrialDesigner: React.FC = () => {
         {activeTab === 'design' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Trial Overview */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Trial Overview</h2>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">Trial Overview</h2>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Title</label>
                   <input
                     type="text"
                     value={trialDesign.title}
                     onChange={(e) => setTrialDesign({ ...trialDesign, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phase</label>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Phase</label>
                     <select
                       value={trialDesign.phase}
                       onChange={(e) => setTrialDesign({ ...trialDesign, phase: e.target.value as unknown })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="I">Phase I</option>
                       <option value="II">Phase II</option>
@@ -370,22 +370,22 @@ const ClinicalTrialDesigner: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sample Size</label>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Sample Size</label>
                     <input
                       type="number"
                       value={trialDesign.sampleSize}
                       onChange={(e) => setTrialDesign({ ...trialDesign, sampleSize: parseInt(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Primary Endpoint</label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Primary Endpoint</label>
                   <textarea
                     value={trialDesign.primaryEndpoint}
                     onChange={(e) => setTrialDesign({ ...trialDesign, primaryEndpoint: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={2}
                   />
                 </div>
@@ -393,21 +393,21 @@ const ClinicalTrialDesigner: React.FC = () => {
             </div>
 
             {/* Virtual Components */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Virtual Components</h2>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">Virtual Components</h2>
 
               <div className="space-y-3">
                 {trialDesign.virtualComponents.map((component, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-3">
+                  <div key={index} className="border border-neutral-200 rounded-lg p-3">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <div className="font-medium text-gray-900">{component.name}</div>
-                        <div className="text-sm text-gray-600">{component.technology}</div>
+                        <div className="font-medium text-neutral-900">{component.name}</div>
+                        <div className="text-sm text-neutral-600">{component.technology}</div>
                       </div>
-                      <div className="text-sm text-gray-600">${component.cost}</div>
+                      <div className="text-sm text-neutral-600">${component.cost}</div>
                     </div>
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-gray-500">{component.frequency}</span>
+                      <span className="text-neutral-500">{component.frequency}</span>
                       <span className={`px-2 py-1 rounded-full ${
                         component.feasibility === 'high' ? 'bg-green-100 text-green-800' :
                         component.feasibility === 'medium' ? 'bg-yellow-100 text-yellow-800' :
@@ -420,7 +420,7 @@ const ClinicalTrialDesigner: React.FC = () => {
                 ))}
               </div>
 
-              <button className="w-full mt-4 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400">
+              <button className="w-full mt-4 px-4 py-2 border-2 border-dashed border-neutral-300 rounded-lg text-neutral-600 hover:border-neutral-400">
                 + Add Virtual Component
               </button>
             </div>
@@ -430,7 +430,7 @@ const ClinicalTrialDesigner: React.FC = () => {
         {activeTab === 'simulate' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-900">Trial Simulation</h2>
+              <h2 className="text-lg font-semibold text-neutral-900">Trial Simulation</h2>
               <button
                 onClick={runTrialSimulation}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -442,38 +442,38 @@ const ClinicalTrialDesigner: React.FC = () => {
             {simulationResults && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+                  <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6 text-center">
                     <div className="text-2xl font-bold text-green-600">
                       {Math.round(simulationResults.success_probability * 100)}%
                     </div>
-                    <div className="text-sm text-gray-600">Success Probability</div>
+                    <div className="text-sm text-neutral-600">Success Probability</div>
                   </div>
 
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+                  <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6 text-center">
                     <div className="text-2xl font-bold text-blue-600">
                       ${(simulationResults.cost_projection.find((p: any) => p.scenario === 'realistic' && p.month === trialDesign.duration)?.value / 1000000 || 0).toFixed(1)}M
                     </div>
-                    <div className="text-sm text-gray-600">Estimated Cost</div>
+                    <div className="text-sm text-neutral-600">Estimated Cost</div>
                   </div>
 
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+                  <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6 text-center">
                     <div className="text-2xl font-bold text-purple-600">
                       {trialDesign.duration + 3}
                     </div>
-                    <div className="text-sm text-gray-600">Timeline (Months)</div>
+                    <div className="text-sm text-neutral-600">Timeline (Months)</div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Risk Assessment</h3>
+                <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                  <h3 className="text-lg font-medium text-neutral-900 mb-4">Risk Assessment</h3>
 
                   <div className="space-y-4">
                     {simulationResults.risk_factors.map((risk, index) => (
-                      <div key={index} className="border border-gray-200 rounded-lg p-4">
+                      <div key={index} className="border border-neutral-200 rounded-lg p-4">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <div className="font-medium text-gray-900">{risk.category}</div>
-                            <div className="text-sm text-gray-600">{risk.risk}</div>
+                            <div className="font-medium text-neutral-900">{risk.category}</div>
+                            <div className="text-sm text-neutral-600">{risk.risk}</div>
                           </div>
                           <div className={`px-2 py-1 rounded-full text-xs font-medium ${
                             risk.impact === 'high' ? 'bg-red-100 text-red-800' :
@@ -495,12 +495,12 @@ const ClinicalTrialDesigner: React.FC = () => {
 
         {activeTab === 'optimize' && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">AI-Powered Optimizations</h2>
+            <h2 className="text-lg font-semibold text-neutral-900">AI-Powered Optimizations</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Reduce Cost</h3>
-                <p className="text-sm text-gray-600 mb-4">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-lg font-medium text-neutral-900 mb-2">Reduce Cost</h3>
+                <p className="text-sm text-neutral-600 mb-4">
                   Optimize site selection and virtual components to reduce overall trial cost by 15-25%
                 </p>
                 <button
@@ -511,9 +511,9 @@ const ClinicalTrialDesigner: React.FC = () => {
                 </button>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Improve Enrollment</h3>
-                <p className="text-sm text-gray-600 mb-4">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-lg font-medium text-neutral-900 mb-2">Improve Enrollment</h3>
+                <p className="text-sm text-neutral-600 mb-4">
                   Add digital recruitment strategies and expand site network to accelerate enrollment
                 </p>
                 <button
@@ -524,9 +524,9 @@ const ClinicalTrialDesigner: React.FC = () => {
                 </button>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Reduce Risk</h3>
-                <p className="text-sm text-gray-600 mb-4">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-lg font-medium text-neutral-900 mb-2">Reduce Risk</h3>
+                <p className="text-sm text-neutral-600 mb-4">
                   Add interim analyses and improve retention strategies to minimize trial risk
                 </p>
                 <button
@@ -539,14 +539,14 @@ const ClinicalTrialDesigner: React.FC = () => {
             </div>
 
             {simulationResults && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Recommendations</h3>
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-lg font-medium text-neutral-900 mb-4">Recommendations</h3>
 
                 <div className="space-y-2">
                   {simulationResults.recommendations.map((recommendation, index) => (
                     <div key={index} className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2" />
-                      <div className="text-sm text-gray-700">{recommendation}</div>
+                      <div className="text-sm text-neutral-700">{recommendation}</div>
                     </div>
                   ))}
                 </div>
@@ -557,94 +557,94 @@ const ClinicalTrialDesigner: React.FC = () => {
 
         {activeTab === 'market_access' && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Market Access & Reimbursement Strategy</h2>
+            <h2 className="text-lg font-semibold text-neutral-900">Market Access & Reimbursement Strategy</h2>
 
             {/* Market Access Overview */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center mb-4">
                   <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                     <span className="text-xl">💰</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Payer Landscape</h3>
+                  <h3 className="text-lg font-semibold text-neutral-900">Payer Landscape</h3>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="text-sm font-medium text-gray-900">Target Payers</div>
-                    <div className="text-xs text-gray-600 mt-1">
+                  <div className="bg-neutral-50 rounded-lg p-3">
+                    <div className="text-sm font-medium text-neutral-900">Target Payers</div>
+                    <div className="text-xs text-neutral-600 mt-1">
                       CMS Medicare, Private Insurance, Health Systems
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="text-sm font-medium text-gray-900">Coverage Gap</div>
-                    <div className="text-xs text-gray-600 mt-1">
+                  <div className="bg-neutral-50 rounded-lg p-3">
+                    <div className="text-sm font-medium text-neutral-900">Coverage Gap</div>
+                    <div className="text-xs text-neutral-600 mt-1">
                       Digital therapeutics coverage varies by region
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="text-sm font-medium text-gray-900">Market Size</div>
-                    <div className="text-xs text-gray-600 mt-1">
+                  <div className="bg-neutral-50 rounded-lg p-3">
+                    <div className="text-sm font-medium text-neutral-900">Market Size</div>
+                    <div className="text-xs text-neutral-600 mt-1">
                       $2.4B addressable market for diabetes DTx
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center mb-4">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                     <span className="text-xl">📊</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Health Economics</h3>
+                  <h3 className="text-lg font-semibold text-neutral-900">Health Economics</h3>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="text-sm font-medium text-gray-900">Cost-Effectiveness</div>
-                    <div className="text-xs text-gray-600 mt-1">
+                  <div className="bg-neutral-50 rounded-lg p-3">
+                    <div className="text-sm font-medium text-neutral-900">Cost-Effectiveness</div>
+                    <div className="text-xs text-neutral-600 mt-1">
                       ICER: $15,400/QALY (Well below threshold)
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="text-sm font-medium text-gray-900">Budget Impact</div>
-                    <div className="text-xs text-gray-600 mt-1">
+                  <div className="bg-neutral-50 rounded-lg p-3">
+                    <div className="text-sm font-medium text-neutral-900">Budget Impact</div>
+                    <div className="text-xs text-neutral-600 mt-1">
                       $847 PMPM savings vs. standard of care
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="text-sm font-medium text-gray-900">ROI Timeline</div>
-                    <div className="text-xs text-gray-600 mt-1">
+                  <div className="bg-neutral-50 rounded-lg p-3">
+                    <div className="text-sm font-medium text-neutral-900">ROI Timeline</div>
+                    <div className="text-xs text-neutral-600 mt-1">
                       Positive ROI within 8 months
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
                 <div className="flex items-center mb-4">
                   <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
                     <span className="text-xl">⚖️</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Regulatory Path</h3>
+                  <h3 className="text-lg font-semibold text-neutral-900">Regulatory Path</h3>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="text-sm font-medium text-gray-900">FDA Designation</div>
-                    <div className="text-xs text-gray-600 mt-1">
+                  <div className="bg-neutral-50 rounded-lg p-3">
+                    <div className="text-sm font-medium text-neutral-900">FDA Designation</div>
+                    <div className="text-xs text-neutral-600 mt-1">
                       De Novo pathway recommended
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="text-sm font-medium text-gray-900">Evidence Requirements</div>
-                    <div className="text-xs text-gray-600 mt-1">
+                  <div className="bg-neutral-50 rounded-lg p-3">
+                    <div className="text-sm font-medium text-neutral-900">Evidence Requirements</div>
+                    <div className="text-xs text-neutral-600 mt-1">
                       RCT + Real-world evidence needed
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="text-sm font-medium text-gray-900">Timeline</div>
-                    <div className="text-xs text-gray-600 mt-1">
+                  <div className="bg-neutral-50 rounded-lg p-3">
+                    <div className="text-sm font-medium text-neutral-900">Timeline</div>
+                    <div className="text-xs text-neutral-600 mt-1">
                       18-24 months to market access
                     </div>
                   </div>
@@ -653,66 +653,66 @@ const ClinicalTrialDesigner: React.FC = () => {
             </div>
 
             {/* Reimbursement Strategy */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Reimbursement Strategy Framework</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">Reimbursement Strategy Framework</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Evidence Generation Plan</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Evidence Generation Plan</h4>
                   <div className="space-y-2">
                     <div className="flex items-center">
                       <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center mr-2">
                         <div className="w-2 h-2 bg-green-600 rounded-full"></div>
                       </div>
-                      <span className="text-sm text-gray-700">Clinical efficacy endpoints aligned with payer priorities</span>
+                      <span className="text-sm text-neutral-700">Clinical efficacy endpoints aligned with payer priorities</span>
                     </div>
                     <div className="flex items-center">
                       <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center mr-2">
                         <div className="w-2 h-2 bg-green-600 rounded-full"></div>
                       </div>
-                      <span className="text-sm text-gray-700">Health economic outcomes measurement</span>
+                      <span className="text-sm text-neutral-700">Health economic outcomes measurement</span>
                     </div>
                     <div className="flex items-center">
                       <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center mr-2">
                         <div className="w-2 h-2 bg-green-600 rounded-full"></div>
                       </div>
-                      <span className="text-sm text-gray-700">Patient-reported outcomes integration</span>
+                      <span className="text-sm text-neutral-700">Patient-reported outcomes integration</span>
                     </div>
                     <div className="flex items-center">
                       <div className="w-4 h-4 bg-yellow-100 rounded-full flex items-center justify-center mr-2">
                         <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
                       </div>
-                      <span className="text-sm text-gray-700">Real-world evidence collection plan</span>
+                      <span className="text-sm text-neutral-700">Real-world evidence collection plan</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Payer Engagement Strategy</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Payer Engagement Strategy</h4>
                   <div className="space-y-2">
                     <div className="flex items-center">
                       <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                         <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                       </div>
-                      <span className="text-sm text-gray-700">Early payer advisory board establishment</span>
+                      <span className="text-sm text-neutral-700">Early payer advisory board establishment</span>
                     </div>
                     <div className="flex items-center">
                       <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                         <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                       </div>
-                      <span className="text-sm text-gray-700">Value proposition development</span>
+                      <span className="text-sm text-neutral-700">Value proposition development</span>
                     </div>
                     <div className="flex items-center">
                       <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                         <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                       </div>
-                      <span className="text-sm text-gray-700">CPT code strategy planning</span>
+                      <span className="text-sm text-neutral-700">CPT code strategy planning</span>
                     </div>
                     <div className="flex items-center">
                       <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                         <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                       </div>
-                      <span className="text-sm text-gray-700">Coverage policy development support</span>
+                      <span className="text-sm text-neutral-700">Coverage policy development support</span>
                     </div>
                   </div>
                 </div>
@@ -720,25 +720,25 @@ const ClinicalTrialDesigner: React.FC = () => {
             </div>
 
             {/* HEOR Study Design */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Health Economic Outcomes Research (HEOR) Integration</h3>
+            <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">Health Economic Outcomes Research (HEOR) Integration</h3>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Primary Economic Endpoints</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Primary Economic Endpoints</h4>
                   <div className="space-y-3">
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-900">Healthcare Utilization</div>
-                      <div className="text-xs text-gray-600 mt-1">
+                    <div className="bg-neutral-50 rounded-lg p-3">
+                      <div className="text-sm font-medium text-neutral-900">Healthcare Utilization</div>
+                      <div className="text-xs text-neutral-600 mt-1">
                         • Emergency department visits<br/>
                         • Hospital admissions<br/>
                         • Specialist consultations<br/>
                         • Medication adherence
                       </div>
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-900">Cost Outcomes</div>
-                      <div className="text-xs text-gray-600 mt-1">
+                    <div className="bg-neutral-50 rounded-lg p-3">
+                      <div className="text-sm font-medium text-neutral-900">Cost Outcomes</div>
+                      <div className="text-xs text-neutral-600 mt-1">
                         • Direct medical costs<br/>
                         • Indirect costs (productivity)<br/>
                         • Cost per quality-adjusted life year<br/>
@@ -749,28 +749,28 @@ const ClinicalTrialDesigner: React.FC = () => {
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Market Access Milestones</h4>
+                  <h4 className="font-medium text-neutral-900 mb-3">Market Access Milestones</h4>
                   <div className="space-y-3">
                     <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                       <div className="flex justify-between items-center">
-                        <div className="text-sm font-medium text-gray-900">Phase II Completion</div>
+                        <div className="text-sm font-medium text-neutral-900">Phase II Completion</div>
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Month 18</span>
                       </div>
-                      <div className="text-xs text-gray-600 mt-1">Early payer discussions & value framework</div>
+                      <div className="text-xs text-neutral-600 mt-1">Early payer discussions & value framework</div>
                     </div>
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <div className="flex justify-between items-center">
-                        <div className="text-sm font-medium text-gray-900">Phase III Readout</div>
+                        <div className="text-sm font-medium text-neutral-900">Phase III Readout</div>
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Month 36</span>
                       </div>
-                      <div className="text-xs text-gray-600 mt-1">Health economic data publication</div>
+                      <div className="text-xs text-neutral-600 mt-1">Health economic data publication</div>
                     </div>
                     <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                       <div className="flex justify-between items-center">
-                        <div className="text-sm font-medium text-gray-900">FDA Clearance</div>
+                        <div className="text-sm font-medium text-neutral-900">FDA Clearance</div>
                         <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Month 42</span>
                       </div>
-                      <div className="text-xs text-gray-600 mt-1">Coverage determination submissions</div>
+                      <div className="text-xs text-neutral-600 mt-1">Coverage determination submissions</div>
                     </div>
                   </div>
                 </div>
@@ -779,30 +779,30 @@ const ClinicalTrialDesigner: React.FC = () => {
 
             {/* Value Proposition Canvas */}
             <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">💡 Value Proposition Canvas</h3>
+              <h3 className="text-xl font-bold text-neutral-900 mb-4">💡 Value Proposition Canvas</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">Clinical Value</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                <div className="bg-canvas-surface rounded-lg p-4">
+                  <h4 className="font-semibold text-neutral-900 mb-2">Clinical Value</h4>
+                  <ul className="text-sm text-neutral-600 space-y-1">
                     <li>• 1.2% HbA1c reduction vs. SOC</li>
                     <li>• 40% improvement in adherence</li>
                     <li>• 25% reduction in hypoglycemic events</li>
                     <li>• Enhanced quality of life scores</li>
                   </ul>
                 </div>
-                <div className="bg-white rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">Economic Value</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                <div className="bg-canvas-surface rounded-lg p-4">
+                  <h4 className="font-semibold text-neutral-900 mb-2">Economic Value</h4>
+                  <ul className="text-sm text-neutral-600 space-y-1">
                     <li>• $2,400 annual cost savings per patient</li>
                     <li>• 30% reduction in ER visits</li>
                     <li>• 20% decrease in specialist visits</li>
                     <li>• Positive ROI within 8 months</li>
                   </ul>
                 </div>
-                <div className="bg-white rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">Operational Value</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                <div className="bg-canvas-surface rounded-lg p-4">
+                  <h4 className="font-semibold text-neutral-900 mb-2">Operational Value</h4>
+                  <ul className="text-sm text-neutral-600 space-y-1">
                     <li>• Scalable digital delivery model</li>
                     <li>• Integration with existing EHRs</li>
                     <li>• Real-time patient monitoring</li>
@@ -822,50 +822,50 @@ const ClinicalTrialDesigner: React.FC = () => {
 
         {activeTab === 'export' && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Export Protocol & Documentation</h2>
+            <h2 className="text-lg font-semibold text-neutral-900">Export Protocol & Documentation</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Protocol Documents</h3>
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-lg font-medium text-neutral-900 mb-4">Protocol Documents</h3>
 
                 <div className="space-y-3">
                   <button
                     onClick={exportTrialProtocol}
-                    className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                    className="w-full text-left px-4 py-3 border border-neutral-200 rounded-lg hover:bg-neutral-50"
                   >
                     <div className="font-medium">📄 Clinical Trial Protocol</div>
-                    <div className="text-sm text-gray-600">Complete protocol with statistical plan</div>
+                    <div className="text-sm text-neutral-600">Complete protocol with statistical plan</div>
                   </button>
 
-                  <button className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <button className="w-full text-left px-4 py-3 border border-neutral-200 rounded-lg hover:bg-neutral-50">
                     <div className="font-medium">📊 Statistical Analysis Plan</div>
-                    <div className="text-sm text-gray-600">Detailed SAP with interim analyses</div>
+                    <div className="text-sm text-neutral-600">Detailed SAP with interim analyses</div>
                   </button>
 
-                  <button className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <button className="w-full text-left px-4 py-3 border border-neutral-200 rounded-lg hover:bg-neutral-50">
                     <div className="font-medium">⚠️ Risk Management Plan</div>
-                    <div className="text-sm text-gray-600">Risk assessment and mitigation strategies</div>
+                    <div className="text-sm text-neutral-600">Risk assessment and mitigation strategies</div>
                   </button>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Regulatory Submissions</h3>
+              <div className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-lg font-medium text-neutral-900 mb-4">Regulatory Submissions</h3>
 
                 <div className="space-y-3">
-                  <button className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <button className="w-full text-left px-4 py-3 border border-neutral-200 rounded-lg hover:bg-neutral-50">
                     <div className="font-medium">🏛️ FDA IND Application</div>
-                    <div className="text-sm text-gray-600">Ready-to-submit IND package</div>
+                    <div className="text-sm text-neutral-600">Ready-to-submit IND package</div>
                   </button>
 
-                  <button className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <button className="w-full text-left px-4 py-3 border border-neutral-200 rounded-lg hover:bg-neutral-50">
                     <div className="font-medium">🌍 EMA CTA Submission</div>
-                    <div className="text-sm text-gray-600">Clinical Trial Authorization for EU</div>
+                    <div className="text-sm text-neutral-600">Clinical Trial Authorization for EU</div>
                   </button>
 
-                  <button className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <button className="w-full text-left px-4 py-3 border border-neutral-200 rounded-lg hover:bg-neutral-50">
                     <div className="font-medium">🏥 IRB/EC Package</div>
-                    <div className="text-sm text-gray-600">Ethics committee submission materials</div>
+                    <div className="text-sm text-neutral-600">Ethics committee submission materials</div>
                   </button>
                 </div>
               </div>

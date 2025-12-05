@@ -1,2607 +1,1787 @@
 'use client';
 
-/**
- * @fileoverview Claude.ai-Inspired Expert Consultation Interface
- * @description Clean, minimal prompt composer with 2 simple toggles
- *
- * Features:
- * - Claude.ai-style prompt composer
- * - 2 simple toggles: Automatic (on/off), Autonomous (on/off)
- * - Clean attachment UI
- * - Real-time streaming responses
- * - Conversation sidebar
- * - Dark/light mode
- * - Token counter
- *
- * @author VITAL AI Platform Team
- */
-
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from 'next-themes';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import {
-  Sparkles,
-  Send,
-  Plus,
-  Moon,
-  Sun,
-  Menu,
-  X,
-  Copy,
-  Check,
   Bot,
   User,
-  FileText,
+  Play,
+  GitBranch,
+  Database,
+  ShieldCheck,
+  UserCircle,
+  History,
   Brain,
-  Paperclip,
-  BookOpen,
-  AlertCircle,
-  Image as ImageIcon,
-  Zap,
-  Settings2,
+  FileSearch,
+  Search,
+  Sparkles,
+  Radio,
+  CheckCircle,
   Wrench,
+  SkipForward,
   MessageSquare,
+  Save,
+  Settings,
+  Layout,
+  RefreshCw,
+  Eye,
+  Circle,
+  Zap,
+  AlertTriangle,
+  ThumbsUp,
+  ThumbsDown,
+  Users,
+  Target,
+  Grid,
+  type LucideIcon,
 } from 'lucide-react';
-import { PromptInput } from '@/components/prompt-input';
-import { type Agent as SidebarAgent } from '@/components/ask-expert-sidebar';
-import { AskExpertProvider, useAskExpert } from '@/contexts/ask-expert-context';
-import { ChatHistoryProvider, useChatHistory } from '@/contexts/chat-history-context';
-import { PromptStarters, type PromptStarter } from '@/components/prompt-starters';
-import { useAuth } from '@/lib/auth/supabase-auth-context';
-import { useConversations } from '@/lib/hooks/use-conversations';
-import { ChatHistorySidebar } from '@/components/chat-history-sidebar';
-import { SelectedAgentsList } from '@/components/selected-agent-card';
-import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ui/shadcn-io/ai/reasoning';
-import {
-  __Conversation as Conversation,
-  __ConversationContent as ConversationContent,
-} from '@/components/ui/shadcn-io/ai/conversation';
-import { EnhancedMessageDisplay } from '@/features/ask-expert/components/EnhancedMessageDisplay';
-import { InlineArtifactGenerator } from '@/features/ask-expert/components/InlineArtifactGenerator';
-import { AdvancedStreamingWindow } from '@/features/ask-expert/components/AdvancedStreamingWindow';
-import { AgentAvatar, Button } from '@vital/ui';
-import { Suggestions, Suggestion } from '@/components/ai/suggestion';
-import { useAgentWithStats } from '@/features/ask-expert/hooks/useAgentWithStats';
-import { useAgentsStore } from '@/lib/stores/agents-store';
 
-// ============================================================================
-// TYPES
-// ============================================================================
+// Context for shared agent selection
+import { useAskExpert } from '@/contexts/ask-expert-context';
+
+// HITL Components
+import {
+  ModeSelectionModal,
+  UserPromptModal,
+  ProgressTracker,
+  PlanApprovalModal,
+  ToolExecutionCard,
+  SubAgentApprovalCard,
+  FinalReviewPanel,
+} from '@/features/ask-expert/components';
+
+import { Button } from '@/components/ui/button';
+import { PromptInput } from '@/components/prompt-input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+// AI Elements - Reasoning component
+import {
+  Reasoning,
+  ReasoningTrigger,
+} from '@/components/ai-elements/reasoning';
+
+// Collapsible for custom reasoning content
+import {
+  CollapsibleContent,
+} from '@/components/ui/collapsible';
+
+// AI Elements - Loader
+import { Loader } from '@/components/ai-elements/loader';
+
+// Streamdown for chat completion markdown streaming
+import { Streamdown } from 'streamdown';
+
+// Inline Citations
+import {
+  InlineCitation,
+  InlineCitationCard,
+  InlineCitationCardTrigger,
+  InlineCitationCardBody,
+  InlineCitationCarousel,
+  InlineCitationCarouselContent,
+  InlineCitationCarouselItem,
+  InlineCitationCarouselHeader,
+  InlineCitationCarouselIndex,
+  InlineCitationCarouselPrev,
+  InlineCitationCarouselNext,
+  InlineCitationSource,
+} from '@/components/ai-elements/inline-citation';
+
+// Sources section (bottom)
+import {
+  Source,
+  Sources,
+  SourcesContent,
+  SourcesTrigger,
+} from '@/components/ai-elements/sources';
+
+// Types - Agent type comes from context
 
 interface Source {
-  id?: string;
-  url: string;
-  title?: string;
-  description?: string;
-  excerpt?: string;
-  similarity?: number;
-  domain?: string;
-  evidenceLevel?: 'A' | 'B' | 'C' | 'D' | 'Unknown';
-  organization?: string;
-  reliabilityScore?: number;
-  lastUpdated?: string;
-}
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: number;
-  attachments?: AttachmentInfo[];
-  reasoning?: string[];
-  sources?: Source[];
-  selectedAgent?: {
-    id: string;
-    name: string;
-    display_name: string;
-  };
-  selectionReason?: string;
-  confidence?: number;
-  autonomousMetadata?: {
-    goalUnderstanding?: string;
-    executionPlan?: string;
-    currentIteration?: number;
-    currentThought?: string;
-    currentAction?: string;
-    currentObservation?: string;
-    currentReflection?: string;
-    finalAnswer?: string;
-    finalConfidence?: number;
-    totalIterations?: number;
-  };
-  branches?: Array<{
-    id: string;
-    content: string;
-    confidence?: number;
-    citations?: {
-      number: number;
-      text: string;
-      sourceId?: string;
-    }[];
-    sources?: Source[];
-    createdAt?: Date;
-    reasoning?: string | string[];
-  }>;
-  currentBranch?: number;
-  metadata?: {
-    ragSummary?: {
-      totalSources: number;
-      strategy?: string;
-      domains?: string[];
-      cacheHit?: boolean;
-      warning?: string;
-      retrievalTimeMs?: number;
-    };
-    toolSummary?: {
-      allowed: string[];
-      used: string[];
-      totals: {
-        calls: number;
-        success: number;
-        failure: number;
-        totalTimeMs: number;
-      };
-    };
-    sources?: Source[];
-    reasoning?: string[];
-    confidence?: number;
-    citations?: {
-      number: number;
-      text: string;
-      sourceId?: string;
-    }[];
-  };
-}
-
-interface AttachmentInfo {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
-  url: string;
-}
-
-interface Conversation {
-  id: string;
   title: string;
-  messages: Message[];
-  createdAt: number;
-  updatedAt: number;
-  isPinned?: boolean;
-}
-
-// ============================================================================
-// GOLD STANDARD: Additional Interfaces from page-complete.tsx
-// ============================================================================
-
-interface WorkflowStep {
-  id: string;
-  name: string;
-  description?: string;
-  status: 'pending' | 'running' | 'completed' | 'error';
-  progress?: number;
-  startTime?: Date;
-  endTime?: Date;
+  url: string;
+  snippet?: string;
 }
 
 interface ReasoningStep {
+  key: string;
+  label: string;
+}
+
+interface ChatMessage {
   id: string;
-  type: 'thought' | 'action' | 'observation';
+  role: 'user' | 'assistant';
   content: string;
+  reasoning?: string;
+  reasoningSteps?: ReasoningStep[];
+  sources?: Source[];
   confidence?: number;
   timestamp: Date;
+  isStreaming?: boolean;
+  reasoningComplete?: boolean;
+  hitlCheckpoint?: HITLCheckpoint;
+  spawnedAgents?: SpawnedAgent[];
 }
 
-interface StreamingMetrics {
-  tokensGenerated: number;
-  tokensPerSecond: number;
-  elapsedTime: number;
-  estimatedTimeRemaining?: number;
+// Mode 3: HITL Checkpoint types
+interface HITLCheckpoint {
+  id: string;
+  type: 'plan' | 'tool' | 'subagent' | 'decision' | 'final';
+  title: string;
+  description: string;
+  options?: HITLOption[];
+  status: 'pending' | 'approved' | 'rejected' | 'modified';
+  risk_level: 'low' | 'medium' | 'high' | 'critical';
 }
 
-interface SessionStats {
-  totalConversations: number;
-  totalMessages: number;
-  avgSessionDuration: string;
-  mostUsedMode: string;
-  mostUsedAgent: string;
+interface HITLOption {
+  id: string;
+  label: string;
+  description?: string;
+  recommended?: boolean;
 }
 
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
+interface SpawnedAgent {
+  id: string;
+  name: string;
+  role: string;
+  status: 'spawning' | 'running' | 'completed' | 'failed';
+}
 
-function AskExpertPageContent() {
-  // Get agents and selection from context (loaded by layout sidebar)
-  const { selectedAgents, agents, setSelectedAgents, refreshAgents } = useAskExpert();
-  const { user } = useAuth();
-  
-  // Also use agents store directly to ensure we have access to all experts
-  const { agents: storeAgents, loadAgents: loadStoreAgents, isLoading: isLoadingStoreAgents } = useAgentsStore();
-  
-  // Load agents from store on mount
-  useEffect(() => {
-    if (storeAgents.length === 0 && !isLoadingStoreAgents) {
-      console.log('🔄 [AskExpert] Loading agents from store...');
-      loadStoreAgents();
-    }
-  }, [loadStoreAgents, storeAgents.length, isLoadingStoreAgents]);
-  
-  // Merge store agents with context agents (prefer store agents as they're more up-to-date)
-  const allAvailableAgents = useMemo(() => {
-    const storeAgentMap = new Map(storeAgents.map(a => [a.id, a]));
-    const contextAgentMap = new Map(agents.map(a => [a.id, a]));
-    
-    // Start with store agents, then add any context agents not in store
-    const merged = [...storeAgents];
-    agents.forEach(contextAgent => {
-      if (!storeAgentMap.has(contextAgent.id)) {
-        merged.push(contextAgent);
-      }
-    });
-    
-    console.log(`📦 [AskExpert] Merged ${merged.length} agents (${storeAgents.length} from store, ${agents.length} from context)`);
-    return merged;
-  }, [storeAgents, agents]);
+// Mode definitions - 2x2 matrix: Selection (Manual/Automatic) × Execution (Interactive/Autonomous)
+type Mode = '1' | '2' | '3' | '4';
 
-  // Theme hook (global dark/light mode)
-  const { theme } = useTheme();
+interface ModeConfig {
+  id: Mode;
+  name: string;
+  description: string;
+  icon: LucideIcon;
+  features?: string[];
+}
 
-  // Chat history context
-  const {
-    currentSession,
-    messages: chatMessages,
-    addMessage,
-    createSession,
-    updateSession
-  } = useChatHistory();
+const MODES: ModeConfig[] = [
+  {
+    id: '1',
+    name: 'Ask Expert',
+    description: 'Manual selection, interactive chat',
+    icon: MessageSquare,
+    features: ['Select your expert', 'Turn-by-turn conversation', 'Full control'],
+  },
+  {
+    id: '2',
+    name: 'Smart Routing',
+    description: 'Auto-routed, interactive chat',
+    icon: Sparkles,
+    features: ['AI selects best expert', 'Turn-by-turn conversation', 'Efficient routing'],
+  },
+  {
+    id: '3',
+    name: 'Expert Mission',
+    description: 'Manual selection, goal-driven execution',
+    icon: Target,
+    features: ['Select your expert', 'Autonomous execution', 'HITL checkpoints'],
+  },
+  {
+    id: '4',
+    name: 'Full Auto',
+    description: 'AI-driven, goal-driven execution',
+    icon: Zap,
+    features: ['AI orchestration', 'Multi-agent collaboration', 'HITL checkpoints'],
+  },
+];
 
-  // State management
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [streamingMessage, setStreamingMessage] = useState('');
-  const [streamingReasoning, setStreamingReasoning] = useState<string>('');
-  const [isStreamingReasoning, setIsStreamingReasoning] = useState(false);
-  const [recentReasoning, setRecentReasoning] = useState<string[]>([]);
-  const [recentReasoningTimestamp, setRecentReasoningTimestamp] = useState<number | null>(null);
+// HITL Safety levels for autonomous modes
+type HITLSafetyLevel = 'strict' | 'balanced' | 'permissive';
 
-  // Simple toggles (like Claude.ai)
-  // Default: Both OFF → Mode 1: Manual Interactive
-  const [isAutomatic, setIsAutomatic] = useState(false);
-  const [isAutonomous, setIsAutonomous] = useState(false);
-  const [enableRAG, setEnableRAG] = useState(true); // RAG enabled by default - all modes should use knowledge base
-  const [enableTools, setEnableTools] = useState(false); // Tools disabled by default - user must enable
-  const [selectedModel, setSelectedModel] = useState<string>('gpt-4'); // Model selection for AI interactions
-  const [hasManualToolsToggle, setHasManualToolsToggle] = useState(false);
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const [tokenCount, setTokenCount] = useState(0);
-  const [showArtifactGenerator, setShowArtifactGenerator] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [selectedTools, setSelectedTools] = useState<string[]>([]);
-  const [selectedRagDomains, setSelectedRagDomains] = useState<string[]>([]);
-  const [allAvailableTools, setAllAvailableTools] = useState<string[]>([]);
-  const [allAvailableRagDomains, setAllAvailableRagDomains] = useState<string[]>([]);
-  const [loadingTools, setLoadingTools] = useState(false);
-  const [loadingRagDomains, setLoadingRagDomains] = useState(false);
-  const [streamingMeta, setStreamingMeta] = useState<{
-    ragSummary?: NonNullable<Message['metadata']>['ragSummary'];
-    toolSummary?: NonNullable<Message['metadata']>['toolSummary'];
-    sources?: Source[];
-    reasoning: string[];
-  } | null>(null);
+// Use Next.js API proxy to avoid CORS issues
+const STREAM_API_URL = '/api/ask-expert/stream';
 
-  // ============================================================================
-  // GOLD STANDARD: Advanced Streaming State
-  // ============================================================================
-  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
-  const [reasoningSteps, setReasoningSteps] = useState<ReasoningStep[]>([]);
-  const [streamingMetrics, setStreamingMetrics] = useState<StreamingMetrics>({
-    tokensGenerated: 0,
-    tokensPerSecond: 0,
-    elapsedTime: 0,
-  });
-  const [isPaused, setIsPaused] = useState(false);
-  const [sessionStats, setSessionStats] = useState<SessionStats>({
-    totalConversations: 0,
-    totalMessages: 0,
-    avgSessionDuration: '0m',
-    mostUsedMode: 'Mode 1',
-    mostUsedAgent: '',
-  });
+// Ordered workflow steps with icons - covers all backend step keys
+const WORKFLOW_STEPS: { key: string; label: string; icon: LucideIcon }[] = [
+  // Initialization
+  { key: 'initializing', label: 'Starting up', icon: Play },
+  { key: 'LangGraph', label: 'Processing workflow', icon: GitBranch },
+  // Session & Validation
+  { key: 'load_session', label: 'Loading session', icon: Database },
+  { key: 'validate_tenant', label: 'Validating access', icon: ShieldCheck },
+  { key: 'load_agent_profile', label: 'Loading expert profile', icon: UserCircle },
+  { key: 'load_conversation_history', label: 'Retrieving context', icon: History },
+  // Analysis
+  { key: 'analyze_query_complexity', label: 'Analyzing question', icon: Brain },
+  // RAG
+  { key: 'should_use_rag', label: 'Checking knowledge base', icon: FileSearch },
+  { key: 'rag_retrieval', label: 'Searching documents', icon: Search },
+  // Tools
+  { key: 'should_use_tools', label: 'Evaluating tools', icon: Wrench },
+  { key: 'skip_tools', label: 'Skipping tools', icon: SkipForward },
+  { key: 'execute_tools', label: 'Running tools', icon: Wrench },
+  // Generation
+  { key: 'execute_expert_agent', label: 'Consulting expert', icon: Sparkles },
+  { key: 'generate_response', label: 'Generating response', icon: Sparkles },
+  { key: 'generate_streaming_response', label: 'Streaming response', icon: Radio },
+  { key: 'stream_response', label: 'Streaming answer', icon: Radio },
+  // Validation & Finalization
+  { key: 'validate_human_review', label: 'Reviewing response', icon: Eye },
+  { key: 'save_message', label: 'Saving message', icon: Save },
+  { key: 'update_session_metadata', label: 'Updating session', icon: Settings },
+  { key: 'format_output', label: 'Formatting output', icon: Layout },
+  { key: 'should_continue_conversation', label: 'Checking continuation', icon: RefreshCw },
+  { key: 'finalize', label: 'Finalizing', icon: CheckCircle },
+];
 
+// Map step key to label
+const STEP_LABELS: Record<string, string> = Object.fromEntries(
+  WORKFLOW_STEPS.map(s => [s.key, s.label])
+);
 
-  const formatReasoningTimestamp = useCallback((value: number | null) => {
-    if (!value) {
-      return '';
-    }
-    try {
-      return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return '';
-    }
-  }, []);
+// Map step key to icon
+const STEP_ICONS: Record<string, LucideIcon> = Object.fromEntries(
+  WORKFLOW_STEPS.map(s => [s.key, s.icon])
+);
 
-  // ============================================================================
-  // GOLD STANDARD: Pause/Resume Handlers
-  // ============================================================================
-  const handlePauseStreaming = useCallback(() => {
-    setIsPaused(true);
-    // Note: Full pause support requires backend implementation
-    // For now, updates UI state only
-  }, []);
+// Get step icon component - returns Circle as fallback for unknown steps
+function getStepIcon(stepKey: string): LucideIcon {
+  return STEP_ICONS[stepKey] || Circle;
+}
 
-  const handleResumeStreaming = useCallback(() => {
-    setIsPaused(false);
-  }, []);
-
-  const handleBranchChange = useCallback((messageId: string, branchIndex: number) => {
-    let updatedMessage: Message | undefined;
-
-    setMessages((prev) =>
-      prev.map((message) => {
-        if (message.id !== messageId) {
-          return message;
-        }
-
-        const selectedBranch = message.branches?.[branchIndex];
-        const branchReasoning = selectedBranch?.reasoning
-          ? Array.isArray(selectedBranch.reasoning)
-            ? selectedBranch.reasoning
-            : [selectedBranch.reasoning]
-          : message.metadata?.reasoning ?? message.reasoning ?? [];
-        const branchSources = selectedBranch?.sources && selectedBranch.sources.length > 0
-          ? selectedBranch.sources.map((src) => ({ ...src }))
-          : message.sources;
-
-        const nextMessage: Message = {
-          ...message,
-          currentBranch: branchIndex,
-          content: selectedBranch?.content ?? message.content,
-          sources: branchSources,
-          metadata: message.metadata
-            ? {
-                ...message.metadata,
-                sources: branchSources,
-                reasoning: branchReasoning,
-              }
-            : message.metadata,
-        };
-
-        updatedMessage = nextMessage;
-        return nextMessage;
-      })
-    );
-
-    if (updatedMessage) {
-      setRecentReasoning(
-        updatedMessage.metadata?.reasoning ?? updatedMessage.reasoning ?? []
-      );
-      setRecentReasoningTimestamp(Date.now());
-
-      if (activeConversationId) {
-        setConversations((prev) =>
-          prev.map((conv) =>
-            conv.id === activeConversationId
-              ? {
-                  ...conv,
-                  messages: conv.messages.map((message) =>
-                    message.id === updatedMessage!.id
-                      ? { ...message, ...updatedMessage }
-                      : message
-                  ),
-                  updatedAt: Date.now(),
-                }
-              : conv
-          )
-        );
-      }
-    }
-  }, [activeConversationId, setConversations, setMessages, setRecentReasoning, setRecentReasoningTimestamp]);
-
-  const submitFeedbackForMessage = useCallback(
-    async (message: Message, type: 'positive' | 'negative', previousUserMessage?: Message) => {
-      const vote = type === 'positive' ? 'up' : 'down';
-      try {
-        await fetch('/api/feedback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messageId: message.id,
-            vote,
-            rating: vote === 'up' ? 5 : 1,
-            queryText: previousUserMessage?.content ?? '',
-            responseText: message.content,
-            agentId: message.selectedAgent?.id,
-            timestamp: new Date().toISOString(),
-          }),
-        });
-      } catch (error) {
-        console.error('Error submitting feedback:', error);
-      }
-    },
-    []
-  );
-
-  // Fetch all available tools from database
-  useEffect(() => {
-    const fetchAllTools = async () => {
-      try {
-        setLoadingTools(true);
-        const response = await fetch('/api/tools-crud?limit=10000');
-        if (response.ok) {
-          const data = await response.json();
-          const toolNames = (data.tools || []).map((tool: any) => tool.name || tool.slug).filter(Boolean);
-          setAllAvailableTools(toolNames);
-        } else {
-          // API returns empty array on error, so just log and continue
-          const errorText = await response.text();
-          console.warn('Failed to fetch tools, using empty list:', errorText);
-          setAllAvailableTools([]);
-        }
-      } catch (error) {
-        console.warn('Error fetching tools, using empty list:', error);
-        setAllAvailableTools([]);
-      } finally {
-        setLoadingTools(false);
-      }
-    };
-
-    fetchAllTools();
-  }, []);
-
-  // Fetch all available RAG domains from database
-  useEffect(() => {
-    const fetchAllRagDomains = async () => {
-      try {
-        setLoadingRagDomains(true);
-        const response = await fetch('/api/knowledge-domains');
-        if (response.ok) {
-          const data = await response.json();
-          const domainNames = (data.domains || []).map((domain: any) => domain.name).filter(Boolean);
-          setAllAvailableRagDomains(domainNames);
-        } else {
-          // API returns empty array on error, so just log and continue
-          const errorText = await response.text();
-          console.warn('Failed to fetch RAG domains, using empty list:', errorText);
-          setAllAvailableRagDomains([]);
-        }
-      } catch (error) {
-        console.warn('Error fetching RAG domains, using empty list:', error);
-        setAllAvailableRagDomains([]);
-      } finally {
-        setLoadingRagDomains(false);
-      }
-    };
-
-    fetchAllRagDomains();
-  }, []);
-
-  // Use merged agents list (from store + context)
-  const effectiveAgents = allAvailableAgents.length > 0 ? allAvailableAgents : agents;
-  
-  // Use all available tools from database (not just from selected agents)
-  const availableTools = useMemo(() => {
-    // Return all tools from database, sorted
-    return Array.from(new Set(allAvailableTools)).sort((a, b) => a.localeCompare(b));
-  }, [allAvailableTools]);
-
-  useEffect(() => {
-    // Update selected tools to only include valid ones (remove invalid selections)
-    setSelectedTools((prev) => {
-      const valid = prev.filter((tool) => availableTools.includes(tool));
-      return valid;
-    });
-  }, [availableTools]);
-
-  // GOLDEN RULE MATRIX:
-  //                  | Manual Selection | Auto Selection  |
-  //                  | (User picks)     | (System picks)  |
-  // -----------------+------------------+-----------------+
-  // Conversational   | Mode 1           | Mode 2          |
-  // -----------------+------------------+-----------------+
-  // Agentic          | Mode 3           | Mode 4          |
-  const currentMode = useMemo(() => {
-    if (isAutonomous && !isAutomatic) {
-      // Mode 3: Manual-Agentic (User selects + Autonomous reasoning)
-      return { id: 3, name: 'Manual-Agentic', description: 'You select agent + autonomous reasoning', color: 'purple' };
-    }
-    if (isAutonomous && isAutomatic) {
-      // Mode 4: Auto-Agentic (AI selects + Autonomous reasoning)
-      return { id: 4, name: 'Auto-Agentic', description: 'AI selects agent + autonomous reasoning', color: 'green' };
-    }
-    if (!isAutonomous && isAutomatic) {
-      // Mode 2: Auto-Conversational (AI selects + Interactive)
-      return { id: 2, name: 'Automatic Selection', description: 'AI selects best agent for you', color: 'blue' };
-    }
-    // Mode 1: Manual-Conversational (User selects + Interactive)
-    return { id: 1, name: 'Manual Interactive', description: 'You select agent + interactive chat', color: 'gray' };
-  }, [isAutonomous, isAutomatic]);
-
-  const primarySelectedAgent = useMemo(() => {
-  if (!selectedAgents.length) {
-    return null;
+// Format step name to user-friendly label
+function formatStepName(step: string): string {
+  if (STEP_LABELS[step]) {
+    return STEP_LABELS[step];
   }
-  const agent = effectiveAgents.find((a) => a.id === selectedAgents[0]);
-    if (!agent) {
-      return null;
-    }
+  // Convert snake_case to Title Case
+  return step
+    .replace(/_/g, ' ')
+    .replace(/([A-Z])/g, ' $1')
+    .trim()
+    .toLowerCase()
+    .replace(/^\w/, (c) => c.toUpperCase());
+}
 
-    const displayName =
-      (agent as any).displayName ||
-      (agent as any).display_name ||
-      agent.name;
+/**
+ * Parse extended thinking XML tags from LLM response
+ * Extracts <thinking> content for reasoning panel and <answer> content for chat
+ * Handles streaming where tags may be incomplete
+ */
+function parseExtendedThinking(content: string): {
+  thinking: string;
+  answer: string;
+  hasThinkingTag: boolean;
+  isComplete: boolean;
+} {
+  // Check for complete thinking tags
+  const thinkingMatch = content.match(/<thinking>([\s\S]*?)<\/thinking>/);
+  const answerMatch = content.match(/<answer>([\s\S]*?)<\/answer>/);
+
+  // Check for incomplete tags (streaming in progress)
+  const hasOpenThinking = content.includes('<thinking>') && !content.includes('</thinking>');
+  const hasOpenAnswer = content.includes('<answer>') && !content.includes('</answer>');
+
+  let thinking = '';
+  let answer = content;
+
+  if (thinkingMatch) {
+    thinking = thinkingMatch[1].trim();
+  } else if (hasOpenThinking) {
+    // Extract partial thinking content
+    const startIdx = content.indexOf('<thinking>') + '<thinking>'.length;
+    thinking = content.slice(startIdx).trim();
+  }
+
+  if (answerMatch) {
+    answer = answerMatch[1].trim();
+  } else if (hasOpenAnswer) {
+    // Extract partial answer content
+    const startIdx = content.indexOf('<answer>') + '<answer>'.length;
+    answer = content.slice(startIdx).trim();
+  } else if (thinkingMatch || hasOpenThinking) {
+    // If we have thinking but no answer tags, strip thinking from content
+    answer = content
+      .replace(/<thinking>[\s\S]*?<\/thinking>/g, '')
+      .replace(/<thinking>[\s\S]*/g, '')
+      .replace(/<\/?answer>/g, '')
+      .trim();
+  }
+
+  // Also clean any remaining XML tags from the answer
+  answer = answer
+    .replace(/<\/?thinking>/g, '')
+    .replace(/<\/?answer>/g, '')
+    .trim();
 
   return {
-    id: agent.id,
-    avatar: agent.avatar,
-    displayName,
+    thinking,
+    answer,
+    hasThinkingTag: !!thinkingMatch || hasOpenThinking,
+    isComplete: !!thinkingMatch && !!answerMatch,
   };
-  }, [effectiveAgents, selectedAgents]);
+}
 
-  const primaryAgentId = selectedAgents.length ? selectedAgents[0] : null;
-  const {
-    stats: primaryAgentStats,
-    memory: primaryAgentMemory,
-    isLoadingMemory: isLoadingPrimaryMemory,
-  } = useAgentWithStats(primaryAgentId, user?.id ?? null);
+// Get risk level styling for HITL checkpoints
+function getRiskLevelStyles(riskLevel: HITLCheckpoint['risk_level']): {
+  border: string;
+  bg: string;
+  badge: string;
+  text: string;
+} {
+  switch (riskLevel) {
+    case 'critical':
+      return {
+        border: 'border-red-500',
+        bg: 'bg-red-500/10',
+        badge: 'bg-red-500 text-white',
+        text: 'text-red-600 dark:text-red-400',
+      };
+    case 'high':
+      return {
+        border: 'border-orange-500',
+        bg: 'bg-orange-500/10',
+        badge: 'bg-orange-500 text-white',
+        text: 'text-orange-600 dark:text-orange-400',
+      };
+    case 'medium':
+      return {
+        border: 'border-yellow-500',
+        bg: 'bg-yellow-500/10',
+        badge: 'bg-yellow-500 text-black',
+        text: 'text-yellow-600 dark:text-yellow-400',
+      };
+    case 'low':
+    default:
+      return {
+        border: 'border-green-500',
+        bg: 'bg-green-500/10',
+        badge: 'bg-green-500 text-white',
+        text: 'text-green-600 dark:text-green-400',
+      };
+  }
+}
 
-  const latestAssistantMessage = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i -= 1) {
-      const message = messages[i];
-      if (message.role === 'assistant' && message.content?.trim()) {
-        return message;
-      }
+// Get HITL checkpoint type icon and label
+function getCheckpointTypeInfo(type: HITLCheckpoint['type']): { icon: LucideIcon; label: string } {
+  switch (type) {
+    case 'plan':
+      return { icon: Target, label: 'Execution Plan' };
+    case 'tool':
+      return { icon: Wrench, label: 'Tool Execution' };
+    case 'subagent':
+      return { icon: Users, label: 'Agent Spawn' };
+    case 'decision':
+      return { icon: GitBranch, label: 'Decision Point' };
+    case 'final':
+      return { icon: CheckCircle, label: 'Final Review' };
+    default:
+      return { icon: AlertTriangle, label: 'Checkpoint' };
+  }
+}
+
+export default function AskExpertV2Page() {
+  // Use shared context for agent selection (sidebar can now select agents)
+  const { agents, selectedAgents, setSelectedAgents, agentsLoading } = useAskExpert();
+
+  // Derive the currently selected agent from context (first selected agent)
+  const selectedAgent = useMemo(() => {
+    if (selectedAgents.length === 0) return null;
+    return agents.find(a => a.id === selectedAgents[0]) || null;
+  }, [agents, selectedAgents]);
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [sessionId] = useState(() => uuidv4());
+  const [mode, setMode] = useState<Mode>('1');
+  const [pendingHITL, setPendingHITL] = useState<HITLCheckpoint | null>(null);
+
+  // Model selection for PromptInput
+  const [selectedModel, setSelectedModel] = useState('gpt-4');
+  const [enableRAG, setEnableRAG] = useState(false);
+  const [enableTools, setEnableTools] = useState(true);
+
+  // Modal states
+  const [showModeModal, setShowModeModal] = useState(false);
+  const [showPromptModal, setShowPromptModal] = useState(false);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [hitlSafetyLevel, setHitlSafetyLevel] = useState<HITLSafetyLevel>('balanced');
+  const [executionGoal, setExecutionGoal] = useState('');
+  const [executionContext, setExecutionContext] = useState('');
+
+  // Track whether autonomous mode has been configured this session
+  // Once configured, subsequent sends skip the modal and use saved settings
+  const [autonomousConfigured, setAutonomousConfigured] = useState(false);
+
+  // Mode 3/4 execution tracking
+  const [executionSteps, setExecutionSteps] = useState<Array<{
+    id: string;
+    label: string;
+    status: 'pending' | 'running' | 'completed' | 'failed';
+    startedAt?: Date;
+    completedAt?: Date;
+  }>>([]);
+  const [pendingPlan, setPendingPlan] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    steps: Array<{
+      id: string;
+      title: string;
+      description: string;
+      agentName?: string;
+      toolsRequired?: string[];
+      estimatedDuration?: string;
+    }>;
+    estimatedDuration: string;
+    totalSteps: number;
+    riskAssessment: { level: 'low' | 'medium' | 'high' | 'critical'; reason: string };
+  } | null>(null);
+  const [pendingToolExecution, setPendingToolExecution] = useState<{
+    id: string;
+    toolName: string;
+    description: string;
+    category: string;
+    parameters: Array<{ name: string; value: unknown; type: string; sensitive?: boolean }>;
+    riskLevel: 'low' | 'medium' | 'high' | 'critical';
+    riskReason?: string;
+    estimatedDuration?: string;
+  } | null>(null);
+  const [pendingSubAgentSpawn, setPendingSubAgentSpawn] = useState<{
+    id: string;
+    agentName: string;
+    agentRole: string;
+    level: 'L2' | 'L3' | 'L4' | 'L5';
+    justification: string;
+    capabilities: Array<{ name: string; description: string }>;
+    expectedOutput: string;
+    riskLevel: 'low' | 'medium' | 'high';
+    estimatedTokens?: number;
+  } | null>(null);
+  const [pendingFinalReview, setPendingFinalReview] = useState<{
+    id: string;
+    response: string;
+    sources: Array<{ title: string; url: string; snippet?: string; relevance?: number }>;
+    confidence: number;
+    executionSummary: {
+      totalSteps: number;
+      completedSteps: number;
+      agentsUsed: number;
+      toolsExecuted: number;
+      totalDuration: string;
+      tokensUsed: number;
+    };
+    createdAt: Date;
+  } | null>(null);
+  const [isAutonomousExecution, setIsAutonomousExecution] = useState(false);
+  // Pending goal for autonomous mode - stores the goal from chat input when config modal is shown
+  const [pendingAutonomousGoal, setPendingAutonomousGoal] = useState<string | null>(null);
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // Ref to hold sendMessage function for use in handleSendOrConfigure (avoids circular dependency)
+  // Updated to accept optional message override parameter
+  const sendMessageRef = useRef<((messageOverride?: string) => Promise<void>) | null>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-    return undefined;
   }, [messages]);
 
-  const followUpSuggestions = useMemo(() => {
-    return generateFollowUpSuggestions(
-      latestAssistantMessage,
-      streamingMessage,
-      currentMode.name
+  // Agent fetching is handled by the AskExpertContext provider
+
+  // Handle HITL checkpoint approval/rejection (Mode 3)
+  const handleHITLResponse = useCallback(async (
+    checkpointId: string,
+    decision: 'approved' | 'rejected',
+    messageId: string
+  ) => {
+    // Update the checkpoint status in the message
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId && msg.hitlCheckpoint?.id === checkpointId
+          ? {
+              ...msg,
+              hitlCheckpoint: {
+                ...msg.hitlCheckpoint,
+                status: decision,
+              },
+            }
+          : msg
+      )
     );
-  }, [latestAssistantMessage, streamingMessage, currentMode]);
 
-  const artifactConversationContext = useMemo(() => {
-    if (messages.length === 0) {
-      return '';
+    // Clear pending HITL state
+    setPendingHITL(null);
+
+    // Send approval/rejection to backend
+    try {
+      await fetch('/api/ask-expert/hitl-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint_id: checkpointId,
+          decision,
+          session_id: sessionId,
+        }),
+      });
+    } catch (error) {
+      console.error('[AskExpertV2] Failed to send HITL response:', error);
     }
-    return messages
-      .slice(-6)
-      .map((message) => {
-        const speaker = message.role === 'user' ? 'User' : 'Expert';
-        const text = message.content?.trim() ?? '';
-        return text.length > 0 ? `${speaker}: ${text}` : '';
-      })
-      .filter((line) => line.length > 0)
-      .join('\n');
-  }, [messages]);
+  }, [sessionId]);
 
-  const handleArtifactGenerate = useCallback(
-    async (templateId: string, artifactInputs: Record<string, string>) => {
-      try {
-        console.debug('[AskExpert] Artifact generation requested', {
-          templateId,
-          artifactInputs,
-        });
-      } catch (error) {
-        console.error('[AskExpert] Artifact generation hook failed', error);
-      }
-    },
-    []
-  );
+  // Handle mode selection from modal
+  const handleModeSelect = useCallback((selectedMode: '1' | '2' | '3' | '4') => {
+    setMode(selectedMode);
+    setShowModeModal(false);
 
-  const hasAssistantResponse = useMemo(
-    () => messages.some((message) => message.role === 'assistant' && message.content?.trim()),
-    [messages]
-  );
-
-  const shouldShowSuggestions =
-    followUpSuggestions.length > 0 &&
-    (hasAssistantResponse || Boolean(streamingMessage && streamingMessage.trim().length > 0));
-
-  // Use all available RAG domains from database (not just from selected agents)
-  const availableRagDomains = useMemo(() => {
-    // Return all RAG domains from database, sorted
-    return Array.from(new Set(allAvailableRagDomains)).sort((a, b) => a.localeCompare(b));
-  }, [allAvailableRagDomains]);
-
-  useEffect(() => {
-    // Update selected RAG domains to only include valid ones (remove invalid selections)
-    setSelectedRagDomains((prev) => {
-      const valid = prev.filter((domain) => availableRagDomains.includes(domain));
-      return valid;
-    });
-  }, [availableRagDomains]);
-
-  useEffect(() => {
-    if (messages.length === 0 && showArtifactGenerator) {
-      setShowArtifactGenerator(false);
+    // Reset autonomous config when changing modes
+    if (selectedMode !== '3' && selectedMode !== '4') {
+      setAutonomousConfigured(false);
     }
-  }, [messages.length, showArtifactGenerator]);
 
-  const handleEnableToolsChange = useCallback((value: boolean) => {
-    if (enableTools === value) {
-      return;
+    // For autonomous modes (3, 4), show the user prompt modal to collect goal
+    if (selectedMode === '3' || selectedMode === '4') {
+      setShowPromptModal(true);
     }
-    setHasManualToolsToggle(true);
-    setEnableTools(value);
-  }, [enableTools]);
-
-  // Prompt starters
-  const [promptStarters, setPromptStarters] = useState<PromptStarter[]>([]);
-  const [loadingPromptStarters, setLoadingPromptStarters] = useState(false);
-
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Estimate token count
-  useEffect(() => {
-    const estimated = Math.ceil((inputValue.length + messages.reduce((acc, m) => acc + m.content.length, 0)) / 4);
-    setTokenCount(estimated);
-  }, [inputValue, messages]);
-
-  // Auto-scroll
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, streamingMessage, scrollToBottom]);
+  // Intercept send action for autonomous modes - show config modal on first send, then skip
+  const handleSendOrConfigure = useCallback(() => {
+    const isAutonomousMode = mode === '3' || mode === '4';
+    const currentMessage = inputValue.trim();
 
-  // Conversations management with database (replaces localStorage)
-  const {
-    conversations: dbConversations,
-    isLoading: conversationsLoading,
-    createMutation,
-    updateMutation,
-    deleteMutation,
-    migrateMutation,
-  } = useConversations(user?.id || null);
-  const migrationCompleted = useRef(false);
-  const conversationsInitialized = useRef(false);
-
-  // Migrate from localStorage on mount (one-time)
-  useEffect(() => {
-    if (user?.id && typeof window !== 'undefined' && !migrationCompleted.current) {
-      const hasLocalStorage = localStorage.getItem('vital-conversations');
-      if (hasLocalStorage && !migrationCompleted.current) {
-        migrateMutation.mutate(undefined, {
-          onSuccess: () => {
-            migrationCompleted.current = true;
-          },
-        });
-      }
-    }
-  }, [user?.id, migrateMutation]);
-
-  // Load conversations from database
-  useEffect(() => {
-    // Skip if already initialized or if we have an active conversation
-    if (conversationsInitialized.current || activeConversationId) {
-      return;
-    }
-
-    if (dbConversations && dbConversations.length > 0) {
-      setConversations(dbConversations);
-      // Only set active conversation if we don't have one
-      if (dbConversations[0]) {
-        setActiveConversationId(dbConversations[0].id);
-        setMessages(dbConversations[0].messages);
-        conversationsInitialized.current = true;
-      }
-    } else if (!conversationsLoading && (!dbConversations || dbConversations.length === 0)) {
-      // Create first conversation if none exist
-      conversationsInitialized.current = true; // Set early to prevent re-running
-      const newConv: Conversation = {
-        id: `temp_${Date.now()}`,
-        title: 'New Conversation',
-        messages: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
-      if (user?.id) {
-        createMutation.mutate({
-          title: newConv.title,
-          messages: newConv.messages,
-          createdAt: newConv.createdAt,
-          updatedAt: newConv.updatedAt,
-        }, {
-          onSuccess: (created) => {
-            setConversations([created]);
-            setActiveConversationId(created.id);
-          },
-        });
-      } else {
-        setConversations([newConv]);
-        setActiveConversationId(newConv.id);
-      }
-    }
-  }, [dbConversations, conversationsLoading, user?.id, createMutation, activeConversationId]);
-
-  // Save conversation updates to database
-  useEffect(() => {
-    if (conversations.length > 0 && user?.id && !conversationsLoading && conversationsInitialized.current) {
-      const activeConv = conversations.find(c => c.id === activeConversationId);
-      if (activeConv && activeConv.id && !activeConv.id.startsWith('temp_')) {
-        // Only update existing conversations (not temp ones)
-        // Debounce updates to prevent excessive API calls
-        const timeoutId = setTimeout(() => {
-          updateMutation.mutate({
-            conversationId: activeConv.id,
-            updates: {
-              messages: activeConv.messages,
-              title: activeConv.title,
-              isPinned: activeConv.isPinned,
-            },
-          });
-        }, 500); // Wait 500ms before saving
-        
-        return () => clearTimeout(timeoutId);
-      }
-    }
-  }, [conversations, activeConversationId, user?.id, conversationsLoading, updateMutation]);
-
-  // Fetch prompt starters when selected agents change
-  useEffect(() => {
-    if (selectedAgents.length === 0) {
-      setPromptStarters([]);
-      return;
-    }
-
-    const fetchPromptStarters = async () => {
-     setLoadingPromptStarters(true);
-     try {
-       // Get CSRF token from cookie
-       const csrfToken = document.cookie
-         .split('; ')
-         .find(row => row.startsWith('__Host-csrf-token='))
-         ?.split('=')[1];
-       
-       const headers: Record<string, string> = {
-         'Content-Type': 'application/json',
-       };
-       
-       // Add CSRF token if available
-       if (csrfToken) {
-         headers['x-csrf-token'] = csrfToken;
-       }
-       
-       const response = await fetch('/api/prompt-starters', {
-         method: 'POST',
-         headers,
-         body: JSON.stringify({ agentIds: selectedAgents }),
-       });
-
-       if (response.ok) {
-         const data = await response.json();
-         setPromptStarters(data.prompts || []);
-       } else {
-         console.error('Failed to fetch prompt starters');
-         setPromptStarters([]);
-       }
-      } catch (error) {
-        console.error('Error fetching prompt starters:', error);
-        setPromptStarters([]);
-      } finally {
-        setLoadingPromptStarters(false);
-      }
-    };
-
-    fetchPromptStarters();
-  }, [selectedAgents]);
-
-  // File upload
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setAttachments(prev => [...prev, ...files]);
-  };
-
-  const removeAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Send message
-  const handleSend = async ({
-    promptText,
-    attachmentsOverride,
-    existingUserMessage,
-    skipUserMessageAppend = false,
-    conversationOverride,
-  }: {
-    promptText?: string;
-    attachmentsOverride?: File[];
-    existingUserMessage?: Message;
-    skipUserMessageAppend?: boolean;
-    conversationOverride?: Message[];
-  } = {}) => {
-    const pendingPrompt = promptText ?? inputValue;
-    if (!pendingPrompt.trim() || isLoading) return;
-
-    // ============================================================================
-    // GOLD STANDARD: Reset streaming state for new message
-    // ============================================================================
-    setWorkflowSteps([]);
-    setReasoningSteps([]);
-    setStreamingMetrics({
-      tokensGenerated: 0,
-      tokensPerSecond: 0,
-      elapsedTime: 0,
+    console.log('[AskExpertV2] handleSendOrConfigure called:', {
+      mode,
+      isAutonomousMode,
+      currentMessage,
+      autonomousConfigured,
     });
-    setIsPaused(false);
 
-    const messageContent = pendingPrompt.trim();
-    const effectiveAttachments = attachmentsOverride ?? attachments;
-    const conversationContext = conversationOverride ?? messages;
-
-    // Determine mode based on UI toggles (Mode 1-4 system)
-    // GOLDEN RULE MATRIX:
-    //                  | Manual Selection | Auto Selection  |
-    //                  | (User picks)     | (System picks)  |
-    // -----------------+------------------+-----------------+
-    // Conversational   | Mode 1           | Mode 2          |
-    // -----------------+------------------+-----------------+
-    // Agentic (CoT)    | Mode 3           | Mode 4          |
-    let mode: 'manual' | 'automatic' | 'autonomous' | 'multi-expert' = 'manual';
-
-    if (isAutonomous && isAutomatic) {
-      mode = 'autonomous'; // Mode 4: Agentic + Auto Selection (system picks agent + autonomous reasoning)
-    } else if (isAutonomous && !isAutomatic) {
-      mode = 'multi-expert'; // Mode 3: Agentic + Manual Selection (user picks agent + autonomous reasoning)
-    } else if (!isAutonomous && isAutomatic) {
-      mode = 'automatic'; // Mode 2: Conversational + Auto Selection (system picks agent)
+    if (isAutonomousMode && currentMessage) {
+      // If already configured this session, send directly with saved settings
+      if (autonomousConfigured) {
+        console.log('[AskExpertV2] Already configured - sending directly');
+        setIsAutonomousExecution(true);
+        // Pass message directly to avoid stale closure
+        sendMessageRef.current?.(currentMessage);
+      } else {
+        // First time in autonomous mode - show config modal
+        console.log('[AskExpertV2] Not configured - showing modal');
+        setPendingAutonomousGoal(currentMessage);
+        setShowPromptModal(true);
+      }
     } else {
-      mode = 'manual'; // Mode 1: Conversational + Manual Selection (user picks agent)
+      // For interactive modes (1, 2), send directly via ref
+      console.log('[AskExpertV2] Interactive mode - sending directly');
+      sendMessageRef.current?.();
     }
+  }, [mode, inputValue, autonomousConfigured]);
 
-    // For Mode 1 and Mode 3 (Manual Selection modes), we need a single selected agent
-    const agentId = selectedAgents.length > 0 ? selectedAgents[0] : undefined;
+  // Mode 3 specific parameters (set via UserPromptModal)
+  const [hitlEnabled, setHitlEnabled] = useState(true);
+  const [maxIterations, setMaxIterations] = useState(5);
 
-    // Check if Mode 1 or Mode 3 requires an agent but none is selected
-    if ((mode === 'manual' || mode === 'multi-expert') && !agentId) {
-      console.log('❌ [Mode Check] No agent selected for mode:', mode, 'selectedAgents:', selectedAgents);
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: 'Please select an agent from the sidebar before sending a message. Click on an agent to add it to your chat.',
-        timestamp: Date.now(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      return;
+  // Handle user prompt submission (for autonomous modes)
+  const handlePromptSubmit = useCallback((data: {
+    goal: string;
+    context: string;
+    hitlEnabled: boolean;
+    hitlLevel: 'strict' | 'balanced' | 'permissive';
+    maxIterations: number;
+    deliverables: string[];
+  }) => {
+    // Determine the message to send: use pendingAutonomousGoal if set (from chat input),
+    // otherwise use the goal from the modal form
+    const messageToSend = pendingAutonomousGoal || data.goal;
+
+    console.log('[AskExpertV2] handlePromptSubmit called:', {
+      goal: data.goal,
+      pendingAutonomousGoal,
+      messageToSend,
+      currentInputValue: inputValue,
+      hasSelectedAgent: !!selectedAgent,
+      selectedAgentId: selectedAgent?.id,
+    });
+
+    // Set execution context and config
+    setExecutionGoal(data.goal);
+    setExecutionContext(data.context);
+    setHitlEnabled(data.hitlEnabled);
+    setHitlSafetyLevel(data.hitlLevel);
+    setMaxIterations(data.maxIterations);
+    setShowPromptModal(false);
+
+    // Mark as configured - subsequent sends will skip the modal
+    setAutonomousConfigured(true);
+
+    // Clear the pending goal state
+    setPendingAutonomousGoal(null);
+    setIsAutonomousExecution(true);
+
+    // Send the message directly by passing it as a parameter
+    // This avoids stale closure issues with inputValue state
+    console.log('[AskExpertV2] Calling sendMessage directly with message:', messageToSend);
+    if (sendMessageRef.current) {
+      sendMessageRef.current(messageToSend);
+    } else {
+      console.error('[AskExpertV2] sendMessageRef.current is null!');
     }
+  }, [pendingAutonomousGoal, inputValue, selectedAgent]);
 
-    console.log('✅ [Mode Check] Mode:', mode, 'Agent ID:', agentId, 'Selected Agents:', selectedAgents);
-
-    const userMessage: Message = existingUserMessage ?? {
-      id: Date.now().toString(),
-      role: 'user',
-      content: messageContent,
-      timestamp: Date.now(),
-      attachments: (effectiveAttachments ?? []).map((file, i) => ({
-        id: `${Date.now()}-${i}`,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        url: URL.createObjectURL(file),
-      })),
-    };
-
-    if (!existingUserMessage && !skipUserMessageAppend) {
-      setMessages(prev => [...prev, userMessage]);
-    }
-    if (!skipUserMessageAppend) {
-      setInputValue('');
-      setAttachments([]);
-    }
-    
-    // Show reasoning component immediately when starting a request
-    setStreamingReasoning('Thinking...');
-    setIsStreamingReasoning(true);
-    setIsLoading(true);
-    setRecentReasoning([]);
-    setRecentReasoningTimestamp(null);
-    
-    // Reset streaming message
-    setStreamingMessage('');
+  // Handle plan approval (Mode 3/4)
+  const handlePlanApprove = useCallback(async () => {
+    if (!pendingPlan) return;
 
     try {
-      console.log('[AskExpert] Sending request to /api/ask-expert/orchestrate', {
-        mode,
-        agentId,
-        messageLength: messageContent.length,
-        enableRAG,
-        enableTools,
-      });
-      
-      // Build request body
-      // Mode 2 (automatic) and Mode 3 (autonomous) always require RAG for agent selection and knowledge retrieval
-      // They also need tools enabled for web search capability
-      const shouldEnableRAG = mode === 'automatic' || mode === 'autonomous' ? true : enableRAG;
-      const shouldEnableTools = mode === 'automatic' || mode === 'autonomous' ? true : enableTools;
-      const requestBody: any = {
-        mode: mode,
-        agentId: (mode === 'manual' || mode === 'multi-expert') ? agentId : undefined, // For manual and multi-expert modes
-        message: messageContent,
-        conversationHistory: conversationContext.map(m => ({
-          role: m.role,
-          content: m.content
-        })),
-        // Optional settings - RAG and Tools are always enabled for automatic/autonomous modes
-        enableRAG: shouldEnableRAG,
-        enableTools: shouldEnableTools,
-        requestedTools: shouldEnableTools ? (selectedTools.length > 0 ? selectedTools : ['web_search', 'calculator']) : undefined,
-        selectedRagDomains: shouldEnableRAG ? selectedRagDomains : undefined,
-        model: selectedModel,
-        temperature: 0.7,
-        maxTokens: 2000,
-        userId: user?.id, // For Mode 2 and Mode 3 agent selection
-        // Autonomous mode settings
-        maxIterations: (mode === 'autonomous' || mode === 'multi-expert') ? 10 : undefined,
-        confidenceThreshold: (mode === 'autonomous' || mode === 'multi-expert') ? 0.95 : undefined,
-      };
-
-      // Get CSRF token from cookie
-      const csrfToken = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('__Host-csrf-token='))
-        ?.split('=')[1];
-      
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      
-      // Add CSRF token if available
-      if (csrfToken) {
-        headers['x-csrf-token'] = csrfToken;
-      }
-      
-      const response = await fetch('/api/ask-expert/orchestrate', {
+      await fetch('/api/ask-expert/hitl-response', {
         method: 'POST',
-        headers,
-        body: JSON.stringify(requestBody),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint_id: pendingPlan.id,
+          checkpoint_type: 'plan',
+          decision: 'approved',
+          session_id: sessionId,
+        }),
+      });
+
+      // Initialize execution steps from the plan
+      setExecutionSteps(pendingPlan.steps.map((step, idx) => ({
+        id: step.id,
+        label: step.title,
+        status: idx === 0 ? 'running' : 'pending',
+        ...(idx === 0 && { startedAt: new Date() }),
+      })));
+
+      setShowPlanModal(false);
+      setPendingPlan(null);
+    } catch (error) {
+      console.error('[AskExpertV2] Failed to approve plan:', error);
+    }
+  }, [pendingPlan, sessionId]);
+
+  // Handle plan rejection (Mode 3/4)
+  const handlePlanReject = useCallback(async (feedback: string) => {
+    if (!pendingPlan) return;
+
+    try {
+      await fetch('/api/ask-expert/hitl-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint_id: pendingPlan.id,
+          checkpoint_type: 'plan',
+          decision: 'rejected',
+          feedback,
+          session_id: sessionId,
+        }),
+      });
+
+      setShowPlanModal(false);
+      setPendingPlan(null);
+      setIsAutonomousExecution(false);
+    } catch (error) {
+      console.error('[AskExpertV2] Failed to reject plan:', error);
+    }
+  }, [pendingPlan, sessionId]);
+
+  // Handle tool execution approval
+  const handleToolApprove = useCallback(async () => {
+    if (!pendingToolExecution) return;
+
+    try {
+      await fetch('/api/ask-expert/hitl-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint_id: pendingToolExecution.id,
+          checkpoint_type: 'tool',
+          decision: 'approved',
+          session_id: sessionId,
+        }),
+      });
+      setPendingToolExecution(null);
+    } catch (error) {
+      console.error('[AskExpertV2] Failed to approve tool execution:', error);
+    }
+  }, [pendingToolExecution, sessionId]);
+
+  // Handle tool execution rejection
+  const handleToolReject = useCallback(async (reason: string) => {
+    if (!pendingToolExecution) return;
+
+    try {
+      await fetch('/api/ask-expert/hitl-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint_id: pendingToolExecution.id,
+          checkpoint_type: 'tool',
+          decision: 'rejected',
+          feedback: reason,
+          session_id: sessionId,
+        }),
+      });
+      setPendingToolExecution(null);
+    } catch (error) {
+      console.error('[AskExpertV2] Failed to reject tool execution:', error);
+    }
+  }, [pendingToolExecution, sessionId]);
+
+  // Handle sub-agent spawn approval
+  const handleSubAgentApprove = useCallback(async () => {
+    if (!pendingSubAgentSpawn) return;
+
+    try {
+      await fetch('/api/ask-expert/hitl-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint_id: pendingSubAgentSpawn.id,
+          checkpoint_type: 'subagent',
+          decision: 'approved',
+          session_id: sessionId,
+        }),
+      });
+      setPendingSubAgentSpawn(null);
+    } catch (error) {
+      console.error('[AskExpertV2] Failed to approve sub-agent spawn:', error);
+    }
+  }, [pendingSubAgentSpawn, sessionId]);
+
+  // Handle sub-agent spawn rejection
+  const handleSubAgentReject = useCallback(async (reason: string) => {
+    if (!pendingSubAgentSpawn) return;
+
+    try {
+      await fetch('/api/ask-expert/hitl-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint_id: pendingSubAgentSpawn.id,
+          checkpoint_type: 'subagent',
+          decision: 'rejected',
+          feedback: reason,
+          session_id: sessionId,
+        }),
+      });
+      setPendingSubAgentSpawn(null);
+    } catch (error) {
+      console.error('[AskExpertV2] Failed to reject sub-agent spawn:', error);
+    }
+  }, [pendingSubAgentSpawn, sessionId]);
+
+  // Handle final review approval
+  const handleFinalApprove = useCallback(async () => {
+    if (!pendingFinalReview) return;
+
+    try {
+      await fetch('/api/ask-expert/hitl-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint_id: pendingFinalReview.id,
+          checkpoint_type: 'final',
+          decision: 'approved',
+          session_id: sessionId,
+        }),
+      });
+      setPendingFinalReview(null);
+      setIsAutonomousExecution(false);
+      setExecutionSteps([]);
+    } catch (error) {
+      console.error('[AskExpertV2] Failed to approve final review:', error);
+    }
+  }, [pendingFinalReview, sessionId]);
+
+  // Handle final review rejection
+  const handleFinalReject = useCallback(async (reason: string) => {
+    if (!pendingFinalReview) return;
+
+    try {
+      await fetch('/api/ask-expert/hitl-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint_id: pendingFinalReview.id,
+          checkpoint_type: 'final',
+          decision: 'rejected',
+          feedback: reason,
+          session_id: sessionId,
+        }),
+      });
+      setPendingFinalReview(null);
+      // Keep execution state for retry
+    } catch (error) {
+      console.error('[AskExpertV2] Failed to reject final review:', error);
+    }
+  }, [pendingFinalReview, sessionId]);
+
+  // Handle final review request changes
+  const handleFinalRequestChanges = useCallback(async (feedback: string) => {
+    if (!pendingFinalReview) return;
+
+    try {
+      await fetch('/api/ask-expert/hitl-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint_id: pendingFinalReview.id,
+          checkpoint_type: 'final',
+          decision: 'request_changes',
+          feedback,
+          session_id: sessionId,
+        }),
+      });
+      setPendingFinalReview(null);
+      // Keep execution state for iteration
+    } catch (error) {
+      console.error('[AskExpertV2] Failed to request changes:', error);
+    }
+  }, [pendingFinalReview, sessionId]);
+
+  // Send message with SSE streaming
+  // Optional messageOverride allows passing message directly (avoids stale closure issues)
+  const sendMessage = useCallback(async (messageOverride?: string) => {
+    // Use override if provided, otherwise use inputValue
+    const messageToSend = messageOverride?.trim() || inputValue.trim();
+
+    // Debug logging for send failures
+    console.log('[AskExpertV2] sendMessage called:', {
+      messageOverride,
+      inputValue: inputValue.trim(),
+      messageToSend,
+      hasSelectedAgent: !!selectedAgent,
+      selectedAgentId: selectedAgent?.id,
+      isLoading,
+    });
+
+    // Validate before sending
+    if (!messageToSend) {
+      console.warn('[AskExpertV2] Cannot send: message is empty');
+      return;
+    }
+    if (!selectedAgent) {
+      console.warn('[AskExpertV2] Cannot send: no agent selected');
+      return;
+    }
+    if (isLoading) {
+      console.warn('[AskExpertV2] Cannot send: already loading');
+      return;
+    }
+
+    const userMessage: ChatMessage = {
+      id: uuidv4(),
+      role: 'user',
+      content: messageToSend,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue('');
+    setIsLoading(true);
+
+    // Create assistant message placeholder
+    const assistantMessageId = uuidv4();
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: '',
+        reasoning: '',
+        reasoningSteps: [],
+        timestamp: new Date(),
+        isStreaming: true,
+        reasoningComplete: false,
+      },
+    ]);
+
+    abortControllerRef.current = new AbortController();
+
+    // Local accumulators for streaming
+    let accumulatedContent = '';
+    let accumulatedReasoning = '';
+    let accumulatedSteps: ReasoningStep[] = [];
+
+    try {
+      const tenantId = selectedAgent.tenant_id || '00000000-0000-0000-0000-000000000001';
+
+      const response = await fetch(STREAM_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        body: JSON.stringify({
+          agent_id: selectedAgent.id,
+          message: userMessage.content,
+          session_id: sessionId,
+          mode,
+          // Mode 3 specific parameters - use values from UserPromptModal
+          ...(mode === '3' && {
+            hitl_enabled: hitlEnabled,
+            hitl_safety_level: hitlSafetyLevel,
+            max_iterations: maxIterations,
+            enable_rag: enableRAG,
+            enable_tools: enableTools,
+          }),
+        }),
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
-        const contentType = response.headers.get('content-type') || '';
-        let errorText = '';
-        let errorData: any = {};
-        
-        try {
-          if (contentType.includes('application/json')) {
-            errorData = await response.json();
-          } else {
-            errorText = await response.text();
-            
-            // Check if it's an HTML error page (Next.js error page)
-            if (errorText.includes('<!DOCTYPE html>') || errorText.includes('<html')) {
-              // Try to extract error message from Next.js error page JSON
-              try {
-                const jsonMatch = errorText.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/s);
-                if (jsonMatch && jsonMatch[1]) {
-                  const nextData = JSON.parse(jsonMatch[1]);
-                  const errorMessage = nextData?.props?.pageProps?.err?.message || 
-                                     nextData?.err?.message || 
-                                     'Server error occurred';
-                  errorData = { 
-                    message: errorMessage,
-                    statusCode: nextData?.props?.pageProps?.statusCode || response.status,
-                  };
-                } else {
-                  // Fallback: extract from error message in HTML
-                  const errorMatch = errorText.match(/message["']:\s*["']([^"']+)["']/);
-                  if (errorMatch) {
-                    errorData = { message: errorMatch[1] };
-                  } else {
-                    errorData = { 
-                      message: `Server error (${response.status}): ${response.statusText}`,
-                      html: true,
-                    };
-                  }
-                }
-              } catch (parseError) {
-                errorData = { 
-                  message: `Server error (${response.status}): ${response.statusText}. The server returned an HTML error page.`,
-                  html: true,
-                };
-              }
-            } else {
-              // Try to parse as JSON even if content-type doesn't say so
-              try {
-                errorData = JSON.parse(errorText);
-              } catch {
-                errorData = { message: errorText || `HTTP ${response.status}: ${response.statusText}` };
-              }
-            }
-          }
-        } catch (readError) {
-          console.error('[AskExpert] Failed to read error response:', readError);
-          errorData = { 
-            message: `HTTP ${response.status}: ${response.statusText}`,
-            readError: readError instanceof Error ? readError.message : String(readError),
-          };
-        }
-        
-        const errorMessage = errorData?.message || 
-                           errorData?.error || 
-                           errorText || 
-                           `HTTP ${response.status}: ${response.statusText}`;
-        
-        console.error('[AskExpert] Response not OK:', {
-          status: response.status,
-          statusText: response.statusText,
-          contentType,
-          errorData,
-          errorText: errorText.substring(0, 200), // Limit log size
-        });
-        
-        throw new Error(errorMessage);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
-      console.log('[AskExpert] Response OK, starting stream processing');
 
       const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
       const decoder = new TextDecoder();
+      let buffer = '';
 
-      let fullResponse = '';
-      let reasoning: string[] = [];
-      let sources: Source[] = [];
-      let selectedAgent: Message['selectedAgent'] = undefined;
-      let selectionReason: string | undefined = undefined;
-      let confidence: number | undefined = undefined;
-      let autonomousMetadata: any = {};
-      let ragSummary = {
-        totalSources: 0,
-        strategy: undefined as string | undefined,
-        domains: enableRAG ? [...selectedRagDomains] : [],
-        cacheHit: false,
-        warning: undefined as string | undefined,
-        retrievalTimeMs: undefined as number | undefined,
-      };
-      let toolSummary = {
-        allowed: enableTools ? [...selectedTools] : [],
-        used: [] as string[],
-        totals: { calls: 0, success: 0, failure: 0, totalTimeMs: 0 },
-      };
-      let finalMeta: any = null;
-      let branches: Message['branches'];
-      let currentBranch = 0;
-
-      // ============================================================================
-      // GOLD STANDARD: Streaming metrics tracking
-      // ============================================================================
-      const streamStartTime = Date.now();
-      let totalTokens = 0;
-
-      const updateStreamingMeta = () => {
-        setStreamingMeta({
-          ragSummary: { ...ragSummary },
-          toolSummary: {
-            ...toolSummary,
-            totals: { ...toolSummary.totals },
-          },
-          sources: [...sources],
-          reasoning: [...reasoning],
-        });
-      };
-
-      updateStreamingMeta();
-
-      while (reader) {
+      while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
+          if (!line.startsWith('data: ')) continue;
 
-              // Handle different chunk types based on mode
-              if (data.type === 'chunk' && data.content) {
-                // Handle metadata chunks for Mode 1 AND Mode 2 (both use same metadata format)
-                const metaPrefix = typeof data.content === 'string' &&
-                  (data.content.startsWith('__mode1_meta__') || data.content.startsWith('__mode2_meta__'));
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr || jsonStr === '[DONE]') continue;
 
-                if (metaPrefix) {
-                  // Extract the actual prefix to strip it correctly
-                  const prefixToStrip = data.content.startsWith('__mode1_meta__') ? '__mode1_meta__' : '__mode2_meta__';
-                  try {
-                    const meta = JSON.parse(data.content.slice(prefixToStrip.length));
-                    switch (meta?.event) {
-                      case 'rag_sources': {
-                        const incomingSources = Array.isArray(meta.sources) ? meta.sources : [];
-                        sources = incomingSources.map((source: any, idx: number) => ({
-                          id: source.id || `source-${idx + 1}`,
-                          url: source.url || '#',
-                          title: source.title || `Source ${idx + 1}`,
-                          excerpt: source.excerpt || source.description,
-                          similarity: typeof source.similarity === 'number' ? source.similarity : undefined,
-                          domain: source.domain,
-                          evidenceLevel: source.evidenceLevel || 'Unknown',
-                          organization: source.organization,
-                          reliabilityScore: typeof source.reliabilityScore === 'number' ? source.reliabilityScore : undefined,
-                          lastUpdated: source.lastUpdated,
-                        }));
-                        ragSummary = {
-                          totalSources: typeof meta.total === 'number' ? meta.total : sources.length,
-                          strategy: meta.strategy || ragSummary.strategy,
-                          domains: Array.isArray(meta.domains) ? meta.domains : ragSummary.domains,
-                          cacheHit: typeof meta.cacheHit === 'boolean' ? meta.cacheHit : ragSummary.cacheHit,
-                          warning: undefined,
-                          retrievalTimeMs: typeof meta.retrievalTimeMs === 'number' ? meta.retrievalTimeMs : ragSummary.retrievalTimeMs,
-                        };
-                        setStreamingReasoning(prev => {
-                          const base = `📚 Retrieved ${sources.length} evidence source${sources.length === 1 ? '' : 's'}${meta.strategy ? ` (${meta.strategy})` : ''}`;
-                          return prev ? `${base}\n\n${prev}` : base;
-                        });
-                        setIsStreamingReasoning(true);
-                        reasoning.push(`Retrieved ${sources.length} evidence source${sources.length === 1 ? '' : 's'}${meta.strategy ? ` (${meta.strategy})` : ''}.`);
-                        updateStreamingMeta();
-                        break;
-                      }
-                      case 'rag_warning': {
-                        ragSummary.warning = meta.message;
-                        setStreamingReasoning(prev => {
-                          const base = `⚠️ ${meta.message || 'Evidence could not be retrieved.'}`;
-                          return prev ? `${base}\n\n${prev}` : base;
-                        });
-                        setIsStreamingReasoning(true);
-                        if (meta.message) {
-                          reasoning.push(meta.message);
-                        }
-                        updateStreamingMeta();
-                        break;
-                      }
-                      case 'reasoning': {
-                        const message =
-                          typeof meta.message === 'string'
-                            ? meta.message
-                            : Array.isArray(meta.message)
-                              ? meta.message.join('\n')
-                              : '';
-                        if (message && message.trim().length > 0) {
-                          setStreamingReasoning(prev => {
-                            return prev ? `${prev}\n\n${message}` : message;
-                          });
-                          setIsStreamingReasoning(true);
-                          reasoning.push(message);
-                          updateStreamingMeta();
-                        }
-                        break;
-                      }
-                      case 'tool_execution': {
-                        const tool = meta.tool ?? {};
-                        const toolName = typeof tool.name === 'string' ? tool.name : 'unknown tool';
-                        const durationMs = typeof tool.durationMs === 'number' ? tool.durationMs : 0;
-                        const success = typeof tool.success === 'boolean' ? tool.success : true;
-                        const errorMessage = typeof tool.error === 'string' ? tool.error : undefined;
-                        const outputPreview = typeof tool.outputPreview === 'string' ? tool.outputPreview : undefined;
+          try {
+            const data = JSON.parse(jsonStr);
 
-                        const allowed = toolName && !toolSummary.allowed.includes(toolName)
-                          ? [...toolSummary.allowed, toolName]
-                          : toolSummary.allowed;
+            switch (data.event) {
+              case 'token':
+                // Token event - stream to content using Streamdown
+                if (data.content) {
+                  accumulatedContent += data.content;
 
-                        toolSummary = {
-                          ...toolSummary,
-                          allowed,
-                          used: success && toolName
-                            ? Array.from(new Set([...toolSummary.used, toolName]))
-                            : toolSummary.used,
-                          totals: {
-                            calls: toolSummary.totals.calls + 1,
-                            success: toolSummary.totals.success + (success ? 1 : 0),
-                            failure: toolSummary.totals.failure + (success ? 0 : 1),
-                            totalTimeMs: toolSummary.totals.totalTimeMs + durationMs,
-                          },
-                        };
+                  // Parse extended thinking tags from LLM response
+                  const parsed = parseExtendedThinking(accumulatedContent);
 
-                        const previewText = outputPreview
-                          ? outputPreview.length > 160
-                            ? `${outputPreview.slice(0, 157)}...`
-                            : outputPreview
-                          : undefined;
-
-                        const base = success
-                          ? `🛠️ Tool ${toolName} succeeded${previewText ? ` → ${previewText}` : ''}`
-                          : `⚠️ Tool ${toolName} failed${errorMessage ? `: ${errorMessage}` : ''}`;
-
-                        setStreamingReasoning(prev => {
-                          return prev ? `${base}\n\n${prev}` : base;
-                        });
-                        setIsStreamingReasoning(true);
-                        reasoning.push(base);
-                        updateStreamingMeta();
-                        break;
-                      }
-                      case 'final': {
-                        finalMeta = meta;
-                        if (meta.rag) {
-                          ragSummary = {
-                            totalSources: meta.rag.totalSources ?? ragSummary.totalSources,
-                            strategy: meta.rag.strategy ?? ragSummary.strategy,
-                            domains: Array.isArray(meta.rag.domains) ? meta.rag.domains : ragSummary.domains,
-                            cacheHit: typeof meta.rag.cacheHit === 'boolean' ? meta.rag.cacheHit : ragSummary.cacheHit,
-                            warning: meta.rag.warning ?? ragSummary.warning,
-                            retrievalTimeMs: typeof meta.rag.retrievalTimeMs === 'number' ? meta.rag.retrievalTimeMs : ragSummary.retrievalTimeMs,
-                          };
-                        }
-                        if (meta.tools) {
-                          toolSummary = {
-                            allowed: Array.isArray(meta.tools.allowed) ? meta.tools.allowed : toolSummary.allowed,
-                            used: Array.isArray(meta.tools.used) ? meta.tools.used : toolSummary.used,
-                            totals: {
-                              calls: meta.tools.totals?.calls ?? toolSummary.totals.calls,
-                              success: meta.tools.totals?.success ?? toolSummary.totals.success,
-                              failure: meta.tools.totals?.failure ?? toolSummary.totals.failure,
-                              totalTimeMs: meta.tools.totals?.totalTimeMs ?? toolSummary.totals.totalTimeMs,
-                            },
-                          };
-                        }
-                        if (Array.isArray(meta.branches) && meta.branches.length > 0) {
-                          branches = meta.branches.map((branch: any, idx: number) => ({
-                            id: branch.id || `branch-${idx + 1}`,
-                            content: typeof branch.content === 'string' ? branch.content : '',
-                            confidence: typeof branch.confidence === 'number' ? branch.confidence : 0,
-                            citations: Array.isArray(branch.citations) ? branch.citations : [],
-                            sources: Array.isArray(branch.sources)
-                              ? branch.sources.map((src: any, sourceIdx: number) => ({
-                                  id: src.id || `branch-${idx + 1}-source-${sourceIdx + 1}`,
-                                  url: src.url || src.link || '#',
-                                  title: src.title || src.name || `Source ${sourceIdx + 1}`,
-                                  excerpt: src.excerpt || src.summary || src.description,
-                                  similarity: typeof src.similarity === 'number' ? src.similarity : undefined,
-                                  domain: src.domain,
-                                  evidenceLevel: src.evidenceLevel || src.level || 'Unknown',
-                                  organization: src.organization,
-                                  reliabilityScore: typeof src.reliabilityScore === 'number' ? src.reliabilityScore : undefined,
-                                  lastUpdated: src.lastUpdated,
-                                }))
-                              : [],
-                            createdAt: branch.createdAt ? new Date(branch.createdAt) : new Date(),
-                            reasoning: Array.isArray(branch.reasoning)
-                              ? branch.reasoning.join('\n')
-                              : branch.reasoning || undefined,
-                          }));
-                          currentBranch = typeof meta.currentBranch === 'number' ? meta.currentBranch : 0;
-                        }
-                        if (typeof meta.confidence === 'number') {
-                          confidence = meta.confidence;
-                        }
-                        updateStreamingMeta();
-                        break;
-                      }
-                      default:
-                        break;
+                  // If we found thinking content, add it to reasoning steps
+                  if (parsed.thinking && parsed.hasThinkingTag) {
+                    // Add a reasoning step for the thinking content
+                    if (!accumulatedSteps.some(s => s.key === 'llm_thinking')) {
+                      accumulatedSteps = [...accumulatedSteps, { key: 'llm_thinking', label: 'Analyzing response' }];
                     }
-                  } catch (metaError) {
-                    console.warn('[AskExpert] Failed to parse metadata chunk', metaError);
+                    // Store the full thinking content
+                    accumulatedReasoning = parsed.thinking;
                   }
-                  continue;
-                }
 
-                // Mode 1: Simple chunk
-                // Skip error messages that start with "Error:"
-                if (typeof data.content === 'string' && data.content.startsWith('Error:')) {
-                  const errorMessage = data.content.replace(/^Error:\s*/, '');
-                  setStreamingReasoning(prev => `❌ Error: ${errorMessage}`);
-                  setIsStreamingReasoning(true);
-                  fullResponse += data.content;
-                } else {
-                  fullResponse += data.content;
-                  setStreamingMessage(fullResponse);
-
-                  // GOLD STANDARD: Update streaming metrics
-                  totalTokens += (data.content?.length || 0);
-                  const elapsedSeconds = (Date.now() - streamStartTime) / 1000;
-                  setStreamingMetrics({
-                    tokensGenerated: totalTokens,
-                    tokensPerSecond: elapsedSeconds > 0 ? totalTokens / elapsedSeconds : 0,
-                    elapsedTime: elapsedSeconds,
-                  });
-
-                  // GOLD STANDARD: Add/update response generation workflow step
-                  if (fullResponse.length > 0) {
-                    setWorkflowSteps(prev => {
-                      const hasResponseStep = prev.some(s => s.id === 'response-generation');
-                      if (!hasResponseStep) {
-                        return [
-                          ...prev.map(s => s.id === 'rag-retrieval' && s.status === 'running' ? {...s, status: 'completed', endTime: new Date()} : s),
-                          {
-                            id: 'response-generation',
-                            name: 'Response Generation',
-                            description: `${totalTokens} tokens generated`,
-                            status: 'running',
-                            startTime: new Date()
+                  setMessages((prev) =>
+                    prev.map((msg) =>
+                      msg.id === assistantMessageId
+                        ? {
+                            ...msg,
+                            // Display cleaned answer without XML tags
+                            content: parsed.answer,
+                            // Include thinking in reasoning if present
+                            reasoning: parsed.thinking || msg.reasoning || accumulatedReasoning,
+                            reasoningSteps: accumulatedSteps.length > 0 ? accumulatedSteps : msg.reasoningSteps,
+                            reasoningComplete: true,
                           }
-                        ];
-                      }
-                      return prev.map(s => s.id === 'response-generation' ? {...s, description: `${totalTokens} tokens generated`} : s);
-                    });
-                  }
+                        : msg
+                    )
+                  );
+                }
+                break;
 
-                  if (!streamingReasoning || streamingReasoning === 'Thinking...' || streamingReasoning.startsWith('❌')) {
-                    setStreamingReasoning('Processing your request...');
-                    setIsStreamingReasoning(true);
+              case 'thinking':
+                // Reasoning event - show steps with icons and capture AI reasoning content
+                const step = data.step || 'Processing';
+                const status = data.status || 'running';
+                const friendlyStep = formatStepName(step);
+
+                // Capture AI reasoning content from message/content field
+                const reasoningContent = data.message || data.content || '';
+
+                // Special case: ai_thinking step contains the full LLM reasoning
+                if (step === 'ai_thinking' && reasoningContent) {
+                  accumulatedReasoning = reasoningContent;
+                  if (!accumulatedSteps.some(s => s.key === 'ai_thinking')) {
+                    accumulatedSteps = [...accumulatedSteps, { key: 'ai_thinking', label: 'AI Analysis' }];
                   }
                 }
-              } else if (data.type === 'agent_selection' && data.agent) {
-                // Mode 2 & Mode 3: Agent selection info
-                selectedAgent = {
-                  id: data.agent.id,
-                  name: data.agent.name,
-                  display_name: data.agent.display_name || data.agent.name
+
+                // Process all thinking events (both running and completed)
+                // Check if step already exists
+                if (!accumulatedSteps.some(s => s.key === step)) {
+                  // Add step with its description
+                  const stepWithContent = reasoningContent
+                    ? `${friendlyStep}: ${reasoningContent.substring(0, 100)}${reasoningContent.length > 100 ? '...' : ''}`
+                    : friendlyStep;
+                  accumulatedSteps = [...accumulatedSteps, { key: step, label: stepWithContent }];
+
+                  // Build reasoning text from step descriptions
+                  if (reasoningContent && step !== 'ai_thinking') {
+                    accumulatedReasoning = accumulatedReasoning
+                      ? `${accumulatedReasoning}\n\n**${friendlyStep}:** ${reasoningContent}`
+                      : `**${friendlyStep}:** ${reasoningContent}`;
+                  }
+                }
+
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, reasoning: accumulatedReasoning, reasoningSteps: accumulatedSteps }
+                      : msg
+                  )
+                );
+                break;
+
+              case 'done':
+                // Final response - parse and clean XML tags
+                const rawFinalContent = (data.response && data.response.trim())
+                  || (data.content && data.content.trim())
+                  || accumulatedContent;
+
+                // Parse extended thinking tags from final content
+                const parsedFinal = parseExtendedThinking(rawFinalContent);
+
+                const sources: Source[] = data.sources || [];
+                const confidence = data.confidence;
+
+                // Extract reasoning from done event
+                // Backend sends reasoning at top-level (data.reasoning) NOT in metadata
+                let finalReasoning = parsedFinal.thinking || accumulatedReasoning;
+
+                // Check TOP-LEVEL reasoning array from backend (contains ai_thinking step)
+                // Backend structure: { event: 'done', reasoning: [{step: 'ai_thinking', content: '...'}], ... }
+                const topLevelReasoning = data.reasoning;
+                if (Array.isArray(topLevelReasoning) && topLevelReasoning.length > 0) {
+                  const aiThinkingStep = topLevelReasoning.find((r: { step?: string }) => r.step === 'ai_thinking');
+                  if (aiThinkingStep?.content) {
+                    finalReasoning = aiThinkingStep.content;
+                  }
+                }
+
+                // Fallback: Check metadata.reasoning array (for older backend versions)
+                if (!finalReasoning) {
+                  const metadataReasoning = data.metadata?.reasoning;
+                  if (Array.isArray(metadataReasoning) && metadataReasoning.length > 0) {
+                    const aiThinkingStep = metadataReasoning.find((r: { step?: string }) => r.step === 'ai_thinking');
+                    if (aiThinkingStep?.content) {
+                      finalReasoning = aiThinkingStep.content;
+                    }
+                  }
+                }
+
+                // Also check metadata.thinking_steps for workflow reasoning (fallback)
+                if (!finalReasoning) {
+                  const thinkingSteps = data.metadata?.thinking_steps;
+                  if (Array.isArray(thinkingSteps) && thinkingSteps.length > 0) {
+                    finalReasoning = thinkingSteps
+                      .map((s: { description?: string; message?: string }) => s.description || s.message || '')
+                      .filter(Boolean)
+                      .join('\n');
+                  }
+                }
+
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessageId
+                      ? {
+                          ...msg,
+                          // Display cleaned answer without XML tags
+                          content: parsedFinal.answer,
+                          // Preserve thinking content in reasoning
+                          reasoning: finalReasoning || msg.reasoning,
+                          sources,
+                          confidence,
+                          isStreaming: false,
+                          reasoningComplete: true,
+                        }
+                      : msg
+                  )
+                );
+                break;
+
+              case 'error':
+                console.error('[AskExpertV2] SSE Error:', data.message);
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessageId
+                      ? {
+                          ...msg,
+                          content: `Error: ${data.message || 'Unknown error'}`,
+                          isStreaming: false,
+                          reasoningComplete: true,
+                        }
+                      : msg
+                  )
+                );
+                break;
+
+              // Mode 3 specific events
+              case 'hitl_request':
+                // HITL checkpoint requiring user approval
+                const checkpoint: HITLCheckpoint = {
+                  id: data.checkpoint_id || uuidv4(),
+                  type: data.checkpoint_type || 'decision',
+                  title: data.title || 'Checkpoint',
+                  description: data.description || 'Approval required',
+                  options: data.options || [],
+                  status: 'pending',
+                  risk_level: data.risk_level || 'medium',
                 };
-                confidence = data.confidence;
+                setPendingHITL(checkpoint);
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, hitlCheckpoint: checkpoint }
+                      : msg
+                  )
+                );
+                break;
 
-                // GOLD STANDARD: Add workflow step for agent selection
-                setWorkflowSteps(prev => [
-                  ...prev.filter(s => s.id !== 'agent-selection'),
-                  {
-                    id: 'agent-selection',
-                    name: 'Agent Selection',
-                    description: `Selected: ${selectedAgent.display_name}`,
-                    status: 'completed',
-                    startTime: new Date(),
-                    endTime: new Date()
+              case 'agent_spawn':
+                // Sub-agent being spawned (Mode 3)
+                const spawnedAgent: SpawnedAgent = {
+                  id: data.agent_id || uuidv4(),
+                  name: data.agent_name || 'Sub-agent',
+                  role: data.role || 'Specialist',
+                  status: data.status || 'spawning',
+                };
+                setMessages((prev) =>
+                  prev.map((msg) => {
+                    if (msg.id !== assistantMessageId) return msg;
+                    const currentAgents = msg.spawnedAgents || [];
+                    const existingIdx = currentAgents.findIndex((a) => a.id === spawnedAgent.id);
+                    if (existingIdx >= 0) {
+                      currentAgents[existingIdx] = spawnedAgent;
+                      return { ...msg, spawnedAgents: [...currentAgents] };
+                    }
+                    return { ...msg, spawnedAgents: [...currentAgents, spawnedAgent] };
+                  })
+                );
+                // Also add to reasoning steps
+                if (!accumulatedSteps.some((s) => s.key === `spawn_${spawnedAgent.id}`)) {
+                  accumulatedSteps = [
+                    ...accumulatedSteps,
+                    { key: `spawn_${spawnedAgent.id}`, label: `Spawning ${spawnedAgent.name}` },
+                  ];
+                  accumulatedReasoning = accumulatedSteps.map((s) => s.label).join('\n');
+                  setMessages((prev) =>
+                    prev.map((msg) =>
+                      msg.id === assistantMessageId
+                        ? { ...msg, reasoning: accumulatedReasoning, reasoningSteps: accumulatedSteps }
+                        : msg
+                    )
+                  );
+                }
+                break;
+
+              case 'step_progress':
+                // Autonomous execution progress (Mode 3)
+                const progressStep = data.step || 'Processing';
+                const progressLabel = formatStepName(progressStep);
+                if (!accumulatedSteps.some((s) => s.key === progressStep)) {
+                  accumulatedSteps = [...accumulatedSteps, { key: progressStep, label: progressLabel }];
+                  accumulatedReasoning = accumulatedSteps.map((s) => s.label).join('\n');
+                  setMessages((prev) =>
+                    prev.map((msg) =>
+                      msg.id === assistantMessageId
+                        ? { ...msg, reasoning: accumulatedReasoning, reasoningSteps: accumulatedSteps }
+                        : msg
+                    )
+                  );
+                }
+                // Update execution steps tracking
+                setExecutionSteps((prev) => {
+                  const idx = prev.findIndex((s) => s.label === progressLabel);
+                  if (idx >= 0) {
+                    const updated = [...prev];
+                    updated[idx] = { ...updated[idx], status: 'completed', completedAt: new Date() };
+                    // Start next step if available
+                    if (idx + 1 < updated.length) {
+                      updated[idx + 1] = { ...updated[idx + 1], status: 'running', startedAt: new Date() };
+                    }
+                    return updated;
                   }
-                ]);
-
-                // Add agent selection to reasoning
-                setStreamingReasoning(prev => {
-                  const agentInfo = `🤖 Selected Agent: ${data.agent.display_name || data.agent.name}`;
-                  return prev && prev !== 'Thinking...' && prev !== 'Processing your request...'
-                    ? `${prev}\n\n${agentInfo}`
-                    : agentInfo;
+                  return prev;
                 });
-                setIsStreamingReasoning(true);
-              } else if (data.type === 'selection_reason' && data.selectionReason) {
-                // Mode 2 & Mode 3: Selection reason
-                selectionReason = data.selectionReason;
-                // Add selection reason to reasoning
-                setStreamingReasoning(prev => {
-                  const reasonText = `💡 Selection Reason: ${data.selectionReason}`;
-                  return prev ? `${prev}\n\n${reasonText}` : reasonText;
+                break;
+
+              case 'plan_request':
+                // Execution plan requiring approval (Mode 3/4)
+                setPendingPlan({
+                  id: data.plan_id || uuidv4(),
+                  title: data.title || 'Execution Plan',
+                  description: data.description || 'Review the proposed execution plan',
+                  steps: data.steps || [],
+                  estimatedDuration: data.estimated_duration || 'Unknown',
+                  totalSteps: data.total_steps || data.steps?.length || 0,
+                  riskAssessment: {
+                    level: data.risk_level || 'medium',
+                    reason: data.risk_reason || 'Standard execution',
+                  },
                 });
-                setIsStreamingReasoning(true);
-              } else if (data.type === 'goal_understanding') {
-                // Mode 3 & Mode 4: Goal understanding
-                autonomousMetadata.goalUnderstanding = data.content;
-                // Accumulate reasoning for display
-                setStreamingReasoning(prev => `🎯 Goal Understanding: ${data.content}` + (prev ? '\n\n' + prev : ''));
-                setIsStreamingReasoning(true);
-                console.log('🎯 Goal Understanding:', data.content);
-              } else if (data.type === 'execution_plan') {
-                // Mode 3 & Mode 4: Execution plan
-                autonomousMetadata.executionPlan = data.content;
-                // Accumulate reasoning for display
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `📋 Execution Plan: ${data.content}`);
-                setIsStreamingReasoning(true);
-                console.log('📋 Execution Plan:', data.content);
-              } else if (data.type === 'iteration_start') {
-                // Mode 3 & Mode 4: ReAct iteration start
-                autonomousMetadata.currentIteration = data.metadata?.iteration;
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🔄 Iteration ${data.metadata?.iteration + 1}: Starting`);
-                setIsStreamingReasoning(true);
-                console.log(`🔄 Iteration ${data.metadata?.iteration}: Starting`);
-              } else if (data.type === 'thinking_start') {
-                // Detailed step: Starting thinking
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🧠 Analyzing current state...`);
-                setIsStreamingReasoning(true);
-              } else if (data.type === 'thought') {
-                // Mode 3 & Mode 4: ReAct thought
-                autonomousMetadata.currentThought = data.content;
+                setShowPlanModal(true);
+                break;
 
-                // GOLD STANDARD: Add reasoning step
-                setReasoningSteps(prev => [
-                  ...prev,
-                  {
-                    id: `thought-${Date.now()}`,
-                    type: 'thought',
-                    content: data.content,
-                    confidence: data.metadata?.confidence,
-                    timestamp: new Date()
-                  }
-                ]);
-
-                // Accumulate reasoning for display
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🧠 Thought: ${data.content}`);
-                setIsStreamingReasoning(true);
-                console.log('🧠 Thought:', data.content);
-              } else if (data.type === 'action_decision_start') {
-                // Detailed step: Starting action decision
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🎯 Deciding on next action...`);
-                setIsStreamingReasoning(true);
-              } else if (data.type === 'action_decided') {
-                // Detailed step: Action decided
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `✅ Action Decided: ${data.content}`);
-                setIsStreamingReasoning(true);
-              } else if (data.type === 'action_execution_start') {
-                // Detailed step: Starting action execution
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `⚙️ Executing action...`);
-                setIsStreamingReasoning(true);
-              } else if (data.type === 'action_executed') {
-                // Detailed step: Action executed
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `✅ Action Executed: ${data.content}`);
-                setIsStreamingReasoning(true);
-              } else if (data.type === 'action') {
-                // Mode 3 & Mode 4: ReAct action (fallback for old format)
-                autonomousMetadata.currentAction = data.content;
-
-                // GOLD STANDARD: Add reasoning step
-                setReasoningSteps(prev => [
-                  ...prev,
-                  {
-                    id: `action-${Date.now()}`,
-                    type: 'action',
-                    content: data.content,
-                    timestamp: new Date()
-                  }
-                ]);
-
-                // Accumulate reasoning for display
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `⚡ Action: ${data.content}`);
-                setIsStreamingReasoning(true);
-                console.log('⚡ Action:', data.content);
-              } else if (data.type === 'observation_start') {
-                // Detailed step: Starting observation
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🔍 Processing action results...`);
-                setIsStreamingReasoning(true);
-              } else if (data.type === 'observation') {
-                // Mode 3 & Mode 4: ReAct observation
-                autonomousMetadata.currentObservation = data.content;
-
-                // GOLD STANDARD: Add reasoning step
-                setReasoningSteps(prev => [
-                  ...prev,
-                  {
-                    id: `observation-${Date.now()}`,
-                    type: 'observation',
-                    content: data.content,
-                    timestamp: new Date()
-                  }
-                ]);
-
-                // Accumulate reasoning for display
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `👁️ Observation: ${data.content}`);
-                setIsStreamingReasoning(true);
-                console.log('👁️ Observation:', data.content);
-              } else if (data.type === 'reflection_start') {
-                // Detailed step: Starting reflection
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `💭 Reflecting on what we learned...`);
-                setIsStreamingReasoning(true);
-              } else if (data.type === 'reflection') {
-                // Mode 3 & Mode 4: ReAct reflection
-                autonomousMetadata.currentReflection = data.content;
-                // Accumulate reasoning for display
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🤔 Reflection: ${data.content}`);
-                setIsStreamingReasoning(true);
-                console.log('🤔 Reflection:', data.content);
-              } else if (data.type === 'final_answer') {
-                // Mode 3 & Mode 4: Final answer
-                fullResponse = data.content;
-                setStreamingMessage(fullResponse);
-                autonomousMetadata.finalAnswer = data.content;
-                autonomousMetadata.finalConfidence = data.metadata?.confidence;
-                autonomousMetadata.totalIterations = data.metadata?.iterations;
-                console.log('✅ Final Answer:', data.content);
-              } else if (data.type === 'sources' && data.sources) {
-                // RAG sources from the API
-                sources = data.sources.map((src: any) => ({
-                  id: src.id,
-                  url: src.url || src.link || '#',
-                  title: src.title || src.name || 'Source',
-                  description: src.description || src.excerpt || src.summary,
-                  excerpt: src.excerpt || src.content?.substring(0, 200),
-                  similarity: src.similarity || src.score,
-                }));
-                console.log('📚 Sources received:', sources.length);
-                updateStreamingMeta();
-              } else if (data.type === 'done') {
-                reasoning = data.reasoning || [];
-                // Sources might also come in the done event
-                if (data.sources) {
-                  sources = data.sources.map((src: any) => ({
-                    id: src.id,
-                    url: src.url || src.link || '#',
-                    title: src.title || src.name || 'Source',
-                    description: src.description || src.excerpt || src.summary,
-                    excerpt: src.excerpt || src.content?.substring(0, 200),
-                    similarity: src.similarity || src.score,
-                  }));
-                }
-                console.log('✅ Execution completed');
-                updateStreamingMeta();
-              } else if (data.type === 'error') {
-                // Handle structured error events from backend
-                const errorCode = data.code || 'UNKNOWN_ERROR';
-                const errorMessage = data.message || data.content || `Unknown error from ${mode}`;
-                console.error(`[${mode}] Error (${errorCode}):`, errorMessage);
-                console.error(`[${mode}] Full error data:`, JSON.stringify(data, null, 2));
-                if (data.stack) {
-                  console.error(`[${mode}] Error stack:`, data.stack);
-                }
-                
-                // Map error codes to user-friendly messages
-                let userFriendlyMessage = errorMessage;
-                if (errorCode === 'TIMEOUT_ERROR') {
-                  userFriendlyMessage = 'The request took too long to complete. Please try again with a shorter message.';
-                } else if (errorCode === 'AGENT_NOT_FOUND') {
-                  userFriendlyMessage = 'The selected expert agent could not be found. Please select a different agent.';
-                } else if (errorCode === 'LLM_TIMEOUT' || errorCode === 'LLM_RATE_LIMIT') {
-                  userFriendlyMessage = 'The AI service is temporarily unavailable. Please try again in a moment.';
-                } else if (errorCode === 'RAG_TIMEOUT' || errorCode === 'RAG_SERVICE_UNAVAILABLE') {
-                  userFriendlyMessage = 'The knowledge base search is temporarily unavailable. The response may be less detailed.';
-                } else if (errorCode === 'RAG_NO_RESULTS') {
-                  userFriendlyMessage = 'We could not find supporting evidence in the knowledge base. Please broaden your query, select additional knowledge domains, enable evidence tools, or explicitly permit answers without evidence.';
-                } else if (errorCode === 'NETWORK_ERROR') {
-                  userFriendlyMessage = 'Network connection issue. Please check your internet connection and try again.';
-                } else if (errorCode === 'DATABASE_CONNECTION_ERROR') {
-                  userFriendlyMessage = 'Database service is temporarily unavailable. Please try again in a moment.';
-                } else if (errorMessage.includes('Failed to connect to API Gateway') || errorMessage.includes('fetch failed') || errorMessage.includes('ECONNREFUSED')) {
-                  userFriendlyMessage = 'Unable to connect to the AI service. Please ensure the API Gateway server is running on port 3001 and try again.';
-                }
-
-                // Update streaming message with error
-                if (fullResponse.trim() === '') {
-                  fullResponse = userFriendlyMessage;
-                  setStreamingMessage(fullResponse);
-                }
-                
-                setStreamingReasoning(prev => {
-                  const errorText = `❌ ${userFriendlyMessage}`;
-                  return prev ? `${prev}\n\n${errorText}` : errorText;
+              case 'tool_request':
+                // Tool execution requiring approval
+                setPendingToolExecution({
+                  id: data.tool_id || uuidv4(),
+                  toolName: data.tool_name || 'Unknown Tool',
+                  description: data.description || 'Tool execution requested',
+                  category: data.category || 'general',
+                  parameters: data.parameters || [],
+                  riskLevel: data.risk_level || 'low',
+                  riskReason: data.risk_reason,
+                  estimatedDuration: data.estimated_duration,
                 });
-                setIsStreamingReasoning(true);
-                
-                // Don't throw - let the stream complete to show the error message
-                // The error will be shown in the final message
-              }
-              // Handle generic reasoning events
-              else if (data.type === 'reasoning' || data.reasoning) {
-                // Generic reasoning data
-                const reasoningText = data.content || data.reasoning || '';
-                if (reasoningText) {
-                  setStreamingReasoning(prev => {
-                    return prev && prev !== 'Thinking...' && prev !== 'Processing your request...'
-                      ? `${prev}\n\n${reasoningText}`
-                      : reasoningText;
-                  });
-                  setIsStreamingReasoning(true);
-                  // Also accumulate into reasoning array
-                  if (typeof reasoningText === 'string') {
-                    reasoning.push(reasoningText);
-                  } else if (Array.isArray(reasoningText)) {
-                    reasoning = [...reasoning, ...reasoningText];
-                  }
-                  updateStreamingMeta();
-                }
-              }
-              // Fallback: Support old format for backward compatibility
-              else if (data.token) {
-                fullResponse += data.token;
-                setStreamingMessage(fullResponse);
-                // Show reasoning during token streaming
-                if (!isStreamingReasoning || streamingReasoning === 'Thinking...' || streamingReasoning === 'Processing your request...') {
-                  setStreamingReasoning('Generating response...');
-                  setIsStreamingReasoning(true);
-                }
-              } else if (data.done && !data.type) {
-                reasoning = data.reasoning || [];
-                // If reasoning was provided, show it
-                if (reasoning && reasoning.length > 0) {
-                  setStreamingReasoning(reasoning.join('\n\n'));
-                  setIsStreamingReasoning(true);
-                }
-              } else if (data.error) {
-                throw new Error(data.error);
-              }
-            } catch (e) {
-              if (e instanceof SyntaxError) {
-                // Ignore JSON parse errors
-              } else {
-                throw e; // Re-throw other errors
-              }
+                break;
+
+              case 'subagent_request':
+                // Sub-agent spawn requiring approval
+                setPendingSubAgentSpawn({
+                  id: data.subagent_id || uuidv4(),
+                  agentName: data.agent_name || 'Sub-agent',
+                  agentRole: data.role || 'Specialist',
+                  level: data.level || 'L3',
+                  justification: data.justification || 'Required for task completion',
+                  capabilities: data.capabilities || [],
+                  expectedOutput: data.expected_output || 'Task-specific output',
+                  riskLevel: data.risk_level || 'low',
+                  estimatedTokens: data.estimated_tokens,
+                });
+                break;
+
+              case 'final_review':
+                // Final response review (Mode 3/4)
+                setPendingFinalReview({
+                  id: data.review_id || uuidv4(),
+                  response: data.response || accumulatedContent,
+                  sources: data.sources || [],
+                  confidence: data.confidence || 0.8,
+                  executionSummary: {
+                    totalSteps: data.total_steps || executionSteps.length,
+                    completedSteps: data.completed_steps || executionSteps.filter((s) => s.status === 'completed').length,
+                    agentsUsed: data.agents_used || 1,
+                    toolsExecuted: data.tools_executed || 0,
+                    totalDuration: data.total_duration || 'Unknown',
+                    tokensUsed: data.tokens_used || 0,
+                  },
+                  createdAt: new Date(),
+                });
+                break;
             }
+          } catch (parseError) {
+            console.warn('[AskExpertV2] Failed to parse SSE data:', jsonStr);
           }
         }
       }
-
-      const assistantMessageId = (Date.now() + 1).toString();
-      const messageBranches =
-        branches && branches.length > 0
-          ? branches
-          : [
-              {
-                id: `${assistantMessageId}-branch-0`,
-                content: fullResponse,
-                confidence: typeof confidence === 'number' ? confidence : 0,
-                citations: Array.isArray(finalMeta?.citations) ? finalMeta.citations : [],
-                sources: sources.map((src, idx) => ({ ...src, id: src.id || `fallback-source-${idx + 1}` })),
-                createdAt: new Date(),
-                reasoning: reasoning.length > 0 ? reasoning.join('\n') : undefined,
-              },
-            ];
-      const activeBranchIndex = Math.min(currentBranch, messageBranches.length - 1);
-      const activeBranch = messageBranches[activeBranchIndex];
-
-      const assistantMessage: Message = {
-        id: assistantMessageId,
-        role: 'assistant',
-        content: activeBranch?.content ?? fullResponse,
-        timestamp: Date.now(),
-        reasoning,
-        sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : sources,
-        selectedAgent,
-        selectionReason,
-        confidence,
-        branches: messageBranches,
-        currentBranch: activeBranchIndex,
-        // Add autonomous metadata for Mode 3 & Mode 4
-        ...(Object.keys(autonomousMetadata).length > 0 && { autonomousMetadata }),
-        metadata: {
-          ragSummary,
-          toolSummary,
-          sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : sources,
-          reasoning,
-          confidence,
-          citations: Array.isArray(finalMeta?.citations) ? finalMeta.citations : undefined,
-        },
-      };
-
-      const resolvedAgentId = selectedAgent?.id || agentId || undefined;
-
-      if (
-        user?.id &&
-        resolvedAgentId &&
-        assistantMessage.content &&
-        assistantMessage.content.trim().length > 0
-      ) {
-        void fetch('/api/memory/long-term', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user.id,
-            agentId: resolvedAgentId,
-            userMessage: messageContent,
-            assistantMessage: assistantMessage.content,
-          }),
-        }).catch((error) => {
-          console.error('[LongTermMemory] Failed to persist memory', error);
-        });
-      }
-
-      // Debug: Log message creation with actual mode
-      // Golden Rule: 'autonomous' = Mode 4 (Agentic + Auto), 'multi-expert' = Mode 3 (Agentic + Manual)
-      const modeNumber = mode === 'manual' ? 1 : mode === 'automatic' ? 2 : mode === 'autonomous' ? 4 : 3;
-      console.group(`📝 [Mode ${modeNumber} Debug] Creating Assistant Message`);
-      console.log('Mode:', mode, `(Mode ${modeNumber})`);
-      console.log('Content length:', fullResponse.length);
-      console.log('Content preview:', fullResponse.substring(0, 100));
-      console.log('Selected agent:', selectedAgent);
-      console.log('Sources count:', sources.length);
-      console.log('Reasoning steps:', reasoning.length);
-      console.log('Autonomous metadata keys:', Object.keys(autonomousMetadata));
-      console.log('Confidence:', confidence);
-      console.log('Message ID:', assistantMessage.id);
-      console.log('Full message object:', assistantMessage);
-      console.groupEnd();
-
-      setMessages(prev => {
-        const updated = [...prev, assistantMessage];
-        console.log(`📊 [Mode ${modeNumber} Debug] Messages array updated. Total messages:`, updated.length);
-        console.log(`📊 [Mode ${modeNumber} Debug] Last message role:`, updated[updated.length - 1].role);
-        console.log(`📊 [Mode ${modeNumber} Debug] Last message agent:`, updated[updated.length - 1].selectedAgent);
-        return updated;
-      });
-      const branchReasoning = activeBranch?.reasoning;
-      const normalizedRecentReasoning = branchReasoning
-        ? Array.isArray(branchReasoning)
-          ? branchReasoning
-          : [branchReasoning]
-        : reasoning;
-      setRecentReasoning(normalizedRecentReasoning);
-      setRecentReasoningTimestamp(Date.now());
-      setStreamingMessage('');
-      setStreamingReasoning('');
-      setIsStreamingReasoning(false);
-      setStreamingMeta(null);
-
-      if (activeConversationId) {
-        setConversations(prev =>
-          prev.map(conv =>
-                  conv.id === activeConversationId
+    } catch (error: unknown) {
+      const err = error as Error;
+      if (err.name === 'AbortError') {
+        console.log('[AskExpertV2] Request aborted');
+      } else {
+        console.error('[AskExpertV2] Error:', error);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessageId
               ? {
-                  ...conv,
-                  messages: skipUserMessageAppend
-                    ? [...conv.messages, assistantMessage]
-                    : [...conv.messages, userMessage, assistantMessage],
-                  title: conv.messages.length === 0 ? messageContent.substring(0, 50) : conv.title,
-                  updatedAt: Date.now(),
+                  ...msg,
+                  content: `Error: ${err.message || 'Failed to get response'}`,
+                  isStreaming: false,
+                  reasoningComplete: true,
                 }
-              : conv
+              : msg
           )
         );
       }
-    } catch (error) {
-      console.error('[AskExpert] Error:', error);
-      
-      // Handle fetch failures specifically
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.error('[AskExpert] Fetch failed - network or server error:', error.message);
-        const networkErrorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: 'Network error: Unable to connect to the server. Please check your internet connection and try again.',
-          timestamp: Date.now(),
-        };
-        setMessages(prev => [...prev, networkErrorMessage]);
-      } else if (error instanceof Error) {
-        console.error('[AskExpert] Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name,
-        });
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `Sorry, I encountered an error: ${error.message}. Please try again.`,
-          timestamp: Date.now(),
-        };
-        setMessages(prev => [...prev, errorMessage]);
-      } else {
-        console.error('[AskExpert] Unknown error:', error);
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: 'Sorry, I encountered an unknown error. Please try again.',
-          timestamp: Date.now(),
-        };
-        setMessages(prev => [...prev, errorMessage]);
-      }
-      
-      setStreamingMessage('');
-      setStreamingReasoning('');
-      setIsStreamingReasoning(false);
-      setStreamingMeta(null);
     } finally {
       setIsLoading(false);
-      setStreamingMeta(null);
+      abortControllerRef.current = null;
+    }
+  }, [inputValue, selectedAgent, isLoading, sessionId, mode, hitlEnabled, hitlSafetyLevel, maxIterations, enableRAG, enableTools]);
+
+  // Assign sendMessage to ref for use in earlier callbacks
+  sendMessageRef.current = sendMessage;
+
+  // Handle Enter key - uses intercept for autonomous modes
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendOrConfigure();
     }
   };
-
-  const handleRegenerate = async (assistantMessageId: string) => {
-    const assistantIndex = messages.findIndex((msg) => msg.id === assistantMessageId);
-    if (assistantIndex === -1) {
-      return;
-    }
-
-    let previousUserMessage: Message | null = null;
-    for (let idx = assistantIndex - 1; idx >= 0; idx--) {
-      if (messages[idx].role === 'user') {
-        previousUserMessage = messages[idx];
-        break;
-      }
-    }
-
-    if (!previousUserMessage) {
-      console.warn('[AskExpert] Regenerate requested but no preceding user message found.');
-      return;
-    }
-
-    const conversationWithoutAssistant = messages.filter((msg) => msg.id !== assistantMessageId);
-    setMessages(conversationWithoutAssistant);
-    if (activeConversationId) {
-      setConversations((prev) =>
-        prev.map((conv) =>
-          conv.id === activeConversationId
-            ? {
-                ...conv,
-                messages: conv.messages.filter((msg) => msg.id !== assistantMessageId),
-              }
-            : conv
-        )
-      );
-    }
-
-    try {
-      await handleSend({
-        promptText: previousUserMessage.content,
-        existingUserMessage: previousUserMessage,
-        skipUserMessageAppend: true,
-        conversationOverride: conversationWithoutAssistant,
-      });
-    } catch (error) {
-      console.error('[AskExpert] Regenerate failed:', error);
-    }
-  };
-
-  // New conversation
-  const handleNewConversation = useCallback(
-    (options?: { id?: string; title?: string }) => {
-      const conversationId = options?.id ?? Date.now().toString();
-      const newConv: Conversation = {
-        id: conversationId,
-        title: options?.title || 'New Conversation',
-        messages: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        isPinned: false,
-      };
-      setConversations(prev => [newConv, ...prev]);
-      setActiveConversationId(conversationId);
-      setMessages([]);
-    },
-    []
-  );
-
-  // Conversation management handlers
-  const handleDeleteConversation = useCallback(
-    (id: string) => {
-      setConversations(prev => prev.filter(c => c.id !== id));
-      if (activeConversationId === id) {
-        const remaining = conversations.filter(c => c.id !== id);
-        if (remaining.length > 0) {
-          setActiveConversationId(remaining[0].id);
-          setMessages(remaining[0].messages);
-        } else {
-          handleNewConversation();
-        }
-      }
-    },
-    [activeConversationId, conversations, handleNewConversation]
-  );
-
-  const handleRenameConversation = useCallback((id: string, newTitle: string) => {
-    setConversations(prev =>
-      prev.map(c => (c.id === id ? { ...c, title: newTitle, updatedAt: Date.now() } : c))
-    );
-  }, []);
-
-  const handleTogglePin = useCallback((id: string) => {
-    setConversations(prev =>
-      prev.map(c => (c.id === id ? { ...c, isPinned: !c.isPinned } : c))
-    );
-  }, []);
-
-  const handleConversationSelect = useCallback(
-    (id: string) => {
-      setActiveConversationId(id);
-      const conv = conversations.find(c => c.id === id);
-      setMessages(conv ? conv.messages : []);
-    },
-    [conversations]
-  );
-
-  const handleSuggestionClick = useCallback(
-    (suggestion: string) => {
-      setInputValue(suggestion);
-      requestAnimationFrame(() => {
-        inputRef.current?.focus();
-        inputRef.current?.setSelectionRange(suggestion.length, suggestion.length);
-      });
-    },
-    []
-  );
-
-  // Copy message
-  const handleCopy = useCallback((content: string, id: string) => {
-    navigator.clipboard.writeText(content).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
-  }, []);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
-        e.preventDefault();
-        handleNewConversation();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNewConversation]);
-
-  useEffect(() => {
-    const handleNewChatEvent = (event: Event) => {
-      const detail = (event as CustomEvent<{ sessionId?: string; title?: string }>).detail;
-      handleNewConversation({
-        id: detail?.sessionId,
-        title: detail?.title,
-      });
-    };
-
-    const handleOpenChatEvent = async (event: Event) => {
-      const detail = (event as CustomEvent<{ sessionId?: string; title?: string }>).detail;
-      if (detail?.sessionId) {
-        const exists = conversations.some((conv) => conv.id === detail.sessionId);
-        if (!exists) {
-          // Fetch conversation data from database
-          try {
-            const response = await fetch(`/api/ask-expert?conversationId=${encodeURIComponent(detail.sessionId)}`);
-            if (response.ok) {
-              const data = await response.json();
-              if (data.conversation) {
-                // Extract messages from context
-                const contextMessages = data.conversation.context?.messages || [];
-                const loadedMessages: Message[] = contextMessages.map((msg: { role: string; content: string }, idx: number) => ({
-                  id: `${detail.sessionId}-msg-${idx}`,
-                  role: msg.role === 'user' ? 'user' : 'assistant',
-                  content: msg.content,
-                  timestamp: Date.now(),
-                }));
-
-                // Add to local conversations state with loaded messages
-                const newConv: Conversation = {
-                  id: detail.sessionId,
-                  title: data.conversation.title || detail.title || 'Conversation',
-                  messages: loadedMessages,
-                  createdAt: new Date(data.conversation.created_at).getTime(),
-                  updatedAt: new Date(data.conversation.updated_at || data.conversation.created_at).getTime(),
-                  isPinned: false,
-                };
-                setConversations(prev => [newConv, ...prev.filter(c => c.id !== detail.sessionId)]);
-                setActiveConversationId(detail.sessionId);
-                setMessages(loadedMessages);
-                return;
-              }
-            }
-          } catch (error) {
-            console.error('Failed to load conversation:', error);
-          }
-          // Fallback: create new empty conversation
-          handleNewConversation({ id: detail.sessionId, title: detail.title || 'Conversation' });
-        } else {
-          handleConversationSelect(detail.sessionId);
-        }
-      }
-    };
-
-    window.addEventListener('ask-expert:new-chat', handleNewChatEvent);
-    window.addEventListener('ask-expert:open-chat', handleOpenChatEvent);
-
-    return () => {
-      window.removeEventListener('ask-expert:new-chat', handleNewChatEvent);
-      window.removeEventListener('ask-expert:open-chat', handleOpenChatEvent);
-    };
-  }, [conversations, handleConversationSelect, handleNewConversation]);
 
   return (
-    <div className="flex flex-col h-full w-full bg-white dark:bg-gray-950">
-      {/* Top Bar - Clean like Claude */}
-      <header className="h-14 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 bg-white dark:bg-gray-900">
-        <div className="flex items-center gap-3 flex-wrap">
-          <Brain className="w-5 h-5 text-blue-500" />
-          <h1 className="text-base font-semibold text-gray-900 dark:text-white">
-            Ask the Experts
-          </h1>
-          {/* Current Mode Badge */}
-          <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-            currentMode.color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
-            currentMode.color === 'green' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-            currentMode.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-            'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-          }`}>
-            Mode {currentMode.id}: {currentMode.name}
+    <div className="flex h-[calc(100vh-4rem)] flex-col">
+      {/* Header with Mode and Agent Selectors */}
+      <div className="border-b bg-background/95 px-4 py-3 backdrop-blur">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Bot className="h-6 w-6 text-primary" />
+            <h1 className="text-lg font-semibold">Ask Expert V2</h1>
           </div>
-          {primarySelectedAgent && (
-            <div className="inline-flex items-center gap-2 rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 shadow-sm dark:bg-purple-900/30 dark:text-purple-200">
-              <AgentAvatar
-                avatar={primarySelectedAgent.avatar}
-                name={primarySelectedAgent.displayName}
-                size="list"
-                className="rounded-full"
-              />
-              <span>{primarySelectedAgent.displayName}</span>
-            </div>
-          )}
-        </div>
 
-          <div className="flex items-center gap-2">
-            {/* Settings Button */}
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className={`p-2 rounded-lg transition-colors ${
-                showSettings
-                  ? 'bg-gray-100 dark:bg-gray-800'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
+          <div className="flex items-center gap-3">
+            {/* Mode Selector - Opens 2x2 Modal */}
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => setShowModeModal(true)}
             >
-              <Settings2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </button>
-          </div>
-        </header>
+              {(() => {
+                const currentMode = MODES.find((m) => m.id === mode);
+                const ModeIcon = currentMode?.icon || MessageSquare;
+                return (
+                  <>
+                    <ModeIcon className="h-4 w-4" />
+                    <span>Mode {mode}: {currentMode?.name}</span>
+                  </>
+                );
+              })()}
+              <Grid className="h-4 w-4 opacity-50" />
+            </Button>
 
-        {/* Settings Panel (slides down when opened) */}
-        <AnimatePresence>
-          {showSettings && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 overflow-hidden"
-            >
-              <div className="p-4 space-y-4">
-                {/* Mode Selector Grid - Large Quadrant Style */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    Select Mode
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Mode 1 */}
-                    <button
-                      onClick={() => {
-                        setIsAutomatic(false);
-                        setIsAutonomous(false);
-                      }}
-                      className={`p-4 rounded-lg border-2 text-left transition-all ${
-                        currentMode.id === 1
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Mode 1: Manual Interactive
-                        </span>
-                        {currentMode.id === 1 && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        You select agent + interactive chat
-                      </p>
-                    </button>
-
-                    {/* Mode 2 */}
-                    <button
-                      onClick={() => {
-                        setIsAutomatic(true);
-                        setIsAutonomous(false);
-                      }}
-                      className={`p-4 rounded-lg border-2 text-left transition-all ${
-                        currentMode.id === 2
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Mode 2: Automatic Selection
-                        </span>
-                        {currentMode.id === 2 && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        AI selects best agent for you
-                      </p>
-                    </button>
-
-                    {/* Mode 3: Manual-Agentic (User selects + Autonomous) */}
-                    <button
-                      onClick={() => {
-                        setIsAutomatic(false);  // Manual selection (user picks)
-                        setIsAutonomous(true);  // Agentic mode
-                      }}
-                      className={`p-4 rounded-lg border-2 text-left transition-all ${
-                        currentMode.id === 3
-                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-400'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Mode 3: Manual-Agentic
-                        </span>
-                        {currentMode.id === 3 && (
-                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        You select agent + autonomous reasoning
-                      </p>
-                    </button>
-
-                    {/* Mode 4: Auto-Agentic (AI selects + Autonomous) */}
-                    <button
-                      onClick={() => {
-                        setIsAutomatic(true);   // Auto selection (AI picks)
-                        setIsAutonomous(true);  // Agentic mode
-                      }}
-                      className={`p-4 rounded-lg border-2 text-left transition-all ${
-                        currentMode.id === 4
-                          ? 'border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-400'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Mode 4: Auto-Agentic
-                        </span>
-                        {currentMode.id === 4 && (
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        AI selects agent + autonomous reasoning
-                      </p>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Current Mode Display */}
-                <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    Active Mode
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-bold text-gray-900 dark:text-white">
-                        Mode {currentMode.id}: {currentMode.name}
-                      </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                        {currentMode.description}
-                      </div>
-                    </div>
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      currentMode.color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
-                      currentMode.color === 'green' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                      currentMode.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                      'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                    }`}>
-                      {currentMode.id}
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Messages Area */}
-        <Conversation className="flex-1">
-          <ConversationContent className="max-w-3xl mx-auto px-4 py-6">
-            {/* GOLD STANDARD: Advanced Streaming Window */}
-            {isLoading && (workflowSteps.length > 0 || reasoningSteps.length > 0) && (
-              <div className="mb-6">
-                <AdvancedStreamingWindow
-                  workflowSteps={workflowSteps}
-                  reasoningSteps={reasoningSteps}
-                  metrics={streamingMetrics}
-                  isStreaming={isLoading}
-                  canPause={true}
-                  onPause={handlePauseStreaming}
-                  onResume={handleResumeStreaming}
-                />
-              </div>
-            )}
-
-            {/* Selected Agents Display (for multiple selections) */}
-            {selectedAgents.length > 1 && (
-              <div className="mb-6">
-                <SelectedAgentsList
-                  compact
-                  agents={agents.filter((agent) => selectedAgents.includes(agent.id))}
-                  selectedAgentIds={selectedAgents}
-                  onAgentClick={(agentId) => {
-                    setSelectedAgents(
-                      selectedAgents.includes(agentId)
-                        ? selectedAgents.filter((id) => id !== agentId)
-                        : [...selectedAgents, agentId]
-                    );
-                  }}
-                  onAgentRemove={(agentId) => {
-                    setSelectedAgents(selectedAgents.filter((id) => id !== agentId));
-                  }}
-                />
-              </div>
-            )}
-
-            {primaryAgentId && (
-              <div className="mb-6 space-y-4">
-                {(isLoadingPrimaryMemory || (primaryAgentMemory?.facts?.length ?? 0) > 0) && (
-                  <div className="rounded-xl border border-blue-200/60 bg-blue-50/60 dark:border-blue-800/50 dark:bg-blue-900/20 p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Brain className="w-4 h-4 text-blue-600 dark:text-blue-300" />
-                        <span className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                          Memory Insights
-                        </span>
-                      </div>
-                      {isLoadingPrimaryMemory && (
-                        <span className="text-xs text-blue-600 dark:text-blue-200 animate-pulse">
-                          Updating…
-                        </span>
-                      )}
-                    </div>
-                    {isLoadingPrimaryMemory ? (
-                      <div className="space-y-2">
-                        {[0, 1, 2].map((i) => (
-                          <div key={i} className="h-10 bg-white/60 dark:bg-blue-900/40 rounded-lg animate-pulse" />
-                        ))}
-                      </div>
-                    ) : (
-                      primaryAgentMemory?.facts &&
-                      primaryAgentMemory.facts.length > 0 && (
-                        <ul className="space-y-2">
-                          {primaryAgentMemory.facts.slice(0, 3).map((fact) => (
-                            <li
-                              key={fact.id}
-                              className="rounded-lg bg-white dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/60 p-2 text-xs text-blue-900 dark:text-blue-100"
-                            >
-                              <p className="font-medium text-blue-800 dark:text-blue-100">{fact.fact}</p>
-                              <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-blue-600 dark:text-blue-300">
-                                <span className="bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded-full">
-                                  {fact.category}
-                                </span>
-                                <span>Confidence {(fact.confidence * 100).toFixed(0)}%</span>
-                                <span>{new Date(fact.createdAt).toLocaleDateString()}</span>
-                              </div>
-                            </li>
-                          ))}
-                          {primaryAgentMemory.facts.length > 3 && (
-                            <li className="text-[11px] text-blue-600 dark:text-blue-300">
-                              +{primaryAgentMemory.facts.length - 3} more memorized facts
-                            </li>
-                          )}
-                        </ul>
-                      )
-                    )}
-                  </div>
-                )}
-
-                {primaryAgentStats?.recentFeedback && primaryAgentStats.recentFeedback.length > 0 && (
-                  <div className="rounded-xl border border-amber-200/60 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-900/20 p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <MessageSquare className="w-4 h-4 text-amber-600 dark:text-amber-300" />
-                      <span className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                        Recent User Feedback
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      {primaryAgentStats.recentFeedback.slice(0, 3).map((feedback) => (
-                        <div
-                          key={feedback.id}
-                          className="rounded-lg bg-white dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 p-2 text-xs text-amber-900 dark:text-amber-100"
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium">Rating {feedback.rating.toFixed(1)}/5</span>
-                            <span>{new Date(feedback.createdAt).toLocaleDateString()}</span>
-                          </div>
-                          <p className="text-xs text-amber-800 dark:text-amber-200">
-                            {feedback.comment ? `“${feedback.comment}”` : 'No comment provided'}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                <Sparkles className="w-12 h-12 text-blue-500 mb-3" />
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  How can I help you today?
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mb-8">
-                  Ask anything and get expert answers powered by advanced AI
-                </p>
-
-                {/* Show agent selection prompt for Mode 1 and Mode 4 */}
-                {selectedAgents.length === 0 && (currentMode.id === 1 || currentMode.id === 4) && (
-                  <div className="w-full max-w-md mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Bot className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                        Select an Expert
-                      </span>
-                    </div>
-                    <p className="text-xs text-blue-700 dark:text-blue-300">
-                      Choose an expert from the sidebar to get started with {currentMode.name}.
-                    </p>
-                  </div>
-                )}
-
-                {/* Prompt Starters - Show when agents are selected */}
-                {selectedAgents.length > 0 && (
-                  <div className="w-full max-w-4xl mt-6">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 text-left">
-                      Suggested prompts for your selected expert{selectedAgents.length > 1 ? 's' : ''}:
-                    </h3>
-                    <PromptStarters
-                      prompts={promptStarters}
-                      onSelectPrompt={(promptText) => setInputValue(promptText)}
-                      isLoading={loadingPromptStarters}
-                    />
-                  </div>
-                )}
+            {/* Selected Agent Indicator (agents selected via sidebar) */}
+            {selectedAgent ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-muted/30">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={selectedAgent.avatar} />
+                  <AvatarFallback>{selectedAgent.name[0]}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium max-w-[200px] truncate">{selectedAgent.name}</span>
               </div>
             ) : (
-              <>
-                {recentReasoning.length > 0 && (
-                  <div className="mb-4">
-                    <Reasoning defaultOpen={false}>
-                      <ReasoningTrigger
-                        title={`Latest AI Reasoning${formatReasoningTimestamp(recentReasoningTimestamp) ? ` • ${formatReasoningTimestamp(recentReasoningTimestamp)}` : ''}`}
-                      />
-                      <ReasoningContent>
-                        <div className="space-y-2 text-xs text-muted-foreground">
-                      {recentReasoning.map((step, idx) => (
-                        <div
-                          key={`${idx}-${step.slice(0, 20)}`}
-                          className="flex items-start gap-2 rounded-lg bg-muted/30 p-2"
-                        >
-                          <Sparkles className="h-3 w-3 mt-0.5 text-primary flex-shrink-0" />
-                          <span className="whitespace-pre-wrap">{step}</span>
-                        </div>
-                      ))}
-                        </div>
-                      </ReasoningContent>
-                    </Reasoning>
-                  </div>
-                )}
-
-                {messages.map((msg, index) => {
-                  const agentInfo =
-                    msg.role === 'assistant' && msg.selectedAgent
-                      ? agents.find((a) => a.id === msg.selectedAgent?.id)
-                      : null;
-                  const avatarValue =
-                    msg.role === 'assistant'
-                      ? agentInfo?.avatar
-                      : undefined;
-
-                  const previousUserMessage =
-                    index > 0 && messages[index - 1].role === 'user'
-                      ? messages[index - 1]
-                      : undefined;
-
-                  const allowRegenerate =
-                    msg.role === 'assistant' && index === messages.length - 1;
-
-                  return (
-                    <EnhancedMessageDisplay
-                      key={msg.id}
-                      id={msg.id}
-                      role={msg.role}
-                      content={msg.content}
-                      timestamp={new Date(msg.timestamp)}
-                      metadata={msg.metadata}
-                      agentName={agentInfo?.displayName || (agentInfo as any)?.display_name || agentInfo?.name}
-                      agentAvatar={avatarValue}
-                      branches={msg.branches}
-                      currentBranch={msg.currentBranch ?? 0}
-                      onBranchChange={
-                        msg.branches && msg.branches.length > 1
-                          ? (branchIndex) => handleBranchChange(msg.id, branchIndex)
-                          : undefined
-                      }
-                      onCopy={() => handleCopy(msg.content, msg.id)}
-                      onFeedback={
-                        msg.role === 'assistant'
-                          ? (type) => submitFeedbackForMessage(msg, type, previousUserMessage)
-                          : undefined
-                      }
-                      onRegenerate={
-                        allowRegenerate
-                          ? () => handleRegenerate(msg.id)
-                          : undefined
-                      }
-                      allowRegenerate={allowRegenerate}
-                    />
-                  );
-                })}
-
-
-                {/* Show reasoning and streaming response as soon as loading starts */}
-                {(isLoading || streamingMessage || isStreamingReasoning) && (
-                  <EnhancedMessageDisplay
-                    id="streaming-assistant"
-                    role="assistant"
-                    content={streamingMessage || ''}
-                    timestamp={new Date()}
-                    isStreaming
-                    metadata={streamingMeta || (streamingReasoning ? { reasoning: [streamingReasoning] } : undefined)}
-                    agentName={(() => {
-                      const agent = selectedAgents.length > 0
-                        ? agents.find((a) => selectedAgents.includes(a.id))
-                        : null;
-                      if (!agent) {
-                        return 'Expert';
-                      }
-                      return (agent as any).displayName || (agent as any).display_name || agent.name || 'Expert';
-                    })()}
-                    agentAvatar={(() => {
-                      const agent = selectedAgents.length > 0
-                        ? agents.find((a) => selectedAgents.includes(a.id))
-                        : null;
-                      return agent?.avatar || 'avatar_0001';
-                    })()}
-                  />
-                )}
-                      
-              </>
-            )}
-            {messages.length > 0 && (
-              <div className="mt-8 space-y-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowArtifactGenerator((prev) => !prev)}
-                  className="inline-flex items-center gap-2"
-                >
-                  <Sparkles className="h-4 w-4 text-blue-600" />
-                  {showArtifactGenerator ? 'Hide Document Generator' : 'Generate Document'}
-                </Button>
-
-                {showArtifactGenerator && (
-                  <InlineArtifactGenerator
-                    conversationContext={artifactConversationContext}
-                    onGenerate={handleArtifactGenerate}
-                    onClose={() => setShowArtifactGenerator(false)}
-                    className="mt-2"
-                  />
-                )}
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed text-muted-foreground">
+                <Bot className="h-5 w-5" />
+                <span className="text-sm">{agentsLoading ? 'Loading...' : 'Select agent from sidebar'}</span>
               </div>
             )}
-            <div ref={messagesEndRef} />
-          </ConversationContent>
-        </Conversation>
-
-        {shouldShowSuggestions && (
-          <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-2">
-            <Suggestions layout="wrap">
-              {followUpSuggestions.map((suggestion) => (
-                <Suggestion
-                  key={suggestion}
-                  suggestion={suggestion}
-                  onClick={handleSuggestionClick}
-                />
-              ))}
-            </Suggestions>
           </div>
-        )}
+        </div>
+      </div>
 
-        {/* Enhanced Prompt Input */}
-        <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 sticky bottom-0">
-          <PromptInput
-            value={inputValue}
-            onChange={setInputValue}
-            onSubmit={handleSend}
-            isLoading={isLoading}
-            placeholder="How can I help you today?"
-            textareaRef={inputRef}
-            selectedModel={selectedModel}
-            onModelChange={setSelectedModel}
-            isAutomatic={isAutomatic}
-            onAutomaticChange={setIsAutomatic}
-            isAutonomous={isAutonomous}
-            onAutonomousChange={setIsAutonomous}
-            attachments={attachments}
-            onAttachmentsChange={setAttachments}
-            tokenCount={tokenCount}
-            enableRAG={enableRAG}
-            onEnableRAGChange={setEnableRAG}
-            enableTools={enableTools}
-            onEnableToolsChange={handleEnableToolsChange}
-            availableTools={availableTools}
-            selectedTools={selectedTools}
-            onSelectedToolsChange={setSelectedTools}
-            availableRagDomains={availableRagDomains}
-            selectedRagDomains={selectedRagDomains}
-            onSelectedRagDomainsChange={setSelectedRagDomains}
+      {/* Chat Messages */}
+      <ScrollArea className="flex-1" ref={scrollRef}>
+        <div className="mx-auto max-w-3xl p-4 space-y-6">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+              <Bot className="h-12 w-12 text-muted-foreground mb-4" />
+              <h2 className="text-lg font-medium">Start a conversation</h2>
+              <p className="text-muted-foreground">Select an agent and ask your question below</p>
+            </div>
+          ) : (
+            messages.map((message) => (
+              <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {message.role === 'assistant' && (
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarImage src={selectedAgent?.avatar} />
+                    <AvatarFallback>
+                      <Bot className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+
+                <div className={`max-w-[80%] space-y-3`}>
+                  {/* User message bubble */}
+                  {message.role === 'user' && (
+                    <div className="rounded-lg p-4 bg-primary text-primary-foreground">
+                      <p className="whitespace-pre-wrap">{message.content}</p>
+                    </div>
+                  )}
+
+                  {/* Assistant: Component 1 - AI Reasoning with Icons (Progressive Disclosure) */}
+                  {message.role === 'assistant' && message.reasoningSteps && message.reasoningSteps.length > 0 && (
+                    <Reasoning
+                      isStreaming={message.isStreaming && !message.reasoningComplete}
+                      defaultOpen={true}
+                      className="w-full"
+                    >
+                      <ReasoningTrigger />
+                      <CollapsibleContent
+                        className="mt-4 text-sm data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground outline-none data-[state=closed]:animate-out data-[state=open]:animate-in"
+                      >
+                        <div className="space-y-2">
+                          {message.reasoningSteps.map((step, idx) => {
+                            const StepIcon = getStepIcon(step.key);
+                            return (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300"
+                                style={{ animationDelay: `${idx * 100}ms`, animationFillMode: 'backwards' }}
+                              >
+                                <StepIcon className="h-4 w-4 text-primary shrink-0" />
+                                <span className="animate-in fade-in duration-500" style={{ animationDelay: `${idx * 100 + 50}ms` }}>
+                                  {step.label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CollapsibleContent>
+                    </Reasoning>
+                  )}
+
+                  {/* Assistant: HITL Checkpoint UI (Mode 3 only) */}
+                  {message.role === 'assistant' && message.hitlCheckpoint && message.hitlCheckpoint.status === 'pending' && (
+                    (() => {
+                      const checkpoint = message.hitlCheckpoint;
+                      const riskStyles = getRiskLevelStyles(checkpoint.risk_level);
+                      const typeInfo = getCheckpointTypeInfo(checkpoint.type);
+                      const TypeIcon = typeInfo.icon;
+                      return (
+                        <div className={`rounded-lg border-2 ${riskStyles.border} ${riskStyles.bg} p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300`}>
+                          {/* Header with type badge and risk indicator */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <TypeIcon className={`h-5 w-5 ${riskStyles.text}`} />
+                              <span className={`text-xs font-medium px-2 py-0.5 rounded ${riskStyles.badge}`}>
+                                {typeInfo.label}
+                              </span>
+                            </div>
+                            <span className={`text-xs font-medium ${riskStyles.text} capitalize`}>
+                              {checkpoint.risk_level} Risk
+                            </span>
+                          </div>
+
+                          {/* Title and description */}
+                          <div className="space-y-1">
+                            <h4 className="font-medium text-foreground">{checkpoint.title}</h4>
+                            <p className="text-sm text-muted-foreground">{checkpoint.description}</p>
+                          </div>
+
+                          {/* Options if available */}
+                          {checkpoint.options && checkpoint.options.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-medium text-muted-foreground">Available options:</p>
+                              <div className="space-y-1">
+                                {checkpoint.options.map((option) => (
+                                  <div
+                                    key={option.id}
+                                    className={`flex items-center gap-2 p-2 rounded text-sm ${
+                                      option.recommended ? 'bg-primary/10 border border-primary/20' : 'bg-background/50'
+                                    }`}
+                                  >
+                                    {option.recommended && (
+                                      <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                                    )}
+                                    <div>
+                                      <span className="font-medium">{option.label}</span>
+                                      {option.description && (
+                                        <p className="text-xs text-muted-foreground">{option.description}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Action buttons */}
+                          <div className="flex items-center gap-3 pt-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleHITLResponse(checkpoint.id, 'approved', message.id)}
+                              className="flex items-center gap-1.5"
+                            >
+                              <ThumbsUp className="h-4 w-4" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleHITLResponse(checkpoint.id, 'rejected', message.id)}
+                              className="flex items-center gap-1.5"
+                            >
+                              <ThumbsDown className="h-4 w-4" />
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })()
+                  )}
+
+                  {/* Assistant: Approved/Rejected HITL status indicator */}
+                  {message.role === 'assistant' && message.hitlCheckpoint && message.hitlCheckpoint.status !== 'pending' && (
+                    <div className={`flex items-center gap-2 text-sm ${
+                      message.hitlCheckpoint.status === 'approved' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {message.hitlCheckpoint.status === 'approved' ? (
+                        <>
+                          <ThumbsUp className="h-4 w-4" />
+                          <span>Checkpoint approved</span>
+                        </>
+                      ) : (
+                        <>
+                          <ThumbsDown className="h-4 w-4" />
+                          <span>Checkpoint rejected</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Assistant: Spawned agents indicator (Mode 3) */}
+                  {message.role === 'assistant' && message.spawnedAgents && message.spawnedAgents.length > 0 && (
+                    <div className="flex flex-wrap gap-2 py-2">
+                      {message.spawnedAgents.map((agent) => (
+                        <div
+                          key={agent.id}
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs bg-secondary/50 border border-border"
+                        >
+                          <Users className="h-3 w-3" />
+                          <span className="font-medium">{agent.name}</span>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            agent.status === 'running' ? 'bg-yellow-500 animate-pulse' :
+                            agent.status === 'completed' ? 'bg-green-500' :
+                            agent.status === 'failed' ? 'bg-red-500' : 'bg-gray-500'
+                          }`} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Assistant: Component 2 - Chat Completion (using Streamdown) */}
+                  {message.role === 'assistant' && (
+                    <div className="py-2">
+                      {/* Show loader when waiting for content */}
+                      {message.isStreaming && !message.content ? (
+                        <Loader />
+                      ) : (
+                        /* Streamdown for markdown streaming */
+                        <Streamdown
+                          isAnimating={message.isStreaming}
+                          className="prose prose-sm dark:prose-invert max-w-none"
+                        >
+                          {message.content}
+                        </Streamdown>
+                      )}
+
+                      {/* Sources Section - Inline Citation Badges + Collapsible Sources List */}
+                      {!message.isStreaming && message.sources && message.sources.length > 0 && (
+                        <div className="mt-4 pt-3 border-t border-border/30 space-y-4">
+                          {/* Inline Citation Badges with Hover Cards */}
+                          <div className="flex flex-wrap gap-2">
+                            {message.sources.map((source, i) => (
+                              <InlineCitation key={i}>
+                                <InlineCitationCard>
+                                  <InlineCitationCardTrigger sources={[source.url]} />
+                                  <InlineCitationCardBody>
+                                    <InlineCitationCarousel>
+                                      <InlineCitationCarouselHeader>
+                                        <InlineCitationCarouselPrev />
+                                        <InlineCitationCarouselNext />
+                                        <InlineCitationCarouselIndex />
+                                      </InlineCitationCarouselHeader>
+                                      <InlineCitationCarouselContent>
+                                        <InlineCitationCarouselItem>
+                                          <InlineCitationSource
+                                            title={source.title}
+                                            url={source.url}
+                                            description={source.snippet}
+                                          />
+                                        </InlineCitationCarouselItem>
+                                      </InlineCitationCarouselContent>
+                                    </InlineCitationCarousel>
+                                  </InlineCitationCardBody>
+                                </InlineCitationCard>
+                              </InlineCitation>
+                            ))}
+                          </div>
+
+                          {/* Collapsible Sources List */}
+                          <Sources>
+                            <SourcesTrigger count={message.sources.length} />
+                            <SourcesContent>
+                              {message.sources.map((source, i) => (
+                                <Source
+                                  key={i}
+                                  href={source.url}
+                                  title={source.title}
+                                />
+                              ))}
+                            </SourcesContent>
+                          </Sources>
+                        </div>
+                      )}
+
+                      {/* Confidence */}
+                      {!message.isStreaming && message.confidence !== undefined && (
+                        <div className="mt-3 text-xs text-muted-foreground">
+                          Confidence: {Math.round(message.confidence * 100)}%
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {message.role === 'user' && (
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarFallback>
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Input Area - Enhanced PromptInput with mode toggles */}
+      <div className="border-t bg-background/95 px-4 py-4 backdrop-blur">
+        <PromptInput
+          value={inputValue}
+          onChange={setInputValue}
+          onSubmit={handleSendOrConfigure}
+          isLoading={isLoading}
+          placeholder={
+            selectedAgent
+              ? `Ask ${selectedAgent.name}...`
+              : 'Select an agent to start...'
+          }
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+          isAutomatic={mode === '2' || mode === '4'}
+          onAutomaticChange={(isAuto) => {
+            // Toggle between manual and automatic while preserving autonomous
+            const isAutonomous = mode === '3' || mode === '4';
+            if (isAuto) {
+              setMode(isAutonomous ? '4' : '2');
+            } else {
+              setMode(isAutonomous ? '3' : '1');
+            }
+          }}
+          isAutonomous={mode === '3' || mode === '4'}
+          onAutonomousChange={(isAuto) => {
+            // Toggle between interactive and autonomous while preserving automatic
+            const isAutomatic = mode === '2' || mode === '4';
+            if (isAuto) {
+              // Scenario 1: When toggling autonomous ON, show the UserPromptModal
+              setMode(isAutomatic ? '4' : '3');
+              setShowPromptModal(true);
+            } else {
+              // Switching to interactive mode - reset autonomous config
+              setMode(isAutomatic ? '2' : '1');
+              setAutonomousConfigured(false);
+            }
+          }}
+          // Scenario 3: "Define Goal" button click in PromptInput when autonomous is active
+          onDefineGoalClick={() => setShowPromptModal(true)}
+          enableRAG={enableRAG}
+          onEnableRAGChange={setEnableRAG}
+          enableTools={enableTools}
+          onEnableToolsChange={setEnableTools}
+        />
+      </div>
+
+      {/* Mode Selection Modal (2x2 Grid) */}
+      <ModeSelectionModal
+        isOpen={showModeModal}
+        currentMode={mode}
+        onSelectMode={handleModeSelect}
+        onClose={() => setShowModeModal(false)}
+      />
+
+      {/* User Prompt Modal (for autonomous modes 3 & 4) */}
+      <UserPromptModal
+        isOpen={showPromptModal}
+        agentName={selectedAgent?.name}
+        goal={pendingAutonomousGoal || undefined}
+        agentDefaults={selectedAgent ? {
+          hitl_enabled: selectedAgent.hitl_enabled ?? true,
+          hitl_safety_level: (selectedAgent.hitl_safety_level as 'strict' | 'balanced' | 'permissive') ?? 'balanced',
+          max_goal_iterations: selectedAgent.max_goal_iterations ?? 5,
+          confidence_threshold: selectedAgent.confidence_threshold ?? 0.85,
+        } : undefined}
+        onSubmit={handlePromptSubmit}
+        onClose={() => {
+          setShowPromptModal(false);
+          setPendingAutonomousGoal(null);
+        }}
+      />
+
+      {/* Plan Approval Modal (Mode 3/4 - Autonomous execution plan) */}
+      {pendingPlan && (
+        <PlanApprovalModal
+          isOpen={showPlanModal}
+          plan={{
+            id: pendingPlan.id,
+            title: pendingPlan.title,
+            description: pendingPlan.description,
+            steps: pendingPlan.steps,
+            estimatedDuration: pendingPlan.estimatedDuration,
+            totalSteps: pendingPlan.totalSteps,
+            riskAssessment: pendingPlan.riskAssessment,
+          }}
+          onApprove={handlePlanApprove}
+          onReject={handlePlanReject}
+          onClose={() => {
+            setShowPlanModal(false);
+            setPendingPlan(null);
+          }}
+        />
+      )}
+
+      {/* Progress Tracker - Shows during autonomous execution (Mode 3/4) */}
+      {isAutonomousExecution && executionSteps.length > 0 && (
+        <div className="fixed bottom-20 right-4 z-50 max-w-sm">
+          <ProgressTracker
+            steps={executionSteps}
+            currentStepIndex={executionSteps.findIndex((s) => s.status === 'running')}
+            isComplete={executionSteps.every((s) => s.status === 'completed')}
           />
         </div>
+      )}
+
+      {/* Tool Execution Card - Inline approval for tool use (Mode 3/4) */}
+      {pendingToolExecution && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="max-w-lg w-full mx-4">
+            <ToolExecutionCard
+              request={pendingToolExecution}
+              onApprove={handleToolApprove}
+              onReject={handleToolReject}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Sub-Agent Approval Card - Inline approval for agent spawning (Mode 3/4) */}
+      {pendingSubAgentSpawn && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="max-w-lg w-full mx-4">
+            <SubAgentApprovalCard
+              request={pendingSubAgentSpawn}
+              onApprove={handleSubAgentApprove}
+              onReject={handleSubAgentReject}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Final Review Panel - Shows at end of autonomous execution (Mode 3/4) */}
+      {pendingFinalReview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overflow-auto py-8">
+          <div className="max-w-2xl w-full mx-4">
+            <FinalReviewPanel
+              review={pendingFinalReview}
+              onApprove={handleFinalApprove}
+              onReject={handleFinalReject}
+              onRequestChanges={handleFinalRequestChanges}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
-}
-
-// Default export - no provider needed (provided by layout sidebar)
-export default function AskExpertPage() {
-  return (
-    <ChatHistoryProvider>
-      <AskExpertPageContent />
-    </ChatHistoryProvider>
-  );
-}
-
-function generateFollowUpSuggestions(
-  message: Message | undefined,
-  streamingMessage: string | undefined,
-  modeName: string
-): string[] {
-  const suggestions = new Set<string>();
-
-  if (streamingMessage && streamingMessage.trim().length > 0) {
-    suggestions.add('What other details should we explore about this?');
-  }
-
-  if (!message || !message.content) {
-    suggestions.add(`What should I do next in ${modeName.toLowerCase()} mode?`);
-    suggestions.add('Suggest actionable next steps.');
-    suggestions.add('Flag potential risks I should know about.');
-    return Array.from(suggestions).slice(0, 4);
-  }
-
-  const content = message.content.replace(/\s+/g, ' ').trim();
-  const sentences = content
-    .split(/(?<=[.!?])\s+/)
-    .filter((sentence) => sentence.length > 40)
-    .slice(0, 3);
-
-  sentences.forEach((sentence) => {
-    const topic = extractTopic(sentence);
-    if (topic) {
-      suggestions.add(`Can you expand on ${topic}?`);
-    }
-  });
-
-  const bulletTopics = message.content
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => /^[-*•]/.test(line))
-    .slice(0, 2);
-
-  bulletTopics.forEach((line) => {
-    const cleaned = line.replace(/^[-*•]\s*/, '');
-    const topic = extractTopic(cleaned);
-    if (topic) {
-      suggestions.add(`What are the implications of ${topic}?`);
-    }
-  });
-
-  if (message.metadata?.ragSummary?.warning) {
-    suggestions.add('How can we resolve the evidence gaps you mentioned?');
-  }
-
-  const domains = message.metadata?.ragSummary?.domains;
-  if (domains && domains.length > 0) {
-    suggestions.add(`Share more insights on ${domains[0]}.`);
-  }
-
-  const usedTools = message.metadata?.toolSummary?.used;
-  if (usedTools && usedTools.length > 0) {
-    suggestions.add(`What did the ${usedTools[0]} tool uncover?`);
-  }
-
-  suggestions.add('What concrete steps should we prioritize next?');
-  suggestions.add('Are there risks or blockers we should anticipate?');
-
-  return Array.from(suggestions).slice(0, 4);
-}
-
-function extractTopic(sentence: string): string | null {
-  const trimmed = sentence.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const separators = [trimmed.indexOf(':'), trimmed.indexOf('—'), trimmed.indexOf('- ')].filter(
-    (index) => index > 0
-  );
-  const cutoff = separators.length ? Math.min(...separators) : Math.min(trimmed.length, 80);
-  let candidate = trimmed.slice(0, cutoff).replace(/^[^A-Za-z0-9]+/, '').trim();
-  if (!candidate) {
-    return null;
-  }
-
-  if (candidate.length > 60) {
-    candidate = `${candidate.slice(0, 57)}...`;
-  }
-
-  return candidate;
 }

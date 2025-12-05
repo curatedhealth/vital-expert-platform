@@ -104,11 +104,11 @@ export const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
 
   if (!node) {
     return (
-      <div className="w-[350px] bg-white border-l border-gray-200 flex flex-col h-full shadow-lg">
-        <div className="px-6 py-4 border-b bg-gradient-to-r from-primary to-gray-900 text-white">
+      <div className="w-[350px] bg-white border-l border-neutral-200 flex flex-col h-full shadow-lg">
+        <div className="px-6 py-4 border-b bg-gradient-to-r from-primary to-neutral-900 text-white">
           <h3 className="text-lg font-semibold">Node Properties</h3>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-gray-600 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-neutral-600 text-center">
           <Settings size={48} className="mb-4 opacity-50" />
           <p>Select a node to edit its properties</p>
         </div>
@@ -158,8 +158,8 @@ export const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
 
 
   return (
-    <div className="w-[350px] bg-white border-l border-gray-200 flex flex-col h-full shadow-lg">
-      <div className="px-6 py-4 border-b bg-gradient-to-r from-primary to-gray-900 text-white flex justify-between items-center">
+    <div className="w-[350px] bg-white border-l border-neutral-200 flex flex-col h-full shadow-lg">
+      <div className="px-6 py-4 border-b bg-gradient-to-r from-primary to-neutral-900 text-white flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">{formData.label || 'Node Properties'}</h3>
           <span className="text-xs opacity-90 block mt-1">{nodeType}</span>

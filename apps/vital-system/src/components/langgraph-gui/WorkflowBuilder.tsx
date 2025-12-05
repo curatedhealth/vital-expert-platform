@@ -3125,7 +3125,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
           </DropdownMenu>
       </div>
       ) : (
-      <header className="bg-gradient-to-r from-primary to-gray-900 text-white px-8 py-6 flex justify-between items-center shadow-md z-50">
+      <header className="bg-gradient-to-r from-primary to-neutral-900 text-white px-8 py-6 flex justify-between items-center shadow-md z-50">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <span className="text-4xl">🔬</span>
@@ -3254,7 +3254,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
           <Button
             variant="outline"
             size="icon"
-            className="fixed top-1/2 left-0 -translate-y-1/2 bg-white border-l-0 rounded-l-none rounded-r-lg shadow-lg hover:bg-gray-50 text-primary z-40"
+            className="fixed top-1/2 left-0 -translate-y-1/2 bg-white border-l-0 rounded-l-none rounded-r-lg shadow-lg hover:bg-neutral-50 text-primary z-40"
             onClick={() => setShowNodePalette(true)}
             title="Show Node Palette"
           >
@@ -3263,7 +3263,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
         )}
 
         {/* React Flow Canvas or Code View */}
-        <div className="flex-1 bg-gray-50 relative min-h-0 h-full" ref={reactFlowWrapper}>
+        <div className="flex-1 bg-neutral-50 relative min-h-0 h-full" ref={reactFlowWrapper}>
           {showCodeView ? (
             <div className="h-full overflow-auto">
               <WorkflowCodeView
@@ -3311,7 +3311,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
                 <Button
                   variant="outline"
                   size="icon"
-                  className="bg-white border-2 border-gray-300 hover:border-primary shadow-md"
+                  className="bg-white border-2 border-neutral-300 hover:border-primary shadow-md"
                   onClick={() => setShowControls(!showControls)}
                   title={showControls ? 'Hide Controls' : 'Show Controls'}
                 >

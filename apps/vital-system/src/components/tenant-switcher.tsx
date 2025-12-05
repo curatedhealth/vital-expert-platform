@@ -143,7 +143,7 @@ export function TenantSwitcher() {
       case 'pharmaceuticals':
         return { label: 'Pharmaceuticals', color: 'text-blue-600' };
       default:
-        return { label: 'Standard', color: 'text-gray-600' };
+        return { label: 'Standard', color: 'text-neutral-600' };
     }
   };
 

@@ -18,7 +18,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         <h2 className="text-xl font-semibold mb-4">
           {editingAgent ? 'Edit Agent' : 'Create Agent'}
         </h2>
-        <p className="text-gray-600 mb-6">
+        <p className="text-neutral-600 mb-6">
           Agent creator functionality is under development.
         </p>
         <div className="flex gap-2 justify-end">

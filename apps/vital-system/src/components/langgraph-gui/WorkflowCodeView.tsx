@@ -49,18 +49,18 @@ export const WorkflowCodeView: React.FC<WorkflowCodeViewProps> = ({
   };
 
   return (
-    <div className={cn("flex flex-col h-full bg-gray-900 text-gray-100", className)}>
+    <div className={cn("flex flex-col h-full bg-neutral-900 text-neutral-100", className)}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+      <div className="px-6 py-4 border-b border-neutral-700 flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">Python Code</h3>
-          <p className="text-sm text-gray-400 mt-1">Generated workflow code</p>
+          <p className="text-sm text-neutral-400 mt-1">Generated workflow code</p>
         </div>
         <Button
           onClick={handleCopy}
           variant="outline"
           size="sm"
-          className="bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700"
+          className="bg-neutral-800 border-neutral-700 text-neutral-200 hover:bg-neutral-700"
         >
           {copied ? (
             <>
@@ -79,7 +79,7 @@ export const WorkflowCodeView: React.FC<WorkflowCodeViewProps> = ({
       {/* Code Display */}
       <div className="flex-1 overflow-auto p-6">
         <pre className="text-sm font-mono leading-relaxed">
-          <code className="text-gray-100">{pythonCode}</code>
+          <code className="text-neutral-100">{pythonCode}</code>
         </pre>
       </div>
     </div>

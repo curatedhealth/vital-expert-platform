@@ -52,7 +52,7 @@ export function AgentCard({
           w-full p-3 rounded-lg border-2 transition-all text-left
           ${isSelected
             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-600'
+            : 'border-neutral-200 dark:border-neutral-700 bg-canvas-surface dark:bg-neutral-800 hover:border-blue-300 dark:hover:border-blue-600'
           }
           ${className}
         `}
@@ -67,7 +67,7 @@ export function AgentCard({
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
                 {agent.title}
               </h3>
               {isSelected && (
@@ -76,7 +76,7 @@ export function AgentCard({
             </div>
             
             {agent.category && (
-              <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+              <span className="text-xs text-neutral-500 dark:text-neutral-400 capitalize">
                 {agent.category}
               </span>
             )}
@@ -102,7 +102,7 @@ export function AgentCard({
           relative rounded-xl border-2 transition-all overflow-hidden
           ${isSelected
             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg'
-            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'
+            : 'border-neutral-200 dark:border-neutral-700 bg-canvas-surface dark:bg-neutral-800 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'
           }
           ${className}
         `}
@@ -127,12 +127,12 @@ export function AgentCard({
             />
             
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+              <h3 className="text-base font-semibold text-neutral-900 dark:text-white mb-1">
                 {agent.title}
               </h3>
               
               {agent.category && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 capitalize">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 capitalize">
                   <Bot className="w-3 h-3" />
                   {agent.category}
                 </span>
@@ -141,7 +141,7 @@ export function AgentCard({
           </div>
 
           {/* Description */}
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4 line-clamp-2">
             {agent.description}
           </p>
 
@@ -158,7 +158,7 @@ export function AgentCard({
                 </span>
               ))}
               {agent.expertise.length > 3 && (
-                <span className="inline-flex items-center px-2 py-1 rounded-md text-xs text-gray-500 dark:text-gray-400">
+                <span className="inline-flex items-center px-2 py-1 rounded-md text-xs text-neutral-500 dark:text-neutral-400">
                   +{agent.expertise.length - 3} more
                 </span>
               )}
@@ -167,7 +167,7 @@ export function AgentCard({
 
           {/* Stats */}
           {showStats && (
-            <div className="flex items-center gap-4 mb-4 text-xs text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-4 mb-4 text-xs text-neutral-600 dark:text-neutral-400">
               {rating > 0 && (
                 <div className="flex items-center gap-1">
                   <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
@@ -193,7 +193,7 @@ export function AgentCard({
                   flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-colors
                   ${isSelected
                     ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    : 'bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600'
                   }
                 `}
               >
@@ -204,10 +204,10 @@ export function AgentCard({
             {onViewDetails && (
               <button
                 onClick={onViewDetails}
-                className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
                 title="View details"
               >
-                <ExternalLink className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                <ExternalLink className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
               </button>
             )}
           </div>
@@ -222,7 +222,7 @@ export function AgentCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={`
-        rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden
+        rounded-xl border border-neutral-200 dark:border-neutral-700 bg-canvas-surface dark:bg-neutral-800 overflow-hidden
         ${className}
       `}
     >
@@ -246,13 +246,13 @@ export function AgentCard({
             avatar={agent.avatar_url}
             name={agent.title}
             size="large"
-            className="rounded-full border-4 border-white dark:border-gray-800"
+            className="rounded-full border-4 border-white dark:border-neutral-800"
           />
         </div>
 
         {/* Title and category */}
         <div className="mb-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
             {agent.title}
           </h2>
           
@@ -268,7 +268,7 @@ export function AgentCard({
               <div className="flex items-center gap-1 text-sm">
                 <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
                 <span className="font-semibold">{rating.toFixed(1)}</span>
-                <span className="text-gray-500 dark:text-gray-400">
+                <span className="text-neutral-500 dark:text-neutral-400">
                   ({agent.total_consultations} consultations)
                 </span>
               </div>
@@ -278,10 +278,10 @@ export function AgentCard({
 
         {/* Description */}
         <div className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-2">
             About
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
             {agent.description}
           </p>
         </div>
@@ -289,7 +289,7 @@ export function AgentCard({
         {/* Expertise */}
         {agent.expertise && agent.expertise.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 flex items-center gap-2">
               <Brain className="w-4 h-4 text-blue-500" />
               Expertise
             </h3>
@@ -309,7 +309,7 @@ export function AgentCard({
         {/* Specialties */}
         {agent.specialties && agent.specialties.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-500" />
               Specialties
             </h3>
@@ -317,7 +317,7 @@ export function AgentCard({
               {agent.specialties.map((specialty, idx) => (
                 <li
                   key={idx}
-                  className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400"
+                  className="flex items-start gap-2 text-sm text-neutral-600 dark:text-neutral-400"
                 >
                   <div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 flex-shrink-0" />
                   <span>{specialty}</span>
@@ -330,10 +330,10 @@ export function AgentCard({
         {/* Background - only for full Agent type */}
         {'background' in agent && agent.background && (
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-2">
               Background
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
               {agent.background}
             </p>
           </div>
@@ -341,7 +341,7 @@ export function AgentCard({
 
         {/* Actions */}
         {onSelect && (
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="pt-4 border-t border-neutral-200 dark:border-neutral-700">
             <button
               onClick={onSelect}
               className={`
@@ -374,12 +374,12 @@ export function AgentCard({
 export function AgentCardSkeleton({ variant = 'default' }: { variant?: 'default' | 'compact' }) {
   if (variant === 'compact') {
     return (
-      <div className="w-full p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="w-full p-3 rounded-lg border-2 border-neutral-200 dark:border-neutral-700 bg-canvas-surface dark:bg-neutral-800">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+          <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4" />
-            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/2" />
+            <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-3/4" />
+            <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-1/2" />
           </div>
         </div>
       </div>
@@ -387,27 +387,27 @@ export function AgentCardSkeleton({ variant = 'default' }: { variant?: 'default'
   }
 
   return (
-    <div className="rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
+    <div className="rounded-xl border-2 border-neutral-200 dark:border-neutral-700 bg-canvas-surface dark:bg-neutral-800 p-5">
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        <div className="w-16 h-16 rounded-full bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
         <div className="flex-1 space-y-2">
-          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4" />
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/2" />
+          <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-3/4" />
+          <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-1/2" />
         </div>
       </div>
       
       <div className="space-y-2 mb-4">
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-5/6" />
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-5/6" />
       </div>
       
       <div className="flex gap-2 mb-4">
-        <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        <div className="h-6 w-20 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+        <div className="h-6 w-24 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+        <div className="h-6 w-16 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
       </div>
       
-      <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+      <div className="h-10 bg-neutral-200 dark:bg-neutral-700 rounded-lg animate-pulse" />
     </div>
   );
 }

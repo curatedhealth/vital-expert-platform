@@ -123,11 +123,11 @@ Monitoring:
                     (System Picks)       │  (User Picks)
                                         │
 QUERY         ┌──────────────────────────┼──────────────────────────┐
-(One-shot)    │  Mode 3: Query-Auto     │  Mode 2: Query-Manual   │
+(One-shot)    │  Mode 4: Query-Auto     │  Mode 2: Query-Manual   │
               └──────────────────────────┼──────────────────────────┘
                                         │
 CHAT          ┌──────────────────────────┼──────────────────────────┐
-(Multi-turn)  │  ✅ MODE 4: Chat-Auto   │  Mode 1: Chat-Manual    │
+(Multi-turn)  │  ✅ MODE 3: Chat-Auto   │  Mode 1: Chat-Manual    │
               │  (This Document)        │                         │
               └──────────────────────────┼──────────────────────────┘
 ```

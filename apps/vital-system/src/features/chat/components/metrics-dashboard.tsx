@@ -153,7 +153,7 @@ export function MetricsDashboard({ className }: MetricsDashboardProps) {
       case 'healthy': return 'text-green-600';
       case 'degraded': return 'text-yellow-600';
       case 'critical': return 'text-red-600';
-      default: return 'text-gray-400';
+      default: return 'text-neutral-400';
     }
   };
 
@@ -172,7 +172,7 @@ export function MetricsDashboard({ className }: MetricsDashboardProps) {
       case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
       case 'high': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
       case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+      default: return 'bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200';
     }
   };
 

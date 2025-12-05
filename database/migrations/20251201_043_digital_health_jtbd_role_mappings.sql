@@ -297,3 +297,5 @@ LEFT JOIN jtbd_roles jr ON jr.jtbd_id = j.id
 WHERE j.code LIKE 'JTBD-D%' OR j.code LIKE 'JTBD-C%' OR j.code LIKE 'JTBD-P%' 
    OR j.code LIKE 'JTBD-T%' OR j.code LIKE 'JTBD-L%' OR j.code LIKE 'JTBD-R%';
 
+
+

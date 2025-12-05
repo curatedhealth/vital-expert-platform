@@ -98,15 +98,15 @@ export function HierarchicalOrgFilter({
       <div className="space-y-4">
         <div className="space-y-2">
           <Label>Function</Label>
-          <div className="h-10 bg-gray-100 rounded animate-pulse" />
+          <div className="h-10 bg-neutral-100 rounded animate-pulse" />
         </div>
         <div className="space-y-2">
           <Label>Department</Label>
-          <div className="h-10 bg-gray-100 rounded animate-pulse" />
+          <div className="h-10 bg-neutral-100 rounded animate-pulse" />
         </div>
         <div className="space-y-2">
           <Label>Role</Label>
-          <div className="h-10 bg-gray-100 rounded animate-pulse" />
+          <div className="h-10 bg-neutral-100 rounded animate-pulse" />
         </div>
       </div>
     );
@@ -131,7 +131,7 @@ export function HierarchicalOrgFilter({
           </SelectContent>
         </Select>
         {orgStructure && orgStructure.functions && orgStructure.functions.length === 0 && (
-          <p className="text-xs text-gray-500">No functions available</p>
+          <p className="text-xs text-neutral-500">No functions available</p>
         )}
       </div>
 

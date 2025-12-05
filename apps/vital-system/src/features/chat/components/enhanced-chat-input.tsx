@@ -712,12 +712,12 @@ export function EnhancedChatInput({
                 </Badge>
               )}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-neutral-500">
               Complexity: {Math.round(intentAnalysis.complexity * 100)}%
             </div>
           </div>
           {processingTime && (
-            <div className="text-xs text-gray-400">
+            <div className="text-xs text-neutral-400">
               {processingTime}ms
             </div>
           )}
@@ -770,7 +770,7 @@ export function EnhancedChatInput({
                 key={`profile-${index}`}
                 variant="ghost"
                 size="sm"
-                className="text-xs h-7 px-3 text-gray-600 hover:bg-gray-50 border border-gray-200"
+                className="text-xs h-7 px-3 text-neutral-600 hover:bg-neutral-50 border border-neutral-200"
                 onClick={() => {
                   if (onQuickPromptSelect) {
                     onQuickPromptSelect(prompt);
@@ -788,8 +788,8 @@ export function EnhancedChatInput({
 
       {/* Attachment Options */}
       {showAttachments && (
-        <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-lg">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">
+        <div className="p-3 bg-white border border-neutral-200 rounded-lg shadow-lg">
+          <h4 className="text-sm font-medium text-neutral-900 mb-3">
             Attach files to enhance your query
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -797,14 +797,14 @@ export function EnhancedChatInput({
               <Button
                 key={option.id}
                 variant="outline"
-                className="h-auto p-3 flex flex-col items-start gap-2 hover:bg-gray-50"
+                className="h-auto p-3 flex flex-col items-start gap-2 hover:bg-neutral-50"
                 onClick={() => handleFileUpload(option.id)}
               >
                 <div className="flex items-center gap-2">
                   <option.icon className="h-4 w-4" />
                   <span className="font-medium text-sm">{option.label}</span>
                 </div>
-                <p className="text-xs text-gray-500 text-left">
+                <p className="text-xs text-neutral-500 text-left">
                   {option.description}
                 </p>
               </Button>
@@ -905,7 +905,7 @@ export function EnhancedChatInput({
       {showAdvancedControls && intentAnalysis && (
         <div className="animate-scale-in">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-gray-700">Advanced Options</span>
+            <span className="text-xs font-medium text-neutral-700">Advanced Options</span>
             <Badge variant="outline" className="text-xs text-green-600 border-green-300">
               Expert Mode
             </Badge>

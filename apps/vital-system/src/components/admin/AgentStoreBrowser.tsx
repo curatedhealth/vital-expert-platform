@@ -141,7 +141,7 @@ function VirtualizedAgentList({
       case 'tier_3':
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
+        return 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-400';
     }
   };
 
@@ -150,7 +150,7 @@ function VirtualizedAgentList({
       case 'active':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'inactive':
-        return <XCircle className="h-4 w-4 text-gray-400" />;
+        return <XCircle className="h-4 w-4 text-neutral-400" />;
       case 'draft':
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case 'deprecated':
@@ -172,7 +172,7 @@ function VirtualizedAgentList({
             <div
               key={agent.id}
               style={{ height: itemHeight }}
-              className={`flex items-center px-4 border-b hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+              className={`flex items-center px-4 border-b hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors ${
                 selectedIds.has(agent.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
               }`}
             >
@@ -191,12 +191,12 @@ function VirtualizedAgentList({
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900 dark:text-white truncate">
+                  <span className="font-medium text-neutral-900 dark:text-white truncate">
                     {agent.display_name || agent.name}
                   </span>
                   {getStatusIcon(agent.status)}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                <div className="text-sm text-neutral-500 dark:text-neutral-400 truncate">
                   {agent.description?.slice(0, 60)}...
                 </div>
               </div>
@@ -310,10 +310,10 @@ function AgentDetailsSidebar({ agent, open, onClose }: AgentDetailsSidebarProps)
 
           {/* Description */}
           <div>
-            <h4 className="text-sm font-medium text-gray-500 mb-2">
+            <h4 className="text-sm font-medium text-neutral-500 mb-2">
               Description
             </h4>
-            <p className="text-sm text-gray-900 dark:text-gray-100">
+            <p className="text-sm text-neutral-900 dark:text-neutral-100">
               {agent.description}
             </p>
           </div>
@@ -321,25 +321,25 @@ function AgentDetailsSidebar({ agent, open, onClose }: AgentDetailsSidebarProps)
           {/* Organization */}
           {(agent.department_name || agent.function_name || agent.role_name) && (
             <div>
-              <h4 className="text-sm font-medium text-gray-500 mb-2">
+              <h4 className="text-sm font-medium text-neutral-500 mb-2">
                 Organization
               </h4>
               <div className="space-y-1 text-sm">
                 {agent.department_name && (
                   <div className="flex items-center gap-2">
-                    <Building className="h-4 w-4 text-gray-400" />
+                    <Building className="h-4 w-4 text-neutral-400" />
                     <span>{agent.department_name}</span>
                   </div>
                 )}
                 {agent.function_name && (
                   <div className="flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-gray-400" />
+                    <Layers className="h-4 w-4 text-neutral-400" />
                     <span>{agent.function_name}</span>
                   </div>
                 )}
                 {agent.role_name && (
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-gray-400" />
+                    <Users className="h-4 w-4 text-neutral-400" />
                     <span>{agent.role_name}</span>
                   </div>
                 )}
@@ -350,7 +350,7 @@ function AgentDetailsSidebar({ agent, open, onClose }: AgentDetailsSidebarProps)
           {/* Knowledge Domains */}
           {agent.knowledge_domains?.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-gray-500 mb-2">
+              <h4 className="text-sm font-medium text-neutral-500 mb-2">
                 Knowledge Domains
               </h4>
               <div className="flex flex-wrap gap-1">
@@ -366,7 +366,7 @@ function AgentDetailsSidebar({ agent, open, onClose }: AgentDetailsSidebarProps)
           {/* Capabilities */}
           {agent.capabilities?.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-gray-500 mb-2">
+              <h4 className="text-sm font-medium text-neutral-500 mb-2">
                 Capabilities
               </h4>
               <div className="flex flex-wrap gap-1">
@@ -380,7 +380,7 @@ function AgentDetailsSidebar({ agent, open, onClose }: AgentDetailsSidebarProps)
           )}
 
           {/* Timestamps */}
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-neutral-500">
             <div>Created: {new Date(agent.created_at).toLocaleDateString()}</div>
             <div>Updated: {new Date(agent.updated_at).toLocaleDateString()}</div>
           </div>
@@ -577,7 +577,7 @@ export function AgentStoreBrowser() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading agents...</p>
+          <p className="text-neutral-600">Loading agents...</p>
         </div>
       </div>
     );
@@ -589,7 +589,7 @@ export function AgentStoreBrowser() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Agent Store</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-neutral-600 dark:text-neutral-400 mt-1">
             Browse and manage {stats?.total?.toLocaleString() || 0} agents
           </p>
         </div>
@@ -619,7 +619,7 @@ export function AgentStoreBrowser() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
+              <CardTitle className="text-sm font-medium text-neutral-500">
                 Total Agents
               </CardTitle>
             </CardHeader>
@@ -631,7 +631,7 @@ export function AgentStoreBrowser() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
+              <CardTitle className="text-sm font-medium text-neutral-500">
                 Active
               </CardTitle>
             </CardHeader>
@@ -643,7 +643,7 @@ export function AgentStoreBrowser() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
+              <CardTitle className="text-sm font-medium text-neutral-500">
                 Domains
               </CardTitle>
             </CardHeader>
@@ -655,7 +655,7 @@ export function AgentStoreBrowser() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
+              <CardTitle className="text-sm font-medium text-neutral-500">
                 Filtered
               </CardTitle>
             </CardHeader>
@@ -675,7 +675,7 @@ export function AgentStoreBrowser() {
             {/* Search */}
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
                 <Input
                   placeholder="Search agents..."
                   value={filters.search}
@@ -821,7 +821,7 @@ export function AgentStoreBrowser() {
       )}
 
       {/* Select All Header */}
-      <div className="flex items-center gap-3 px-4 py-2 border rounded-t-lg bg-gray-50 dark:bg-gray-800">
+      <div className="flex items-center gap-3 px-4 py-2 border rounded-t-lg bg-neutral-50 dark:bg-neutral-800">
         <Checkbox
           checked={
             selectedIds.size > 0 &&
@@ -829,7 +829,7 @@ export function AgentStoreBrowser() {
           }
           onCheckedChange={handleSelectAll}
         />
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
           {filteredAgents.length.toLocaleString()} agents
         </span>
       </div>

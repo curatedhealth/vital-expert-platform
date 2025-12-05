@@ -5,6 +5,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { v4 as uuidv4 } from 'uuid'
 import { supabase } from '@vital/sdk/client'
 
 // Advisory Board Session Types
@@ -259,7 +260,7 @@ async function handleCreateSession(
         ...sessionData,
         creator_id: userId,
         organization_id: organizationId,
-        session_id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        session_id: uuidv4(), // Use proper UUID format for database compatibility
         created_at: new Date().toISOString(),
         status: 'scheduled'
       }),
@@ -301,7 +302,7 @@ async function handleCreateSession(
     }
   } catch (error) {
     // Fallback session creation
-    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = uuidv4(); // Use proper UUID format for database compatibility
 
     // Store session in database as fallback
     const { data: session, error: dbError } = await supabase

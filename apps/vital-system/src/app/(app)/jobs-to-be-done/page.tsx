@@ -173,7 +173,7 @@ export default function JTBDPage() {
       case 'low':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-neutral-100 text-neutral-800 border-neutral-200';
     }
   };
 
@@ -186,7 +186,7 @@ export default function JTBDPage() {
       case 'completed':
         return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-neutral-100 text-neutral-800 border-neutral-200';
     }
   };
 
@@ -207,7 +207,7 @@ export default function JTBDPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                <CardTitle className="text-xs font-medium text-neutral-600 flex items-center gap-1">
                   <Target className="h-3 w-3" />
                   Total Jobs
                 </CardTitle>
@@ -324,7 +324,7 @@ export default function JTBDPage() {
                 {/* Search */}
                 <div className="flex-1">
                   <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
                     <Input
                       placeholder="Search jobs by statement, category, or persona..."
                       value={searchQuery}
@@ -338,7 +338,7 @@ export default function JTBDPage() {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-4 py-2 border rounded-md bg-white dark:bg-gray-800"
+                  className="px-4 py-2 border rounded-md bg-canvas-surface dark:bg-neutral-800"
                 >
                   <option value="all">All Categories</option>
                   {getUniqueCategories().map(category => (
@@ -350,7 +350,7 @@ export default function JTBDPage() {
                 <select
                   value={selectedPriority}
                   onChange={(e) => setSelectedPriority(e.target.value)}
-                  className="px-4 py-2 border rounded-md bg-white dark:bg-gray-800"
+                  className="px-4 py-2 border rounded-md bg-canvas-surface dark:bg-neutral-800"
                 >
                   <option value="all">All Priorities</option>
                   <option value="high">High</option>
@@ -362,7 +362,7 @@ export default function JTBDPage() {
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="px-4 py-2 border rounded-md bg-white dark:bg-gray-800"
+                  className="px-4 py-2 border rounded-md bg-canvas-surface dark:bg-neutral-800"
                 >
                   <option value="all">All Statuses</option>
                   <option value="active">Active</option>
@@ -384,7 +384,7 @@ export default function JTBDPage() {
                 </Button>
               </div>
 
-              <div className="mt-4 text-sm text-gray-500">
+              <div className="mt-4 text-sm text-neutral-500">
                 Showing {filteredJTBDs.length} of {stats.total} jobs
               </div>
             </CardContent>
@@ -442,7 +442,7 @@ export default function JTBDPage() {
           {filteredJTBDs.length === 0 && !loading && (
             <Card>
               <CardContent className="py-12 text-center">
-                <p className="text-gray-500">No jobs found matching your filters.</p>
+                <p className="text-neutral-500">No jobs found matching your filters.</p>
               </CardContent>
             </Card>
           )}
@@ -469,7 +469,7 @@ function JTBDCard({ jtbd, compact = false, onClick, getPriorityColor, getStatusC
       case 'low':
         return 'bg-green-100 text-green-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -484,7 +484,7 @@ function JTBDCard({ jtbd, compact = false, onClick, getPriorityColor, getStatusC
       case 'low':
         return 'bg-green-100 text-green-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -496,7 +496,7 @@ function JTBDCard({ jtbd, compact = false, onClick, getPriorityColor, getStatusC
             <div className="flex items-center gap-2 mb-1">
               <Target className="h-4 w-4 text-primary" />
               {jtbd.code && (
-                <span className="text-xs font-mono text-gray-500">{jtbd.code}</span>
+                <span className="text-xs font-mono text-neutral-500">{jtbd.code}</span>
               )}
             </div>
             <CardTitle className="text-base line-clamp-2">{jtbd.job_statement}</CardTitle>
@@ -560,7 +560,7 @@ function JTBDCard({ jtbd, compact = false, onClick, getPriorityColor, getStatusC
             <div className="space-y-2 pt-2 border-t">
               {jtbd.opportunity_score && (
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600 flex items-center gap-1">
+                  <span className="text-neutral-600 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     Opportunity
                   </span>
@@ -572,7 +572,7 @@ function JTBDCard({ jtbd, compact = false, onClick, getPriorityColor, getStatusC
               )}
               {jtbd.importance_score && (
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600 flex items-center gap-1">
+                  <span className="text-neutral-600 flex items-center gap-1">
                     <BarChart3 className="h-3 w-3" />
                     Importance
                   </span>
@@ -587,7 +587,7 @@ function JTBDCard({ jtbd, compact = false, onClick, getPriorityColor, getStatusC
 
           {/* Additional Metadata */}
           {!compact && (
-            <div className="text-xs text-gray-500 space-y-1 pt-2">
+            <div className="text-xs text-neutral-500 space-y-1 pt-2">
               {jtbd.frequency && (
                 <div className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
@@ -615,7 +615,7 @@ function JTBDListItem({ jtbd, onClick, getPriorityColor, getStatusColor }: {
   getStatusColor: (status?: string) => string;
 }) {
   return (
-    <Card className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50" onClick={() => onClick?.(jtbd)}>
+    <Card className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-gray-800/50" onClick={() => onClick?.(jtbd)}>
       <CardContent className="py-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -625,7 +625,7 @@ function JTBDListItem({ jtbd, onClick, getPriorityColor, getStatusColor }: {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 {jtbd.code && (
-                  <span className="text-xs font-mono text-gray-500">{jtbd.code}</span>
+                  <span className="text-xs font-mono text-neutral-500">{jtbd.code}</span>
                 )}
                 {jtbd.category && (
                   <Badge variant="outline" className="text-xs">
@@ -635,7 +635,7 @@ function JTBDListItem({ jtbd, onClick, getPriorityColor, getStatusColor }: {
               </div>
               <h3 className="font-semibold line-clamp-1">{jtbd.job_statement}</h3>
               {jtbd.description && (
-                <p className="text-sm text-gray-500 line-clamp-1">
+                <p className="text-sm text-neutral-500 line-clamp-1">
                   {jtbd.description}
                 </p>
               )}
@@ -645,7 +645,7 @@ function JTBDListItem({ jtbd, onClick, getPriorityColor, getStatusColor }: {
           <div className="flex items-center gap-2 flex-shrink-0">
             {jtbd.opportunity_score && (
               <div className="text-xs text-right">
-                <span className="text-gray-500">ODI</span>
+                <span className="text-neutral-500">ODI</span>
                 <div className="font-bold text-blue-600">{jtbd.opportunity_score}</div>
               </div>
             )}
@@ -666,7 +666,7 @@ function JTBDListItem({ jtbd, onClick, getPriorityColor, getStatusColor }: {
               <Badge className={
                 jtbd.odi_tier === 'extreme' ? 'bg-red-500 text-white' :
                 jtbd.odi_tier === 'high' ? 'bg-orange-100 text-orange-800' :
-                'bg-gray-100 text-gray-800'
+                'bg-neutral-100 text-neutral-800'
               }>
                 {jtbd.odi_tier}
               </Badge>
@@ -677,4 +677,6 @@ function JTBDListItem({ jtbd, onClick, getPriorityColor, getStatusColor }: {
     </Card>
   );
 }
+
+
 

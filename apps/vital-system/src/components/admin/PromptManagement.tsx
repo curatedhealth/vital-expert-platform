@@ -313,7 +313,7 @@ export function PromptManagement() {
       case 'deprecated':
         return <Badge className="bg-red-100 text-red-800">Deprecated</Badge>;
       case 'archived':
-        return <Badge className="bg-gray-100 text-gray-800">Archived</Badge>;
+        return <Badge className="bg-neutral-100 text-neutral-800">Archived</Badge>;
       default:
         return <Badge variant="secondary">{status || 'Unknown'}</Badge>;
     }

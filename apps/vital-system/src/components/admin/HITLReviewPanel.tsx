@@ -80,7 +80,7 @@ function CheckpointIcon({ type }: { type: string }) {
     case 'artifact_generation':
       return <Settings className="h-5 w-5 text-green-500" />;
     default:
-      return <AlertTriangle className="h-5 w-5 text-gray-500" />;
+      return <AlertTriangle className="h-5 w-5 text-neutral-500" />;
   }
 }
 
@@ -193,7 +193,7 @@ function ApprovalCard({ approval, onApprove, onReject, onModify }: ApprovalCardP
       {expanded && (
         <CardContent className="pt-2 space-y-4">
           {/* Request Details */}
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-sm">
+          <div className="bg-neutral-50 dark:bg-neutral-800 rounded-lg p-4 text-sm">
             <pre className="whitespace-pre-wrap overflow-auto max-h-60 text-xs">
               {JSON.stringify(approval.request_data, null, 2)}
             </pre>
@@ -201,7 +201,7 @@ function ApprovalCard({ approval, onApprove, onReject, onModify }: ApprovalCardP
 
           {/* Feedback Input */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 block">
               Feedback (optional)
             </label>
             <Textarea
@@ -478,7 +478,7 @@ export function HITLReviewPanel({
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading HITL approvals...</p>
+          <p className="text-neutral-600">Loading HITL approvals...</p>
         </div>
       </div>
     );
@@ -490,7 +490,7 @@ export function HITLReviewPanel({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">HITL Review Panel</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-neutral-600 dark:text-neutral-400 mt-1">
             Human-in-the-Loop approval queue for autonomous workflows
           </p>
         </div>
@@ -539,7 +539,7 @@ export function HITLReviewPanel({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
+              <CardTitle className="text-sm font-medium text-neutral-500">
                 Pending
               </CardTitle>
             </CardHeader>
@@ -551,7 +551,7 @@ export function HITLReviewPanel({
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
+              <CardTitle className="text-sm font-medium text-neutral-500">
                 Approved
               </CardTitle>
             </CardHeader>
@@ -563,7 +563,7 @@ export function HITLReviewPanel({
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
+              <CardTitle className="text-sm font-medium text-neutral-500">
                 Rejected
               </CardTitle>
             </CardHeader>
@@ -575,7 +575,7 @@ export function HITLReviewPanel({
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
+              <CardTitle className="text-sm font-medium text-neutral-500">
                 Approval Rate
               </CardTitle>
             </CardHeader>
@@ -604,7 +604,7 @@ export function HITLReviewPanel({
       {approvals.length === 0 ? (
         <Card>
           <CardContent className="py-12">
-            <div className="text-center text-gray-500">
+            <div className="text-center text-neutral-500">
               <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
               <p className="text-lg font-medium">No pending approvals</p>
               <p className="text-sm mt-1">

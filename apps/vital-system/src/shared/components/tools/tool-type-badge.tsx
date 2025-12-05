@@ -70,11 +70,11 @@ export function ToolTypeBadge({
       case 'saas':
         return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       case 'software_reference':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-neutral-100 text-neutral-800 border-neutral-200';
       case 'ai_framework':
         return 'bg-pink-100 text-pink-800 border-pink-200';
       default:
-        return 'bg-gray-100 text-gray-600 border-gray-200';
+        return 'bg-neutral-100 text-neutral-600 border-neutral-200';
     }
   };
 

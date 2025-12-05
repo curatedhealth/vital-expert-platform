@@ -31,12 +31,12 @@ export function SelectedAgentCard({
   return (
     <div
       className={cn(
-        'flex items-center gap-2 rounded-md border transition-all cursor-pointer group bg-white/80 dark:bg-gray-900/60',
+        'flex items-center gap-2 rounded-md border transition-all cursor-pointer group bg-white/80 dark:bg-neutral-900/60',
         'hover:shadow-sm hover:-translate-y-0.5',
         compact ? 'px-2.5 py-1.5' : 'px-3.5 py-2.5',
         isSelected
           ? 'border-vital-primary-400 shadow-sm'
-          : 'border-gray-200 hover:border-gray-300 dark:border-gray-800',
+          : 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-800',
         className
       )}
       onClick={onClick}
@@ -57,7 +57,7 @@ export function SelectedAgentCard({
           className={cn(
             'rounded-full border border-transparent',
             compact ? 'w-8 h-8' : 'w-10 h-10',
-            isSelected ? 'border-vital-primary-300' : 'border-gray-200'
+            isSelected ? 'border-vital-primary-300' : 'border-neutral-200'
           )}
         />
       </div>
@@ -67,7 +67,7 @@ export function SelectedAgentCard({
         <span
           className={cn(
             'text-sm font-semibold truncate block',
-            isSelected ? 'text-vital-primary-900' : 'text-gray-900'
+            isSelected ? 'text-vital-primary-900' : 'text-neutral-900'
           )}
         >
           {displayName}
@@ -86,7 +86,7 @@ export function SelectedAgentCard({
             'opacity-0 group-hover:opacity-100',
             isSelected
               ? 'hover:bg-vital-primary-200 text-vital-primary-700'
-              : 'hover:bg-gray-100 text-gray-500'
+              : 'hover:bg-neutral-100 text-neutral-500'
           )}
           aria-label={`Remove ${displayName}`}
         >

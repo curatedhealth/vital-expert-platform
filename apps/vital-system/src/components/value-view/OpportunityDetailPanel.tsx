@@ -127,7 +127,7 @@ const PRIORITY_CONFIG = {
   critical: { label: 'Critical', color: 'text-red-600', bgColor: 'bg-red-100' },
   high: { label: 'High', color: 'text-amber-600', bgColor: 'bg-amber-100' },
   medium: { label: 'Medium', color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  low: { label: 'Low', color: 'text-gray-600', bgColor: 'bg-gray-100' },
+  low: { label: 'Low', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
 }
 
 // ═══════════════════════════════════════════════════════════════════

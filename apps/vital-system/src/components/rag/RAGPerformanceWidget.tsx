@@ -113,7 +113,7 @@ export function RAGPerformanceWidget({ className }: RAGPerformanceWidgetProps) {
           <div className="flex items-center justify-center h-32">
             <div className="flex items-center space-x-2">
               <Activity className="h-4 w-4 animate-pulse" />
-              <span className="text-sm text-gray-600">Loading...</span>
+              <span className="text-sm text-neutral-600">Loading...</span>
             </div>
           </div>
         </CardContent>
@@ -185,7 +185,7 @@ export function RAGPerformanceWidget({ className }: RAGPerformanceWidgetProps) {
           <div className="space-y-1">
             <div className="flex items-center space-x-1">
               <Database className="h-3 w-3 text-blue-500" />
-              <span className="text-xs text-gray-600">Cache Hit Rate</span>
+              <span className="text-xs text-neutral-600">Cache Hit Rate</span>
             </div>
             <p className="text-lg font-semibold">
               {(metrics.cache_hit_rate * 100).toFixed(1)}%
@@ -194,7 +194,7 @@ export function RAGPerformanceWidget({ className }: RAGPerformanceWidgetProps) {
           <div className="space-y-1">
             <div className="flex items-center space-x-1">
               <Clock className="h-3 w-3 text-green-500" />
-              <span className="text-xs text-gray-600">Response Time</span>
+              <span className="text-xs text-neutral-600">Response Time</span>
             </div>
             <p className="text-lg font-semibold">
               {metrics.response_time_ms.toLocaleString()}ms
@@ -206,7 +206,7 @@ export function RAGPerformanceWidget({ className }: RAGPerformanceWidgetProps) {
         <div className="space-y-1">
           <div className="flex items-center space-x-1">
             <TrendingUp className="h-3 w-3 text-purple-500" />
-            <span className="text-xs text-gray-600">Total Queries (24h)</span>
+            <span className="text-xs text-neutral-600">Total Queries (24h)</span>
           </div>
           <p className="text-lg font-semibold">
             {metrics.total_queries.toLocaleString()}

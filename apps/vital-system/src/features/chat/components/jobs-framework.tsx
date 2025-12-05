@@ -135,7 +135,7 @@ export function JobsFramework({ jobDescription, onJobComplete, className }: Jobs
       case 'functional': return 'bg-blue-500';
       case 'emotional': return 'bg-green-500';
       case 'social': return 'bg-purple-500';
-      default: return 'bg-gray-500';
+      default: return 'bg-neutral-500';
     }
   };
 

@@ -37,7 +37,7 @@ export default function CaseStudies() {
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-6">
             Success Stories from Healthcare Innovators
           </h2>
         </div>
@@ -52,13 +52,13 @@ export default function CaseStudies() {
               viewport={{ once: true }}
               className="group"
             >
-              <div className="p-8 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full">
+              <div className="p-8 bg-white rounded-2xl border border-neutral-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full">
                 <div className="mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  <h3 className="text-xl font-bold text-neutral-900 mb-4">
                     {study.title}
                   </h3>
                   
-                  <blockquote className="text-lg text-gray-700 italic mb-6 leading-relaxed">
+                  <blockquote className="text-lg text-neutral-700 italic mb-6 leading-relaxed">
                     "{study.quote}"
                   </blockquote>
                   
@@ -69,8 +69,8 @@ export default function CaseStudies() {
                       </span>
                     </div>
                     <div>
-                      <div className="font-semibold text-gray-900">{study.author}</div>
-                      <div className="text-sm text-gray-600">{study.role}</div>
+                      <div className="font-semibold text-neutral-900">{study.author}</div>
+                      <div className="text-sm text-neutral-600">{study.role}</div>
                     </div>
                   </div>
                 </div>

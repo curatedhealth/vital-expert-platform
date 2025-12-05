@@ -31,7 +31,7 @@ export default function ProblemSection() {
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-6">
             Your Healthcare Innovation Challenges, Solved
           </h2>
         </div>
@@ -46,16 +46,16 @@ export default function ProblemSection() {
               viewport={{ once: true }}
               className="group"
             >
-              <div className="p-8 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 backdrop-blur-sm bg-white/90">
+              <div className="p-8 bg-white rounded-2xl border border-neutral-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 backdrop-blur-sm bg-white/90">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="p-3 bg-vital-blue-50 rounded-xl text-vital-blue-600 group-hover:bg-vital-blue-100 transition-colors">
                     {problem.icon}
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900">
+                  <h3 className="text-xl font-semibold text-neutral-900">
                     {problem.title}
                   </h3>
                 </div>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-neutral-600 leading-relaxed">
                   {problem.description}
                 </p>
               </div>

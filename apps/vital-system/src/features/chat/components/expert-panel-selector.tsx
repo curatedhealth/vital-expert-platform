@@ -391,18 +391,18 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-900 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-canvas-surface dark:bg-neutral-900 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+        <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-foreground">Create Expert Panel</h2>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              className="text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
             >
               ✕
             </button>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <p className="text-neutral-600 dark:text-neutral-400 mt-2">
             Select a template or build a custom panel of experts for your consultation
           </p>
         </div>
@@ -420,7 +420,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
               >
                 ← Back to Domains
               </button>
-              <span className="text-gray-400">/</span>
+              <span className="text-neutral-400">/</span>
               <span className="font-medium">{selectedDomain.name}</span>
             </div>
           )}
@@ -434,13 +434,13 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                   <button
                     key={domain.id}
                     onClick={() => setSelectedDomain(domain)}
-                    className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg text-left hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                    className="p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg text-left hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-3xl">{domain.icon}</span>
                       <h4 className="font-semibold text-foreground">{domain.name}</h4>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
                       {domain.description}
                     </p>
                     <div className="mt-3 text-xs text-blue-600 dark:text-blue-400">
@@ -454,14 +454,14 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                   className={`p-4 border rounded-lg text-left transition-all ${
                     selectedTemplate?.id === 'custom-panel'
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
                   }`}
                 >
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-3xl">🎯</span>
                     <h4 className="font-semibold text-foreground">Custom Expert Panel</h4>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
                     Build your own panel by selecting specific experts
                   </p>
                 </button>
@@ -483,7 +483,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                     className={`p-4 border rounded-lg text-left transition-all ${
                       selectedTemplate?.id === useCase.id
                         ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                        : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -492,7 +492,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                         <span className="text-green-500">✓ Selected</span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
                       {useCase.description}
                     </p>
                     {useCase.expertiseAreas.length > 0 && (
@@ -500,7 +500,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                         {useCase.expertiseAreas.slice(0, 3).map((area) => (
                           <span
                             key={area}
-                            className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-xs rounded"
+                            className="px-2 py-1 bg-neutral-100 dark:bg-neutral-800 text-xs rounded"
                           >
                             {area}
                           </span>
@@ -525,7 +525,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                   placeholder="Search experts..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -536,7 +536,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                     className={`p-3 border rounded-lg cursor-pointer transition-all ${
                       selectedExperts.find((expert: any) => expert.id === agent.id)
                         ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                        : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
                     }`}
                     onClick={() => handleExpertToggle(agent)}
                   >
@@ -546,7 +546,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                         <h4 className="font-medium text-sm text-foreground truncate">
                           {agent.display_name}
                         </h4>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2">
                           {agent.description}
                         </p>
                         {agent.knowledge_domains && agent.knowledge_domains.length > 0 && (
@@ -554,7 +554,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                             {agent.knowledge_domains.slice(0, 2).map((domain) => (
                               <span
                                 key={domain}
-                                className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 text-xs rounded"
+                                className="px-1 py-0.5 bg-neutral-100 dark:bg-neutral-800 text-xs rounded"
                               >
                                 {domain}
                               </span>
@@ -584,7 +584,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                       id="includeKnowledgeBase"
                       checked={knowledgeConfig.includeKnowledgeBase}
                       onChange={(e) => setKnowledgeConfig(prev => ({ ...prev, includeKnowledgeBase: e.target.checked }))}
-                      className="rounded border-gray-300"
+                      className="rounded border-neutral-300"
                     />
                     <label htmlFor="includeKnowledgeBase" className="font-medium text-sm">
                       Include Knowledge Base
@@ -593,7 +593,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                   {loadingKnowledgeSources ? (
                     <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-sm text-neutral-600 dark:text-neutral-400">
                       {knowledgeConfig.knowledgeSourcesCount} sources available
                     </span>
                   )}
@@ -601,7 +601,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
 
                 {knowledgeConfig.includeKnowledgeBase && knowledgeConfig.knowledgeSourcesCount > 0 && (
                   <div className="space-y-2">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
                       Expert panel will have access to {knowledgeConfig.knowledgeSourcesCount} knowledge sources
                       {knowledgeConfig.domain && ` in ${knowledgeConfig.domain.replace('_', ' ')}`}
                       {knowledgeConfig.prismSuite && ` using the ${knowledgeConfig.prismSuite}™ framework`}.
@@ -631,8 +631,8 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
           )}
         </div>
 
-        <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="p-6 border-t border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
+          <div className="text-sm text-neutral-600 dark:text-neutral-400">
             {selectedExperts.length > 0 && (
               <span>
                 {selectedExperts.length} expert{selectedExperts.length !== 1 ? 's' : ''} selected
@@ -642,7 +642,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+              className="px-4 py-2 text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
             >
               Cancel
             </button>
@@ -652,7 +652,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
               className={`px-6 py-2 rounded-lg font-medium ${
                 selectedExperts.length > 0
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
               }`}
             >
               Create Panel

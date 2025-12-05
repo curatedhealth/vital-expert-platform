@@ -80,7 +80,7 @@ export const __PopoverContent = ({
     <div
       className={`
         absolute top-full mt-2 z-50 w-72 rounded-md border
-        bg-white p-4 shadow-md outline-none
+        bg-canvas-surface p-4 shadow-md outline-none
         ${alignmentClass}
         ${className}
       `}

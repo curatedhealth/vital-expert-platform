@@ -33,7 +33,7 @@ export function PromptStarters({
       <div className="flex items-center justify-center py-12">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading prompt starters...</p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">Loading prompt starters...</p>
         </div>
       </div>
     );
@@ -77,7 +77,7 @@ export function PromptStarters({
       case 'expert':
         return 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/30';
       default:
-        return 'bg-gray-50 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900/30';
+        return 'bg-neutral-50 dark:bg-neutral-900/20 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900/30';
     }
   };
 
@@ -88,7 +88,7 @@ export function PromptStarters({
     <div className="w-full max-w-4xl mx-auto py-6">
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="w-5 h-5 text-blue-500" />
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
           Suggested Prompts
         </h3>
       </div>
@@ -135,7 +135,7 @@ export function PromptStarters({
       </div>
 
       {/* Complexity Legend */}
-      <div className="flex items-center gap-4 mt-4 text-xs text-gray-500 dark:text-gray-400">
+      <div className="flex items-center gap-4 mt-4 text-xs text-neutral-500 dark:text-neutral-400">
         <div className="flex items-center gap-1">
           <Sparkles className="w-3 h-3 text-green-500" />
           <span>Basic</span>

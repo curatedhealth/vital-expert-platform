@@ -422,7 +422,7 @@ export function AgentManagement() {
 
   const getStatusBadge = (agent: Agent) => {
     if (!agent.is_active) {
-      return <Badge className="bg-gray-100 text-gray-800">Inactive</Badge>;
+      return <Badge className="bg-neutral-100 text-neutral-800">Inactive</Badge>;
     }
     if (agent.metadata?.status === 'draft') {
       return <Badge className="bg-yellow-100 text-yellow-800">Draft</Badge>;
@@ -493,7 +493,7 @@ export function AgentManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Inactive</CardTitle>
-            <XCircle className="h-4 w-4 text-gray-600" />
+            <XCircle className="h-4 w-4 text-neutral-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.inactive}</div>

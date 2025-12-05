@@ -39,9 +39,10 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { LevelBadge } from './level-badge';
+import { SubagentSelector } from './subagent-selector';
 import { useAgentStore, useSelectedAgent } from '../stores/agent-store';
 import { agentApi } from '../services/agent-api';
-import type { Agent, AgentWithRelationships } from '../types/agent.types';
+import type { Agent, AgentWithRelationships, SubagentHierarchyConfig } from '../types/agent.types';
 import { getAgentLevelColor } from '../constants/design-tokens';
 import {
   Sparkles,
@@ -340,6 +341,7 @@ const SpawningTab: React.FC<{ agent: Agent }> = ({ agent }) => {
   const [agentWithRelationships, setAgentWithRelationships] =
     React.useState<AgentWithRelationships | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [showHierarchyConfig, setShowHierarchyConfig] = React.useState(false);
 
   React.useEffect(() => {
     const fetchRelationships = async () => {
@@ -369,6 +371,24 @@ const SpawningTab: React.FC<{ agent: Agent }> = ({ agent }) => {
     agentWithRelationships?.spawning_relationships_parent || [];
   const childRelationships =
     agentWithRelationships?.spawning_relationships_child || [];
+  const hierarchyConfig = agent.metadata?.hierarchy as SubagentHierarchyConfig | undefined;
+
+  // If showing hierarchy config, render the SubagentSelector
+  if (showHierarchyConfig) {
+    return (
+      <ScrollArea className="h-[600px] pr-4">
+        <SubagentSelector
+          agent={agent}
+          onSave={(config) => {
+            setShowHierarchyConfig(false);
+            // Refresh agent data
+            agentApi.getAgentById(agent.id).then(setAgentWithRelationships);
+          }}
+          onCancel={() => setShowHierarchyConfig(false)}
+        />
+      </ScrollArea>
+    );
+  }
 
   return (
     <ScrollArea className="h-[600px] pr-4">
@@ -381,7 +401,7 @@ const SpawningTab: React.FC<{ agent: Agent }> = ({ agent }) => {
               Spawning Capability
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             {canSpawn ? (
               <div className="flex items-center gap-2 text-emerald-600">
                 <CheckCircle2 className="h-5 w-5" />
@@ -394,8 +414,87 @@ const SpawningTab: React.FC<{ agent: Agent }> = ({ agent }) => {
                 This agent cannot spawn other agents
               </p>
             )}
+
+            {/* Configure Hierarchy Button */}
+            {canSpawn && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowHierarchyConfig(true)}
+                className="mt-2"
+              >
+                <Settings2 className="h-4 w-4 mr-2" />
+                Configure L4/L5 Hierarchy
+              </Button>
+            )}
           </CardContent>
         </Card>
+
+        {/* Current Hierarchy Config Summary */}
+        {hierarchyConfig && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Brain className="h-4 w-4 text-purple-500" />
+                Configured Hierarchy
+              </CardTitle>
+              <CardDescription>
+                L4/L5 agents configured for spawning
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* L4 Workers Summary */}
+              <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">L4</Badge>
+                  <span className="text-sm">Workers</span>
+                </div>
+                <span className="text-sm font-medium">
+                  {hierarchyConfig.l4_workers?.configured?.length || 0} configured
+                </span>
+              </div>
+
+              {/* L5 Tools Summary */}
+              <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">L5</Badge>
+                  <span className="text-sm">Tools</span>
+                </div>
+                <span className="text-sm font-medium">
+                  {hierarchyConfig.l5_tools?.configured?.length || 0} configured
+                </span>
+              </div>
+
+              {/* Context Engineer */}
+              {hierarchyConfig.context_engineer?.is_enabled && (
+                <div className="flex items-center justify-between p-2 bg-purple-500/10 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="border-purple-500 text-purple-500">
+                      Context
+                    </Badge>
+                    <span className="text-sm">
+                      {hierarchyConfig.context_engineer.agent_name || 'Engineer enabled'}
+                    </span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {hierarchyConfig.context_engineer.context_strategy}
+                  </span>
+                </div>
+              )}
+
+              {/* Edit Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHierarchyConfig(true)}
+                className="w-full mt-2"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Configuration
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Parent Agents */}
         {parentRelationships.length > 0 && (
@@ -410,7 +509,6 @@ const SpawningTab: React.FC<{ agent: Agent }> = ({ agent }) => {
               <p className="text-sm text-muted-foreground">
                 {parentRelationships.length} parent agent(s)
               </p>
-              {/* TODO: Display parent agent cards */}
             </CardContent>
           </Card>
         )}
@@ -428,20 +526,30 @@ const SpawningTab: React.FC<{ agent: Agent }> = ({ agent }) => {
               <p className="text-sm text-muted-foreground">
                 {childRelationships.length} child agent(s)
               </p>
-              {/* TODO: Display child agent cards */}
             </CardContent>
           </Card>
         )}
 
-        {/* Empty State */}
+        {/* Empty State - only show if no hierarchy config either */}
         {parentRelationships.length === 0 &&
-          childRelationships.length === 0 && (
+          childRelationships.length === 0 &&
+          !hierarchyConfig && (
             <Card>
               <CardContent className="py-8 text-center">
                 <GitBranch className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mb-4">
                   No spawning relationships configured
                 </p>
+                {canSpawn && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowHierarchyConfig(true)}
+                  >
+                    <Settings2 className="h-4 w-4 mr-2" />
+                    Configure Hierarchy
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}

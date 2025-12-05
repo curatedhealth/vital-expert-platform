@@ -84,13 +84,13 @@ function TaskNode({ data }: { data: any }) {
 
       {/* Body - Only show if there are assignments */}
       {hasAssignments && (
-        <div className="p-3 space-y-2 bg-gray-50">
+        <div className="p-3 space-y-2 bg-neutral-50">
           {/* Agents */}
           {data.agents && data.agents.length > 0 && (
             <div className="space-y-1">
               <div className="flex items-center gap-1">
                 <Bot className="h-3 w-3 text-blue-600" />
-                <span className="text-xs font-semibold text-gray-700">
+                <span className="text-xs font-semibold text-neutral-700">
                   {data.agents.length} Agent{data.agents.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -114,7 +114,7 @@ function TaskNode({ data }: { data: any }) {
             <div className="space-y-1">
               <div className="flex items-center gap-1">
                 <Wrench className="h-3 w-3 text-green-600" />
-                <span className="text-xs font-semibold text-gray-700">
+                <span className="text-xs font-semibold text-neutral-700">
                   {data.tools.length} Tool{data.tools.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -126,7 +126,7 @@ function TaskNode({ data }: { data: any }) {
             <div className="space-y-1">
               <div className="flex items-center gap-1">
                 <Database className="h-3 w-3 text-purple-600" />
-                <span className="text-xs font-semibold text-gray-700">
+                <span className="text-xs font-semibold text-neutral-700">
                   {data.rags.length} Source{data.rags.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -314,7 +314,7 @@ export function EndToEndWorkflowVisualizer({
         <h3 className="font-semibold text-deep-charcoal mb-2">
           End-to-End Workflow Visualization
         </h3>
-        <div className="flex items-center gap-6 text-sm text-gray-700">
+        <div className="flex items-center gap-6 text-sm text-neutral-700">
           <div className="flex items-center gap-2">
             <WorkflowIcon className="h-4 w-4 text-purple-600" />
             <span>{workflows.length} Workflow{workflows.length !== 1 ? 's' : ''}</span>
@@ -323,14 +323,14 @@ export function EndToEndWorkflowVisualizer({
             <div className="w-4 h-4 rounded bg-blue-500"></div>
             <span>{totalTasks} Task{totalTasks !== 1 ? 's' : ''}</span>
           </div>
-          <div className="text-xs text-gray-500 ml-auto">
+          <div className="text-xs text-neutral-500 ml-auto">
             Scroll to navigate • Use controls to zoom
           </div>
         </div>
       </div>
 
       {/* Flow Diagram */}
-      <div className="w-full h-[1000px] border-2 border-gray-200 rounded-lg bg-gray-50 overflow-hidden">
+      <div className="w-full h-[1000px] border-2 border-neutral-200 rounded-lg bg-neutral-50 overflow-hidden">
         <ReactFlow
           nodes={initialNodes}
           edges={initialEdges}
@@ -361,7 +361,7 @@ export function EndToEndWorkflowVisualizer({
 
       {/* Legend */}
       <div className="bg-white border rounded-lg p-4">
-        <h4 className="font-semibold text-sm text-gray-700 mb-3">Legend</h4>
+        <h4 className="font-semibold text-sm text-neutral-700 mb-3">Legend</h4>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-green-500"></div>

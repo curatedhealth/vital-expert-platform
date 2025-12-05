@@ -70,7 +70,7 @@ export default function SupabaseDiagnosticPage() {
       case 'degraded':
         return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
       default:
-        return <AlertTriangle className="w-5 h-5 text-gray-400" />;
+        return <AlertTriangle className="w-5 h-5 text-neutral-400" />;
     }
   };
 
@@ -92,16 +92,16 @@ export default function SupabaseDiagnosticPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-neutral-50 p-6">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-neutral-900 flex items-center gap-3">
               <Database className="w-8 h-8 text-blue-600" />
               Supabase Connection Diagnostics
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-neutral-600 mt-2">
               Comprehensive testing of your Supabase configuration and connectivity
             </p>
           </div>
@@ -140,33 +140,33 @@ export default function SupabaseDiagnosticPage() {
               {diagnostics.summary && (
                 <div className="grid grid-cols-4 gap-4">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-gray-900">
+                    <div className="text-3xl font-bold text-neutral-900">
                       {diagnostics.summary.total_tests}
                     </div>
-                    <div className="text-sm text-gray-600">Total Tests</div>
+                    <div className="text-sm text-neutral-600">Total Tests</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-green-600">
                       {diagnostics.summary.passed}
                     </div>
-                    <div className="text-sm text-gray-600">Passed</div>
+                    <div className="text-sm text-neutral-600">Passed</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-red-600">
                       {diagnostics.summary.failed}
                     </div>
-                    <div className="text-sm text-gray-600">Failed</div>
+                    <div className="text-sm text-neutral-600">Failed</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-yellow-600">
                       {diagnostics.summary.warnings}
                     </div>
-                    <div className="text-sm text-gray-600">Warnings</div>
+                    <div className="text-sm text-neutral-600">Warnings</div>
                   </div>
                 </div>
               )}
               
-              <div className="mt-4 text-xs text-gray-500">
+              <div className="mt-4 text-xs text-neutral-500">
                 Last run: {new Date(diagnostics.timestamp).toLocaleString()}
               </div>
             </CardContent>
@@ -186,7 +186,7 @@ export default function SupabaseDiagnosticPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="bg-gray-50 p-4 rounded-lg overflow-auto text-xs">
+              <pre className="bg-neutral-50 p-4 rounded-lg overflow-auto text-xs">
                 {JSON.stringify(test.details, null, 2)}
               </pre>
             </CardContent>

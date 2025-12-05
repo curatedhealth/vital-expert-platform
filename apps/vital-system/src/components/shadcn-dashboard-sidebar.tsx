@@ -132,7 +132,7 @@ function AskExpertSidebarContent() {
       case 2:
         return 'bg-blue-100 text-blue-700';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-neutral-100 text-neutral-700';
     }
   };
 
@@ -166,7 +166,7 @@ function AskExpertSidebarContent() {
           <div className="px-2 mb-3">
             {/* Search */}
             <div className="relative mb-2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
               <Input
                 type="text"
                 placeholder="Search agents..."
@@ -199,7 +199,7 @@ function AskExpertSidebarContent() {
               ))}
             </div>
 
-            <div className="text-xs text-gray-500 mb-2">
+            <div className="text-xs text-neutral-500 mb-2">
               {selectedAgents.length} selected
             </div>
           </div>
@@ -217,7 +217,7 @@ function AskExpertSidebarContent() {
                       'w-full text-left p-2 rounded-md text-xs transition-colors',
                       isSelected
                         ? 'bg-blue-50 text-blue-900'
-                        : 'hover:bg-gray-100'
+                        : 'hover:bg-neutral-100'
                     )}
                   >
                     <div className="flex items-center gap-2">

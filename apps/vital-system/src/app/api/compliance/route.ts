@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { v4 as uuidv4 } from 'uuid';
 
 import { ComplianceAwareOrchestrator } from '@/agents/core/ComplianceAwareOrchestrator';
 import { HIPAAComplianceManager } from '@/lib/compliance/hipaa-compliance';
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
       data_content: body.data_content,
       context: {
         user_id: body.user_id,
-        session_id: body.session_id || `session_${Date.now()}`,
+        session_id: body.session_id || uuidv4(), // Use proper UUID format
         timestamp: new Date().toISOString(),
         compliance_level: body.compliance_level || 'high',
         audit_required: true

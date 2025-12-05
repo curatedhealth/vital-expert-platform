@@ -12,6 +12,10 @@ import type {
   AgentFilters,
   AgentWithRelationships,
   AgentLevelNumber,
+  RecommendedSubagent,
+  RecommendSubagentsRequest,
+  RecommendSubagentsResponse,
+  SubagentHierarchyConfig,
 } from '../types/agent.types';
 import { PERFORMANCE } from '../constants/design-tokens';
 
@@ -379,6 +383,267 @@ export class AgentApiService {
       throw new AgentServiceError(
         'Failed to fetch spawnable agents',
         'FETCH_SPAWNABLE_FAILED'
+      );
+    }
+  }
+
+  /**
+   * Get recommended subagents based on domain matching
+   * Used by SubagentSelector component to suggest L4/L5 agents
+   */
+  async getRecommendedSubagents(
+    request: RecommendSubagentsRequest
+  ): Promise<RecommendSubagentsResponse> {
+    const {
+      parent_agent_id,
+      target_level,
+      domain_expertise,
+      department_name,
+      function_name,
+      limit = 10,
+    } = request;
+
+    const cacheKey = `recommended:${parent_agent_id}:L${target_level}`;
+    const cached = cache.get<RecommendSubagentsResponse>(cacheKey);
+    if (cached) return cached;
+
+    try {
+      // Build query for ALL active agents
+      // NOTE: agent_levels are not populated in DB yet, so we fetch all agents
+      // and let users manually select which ones to use as L4/L5 workers/tools
+      const { data: agents, error } = await supabase
+        .from('agents')
+        .select('*, agent_levels(*)')
+        .eq('status', 'active')
+        .order('name', { ascending: true })
+        .limit(100);
+
+      if (error) throw error;
+
+      // Score and rank agents based on domain matching
+      const recommendations: RecommendedSubagent[] = (agents || [])
+        .map((agent: Agent) => {
+          const matchReasons: string[] = [];
+          let score = 0.5; // Base score
+
+          // Department match (highest weight)
+          if (
+            department_name &&
+            agent.department_name?.toLowerCase().includes(department_name.toLowerCase())
+          ) {
+            score += 0.3;
+            matchReasons.push(`Same department: ${department_name}`);
+          }
+
+          // Function match
+          if (
+            function_name &&
+            agent.function_name?.toLowerCase().includes(function_name.toLowerCase())
+          ) {
+            score += 0.15;
+            matchReasons.push(`Same function: ${function_name}`);
+          }
+
+          // Domain expertise match
+          if (domain_expertise && agent.metadata?.domain_expertise) {
+            const agentDomain = agent.metadata.domain_expertise;
+            if (
+              agentDomain.primary_domain === domain_expertise.primary_domain ||
+              agentDomain.sub_domains?.some((d: string) =>
+                domain_expertise.sub_domains?.includes(d)
+              )
+            ) {
+              score += 0.2;
+              matchReasons.push('Domain expertise match');
+            }
+          }
+
+          // Boost for context engineers
+          if (
+            agent.slug?.includes('context-engineer') ||
+            agent.name?.toLowerCase().includes('context')
+          ) {
+            score += 0.1;
+            matchReasons.push('Context management capability');
+          }
+
+          // Default reason if no specific matches
+          if (matchReasons.length === 0) {
+            matchReasons.push('General capability match');
+          }
+
+          return {
+            agent_id: agent.id,
+            agent_name: agent.name || agent.display_name || 'Unknown Agent',
+            agent_level: target_level,
+            domain_expertise: agent.metadata?.domain_expertise,
+            match_score: Math.min(score, 1), // Cap at 1.0
+            match_reasons: matchReasons,
+          };
+        })
+        .sort((a, b) => b.match_score - a.match_score)
+        .slice(0, limit);
+
+      const response: RecommendSubagentsResponse = {
+        recommendations,
+        total_available: agents?.length || 0,
+        match_criteria: {
+          domain_match: !!domain_expertise,
+          department_match: !!department_name,
+          function_match: !!function_name,
+        },
+      };
+
+      // Cache for 5 minutes
+      cache.set(cacheKey, response, 5 * 60 * 1000);
+
+      return response;
+    } catch (error) {
+      console.error('Error fetching recommended subagents:', error);
+      throw new AgentServiceError(
+        'Failed to fetch recommended subagents',
+        'RECOMMENDATIONS_FAILED'
+      );
+    }
+  }
+
+  /**
+   * Update agent hierarchy configuration in metadata
+   */
+  async updateAgentHierarchy(
+    agentId: string,
+    hierarchyConfig: SubagentHierarchyConfig
+  ): Promise<Agent> {
+    try {
+      if (!agentId) {
+        throw new AgentServiceError('Agent ID is required', 'INVALID_AGENT_ID');
+      }
+
+      // First get current metadata
+      const { data: currentAgent, error: fetchError } = await supabase
+        .from('agents')
+        .select('metadata')
+        .eq('id', agentId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching agent for hierarchy update:', {
+          code: fetchError.code,
+          message: fetchError.message,
+          details: fetchError.details,
+          hint: fetchError.hint,
+        });
+        throw new AgentServiceError(
+          `Failed to fetch agent ${agentId}: ${fetchError.message}`,
+          fetchError.code || 'FETCH_FAILED'
+        );
+      }
+
+      // Merge hierarchy into metadata
+      const updatedMetadata = {
+        ...(currentAgent?.metadata || {}),
+        hierarchy: {
+          ...hierarchyConfig,
+          last_configured_at: new Date().toISOString(),
+        },
+      };
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Updating agent hierarchy:', {
+          agentId,
+          hierarchyConfig: JSON.stringify(hierarchyConfig).substring(0, 200) + '...',
+        });
+      }
+
+      // Update agent
+      const { data, error } = await supabase
+        .from('agents')
+        .update({
+          metadata: updatedMetadata,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', agentId)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Error updating agent hierarchy in database:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        });
+        throw new AgentServiceError(
+          `Database update failed: ${error.message}`,
+          error.code || 'UPDATE_FAILED'
+        );
+      }
+
+      if (!data) {
+        throw new AgentServiceError(
+          'Update succeeded but no data returned',
+          'NO_DATA_RETURNED'
+        );
+      }
+
+      // Invalidate cache
+      this.invalidateCache(`agent:${agentId}`);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Agent hierarchy updated successfully:', agentId);
+      }
+
+      return data as Agent;
+    } catch (error) {
+      // Re-throw AgentServiceError as-is
+      if (error instanceof AgentServiceError) {
+        throw error;
+      }
+
+      // Handle unknown errors with better diagnostics
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorDetails = error instanceof Error ? error.stack : JSON.stringify(error);
+
+      console.error('Unexpected error updating agent hierarchy:', {
+        agentId,
+        error: errorMessage,
+        details: errorDetails,
+      });
+
+      throw new AgentServiceError(
+        `Failed to update hierarchy for agent ${agentId}: ${errorMessage}`,
+        'HIERARCHY_UPDATE_FAILED'
+      );
+    }
+  }
+
+  /**
+   * Get context engineer agents available for workflows
+   */
+  async getContextEngineers(): Promise<Agent[]> {
+    const cacheKey = 'agents:context-engineers';
+    const cached = cache.get<Agent[]>(cacheKey);
+    if (cached) return cached;
+
+    try {
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*, agent_levels(*)')
+        .eq('status', 'active')
+        .or('slug.ilike.%context-engineer%,name.ilike.%context engineer%')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      const agents = (data || []) as Agent[];
+      cache.set(cacheKey, agents);
+
+      return agents;
+    } catch (error) {
+      console.error('Error fetching context engineers:', error);
+      throw new AgentServiceError(
+        'Failed to fetch context engineers',
+        'CONTEXT_ENGINEERS_FAILED'
       );
     }
   }

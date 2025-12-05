@@ -226,7 +226,7 @@ const AgentCard: React.FC<{
 }> = ({ agent, onStart, onStop, onConfigure }) => {
   const statusConfig: Record<string, { color: string; icon: React.ElementType }> = {
     active: { color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle },
-    idle: { color: 'bg-gray-100 text-gray-800 border-gray-200', icon: Clock },
+    idle: { color: 'bg-neutral-100 text-neutral-800 border-neutral-200', icon: Clock },
     busy: { color: 'bg-blue-100 text-blue-800 border-blue-200', icon: Activity },
     error: { color: 'bg-red-100 text-red-800 border-red-200', icon: AlertTriangle },
     maintenance: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: RefreshCw }
@@ -251,7 +251,7 @@ const AgentCard: React.FC<{
             {agent.status}
           </Badge>
         </div>
-        <p className="text-sm text-gray-600 mt-2">{agent.description}</p>
+        <p className="text-sm text-neutral-600 mt-2">{agent.description}</p>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -270,13 +270,13 @@ const AgentCard: React.FC<{
         {/* Metrics */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <div className="text-xs text-gray-500">Success Rate</div>
+            <div className="text-xs text-neutral-500">Success Rate</div>
             <div className="text-lg font-semibold text-green-600">
               {agent.metrics.successRate}%
             </div>
           </div>
           <div>
-            <div className="text-xs text-gray-500">Avg Response</div>
+            <div className="text-xs text-neutral-500">Avg Response</div>
             <div className="text-lg font-semibold">
               {agent.metrics.avgResponseTime}ms
             </div>
@@ -325,7 +325,7 @@ const AgentCard: React.FC<{
         </div>
 
         {/* Last Activity */}
-        <div className="text-xs text-gray-500 pt-2 border-t">
+        <div className="text-xs text-neutral-500 pt-2 border-t">
           Last activity: {agent.lastActivity.toLocaleString()}
         </div>
       </CardContent>
@@ -338,7 +338,7 @@ const ExecutionItem: React.FC<{ execution: AgentExecution }> = ({ execution }) =
     running: { color: 'bg-blue-100 text-blue-800', icon: '🔄' },
     completed: { color: 'bg-green-100 text-green-800', icon: '✅' },
     failed: { color: 'bg-red-100 text-red-800', icon: '❌' },
-    cancelled: { color: 'bg-gray-100 text-gray-800', icon: '⏹️' }
+    cancelled: { color: 'bg-neutral-100 text-neutral-800', icon: '⏹️' }
   };
 
   const config = statusConfig[execution.status] || statusConfig.running;
@@ -354,7 +354,7 @@ const ExecutionItem: React.FC<{ execution: AgentExecution }> = ({ execution }) =
               {execution.status}
             </Badge>
           </div>
-          <p className="text-sm text-gray-600 mb-2">{execution.input}</p>
+          <p className="text-sm text-neutral-600 mb-2">{execution.input}</p>
 
           {execution.output && (
             <div className="bg-green-50 p-2 rounded text-xs">
@@ -370,7 +370,7 @@ const ExecutionItem: React.FC<{ execution: AgentExecution }> = ({ execution }) =
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-gray-500">
+      <div className="flex items-center justify-between text-xs text-neutral-500">
         <span>Started: {execution.startTime.toLocaleString()}</span>
         {execution.duration && (
           <span>Duration: {Math.round(execution.duration / 1000)}s</span>
@@ -527,12 +527,12 @@ const AgentManager: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="p-6 space-y-6 bg-neutral-50 min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Agent Manager</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-neutral-900">Agent Manager</h1>
+          <p className="text-neutral-600 mt-1">
             Manage and monitor AI agents across the VITAL Path platform
           </p>
         </div>
@@ -550,7 +550,7 @@ const AgentManager: React.FC = () => {
               <Brain className="h-5 w-5 text-blue-600" />
               <div>
                 <div className="text-2xl font-bold">{agentStats.total}</div>
-                <div className="text-sm text-gray-600">Total Agents</div>
+                <div className="text-sm text-neutral-600">Total Agents</div>
               </div>
             </div>
           </CardContent>
@@ -561,7 +561,7 @@ const AgentManager: React.FC = () => {
               <CheckCircle className="h-5 w-5 text-green-600" />
               <div>
                 <div className="text-2xl font-bold">{agentStats.active}</div>
-                <div className="text-sm text-gray-600">Active</div>
+                <div className="text-sm text-neutral-600">Active</div>
               </div>
             </div>
           </CardContent>
@@ -572,7 +572,7 @@ const AgentManager: React.FC = () => {
               <Activity className="h-5 w-5 text-blue-600" />
               <div>
                 <div className="text-2xl font-bold">{agentStats.busy}</div>
-                <div className="text-sm text-gray-600">Busy</div>
+                <div className="text-sm text-neutral-600">Busy</div>
               </div>
             </div>
           </CardContent>
@@ -580,10 +580,10 @@ const AgentManager: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-gray-600" />
+              <Clock className="h-5 w-5 text-neutral-600" />
               <div>
                 <div className="text-2xl font-bold">{agentStats.idle}</div>
-                <div className="text-sm text-gray-600">Idle</div>
+                <div className="text-sm text-neutral-600">Idle</div>
               </div>
             </div>
           </CardContent>
@@ -594,7 +594,7 @@ const AgentManager: React.FC = () => {
               <AlertTriangle className="h-5 w-5 text-red-600" />
               <div>
                 <div className="text-2xl font-bold">{agentStats.error}</div>
-                <div className="text-sm text-gray-600">Errors</div>
+                <div className="text-sm text-neutral-600">Errors</div>
               </div>
             </div>
           </CardContent>
@@ -674,16 +674,16 @@ const AgentManager: React.FC = () => {
               <CardContent>
                 <div className="space-y-4">
                   {agents.map((agent) => (
-                    <div key={agent.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={agent.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                       <div>
                         <div className="font-medium">{agent.name}</div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-neutral-600">
                           {agent.metrics.totalRequests} requests • {agent.metrics.successRate}% success
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="font-medium">{agent.metrics.avgResponseTime}ms</div>
-                        <div className="text-sm text-gray-600">avg response</div>
+                        <div className="text-sm text-neutral-600">avg response</div>
                       </div>
                     </div>
                   ))}

@@ -66,7 +66,7 @@ export function KnowledgeTab({
               id="ragEnabled"
               checked={formData.ragEnabled}
               onChange={(e) => setFormData((prev) => ({ ...prev, ragEnabled: e.target.checked }))}
-              className="w-4 h-4 text-market-purple bg-gray-100 border-gray-300 rounded focus:ring-market-purple"
+              className="w-4 h-4 text-market-purple bg-neutral-100 border-neutral-300 rounded focus:ring-market-purple"
             />
             <Label htmlFor="ragEnabled" className="flex items-center gap-2">
               <Zap className="h-4 w-4 flex-shrink-0" />
@@ -101,7 +101,7 @@ export function KnowledgeTab({
 
               <div>
                 <Label>Upload Files</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                <div className="border-2 border-dashed border-neutral-300 rounded-lg p-4 text-center">
                   <input
                     type="file"
                     id="fileUpload"
@@ -112,11 +112,11 @@ export function KnowledgeTab({
                   />
                   <label htmlFor="fileUpload" className="cursor-pointer">
                     <div className="flex flex-col items-center gap-2">
-                      <Plus className="h-8 w-8 text-gray-400" />
-                      <span className="text-sm text-gray-600">
+                      <Plus className="h-8 w-8 text-neutral-400" />
+                      <span className="text-sm text-neutral-600">
                         Click to upload files or drag and drop
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-neutral-500">
                         PDF, TXT, DOC, DOCX, MD files supported
                       </span>
                     </div>
@@ -246,7 +246,7 @@ export function KnowledgeTab({
                     case 3:
                       return 'bg-green-500/10 text-green-700 border-green-300';
                     default:
-                      return 'bg-gray-500/10 text-gray-700 border-gray-300';
+                      return 'bg-neutral-500/10 text-neutral-700 border-neutral-300';
                   }
                 };
 

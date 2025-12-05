@@ -7,16 +7,16 @@
 
 import React, { useState, useEffect } from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Input } from '@/shared/components/ui/input';
-import { Label } from '@/shared/components/ui/label';
-import { Progress } from '@/shared/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import { Textarea } from '@/shared/components/ui/textarea';
-import { cn } from '@/shared/services/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 interface RAGSystemConfig {
   systemId: string;
@@ -67,11 +67,12 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
     }
   }, [selectedAgent]);
 
+  const loadConfigurations = async () => {
     setLoading(true);
     try {
-
+      const response = await fetch('/api/rag/configurations');
       if (response.ok) {
-
+        const data = await response.json();
         setConfigurations(data.configurations || []);
         setAvailableRAGSystems(data.availableRAGSystems || []);
       }
@@ -82,10 +83,11 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
     }
   };
 
+  const loadAgentConfiguration = async (agentId: string) => {
     try {
-
+      const response = await fetch(`/api/rag/configurations/${agentId}`);
       if (response.ok) {
-
+        const data = await response.json();
         setCurrentConfig(data.configuration);
       }
     } catch (error) {
@@ -93,11 +95,12 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
     }
   };
 
+  const updateConfiguration = async (config: Partial<AgentRAGConfig>) => {
     if (!selectedAgent) return;
 
     setLoading(true);
     try {
-
+      const response = await fetch('/api/rag/configurations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -107,7 +110,7 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
       });
 
       if (response.ok) {
-
+        const data = await response.json();
         setCurrentConfig(data.configuration);
         onConfigurationUpdate?.(data.configuration);
         await loadConfigurations(); // Refresh the list
@@ -119,11 +122,12 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
     }
   };
 
+  const testRAGSystem = async () => {
     if (!selectedAgent || !testQuery.trim()) return;
 
     setTesting(true);
     try {
-
+      const response = await fetch('/api/rag/test', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -134,7 +138,7 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
       });
 
       if (response.ok) {
-
+        const data = await response.json();
         setTestResults(data.testResults);
       }
     } catch (error) {
@@ -144,11 +148,12 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
     }
   };
 
+  const resetConfiguration = async () => {
     if (!selectedAgent) return;
 
     setLoading(true);
     try {
-
+      const response = await fetch(`/api/rag/configurations/${selectedAgent}`, {
         method: 'DELETE'
       });
 
@@ -163,27 +168,43 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
     }
   };
 
+  const handleWeightChange = (systemId: string, weight: number) => {
     if (!currentConfig) return;
-
-      system.systemId === systemId ? { ...system, weight } : system
-    );
-
+    const updatedConfig = {
+      ...currentConfig,
+      ragSystems: currentConfig.ragSystems.map(system =>
+        system.systemId === systemId ? { ...system, weight } : system
+      )
+    };
     setCurrentConfig(updatedConfig);
   };
 
+  const handleAddRAGSystem = (systemId: string, systemType: string) => {
     if (!currentConfig) return;
 
     const newSystem: RAGSystemConfig = {
       systemId,
-      systemType: systemType as unknown,
+      systemType: systemType as RAGSystemConfig['systemType'],
       weight: 0.1,
-      filters: { /* TODO: implement */ }
+      filters: {}
+    };
+
+    const updatedConfig = {
+      ...currentConfig,
+      ragSystems: [...currentConfig.ragSystems, newSystem]
     };
 
     setCurrentConfig(updatedConfig);
   };
 
+  const handleRemoveRAGSystem = (systemId: string) => {
     if (!currentConfig) return;
+
+    const updatedSystems = currentConfig.ragSystems.filter(s => s.systemId !== systemId);
+    const updatedConfig = {
+      ...currentConfig,
+      ragSystems: updatedSystems
+    };
 
     // Update default if it was the removed system
     if (currentConfig.defaultRAG === systemId && updatedSystems.length > 0) {
@@ -193,6 +214,8 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
     setCurrentConfig(updatedConfig);
   };
 
+  const getSystemTypeColor = (systemType: string): string => {
+    const colors = {
       'medical': 'bg-blue-100 text-blue-800',
       'enhanced': 'bg-green-100 text-green-800',
       'hybrid': 'bg-purple-100 text-purple-800',

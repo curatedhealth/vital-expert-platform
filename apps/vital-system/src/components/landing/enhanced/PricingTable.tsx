@@ -65,22 +65,22 @@ export default function PricingTable() {
   ]
 
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-neutral-50">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-6">
             Simple, Transparent Pricing for Every Stage
           </h2>
           
           {/* Annual/Monthly Toggle */}
           <div className="flex items-center justify-center gap-4 mb-8">
-            <span className={`text-lg ${!isAnnual ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>
+            <span className={`text-lg ${!isAnnual ? 'text-neutral-900 font-semibold' : 'text-neutral-500'}`}>
               Monthly
             </span>
             <button
               onClick={() => setIsAnnual(!isAnnual)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                isAnnual ? 'bg-vital-blue-600' : 'bg-gray-200'
+                isAnnual ? 'bg-vital-blue-600' : 'bg-neutral-200'
               }`}
             >
               <span
@@ -89,7 +89,7 @@ export default function PricingTable() {
                 }`}
               />
             </button>
-            <span className={`text-lg ${isAnnual ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>
+            <span className={`text-lg ${isAnnual ? 'text-neutral-900 font-semibold' : 'text-neutral-500'}`}>
               Annual
             </span>
             {isAnnual && (
@@ -121,22 +121,22 @@ export default function PricingTable() {
               <div className={`p-8 rounded-2xl border-2 transition-all duration-300 hover:-translate-y-1 ${
                 plan.popular 
                   ? 'border-vital-blue-200 shadow-xl bg-white' 
-                  : 'border-gray-200 hover:border-gray-300 bg-white'
+                  : 'border-neutral-200 hover:border-neutral-300 bg-white'
               }`}>
                 <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                  <p className="text-gray-600 mb-4">{plan.description}</p>
+                  <h3 className="text-2xl font-bold text-neutral-900 mb-2">{plan.name}</h3>
+                  <p className="text-neutral-600 mb-4">{plan.description}</p>
                   
                   <div className="mb-4">
                     {typeof plan.monthlyPrice === 'number' ? (
                       <div>
-                        <span className="text-5xl font-bold text-gray-900">
+                        <span className="text-5xl font-bold text-neutral-900">
                           ${isAnnual ? plan.annualPrice : plan.monthlyPrice}
                         </span>
-                        <span className="text-gray-600">/month</span>
+                        <span className="text-neutral-600">/month</span>
                       </div>
                     ) : (
-                      <div className="text-3xl font-bold text-gray-900">{plan.monthlyPrice}</div>
+                      <div className="text-3xl font-bold text-neutral-900">{plan.monthlyPrice}</div>
                     )}
                   </div>
                 </div>
@@ -147,12 +147,12 @@ export default function PricingTable() {
                       {feature.included ? (
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
                       ) : (
-                        <X className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                        <X className="w-5 h-5 text-neutral-400 flex-shrink-0" />
                       )}
                       <div className="flex-1">
-                        <span className="text-gray-900 font-medium">{feature.name}</span>
+                        <span className="text-neutral-900 font-medium">{feature.name}</span>
                         {feature.value && (
-                          <span className="text-gray-600 ml-2">({feature.value})</span>
+                          <span className="text-neutral-600 ml-2">({feature.value})</span>
                         )}
                       </div>
                     </li>
@@ -163,7 +163,7 @@ export default function PricingTable() {
                   className={`w-full py-3 text-lg font-semibold ${
                     plan.popular 
                       ? 'bg-vital-blue-600 hover:bg-vital-blue-700 text-white' 
-                      : 'bg-gray-900 hover:bg-gray-800 text-white'
+                      : 'bg-neutral-900 hover:bg-neutral-800 text-white'
                   }`}
                 >
                   {plan.cta}
@@ -174,7 +174,7 @@ export default function PricingTable() {
         </div>
 
         <div className="text-center mt-12">
-          <p className="text-gray-600">
+          <p className="text-neutral-600">
             All plans include: Daily updates, data isolation, API access
           </p>
         </div>

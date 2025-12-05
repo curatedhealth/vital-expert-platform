@@ -361,7 +361,7 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
       case 'completed': return <CheckCircle className="h-4 w-4 text-blue-600" />;
       case 'planned': return <Clock className="h-4 w-4 text-yellow-600" />;
       case 'paused': return <AlertTriangle className="h-4 w-4 text-orange-600" />;
-      default: return <Activity className="h-4 w-4 text-gray-600" />;
+      default: return <Activity className="h-4 w-4 text-neutral-600" />;
     }
   };
 
@@ -370,7 +370,7 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
       case 'completed': return 'bg-blue-100 text-blue-800';
       case 'planned': return 'bg-yellow-100 text-yellow-800';
       case 'paused': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -382,15 +382,15 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
       case 'patient-app': return <Stethoscope className="h-5 w-5 text-teal-600" />;
       case 'lab': return <Target className="h-5 w-5 text-orange-600" />;
       case 'pharmacy': return <Pill className="h-5 w-5 text-pink-600" />;
-      default: return <Database className="h-5 w-5 text-gray-600" />;
+      default: return <Database className="h-5 w-5 text-neutral-600" />;
     }
   };
 
     switch (status) {
       case 'connected': return 'text-green-600';
-      case 'disconnected': return 'text-gray-600';
+      case 'disconnected': return 'text-neutral-600';
       case 'error': return 'text-red-600';
-      default: return 'text-gray-600';
+      default: return 'text-neutral-600';
     }
   };
 
@@ -409,15 +409,15 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Real-World Evidence Platform</h1>
-          <p className="text-gray-600 mt-2">Generate insights from real-world healthcare data</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Real-World Evidence Platform</h1>
+          <p className="text-neutral-600 mt-2">Generate insights from real-world healthcare data</p>
         </div>
         <div className="flex space-x-3">
           <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             <Plus className="h-4 w-4 mr-2" />
             New Study
           </button>
-          <button className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors">
             <Upload className="h-4 w-4 mr-2" />
             Import Data
           </button>
@@ -429,11 +429,11 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Patients</p>
+              <p className="text-sm text-neutral-600">Total Patients</p>
               <p className="text-2xl font-bold text-blue-600">{(metrics.totalPatients / 1000000).toFixed(1)}M</p>
             </div>
             <Users className="h-8 w-8 text-blue-600" />
@@ -444,11 +444,11 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active Studies</p>
+              <p className="text-sm text-neutral-600">Active Studies</p>
               <p className="text-2xl font-bold text-green-600">{metrics.activeStudies}</p>
             </div>
             <Activity className="h-8 w-8 text-green-600" />
@@ -459,11 +459,11 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Data Points</p>
+              <p className="text-sm text-neutral-600">Data Points</p>
               <p className="text-2xl font-bold text-purple-600">{(metrics.dataPoints / 1000000).toFixed(1)}M</p>
             </div>
             <Database className="h-8 w-8 text-purple-600" />
@@ -474,11 +474,11 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">RW Outcomes</p>
+              <p className="text-sm text-neutral-600">RW Outcomes</p>
               <p className="text-2xl font-bold text-teal-600">{metrics.realWorldOutcomes}</p>
             </div>
             <Target className="h-8 w-8 text-teal-600" />
@@ -489,11 +489,11 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Safety Signals</p>
+              <p className="text-sm text-neutral-600">Safety Signals</p>
               <p className="text-2xl font-bold text-orange-600">{metrics.safetySignals}</p>
             </div>
             <Shield className="h-8 w-8 text-orange-600" />
@@ -504,11 +504,11 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Effectiveness</p>
+              <p className="text-sm text-neutral-600">Effectiveness</p>
               <p className="text-2xl font-bold text-indigo-600">{metrics.effectivenessAnalyses}</p>
             </div>
             <TrendingUp className="h-8 w-8 text-indigo-600" />
@@ -519,11 +519,11 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Registries</p>
+              <p className="text-sm text-neutral-600">Registries</p>
               <p className="text-2xl font-bold text-pink-600">{metrics.registryConnections}</p>
             </div>
             <Building className="h-8 w-8 text-pink-600" />
@@ -534,11 +534,11 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-white rounded-lg border border-gray-200 p-4"
+          className="bg-canvas-surface rounded-lg border border-neutral-200 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Time to Insight</p>
+              <p className="text-sm text-neutral-600">Time to Insight</p>
               <p className="text-2xl font-bold text-red-600">{metrics.timeToInsight} wks</p>
             </div>
             <Zap className="h-8 w-8 text-red-600" />
@@ -547,7 +547,7 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-neutral-200">
         <nav className="-mb-px flex space-x-8">
           {[
             { key: 'overview', label: 'RWE Overview', icon: BarChart3 },
@@ -562,7 +562,7 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
               className={`flex items-center px-3 py-2 border-b-2 font-medium text-sm ${
                 activeTab === key
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               <Icon className="h-4 w-4 mr-2" />
@@ -577,66 +577,66 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
         <div className="space-y-6">
           {/* Platform Capabilities */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">RWE Platform Capabilities</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">RWE Platform Capabilities</h3>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <Database className="h-5 w-5 text-blue-600" />
-                  <span className="text-gray-700">Multi-source data integration (EHR, Claims, Registry)</span>
+                  <span className="text-neutral-700">Multi-source data integration (EHR, Claims, Registry)</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Brain className="h-5 w-5 text-purple-600" />
-                  <span className="text-gray-700">AI-powered outcome prediction and analysis</span>
+                  <span className="text-neutral-700">AI-powered outcome prediction and analysis</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Shield className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">Automated safety signal detection</span>
+                  <span className="text-neutral-700">Automated safety signal detection</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <TrendingUp className="h-5 w-5 text-red-600" />
-                  <span className="text-gray-700">Real-time effectiveness monitoring</span>
+                  <span className="text-neutral-700">Real-time effectiveness monitoring</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Globe className="h-5 w-5 text-teal-600" />
-                  <span className="text-gray-700">Global regulatory submission support</span>
+                  <span className="text-neutral-700">Global regulatory submission support</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Data Quality & Coverage</h3>
+            <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-4">Data Quality & Coverage</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Overall Data Quality</span>
+                  <span className="text-neutral-600">Overall Data Quality</span>
                   <div className="flex items-center">
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                       <div className="bg-green-600 h-2 rounded-full" style={{width: '92%'}}></div>
                     </div>
                     <span className="font-medium">92%</span>
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Geographic Coverage</span>
+                  <span className="text-neutral-600">Geographic Coverage</span>
                   <div className="flex items-center">
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                       <div className="bg-blue-600 h-2 rounded-full" style={{width: '78%'}}></div>
                     </div>
                     <span className="font-medium">78%</span>
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Data Completeness</span>
+                  <span className="text-neutral-600">Data Completeness</span>
                   <div className="flex items-center">
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                       <div className="bg-purple-600 h-2 rounded-full" style={{width: '85%'}}></div>
                     </div>
                     <span className="font-medium">85%</span>
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Regulatory Readiness</span>
+                  <span className="text-neutral-600">Regulatory Readiness</span>
                   <div className="flex items-center">
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                       <div className="bg-teal-600 h-2 rounded-full" style={{width: '94%'}}></div>
                     </div>
                     <span className="font-medium">94%</span>
@@ -647,8 +647,8 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
           </div>
 
           {/* Recent Studies */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recently Completed Analyses</h3>
+          <div className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
+            <h3 className="text-lg font-semibold text-neutral-900 mb-4">Recently Completed Analyses</h3>
             <div className="space-y-3">
               {[
                 {
@@ -676,16 +676,16 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
                   type: 'outcomes'
                 }
               ].map((analysis, index) => (
-                <div key={index} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+                <div key={index} className="flex items-start justify-between p-4 bg-neutral-50 rounded-lg">
                   <div className="flex items-start space-x-3">
                     {analysis.type === 'effectiveness' && <TrendingUp className="h-5 w-5 text-green-600 mt-0.5" />}
                     {analysis.type === 'safety' && <Shield className="h-5 w-5 text-blue-600 mt-0.5" />}
                     {analysis.type === 'utilization' && <Activity className="h-5 w-5 text-purple-600 mt-0.5" />}
                     {analysis.type === 'outcomes' && <Target className="h-5 w-5 text-orange-600 mt-0.5" />}
                     <div>
-                      <p className="font-medium text-gray-900">{analysis.title}</p>
+                      <p className="font-medium text-neutral-900">{analysis.title}</p>
                       <p className="text-sm text-green-600 font-medium">{analysis.outcome}</p>
-                      <p className="text-xs text-gray-500 mt-1">{analysis.time}</p>
+                      <p className="text-xs text-neutral-500 mt-1">{analysis.time}</p>
                     </div>
                   </div>
                   <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
@@ -704,11 +704,11 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
                 <input
                   type="text"
                   placeholder="Search studies..."
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 w-full border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -716,7 +716,7 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
               <select
                 value={selectedTherapeuticArea}
                 onChange={(e) => setSelectedTherapeuticArea(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Therapeutic Areas</option>
                 <option value="endocrinology">Endocrinology</option>
@@ -724,7 +724,7 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
                 <option value="geriatrics">Geriatrics</option>
                 <option value="cardiology">Cardiology</option>
               </select>
-              <button className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              <button className="flex items-center px-3 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50">
                 <Filter className="h-4 w-4 mr-2" />
                 Filters
               </button>
@@ -734,11 +734,11 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
           {/* Studies List */}
           <div className="space-y-4">
             {rweStudies.map((study) => (
-              <div key={study.id} className="bg-white rounded-lg border border-gray-200 p-6">
+              <div key={study.id} className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{study.name}</h3>
-                    <p className="text-gray-600 mt-1">
+                    <h3 className="text-lg font-semibold text-neutral-900">{study.name}</h3>
+                    <p className="text-neutral-600 mt-1">
                       {study.therapeuticArea} • {study.population.toLocaleString()} patients • {study.type}
                     </p>
                   </div>
@@ -783,18 +783,18 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Primary Outcome</h4>
-                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                    <h4 className="font-medium text-neutral-900 mb-3">Primary Outcome</h4>
+                    <p className="text-sm text-neutral-600 bg-neutral-50 p-3 rounded-lg">
                       {study.primaryOutcome}
                     </p>
                   </div>
 
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Key Endpoints</h4>
+                    <h4 className="font-medium text-neutral-900 mb-3">Key Endpoints</h4>
                     <div className="space-y-2">
                       {study.endpoints.slice(0, 2).map((endpoint) => (
                         <div key={endpoint.id} className="flex items-center justify-between text-sm">
-                          <span className="text-gray-700">{endpoint.name}</span>
+                          <span className="text-neutral-700">{endpoint.name}</span>
                           <span className={`px-2 py-1 rounded text-xs font-medium ${
                             endpoint.validationStatus === 'validated' ? 'bg-green-100 text-green-800' :
                             endpoint.validationStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
@@ -805,14 +805,14 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
                         </div>
                       ))}
                       {study.endpoints.length > 2 && (
-                        <p className="text-sm text-gray-500">+{study.endpoints.length - 2} more endpoints</p>
+                        <p className="text-sm text-neutral-500">+{study.endpoints.length - 2} more endpoints</p>
                       )}
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-6 flex justify-end space-x-3">
-                  <button className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                  <button className="px-4 py-2 text-sm border border-neutral-300 text-neutral-700 rounded hover:bg-neutral-50">
                     View Analytics
                   </button>
                   <button className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
@@ -829,13 +829,13 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {dataSources.map((source) => (
-              <div key={source.id} className="bg-white rounded-lg border border-gray-200 p-6">
+              <div key={source.id} className="bg-canvas-surface rounded-lg border border-neutral-200 p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     {getDataSourceIcon(source.type)}
                     <div>
-                      <h3 className="font-semibold text-gray-900">{source.name}</h3>
-                      <p className="text-sm text-gray-600">{source.provider}</p>
+                      <h3 className="font-semibold text-neutral-900">{source.name}</h3>
+                      <p className="text-sm text-neutral-600">{source.provider}</p>
                     </div>
                   </div>
                   <div className={`w-3 h-3 rounded-full ${getConnectionStatusColor(source.status)} ${
@@ -846,13 +846,13 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Patients</span>
+                    <span className="text-sm text-neutral-600">Patients</span>
                     <span className="font-medium">{source.patients.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Data Quality</span>
+                    <span className="text-sm text-neutral-600">Data Quality</span>
                     <div className="flex items-center">
-                      <div className="w-20 bg-gray-200 rounded-full h-1 mr-2">
+                      <div className="w-20 bg-neutral-200 rounded-full h-1 mr-2">
                         <div
                           className="bg-green-600 h-1 rounded-full"
                           style={{width: `${source.dataQuality}%`}}
@@ -862,7 +862,7 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Last Update</span>
+                    <span className="text-sm text-neutral-600">Last Update</span>
                     <span className="text-sm font-medium">
                       {source.lastUpdate.toLocaleDateString()}
                     </span>
@@ -870,13 +870,13 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
                 </div>
 
                 <div className="mt-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">Coverage</h4>
+                  <h4 className="text-sm font-medium text-neutral-900 mb-2">Coverage</h4>
                   <div className="space-y-1">
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-neutral-600">
                       <strong>Geographic:</strong> {source.coverage.geographic.slice(0, 2).join(', ')}
                       {source.coverage.geographic.length > 2 && ` +${source.coverage.geographic.length - 2}`}
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-neutral-600">
                       <strong>Clinical:</strong> {source.coverage.clinical.slice(0, 2).join(', ')}
                       {source.coverage.clinical.length > 2 && ` +${source.coverage.clinical.length - 2}`}
                     </div>
@@ -884,7 +884,7 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
                 </div>
 
                 <div className="mt-4 flex space-x-2">
-                  <button className="flex-1 px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                  <button className="flex-1 px-3 py-2 text-sm border border-neutral-300 text-neutral-700 rounded hover:bg-neutral-50">
                     Configure
                   </button>
                   <button className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">

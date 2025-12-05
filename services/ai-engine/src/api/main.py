@@ -25,7 +25,10 @@ from datetime import datetime
 from typing import Dict, Any
 
 # Import routes
-from api.routes import hybrid_search, mode1_interactive
+from api.routes import hybrid_search, mode1_manual_interactive, mode3_manual_autonomous, mode3_deep_research
+
+# Import enterprise ontology routers
+from api.routers.enterprise_ontology import ontology, ontology_extended
 
 # Configure logging
 logging.basicConfig(
@@ -236,7 +239,13 @@ async def log_requests(request: Request, call_next):
 
 # Include routers
 app.include_router(hybrid_search.router)
-app.include_router(mode1_interactive.router)
+app.include_router(mode1_manual_interactive.router)
+app.include_router(mode3_manual_autonomous.router)
+app.include_router(mode3_deep_research.router)
+
+# Enterprise Ontology APIs
+app.include_router(ontology.router, prefix="/api/v1/ontology", tags=["Enterprise Ontology"])
+app.include_router(ontology_extended.router, prefix="/api/v1/ontology-extended", tags=["Enterprise Ontology Extended"])
 
 
 @app.get("/", include_in_schema=False)

@@ -1367,10 +1367,10 @@ export const TaskLibrary: React.FC<TaskLibraryProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="p-2 border-b border-gray-200 space-y-2">
+      <div className="p-2 border-b border-neutral-200 space-y-2">
         <div>
           <h2 className="text-sm font-semibold">Task Library</h2>
-          <p className="text-[10px] text-gray-500 mt-0.5">Drag to canvas</p>
+          <p className="text-[10px] text-neutral-500 mt-0.5">Drag to canvas</p>
         </div>
         <div className="flex gap-1">
           <Button
@@ -1399,7 +1399,7 @@ export const TaskLibrary: React.FC<TaskLibraryProps> = ({
       <div className="flex-1 overflow-y-auto p-2 space-y-3">
         {Object.entries(tasksByCategory).map(([category, tasks]) => (
           <div key={category} className="space-y-1.5">
-            <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">{category}</h3>
+            <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">{category}</h3>
             <div className="space-y-1.5">
               {tasks.map((task) => (
                 <Card
@@ -1415,8 +1415,8 @@ export const TaskLibrary: React.FC<TaskLibraryProps> = ({
                     <div className="flex items-start gap-2">
                       <span className="text-lg flex-shrink-0">{task.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-xs text-gray-900 mb-0.5">{task.name}</div>
-                        <div className="text-[10px] text-gray-600 line-clamp-1">{task.description}</div>
+                        <div className="font-medium text-xs text-neutral-900 mb-0.5">{task.name}</div>
+                        <div className="text-[10px] text-neutral-600 line-clamp-1">{task.description}</div>
                       </div>
                     </div>
                   </CardContent>

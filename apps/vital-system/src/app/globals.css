@@ -8,19 +8,42 @@
   :root {
     --radius: 0.5rem;
 
-    /* VITAL.expert Brand Colors - Updated v2.0 */
-    
-    /* Core Brand Colors */
+    /* ═══════════════════════════════════════════════════════════════════
+       VITAL Platform Design Tokens v2.0
+       Visual Philosophy: Clean Modernism - Bauhaus precision with soft, radiant surfaces
+       ═══════════════════════════════════════════════════════════════════ */
+
+    /* Canvas Tokens (Primary Backgrounds) */
+    --canvas-primary: #FFFAFA;      /* Snow - Softly Radiant - 80-90% of interface */
+    --canvas-surface: #FFFFFF;      /* Pure white - elevated cards, modals */
+    --canvas-alt: #F8F8FF;          /* Ghost White - Whisper of Cool - alternate surfaces */
+    --canvas-muted: #FAF9F6;        /* Off White - The Soft Touch - subtle backgrounds */
+
+    /* Core Brand Colors - Expert Purple */
+    --vital-primary-50: #EDE9FE;
     --vital-primary-100: #F5EEFD;
-    --vital-primary-500: #9B5DE0;  /* Main brand purple */
-    --vital-primary-600: #8A4FD0;
-    
+    --vital-primary-500: #9B5DE0;   /* Expert Purple - main brand color */
+    --vital-primary-600: #8B4CD0;   /* Hover state */
+    --vital-primary-700: #6D28D9;   /* Strong emphasis */
+
     /* Secondary & Accent Colors */
     --vital-secondary-500: #00CAFF;  /* Secondary cyan */
-    --vital-accent-mint: #00FFDE;     /* Accent mint */
-    --vital-accent-violet: #4300FF;   /* Accent violet */
-    
-    /* Neutral Colors (Slate) */
+    --vital-accent-mint: #00FFDE;    /* Accent mint */
+    --vital-accent-violet: #4300FF;  /* Accent violet */
+
+    /* Cool Neutral Scale (aligned with Snow/Ghost White) */
+    --neutral-50: #FAFAFA;           /* Lightest gray - subtle backgrounds */
+    --neutral-100: #F5F5F5;          /* Light gray - surface */
+    --neutral-200: #EEEEEE;          /* UI surfaces, borders, dividers */
+    --neutral-300: #E0E0E0;          /* Input borders */
+    --neutral-400: #BDBDBD;          /* Secondary strokes, disabled */
+    --neutral-500: #9E9E9E;          /* Placeholder text */
+    --neutral-600: #757575;          /* Secondary text, icons */
+    --neutral-700: #616161;          /* Body text */
+    --neutral-800: #424242;          /* Headings */
+    --neutral-900: #212121;          /* Primary text, structure */
+
+    /* Legacy Slate Colors (for backwards compatibility) */
     --vital-slate-50: #F8FAFC;
     --vital-slate-100: #F1F5F9;
     --vital-slate-200: #E2E8F0;
@@ -31,9 +54,9 @@
     --vital-slate-700: #334155;
     --vital-slate-800: #1E293B;
     --vital-slate-900: #0F172A;
-    
+
     /* Legacy support - mapped to new colors */
-    --vital-black: #0F172A;  /* Slate-900 */
+    --vital-black: #212121;   /* Neutral-900 */
     --vital-white: #FFFFFF;
     --vital-gray-95: var(--vital-slate-50);
     --vital-gray-90: var(--vital-slate-100);
@@ -156,40 +179,41 @@
     --ease-in: cubic-bezier(0.4, 0, 1, 1);
     --ease-out: cubic-bezier(0, 0, 0.2, 1);
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-    /* Semantic UI Tokens - Mapped to new brand colors */
-    --background: 0 0% 100%;
-    --foreground: 214 32% 9%;  /* Slate-900 */
-    --card: 0 0% 100%;
-    --card-foreground: 214 32% 9%;  /* Slate-900 */
-    --popover: 0 0% 100%;
-    --popover-foreground: 214 32% 9%;
-    --primary: 268 68% 62%;  /* Primary Purple #9B5DE0 */
-    --primary-foreground: 0 0% 100%;  /* White */
-    --secondary: 192 100% 50%;  /* Secondary Cyan #00CAFF */
-    --secondary-foreground: 0 0% 100%;  /* White */
-    --muted: 210 40% 96.1%;  /* Slate-100 */
-    --muted-foreground: 215 16% 47%;  /* Slate-600 */
-    --accent: 268 68% 96%;  /* Primary-100 light purple */
-    --accent-foreground: 268 68% 32%;  /* Primary-600 dark purple */
-    --destructive: 0 84.2% 60.2%;  /* Error red */
-    --border: 214 32% 91.8%;  /* Slate-200 */
-    --input: 214 32% 91.8%;  /* Slate-200 */
-    --ring: 268 68% 62%;  /* Primary Purple */
+    /* Semantic UI Tokens - Using Snow canvas background */
+    --background: 0 100% 99.6%;      /* Snow #FFFAFA - softly radiant */
+    --foreground: 0 0% 13%;          /* Neutral-900 #212121 */
+    --card: 0 0% 100%;               /* Pure white for elevated cards */
+    --card-foreground: 0 0% 13%;     /* Neutral-900 */
+    --popover: 0 0% 100%;            /* Pure white */
+    --popover-foreground: 0 0% 13%;  /* Neutral-900 */
+    --primary: 273 68% 55%;          /* Expert Purple #9B5DE0 */
+    --primary-foreground: 0 0% 100%; /* White */
+    --secondary: 192 100% 50%;       /* Secondary Cyan #00CAFF */
+    --secondary-foreground: 0 0% 100%; /* White */
+    --muted: 0 0% 96%;               /* Neutral-100 #F5F5F5 */
+    --muted-foreground: 0 0% 46%;    /* Neutral-600 #757575 */
+    --accent: 273 68% 96%;           /* Primary-50 light purple */
+    --accent-foreground: 273 68% 35%; /* Primary-700 dark purple */
+    --destructive: 0 84% 60%;        /* Error red */
+    --border: 0 0% 93%;              /* Neutral-200 #EEEEEE */
+    --input: 0 0% 93%;               /* Neutral-200 */
+    --ring: 273 68% 55%;             /* Expert Purple */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-    --sidebar-background: 0 0% 98%;
-    --destructive-foreground: 0 0% 98%;
+    /* Sidebar - Using Snow canvas family */
+    --sidebar: 0 100% 99.6%;            /* Snow #FFFAFA */
+    --sidebar-foreground: 0 0% 38%;     /* Neutral-700 #616161 */
+    --sidebar-primary: 273 68% 55%;     /* Expert Purple */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 96%;         /* Neutral-100 #F5F5F5 */
+    --sidebar-accent-foreground: 0 0% 26%;  /* Neutral-800 #424242 */
+    --sidebar-border: 0 0% 93%;         /* Neutral-200 #EEEEEE */
+    --sidebar-ring: 273 68% 55%;        /* Expert Purple */
+    --sidebar-background: 0 100% 99.6%; /* Snow #FFFAFA */
+    --destructive-foreground: 0 0% 100%;
   }
 
   /* Multi-Tenant Architecture - Pharma Tenant */
@@ -257,15 +281,16 @@
     --chart-3: 30 80% 60%;
     --chart-4: 280 65% 65%;
     --chart-5: 340 75% 60%;
-    --sidebar: oklch(0.16 0.006 285.885);  /* Slightly darker sidebar */
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 268 68% 65%;  /* Brand purple for consistency */
+    /* Dark mode sidebar */
+    --sidebar: 222 47% 9%;              /* Dark slate */
+    --sidebar-foreground: 0 0% 95%;     /* Light gray text */
+    --sidebar-primary: 273 68% 65%;     /* Lighter Expert Purple */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 20%;  /* Lighter accent for better hover states */
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 24%;  /* Lighter borders */
-    --sidebar-ring: 268 68% 65%;  /* Brand purple */
-    --sidebar-background: 240 5.9% 8%;  /* Darker sidebar background */
+    --sidebar-accent: 222 30% 18%;      /* Subtle dark hover */
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 222 30% 22%;      /* Visible dark borders */
+    --sidebar-ring: 273 68% 65%;        /* Expert Purple */
+    --sidebar-background: 222 47% 7%;   /* Deepest dark */
     --destructive-foreground: 0 0% 98%;
   }
 }
@@ -298,7 +323,7 @@
     42% { background: var(--data-purple); }
     57% { background: var(--market-orange); }
     71% { background: var(--research-cyan); }
-    85% { background: --quality-gold); }
+    85% { background: var(--quality-gold); }
     100% { background: var(--regulatory-blue); }
   }
 

@@ -47,7 +47,7 @@ export default function HeroSection() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button 
               size="lg" 
-              className="bg-white text-vital-blue-600 hover:bg-gray-100 px-8 py-6 text-lg font-semibold group"
+              className="bg-white text-vital-blue-600 hover:bg-neutral-100 px-8 py-6 text-lg font-semibold group"
             >
               Start Free Trial 
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />

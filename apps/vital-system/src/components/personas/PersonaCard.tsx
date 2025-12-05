@@ -70,6 +70,18 @@ export function PersonaCard({ persona, compact = false, onClick }: PersonaCardPr
   const workComplexity = typeof persona.work_complexity_score === 'string'
     ? parseFloat(persona.work_complexity_score)
     : persona.work_complexity_score;
+  const priorityScore = (() => {
+    const jtbdWeight = persona.jtbds_count ? Math.min(persona.jtbds_count / 8, 1) : 0;
+    const ai = aiReadiness || 0;
+    const work = workComplexity || 0;
+    return (ai * 0.5) + (work * 0.35) + (jtbdWeight * 0.15);
+  })();
+  const priorityLabel = priorityScore >= 0.7 ? 'High focus' : priorityScore >= 0.45 ? 'Medium' : 'Watch';
+  const priorityTone = priorityScore >= 0.7
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    : priorityScore >= 0.45
+      ? 'bg-amber-50 text-amber-700 border-amber-200'
+      : 'bg-neutral-50 text-neutral-700 border-neutral-200';
 
   return (
     <Card 
@@ -80,11 +92,11 @@ export function PersonaCard({ persona, compact = false, onClick }: PersonaCardPr
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <UserCircle className="h-4 w-4 text-gray-400 flex-shrink-0" />
+              <UserCircle className="h-4 w-4 text-neutral-400 flex-shrink-0" />
               <CardTitle className="text-base font-semibold truncate">{persona.name}</CardTitle>
             </div>
             {persona.title && (
-              <p className="text-sm font-medium text-gray-700 truncate">{persona.title}</p>
+              <p className="text-sm font-medium text-neutral-700 truncate">{persona.title}</p>
             )}
           </div>
           {/* Archetype Badge */}
@@ -94,6 +106,10 @@ export function PersonaCard({ persona, compact = false, onClick }: PersonaCardPr
               {archetype}
             </Badge>
           )}
+          {/* Priority Badge */}
+          <Badge variant="outline" className={`${priorityTone} text-[11px] font-semibold`}>
+            {priorityLabel}
+          </Badge>
         </div>
         {!compact && (persona.tagline || persona.one_liner) && (
           <CardDescription className="line-clamp-2 text-xs mt-1">
@@ -117,7 +133,7 @@ export function PersonaCard({ persona, compact = false, onClick }: PersonaCardPr
               </Badge>
             )}
             {persona.seniority_level && (
-              <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-xs">
+              <Badge variant="outline" className="bg-neutral-50 text-neutral-700 border-neutral-200 text-xs">
                 {persona.seniority_level}
               </Badge>
             )}
@@ -131,59 +147,59 @@ export function PersonaCard({ persona, compact = false, onClick }: PersonaCardPr
           </div>
 
           {/* AI Readiness & Work Complexity Scores */}
-          {!compact && (aiReadiness !== undefined || workComplexity !== undefined) && (
-            <div className="space-y-2 pt-2 border-t border-gray-100">
-              {aiReadiness !== undefined && (
+          {!compact && (Number.isFinite(aiReadiness) || Number.isFinite(workComplexity)) && (
+            <div className="space-y-2 pt-2 border-t border-neutral-100">
+              {Number.isFinite(aiReadiness) && (
                 <div className="space-y-1">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-600 flex items-center gap-1">
+                    <span className="text-neutral-600 flex items-center gap-1">
                       <Zap className="h-3 w-3 text-blue-500" />
                       AI Readiness
                     </span>
-                    <span className="font-medium">{Math.round(aiReadiness * 100)}%</span>
+                    <span className="font-medium">{Math.round((aiReadiness || 0) * 100)}%</span>
                   </div>
-                  <Progress value={aiReadiness * 100} className="h-1.5" />
+                  <Progress value={(aiReadiness || 0) * 100} className="h-1.5" />
                 </div>
               )}
-              {workComplexity !== undefined && (
+              {Number.isFinite(workComplexity) && (
                 <div className="space-y-1">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-600 flex items-center gap-1">
+                    <span className="text-neutral-600 flex items-center gap-1">
                       <Brain className="h-3 w-3 text-purple-500" />
                       Work Complexity
                     </span>
-                    <span className="font-medium">{Math.round(workComplexity * 100)}%</span>
+                    <span className="font-medium">{Math.round((workComplexity || 0) * 100)}%</span>
                   </div>
-                  <Progress value={workComplexity * 100} className="h-1.5" />
+                  <Progress value={(workComplexity || 0) * 100} className="h-1.5" />
                 </div>
               )}
             </div>
           )}
 
           {/* Data Points - JTBDs, Goals, Challenges */}
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100">
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-neutral-100">
             <div className="flex flex-col items-center gap-0.5">
               <Target className="h-4 w-4 text-blue-500" />
-              <div className="text-sm font-semibold text-gray-700">{jtbdsCount}</div>
-              <div className="text-[10px] text-gray-500">JTBDs</div>
+              <div className="text-sm font-semibold text-neutral-700">{jtbdsCount}</div>
+              <div className="text-[10px] text-neutral-500">JTBDs</div>
             </div>
 
             <div className="flex flex-col items-center gap-0.5">
               <TrendingUp className="h-4 w-4 text-green-500" />
-              <div className="text-sm font-semibold text-gray-700">{goalsCount}</div>
-              <div className="text-[10px] text-gray-500">Goals</div>
+              <div className="text-sm font-semibold text-neutral-700">{goalsCount}</div>
+              <div className="text-[10px] text-neutral-500">Goals</div>
             </div>
 
             <div className="flex flex-col items-center gap-0.5">
               <AlertTriangle className="h-4 w-4 text-orange-500" />
-              <div className="text-sm font-semibold text-gray-700">{challengesCount}</div>
-              <div className="text-[10px] text-gray-500">Challenges</div>
+              <div className="text-sm font-semibold text-neutral-700">{challengesCount}</div>
+              <div className="text-[10px] text-neutral-500">Challenges</div>
             </div>
           </div>
 
           {/* Geographic Scope & Data Quality */}
           {!compact && (persona.geographic_scope || persona.data_quality_score) && (
-            <div className="flex justify-between items-center text-xs text-gray-500 pt-1">
+            <div className="flex justify-between items-center text-xs text-neutral-500 pt-1">
               {persona.geographic_scope && (
                 <span className="truncate">{persona.geographic_scope}</span>
               )}

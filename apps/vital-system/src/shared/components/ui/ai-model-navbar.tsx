@@ -84,7 +84,7 @@ interface AIModelNavbarProps {
     case 'preview':
       return <Badge variant="outline" className="text-orange-700 border-orange-300 bg-orange-50">Preview</Badge>;
     case 'deprecated':
-      return <Badge variant="outline" className="text-gray-700 border-gray-300 bg-gray-50">Legacy</Badge>;
+      return <Badge variant="outline" className="text-neutral-700 border-neutral-300 bg-neutral-50">Legacy</Badge>;
     default:
       return null;
   }
@@ -101,7 +101,7 @@ interface AIModelNavbarProps {
             "h-3 w-3",
             star <= rating
               ? "fill-yellow-400 text-yellow-400"
-              : "text-gray-300"
+              : "text-neutral-300"
           )}
         />
       ))}
@@ -129,14 +129,14 @@ interface AIModelNavbarProps {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="h-10 min-w-[240px] justify-between bg-white hover:bg-gray-50 border-gray-300"
+          className="h-10 min-w-[240px] justify-between bg-white hover:bg-neutral-50 border-neutral-300"
         >
           <div className="flex items-center gap-2">
             {/* eslint-disable-next-line security/detect-object-injection */}
             <span className="text-lg">{getProviderIcon(currentModel.provider)}</span>
             <div className="flex flex-col items-start">
               <span className="text-sm font-medium">{currentModel.name}</span>
-              <span className="text-xs text-gray-500 truncate max-w-[120px]">
+              <span className="text-xs text-neutral-500 truncate max-w-[120px]">
                 {currentModel.description}
               </span>
             </div>
@@ -150,7 +150,7 @@ interface AIModelNavbarProps {
             <Brain className="h-5 w-5 text-blue-600" />
             Select AI Model
           </h3>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-neutral-600 mt-1">
             Choose the best model for your pharmaceutical intelligence needs
           </p>
         </div>
@@ -159,7 +159,7 @@ interface AIModelNavbarProps {
           {/* eslint-disable-next-line security/detect-object-injection */}
           {Object.entries(groupedModels).map(([provider, models]) => (
             <div key={provider} className="p-2">
-              <div className="px-2 py-1 text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <div className="px-2 py-1 text-xs font-medium text-neutral-500 uppercase tracking-wide">
                 {/* eslint-disable-next-line security/detect-object-injection */}
                 {getProviderIcon(provider)} {provider}
               </div>
@@ -172,7 +172,7 @@ interface AIModelNavbarProps {
                       setIsOpen(false);
                     }}
                     className={cn(
-                      "w-full p-3 text-left rounded-lg transition-colors hover:bg-gray-50",
+                      "w-full p-3 text-left rounded-lg transition-colors hover:bg-neutral-50",
                       selectedModel === model.id && "bg-blue-50 border border-blue-200"
                     )}
                   >
@@ -182,7 +182,7 @@ interface AIModelNavbarProps {
                           <span className="font-medium text-sm">{model.name}</span>
                           <ModelStatusBadge status={model.status} />
                         </div>
-                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                        <p className="text-xs text-neutral-600 mb-2 line-clamp-2">
                           {model.description}
                         </p>
 
@@ -190,17 +190,17 @@ interface AIModelNavbarProps {
                         <div className="grid grid-cols-3 gap-2 text-xs">
                           <div className="flex items-center gap-1">
                             <Brain className="h-3 w-3 text-purple-500" />
-                            <span className="text-gray-500">Logic</span>
+                            <span className="text-neutral-500">Logic</span>
                             <CapabilityRating rating={model.capabilities.reasoning} />
                           </div>
                           <div className="flex items-center gap-1">
                             <Zap className="h-3 w-3 text-yellow-500" />
-                            <span className="text-gray-500">Speed</span>
+                            <span className="text-neutral-500">Speed</span>
                             <CapabilityRating rating={model.capabilities.speed} />
                           </div>
                           <div className="flex items-center gap-1">
                             <Sparkles className="h-3 w-3 text-pink-500" />
-                            <span className="text-gray-500">Creative</span>
+                            <span className="text-neutral-500">Creative</span>
                             <CapabilityRating rating={model.capabilities.creativity} />
                           </div>
                         </div>
@@ -220,7 +220,7 @@ interface AIModelNavbarProps {
                         </div>
 
                         {/* Pricing */}
-                        <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-2 mt-2 text-xs text-neutral-500">
                           <span>${model.pricing.input}/M input</span>
                           <span>•</span>
                           <span>${model.pricing.output}/M output</span>
@@ -236,8 +236,8 @@ interface AIModelNavbarProps {
           ))}
         </div>
 
-        <div className="p-3 border-t bg-gray-50">
-          <div className="flex items-center gap-2 text-xs text-gray-600">
+        <div className="p-3 border-t bg-neutral-50">
+          <div className="flex items-center gap-2 text-xs text-neutral-600">
             <Monitor className="h-3 w-3" />
             <span>Model performance varies by task complexity</span>
           </div>
@@ -328,7 +328,7 @@ export const AIModelNavbar: React.FC<AIModelNavbarProps> = ({
               <div className="h-8 w-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <Bot className="h-5 w-5 text-white" />
               </div>
-              <span className="font-bold text-xl text-gray-900">VITAL AI</span>
+              <span className="font-bold text-xl text-neutral-900">VITAL AI</span>
             </Link>
           </div>
 

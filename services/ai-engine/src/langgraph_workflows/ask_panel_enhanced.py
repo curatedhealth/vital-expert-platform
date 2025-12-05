@@ -20,6 +20,7 @@ import structlog
 from datetime import datetime
 from uuid import uuid4
 import json
+import re
 
 logger = structlog.get_logger()
 
@@ -82,6 +83,11 @@ class EnhancedPanelState(TypedDict):
     debate_topics: List[str]
     consensus_reached: bool
     consensus_level: float
+    
+    # Network pattern tracking
+    current_expert_index: int  # Which expert is currently speaking
+    experts_spoken_this_round: List[int]  # Track which experts have spoken in current round
+    next_expert_to_speak: Optional[str]  # Expert ID that should speak next (moderator decision)
 
     # Final output
     summary: Optional[str]
@@ -129,15 +135,22 @@ class EnhancedAskPanelWorkflow:
         self.panel_mode = panel_mode
 
     async def initialize(self):
-        """Initialize the enhanced LangGraph workflow"""
+        """Initialize the enhanced LangGraph workflow with network pattern for debate"""
         workflow = StateGraph(EnhancedPanelState)
 
-        # Add nodes
+        # Add core nodes
         workflow.add_node("orchestrator_intro", self.orchestrator_intro_node)
         workflow.add_node("retrieve_knowledge", self.retrieve_knowledge_node)
         workflow.add_node("initial_panel_responses", self.initial_panel_responses_node)
         workflow.add_node("identify_debate_topics", self.identify_debate_topics_node)
+        
+        # Network pattern nodes for debate
+        workflow.add_node("moderator_routing", self.moderator_routing_node)
+        workflow.add_node("expert_debate_response", self.expert_debate_response_node)
+        
+        # Legacy sequential debate node (kept for backward compatibility)
         workflow.add_node("panel_debate_round", self.panel_debate_round_node)
+        
         workflow.add_node("check_consensus", self.check_consensus_node)
         workflow.add_node("generate_summary", self.generate_summary_node)
         workflow.add_node("orchestrator_conclusion", self.orchestrator_conclusion_node)
@@ -155,8 +168,8 @@ class EnhancedAskPanelWorkflow:
             "identify_debate_topics",
             self.should_debate,
             {
-                "debate": "panel_debate_round",
-                "skip": "check_consensus_after_initial"  # Check consensus even if skipping debate
+                "debate": "moderator_routing",  # Start with moderator routing for network pattern
+                "skip": "check_consensus_after_initial"
             }
         )
         
@@ -164,13 +177,32 @@ class EnhancedAskPanelWorkflow:
         workflow.add_node("check_consensus_after_initial", self.check_consensus_node)
         workflow.add_edge("check_consensus_after_initial", "generate_summary")
 
-        # Debate loop
-        workflow.add_edge("panel_debate_round", "check_consensus")
+        # Network pattern: Moderator routes to expert, expert responds, then back to moderator
+        workflow.add_conditional_edges(
+            "moderator_routing",
+            self.route_to_expert_or_consensus,
+            {
+                "expert": "expert_debate_response",
+                "check_consensus": "check_consensus"
+            }
+        )
+        
+        # Expert responds, then routes back to moderator or consensus check
+        workflow.add_conditional_edges(
+            "expert_debate_response",
+            self.route_after_expert_response,
+            {
+                "moderator_routing": "moderator_routing",
+                "check_consensus": "check_consensus"
+            }
+        )
+
+        # Consensus check after network debate
         workflow.add_conditional_edges(
             "check_consensus",
             self.check_if_more_rounds_needed,
             {
-                "continue": "panel_debate_round",
+                "continue": "moderator_routing",  # Continue network debate
                 "done": "generate_summary"
             }
         )
@@ -181,7 +213,7 @@ class EnhancedAskPanelWorkflow:
 
         # Compile
         self.workflow = workflow.compile()
-        logger.info("✅ Enhanced Ask Panel workflow initialized with agent communication")
+        logger.info("✅ Enhanced Ask Panel workflow initialized with network pattern for agent communication")
 
     # ========================================================================
     # Helper: Add message to state and emit for streaming
@@ -288,6 +320,10 @@ Let me begin by gathering relevant knowledge from our comprehensive database...
             state["consensus_reached"] = False
             state["consensus_level"] = 0.0  # Initialize consensus level
             state["debate_topics"] = []
+            # Initialize network pattern tracking
+            state["current_expert_index"] = 0
+            state["experts_spoken_this_round"] = []
+            state["next_expert_to_speak"] = None
 
             return state
 
@@ -393,8 +429,7 @@ Now consulting with our expert panel members...
             tasks = [execute_with_semaphore(expert_id) for expert_id in state["selected_agent_ids"]]
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
-            # Collect all agent messages to add at once
-            agent_messages = []
+            # Track successful and failed responses
             successful_responses = []
             failed_responses = []
 
@@ -416,17 +451,16 @@ Now consulting with our expert panel members...
                         agent_name=result["agent_name"],
                         response_length=len(result["response"])
                     )
-                    # Create message object directly instead of calling _add_message in loop
-                    agent_messages.append({
-                        "id": str(uuid4()),
-                        "type": MessageType.AGENT,
-                        "role": result["agent_name"],
-                        "content": result["response"],
-                        "timestamp": datetime.utcnow().isoformat(),
-                        "agent_id": result["agent_id"],
-                        "agent_name": result["agent_name"],
-                        "metadata": {"round": 1, "role": "panel_member"}
-                    })
+                    # Add message using _add_message to ensure proper tracking
+                    state = self._add_message(
+                        state,
+                        MessageType.AGENT,
+                        result["agent_name"],
+                        result["response"],
+                        agent_id=result["agent_id"],
+                        agent_name=result["agent_name"],
+                        metadata={"round": 1, "role": "panel_member"}
+                    )
                     successful_responses.append(result)
                 else:
                     logger.warning(
@@ -443,10 +477,10 @@ Now consulting with our expert panel members...
                 failed=len(failed_responses)
             )
 
-            # Store responses for this round and add all agent messages
+            # Store responses for this round
+            # Messages have already been added via _add_message above
             return {
                 **state,
-                "messages": agent_messages,  # Add all agent messages at once
                 "agent_responses_by_round": [{
                     "round": 1,
                     "responses": successful_responses
@@ -504,15 +538,50 @@ Provide a JSON array of debate topics (max 3) where panel members could have pro
                 max_tokens=800
             )
 
-            # Parse topics
+            # Parse topics - be more robust with JSON parsing
+            topics = []
             try:
-                topics_data = json.loads(analysis)
-                topics = [t["topic"] for t in topics_data[:3]]
-            except:
+                # Try to extract JSON from the response (might have markdown code blocks)
+                analysis_clean = analysis.strip()
+                if "```json" in analysis_clean:
+                    # Extract JSON from code block
+                    start = analysis_clean.find("```json") + 7
+                    end = analysis_clean.find("```", start)
+                    if end > start:
+                        analysis_clean = analysis_clean[start:end].strip()
+                elif "```" in analysis_clean:
+                    # Extract from generic code block
+                    start = analysis_clean.find("```") + 3
+                    end = analysis_clean.find("```", start)
+                    if end > start:
+                        analysis_clean = analysis_clean[start:end].strip()
+                
+                topics_data = json.loads(analysis_clean)
+                if isinstance(topics_data, list):
+                    topics = [t.get("topic", t) if isinstance(t, dict) else str(t) for t in topics_data[:3]]
+                elif isinstance(topics_data, dict) and "topics" in topics_data:
+                    topics = topics_data["topics"][:3]
+                
+                logger.info(f"✅ Parsed {len(topics)} debate topics: {topics}")
+            except json.JSONDecodeError as e:
+                logger.warning(f"⚠️ Failed to parse JSON from debate topic analysis: {e}")
+                logger.warning(f"⚠️ Raw analysis response: {analysis[:500]}")
+                # Fallback: try to extract topics from text using regex or simple parsing
+                # Look for patterns like "1. Topic" or "- Topic" or "topic: ..."
+                topic_patterns = re.findall(r'(?:^\d+\.\s*|^-\s*|topic["\']?\s*:\s*["\']?)([^\n]+)', analysis, re.MULTILINE | re.IGNORECASE)
+                if topic_patterns:
+                    topics = [t.strip().strip('"\'') for t in topic_patterns[:3] if t.strip()]
+                    logger.info(f"✅ Extracted {len(topics)} topics using fallback parsing: {topics}")
+                else:
+                    topics = []
+            except Exception as e:
+                logger.error(f"❌ Error parsing debate topics: {e}", exc_info=True)
                 topics = []
 
             state["debate_topics"] = topics
 
+            # Always proceed with debate if enabled, even if no topics identified
+            # The should_debate function will handle empty topics
             if topics:
                 topics_message = f"""🤔 **Panel Discussion Topics Identified**
 
@@ -528,6 +597,15 @@ Let's proceed with a panel discussion round...
                     MessageType.ORCHESTRATOR,
                     "orchestrator",
                     topics_message
+                )
+            else:
+                # Even if no topics identified, add a message that debate will proceed
+                logger.info("💬 No specific topics identified, but proceeding with general panel discussion")
+                state = self._add_message(
+                    state,
+                    MessageType.ORCHESTRATOR,
+                    "orchestrator",
+                    "💬 **Panel Discussion**\n\nPanel members will now respond to each other's perspectives and engage in discussion..."
                 )
 
             return state
@@ -557,7 +635,7 @@ Let's proceed with a panel discussion round...
                 state,
                 MessageType.ORCHESTRATOR,
                 "orchestrator",
-                f"💬 **Round {round_number}: Panel Discussion**\n\nPanel members will now respond to each other's points and perspectives..."
+                f"💬 **Round {round_number}: Panel Discussion**\n\nAs the moderator, I'll now give each panel member the opportunity to respond to their colleagues' perspectives. Let's hear from each expert in turn..."
             )
 
             # Get previous messages for context
@@ -566,80 +644,90 @@ Let's proceed with a panel discussion round...
                 if m["type"] == MessageType.AGENT
             ]
 
-            # Execute experts in parallel with debate context
-            semaphore = asyncio.Semaphore(5)
-
-            async def execute_with_semaphore(expert_id):
-                async with semaphore:
-                    return await self._execute_panel_expert(
+            # Execute experts SEQUENTIALLY with moderator messages between each
+            # This creates the "moderator giving word" effect the user expects
+            debate_messages = []
+            successful_responses = []
+            failed_responses = []
+            
+            for i, expert_id in enumerate(state["selected_agent_ids"]):
+                # Get agent name for moderator message
+                try:
+                    tenant_id = state.get("tenant_id")
+                    agent = await self.agent_service.get_agent(expert_id, tenant_id=tenant_id)
+                    agent_name = agent.get("display_name", agent.get("name", expert_id)) if agent else f"Expert {i+1}"
+                except:
+                    agent_name = f"Expert {i+1}"
+                
+                # Moderator gives word to this expert
+                state = self._add_message(
+                    state,
+                    MessageType.ORCHESTRATOR,
+                    "orchestrator",
+                    f"🎤 **Moderator:** {agent_name}, please share your thoughts on your colleagues' perspectives..."
+                )
+                
+                # Execute this expert with all previous messages (including previous debate responses)
+                try:
+                    result = await self._execute_panel_expert(
                         state,
                         expert_id,
                         round_number=round_number,
                         prompt_type="debate",
-                        previous_messages=previous_panel_messages
+                        previous_messages=previous_panel_messages + debate_messages  # Include previous debate responses
                     )
-
-            tasks = [execute_with_semaphore(expert_id) for expert_id in state["selected_agent_ids"]]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-
-            # Collect all debate messages to add at once
-            debate_messages = []
-            successful_responses = []
-            failed_responses = []
-
-            for i, result in enumerate(results):
-                agent_id = state["selected_agent_ids"][i]
-
-                if isinstance(result, Exception):
+                    
+                    if isinstance(result, dict) and result.get("success"):
+                        # Create message object
+                        expert_message = {
+                            "id": str(uuid4()),
+                            "type": MessageType.AGENT,
+                            "role": result["agent_name"],
+                            "content": result["response"],
+                            "timestamp": datetime.utcnow().isoformat(),
+                            "agent_id": result["agent_id"],
+                            "agent_name": result["agent_name"],
+                            "metadata": {"round": round_number, "role": "panel_debater"}
+                        }
+                        debate_messages.append(expert_message)
+                        successful_responses.append(result)
+                        
+                        logger.info(
+                            "✅ Debate round agent response successful",
+                            agent_id=result["agent_id"],
+                            agent_name=result["agent_name"],
+                            round=round_number,
+                            response_length=len(result["response"])
+                        )
+                    else:
+                        failed_responses.append({"agent_id": expert_id, "result": result})
+                except Exception as e:
                     logger.error(
                         "❌ Debate round agent execution returned exception",
-                        agent_id=agent_id,
+                        agent_id=expert_id,
                         round=round_number,
-                        error=str(result),
-                        error_type=type(result).__name__
+                        error=str(e),
+                        error_type=type(e).__name__
                     )
-                    failed_responses.append({"agent_id": agent_id, "error": str(result)})
-                elif isinstance(result, dict) and result.get("success"):
-                    logger.info(
-                        "✅ Debate round agent response successful",
-                        agent_id=result["agent_id"],
-                        agent_name=result["agent_name"],
-                        round=round_number,
-                        response_length=len(result["response"])
-                    )
-                    # Create message object directly instead of calling _add_message in loop
-                    debate_messages.append({
-                        "id": str(uuid4()),
-                        "type": MessageType.AGENT,
-                        "role": result["agent_name"],
-                        "content": result["response"],
-                        "timestamp": datetime.utcnow().isoformat(),
-                        "agent_id": result["agent_id"],
-                        "agent_name": result["agent_name"],
-                        "metadata": {"round": round_number, "role": "panel_debater"}
-                    })
-                    successful_responses.append(result)
-                else:
-                    logger.warning(
-                        "⚠️ Debate round agent execution returned unsuccessful result",
-                        agent_id=agent_id,
-                        round=round_number,
-                        result=result
-                    )
-                    failed_responses.append({"agent_id": agent_id, "result": result})
+                    failed_responses.append({"agent_id": expert_id, "error": str(e)})
+            
 
             logger.info(
                 "📊 Debate round responses summary",
                 round=round_number,
                 total_agents=len(state["selected_agent_ids"]),
                 successful=len(successful_responses),
-                failed=len(failed_responses)
+                failed=len(failed_responses),
+                debate_messages_count=len(debate_messages)
             )
 
             # Store responses for this round and add all debate messages
+            # Note: Moderator messages were already added via _add_message (which uses operator.add)
+            # So they're already in state["messages"]. We just need to add the debate_messages.
+            # With operator.add, returning "messages": debate_messages will add them to existing messages.
             return {
                 **state,
-                "messages": debate_messages,  # Add all debate messages at once
+                "messages": debate_messages,  # operator.add will append these to existing messages
                 "agent_responses_by_round": [{
                     "round": round_number,
                     "responses": successful_responses
@@ -650,6 +738,256 @@ Let's proceed with a panel discussion round...
             logger.error("❌ Panel debate round failed", error=str(e))
             state["error"] = str(e)
             return state
+
+    # ========================================================================
+    # Network Pattern Nodes: Moderator Routing and Expert Response
+    # ========================================================================
+
+    async def moderator_routing_node(self, state: EnhancedPanelState) -> EnhancedPanelState:
+        """
+        Moderator decides which expert should speak next in the network pattern.
+        This allows dynamic routing based on conversation flow.
+        """
+        try:
+            # Initialize round tracking if needed
+            if state.get("current_round", 0) == 0:
+                state["current_round"] = 1
+                state["experts_spoken_this_round"] = []
+                state["current_expert_index"] = 0
+            
+            round_number = state["current_round"]
+            experts_spoken = state.get("experts_spoken_this_round", [])
+            all_expert_ids = state["selected_agent_ids"]
+            
+            # Determine which expert should speak next
+            # Strategy: Round-robin, but moderator can decide based on conversation
+            next_expert_index = None
+            next_expert_id = None
+            
+            # If we have a moderator decision from previous round, use it
+            if state.get("next_expert_to_speak"):
+                next_expert_id = state["next_expert_to_speak"]
+                try:
+                    next_expert_index = all_expert_ids.index(next_expert_id)
+                except ValueError:
+                    next_expert_id = None
+            
+            # Otherwise, find next expert who hasn't spoken this round
+            if next_expert_index is None:
+                for i in range(len(all_expert_ids)):
+                    if i not in experts_spoken:
+                        next_expert_index = i
+                        next_expert_id = all_expert_ids[i]
+                        break
+            
+            # If all experts have spoken, start new round or check consensus
+            if next_expert_index is None:
+                logger.info(f"💬 All experts have spoken in round {round_number}")
+                # Clear spoken list for potential next round
+                state["experts_spoken_this_round"] = []
+                state["next_expert_to_speak"] = None
+                return state
+            
+            # Get expert info
+            tenant_id = state.get("tenant_id")
+            try:
+                agent = await self.agent_service.get_agent(next_expert_id, tenant_id=tenant_id)
+                agent_name = agent.get("display_name", agent.get("name", next_expert_id)) if agent else f"Expert {next_expert_index + 1}"
+            except:
+                agent_name = f"Expert {next_expert_index + 1}"
+            
+            # Moderator gives word to this expert
+            # Check if this is the first expert in this round
+            if len(experts_spoken) == 0:
+                state = self._add_message(
+                    state,
+                    MessageType.ORCHESTRATOR,
+                    "moderator",  # Use "moderator" as role
+                    f"💬 **Round {round_number}: Panel Discussion**\n\nAs the moderator, I'll facilitate a dynamic discussion where experts can respond to each other. Let's begin...",
+                    agent_name="Moderator",  # Set agent_name so it shows in UI
+                    metadata={"role": "moderator", "round": round_number}
+                )
+            
+            # Get context of who has spoken and what they said
+            previous_speakers = []
+            for idx in experts_spoken:
+                if idx < len(all_expert_ids):
+                    try:
+                        prev_agent = await self.agent_service.get_agent(all_expert_ids[idx], tenant_id=tenant_id)
+                        prev_name = prev_agent.get("display_name", prev_agent.get("name", all_expert_ids[idx])) if prev_agent else f"Expert {idx + 1}"
+                        previous_speakers.append(prev_name)
+                    except:
+                        previous_speakers.append(f"Expert {idx + 1}")
+            
+            context_msg = ""
+            if previous_speakers:
+                context_msg = f"\n\nSo far in this round, {', '.join(previous_speakers)} have shared their perspectives."
+            
+            # Add moderator message as visible message with clear moderator label
+            state = self._add_message(
+                state,
+                MessageType.ORCHESTRATOR,
+                "moderator",  # Use "moderator" as role so it shows up clearly
+                f"🎤 **Moderator:** {agent_name}, please share your thoughts on your colleagues' perspectives.{context_msg}",
+                agent_name="Moderator",  # Set agent_name so it shows in UI
+                metadata={"role": "moderator", "round": round_number, "target_expert": agent_name}
+            )
+            
+            # Update state for expert response
+            state["current_expert_index"] = next_expert_index
+            state["next_expert_to_speak"] = next_expert_id
+            
+            logger.info(
+                f"🎤 Moderator routing to expert {next_expert_index + 1}/{len(all_expert_ids)}: {agent_name}",
+                expert_id=next_expert_id,
+                round=round_number
+            )
+            
+            return state
+            
+        except Exception as e:
+            logger.error("❌ Moderator routing failed", error=str(e), exc_info=True)
+            state["error"] = str(e)
+            return state
+
+    async def expert_debate_response_node(self, state: EnhancedPanelState) -> EnhancedPanelState:
+        """
+        Single expert responds in the network pattern.
+        Expert can reference and respond to specific colleagues.
+        """
+        try:
+            round_number = state.get("current_round", 1)
+            expert_id = state.get("next_expert_to_speak")
+            expert_index = state.get("current_expert_index", 0)
+            
+            if not expert_id:
+                logger.error("❌ No expert ID set for debate response")
+                return state
+            
+            # Get previous messages for context
+            previous_panel_messages = [
+                m for m in state.get("messages", [])
+                if m["type"] == MessageType.AGENT
+            ]
+            
+            # Execute this expert
+            try:
+                result = await self._execute_panel_expert(
+                    state,
+                    expert_id,
+                    round_number=round_number,
+                    prompt_type="debate",
+                    previous_messages=previous_panel_messages
+                )
+                
+                if isinstance(result, dict) and result.get("success"):
+                    # Create message object
+                    expert_message = {
+                        "id": str(uuid4()),
+                        "type": MessageType.AGENT,
+                        "role": result["agent_name"],
+                        "content": result["response"],
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "agent_id": result["agent_id"],
+                        "agent_name": result["agent_name"],
+                        "metadata": {"round": round_number, "role": "panel_debater", "network_pattern": True}
+                    }
+                    
+                    # Add message to state
+                    state = self._add_message(
+                        state,
+                        MessageType.AGENT,
+                        result["agent_name"],
+                        result["response"],
+                        agent_id=result["agent_id"],
+                        agent_name=result["agent_name"],
+                        metadata=expert_message["metadata"]
+                    )
+                    
+                    # Mark this expert as having spoken
+                    experts_spoken = state.get("experts_spoken_this_round", [])
+                    if expert_index not in experts_spoken:
+                        experts_spoken.append(expert_index)
+                    state["experts_spoken_this_round"] = experts_spoken
+                    
+                    # Clear next expert (moderator will decide)
+                    state["next_expert_to_speak"] = None
+                    
+                    logger.info(
+                        "✅ Expert debate response successful (network pattern)",
+                        agent_id=result["agent_id"],
+                        agent_name=result["agent_name"],
+                        round=round_number,
+                        experts_spoken_count=len(experts_spoken)
+                    )
+                else:
+                    logger.error(f"❌ Expert execution failed: {result}")
+                    # Still mark as spoken to avoid infinite loop
+                    experts_spoken = state.get("experts_spoken_this_round", [])
+                    if expert_index not in experts_spoken:
+                        experts_spoken.append(expert_index)
+                    state["experts_spoken_this_round"] = experts_spoken
+                    
+            except Exception as e:
+                logger.error(
+                    "❌ Expert debate response failed",
+                    expert_id=expert_id,
+                    round=round_number,
+                    error=str(e),
+                    error_type=type(e).__name__
+                )
+                # Mark as spoken to avoid infinite loop
+                experts_spoken = state.get("experts_spoken_this_round", [])
+                if expert_index not in experts_spoken:
+                    experts_spoken.append(expert_index)
+                state["experts_spoken_this_round"] = experts_spoken
+            
+            return state
+            
+        except Exception as e:
+            logger.error("❌ Expert debate response node failed", error=str(e), exc_info=True)
+            state["error"] = str(e)
+            return state
+
+    def route_to_expert_or_consensus(self, state: EnhancedPanelState) -> str:
+        """
+        Route after moderator decides: to expert or check consensus
+        """
+        experts_spoken = state.get("experts_spoken_this_round", [])
+        all_experts_count = len(state.get("selected_agent_ids", []))
+        
+        # If all experts have spoken this round, check consensus
+        if len(experts_spoken) >= all_experts_count:
+            logger.info("💬 All experts have spoken, routing to consensus check")
+            return "check_consensus"
+        
+        # Otherwise, route to expert
+        return "expert"
+
+    def route_after_expert_response(self, state: EnhancedPanelState) -> str:
+        """
+        Route after expert responds: continue debate or check consensus
+        """
+        experts_spoken = state.get("experts_spoken_this_round", [])
+        all_experts_count = len(state.get("selected_agent_ids", []))
+        current_round = state.get("current_round", 1)
+        max_rounds = state.get("max_rounds", 3)
+        
+        # If all experts have spoken this round
+        if len(experts_spoken) >= all_experts_count:
+            # Check if we should continue to next round
+            if current_round < max_rounds:
+                # Start next round
+                state["current_round"] = current_round + 1
+                state["experts_spoken_this_round"] = []
+                logger.info(f"💬 Starting round {current_round + 1}")
+                return "moderator_routing"  # Continue debate with new round
+            else:
+                logger.info("💬 Max rounds reached, checking consensus")
+                return "check_consensus"
+        
+        # Continue with more experts in this round - route back to moderator
+        return "moderator_routing"
 
     # ========================================================================
     # Node 6: Check Consensus
@@ -891,43 +1229,120 @@ Thank you for using our expert panel consultation service. All insights and reco
 {state["question"]}
 
 **Knowledge Base Context:**
-{state.get("context", '')[:3000]}
+{state.get("context", '')[:2000]}
 
+**Your Task:**
 Provide your expert analysis and recommendations as a panel member. Be thorough and cite specific evidence from the context when possible.
+
+**Important:** Give a unique perspective. Don't just use a generic structure like "Preparation Stage, During Discussion, Post-Discussion" unless that's truly the best way to organize YOUR specific expertise. Focus on what makes YOUR perspective valuable and different.
 """
             else:  # debate
+                # Include recent context but limit to avoid token limits
+                # Use last 3-4 messages per expert to keep context manageable
+                recent_messages = []
+                seen_agents = set()
+                agent_message_count = {}
+                
+                # Get messages in reverse order (most recent first)
+                for m in reversed(previous_messages or []):
+                    agent_name = m.get('agent_name', 'Unknown')
+                    if agent_name not in seen_agents:
+                        seen_agents.add(agent_name)
+                        agent_message_count[agent_name] = 0
+                    
+                    # Limit to 2 most recent messages per agent
+                    if agent_message_count.get(agent_name, 0) < 2:
+                        # Truncate long messages to max 2000 chars
+                        content = m.get('content', '')
+                        if len(content) > 2000:
+                            content = content[:2000] + "... [truncated]"
+                        recent_messages.append({
+                            'agent_name': agent_name,
+                            'content': content,
+                            'round': m.get('metadata', {}).get('round', '?')
+                        })
+                        agent_message_count[agent_name] = agent_message_count.get(agent_name, 0) + 1
+                
+                # Reverse back to chronological order
+                recent_messages.reverse()
+                
                 previous_context = "\n\n".join([
-                    f"**{m['agent_name']}:** {m['content'][:500]}"
-                    for m in (previous_messages or [])[-6:]  # Last 6 messages
+                    f"**{m['agent_name']}** (Round {m['round']}):\n{m['content']}"
+                    for m in recent_messages
                 ])
+                
+                # If context is still too long, truncate further
+                if len(previous_context) > 8000:
+                    previous_context = previous_context[:8000] + "\n\n[Additional context truncated to manage token limits]"
 
-                prompt = f"""You are {agent_name}, participating in round {round_number} of an expert panel discussion.
+                # Get list of other expert names for reference
+                other_experts = [
+                    m.get('agent_name') for m in (previous_messages or [])
+                    if m.get('agent_name') and m.get('agent_name') != agent_name
+                ]
+                unique_experts = list(dict.fromkeys(other_experts))  # Remove duplicates, preserve order
+
+                # Build a more explicit prompt with examples
+                example_engagement = ""
+                if unique_experts:
+                    example_engagement = f"""
+**EXAMPLE OF GOOD ENGAGEMENT:**
+"While {unique_experts[0]} emphasized the importance of real-time analytics, I'd like to add that {unique_experts[1] if len(unique_experts) > 1 else 'another colleague'}'s point about predictive modeling is crucial. However, I see a potential limitation: [specific point]. Based on my experience, [your unique insight]."
+
+**EXAMPLE OF BAD RESPONSE (DO NOT DO THIS):**
+"Integrating advanced analytics can improve decision-making through: 1. Data-Driven Insights 2. Predictive Modeling 3. Cost Management..."
+(This is just repeating the same structure - DON'T DO THIS!)
+"""
+
+                prompt = f"""You are {agent_name}, participating in round {round_number} of an expert panel DEBATE.
 
 {agent.get('system_prompt', '')}
+
+**🚨 CRITICAL INSTRUCTION: This is a DEBATE round. Your colleagues have ALREADY given their initial responses. Your job is to ENGAGE with their SPECIFIC points, NOT repeat the same generic answer structure.**
 
 **Original Panel Question:**
 {state["question"]}
 
-**Previous Panel Discussion:**
+**Your Colleagues' Responses (READ THESE CAREFULLY - YOU MUST REFERENCE THEM):**
 {previous_context}
 
-**Discussion Topics:**
-{chr(10).join([f"- {topic}" for topic in state.get("debate_topics", [])])}
+**Discussion Topics Identified:**
+{chr(10).join([f"- {topic}" for topic in state.get("debate_topics", [])]) if state.get("debate_topics") else "- General discussion"}
 
-Respond to the panel discussion, addressing your colleagues' points. You may:
-- Build on others' insights
-- Challenge assumptions constructively with evidence
-- Offer alternative perspectives backed by expertise
-- Synthesize different viewpoints
-- Identify areas of agreement and disagreement
+{example_engagement}
 
-Keep your response focused, constructive, and evidence-based.
-"""
+**MANDATORY REQUIREMENTS - YOU MUST:**
+1. **Start by referencing a specific colleague by name** - Use phrases like:
+   - "I agree with {unique_experts[0] if unique_experts else '[Colleague Name]'}'s point about..."
+   - "While {unique_experts[0] if unique_experts else '[Colleague Name]'} mentioned X, I think..."
+   - "Building on {unique_experts[0] if unique_experts else '[Colleague Name]'}'s insight..."
 
+2. **Quote or paraphrase a SPECIFIC point** from their response - don't just give your own generic answer
+
+3. **Then either:**
+   - **AGREE** and add NEW evidence, deeper analysis, or a different angle
+   - **DISAGREE** and explain WHY with specific evidence
+   - **SYNTHESIZE** multiple viewpoints into a NEW insight that combines perspectives
+
+4. **Be specific and concrete** - reference actual points they made, not generic concepts
+
+**ABSOLUTELY FORBIDDEN:**
+❌ Starting with "Integrating X can improve Y through: 1. Point A 2. Point B 3. Point C" (this is the generic structure - FORBIDDEN)
+❌ Ignoring what your colleagues said
+❌ Repeating the same answer structure
+❌ Giving a standalone answer without engaging with others
+
+**Your Response (MUST start by referencing a colleague):**"""
+
+            # For debate rounds, increase temperature slightly to encourage more diverse, creative responses
+            base_temperature = agent.get("temperature", 0.7)
+            debate_temperature = base_temperature + 0.2 if prompt_type == "debate" else base_temperature
+            debate_temperature = min(debate_temperature, 1.0)  # Cap at 1.0
+            
             response = await self.llm_service.generate(
                 prompt=prompt,
                 model=agent.get("model", "gpt-4"),
-                temperature=agent.get("temperature", 0.7),
+                temperature=debate_temperature,
                 max_tokens=agent.get("max_tokens", 1500)
             )
 
@@ -953,10 +1368,29 @@ Keep your response focused, constructive, and evidence-based.
 
     def should_debate(self, state: EnhancedPanelState) -> str:
         """Determine if panel debate should occur"""
-        if not state.get("enable_debate"):
+        enable_debate = state.get("enable_debate", False)
+        logger.info(
+            "🔍 Checking if debate should occur",
+            enable_debate=enable_debate,
+            debate_topics=state.get("debate_topics", [])
+        )
+        
+        if not enable_debate:
+            logger.info("💬 Debate skipped: enable_debate is False")
             return "skip"
-        if not state.get("debate_topics"):
-            return "skip"
+        
+        debate_topics = state.get("debate_topics", [])
+        if not debate_topics or len(debate_topics) == 0:
+            # Even if no topics identified, proceed with debate if enabled
+            # This allows panel members to discuss and respond to each other
+            logger.info("💬 No debate topics identified, but proceeding with debate since enable_debate=True")
+            # Set a default topic to ensure debate happens
+            state["debate_topics"] = ["Panel Discussion: Experts will respond to each other's perspectives"]
+            logger.info("✅ Debate WILL proceed - routing to panel_debate_round")
+            return "debate"
+        
+        logger.info(f"💬 Debate enabled with {len(debate_topics)} topics: {debate_topics}")
+        logger.info("✅ Debate WILL proceed - routing to panel_debate_round")
         return "debate"
 
     def check_if_more_rounds_needed(self, state: EnhancedPanelState) -> str:
@@ -1010,6 +1444,10 @@ Keep your response focused, constructive, and evidence-based.
             "debate_topics": [],
             "consensus_reached": False,
             "consensus_level": 0.0,
+            # Network pattern tracking
+            "current_expert_index": 0,
+            "experts_spoken_this_round": [],
+            "next_expert_to_speak": None,
             "summary": None,
             "key_insights": None,
             "action_items": None,

@@ -410,28 +410,182 @@ export function WorkflowTestModal({
       let response;
 
       if (isPanelWorkflow) {
-        // Execute as panel workflow
-        const panelExecuteUrl = `${apiBaseUrl}/panels/execute`;
-        console.log('[WorkflowTestModal] Executing panel workflow:', panelExecuteUrl);
+        // Execute as panel workflow with STREAMING support
+        // Try streaming endpoint first, fallback to regular if not available
+        const panelStreamUrl = `/api/ask-panel-enhanced/stream`;
+        console.log('[WorkflowTestModal] Executing panel workflow with streaming:', panelStreamUrl);
 
-        response = await fetch(panelExecuteUrl, {
+        // Extract agent IDs from workflow nodes (same pattern as WorkflowDesignerEnhanced)
+        const agentIds: string[] = [];
+        if (isMode1 && selectedAgentId) {
+          agentIds.push(selectedAgentId);
+        } else {
+          // Extract from workflow nodes - check multiple locations
+          nodes.forEach((node) => {
+            const nodeType = node.data?.type || node.type;
+            if (nodeType === 'agent' || nodeType === 'expertAgent') {
+              const nodeData = node.data as any;
+              // Check multiple locations where agentId might be stored
+              const agentId = nodeData?.config?.agentId ||
+                            nodeData?.agentId ||
+                            nodeData?.expertConfig?.id;
+              
+              if (agentId && typeof agentId === 'string' && agentId.trim() && !agentIds.includes(agentId)) {
+                agentIds.push(agentId);
+                console.log(`[WorkflowTestModal] Found agent ID: ${agentId} in node ${node.id}`);
+              }
+            }
+          });
+        }
+        
+        console.log(`[WorkflowTestModal] Extracted ${agentIds.length} agent IDs:`, agentIds);
+        
+        if (agentIds.length === 0) {
+          throw new Error('No agents found in workflow. Please add agent nodes to the workflow before testing.');
+        }
+
+        // Default tenant ID (you may want to get this from context)
+        const tenantId = 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
+
+        response = await fetch(panelStreamUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            query: userQuery,
-            openai_api_key: apiKeys.openai,
-            pinecone_api_key: apiKeys.pinecone || '',
-            provider: apiKeys.provider || 'openai',
-            ollama_base_url: apiKeys.ollama_base_url || 'http://localhost:11434',
-            ollama_model: apiKeys.ollama_model || 'qwen3:4b',
-            workflow: workflowDefinition,
-            panel_type: panelType,
-            user_id: 'user',
-            // Include selected agent for Mode 1
-            ...(isMode1 && selectedAgentId ? { selected_agent_ids: [selectedAgentId] } : {}),
+            question: userQuery,
+            template_slug: panelType || 'structured_panel',
+            selected_agent_ids: agentIds,
+            tenant_id: tenantId,
+            enable_debate: true,
+            max_rounds: 3,
+            require_consensus: false,
           }),
           signal: abortControllerRef.current.signal,
         });
+
+        // Handle streaming response
+        if (response.ok && response.body) {
+          // Remove loading message
+          setMessages((prev) => prev.filter(msg => msg.id !== loadingMsgId));
+
+          try {
+            // Read SSE stream
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              // Decode chunk and add to buffer
+              buffer += decoder.decode(value, { stream: true });
+
+              // Process complete SSE events
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6); // Remove "data: " prefix
+                  if (data.trim()) {
+                    try {
+                      const event = JSON.parse(data);
+
+                      if (event.type === 'message' && event.data) {
+                        const eventData = event.data;
+                        
+                        // Convert event data to Message format
+                        // Show moderator messages as normal assistant messages so they're visible
+                        const isModerator = eventData.role === 'moderator' || eventData.agent_name === 'Moderator' || 
+                                           (eventData.type === 'orchestrator' && eventData.content?.includes('Moderator'));
+                        
+                        const message: Message = {
+                          id: eventData.id || `msg-${Date.now()}-${Math.random()}`,
+                          type: isModerator ? 'assistant' : // Show moderator as assistant message
+                                eventData.type === 'orchestrator' ? 'log' : 
+                                eventData.type === 'agent' ? 'assistant' : 'assistant',
+                          content: eventData.content || '',
+                          timestamp: eventData.timestamp ? 
+                            new Date(eventData.timestamp).toLocaleTimeString() : 
+                            new Date().toLocaleTimeString(),
+                          level: isModerator ? undefined : // No special level for moderator
+                                eventData.type === 'orchestrator' ? 'info' : undefined,
+                          agentName: eventData.agent_name || eventData.role || 'Moderator',
+                          agentId: eventData.agent_id,
+                          metadata: eventData.metadata,
+                          isConsensus: eventData.type === 'summary' || eventData.metadata?.consensus,
+                          isSummary: eventData.type === 'summary',
+                        };
+
+                        // Add message to chat
+                        setMessages((prev) => {
+                          // Check for duplicates
+                          const existingIds = new Set(prev.map(m => m.id));
+                          if (existingIds.has(message.id)) {
+                            return prev;
+                          }
+                          return [...prev, message];
+                        });
+                      } else if (event.type === 'complete') {
+                        console.log('✅ Panel consultation completed', event.data);
+                        // Add completion message if needed
+                        setMessages((prev) => [...prev, {
+                          id: `msg-complete-${Date.now()}`,
+                          type: 'log',
+                          content: '✅ Panel consultation completed',
+                          timestamp: new Date().toLocaleTimeString(),
+                          level: 'success',
+                        }]);
+                      } else if (event.type === 'error') {
+                        console.error('❌ Stream error:', event.data);
+                        setMessages((prev) => [...prev, {
+                          id: `msg-error-${Date.now()}`,
+                          type: 'log',
+                          content: `❌ Error: ${event.data?.message || event.data?.error || 'An error occurred'}`,
+                          timestamp: new Date().toLocaleTimeString(),
+                          level: 'error',
+                        }]);
+                      }
+                    } catch (e) {
+                      console.error('[WorkflowTestModal] Failed to parse SSE event:', e, data);
+                    }
+                  }
+                }
+              }
+            }
+
+            // Clear input after streaming completes
+            setUserQuery('');
+            setIsExecuting(false);
+            return; // Exit early since we handled streaming
+          } catch (streamError: any) {
+            // If streaming fails, fall through to error handling below
+            console.error('[WorkflowTestModal] Streaming error:', streamError);
+            throw streamError;
+          }
+        }
+        
+        // If response is not ok or no body, handle as error
+        if (!response.ok) {
+          let errorMessage = 'Panel workflow execution failed';
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.details || errorMessage;
+            if (response.status === 503 && errorData.hint) {
+              errorMessage += `\n\n💡 ${errorData.hint}`;
+            }
+          } catch (e) {
+            try {
+              const errorText = await response.text();
+              if (errorText) errorMessage = errorText;
+            } catch (textError) {
+              errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            }
+          }
+          throw new Error(errorMessage);
+        }
+        
+        // If we get here, streaming wasn't available, fall through to regular handling
       } else {
         // Execute as regular workflow
         const executeUrl = `${apiBaseUrl}/execute`;

@@ -420,28 +420,50 @@ export function WorkflowTestModal({
         if (isMode1 && selectedAgentId) {
           agentIds.push(selectedAgentId);
         } else {
-          // Extract from workflow nodes - check multiple locations
+          // Extract from workflow nodes - check multiple locations and node types
           nodes.forEach((node) => {
             const nodeType = node.data?.type || node.type;
-            if (nodeType === 'agent' || nodeType === 'expertAgent') {
+            const isAgentNode = nodeType === 'agent' || 
+                               nodeType === 'expertAgent' ||
+                               node.data?.task?.id === 'expert_agent' ||
+                               node.id?.startsWith('expert-');
+            
+            if (isAgentNode) {
               const nodeData = node.data as any;
               // Check multiple locations where agentId might be stored
               const agentId = nodeData?.config?.agentId ||
                             nodeData?.agentId ||
-                            nodeData?.expertConfig?.id;
+                            nodeData?.expertConfig?.id ||
+                            nodeData?.config?.expertConfig?.id;
               
-              if (agentId && typeof agentId === 'string' && agentId.trim() && !agentIds.includes(agentId)) {
-                agentIds.push(agentId);
-                console.log(`[WorkflowTestModal] Found agent ID: ${agentId} in node ${node.id}`);
+              // Validate UUID format
+              if (agentId && typeof agentId === 'string' && agentId.trim()) {
+                const dashCount = (agentId.match(/-/g) || []).length;
+                if (agentId.length === 36 && dashCount === 4 && !agentIds.includes(agentId)) {
+                  agentIds.push(agentId);
+                  console.log(`[WorkflowTestModal] ✅ Found valid agent ID: ${agentId} in node ${node.id}`);
+                } else {
+                  console.warn(`[WorkflowTestModal] ⚠️ Node ${node.id} has invalid agent ID: ${agentId} (not a UUID)`);
+                }
+              } else {
+                console.warn(`[WorkflowTestModal] ⚠️ Node ${node.id} is an agent node but has no agentId configured`);
               }
             }
           });
         }
         
-        console.log(`[WorkflowTestModal] Extracted ${agentIds.length} agent IDs:`, agentIds);
+        console.log(`[WorkflowTestModal] Extracted ${agentIds.length} valid agent IDs:`, agentIds);
         
         if (agentIds.length === 0) {
-          throw new Error('No agents found in workflow. Please add agent nodes to the workflow before testing.');
+          const agentNodeCount = nodes.filter(n => 
+            (n.data?.type === 'agent' || n.type === 'agent' || n.id?.startsWith('expert-'))
+          ).length;
+          
+          const errorMsg = agentNodeCount > 0
+            ? `Found ${agentNodeCount} agent node(s) but none have agent IDs configured. Please:\n1. Click on each agent node in the designer\n2. Select a real agent from the dropdown in the property panel\n3. Save the workflow\n4. Try testing again`
+            : 'No agent nodes found in workflow. Please add agent nodes to the workflow before testing.';
+          
+          throw new Error(errorMsg);
         }
 
         // Default tenant ID (you may want to get this from context)

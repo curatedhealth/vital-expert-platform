@@ -146,7 +146,37 @@ export function StreamingPanelConsultation({
                 const event = JSON.parse(data);
 
                 if (event.type === "message" && event.data) {
-                  setMessages((prev) => [...prev, event.data]);
+                  const eventData = event.data;
+                  const isModerator =
+                    eventData.role === "moderator" ||
+                    eventData.agent_name === "Moderator" ||
+                    (typeof eventData.content === "string" &&
+                      eventData.content.toLowerCase().includes("moderator"));
+
+                  const mapped: Message = {
+                    id: eventData.id || `msg-${Date.now()}-${Math.random()}`,
+                    type: isModerator
+                      ? "agent" // Show moderator as normal assistant message
+                      : eventData.type === "summary"
+                      ? "summary"
+                      : eventData.type === "system"
+                      ? "system"
+                      : eventData.type === "agent" || eventData.type === "orchestrator"
+                      ? eventData.type
+                      : "agent",
+                    role: isModerator ? "moderator" : eventData.role || "assistant",
+                    content: eventData.content || "",
+                    timestamp: eventData.timestamp
+                      ? new Date(eventData.timestamp).toLocaleTimeString()
+                      : new Date().toLocaleTimeString(),
+                    agent_id: eventData.agent_id,
+                    agent_name: isModerator
+                      ? "Moderator"
+                      : eventData.agent_name || eventData.role,
+                    metadata: eventData.metadata,
+                  };
+
+                  setMessages((prev) => [...prev, mapped]);
                 } else if (event.type === "complete") {
                   console.log("✅ Panel consultation completed", event.data);
                   setIsStreaming(false);

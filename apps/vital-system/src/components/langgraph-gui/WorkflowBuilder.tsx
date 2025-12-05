@@ -2498,6 +2498,54 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
             enabledTasks: agentsToUse,
             taskCount: agentsToUse.length
           });
+          // Extract agent IDs from workflow nodes (prefer real agent UUIDs over node IDs)
+          const extractedAgentIds: string[] = [];
+          nodes.forEach((node: Node) => {
+            const nodeData = node.data as any;
+            // Check if this is an agent node
+            const isAgentNode = node.type === 'agent' || 
+                               nodeData?.type === 'agent' ||
+                               nodeData?.type === 'expertAgent' ||
+                               nodeData?.task?.id === 'expert_agent';
+            
+            if (isAgentNode) {
+              // Extract agent ID from various locations
+              const agentId = nodeData?.config?.agentId ||
+                            nodeData?.agentId ||
+                            nodeData?.agent_id ||
+                            nodeData?.expertConfig?.id;
+              
+              // Only add if it's a valid UUID
+              if (agentId && typeof agentId === 'string') {
+                const dashCount = (agentId.match(/-/g) || []).length;
+                if (agentId.length === 36 && dashCount === 4 && !extractedAgentIds.includes(agentId)) {
+                  extractedAgentIds.push(agentId);
+                  console.log(`[WorkflowBuilder] Found agent ID: ${agentId} in node ${node.id}`);
+                }
+              }
+            }
+          });
+          
+          // Use extracted agent IDs if found, otherwise use agentsToUse (which will be filtered by API)
+          const finalAgentIds = extractedAgentIds.length > 0 ? extractedAgentIds : agentsToUse;
+          
+          // Build workflow definition for agent extraction fallback
+          const workflowDefinition = {
+            nodes: nodes.map((n: Node) => ({
+              id: n.id,
+              type: n.type,
+              data: n.data,
+              config: (n.data as any)?.config,
+            })),
+            edges: edges.map((e: Edge) => ({
+              id: e.id,
+              source: e.source,
+              target: e.target,
+              type: e.type,
+            })),
+            description: query,
+          };
+
           response = await fetch(executeUrl, {
             method: 'POST',
             headers: {
@@ -2505,13 +2553,14 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
             },
             body: JSON.stringify({
               query,
+              workflow: workflowDefinition,
               openai_api_key: apiKeys.openai,
               pinecone_api_key: apiKeys.pinecone || '',
               provider: apiKeys.provider || 'openai',
               ollama_base_url: apiKeys.ollama_base_url || 'http://localhost:11434',
               ollama_model: apiKeys.ollama_model || 'qwen3:4b',
               orchestrator_system_prompt: orchestratorPrompt,
-              enabled_agents: agentsToUse,
+              enabled_agents: finalAgentIds,
             }),
             signal: abortController.signal,
           });

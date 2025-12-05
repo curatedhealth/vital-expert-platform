@@ -6,8 +6,8 @@
 
 'use client';
 
-import React, { memo } from 'react';
-import { Handle, Position } from 'reactflow';
+import React, { memo, useRef, useEffect } from 'react';
+import { Handle, Position, useReactFlow } from 'reactflow';
 import { Badge } from '@/components/ui/badge';
 import { getNodeTypeDefinition } from '../../constants/node-types';
 import type { NodeType, NodeConfig } from '../../types/workflow';
@@ -25,10 +25,91 @@ interface WorkflowNodeProps {
   data: WorkflowNodeData;
   isConnectable: boolean;
   selected: boolean;
+  id: string;
 }
 
-export const WorkflowNode = memo(({ data, isConnectable, selected }: WorkflowNodeProps) => {
+export const WorkflowNode = memo(({ data, isConnectable, selected, id }: WorkflowNodeProps) => {
   const nodeDef = getNodeTypeDefinition(data.type);
+  const { setNodes, getNodes } = useReactFlow();
+
+  // Handle dropping agents on agent nodes and task nodes (like Expert Agent 1, Expert Agent 2, Moderator)
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Allow drops on agent nodes and task nodes that are agent placeholders
+    const isAgentNode = data.type === 'agent';
+    const isTaskNode = data.type === 'task';
+    const label = (data.label || '').toLowerCase();
+    const isAgentPlaceholder = isTaskNode && (
+      label.includes('expert') || 
+      label.includes('agent') || 
+      label.includes('moderator')
+    );
+    
+    if (!isAgentNode && !isAgentPlaceholder) return;
+    
+    const agentData = e.dataTransfer.getData('application/agent');
+    if (!agentData) return;
+    
+    try {
+      const agent = JSON.parse(agentData);
+      console.log('🎯 Node-level drop handler: Replacing', data.type, 'node', id, 'with agent', agent.name);
+      
+      // Update the node with the new agent using ReactFlow's setNodes
+      // This will trigger onNodesChange in the parent component
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === id) {
+            // Convert task to agent if needed
+            const newType = isTaskNode ? 'agent' : node.data.type;
+            
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                type: newType,
+                label: agent.display_name || agent.name || 'Agent',
+                config: {
+                  ...(node.data.config || {}),
+                  agentId: agent.id,
+                  agentName: agent.name,
+                  agentDisplayName: agent.display_name || agent.name,
+                  agentDescription: agent.description || '',
+                  agentAvatar: agent.avatar_url || agent.avatar,
+                  systemPrompt: agent.system_prompt || node.data.config?.systemPrompt,
+                  model: agent.base_model || node.data.config?.model,
+                  temperature: agent.temperature ?? node.data.config?.temperature,
+                  maxTokens: agent.max_tokens || node.data.config?.maxTokens,
+                },
+              },
+            };
+          }
+          return node;
+        })
+      );
+    } catch (e) {
+      console.error('Failed to parse agent data:', e);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    // Allow drops on agent nodes and task nodes that are agent placeholders
+    const isAgentNode = data.type === 'agent';
+    const isTaskNode = data.type === 'task';
+    const label = (data.label || '').toLowerCase();
+    const isAgentPlaceholder = isTaskNode && (
+      label.includes('expert') || 
+      label.includes('agent') || 
+      label.includes('moderator')
+    );
+    
+    if (isAgentNode || isAgentPlaceholder) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'move';
+    }
+  };
 
   // Defensive: if node type not found, return null or use a fallback
   if (!nodeDef) {
@@ -61,11 +142,14 @@ export const WorkflowNode = memo(({ data, isConnectable, selected }: WorkflowNod
         transition-all duration-200
         ${selected ? 'ring-2 ring-purple-500 ring-offset-2' : ''}
         ${getStatusColor(data.status)}
+        ${data.type === 'agent' ? 'cursor-pointer' : ''}
       `}
       style={{
         backgroundColor: nodeDef.bgColor,
         borderColor: selected ? nodeDef.color : nodeDef.borderColor,
       }}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
     >
       {/* Input Handle */}
       {hasInputs && (
@@ -100,14 +184,14 @@ export const WorkflowNode = memo(({ data, isConnectable, selected }: WorkflowNod
       </div>
 
       {/* Node Description */}
-      {data.config.description && (
+      {data.config?.description && (
         <p className="text-xs text-gray-600 mt-2 line-clamp-2">
           {data.config.description}
         </p>
       )}
 
       {/* Node Config Preview */}
-      {data.type === 'agent' && data.config.model && (
+      {data.type === 'agent' && data.config?.model && (
         <div className="mt-2 pt-2 border-t border-gray-200">
           <div className="flex items-center justify-between text-xs text-gray-600">
             <span>{data.config.model}</span>
@@ -118,7 +202,7 @@ export const WorkflowNode = memo(({ data, isConnectable, selected }: WorkflowNod
         </div>
       )}
 
-      {data.type === 'tool' && data.config.toolName && (
+      {data.type === 'tool' && data.config?.toolName && (
         <div className="mt-2 pt-2 border-t border-gray-200">
           <div className="text-xs text-gray-600 truncate">
             Tool: {data.config.toolName}

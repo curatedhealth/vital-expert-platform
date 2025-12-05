@@ -8,7 +8,20 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.
 // Only create client if credentials are available
 let supabaseAdmin: ReturnType<typeof createClient> | null = null;
 if (supabaseUrl && supabaseServiceKey) {
-  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'vital-system-api',
+      },
+    },
+    db: {
+      schema: 'public',
+    },
+  });
 }
 
 /**

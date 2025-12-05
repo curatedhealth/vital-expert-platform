@@ -775,7 +775,15 @@ def resolve_cors_origin(request: Optional[Request] = None) -> str:
 def map_workflow_body_to_simple_request(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     Normalize workflow designer payloads into the SimpleLangGraphRequest schema.
+    Filters out node IDs and only includes valid agent UUIDs.
     """
+    def is_valid_uuid(agent_id: str) -> bool:
+        """Check if a string is a valid UUID format (36 chars, 4 dashes)"""
+        if not agent_id or not isinstance(agent_id, str):
+            return False
+        dash_count = agent_id.count('-')
+        return len(agent_id) == 36 and dash_count == 4
+    
     workflow_payload = payload.get("workflow") or {}
     selected_agent_ids = (
         payload.get("selected_agent_ids")
@@ -784,32 +792,49 @@ def map_workflow_body_to_simple_request(payload: Dict[str, Any]) -> Dict[str, An
     )
 
     enabled_agents: List[str] = []
+    # Filter provided agent IDs to only valid UUIDs
     if isinstance(selected_agent_ids, list):
         enabled_agents = [
             str(agent_id)
             for agent_id in selected_agent_ids
-            if isinstance(agent_id, (str, int)) and str(agent_id).strip()
+            if isinstance(agent_id, (str, int)) and str(agent_id).strip() and is_valid_uuid(str(agent_id))
         ]
 
+    # If no valid agents found, try extracting from workflow nodes
     if not enabled_agents and isinstance(workflow_payload, dict):
         nodes = workflow_payload.get("nodes") or []
-        enabled_agents = [
-            str(
-                node.get("data", {}).get("agentId")
-                or node.get("data", {}).get("id")
-                or node.get("id")
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            
+            # Check if this is an agent node
+            node_type = node.get("type") or node.get("data", {}).get("type")
+            is_agent_node = (
+                node_type in ["agent", "expertAgent"] or
+                node.get("data", {}).get("task", {}).get("id") == "expert_agent" or
+                node.get("config", {}).get("task", {}).get("id") == "expert_agent" or
+                (node.get("id") and str(node.get("id")).startswith("expert-")) or
+                (node.get("label") and "expert" in str(node.get("label")).lower())
             )
-            for node in nodes
-            if isinstance(node, dict)
-            and (
-                node.get("data", {}).get("agentId")
-                or node.get("data", {}).get("id")
-                or node.get("id")
-            )
-        ]
+            
+            if is_agent_node:
+                # Check multiple locations for agent ID (in order of preference)
+                agent_id = (
+                    node.get("data", {}).get("config", {}).get("agentId") or
+                    node.get("config", {}).get("agentId") or
+                    node.get("data", {}).get("config", {}).get("expertConfig", {}).get("id") or
+                    node.get("config", {}).get("expertConfig", {}).get("id") or
+                    node.get("data", {}).get("agentId") or
+                    node.get("data", {}).get("agent_id") or
+                    node.get("agentId")
+                )
+                
+                # Only add if it's a valid UUID
+                if agent_id and is_valid_uuid(str(agent_id)) and str(agent_id) not in enabled_agents:
+                    enabled_agents.append(str(agent_id))
 
-    if not enabled_agents:
-        enabled_agents = ["workflow-agent"]
+    # Don't use fallback - return empty list if no valid agents found
+    # The execute_langgraph_simple function will handle the error properly
 
     metadata = workflow_payload.get("metadata") if isinstance(workflow_payload, dict) else {}
     derived_query = (
@@ -2633,13 +2658,11 @@ async def options_execute(request: Request):
 @app.post("/execute")
 async def root_execute(request: Request):
     """
-    Alias for /frameworks/langgraph/execute-simple
+    Smart router: Detects panel workflows and routes to enhanced panel workflow with moderator/debate,
+    otherwise uses simple sequential execution.
     Handles direct calls from frontend with apiBaseUrl="http://localhost:8000"
     """
     body = await request.json()
-
-    # Import here to avoid circular imports
-    from api.frameworks import execute_langgraph_simple, SimpleLangGraphRequest
 
     # Convert to proper request format
     simple_request_payload = (
@@ -2647,6 +2670,158 @@ async def root_execute(request: Request):
         if "workflow" in body
         else body
     )
+
+    # Check if this is a panel workflow (2+ agents or panel_type in metadata)
+    workflow_payload = body.get("workflow") or {}
+    metadata = workflow_payload.get("metadata") or {}
+    panel_type = metadata.get("panel_type") or body.get("panel_type")
+    
+    # Extract agent IDs to check count
+    enabled_agents = simple_request_payload.get("enabled_agents", [])
+    is_panel_workflow = (
+        panel_type is not None or  # Explicit panel type
+        len(enabled_agents) >= 2  # 2+ agents suggests panel discussion
+    )
+
+    print(f"🔍 [Execute Router] Panel workflow detection:")
+    print(f"   - Panel type: {panel_type}")
+    print(f"   - Agent count: {len(enabled_agents)}")
+    print(f"   - Is panel workflow: {is_panel_workflow}")
+
+    # If it's a panel workflow, use enhanced panel workflow with moderator and debate
+    if is_panel_workflow and len(enabled_agents) >= 2:
+        print(f"✅ [Execute Router] Routing to Enhanced Panel Workflow with moderator and debate")
+        try:
+            from langgraph_workflows.ask_panel_enhanced import EnhancedAskPanelWorkflow
+            from services.supabase_client import get_supabase_client
+            from services.agent_service import AgentService
+            from services.llm_service import LLMService
+            # SimpleRAGService is defined in ask_panel_streaming.py, import it from there
+            from api.routes.ask_panel_streaming import SimpleRAGService
+
+            # Initialize services
+            supabase_client = get_supabase_client()
+            if not supabase_client.client:
+                await supabase_client.initialize()
+            
+            agent_service = AgentService(supabase_client)
+            rag_service = SimpleRAGService(supabase_client=supabase_client)
+            await rag_service.initialize()
+            llm_service = LLMService()
+
+            # Initialize enhanced panel workflow
+            workflow = EnhancedAskPanelWorkflow(
+                supabase_client=supabase_client,
+                agent_service=agent_service,
+                rag_service=rag_service,
+                llm_service=llm_service,
+            )
+            await workflow.initialize()
+
+            # Get query and tenant_id
+            query = simple_request_payload.get("query") or "Panel discussion"
+            tenant_id = body.get("tenant_id") or "default-tenant"
+            
+            # Execute panel workflow with debate enabled
+            messages = []
+            async for event in workflow.execute(
+                question=query,
+                template_slug=metadata.get("template_slug") or "default",
+                selected_agent_ids=enabled_agents,
+                tenant_id=tenant_id,
+                user_id=body.get("user_id") or "anonymous-user",
+                session_id=body.get("session_id") or "dev-session",
+                enable_debate=True,  # Enable debate with network pattern
+                max_rounds=body.get("max_rounds") or 3,
+                require_consensus=body.get("require_consensus") or False
+            ):
+                if event.get("type") == "message":
+                    messages.append(event.get("data"))
+
+            # Extract agent responses and format them
+            agent_responses = []
+            aggregated_parts = []
+            
+            for msg in messages:
+                msg_type = msg.get("type")
+                if msg_type in ["agent", "moderator"]:
+                    agent_id = msg.get("agent_id")
+                    agent_name = msg.get("agent_name") or msg.get("role") or "Unknown"
+                    content = msg.get("content") or ""
+                    
+                    agent_responses.append({
+                        "agent_id": agent_id,
+                        "agent_name": agent_name,
+                        "response": content,
+                        "content": content,  # Also include for compatibility
+                        "confidence": 0.85,
+                        "type": msg_type
+                    })
+                    
+                    # Add to aggregated response
+                    if msg_type == "moderator":
+                        aggregated_parts.append(f"**🎤 Moderator**: {content}")
+                    else:
+                        aggregated_parts.append(f"**{agent_name}**: {content}")
+            
+            # Build aggregated response
+            if aggregated_parts:
+                aggregated = f"Panel Discussion with {len(enabled_agents)} experts:\n\n"
+                aggregated += "\n\n".join(aggregated_parts)
+            else:
+                aggregated = "Panel discussion completed, but no messages were generated."
+
+            # Format response to match simple execution format
+            result = {
+                "success": True,
+                "query": query,
+                "aggregated_response": aggregated,
+                "agent_results": agent_responses,
+                "agent_responses": agent_responses,  # Also include for compatibility
+                "total_agents": len(enabled_agents),
+                "successful_agents": len([r for r in agent_responses if not r.get("error", False)]),
+                "execution_time_ms": None,  # Could calculate if needed
+                "metadata": {
+                    "execution_mode": "enhanced_panel",
+                    "agent_count": len(enabled_agents),
+                    "debate_enabled": True,
+                    "moderator_enabled": True,
+                    "network_pattern": True,
+                    "panel_type": "enhanced_with_moderator_debate"
+                },
+                # Also include full messages for frontend compatibility
+                "messages": messages,
+                "outputs": {
+                    "messages": messages,
+                    "result": aggregated,
+                    "state": {
+                        "completed": True,
+                        "panel_type": "enhanced_with_moderator_debate"
+                    }
+                }
+            }
+
+            # Return with explicit CORS headers
+            allow_origin = resolve_cors_origin(request)
+            return JSONResponse(
+                content=result,
+                headers={
+                    "Access-Control-Allow-Origin": allow_origin,
+                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Allow-Methods": "POST, OPTIONS",
+                    "Access-Control-Allow-Headers": request.headers.get("access-control-request-headers", "*"),
+                    "Vary": "Origin",
+                }
+            )
+
+        except Exception as e:
+            import traceback
+            print(f"⚠️ Enhanced panel workflow failed, falling back to simple execution: {e}")
+            print(f"   Error details: {traceback.format_exc()}")
+            # Fall through to simple execution
+
+    # Default: Use simple sequential execution
+    from api.frameworks import execute_langgraph_simple, SimpleLangGraphRequest
 
     simple_request = SimpleLangGraphRequest(**simple_request_payload)
     result = await execute_langgraph_simple(simple_request)

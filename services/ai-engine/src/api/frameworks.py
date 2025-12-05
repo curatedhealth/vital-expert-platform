@@ -474,12 +474,187 @@ async def execute_langgraph_simple(request: SimpleLangGraphRequest) -> Dict[str,
     """
     Simple adapter endpoint for frontend compatibility.
     Accepts the frontend's current schema and executes workflow with real agents.
+    
+    Smart routing: If 2+ agents detected, routes to enhanced panel workflow with moderator/debate.
     """
     start_time = time.time()
 
     try:
         print(f"🔵 [LangGraph Simple] Query: {request.query[:100]}...")
         print(f"🔵 [LangGraph Simple] Enabled agents: {request.enabled_agents}")
+        
+        # Check if this is a panel workflow (2+ agents)
+        is_panel_workflow = len(request.enabled_agents) >= 2
+        
+        print(f"🔍 [LangGraph Simple] Panel workflow detection:")
+        print(f"   - Agent count: {len(request.enabled_agents)}")
+        print(f"   - Is panel workflow: {is_panel_workflow}")
+        
+        # If it's a panel workflow, route to enhanced panel workflow
+        if is_panel_workflow:
+            print(f"✅ [LangGraph Simple] Routing to Enhanced Panel Workflow with moderator and debate")
+            try:
+                print(f"📦 [LangGraph Simple] Importing enhanced panel workflow...")
+                from langgraph_workflows.ask_panel_enhanced import EnhancedAskPanelWorkflow
+                from services.supabase_client import get_supabase_client
+                from services.agent_service import AgentService
+                from services.llm_service import LLMService
+                
+                # SimpleRAGService is defined in ask_panel_streaming.py, import it from there
+                from api.routes.ask_panel_streaming import SimpleRAGService
+
+                print(f"📦 [LangGraph Simple] Initializing services...")
+                # Initialize services
+                supabase_client = get_supabase_client()
+                if not supabase_client.client:
+                    print(f"📦 [LangGraph Simple] Initializing Supabase client...")
+                    await supabase_client.initialize()
+                
+                agent_service = AgentService(supabase_client)
+                rag_service = SimpleRAGService(supabase_client=supabase_client)
+                await rag_service.initialize()
+                llm_service = LLMService()
+
+                print(f"📦 [LangGraph Simple] Creating enhanced panel workflow...")
+                # Initialize enhanced panel workflow
+                workflow = EnhancedAskPanelWorkflow(
+                    supabase_client=supabase_client,
+                    agent_service=agent_service,
+                    rag_service=rag_service,
+                    llm_service=llm_service,
+                )
+                print(f"📦 [LangGraph Simple] Initializing workflow...")
+                await workflow.initialize()
+                print(f"✅ [LangGraph Simple] Workflow initialized successfully")
+
+                # Execute panel workflow with debate enabled (with timeout)
+                print(f"🚀 [LangGraph Simple] Executing panel workflow with debate enabled...")
+                print(f"   - Question: {request.query[:100]}...")
+                print(f"   - Agents: {request.enabled_agents}")
+                print(f"   - Enable debate: True")
+                print(f"   - Max rounds: 3")
+                print(f"   - Timeout: 180 seconds (3 minutes)")
+                
+                import asyncio
+                messages = []
+                event_count = 0
+                
+                # Execute with timeout to prevent hanging
+                try:
+                    async def collect_events():
+                        nonlocal messages, event_count
+                        async for event in workflow.execute(
+                            question=request.query,
+                            template_slug="default",
+                            selected_agent_ids=request.enabled_agents,
+                            tenant_id="default-tenant",
+                            user_id="anonymous-user",
+                            session_id="dev-session",
+                            enable_debate=True,  # Enable debate with network pattern
+                            max_rounds=2,  # Reduced to 2 rounds to prevent long execution times
+                            require_consensus=False
+                        ):
+                            event_count += 1
+                            event_type = event.get("type")
+                            print(f"📨 [LangGraph Simple] Event {event_count}: type={event_type}")
+                            
+                            if event_type == "message":
+                                msg_data = event.get("data")
+                                if msg_data:
+                                    messages.append(msg_data)
+                                    msg_role = msg_data.get("role", "unknown")
+                                    msg_agent = msg_data.get("agent_name", "unknown")
+                                    print(f"   📝 Message from {msg_role}/{msg_agent}: {msg_data.get('content', '')[:50]}...")
+                            elif event_type == "complete":
+                                print(f"✅ [LangGraph Simple] Workflow completed")
+                                break
+                            elif event_type == "error":
+                                print(f"❌ [LangGraph Simple] Workflow error: {event.get('error')}")
+                                break
+                    
+                    # Execute with 3 minute timeout
+                    await asyncio.wait_for(collect_events(), timeout=180.0)
+                    print(f"📊 [LangGraph Simple] Collected {len(messages)} messages from workflow")
+                    
+                except asyncio.TimeoutError:
+                    print(f"⏱️ [LangGraph Simple] Workflow execution timed out after 180 seconds")
+                    # Return partial results if we have any messages
+                    if messages:
+                        print(f"⚠️ [LangGraph Simple] Returning {len(messages)} partial messages")
+                    else:
+                        raise HTTPException(
+                            status_code=504,
+                            detail="Panel workflow execution timed out after 3 minutes. Please try with fewer agents or simpler queries."
+                        )
+
+                # Extract agent responses and format them
+                agent_responses = []
+                aggregated_parts = []
+                
+                for msg in messages:
+                    msg_type = msg.get("type")
+                    role = msg.get("role") or ""
+                    agent_name = msg.get("agent_name") or msg.get("role") or "Unknown"
+                    
+                    # Check if this is a moderator message (role="moderator" or agent_name="Moderator")
+                    is_moderator = role == "moderator" or agent_name == "Moderator"
+                    
+                    # Include all message types: agent, orchestrator (which includes moderator)
+                    if msg_type in ["agent", "orchestrator"]:
+                        agent_id = msg.get("agent_id")
+                        content = msg.get("content") or ""
+                        
+                        agent_responses.append({
+                            "agent_id": agent_id,
+                            "agent_name": agent_name,
+                            "response": content,
+                            "content": content,
+                            "confidence": 0.85,
+                            "type": "moderator" if is_moderator else msg_type
+                        })
+                        
+                        # Add to aggregated response
+                        if is_moderator:
+                            aggregated_parts.append(f"**🎤 Moderator**: {content}")
+                        elif msg_type == "orchestrator":
+                            aggregated_parts.append(f"**📋 Orchestrator**: {content}")
+                        else:
+                            aggregated_parts.append(f"**{agent_name}**: {content}")
+                
+                # Build aggregated response
+                if aggregated_parts:
+                    aggregated = f"Panel Discussion with {len(request.enabled_agents)} experts:\n\n"
+                    aggregated += "\n\n".join(aggregated_parts)
+                else:
+                    aggregated = "Panel discussion completed, but no messages were generated."
+
+                duration = int((time.time() - start_time) * 1000)
+
+                return {
+                    "success": True,
+                    "query": request.query,
+                    "aggregated_response": aggregated,
+                    "agent_results": agent_responses,
+                    "agent_responses": agent_responses,
+                    "total_agents": len(request.enabled_agents),
+                    "successful_agents": len([r for r in agent_responses if not r.get("error", False)]),
+                    "execution_time_ms": duration,
+                    "metadata": {
+                        "execution_mode": "enhanced_panel",
+                        "agent_count": len(request.enabled_agents),
+                        "debate_enabled": True,
+                        "moderator_enabled": True,
+                        "network_pattern": True,
+                        "panel_type": "enhanced_with_moderator_debate"
+                    },
+                    "messages": messages
+                }
+
+            except Exception as e:
+                import traceback
+                print(f"⚠️ Enhanced panel workflow failed, falling back to simple execution: {e}")
+                print(f"   Error details: {traceback.format_exc()}")
+                # Fall through to simple execution
 
         # Import dependencies
         import openai
@@ -514,8 +689,39 @@ async def execute_langgraph_simple(request: SimpleLangGraphRequest) -> Dict[str,
         agent_responses = []
         agents_data = []
         
+        # Filter to only valid UUIDs first
+        valid_agent_ids = []
+        for agent_id in request.enabled_agents:
+            if agent_id and isinstance(agent_id, str):
+                dash_count = agent_id.count('-')
+                if len(agent_id) == 36 and dash_count == 4:
+                    valid_agent_ids.append(agent_id)
+                else:
+                    print(f"⚠️ Skipping '{agent_id}': Not a valid UUID format (likely a workflow node ID, not an agent ID)")
+        
+        # If no valid agents found, return error
+        if len(valid_agent_ids) == 0:
+            error_msg = (
+                "No valid agent UUIDs found in enabled_agents. "
+                "Please ensure agent nodes in your workflow are configured with real agent IDs from the database. "
+                f"Received {len(request.enabled_agents)} items, but none were valid UUIDs."
+            )
+            print(f"❌ {error_msg}")
+            return {
+                "success": False,
+                "error": error_msg,
+                "details": {
+                    "received_count": len(request.enabled_agents),
+                    "valid_count": 0,
+                    "received_ids": request.enabled_agents[:10],  # First 10 for debugging
+                },
+                "agent_responses": [],
+                "execution_time_ms": int((time.time() - start_time) * 1000),
+            }
+        
         if supabase_client and supabase_client.client:
-            for agent_id in request.enabled_agents:
+            for agent_id in valid_agent_ids:
+                
                 try:
                     agent = await supabase_client.get_agent_by_id(agent_id)
                     if agent:
@@ -545,9 +751,9 @@ async def execute_langgraph_simple(request: SimpleLangGraphRequest) -> Dict[str,
                         "temperature": 0.7
                     })
         else:
-            # Fallback if Supabase not available
+            # Fallback if Supabase not available - still only use valid UUIDs
             print("⚠️ Supabase client not available, using default agent configs")
-            for agent_id in request.enabled_agents:
+            for agent_id in valid_agent_ids:
                 agents_data.append({
                     "id": agent_id,
                     "name": f"Agent {agent_id[:8]}",
@@ -555,6 +761,20 @@ async def execute_langgraph_simple(request: SimpleLangGraphRequest) -> Dict[str,
                     "model": "gpt-4o",
                     "temperature": 0.7
                 })
+        
+        # Check if we have any agents to execute
+        if len(agents_data) == 0:
+            error_msg = (
+                "No agents available to execute. "
+                "Please ensure agent nodes in your workflow are configured with valid agent UUIDs from the database."
+            )
+            print(f"❌ {error_msg}")
+            return {
+                "success": False,
+                "error": error_msg,
+                "agent_responses": [],
+                "execution_time_ms": int((time.time() - start_time) * 1000),
+            }
         
         # Execute agents sequentially with real LLM calls
         for agent in agents_data:
@@ -771,6 +991,11 @@ async def execute_panel_simple(request: SimplePanelRequest) -> Dict[str, Any]:
         
         if supabase_client and supabase_client.client:
             for agent_id in agent_ids:
+                # Validate UUID format (already validated above, but double-check)
+                if not (len(agent_id) == 36 and agent_id.count('-') == 4):
+                    print(f"⚠️ Skipping '{agent_id}': Not a valid UUID format")
+                    continue
+                
                 try:
                     agent = await supabase_client.get_agent_by_id(agent_id)
                     if agent:

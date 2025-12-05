@@ -649,7 +649,7 @@ Let's proceed with a panel discussion round...
             debate_messages = []
             successful_responses = []
             failed_responses = []
-            
+
             for i, expert_id in enumerate(state["selected_agent_ids"]):
                 # Get agent name for moderator message
                 try:
@@ -680,17 +680,17 @@ Let's proceed with a panel discussion round...
                     if isinstance(result, dict) and result.get("success"):
                         # Create message object
                         expert_message = {
-                            "id": str(uuid4()),
-                            "type": MessageType.AGENT,
-                            "role": result["agent_name"],
-                            "content": result["response"],
-                            "timestamp": datetime.utcnow().isoformat(),
-                            "agent_id": result["agent_id"],
-                            "agent_name": result["agent_name"],
-                            "metadata": {"round": round_number, "role": "panel_debater"}
+                        "id": str(uuid4()),
+                        "type": MessageType.AGENT,
+                        "role": result["agent_name"],
+                        "content": result["response"],
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "agent_id": result["agent_id"],
+                        "agent_name": result["agent_name"],
+                        "metadata": {"round": round_number, "role": "panel_debater"}
                         }
                         debate_messages.append(expert_message)
-                        successful_responses.append(result)
+                    successful_responses.append(result)
                         
                         logger.info(
                             "✅ Debate round agent response successful",
@@ -699,7 +699,7 @@ Let's proceed with a panel discussion round...
                             round=round_number,
                             response_length=len(result["response"])
                         )
-                    else:
+                else:
                         failed_responses.append({"agent_id": expert_id, "result": result})
                 except Exception as e:
                     logger.error(
@@ -862,7 +862,19 @@ Let's proceed with a panel discussion round...
             
             if not expert_id:
                 logger.error("❌ No expert ID set for debate response")
+                # Mark as spoken to avoid infinite loop
+                experts_spoken = state.get("experts_spoken_this_round", [])
+                if expert_index not in experts_spoken:
+                    experts_spoken.append(expert_index)
+                state["experts_spoken_this_round"] = experts_spoken
+                state["next_expert_to_speak"] = None
                 return state
+            
+            logger.info(
+                f"🎯 Executing expert {expert_index + 1} in debate round {round_number}",
+                expert_id=expert_id,
+                expert_index=expert_index
+            )
             
             # Get previous messages for context
             previous_panel_messages = [
@@ -921,26 +933,52 @@ Let's proceed with a panel discussion round...
                         experts_spoken_count=len(experts_spoken)
                     )
                 else:
-                    logger.error(f"❌ Expert execution failed: {result}")
+                    error_msg = result.get("error", "Unknown error") if isinstance(result, dict) else str(result)
+                    logger.error(f"❌ Expert execution failed: {error_msg}")
+                    
+                    # Add error message to state
+                    state = self._add_message(
+                        state,
+                        MessageType.ORCHESTRATOR,
+                        "system",
+                        f"⚠️ Expert {expert_index + 1} was unable to respond: {error_msg}",
+                        metadata={"error": True, "expert_index": expert_index}
+                    )
+                    
                     # Still mark as spoken to avoid infinite loop
                     experts_spoken = state.get("experts_spoken_this_round", [])
                     if expert_index not in experts_spoken:
                         experts_spoken.append(expert_index)
                     state["experts_spoken_this_round"] = experts_spoken
+                    state["next_expert_to_speak"] = None
                     
             except Exception as e:
+                import traceback
+                error_details = traceback.format_exc()
                 logger.error(
                     "❌ Expert debate response failed",
                     expert_id=expert_id,
                     round=round_number,
                     error=str(e),
-                    error_type=type(e).__name__
+                    error_type=type(e).__name__,
+                    traceback=error_details
                 )
+                
+                # Add error message to state
+                state = self._add_message(
+                    state,
+                    MessageType.ORCHESTRATOR,
+                    "system",
+                    f"⚠️ Expert {expert_index + 1} encountered an error: {str(e)}",
+                    metadata={"error": True, "expert_index": expert_index}
+                )
+                
                 # Mark as spoken to avoid infinite loop
                 experts_spoken = state.get("experts_spoken_this_round", [])
                 if expert_index not in experts_spoken:
                     experts_spoken.append(expert_index)
                 state["experts_spoken_this_round"] = experts_spoken
+                state["next_expert_to_speak"] = None
             
             return state
             
@@ -971,7 +1009,20 @@ Let's proceed with a panel discussion round...
         experts_spoken = state.get("experts_spoken_this_round", [])
         all_experts_count = len(state.get("selected_agent_ids", []))
         current_round = state.get("current_round", 1)
-        max_rounds = state.get("max_rounds", 3)
+        max_rounds = state.get("max_rounds", 2)  # Default to 2 rounds to prevent long execution
+        
+        logger.info(
+            f"🔄 Routing after expert response",
+            round=current_round,
+            max_rounds=max_rounds,
+            experts_spoken=len(experts_spoken),
+            total_experts=all_experts_count
+        )
+        
+        # Safety check: if we've been in the same round for too long, move to consensus
+        if len(experts_spoken) >= all_experts_count * 2:  # Safety: if we've spoken twice as many times as experts
+            logger.warning("⚠️ Safety check: Too many expert responses, forcing consensus check")
+            return "check_consensus"
         
         # If all experts have spoken this round
         if len(experts_spoken) >= all_experts_count:
@@ -980,7 +1031,7 @@ Let's proceed with a panel discussion round...
                 # Start next round
                 state["current_round"] = current_round + 1
                 state["experts_spoken_this_round"] = []
-                logger.info(f"💬 Starting round {current_round + 1}")
+                logger.info(f"💬 Starting round {current_round + 1}/{max_rounds}")
                 return "moderator_routing"  # Continue debate with new round
             else:
                 logger.info("💬 Max rounds reached, checking consensus")
@@ -1338,7 +1389,7 @@ Provide your expert analysis and recommendations as a panel member. Be thorough 
             base_temperature = agent.get("temperature", 0.7)
             debate_temperature = base_temperature + 0.2 if prompt_type == "debate" else base_temperature
             debate_temperature = min(debate_temperature, 1.0)  # Cap at 1.0
-            
+
             response = await self.llm_service.generate(
                 prompt=prompt,
                 model=agent.get("model", "gpt-4"),
@@ -1469,11 +1520,31 @@ Provide your expert analysis and recommendations as a panel member. Be thorough 
         messages_yielded = 0
         accumulated_state = initial_state.copy()
 
+        # Temporarily disable LangSmith if enabled to avoid large payload errors (200MB limit)
+        import os
+        langsmith_enabled = os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true"
+        original_tracing = os.environ.get("LANGCHAIN_TRACING_V2")
+        original_api_key = os.environ.get("LANGCHAIN_API_KEY")
+
         try:
+            # Completely disable LangSmith for large panel workflows to avoid size limit errors
+            if langsmith_enabled or original_api_key:
+                os.environ["LANGCHAIN_TRACING_V2"] = "false"
+                if "LANGCHAIN_API_KEY" in os.environ:
+                    del os.environ["LANGCHAIN_API_KEY"]
+                logger.info("🔇 LangSmith completely disabled for panel workflow to avoid size limit errors")
+            
             # Execute workflow with streaming mode - use "updates" to get node names
+            # Set recursion limit to prevent infinite loops (default is 25)
+            # Reduced to 30 to prevent very long executions (2 rounds * 2 experts * ~7 nodes per round)
+            config = {
+                "recursion_limit": 30,  # Reasonable limit for 2 rounds with 2-3 experts
+            }
+            
             async for event in self.workflow.astream(
                 initial_state,
-                stream_mode="updates"  # Get updates for each node with node names
+                stream_mode="updates",  # Get updates for each node with node names
+                config=config
             ):
                 # event is a dict with node name as key and updated state as value
                 for node_name, node_output in event.items():
@@ -1543,3 +1614,13 @@ Provide your expert analysis and recommendations as a panel member. Be thorough 
                 "type": "error",
                 "error": str(e)
             }
+        finally:
+            # Always restore LangSmith settings if they were changed
+            if original_tracing is not None:
+                os.environ["LANGCHAIN_TRACING_V2"] = original_tracing
+            elif langsmith_enabled and "LANGCHAIN_TRACING_V2" in os.environ:
+                # Only delete if we disabled it (it was enabled before)
+                del os.environ["LANGCHAIN_TRACING_V2"]
+            
+            if original_api_key is not None:
+                os.environ["LANGCHAIN_API_KEY"] = original_api_key

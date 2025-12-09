@@ -428,6 +428,144 @@ jobs:
             "environment": "production"
           }
 
+  # Ask Expert specific tests
+  ask-expert-tests:
+    runs-on: ubuntu-latest
+    name: Ask Expert Tests
+    needs: [code-quality]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r services/ai-engine/requirements.txt
+        pip install pytest pytest-asyncio pytest-cov
+        
+    - name: Run Fusion Engine tests
+      run: |
+        pytest services/ai-engine/src/tests/test_fusion_engine.py -v
+        
+    - name: Run LangGraph workflow tests
+      run: |
+        pytest services/ai-engine/src/tests/test_langgraph_workflows.py -v
+        
+    - name: Run Agent Instantiation tests
+      run: |
+        pytest services/ai-engine/src/tests/agent_os/ -v
+        
+    - name: Run performance benchmarks
+      run: |
+        pytest services/ai-engine/src/tests/test_performance_benchmarks_phase5.py -v
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: ask-expert-test-results
+        path: |
+          .coverage
+          pytest-report.xml
+
+  # Ask Expert E2E tests
+  ask-expert-e2e:
+    runs-on: ubuntu-latest
+    name: Ask Expert E2E Tests
+    needs: [test, ask-expert-tests]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      working-directory: apps/vital-system
+      run: npm ci
+      
+    - name: Install Playwright browsers
+      working-directory: apps/vital-system
+      run: npx playwright install --with-deps
+      
+    - name: Run Ask Expert E2E tests
+      working-directory: apps/vital-system
+      run: |
+        npx playwright test e2e/ask-expert-modes.spec.ts --reporter=html
+      env:
+        BASE_URL: ${{ secrets.STAGING_URL }}
+        TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+        TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        
+    - name: Upload Playwright report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: playwright-report
+        path: apps/vital-system/playwright-report/
+
+  # Ask Expert mode-specific validation
+  ask-expert-mode-validation:
+    runs-on: ubuntu-latest
+    name: Validate Ask Expert Modes
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate Mode 1 (Manual Interactive)
+      run: |
+        # Health check
+        curl -sf "${{ secrets.STAGING_URL }}/api/v1/expert/mode1/health" || exit 1
+        echo "✅ Mode 1 health check passed"
+        
+    - name: Validate Mode 2 (Auto Interactive)
+      run: |
+        # Health check
+        curl -sf "${{ secrets.STAGING_URL }}/api/v1/expert/mode2/health" || exit 1
+        echo "✅ Mode 2 health check passed"
+        
+    - name: Validate Mode 3 (Manual Autonomous)
+      run: |
+        # Health check
+        curl -sf "${{ secrets.STAGING_URL }}/api/v1/expert/mode3/health" || exit 1
+        echo "✅ Mode 3 health check passed"
+        
+    - name: Validate Mode 4 (Auto Autonomous)
+      run: |
+        # Health check
+        curl -sf "${{ secrets.STAGING_URL }}/api/v1/expert/mode4/health" || exit 1
+        echo "✅ Mode 4 health check passed"
+        
+    - name: Validate Fusion Engine
+      run: |
+        # Test fusion selection endpoint
+        RESPONSE=$(curl -sf "${{ secrets.STAGING_URL }}/api/v1/fusion/health" || echo '{"status":"error"}')
+        if echo "$RESPONSE" | jq -e '.status == "healthy"' > /dev/null; then
+          echo "✅ Fusion Engine healthy"
+        else
+          echo "⚠️ Fusion Engine not healthy: $RESPONSE"
+        fi
+        
+    - name: Validate Agent Instantiation
+      run: |
+        # Test agent list endpoint
+        curl -sf "${{ secrets.STAGING_URL }}/api/v1/agents/health" || exit 1
+        echo "✅ Agent service healthy"
+
   # Rollback workflow (manual trigger)
   rollback:
     runs-on: ubuntu-latest

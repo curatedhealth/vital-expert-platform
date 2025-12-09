@@ -8,6 +8,10 @@ ARCHITECTURE:
 - All services use the same endpoints
 - Frameworks are shared infrastructure, not service-specific
 - No tight coupling between frameworks and services
+
+Architecture Pattern (LLM Config):
+- Environment variables: L2_LLM_MODEL, L2_LLM_TEMPERATURE, L2_LLM_MAX_TOKENS
+- Python: NO hardcoded model/temperature/max_tokens values
 """
 
 from fastapi import APIRouter, HTTPException
@@ -17,6 +21,11 @@ from enum import Enum
 import os
 import time
 import openai
+
+from infrastructure.llm.config_service import get_llm_config_for_level
+
+# Get L2 defaults from environment variables (for expert agents in frameworks)
+_L2_DEFAULTS = get_llm_config_for_level("L2")
 
 # Initialize router
 router = APIRouter(prefix="/frameworks", tags=["frameworks"])
@@ -58,9 +67,9 @@ class AgentDefinition(BaseModel):
     goal: Optional[str] = None
     backstory: Optional[str] = None
     systemPrompt: str
-    model: Optional[str] = "gpt-4o"
-    temperature: Optional[float] = 0.7
-    maxTokens: Optional[int] = 2000
+    model: Optional[str] = None  # Falls back to _L2_DEFAULTS.model in execution
+    temperature: Optional[float] = None  # Falls back to _L2_DEFAULTS.temperature in execution
+    maxTokens: Optional[int] = None  # Falls back to _L2_DEFAULTS.max_tokens in execution
     tools: Optional[List[str]] = []
     allowDelegation: Optional[bool] = False
 
@@ -126,10 +135,10 @@ async def execute_langgraph(request: ExecutionRequest) -> ExecutionResult:
             
             # Call OpenAI
             response = get_openai_client().chat.completions.create(
-                model=agent.model or "gpt-4o",
+                model=agent.model or _L2_DEFAULTS.model,
                 messages=agent_messages,
-                temperature=agent.temperature or 0.7,
-                max_tokens=agent.maxTokens or 2000
+                temperature=agent.temperature if agent.temperature is not None else _L2_DEFAULTS.temperature,
+                max_tokens=agent.maxTokens or _L2_DEFAULTS.max_tokens
             )
             
             agent_response = response.choices[0].message.content
@@ -209,12 +218,12 @@ async def execute_autogen(request: ExecutionRequest) -> ExecutionResult:
             ]
             
             response = get_openai_client().chat.completions.create(
-                model=agent.model or "gpt-4o",
+                model=agent.model or _L2_DEFAULTS.model,
                 messages=agent_messages,
-                temperature=agent.temperature or 0.7,
-                max_tokens=agent.maxTokens or 2000
+                temperature=agent.temperature if agent.temperature is not None else _L2_DEFAULTS.temperature,
+                max_tokens=agent.maxTokens or _L2_DEFAULTS.max_tokens
             )
-            
+
             agent_response = response.choices[0].message.content
             messages.append({
                 "role": "assistant",
@@ -238,10 +247,10 @@ async def execute_autogen(request: ExecutionRequest) -> ExecutionResult:
                 ]
                 
                 response = get_openai_client().chat.completions.create(
-                    model=agent.model or "gpt-4o",
+                    model=agent.model or _L2_DEFAULTS.model,
                     messages=agent_messages,
-                    temperature=agent.temperature or 0.7,
-                    max_tokens=agent.maxTokens or 1000
+                    temperature=agent.temperature if agent.temperature is not None else _L2_DEFAULTS.temperature,
+                    max_tokens=agent.maxTokens or _L2_DEFAULTS.max_tokens
                 )
                 
                 agent_response = response.choices[0].message.content
@@ -273,13 +282,13 @@ Provide:
 """
             
             consensus_response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+                model=_L2_DEFAULTS.model,
                 messages=[
                     {"role": "system", "content": "You are a consensus builder who synthesizes expert opinions."},
                     {"role": "user", "content": consensus_prompt}
                 ],
-                temperature=0.5,
-                max_tokens=1500
+                temperature=_L2_DEFAULTS.temperature,
+                max_tokens=_L2_DEFAULTS.max_tokens
             )
             
             consensus_data = {
@@ -361,12 +370,12 @@ async def execute_crewai(request: ExecutionRequest) -> ExecutionResult:
             ]
             
             response = get_openai_client().chat.completions.create(
-                model=agent.model or "gpt-4o",
+                model=agent.model or _L2_DEFAULTS.model,
                 messages=agent_messages,
-                temperature=agent.temperature or 0.7,
-                max_tokens=agent.maxTokens or 2000
+                temperature=agent.temperature if agent.temperature is not None else _L2_DEFAULTS.temperature,
+                max_tokens=agent.maxTokens or _L2_DEFAULTS.max_tokens
             )
-            
+
             agent_response = response.choices[0].message.content
             messages.append({
                 "role": "assistant",
@@ -523,8 +532,8 @@ async def execute_langgraph_simple(request: SimpleLangGraphRequest) -> Dict[str,
                             "id": agent_id,
                             "name": agent.get("name", f"Agent {agent_id[:8]}"),
                             "system_prompt": agent.get("system_prompt", "You are a helpful AI assistant."),
-                            "model": agent.get("base_model") or agent.get("model_name") or "gpt-4o",
-                            "temperature": agent.get("metadata", {}).get("temperature", 0.7) if isinstance(agent.get("metadata"), dict) else 0.7
+                            "model": agent.get("base_model") or agent.get("model_name") or _L2_DEFAULTS.model,
+                            "temperature": agent.get("metadata", {}).get("temperature", _L2_DEFAULTS.temperature) if isinstance(agent.get("metadata"), dict) else _L2_DEFAULTS.temperature
                         })
                     else:
                         print(f"⚠️ Agent {agent_id} not found in database, using default")
@@ -532,8 +541,8 @@ async def execute_langgraph_simple(request: SimpleLangGraphRequest) -> Dict[str,
                             "id": agent_id,
                             "name": f"Agent {agent_id[:8]}",
                             "system_prompt": "You are a helpful AI assistant.",
-                            "model": "gpt-4o",
-                            "temperature": 0.7
+                            "model": _L2_DEFAULTS.model,
+                            "temperature": _L2_DEFAULTS.temperature
                         })
                 except Exception as e:
                     print(f"⚠️ Error loading agent {agent_id}: {e}")
@@ -541,8 +550,8 @@ async def execute_langgraph_simple(request: SimpleLangGraphRequest) -> Dict[str,
                         "id": agent_id,
                         "name": f"Agent {agent_id[:8]}",
                         "system_prompt": "You are a helpful AI assistant.",
-                        "model": "gpt-4o",
-                        "temperature": 0.7
+                        "model": _L2_DEFAULTS.model,
+                        "temperature": _L2_DEFAULTS.temperature
                     })
         else:
             # Fallback if Supabase not available
@@ -552,8 +561,8 @@ async def execute_langgraph_simple(request: SimpleLangGraphRequest) -> Dict[str,
                     "id": agent_id,
                     "name": f"Agent {agent_id[:8]}",
                     "system_prompt": "You are a helpful AI assistant.",
-                    "model": "gpt-4o",
-                    "temperature": 0.7
+                    "model": _L2_DEFAULTS.model,
+                    "temperature": _L2_DEFAULTS.temperature
                 })
         
         # Execute agents sequentially with real LLM calls
@@ -572,7 +581,7 @@ async def execute_langgraph_simple(request: SimpleLangGraphRequest) -> Dict[str,
                     model=agent["model"],
                     messages=messages,
                     temperature=agent["temperature"],
-                    max_tokens=2000
+                    max_tokens=_L2_DEFAULTS.max_tokens
                 )
                 
                 agent_response_text = response.choices[0].message.content
@@ -778,8 +787,8 @@ async def execute_panel_simple(request: SimplePanelRequest) -> Dict[str, Any]:
                             "id": agent_id,
                             "name": agent.get("name", f"Agent {agent_id[:8]}"),
                             "system_prompt": agent.get("system_prompt", "You are a helpful AI assistant."),
-                            "model": agent.get("base_model") or agent.get("model_name") or "gpt-4o",
-                            "temperature": agent.get("metadata", {}).get("temperature", 0.7) if isinstance(agent.get("metadata"), dict) else 0.7
+                            "model": agent.get("base_model") or agent.get("model_name") or _L2_DEFAULTS.model,
+                            "temperature": agent.get("metadata", {}).get("temperature", _L2_DEFAULTS.temperature) if isinstance(agent.get("metadata"), dict) else _L2_DEFAULTS.temperature
                         })
                     else:
                         print(f"⚠️ Agent {agent_id} not found in database, using default")
@@ -787,8 +796,8 @@ async def execute_panel_simple(request: SimplePanelRequest) -> Dict[str, Any]:
                             "id": agent_id,
                             "name": f"Agent {agent_id[:8]}",
                             "system_prompt": "You are a helpful AI assistant.",
-                            "model": "gpt-4o",
-                            "temperature": 0.7
+                            "model": _L2_DEFAULTS.model,
+                            "temperature": _L2_DEFAULTS.temperature
                         })
                 except Exception as e:
                     print(f"⚠️ Error loading agent {agent_id}: {e}")
@@ -796,8 +805,8 @@ async def execute_panel_simple(request: SimplePanelRequest) -> Dict[str, Any]:
                         "id": agent_id,
                         "name": f"Agent {agent_id[:8]}",
                         "system_prompt": "You are a helpful AI assistant.",
-                        "model": "gpt-4o",
-                        "temperature": 0.7
+                        "model": _L2_DEFAULTS.model,
+                        "temperature": _L2_DEFAULTS.temperature
                     })
         else:
             # Fallback if Supabase not available
@@ -807,8 +816,8 @@ async def execute_panel_simple(request: SimplePanelRequest) -> Dict[str, Any]:
                     "id": agent_id,
                     "name": f"Agent {agent_id[:8]}",
                     "system_prompt": "You are a helpful AI assistant.",
-                    "model": "gpt-4o",
-                    "temperature": 0.7
+                    "model": _L2_DEFAULTS.model,
+                    "temperature": _L2_DEFAULTS.temperature
                 })
         
         # Execute agents sequentially so each expert can see previous responses
@@ -877,7 +886,7 @@ Provide detailed, professional responses based on your expertise."""
                     model=agent["model"],
                     messages=messages,
                     temperature=agent["temperature"],
-                    max_tokens=2000
+                    max_tokens=_L2_DEFAULTS.max_tokens
                 )
                 
                 agent_response_text = response.choices[0].message.content

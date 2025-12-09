@@ -130,7 +130,7 @@ export const AgentCard = React.forwardRef<HTMLDivElement, AgentCardProps>(
     const statusColors = {
       active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100',
       testing: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100',
-      development: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100',
+      development: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-100',
       inactive: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100',
     };
 

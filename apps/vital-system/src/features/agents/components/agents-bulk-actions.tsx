@@ -237,7 +237,7 @@ export function AgentsBulkActions({
                   disabled={isLoading}
                   className="gap-2"
                 >
-                  <Clock className="h-4 w-4 text-gray-600" />
+                  <Clock className="h-4 w-4 text-neutral-600" />
                   Deactivate
                 </Button>
               </>

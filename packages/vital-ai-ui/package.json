@@ -1,0 +1,73 @@
+{
+  "name": "@vital/ai-ui",
+  "version": "1.0.0",
+  "description": "VITAL AI UI Component Library - Shared components for AI-powered healthcare applications",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./conversation": "./src/conversation/index.ts",
+    "./reasoning": "./src/reasoning/index.ts",
+    "./workflow": "./src/workflow/index.ts",
+    "./data": "./src/data/index.ts",
+    "./documents": "./src/documents/index.ts",
+    "./agents": "./src/agents/index.ts",
+    "./layout": "./src/layout/index.ts",
+    "./fusion": "./src/fusion/index.ts",
+    "./hitl": "./src/hitl/index.ts",
+    "./chat": "./src/chat/index.ts",
+    "./canvas": "./src/canvas/index.ts",
+    "./advanced": "./src/advanced/index.ts",
+    "./mission": "./src/mission/index.ts",
+    "./v0": "./src/v0/index.ts",
+    "./hooks": "./src/hooks/index.ts",
+    "./lib/utils": "./src/lib/utils.ts"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "next": "^14.0.0 || ^15.0.0",
+    "@radix-ui/react-accordion": "*",
+    "@radix-ui/react-alert-dialog": "*",
+    "@radix-ui/react-avatar": "*",
+    "@radix-ui/react-collapsible": "*",
+    "@radix-ui/react-dialog": "*",
+    "@radix-ui/react-dropdown-menu": "*",
+    "@radix-ui/react-label": "*",
+    "@radix-ui/react-popover": "*",
+    "@radix-ui/react-progress": "*",
+    "@radix-ui/react-scroll-area": "*",
+    "@radix-ui/react-separator": "*",
+    "@radix-ui/react-tooltip": "*"
+  },
+  "dependencies": {
+    "ai": "^5.0.86",
+    "@ai-sdk/react": "^2.0.86",
+    "streamdown": "^1.4.0",
+    "lucide-react": "^0.400.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0",
+    "date-fns": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "vital",
+    "ai",
+    "ui",
+    "components",
+    "healthcare",
+    "streaming",
+    "vercel-ai-sdk",
+    "shadcn-ui"
+  ],
+  "repository": {
+    "type": "git",
+    "directory": "packages/vital-ai-ui"
+  },
+  "license": "PROPRIETARY"
+}

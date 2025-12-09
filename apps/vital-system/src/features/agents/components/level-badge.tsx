@@ -25,7 +25,7 @@ const levelBadgeVariants = cva(
         2: 'border-blue-600/20 bg-blue-600 text-white shadow-sm hover:shadow-md hover:scale-105',
         3: 'border-green-600/20 bg-green-600 text-white shadow-sm hover:shadow-md hover:scale-105',
         4: 'border-orange-600/20 bg-orange-600 text-black shadow-sm hover:shadow-md hover:scale-105',
-        5: 'border-gray-600/20 bg-gray-600 text-white shadow-sm hover:shadow-md hover:scale-105',
+        5: 'border-neutral-600/20 bg-neutral-600 text-white shadow-sm hover:shadow-md hover:scale-105',
       },
       size: {
         sm: 'px-2 py-0.5 text-[10px]',
@@ -64,7 +64,7 @@ const levelBadgeVariants = cva(
       {
         level: 5,
         variant: 'outline',
-        className: 'text-gray-600 border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-950',
+        className: 'text-neutral-600 border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-950',
       },
       // Ghost variants
       {
@@ -90,7 +90,7 @@ const levelBadgeVariants = cva(
       {
         level: 5,
         variant: 'ghost',
-        className: 'text-gray-600 hover:bg-gray-600',
+        className: 'text-neutral-600 hover:bg-neutral-600',
       },
     ],
     defaultVariants: {

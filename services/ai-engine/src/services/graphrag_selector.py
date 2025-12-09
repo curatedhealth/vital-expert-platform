@@ -579,6 +579,9 @@ class GraphRAGSelector:
         """
         Enrich agent results with full details from database.
 
+        IMPORTANT: Filters out agents that don't exist in the database.
+        This handles stale Pinecone IDs that no longer exist in PostgreSQL.
+
         Fetches:
         - Full agent metadata
         - Capabilities
@@ -590,8 +593,11 @@ class GraphRAGSelector:
             tenant_id: Tenant identifier
 
         Returns:
-            Agents with enriched details
+            Agents with enriched details (only those that exist in database)
         """
+        if not agents:
+            return []
+
         try:
             supabase = self._get_supabase()
 
@@ -612,9 +618,34 @@ class GraphRAGSelector:
                 for agent in (result.data or [])
             }
 
-            # Enrich agents
+            # Log any stale IDs (exist in Pinecone but not in PostgreSQL)
+            found_ids = set(agent_details_map.keys())
+            requested_ids = set(agent_ids)
+            stale_ids = requested_ids - found_ids
+
+            if stale_ids:
+                logger.warning(
+                    "Stale agent IDs filtered out (exist in Pinecone but not in PostgreSQL)",
+                    stale_count=len(stale_ids),
+                    stale_ids=list(stale_ids),
+                    note="Consider re-indexing Pinecone to remove stale vectors"
+                )
+
+            # Enrich agents - ONLY include those that exist in database
+            enriched_agents = []
             for agent in agents:
-                details = agent_details_map.get(agent["agent_id"], {})
+                agent_id = agent["agent_id"]
+                details = agent_details_map.get(agent_id)
+
+                # Skip agents that don't exist in the database
+                if not details:
+                    logger.debug(
+                        "Skipping stale agent",
+                        agent_id=agent_id,
+                        agent_name=agent.get("agent_name", "Unknown")
+                    )
+                    continue
+
                 agent.update({
                     "description": details.get("description", ""),
                     "capabilities": details.get("capabilities", []),
@@ -627,15 +658,23 @@ class GraphRAGSelector:
                         "success_rate": details.get("success_rate", 0.0)
                     }
                 })
+                enriched_agents.append(agent)
 
-            return agents
+            logger.info(
+                "Agent enrichment completed",
+                requested=len(agents),
+                found=len(enriched_agents),
+                filtered_stale=len(stale_ids)
+            )
+
+            return enriched_agents
 
         except Exception as e:
             logger.error(
                 "Failed to enrich agent details",
                 error=str(e)
             )
-            return agents  # Return un-enriched agents
+            return agents  # Return un-enriched agents on error
 
     # ==================== Analytics ====================
 
@@ -709,3 +748,154 @@ def initialize_graphrag_selector(
         supabase_client=supabase_client
     )
     return _graphrag_selector
+
+
+# ==================== Fusion Engine Adapter ====================
+# Adapter that wraps GraphRAGSelector to provide FusionEngine-compatible interface
+
+
+from dataclasses import dataclass, field
+from typing import Tuple
+
+
+@dataclass
+class FusionResult:
+    """Compatible with fusion.fusion_engine.FusionResult for L1 orchestrator."""
+    fused_rankings: List[Tuple[str, float, Dict]] = field(default_factory=list)
+    vector_results: List[Dict] = field(default_factory=list)
+    graph_results: List[Dict] = field(default_factory=list)
+    relational_results: List[Dict] = field(default_factory=list)
+    vector_scores: Dict[str, float] = field(default_factory=dict)
+    graph_paths: List[Dict] = field(default_factory=list)
+    relational_patterns: Dict = field(default_factory=dict)
+    retrieval_time_ms: float = 0.0
+    sources_used: List[str] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
+
+
+class GraphRAGFusionAdapter:
+    """
+    Adapter that wraps GraphRAGSelector to provide FusionEngine-compatible interface.
+
+    This allows the L1MasterOrchestrator to use GraphRAGSelector through
+    the standard fusion_engine.retrieve() interface.
+
+    Key mapping:
+    - GraphRAGSelector.select_agents() -> FusionEngine.retrieve()
+    - Returns FusionResult with fused_rankings as List[Tuple[id, score, metadata]]
+    """
+
+    def __init__(self, graphrag_selector: GraphRAGSelector):
+        """
+        Initialize adapter with GraphRAGSelector instance.
+
+        Args:
+            graphrag_selector: GraphRAGSelector instance to wrap
+        """
+        self.selector = graphrag_selector
+        logger.info("GraphRAGFusionAdapter initialized")
+
+    async def retrieve(
+        self,
+        query: str,
+        tenant_id: str,
+        top_k: int = 10,
+        context: Optional[Dict] = None
+    ) -> FusionResult:
+        """
+        Retrieve agents using GraphRAG and return in FusionEngine-compatible format.
+
+        Args:
+            query: User query
+            tenant_id: Tenant identifier
+            top_k: Number of results to return
+            context: Optional additional context (ignored, for compatibility)
+
+        Returns:
+            FusionResult with fused_rankings as List[Tuple[agent_id, score, metadata]]
+        """
+        import time
+        start_time = time.time()
+
+        try:
+            # Call GraphRAGSelector.select_agents()
+            # Mode "mode2" for single expert selection
+            agents = await self.selector.select_agents(
+                query=query,
+                tenant_id=tenant_id,
+                mode="mode2",
+                max_agents=top_k,
+                min_confidence=0.001  # Lower threshold to get more candidates
+            )
+
+            retrieval_time_ms = (time.time() - start_time) * 1000
+
+            # Convert to FusionResult format
+            # fused_rankings: List[Tuple[agent_id, score, metadata]]
+            fused_rankings = []
+            sources_used = set()
+
+            for agent in agents:
+                agent_id = agent.get("agent_id", "")
+                score = agent.get("fused_score", 0.0)
+
+                # Build metadata dict
+                metadata = {
+                    "name": agent.get("agent_name", "Unknown"),
+                    "level": agent.get("level", "L2"),  # Default to L2 Expert
+                    "role": agent.get("role", "Expert"),
+                    "description": agent.get("description", ""),
+                    "capabilities": agent.get("capabilities", []),
+                    "tier": agent.get("tier", 2),
+                    "specialization": agent.get("specialization", ""),
+                    "confidence": agent.get("confidence", {}),
+                    "scores": agent.get("scores", {}),
+                    "ranks": agent.get("ranks", {}),
+                }
+
+                fused_rankings.append((agent_id, score, metadata))
+
+                # Track which sources contributed
+                if agent.get("scores"):
+                    sources_used.update(agent["scores"].keys())
+
+            logger.info(
+                "GraphRAGFusionAdapter.retrieve completed",
+                num_results=len(fused_rankings),
+                retrieval_time_ms=round(retrieval_time_ms, 2),
+                sources_used=list(sources_used),
+                top_agent=fused_rankings[0][2]["name"] if fused_rankings else "None"
+            )
+
+            return FusionResult(
+                fused_rankings=fused_rankings,
+                sources_used=list(sources_used),
+                retrieval_time_ms=retrieval_time_ms,
+            )
+
+        except Exception as e:
+            logger.error(
+                "GraphRAGFusionAdapter.retrieve failed",
+                error=str(e),
+                error_type=type(e).__name__
+            )
+            return FusionResult(
+                errors=[str(e)],
+                retrieval_time_ms=(time.time() - start_time) * 1000
+            )
+
+
+def get_graphrag_fusion_adapter(supabase_client=None) -> GraphRAGFusionAdapter:
+    """
+    Get GraphRAGFusionAdapter instance for use with L1MasterOrchestrator.
+
+    This is the recommended way to get a fusion engine for Mode 2 and Mode 4.
+
+    Args:
+        supabase_client: Optional pre-initialized Supabase client
+
+    Returns:
+        GraphRAGFusionAdapter wrapping the GraphRAGSelector singleton
+    """
+    selector = get_graphrag_selector(supabase_client)
+    return GraphRAGFusionAdapter(selector)

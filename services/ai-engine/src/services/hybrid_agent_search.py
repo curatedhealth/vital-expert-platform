@@ -13,6 +13,7 @@ Target Performance: P90 <300ms
 
 import asyncio
 import logging
+import os
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 import time
@@ -30,7 +31,7 @@ class AgentSearchResult:
     """Agent search result with scoring breakdown"""
     agent_id: str
     agent_name: str
-    agent_tier: int
+    agent_level: int
 
     # Scoring components
     vector_score: float  # 0.0 to 1.0
@@ -58,7 +59,7 @@ class HybridAgentSearch:
     """
 
     def __init__(self, database_url: Optional[str] = None):
-        self.database_url = database_url or "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+        self.database_url = database_url or os.getenv("DATABASE_URL")
         self.db_pool: Optional[asyncpg.Pool] = None
 
         self.embeddings = OpenAIEmbeddings(
@@ -96,8 +97,8 @@ class HybridAgentSearch:
         query: str,
         domains: Optional[List[str]] = None,
         capabilities: Optional[List[str]] = None,
-        min_tier: Optional[int] = None,
-        max_tier: Optional[int] = None,
+        min_level: Optional[int] = None,
+        max_level: Optional[int] = None,
         similarity_threshold: float = 0.70,
         max_results: int = 10
     ) -> List[AgentSearchResult]:
@@ -108,8 +109,8 @@ class HybridAgentSearch:
             query: Natural language query
             domains: Optional domain filters
             capabilities: Optional capability filters
-            min_tier: Minimum agent tier (1, 2, or 3)
-            max_tier: Maximum agent tier
+            min_level: Minimum agent level (1..5)
+            max_level: Maximum agent level
             similarity_threshold: Minimum vector similarity (0.0 to 1.0)
             max_results: Maximum number of results
 
@@ -129,8 +130,8 @@ class HybridAgentSearch:
             query_embedding=query_embedding,
             query_domains=domains or [],
             query_capabilities=capabilities or [],
-            min_tier=min_tier,
-            max_tier=max_tier,
+            min_level=min_level,
+            max_level=max_level,
             similarity_threshold=similarity_threshold,
             max_results=max_results
         )
@@ -154,21 +155,21 @@ class HybridAgentSearch:
         query_embedding: List[float],
         query_domains: List[str],
         query_capabilities: List[str],
-        min_tier: Optional[int],
-        max_tier: Optional[int],
+        min_level: Optional[int],
+        max_level: Optional[int],
         similarity_threshold: float,
         max_results: int
     ) -> List[Dict[str, Any]]:
         """Execute hybrid search SQL query"""
 
-        # Build tier filter
-        tier_filter = ""
-        if min_tier is not None and max_tier is not None:
-            tier_filter = f"AND COALESCE((a.metadata->>'tier')::INTEGER, 2) BETWEEN {min_tier} AND {max_tier}"
-        elif min_tier is not None:
-            tier_filter = f"AND COALESCE((a.metadata->>'tier')::INTEGER, 2) >= {min_tier}"
-        elif max_tier is not None:
-            tier_filter = f"AND COALESCE((a.metadata->>'tier')::INTEGER, 2) <= {max_tier}"
+        # Build level filter (legacy column is tier in metadata; kept for compatibility)
+        level_filter = ""
+        if min_level is not None and max_level is not None:
+            level_filter = f"AND COALESCE((a.metadata->>'tier')::INTEGER, 2) BETWEEN {min_level} AND {max_level}"
+        elif min_level is not None:
+            level_filter = f"AND COALESCE((a.metadata->>'tier')::INTEGER, 2) >= {min_level}"
+        elif max_level is not None:
+            level_filter = f"AND COALESCE((a.metadata->>'tier')::INTEGER, 2) <= {max_level}"
 
         query_sql = f"""
         WITH vector_results AS (
@@ -225,7 +226,7 @@ class HybridAgentSearch:
         SELECT
             a.id AS agent_id,
             a.name AS agent_name,
-            COALESCE((a.metadata->>'tier')::INTEGER, 2) AS agent_tier,
+            COALESCE((a.metadata->>'tier')::INTEGER, 2) AS agent_level,
 
             -- Component scores
             COALESCE(vr.vector_score, 0.0)::DECIMAL(5,4) AS vector_score,
@@ -254,7 +255,7 @@ class HybridAgentSearch:
         LEFT JOIN graph_results gr ON a.id = gr.agent_id
         WHERE
             a.is_active = true
-            {tier_filter}
+            {level_filter}
             AND (
                 vr.vector_score IS NOT NULL OR
                 dr.domain_match_count > 0 OR
@@ -315,7 +316,7 @@ class HybridAgentSearch:
             enriched.append(AgentSearchResult(
                 agent_id=str(agent_id),
                 agent_name=result['agent_name'],
-                agent_tier=result['agent_tier'],
+                agent_level=result['agent_level'],
                 vector_score=float(result['vector_score']),
                 domain_score=float(result['domain_score']),
                 capability_score=float(result['capability_score']),
@@ -367,7 +368,7 @@ class HybridAgentSearch:
             SELECT
                 ae.agent_id,
                 a.name AS agent_name,
-                COALESCE((a.metadata->>'tier')::INTEGER, 2) AS agent_tier,
+                COALESCE((a.metadata->>'tier')::INTEGER, 2) AS agent_level,
                 (1 - (ae.embedding <=> $1::vector))::DECIMAL(5,4) AS similarity_score
             FROM agent_embeddings ae
             JOIN agents a ON ae.agent_id = a.id
@@ -385,7 +386,7 @@ class HybridAgentSearch:
             results.append(AgentSearchResult(
                 agent_id=str(row['agent_id']),
                 agent_name=row['agent_name'],
-                agent_tier=row['agent_tier'],
+                agent_level=row['agent_level'],
                 vector_score=float(row['similarity_score']),
                 domain_score=0.0,
                 capability_score=0.0,
@@ -462,7 +463,7 @@ async def main():
         print(f"Search latency: {results[0].search_latency_ms if results else 0:.2f}ms\n")
 
         for result in results:
-            print(f"#{result.ranking_position}: {result.agent_name} (Tier {result.agent_tier})")
+            print(f"#{result.ranking_position}: {result.agent_name} (Level {result.agent_level})")
             print(f"  Hybrid Score:     {result.hybrid_score:.4f}")
             print(f"  Vector Score:     {result.vector_score:.4f} (60% weight)")
             print(f"  Domain Score:     {result.domain_score:.4f} (25% weight)")

@@ -321,7 +321,7 @@ export function ExecutionVisualizer({
               <Activity className="w-5 h-5 text-purple-600" />
               <div>
                 <h3 className="font-semibold text-sm">Workflow Execution</h3>
-                <p className="text-xs text-gray-600">{workflow.name}</p>
+                <p className="text-xs text-neutral-600">{workflow.name}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -342,7 +342,7 @@ export function ExecutionVisualizer({
           {/* Progress Bar */}
           <div className="space-y-2 mb-4">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-600">Progress</span>
+              <span className="text-neutral-600">Progress</span>
               <span className="font-semibold">{Math.round(progress)}%</span>
             </div>
             <Progress value={progress} className="h-2" />
@@ -351,25 +351,25 @@ export function ExecutionVisualizer({
           {/* Metrics Grid */}
           <div className="grid grid-cols-4 gap-4">
             <div>
-              <p className="text-xs text-gray-600 mb-1">Status</p>
+              <p className="text-xs text-neutral-600 mb-1">Status</p>
               <Badge variant={isExecuting ? 'default' : 'secondary'}>
                 {isExecuting ? 'Running' : 'Idle'}
               </Badge>
             </div>
             <div>
-              <p className="text-xs text-gray-600 mb-1">Duration</p>
+              <p className="text-xs text-neutral-600 mb-1">Duration</p>
               <p className="text-sm font-semibold">
                 {formatDuration(metrics.elapsedTime)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-600 mb-1">Current Node</p>
+              <p className="text-xs text-neutral-600 mb-1">Current Node</p>
               <p className="text-sm font-semibold truncate">
                 {currentNodeId ? workflow.nodes.find(n => n.id === currentNodeId)?.label : '-'}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-600 mb-1">Tokens</p>
+              <p className="text-xs text-neutral-600 mb-1">Tokens</p>
               <p className="text-sm font-semibold">
                 {metrics.totalTokens.toLocaleString()}
               </p>
@@ -410,7 +410,7 @@ export function ExecutionVisualizer({
                 <div className="space-y-2">
                   <p className="font-semibold text-xs mb-2">Status</p>
                   <div className="flex items-center gap-2 text-xs">
-                    <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-neutral-400"></div>
                     <span>Pending</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs">

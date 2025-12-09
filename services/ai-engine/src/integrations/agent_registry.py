@@ -19,19 +19,20 @@ from enum import Enum
 import json
 
 # =============================================================================
-# CONFIGURATION
+# CONFIGURATION - Load from environment variables (NEVER hardcode credentials)
 # =============================================================================
+import os
 
-SUPABASE_URL = "https://bomltkhixeatxuoxmolq.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvbWx0a2hpeGVhdHh1b3htb2xxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Mjc4MzkxNSwiZXhwIjoyMDc4MzU5OTE1fQ.dhhJIMib1DMTuIvacv4VnDYjXAgVFRZ5Zrrl_LkpD6Q"
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
 
-PINECONE_API_KEY = "pcsk_3sLEoE_F3XwTFxNkzmWcEtJGS3PNrwB4VBLmZUnuFwvoUTz7NkZ9GGTsBvJfFrgypddFEi"
-PINECONE_INDEX = "vital-knowledge"
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY", "")
+PINECONE_INDEX = os.getenv("PINECONE_INDEX", "vital-knowledge")
 AGENT_NAMESPACE = "ont-agents"
 
-NEO4J_URI = "neo4j+s://13067bdb.databases.neo4j.io"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "kkCxQgpcanSUDv-dKzOzDPcYIhvJHRQRa4tuiNa2Mek"
+NEO4J_URI = os.getenv("NEO4J_URI", "")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
 
 # =============================================================================
 # DATA MODELS

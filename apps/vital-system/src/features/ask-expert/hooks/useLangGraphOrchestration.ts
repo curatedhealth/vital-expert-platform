@@ -1,12 +1,20 @@
 /**
- * useLangGraphOrchestration Hook
- *
- * Connects the Ask Expert UI components to the LangGraph 5-mode orchestrator.
- * Provides real-time streaming of workflow steps, reasoning, and response generation.
- *
- * @see unified-langgraph-orchestrator.ts for backend implementation
- * @see EnhancedModeSelector.tsx for mode selection UI
- * @see AdvancedStreamingWindow.tsx for streaming visualization
+ * VITAL Platform - useLangGraphOrchestration Hook
+ * 
+ * @deprecated This hook is deprecated. Use mode-specific hooks instead.
+ * 
+ * Migration guide:
+ * - For Mode 1 (Manual Interactive): import { useMode1Chat } from '@/features/ask-expert/hooks'
+ * - For Mode 2 (Automatic Interactive): import { useMode2Chat } from '@/features/ask-expert/hooks'
+ * - For Mode 3 (Manual Autonomous): import { useMode3Mission } from '@/features/ask-expert/hooks'
+ * - For HITL checkpoints: import { useCheckpoint } from '@/features/ask-expert/hooks'
+ * 
+ * This hook will be removed in a future release.
+ * 
+ * @see useSSEStream - Base SSE connection handling
+ * @see useMode1Chat - Manual expert selection with multi-turn chat
+ * @see useMode2Chat - Automatic expert selection with Fusion Intelligence
+ * @see useMode3Mission - Goal-driven autonomous missions with HITL
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
@@ -158,7 +166,20 @@ const LANGGRAPH_NODE_NAMES: Record<string, { name: string; description: string }
 
 // ===== HOOK IMPLEMENTATION =====
 
+/**
+ * @deprecated Use useMode1Chat, useMode2Chat, or useMode3Mission instead.
+ */
 export function useLangGraphOrchestration(): UseLangGraphOrchestrationReturn {
+  // Emit deprecation warning in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        '[DEPRECATED] useLangGraphOrchestration is deprecated. ' +
+        'Use useMode1Chat, useMode2Chat, or useMode3Mission instead.'
+      );
+    }
+  }, []);
+
   // State
   const [isStreaming, setIsStreaming] = useState(false);
   const [response, setResponse] = useState<string | null>(null);

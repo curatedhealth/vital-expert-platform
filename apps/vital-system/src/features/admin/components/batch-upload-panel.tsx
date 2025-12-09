@@ -293,7 +293,7 @@ export default function BatchUploadPanel() {
                 </div>
 
                 {/* Upload Options */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-neutral-50 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id={`skip-duplicates-${type}`}
@@ -446,7 +446,7 @@ export default function BatchUploadPanel() {
                           <div className="text-sm text-muted-foreground">Updated</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-600">{results.results.skipped}</div>
+                          <div className="text-2xl font-bold text-neutral-600">{results.results.skipped}</div>
                           <div className="text-sm text-muted-foreground">Skipped</div>
                         </div>
                         <div className="text-center">

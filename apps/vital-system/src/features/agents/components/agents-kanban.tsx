@@ -70,7 +70,7 @@ const STATUS_COLUMNS = {
   },
   inactive: {
     title: 'Inactive',
-    color: 'border-gray-200 bg-gray-50/50',
+    color: 'border-neutral-200 bg-neutral-50/50',
     icon: Clock,
   },
 } as const;
@@ -102,7 +102,7 @@ const TIER_COLORS = {
 const STATUS_COLORS = {
   active: 'bg-green-50 text-green-700 border-green-200',
   testing: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  inactive: 'bg-gray-50 text-gray-700 border-gray-200',
+  inactive: 'bg-neutral-50 text-neutral-700 border-neutral-200',
 } as const;
 
 // ============================================================================

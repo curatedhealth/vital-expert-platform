@@ -444,16 +444,16 @@ async def investigator_health_check():
             "service": "ontology_investigator",
             "workflow": "initialized",
             "reasoning_models": {
-                "tier_1_primary": "claude-opus-4-5-20251101",
-                "tier_2_secondary": "o1",
-                "tier_3_tertiary": "gemini-2.5-pro",
-                "tier_4_opensource": [
+                "level_1_primary": "claude-opus-4-5-20251101",
+                "level_2_secondary": "o1",
+                "level_3_tertiary": "gemini-2.5-pro",
+                "level_4_opensource": [
                     "deepseek-ai/DeepSeek-R1",
                     "Qwen/Qwen2.5-72B-Instruct",
                     "google/medgemma-27b-text-it",
                     "meta-llama/Llama-3.3-70B-Instruct"
                 ],
-                "tier_5_fallback": "gpt-4o"
+                "level_5_fallback": "gpt-4o"
             },
             "ontology_layers": {
                 "L0_tenants": 12,

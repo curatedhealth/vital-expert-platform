@@ -1,0 +1,52 @@
+{
+  "$ref": "#/definitions/job_result_response",
+  "definitions": {
+    "job_result_response": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "type": "string",
+          "const": "completed"
+        },
+        "result": {},
+        "tokenUsage": {
+          "type": "object",
+          "properties": {
+            "totalTokens": {
+              "type": "integer"
+            },
+            "estimatedCostUsd": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "totalTokens",
+            "estimatedCostUsd"
+          ],
+          "additionalProperties": false
+        },
+        "processingTimeMs": {
+          "type": "integer"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 datetime"
+        }
+      },
+      "required": [
+        "jobId",
+        "status",
+        "tokenUsage",
+        "processingTimeMs",
+        "completedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

@@ -840,7 +840,7 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
                   </div>
                   <div className={`w-3 h-3 rounded-full ${getConnectionStatusColor(source.status)} ${
                     source.status === 'connected' ? 'bg-green-600' :
-                    source.status === 'error' ? 'bg-red-600' : 'bg-gray-400'
+                    source.status === 'error' ? 'bg-red-600' : 'bg-neutral-400'
                   }`}></div>
                 </div>
 

@@ -1,0 +1,110 @@
+{
+  "$ref": "#/definitions/job_status_response",
+  "definitions": {
+    "job_status_response": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "running",
+            "completed",
+            "failed",
+            "cancelled",
+            "timeout"
+          ]
+        },
+        "progress": {
+          "type": "object",
+          "properties": {
+            "currentStep": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "totalSteps": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "percentComplete": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "currentStepDescription": {
+              "type": "string"
+            },
+            "tokensUsed": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "tokensRemaining": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "currentStep"
+          ],
+          "additionalProperties": false
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "stackTrace": {
+              "type": "string"
+            },
+            "isRetryable": {
+              "type": "boolean",
+              "default": false
+            },
+            "retryCount": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "additionalProperties": false
+        },
+        "isComplete": {
+          "type": "boolean"
+        },
+        "resultUrl": {
+          "type": "string"
+        },
+        "elapsedMs": {
+          "type": "integer"
+        },
+        "estimatedRemainingMs": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "jobId",
+        "status",
+        "isComplete"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

@@ -39,7 +39,7 @@ class SubAgentConfig(BaseModel):
     agent_type: str  # "specialist", "worker", "tool"
     specialty: str
     parent_agent_id: str
-    tier: int  # 3, 4, or 5
+    agent_level: int = Field(..., alias="tier", description="Agent level (3,4,5). Alias 'tier' deprecated.")
     task: str
     context: Dict
     tools: List[str] = Field(default_factory=list)
@@ -583,7 +583,7 @@ class SubAgentSpawner:
 
     def _build_sub_agent_prompt(self, config: SubAgentConfig) -> str:
         """
-        Build specialized system prompt for sub-agent based on type and tier.
+        Build specialized system prompt for sub-agent based on type and level.
 
         Args:
             config: Sub-agent configuration
@@ -591,7 +591,7 @@ class SubAgentSpawner:
         Returns:
             System prompt string
         """
-        if config.agent_type == "specialist" and config.tier == 3:
+        if config.agent_type == "specialist" and config.agent_level == 3:
             return f"""You are a specialized Level 3 sub-agent with deep expertise in: {config.specialty}
 
 Your parent Level 2 expert agent has delegated a specific task to you. Focus ONLY on this task and provide a detailed, expert-level response.
@@ -610,7 +610,7 @@ Your parent Level 2 expert agent has delegated a specific task to you. Focus ONL
 
 Provide your specialized analysis and recommendations."""
 
-        elif config.agent_type == "worker" and config.tier == 4:
+        elif config.agent_type == "worker" and config.agent_level == 4:
             return f"""You are a Level 4 worker sub-agent responsible for executing a specific task in parallel with other workers.
 
 **Task:** {config.task}
@@ -627,7 +627,7 @@ Provide your specialized analysis and recommendations."""
 
 Complete this task and return structured results."""
 
-        elif config.agent_type == "tool" and config.tier == 5:
+        elif config.agent_type == "tool" and config.agent_level == 5:
             return f"""You are a Level 5 tool agent specialized in using specific tools to accomplish tasks.
 
 **Available tools:** {', '.join(config.tools)}
@@ -646,7 +646,7 @@ Use the tools effectively to complete the task."""
 
         else:
             # Fallback generic prompt
-            return f"""You are a sub-agent (Type: {config.agent_type}, Tier: {config.tier}).
+            return f"""You are a sub-agent (Type: {config.agent_type}, Level: {config.agent_level}).
 
 Task: {config.task}
 
@@ -690,7 +690,7 @@ Complete the task and return your results."""
                 "agent_type": config.agent_type,
                 "specialty": config.specialty,
                 "parent_agent_id": config.parent_agent_id,
-                "tier": config.tier,
+                "agent_level": config.agent_level,
                 "spawned_at": config.spawned_at.isoformat()
             }
             for config in self.active_sub_agents.values()
@@ -708,10 +708,10 @@ Complete the task and return your results."""
                 "worker": sum(1 for c in self.active_sub_agents.values() if c.agent_type == "worker"),
                 "tool": sum(1 for c in self.active_sub_agents.values() if c.agent_type == "tool")
             },
-            "by_tier": {
-                "tier_3": sum(1 for c in self.active_sub_agents.values() if c.tier == 3),
-                "tier_4": sum(1 for c in self.active_sub_agents.values() if c.tier == 4),
-                "tier_5": sum(1 for c in self.active_sub_agents.values() if c.tier == 5)
+            "by_level": {
+                "L3": sum(1 for c in self.active_sub_agents.values() if c.agent_level == 3),
+                "L4": sum(1 for c in self.active_sub_agents.values() if c.agent_level == 4),
+                "L5": sum(1 for c in self.active_sub_agents.values() if c.agent_level == 5)
             }
         }
 

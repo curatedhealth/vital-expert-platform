@@ -866,8 +866,9 @@ export default function AskExpertV2Page() {
       console.warn('[AskExpertV2] Cannot send: message is empty');
       return;
     }
-    if (!selectedAgent) {
-      console.warn('[AskExpertV2] Cannot send: no agent selected');
+    // Mode 2 auto-selects agent on backend via L1 Orchestrator - allow without pre-selection
+    if (!selectedAgent && mode !== '2') {
+      console.warn('[AskExpertV2] Cannot send: no agent selected (required for mode ' + mode + ')');
       return;
     }
     if (isLoading) {
@@ -910,7 +911,8 @@ export default function AskExpertV2Page() {
     let accumulatedSteps: ReasoningStep[] = [];
 
     try {
-      const tenantId = selectedAgent.tenant_id || '00000000-0000-0000-0000-000000000001';
+      // For Mode 2, selectedAgent may be undefined - use default tenant
+      const tenantId = selectedAgent?.tenant_id || '00000000-0000-0000-0000-000000000001';
 
       const response = await fetch(STREAM_API_URL, {
         method: 'POST',
@@ -919,7 +921,8 @@ export default function AskExpertV2Page() {
           'x-tenant-id': tenantId,
         },
         body: JSON.stringify({
-          agent_id: selectedAgent.id,
+          // Mode 2 auto-selects expert on backend - expert_id may be undefined
+          expert_id: selectedAgent?.id,
           message: userMessage.content,
           session_id: sessionId,
           mode,
@@ -945,6 +948,10 @@ export default function AskExpertV2Page() {
       const decoder = new TextDecoder();
       let buffer = '';
 
+      // Track current SSE event type OUTSIDE the while loop to persist across chunks
+      // (standard SSE format uses separate event: and data: lines that may arrive in different chunks)
+      let currentEventType = '';
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -954,15 +961,25 @@ export default function AskExpertV2Page() {
         buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
+          // Parse event: line (standard SSE format)
+          if (line.startsWith('event:')) {
+            currentEventType = line.slice(6).trim();
+            continue;
+          }
 
-          const jsonStr = line.slice(6).trim();
+          // Parse data: line
+          if (!line.startsWith('data:')) continue;
+
+          const jsonStr = line.slice(5).trim();
           if (!jsonStr || jsonStr === '[DONE]') continue;
 
           try {
             const data = JSON.parse(jsonStr);
 
-            switch (data.event) {
+            // Use currentEventType from event: line, fallback to data.event for legacy format
+            const eventType = currentEventType || data.event;
+
+            switch (eventType) {
               case 'token':
                 // Token event - stream to content using Streamdown
                 if (data.content) {
@@ -1006,7 +1023,12 @@ export default function AskExpertV2Page() {
                 const friendlyStep = formatStepName(step);
 
                 // Capture AI reasoning content from message/content field
-                const reasoningContent = data.message || data.content || '';
+                // Also capture the DETAIL field which contains the real runtime data
+                const reasoningMessage = data.message || data.content || '';
+                const reasoningDetail = data.detail || '';
+
+                // Use detail if available (more specific), otherwise use message
+                const reasoningContent = reasoningDetail || reasoningMessage;
 
                 // Special case: ai_thinking step contains the full LLM reasoning
                 if (step === 'ai_thinking' && reasoningContent) {
@@ -1019,11 +1041,17 @@ export default function AskExpertV2Page() {
                 // Process all thinking events (both running and completed)
                 // Check if step already exists
                 if (!accumulatedSteps.some(s => s.key === step)) {
-                  // Add step with its description
-                  const stepWithContent = reasoningContent
-                    ? `${friendlyStep}: ${reasoningContent.substring(0, 100)}${reasoningContent.length > 100 ? '...' : ''}`
-                    : friendlyStep;
-                  accumulatedSteps = [...accumulatedSteps, { key: step, label: stepWithContent }];
+                  // Build label: Use detail for specifics, message for generic description
+                  // Format: "Friendly Step Name: Detail" or just "Friendly Step Name: Message"
+                  let stepLabel = friendlyStep;
+                  if (reasoningDetail) {
+                    // Detail contains the real runtime info (e.g., "Expert: XLSX Formula Calculator")
+                    stepLabel = `${friendlyStep}: ${reasoningDetail}`;
+                  } else if (reasoningMessage && reasoningMessage !== friendlyStep) {
+                    // Fallback to message if no detail
+                    stepLabel = `${friendlyStep}: ${reasoningMessage.substring(0, 100)}${reasoningMessage.length > 100 ? '...' : ''}`;
+                  }
+                  accumulatedSteps = [...accumulatedSteps, { key: step, label: stepLabel }];
 
                   // Build reasoning text from step descriptions
                   if (reasoningContent && step !== 'ai_thinking') {

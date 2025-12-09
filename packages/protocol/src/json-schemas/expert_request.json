@@ -1,0 +1,247 @@
+{
+  "$ref": "#/definitions/expert_request",
+  "definitions": {
+    "expert_request": {
+      "type": "object",
+      "properties": {
+        "conversationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "mode_1_instant",
+            "mode_2_standard",
+            "mode_3_deep_research",
+            "mode_4_autonomous"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100000
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "assistant",
+                  "system",
+                  "tool"
+                ]
+              },
+              "content": {
+                "type": "string"
+              },
+              "citations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "document",
+                        "web",
+                        "database",
+                        "expert"
+                      ]
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "snippet": {
+                      "type": "string"
+                    },
+                    "relevanceScore": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "type",
+                    "title",
+                    "snippet"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "toolCalls": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "arguments": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    },
+                    "result": {},
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "running",
+                        "completed",
+                        "failed"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "arguments",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "thinking": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "step": {
+                      "type": "integer"
+                    },
+                    "thought": {
+                      "type": "string"
+                    },
+                    "action": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "step",
+                    "thought"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "tokenUsage": {
+                "type": "object",
+                "properties": {
+                  "promptTokens": {
+                    "type": "integer"
+                  },
+                  "completionTokens": {
+                    "type": "integer"
+                  },
+                  "totalTokens": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "promptTokens",
+                  "completionTokens",
+                  "totalTokens"
+                ],
+                "additionalProperties": false
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime"
+              },
+              "metadata": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "id",
+              "role",
+              "content",
+              "createdAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "knowledgeDomainIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "systemPromptOverride": {
+          "type": "string"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "maxTokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128000
+        },
+        "includeCitations": {
+          "type": "boolean",
+          "default": true
+        },
+        "stream": {
+          "type": "boolean",
+          "default": true
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Tenant identifier for multi-tenancy isolation"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "User identifier"
+        }
+      },
+      "required": [
+        "agentId",
+        "mode",
+        "message"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

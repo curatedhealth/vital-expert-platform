@@ -186,8 +186,8 @@ const LEVEL_OPTIONS = [
     label: 'L5: Tool',
     description: 'Utility and integration functions',
     icon: Zap,
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-50',
+    color: 'text-neutral-600',
+    bgColor: 'bg-neutral-50',
     models: ['gpt-3.5-turbo'],
   },
 ];

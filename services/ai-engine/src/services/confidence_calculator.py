@@ -35,11 +35,13 @@ class ConfidenceCalculator:
             "completeness": float(os.getenv("CONFIDENCE_COMPLETENESS_WEIGHT", "0.20"))
         }
 
-        # Tier-specific base confidence (higher tiers = higher starting confidence)
-        self.tier_base_confidence = {
-            1: float(os.getenv("CONFIDENCE_TIER1_BASE", "0.75")),
-            2: float(os.getenv("CONFIDENCE_TIER2_BASE", "0.65")),
-            3: float(os.getenv("CONFIDENCE_TIER3_BASE", "0.55"))
+        # Level-specific base confidence (higher levels = higher starting confidence)
+        self.level_base_confidence = {
+            1: float(os.getenv("CONFIDENCE_LEVEL1_BASE", "0.85")),
+            2: float(os.getenv("CONFIDENCE_LEVEL2_BASE", "0.78")),
+            3: float(os.getenv("CONFIDENCE_LEVEL3_BASE", "0.72")),
+            4: float(os.getenv("CONFIDENCE_LEVEL4_BASE", "0.68")),
+            5: float(os.getenv("CONFIDENCE_LEVEL5_BASE", "0.64"))
         }
 
         # Domain-specific boosts
@@ -66,7 +68,7 @@ class ConfidenceCalculator:
         Args:
             query: Original user query
             response: Agent's response text
-            agent_metadata: Agent metadata (specialties, tier, domains)
+            agent_metadata: Agent metadata (specialties, agent_level, domains)
             rag_results: RAG retrieval results with similarity scores
             context: Additional context (conversation history, etc.)
 
@@ -92,9 +94,9 @@ class ConfidenceCalculator:
                 response
             )
 
-            # 4. Apply tier-based base confidence
-            tier = agent_metadata.get("tier", 2)
-            tier_base = self.tier_base_confidence.get(tier, 0.60)
+            # 4. Apply level-based base confidence (fallback to legacy tier)
+            level = agent_metadata.get("agent_level") or agent_metadata.get("tier", 2)
+            level_base = self.level_base_confidence.get(level, 0.68)
 
             # 5. Apply domain-specific boosts
             domain_boost = self._calculate_domain_boost(agent_metadata)
@@ -106,10 +108,10 @@ class ConfidenceCalculator:
                 completeness_confidence * self.weights["completeness"]
             )
 
-            # 7. Final confidence with tier base and domain boost
-            # Formula: (weighted_score * 0.7) + (tier_base * 0.2) + (domain_boost * 0.1)
+            # 7. Final confidence with level base and domain boost
+            # Formula: (weighted_score * 0.7) + (level_base * 0.2) + (domain_boost * 0.1)
             final_confidence = min(
-                (weighted_score * 0.7) + (tier_base * 0.2) + (domain_boost * 0.1),
+                (weighted_score * 0.7) + (level_base * 0.2) + (domain_boost * 0.1),
                 0.99  # Cap at 0.99 (never 100% certain)
             )
 
@@ -121,7 +123,7 @@ class ConfidenceCalculator:
                 rag_confidence,
                 alignment_confidence,
                 completeness_confidence,
-                tier,
+                level,
                 domain_boost,
                 final_confidence
             )
@@ -132,7 +134,7 @@ class ConfidenceCalculator:
                     "rag_confidence": round(rag_confidence, 3),
                     "alignment_confidence": round(alignment_confidence, 3),
                     "completeness_confidence": round(completeness_confidence, 3),
-                    "tier_base": round(tier_base, 3),
+                    "level_base": round(level_base, 3),
                     "domain_boost": round(domain_boost, 3),
                     "weighted_score": round(weighted_score, 3)
                 },
@@ -144,7 +146,7 @@ class ConfidenceCalculator:
             logger.info(
                 "✅ Confidence calculated",
                 final_confidence=final_confidence,
-                tier=tier,
+                agent_level=level,
                 quality=result["quality_level"]
             )
 
@@ -317,11 +319,11 @@ class ConfidenceCalculator:
         """Build agent profile text for embedding"""
         name = agent_metadata.get("name", "Agent")
         specialties = agent_metadata.get("specialties", [])
-        tier = agent_metadata.get("tier", 2)
+        level = agent_metadata.get("agent_level") or agent_metadata.get("tier", 2)
 
         profile = f"""
         Agent: {name}
-        Tier: {tier}
+        Level: {level}
         Specialties: {', '.join(specialties)}
         """.strip()
 
@@ -343,7 +345,7 @@ class ConfidenceCalculator:
         rag_confidence: float,
         alignment_confidence: float,
         completeness_confidence: float,
-        tier: int,
+        level: int,
         domain_boost: float,
         final_confidence: float
     ) -> str:
@@ -374,9 +376,15 @@ class ConfidenceCalculator:
         else:
             reasons.append("brief response")
 
-        # Tier
-        tier_desc = {1: "top-tier specialist", 2: "experienced agent", 3: "general agent"}
-        reasons.append(tier_desc.get(tier, "standard agent"))
+        # Level
+        level_desc = {
+            1: "L1 master orchestrator",
+            2: "L2 domain expert",
+            3: "L3 specialist",
+            4: "L4 worker",
+            5: "L5 tool"
+        }
+        reasons.append(level_desc.get(level, "standard agent"))
 
         # Domain boost
         if domain_boost > 0.05:

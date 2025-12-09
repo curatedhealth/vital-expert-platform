@@ -1,6 +1,10 @@
 """
 Smart Metadata Extraction Service
 Extracts comprehensive metadata from filenames and content using AI and pattern matching
+
+Architecture Pattern (LLM Config):
+- Environment variables: UTILITY_LLM_MODEL, UTILITY_LLM_TEMPERATURE, UTILITY_LLM_MAX_TOKENS
+- Python: NO hardcoded model/temperature/max_tokens values
 """
 
 import re
@@ -14,6 +18,10 @@ from langdetect import detect, LangDetectException
 from unidecode import unidecode
 
 from core.config import get_settings
+from infrastructure.llm.config_service import get_llm_config_for_level
+
+# Get UTILITY defaults from environment variables (for non-agent services)
+_UTILITY_DEFAULTS = get_llm_config_for_level("UTILITY")
 
 # Constants
 TITLE_MIN_LENGTH = 10
@@ -505,13 +513,13 @@ Content (first {CONTENT_PREVIEW_LENGTH} chars):
 """
 
             response = self.openai_client.chat.completions.create(
-                model="gpt-4-turbo-preview",
+                model=_UTILITY_DEFAULTS.model,
                 messages=[
                     {"role": "system", "content": "You are a metadata extraction assistant. Return only valid JSON."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.1,
-                max_tokens=500,
+                temperature=_UTILITY_DEFAULTS.temperature,
+                max_tokens=_UTILITY_DEFAULTS.max_tokens,
             )
 
             # Parse JSON response

@@ -9,10 +9,14 @@ This service provides intelligent, evidence-based agent selection across:
 
 Architecture:
 - Extends GraphRAGSelector for hybrid search (30/50/20)
-- Adds evidence-based tier assessment (Tier 1/2/3)
+- Adds evidence-based level assessment (L1-L5)
 - Implements 8-factor scoring matrix
 - Enforces safety gates and escalation rules
 - Service-agnostic design
+
+Architecture Pattern (LLM Config):
+- Environment variables: UTILITY_LLM_MODEL, UTILITY_LLM_TEMPERATURE, UTILITY_LLM_MAX_TOKENS
+- Python: NO hardcoded model/temperature/max_tokens values
 
 Golden Rules:
 - Evidence-based claims with verification
@@ -34,9 +38,13 @@ import asyncio
 from services.graphrag_selector import GraphRAGSelector
 from services.supabase_client import get_supabase_client
 from core.config import get_settings
+from infrastructure.llm.config_service import get_llm_config_for_level
 
 logger = structlog.get_logger()
 settings = get_settings()
+
+# Get UTILITY defaults from environment variables (for non-agent services)
+_UTILITY_DEFAULTS = get_llm_config_for_level("UTILITY")
 
 
 # ============================================================================
@@ -51,11 +59,13 @@ class VitalService(str, Enum):
     SOLUTION_BUILDER = "solution_builder"
 
 
-class AgentTier(str, Enum):
-    """Agent tier definitions (AgentOS 3.0)"""
-    TIER_1 = "tier_1"  # Rapid Response
-    TIER_2 = "tier_2"  # Expert Analysis
-    TIER_3 = "tier_3"  # Deep Reasoning + Human Oversight
+class AgentLevel(str, Enum):
+    """Agent level definitions (AgentOS 5-level model)"""
+    L1 = "L1"  # Master Orchestrator
+    L2 = "L2"  # Domain Expert
+    L3 = "L3"  # Specialist
+    L4 = "L4"  # Worker
+    L5 = "L5"  # Tool
 
 
 class EscalationTrigger(str, Enum):
@@ -87,9 +97,9 @@ class QueryAssessment(BaseModel):
     reasoning: str  # Human-readable reasoning
 
 
-class TierDefinition(BaseModel):
-    """Tier configuration"""
-    tier: AgentTier
+class LevelDefinition(BaseModel):
+    """Level configuration"""
+    level: AgentLevel
     name: str
     description: str
     target_accuracy: Tuple[float, float]  # Min, Max
@@ -117,7 +127,7 @@ class AgentScore(BaseModel):
     graph_proximity: float = 0.0
     user_preference: float = 0.0
     availability: float = 0.0
-    tier_compatibility: float = 0.0
+    level_compatibility: float = 0.0  # compatibility with required level
     
     # Weighted total
     total_score: float = 0.0
@@ -125,7 +135,7 @@ class AgentScore(BaseModel):
     
     # Metadata
     recommendation_reason: str = ""
-    tier_match: str = ""
+    level_match: str = ""
     can_delegate_to: List[str] = Field(default_factory=list)
 
 
@@ -133,7 +143,7 @@ class EvidenceBasedSelection(BaseModel):
     """Final selection result"""
     service: VitalService
     agents: List[AgentScore]
-    tier: AgentTier
+    level: AgentLevel
     assessment: QueryAssessment
     requires_human_oversight: bool
     requires_panel: bool
@@ -143,48 +153,74 @@ class EvidenceBasedSelection(BaseModel):
 
 
 # ============================================================================
-# TIER DEFINITIONS (ARD v2.0 Specification)
+# LEVEL DEFINITIONS (aligned to 5-level model)
 # ============================================================================
 
-TIER_DEFINITIONS = {
-    AgentTier.TIER_1: TierDefinition(
-        tier=AgentTier.TIER_1,
-        name="Rapid Response",
-        description="Fast, reliable responses for routine queries",
-        target_accuracy=(0.85, 0.92),
-        max_response_time_seconds=5,
-        cost_per_query=0.10,
-        escalation_rate=0.08,
-        requires_human_oversight=False,
-        requires_panel=False,
-        requires_critic=False,
-        min_confidence_threshold=0.75
-    ),
-    AgentTier.TIER_2: TierDefinition(
-        tier=AgentTier.TIER_2,
-        name="Expert Analysis",
-        description="In-depth analysis for complex queries",
-        target_accuracy=(0.90, 0.96),
-        max_response_time_seconds=30,
-        cost_per_query=0.50,
-        escalation_rate=0.12,
-        requires_human_oversight=False,
-        requires_panel=False,  # Optional
-        requires_critic=False,
-        min_confidence_threshold=0.80
-    ),
-    AgentTier.TIER_3: TierDefinition(
-        tier=AgentTier.TIER_3,
-        name="Deep Reasoning + Human Oversight",
-        description="Critical queries requiring deep reasoning and human review",
-        target_accuracy=(0.94, 0.98),
-        max_response_time_seconds=120,
-        cost_per_query=2.00,
-        escalation_rate=0.05,
+LEVEL_DEFINITIONS = {
+    AgentLevel.L1: LevelDefinition(
+        level=AgentLevel.L1,
+        name="Master Orchestrator",
+        description="L1 orchestrates teams, fusion selection, HITL for critical flows",
+        target_accuracy=(0.92, 0.98),
+        max_response_time_seconds=1500,  # 25 min
+        cost_per_query=3.50,
+        escalation_rate=0.50,
         requires_human_oversight=True,
         requires_panel=True,
         requires_critic=True,
         min_confidence_threshold=0.90
+    ),
+    AgentLevel.L2: LevelDefinition(
+        level=AgentLevel.L2,
+        name="Domain Expert",
+        description="Interactive expert analysis with required L5 tools",
+        target_accuracy=(0.90, 0.96),
+        max_response_time_seconds=40,
+        cost_per_query=0.60,
+        escalation_rate=0.20,
+        requires_human_oversight=False,
+        requires_panel=False,
+        requires_critic=True,
+        min_confidence_threshold=0.82
+    ),
+    AgentLevel.L3: LevelDefinition(
+        level=AgentLevel.L3,
+        name="Specialist",
+        description="Deep specialty support; can be HITL-gated",
+        target_accuracy=(0.88, 0.95),
+        max_response_time_seconds=180,
+        cost_per_query=1.20,
+        escalation_rate=0.28,
+        requires_human_oversight=True,
+        requires_panel=False,
+        requires_critic=True,
+        min_confidence_threshold=0.85
+    ),
+    AgentLevel.L4: LevelDefinition(
+        level=AgentLevel.L4,
+        name="Worker",
+        description="Deterministic worker with tools; parallelizable",
+        target_accuracy=(0.82, 0.90),
+        max_response_time_seconds=10,
+        cost_per_query=0.20,
+        escalation_rate=0.10,
+        requires_human_oversight=False,
+        requires_panel=False,
+        requires_critic=False,
+        min_confidence_threshold=0.70
+    ),
+    AgentLevel.L5: LevelDefinition(
+        level=AgentLevel.L5,
+        name="Tool",
+        description="Deterministic tool execution (API, calc, retrieval)",
+        target_accuracy=(0.80, 0.88),
+        max_response_time_seconds=5,
+        cost_per_query=0.05,
+        escalation_rate=0.05,
+        requires_human_oversight=False,
+        requires_panel=False,
+        requires_critic=False,
+        min_confidence_threshold=0.60
     )
 }
 
@@ -198,7 +234,7 @@ class EvidenceBasedAgentSelector(GraphRAGSelector):
     Unified Evidence-Based Agent Selector for ALL 4 VITAL Services
     
     Extends GraphRAGSelector with:
-    - Evidence-based tier assessment (Tier 1/2/3)
+    - Evidence-based level assessment (L1-L5)
     - 8-factor scoring matrix (vs 3-method fusion)
     - Safety gates & escalation
     - Service-agnostic design
@@ -211,7 +247,7 @@ class EvidenceBasedAgentSelector(GraphRAGSelector):
     5. Graph proximity (10%) - Knowledge graph relationships
     6. User preference (5%) - User history
     7. Availability (3%) - Current load
-    8. Tier compatibility (2%) - Tier match
+    8. Level compatibility (2%) - Level match
     
     Usage:
         selector = EvidenceBasedAgentSelector()
@@ -251,13 +287,13 @@ class EvidenceBasedAgentSelector(GraphRAGSelector):
             'graph_proximity': 0.10,
             'user_preference': 0.05,
             'availability': 0.03,
-            'tier_compatibility': 0.02
+            'level_compatibility': 0.02
         }
         
         logger.info(
             "✅ EvidenceBasedAgentSelector initialized",
             weights=self.weights,
-            tier_definitions=list(TIER_DEFINITIONS.keys())
+            level_definitions=list(LEVEL_DEFINITIONS.keys())
         )
     
     # ========================================================================
@@ -323,17 +359,17 @@ class EvidenceBasedAgentSelector(GraphRAGSelector):
                 confidence=assessment.confidence
             )
             
-            # STAGE 2: Determine tier (1, 2, or 3)
-            tier = self._determine_tier(assessment, service)
-            tier_def = TIER_DEFINITIONS[tier]
+            # STAGE 2: Determine level (L1-L5)
+            level = self._determine_level(assessment, service)
+            level_def = LEVEL_DEFINITIONS[level]
             
             logger.info(
-                "tier_determined",
+                "level_determined",
                 operation_id=operation_id,
-                tier=tier.value,
-                tier_name=tier_def.name,
-                requires_human_oversight=tier_def.requires_human_oversight,
-                requires_panel=tier_def.requires_panel
+                level=level.value,
+                level_name=level_def.name,
+                requires_human_oversight=level_def.requires_human_oversight,
+                requires_panel=level_def.requires_panel
             )
             
             # STAGE 3: Multi-modal search (inherit from GraphRAGSelector)
@@ -358,7 +394,7 @@ class EvidenceBasedAgentSelector(GraphRAGSelector):
                 query=query,
                 context=context,
                 assessment=assessment,
-                tier=tier,
+                level=level,
                 user_id=user_id,
                 tenant_id=tenant_id
             )
@@ -375,7 +411,7 @@ class EvidenceBasedAgentSelector(GraphRAGSelector):
                 scored_agents=scored_agents,
                 service=service,
                 max_agents=max_agents,
-                tier=tier
+                level=level
             )
             
             logger.info(
@@ -389,7 +425,7 @@ class EvidenceBasedAgentSelector(GraphRAGSelector):
             gated_agents, safety_gates = await self._apply_safety_gates(
                 agents=filtered_agents,
                 assessment=assessment,
-                tier=tier,
+                level=level,
                 service=service
             )
             
@@ -404,17 +440,17 @@ class EvidenceBasedAgentSelector(GraphRAGSelector):
             result = EvidenceBasedSelection(
                 service=service,
                 agents=gated_agents,
-                tier=tier,
+                level=level,
                 assessment=assessment,
-                requires_human_oversight=tier_def.requires_human_oversight,
-                requires_panel=tier_def.requires_panel or len(gated_agents) > 1,
-                requires_critic=tier_def.requires_critic,
+                requires_human_oversight=level_def.requires_human_oversight,
+                requires_panel=level_def.requires_panel or len(gated_agents) > 1,
+                requires_critic=level_def.requires_critic,
                 safety_gates_applied=safety_gates,
                 selection_metadata={
                     'operation_id': operation_id,
                     'duration_ms': (datetime.now() - start_time).total_seconds() * 1000,
                     'candidates_evaluated': len(graphrag_candidates),
-                    'tier_definition': tier_def.dict(),
+                    'level_definition': level_def.dict(),
                     'user_id': user_id,
                     'session_id': session_id,
                     'timestamp': datetime.now().isoformat()
@@ -431,7 +467,7 @@ class EvidenceBasedAgentSelector(GraphRAGSelector):
                 operation_id=operation_id,
                 service=service.value,
                 agents_selected=len(gated_agents),
-                tier=tier.value,
+                level=level.value,
                 duration_ms=duration_ms,
                 top_agent=gated_agents[0].agent_name if gated_agents else None,
                 top_confidence=gated_agents[0].confidence_score if gated_agents else 0.0
@@ -519,14 +555,14 @@ Service: {service.value}
 Context: {context}"""
 
             response = await self.openai.chat.completions.create(
-                model="gpt-4o",
+                model=_UTILITY_DEFAULTS.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message}
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.2,
-                max_tokens=800
+                temperature=_UTILITY_DEFAULTS.temperature,
+                max_tokens=_UTILITY_DEFAULTS.max_tokens
             )
             
             import json
@@ -575,21 +611,21 @@ Context: {context}"""
     # STAGE 2: TIER DETERMINATION
     # ========================================================================
     
-    def _determine_tier(
+    def _determine_level(
         self,
         assessment: QueryAssessment,
         service: VitalService
-    ) -> AgentTier:
+    ) -> AgentLevel:
         """
-        Determine agent tier based on query assessment
+        Determine agent level based on query assessment
         
-        Tier 1 (Rapid Response):
-        - Low complexity + Low risk + Required accuracy < 0.90
+        L2 (Domain Expert):
+        - Low complexity + Low/Medium risk + Required accuracy < 0.90
         
-        Tier 2 (Expert Analysis):
+        L3 (Specialist):
         - Medium complexity OR Medium risk OR Required accuracy 0.90-0.94
         
-        Tier 3 (Deep Reasoning + Human Oversight):
+        L1 (Master) / escalate:
         - High complexity OR High/Critical risk OR Required accuracy >= 0.94
         - OR Any escalation triggers present
         
@@ -598,57 +634,57 @@ Context: {context}"""
             service: VITAL service
             
         Returns:
-            AgentTier (TIER_1, TIER_2, or TIER_3)
+            AgentLevel
         """
         # Mandatory Tier 3 triggers
         if assessment.escalation_triggers:
             logger.info(
-                "tier_3_mandatory",
+                "level_escalation_mandatory",
                 reason="escalation_triggers_present",
                 triggers=[t.value for t in assessment.escalation_triggers]
             )
-            return AgentTier.TIER_3
+            return AgentLevel.L1
         
         # High complexity or critical risk -> Tier 3
         if assessment.complexity == 'high' or assessment.risk_level == 'critical':
             logger.info(
-                "tier_3_determined",
+                "level_escalation_high_complexity",
                 reason="high_complexity_or_critical_risk",
                 complexity=assessment.complexity,
                 risk_level=assessment.risk_level
             )
-            return AgentTier.TIER_3
+            return AgentLevel.L1
         
         # Required accuracy >= 0.94 -> Tier 3
         if assessment.required_accuracy >= 0.94:
             logger.info(
-                "tier_3_determined",
+                "level_escalation_high_accuracy",
                 reason="high_accuracy_required",
                 required_accuracy=assessment.required_accuracy
             )
-            return AgentTier.TIER_3
+            return AgentLevel.L1
         
-        # Medium complexity/risk or accuracy 0.90-0.94 -> Tier 2
+        # Medium complexity/risk or accuracy 0.90-0.94 -> L3 Specialist
         if (assessment.complexity == 'medium' or 
             assessment.risk_level in ['medium', 'high'] or
             assessment.required_accuracy >= 0.90):
             logger.info(
-                "tier_2_determined",
+                "level_l3_determined",
                 reason="medium_complexity_risk_or_accuracy",
                 complexity=assessment.complexity,
                 risk_level=assessment.risk_level,
                 required_accuracy=assessment.required_accuracy
             )
-            return AgentTier.TIER_2
+            return AgentLevel.L3
         
-        # Default: Tier 1
+        # Default: L2 Domain Expert
         logger.info(
-            "tier_1_determined",
+            "level_l2_default",
             reason="low_complexity_and_risk",
             complexity=assessment.complexity,
             risk_level=assessment.risk_level
         )
-        return AgentTier.TIER_1
+        return AgentLevel.L2
     
     # ========================================================================
     # STAGE 4: 8-FACTOR SCORING
@@ -660,7 +696,7 @@ Context: {context}"""
         query: str,
         context: Dict,
         assessment: QueryAssessment,
-        tier: AgentTier,
+        level: AgentLevel,
         user_id: Optional[str],
         tenant_id: str
     ) -> List[AgentScore]:
@@ -675,14 +711,14 @@ Context: {context}"""
         5. Graph proximity (10%) - From GraphRAG Neo4j score
         6. User preference (5%) - From user history
         7. Availability (3%) - From agent metrics
-        8. Tier compatibility (2%) - Match with required tier
+        8. Level compatibility (2%) - Match with required level
         
         Args:
             candidates: GraphRAG search results
             query: User query
             context: Additional context
             assessment: Query assessment
-            tier: Required tier
+            level: Required level
             user_id: User ID
             tenant_id: Tenant ID
             
@@ -730,9 +766,9 @@ Context: {context}"""
                     agent_id, tenant_id
                 )
                 
-                # 8. Tier compatibility (2%) - Tier match
-                tier_score = await self._calculate_tier_compatibility(
-                    agent_id, tier, tenant_id
+                # 8. Level compatibility (2%) - Level match
+                level_score = await self._calculate_level_compatibility(
+                    agent_id, level, tenant_id
                 )
                 
                 # Weighted total score
@@ -744,7 +780,7 @@ Context: {context}"""
                     graph_score * self.weights['graph_proximity'] +
                     user_pref_score * self.weights['user_preference'] +
                     availability_score * self.weights['availability'] +
-                    tier_score * self.weights['tier_compatibility']
+                    level_score * self.weights['level_compatibility']
                 )
                 
                 # Confidence score (0-1)
@@ -753,14 +789,14 @@ Context: {context}"""
                 # Generate recommendation reason
                 reason = self._generate_recommendation_reason(
                     semantic_score, domain_score, performance_score,
-                    keyword_score, graph_score, tier_score
+                    keyword_score, graph_score, level_score
                 )
                 
                 scored_agent = AgentScore(
                     agent_id=agent_id,
                     agent_name=candidate.get('agent_name', 'Unknown'),
                     agent_type=candidate.get('agent_type', 'general'),
-                    agent_level=candidate.get('tier', None),
+                    agent_level=candidate.get('agent_level') or candidate.get('tier'),
                     semantic_similarity=round(semantic_score, 3),
                     domain_expertise=round(domain_score, 3),
                     historical_performance=round(performance_score, 3),
@@ -768,11 +804,11 @@ Context: {context}"""
                     graph_proximity=round(graph_score, 3),
                     user_preference=round(user_pref_score, 3),
                     availability=round(availability_score, 3),
-                    tier_compatibility=round(tier_score, 3),
+                    level_compatibility=round(level_score, 3),
                     total_score=round(total_score, 3),
                     confidence_score=round(confidence_score, 3),
                     recommendation_reason=reason,
-                    tier_match=tier.value
+                    level_match=level.value
                 )
                 
                 scored_agents.append(scored_agent)
@@ -866,10 +902,10 @@ Context: {context}"""
             logger.error("availability_calculation_failed", error=str(e))
             return 1.0
     
-    async def _calculate_tier_compatibility(
-        self, agent_id: str, required_tier: AgentTier, tenant_id: str
+    async def _calculate_level_compatibility(
+        self, agent_id: str, required_level: AgentLevel, tenant_id: str
     ) -> float:
-        """Calculate tier compatibility score (0-1)"""
+        """Calculate level compatibility score (0-1)"""
         try:
             result = await self.supabase.client.table('agents') \
                 .select('agent_level_id') \
@@ -880,12 +916,11 @@ Context: {context}"""
             if not result.data:
                 return 0.5
             
-            # TODO: Map agent_level to tier
-            # For now, return high compatibility
+            # TODO: Implement true level compatibility using agent_level_id/metadata
             return 0.9
             
         except Exception as e:
-            logger.error("tier_compatibility_calculation_failed", error=str(e))
+            logger.error("level_compatibility_calculation_failed", error=str(e))
             return 0.5
     
     def _generate_recommendation_reason(
@@ -895,7 +930,7 @@ Context: {context}"""
         performance: float,
         keyword: float,
         graph: float,
-        tier: float
+        level: float
     ) -> str:
         """Generate human-readable recommendation reason"""
         reasons = []
@@ -910,8 +945,8 @@ Context: {context}"""
             reasons.append("high keyword relevance")
         if graph >= 0.7:
             reasons.append("strong knowledge graph connections")
-        if tier >= 0.9:
-            reasons.append("perfect tier match")
+        if level >= 0.9:
+            reasons.append("perfect level match")
         
         if not reasons:
             reasons.append("general capability match")
@@ -927,7 +962,7 @@ Context: {context}"""
         scored_agents: List[AgentScore],
         service: VitalService,
         max_agents: int,
-        tier: AgentTier
+        level: AgentLevel
     ) -> List[AgentScore]:
         """Apply service-specific constraints"""
         
@@ -983,7 +1018,7 @@ Context: {context}"""
         self,
         agents: List[AgentScore],
         assessment: QueryAssessment,
-        tier: AgentTier,
+        level: AgentLevel,
         service: VitalService
     ) -> Tuple[List[AgentScore], List[str]]:
         """
@@ -997,10 +1032,10 @@ Context: {context}"""
         if not agents:
             return [], applied_gates
         
-        tier_def = TIER_DEFINITIONS[tier]
+        level_def = LEVEL_DEFINITIONS[level]
         
         # Gate 1: Confidence threshold
-        min_confidence = tier_def.min_confidence_threshold
+        min_confidence = level_def.min_confidence_threshold
         filtered = [a for a in agents if a.confidence_score >= min_confidence]
         
         if len(filtered) < len(agents):
@@ -1015,20 +1050,20 @@ Context: {context}"""
         # Gate 2: Escalation triggers
         if assessment.escalation_triggers:
             applied_gates.append("escalation_triggers_detected")
-            # Ensure Tier 3 requirements
-            if tier != AgentTier.TIER_3:
+            # Ensure highest oversight when escalation triggers present
+            if level != AgentLevel.L1:
                 logger.warning(
                     "escalation_override",
-                    original_tier=tier.value,
-                    escalated_to="tier_3"
+                    original_level=level.value,
+                    escalated_to="L1"
                 )
         
         # Gate 3: Mandatory human oversight
-        if tier_def.requires_human_oversight:
+        if level_def.requires_human_oversight:
             applied_gates.append("human_oversight_required")
         
         # Gate 4: Mandatory panel
-        if tier_def.requires_panel and len(filtered) < 3:
+        if level_def.requires_panel and len(filtered) < 3:
             applied_gates.append("panel_size_insufficient")
             logger.warning(
                 "panel_size_warning",
@@ -1037,7 +1072,7 @@ Context: {context}"""
             )
         
         # Gate 5: Mandatory critic
-        if tier_def.requires_critic:
+        if level_def.requires_critic:
             applied_gates.append("critic_required")
         
         return filtered, applied_gates
@@ -1060,7 +1095,7 @@ Context: {context}"""
                 'user_id': user_id,
                 'session_id': session_id,
                 'service': result.service.value,
-                'tier': result.tier.value,
+                'agent_level': result.level.value,
                 'agents_selected': [a.agent_id for a in result.agents],
                 'query_complexity': result.assessment.complexity,
                 'query_risk_level': result.assessment.risk_level,
@@ -1135,7 +1170,7 @@ async def _enrich_with_graphrag_context_standalone(
 
 def _apply_diversity_coverage_standalone(
     scored_agents: List[AgentScore],
-    tier: AgentTier,
+    level: AgentLevel,
     lambda_param: float = 0.5
 ) -> List[AgentScore]:
     """Apply MMR (Maximal Marginal Relevance) for diversity"""
@@ -1182,7 +1217,7 @@ def _apply_diversity_coverage_standalone(
 
 async def _update_performance_metrics_standalone(
     agent_id: str,
-    tier: str,
+    level: str,
     success: bool = True
 ) -> None:
     """Update daily performance metrics"""
@@ -1194,7 +1229,7 @@ async def _update_performance_metrics_standalone(
         logger.info(
             "metrics_updated",
             agent_id=agent_id[:8],
-            tier=tier,
+            level=level,
             date=today.isoformat()
         )
     except Exception as e:

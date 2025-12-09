@@ -1,8 +1,17 @@
 /**
- * Streaming Service for Ask Expert
- *
- * Handles Server-Sent Events (SSE) streaming from the chat API
- * Provides callbacks for different event types
+ * VITAL Platform - StreamingService
+ * 
+ * @deprecated This class-based service is deprecated. Use hooks instead.
+ * 
+ * Migration guide:
+ * - For Mode 1: import { useMode1Chat } from '@/features/ask-expert/hooks'
+ * - For Mode 2: import { useMode2Chat } from '@/features/ask-expert/hooks'
+ * - For Mode 3: import { useMode3Mission } from '@/features/ask-expert/hooks'
+ * - For base SSE: import { useSSEStream } from '@/features/ask-expert/hooks'
+ * 
+ * This service will be removed in a future release.
+ * 
+ * @see useSSEStream - Modern hook-based SSE handling
  */
 
 export interface StreamingCallbacks {
@@ -56,9 +65,21 @@ export interface MessageMetadata {
   mode?: string;
 }
 
+/**
+ * @deprecated Use useSSEStream or mode-specific hooks instead.
+ */
 export class StreamingService {
   private eventSource: EventSource | null = null;
   private callbacks: StreamingCallbacks = {};
+
+  constructor() {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.warn(
+        '[DEPRECATED] StreamingService is deprecated. ' +
+        'Use useSSEStream, useMode1Chat, useMode2Chat, or useMode3Mission hooks instead.'
+      );
+    }
+  }
 
   /**
    * Start streaming chat session

@@ -138,7 +138,7 @@ class AgentDefinition(BaseModel):
     min_confidence_threshold: float = 0.6
 
     # Metadata
-    tier: int = 2  # Legacy tier field for backward compatibility
+    agent_level: int = Field(2, alias="tier", description="Agent level (L1-L5). Alias 'tier' is deprecated.")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -335,7 +335,7 @@ class AgentHierarchyService:
             ],
             knowledge_domains=knowledge_domains,
             system_prompt=system_prompt,
-            tier=1,  # Legacy tier
+            agent_level=1,  # Legacy alias: tier
             max_delegation_depth=self.max_delegation_depth
         )
 
@@ -388,9 +388,9 @@ class AgentHierarchyService:
         if not agent_data:
             return None
 
-        # Derive tier from agent_levels join or default to L2 (Expert)
+        # Derive level from agent_levels join or default to L2 (Expert)
         agent_levels_data = agent_data.get("agent_levels") or {}
-        tier_value = agent_levels_data.get("level_number", 2) if agent_levels_data else 2
+        level_value = agent_levels_data.get("level_number", 2) if agent_levels_data else 2
 
         expert = AgentDefinition(
             agent_id=agent_id,
@@ -404,7 +404,7 @@ class AgentHierarchyService:
             temperature=agent_data.get("temperature", 0.7),
             max_tokens=agent_data.get("max_tokens", 4000),
             parent_agent_id=parent_master_id,
-            tier=tier_value
+            agent_level=level_value
         )
 
         self.active_agents[agent_id] = expert
@@ -517,7 +517,7 @@ class AgentHierarchyService:
             model=model,
             temperature=temperature,
             parent_agent_id=parent_expert_id,
-            tier=3
+            agent_level=3
         )
 
         self.active_agents[agent_id] = specialist
@@ -582,7 +582,7 @@ class AgentHierarchyService:
                 capabilities=[AgentCapability.PARALLEL_EXECUTION],
                 system_prompt=self._build_worker_prompt(task, context),
                 parent_agent_id=parent_agent_id,
-                tier=4
+                agent_level=4
             )
 
             self.active_agents[agent_id] = worker
@@ -643,7 +643,7 @@ class AgentHierarchyService:
             tools=tools,
             system_prompt=self._build_tool_agent_prompt(tools, context),
             parent_agent_id=parent_agent_id,
-            tier=5
+            agent_level=5
         )
 
         self.active_agents[agent_id] = tool_agent
@@ -1009,9 +1009,9 @@ class AgentHierarchyService:
 
             agent_data = result.data[0]
 
-            # Derive tier from agent_levels join (level_number), fallback to level.value
+            # Derive level from agent_levels join (level_number), fallback to level.value
             agent_levels_data = agent_data.get("agent_levels") or {}
-            tier_value = agent_levels_data.get("level_number", level.value) if agent_levels_data else level.value
+            level_value = agent_levels_data.get("level_number", level.value) if agent_levels_data else level.value
 
             # Create AgentDefinition from database data
             agent = AgentDefinition(
@@ -1028,7 +1028,7 @@ class AgentHierarchyService:
                 temperature=agent_data.get("temperature", 0.7),
                 max_tokens=agent_data.get("max_tokens", 4000),
                 parent_agent_id=parent_id,
-                tier=tier_value
+                agent_level=level_value
             )
 
             # Register in active agents
@@ -1428,7 +1428,7 @@ Use the tools effectively to complete your task."""
             knowledge_domains=["general"],
             system_prompt="You are an expert agent.",
             parent_agent_id=parent_master_id,
-            tier=2
+            agent_level=2
         )
 
     # ========================================================================

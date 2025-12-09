@@ -469,7 +469,7 @@ export function DashboardSidebar({
                             className="rounded-full"
                           />
                         ) : (
-                          <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center text-xs">
+                          <div className="w-4 h-4 rounded-full bg-neutral-100 flex items-center justify-center text-xs">
                             {item.avatar}
                           </div>
                         )}

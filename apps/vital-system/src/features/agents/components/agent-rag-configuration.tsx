@@ -221,7 +221,7 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
       'hybrid': 'bg-purple-100 text-purple-800',
       'langchain': 'bg-orange-100 text-orange-800'
     };
-    return colors[systemType as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[systemType as keyof typeof colors] || 'bg-neutral-100 text-neutral-800';
   };
 
   return (
@@ -552,7 +552,7 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
 
                       <div>
                         <h5 className="font-medium text-sm">Sample Answer:</h5>
-                        <div className="p-3 bg-gray-50 rounded text-sm">
+                        <div className="p-3 bg-neutral-50 rounded text-sm">
                           {testResults.ragResponse.answer}
                         </div>
                       </div>

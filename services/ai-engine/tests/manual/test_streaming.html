@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VITAL - Streaming Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        label { display: block; margin-bottom: 8px; font-weight: 500; }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; }
+        button.danger:hover { background: #c82333; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Menlo', 'Monaco', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .event { margin-bottom: 5px; }
+        .event-type { color: #4ec9b0; }
+        .event-data { color: #ce9178; }
+        .error { color: #f44747; }
+        .success { color: #6a9955; }
+        .status { 
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        .status.connected { background: #d4edda; color: #155724; }
+        .status.disconnected { background: #f8d7da; color: #721c24; }
+        .status.connecting { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>🔌 VITAL Streaming Test</h1>
+    
+    <div class="card">
+        <h2>Connection Settings</h2>
+        <label>API Base URL</label>
+        <input type="text" id="baseUrl" value="http://localhost:8000/api/v1" />
+        
+        <label>Auth Token (JWT)</label>
+        <input type="text" id="authToken" placeholder="Optional: your JWT token" />
+        
+        <div id="connectionStatus" class="status disconnected">Disconnected</div>
+    </div>
+
+    <div class="card">
+        <h2>📝 Chat Streaming Test</h2>
+        <label>Agent ID</label>
+        <input type="text" id="agentId" value="agent-001" />
+        
+        <label>Mode</label>
+        <select id="mode">
+            <option value="1">Mode 1 - Manual Interactive</option>
+            <option value="2">Mode 2 - Automatic Interactive</option>
+            <option value="3">Mode 3 - Manual Autonomous</option>
+            <option value="4">Mode 4 - Automatic Autonomous</option>
+        </select>
+        
+        <label>Message</label>
+        <textarea id="message" rows="3" placeholder="Enter your message...">What is FDA 510k?</textarea>
+        
+        <button onclick="startChatStream()">Start Chat Stream</button>
+        <button class="danger" onclick="stopStream()">Stop</button>
+    </div>
+
+    <div class="card">
+        <h2>📊 Job Status Streaming Test</h2>
+        <label>Job ID</label>
+        <input type="text" id="jobId" placeholder="Enter job ID" />
+        
+        <button onclick="startJobStatusStream()">Watch Job Status</button>
+        <button class="danger" onclick="stopStream()">Stop</button>
+    </div>
+
+    <div class="card">
+        <h2>🔄 Workflow Execution Test</h2>
+        <label>Workflow ID</label>
+        <input type="text" id="workflowId" value="test-workflow-001" />
+        
+        <label>Input Data (JSON)</label>
+        <textarea id="inputData" rows="3">{"query": "Test query", "context": {}}</textarea>
+        
+        <button onclick="startWorkflowStream()">Execute Workflow</button>
+        <button class="danger" onclick="stopStream()">Stop</button>
+    </div>
+
+    <div class="card">
+        <h2>📺 Output</h2>
+        <button onclick="clearOutput()">Clear</button>
+        <div id="output" class="output">Waiting for events...</div>
+    </div>
+
+    <script>
+        let eventSource = null;
+        
+        function updateStatus(status, text) {
+            const el = document.getElementById('connectionStatus');
+            el.className = 'status ' + status;
+            el.textContent = text;
+        }
+        
+        function log(message, type = '') {
+            const output = document.getElementById('output');
+            const className = type ? ` class="${type}"` : '';
+            output.innerHTML += `<div${className}>${escapeHtml(message)}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function logEvent(type, data) {
+            const output = document.getElementById('output');
+            output.innerHTML += `<div class="event"><span class="event-type">[${type}]</span> <span class="event-data">${escapeHtml(JSON.stringify(data, null, 2))}</span></div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function clearOutput() {
+            document.getElementById('output').innerHTML = 'Waiting for events...';
+        }
+        
+        function stopStream() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                updateStatus('disconnected', 'Disconnected');
+                log('Stream stopped', 'success');
+            }
+        }
+        
+        function getHeaders() {
+            const token = document.getElementById('authToken').value;
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        }
+        
+        async function startChatStream() {
+            stopStream();
+            
+            const baseUrl = document.getElementById('baseUrl').value;
+            const agentId = document.getElementById('agentId').value;
+            const mode = document.getElementById('mode').value;
+            const message = document.getElementById('message').value;
+            
+            updateStatus('connecting', 'Connecting...');
+            log(`Starting chat stream: agent=${agentId}, mode=${mode}`);
+            
+            try {
+                // For SSE, we need to POST first to start the stream
+                const response = await fetch(`${baseUrl}/stream/chat`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({
+                        agent_id: agentId,
+                        mode: parseInt(mode),
+                        message: message,
+                    }),
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                updateStatus('connected', 'Connected - Streaming');
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const text = decoder.decode(value);
+                    const lines = text.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                logEvent(data.type || 'data', data);
+                            } catch (e) {
+                                log(line);
+                            }
+                        } else if (line.startsWith('event: ')) {
+                            log(`Event: ${line.slice(7)}`, 'event-type');
+                        }
+                    }
+                }
+                
+                updateStatus('disconnected', 'Stream ended');
+                log('Chat stream completed', 'success');
+                
+            } catch (error) {
+                updateStatus('disconnected', 'Error');
+                log(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function startJobStatusStream() {
+            stopStream();
+            
+            const baseUrl = document.getElementById('baseUrl').value;
+            const jobId = document.getElementById('jobId').value;
+            
+            if (!jobId) {
+                log('Please enter a job ID', 'error');
+                return;
+            }
+            
+            updateStatus('connecting', 'Connecting...');
+            log(`Starting job status stream: job=${jobId}`);
+            
+            try {
+                eventSource = new EventSource(`${baseUrl}/stream/job/${jobId}/status`);
+                
+                eventSource.onopen = () => {
+                    updateStatus('connected', 'Connected');
+                    log('Job status stream connected', 'success');
+                };
+                
+                eventSource.onerror = (e) => {
+                    updateStatus('disconnected', 'Error');
+                    log('Job status stream error', 'error');
+                };
+                
+                eventSource.onmessage = (e) => {
+                    try {
+                        const data = JSON.parse(e.data);
+                        logEvent('status', data);
+                    } catch (err) {
+                        log(e.data);
+                    }
+                };
+                
+                ['job_started', 'progress', 'job_completed', 'job_failed'].forEach(type => {
+                    eventSource.addEventListener(type, (e) => {
+                        const data = JSON.parse(e.data);
+                        logEvent(type, data);
+                    });
+                });
+                
+            } catch (error) {
+                updateStatus('disconnected', 'Error');
+                log(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function startWorkflowStream() {
+            stopStream();
+            
+            const baseUrl = document.getElementById('baseUrl').value;
+            const workflowId = document.getElementById('workflowId').value;
+            const inputData = document.getElementById('inputData').value;
+            
+            updateStatus('connecting', 'Connecting...');
+            log(`Starting workflow execution: workflow=${workflowId}`);
+            
+            try {
+                const response = await fetch(`${baseUrl}/stream/workflow/execute`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({
+                        workflow_id: workflowId,
+                        input_data: JSON.parse(inputData),
+                    }),
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                updateStatus('connected', 'Connected - Executing');
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const text = decoder.decode(value);
+                    const lines = text.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                logEvent(data.type || 'data', data);
+                            } catch (e) {
+                                log(line);
+                            }
+                        }
+                    }
+                }
+                
+                updateStatus('disconnected', 'Execution complete');
+                log('Workflow execution completed', 'success');
+                
+            } catch (error) {
+                updateStatus('disconnected', 'Error');
+                log(`Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
+
+

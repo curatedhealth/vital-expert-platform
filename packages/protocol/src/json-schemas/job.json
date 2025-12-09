@@ -1,0 +1,159 @@
+{
+  "$ref": "#/definitions/job",
+  "definitions": {
+    "job": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "expert_mode_3",
+            "expert_mode_4",
+            "panel_execution",
+            "workflow_execution",
+            "document_ingestion",
+            "ontology_discovery"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "running",
+            "completed",
+            "failed",
+            "cancelled",
+            "timeout"
+          ]
+        },
+        "progress": {
+          "type": "object",
+          "properties": {
+            "currentStep": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "totalSteps": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "percentComplete": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "currentStepDescription": {
+              "type": "string"
+            },
+            "tokensUsed": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "tokensRemaining": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "currentStep"
+          ],
+          "additionalProperties": false
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "stackTrace": {
+              "type": "string"
+            },
+            "isRetryable": {
+              "type": "boolean",
+              "default": false
+            },
+            "retryCount": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "additionalProperties": false
+        },
+        "result": {},
+        "input": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "referenceId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "referenceType": {
+          "type": "string"
+        },
+        "queuedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 datetime"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 datetime"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 datetime"
+        },
+        "estimatedCompletionAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 datetime"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Tenant identifier for multi-tenancy isolation"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "User identifier"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "status",
+        "input",
+        "queuedAt",
+        "tenantId",
+        "userId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

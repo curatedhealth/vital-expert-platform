@@ -18,21 +18,21 @@ logger = structlog.get_logger(__name__)
 agentos_requests_total = Counter(
     'agentos_requests_total',
     'Total number of AgentOS requests',
-    ['service_type', 'agent_id', 'tier', 'tenant_id']
+    ['service_type', 'agent_id', 'agent_level', 'tenant_id']
 )
 
 # Successful requests
 agentos_requests_successful = Counter(
     'agentos_requests_successful',
     'Number of successful requests',
-    ['service_type', 'agent_id', 'tier']
+    ['service_type', 'agent_id', 'agent_level']
 )
 
 # Failed requests
 agentos_requests_failed = Counter(
     'agentos_requests_failed',
     'Number of failed requests',
-    ['service_type', 'agent_id', 'tier', 'error_type']
+    ['service_type', 'agent_id', 'agent_level', 'error_type']
 )
 
 # Escalated requests
@@ -46,7 +46,7 @@ agentos_requests_escalated = Counter(
 agentos_human_oversight_total = Counter(
     'agentos_human_oversight_total',
     'Number of requests with human oversight',
-    ['service_type', 'agent_id', 'tier']
+    ['service_type', 'agent_id', 'agent_level']
 )
 
 
@@ -58,7 +58,7 @@ agentos_human_oversight_total = Counter(
 agentos_request_latency_seconds = Histogram(
     'agentos_request_latency_seconds',
     'Request latency in seconds',
-    ['service_type', 'agent_id', 'tier'],
+    ['service_type', 'agent_id', 'agent_level'],
     buckets=(0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0, 120.0, float('inf'))
 )
 
@@ -66,7 +66,7 @@ agentos_request_latency_seconds = Histogram(
 agentos_agent_execution_seconds = Histogram(
     'agentos_agent_execution_seconds',
     'Agent execution time in seconds',
-    ['agent_id', 'tier'],
+    ['agent_id', 'agent_level'],
     buckets=(0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, float('inf'))
 )
 
@@ -87,7 +87,7 @@ agentos_rag_query_seconds = Histogram(
 agentos_confidence_score = Histogram(
     'agentos_confidence_score',
     'Agent confidence score (0-1)',
-    ['agent_id', 'tier'],
+    ['agent_id', 'agent_level'],
     buckets=(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 )
 
@@ -135,14 +135,14 @@ agentos_f1_score = Gauge(
 agentos_cost_usd_total = Counter(
     'agentos_cost_usd_total',
     'Total cost in USD',
-    ['agent_id', 'tier']
+    ['agent_id', 'agent_level']
 )
 
 # Cost per query histogram
 agentos_cost_per_query_usd = Histogram(
     'agentos_cost_per_query_usd',
     'Cost per query in USD',
-    ['agent_id', 'tier'],
+    ['agent_id', 'agent_level'],
     buckets=(0.001, 0.01, 0.05, 0.10, 0.25, 0.50, 1.0, 2.0, 5.0, float('inf'))
 )
 
@@ -150,7 +150,7 @@ agentos_cost_per_query_usd = Histogram(
 agentos_tokens_used_total = Counter(
     'agentos_tokens_used_total',
     'Total tokens used',
-    ['agent_id', 'tier']
+    ['agent_id', 'agent_level']
 )
 
 
@@ -292,7 +292,7 @@ class MetricsRecorder:
     def record_request(
         service_type: str,
         agent_id: str,
-        tier: Optional[str],
+        agent_level: Optional[str],
         tenant_id: str,
         success: bool,
         latency_seconds: float,
@@ -309,7 +309,7 @@ class MetricsRecorder:
         agentos_requests_total.labels(
             service_type=service_type,
             agent_id=agent_id[:8],  # Truncate for cardinality
-            tier=tier or 'unknown',
+            agent_level=agent_level or 'unknown',
             tenant_id=tenant_id[:8]
         ).inc()
         
@@ -318,13 +318,13 @@ class MetricsRecorder:
             agentos_requests_successful.labels(
                 service_type=service_type,
                 agent_id=agent_id[:8],
-                tier=tier or 'unknown'
+                agent_level=agent_level or 'unknown'
             ).inc()
         else:
             agentos_requests_failed.labels(
                 service_type=service_type,
                 agent_id=agent_id[:8],
-                tier=tier or 'unknown',
+                agent_level=agent_level or 'unknown',
                 error_type='unknown'
             ).inc()
         
@@ -332,38 +332,38 @@ class MetricsRecorder:
         agentos_request_latency_seconds.labels(
             service_type=service_type,
             agent_id=agent_id[:8],
-            tier=tier or 'unknown'
+            agent_level=agent_level or 'unknown'
         ).observe(latency_seconds)
         
         agentos_agent_execution_seconds.labels(
             agent_id=agent_id[:8],
-            tier=tier or 'unknown'
+            agent_level=agent_level or 'unknown'
         ).observe(latency_seconds)
         
         # Record confidence
         if confidence_score is not None:
             agentos_confidence_score.labels(
                 agent_id=agent_id[:8],
-                tier=tier or 'unknown'
+                agent_level=agent_level or 'unknown'
             ).observe(confidence_score)
         
         # Record cost
         if cost_usd is not None:
             agentos_cost_usd_total.labels(
                 agent_id=agent_id[:8],
-                tier=tier or 'unknown'
+                agent_level=agent_level or 'unknown'
             ).inc(cost_usd)
             
             agentos_cost_per_query_usd.labels(
                 agent_id=agent_id[:8],
-                tier=tier or 'unknown'
+                agent_level=agent_level or 'unknown'
             ).observe(cost_usd)
         
         # Record tokens
         if tokens_used is not None:
             agentos_tokens_used_total.labels(
                 agent_id=agent_id[:8],
-                tier=tier or 'unknown'
+                agent_level=agent_level or 'unknown'
             ).inc(tokens_used)
         
         # Record escalation
@@ -526,14 +526,294 @@ class MetricsRecorder:
         ).observe(query_time_seconds)
 
 
+# ============================================================================
+# WORKFLOW METRICS (World-Class Architecture)
+# ============================================================================
+
+# Workflow execution
+workflow_executions_total = Counter(
+    'vital_workflow_executions_total',
+    'Total workflow executions',
+    ['workflow_id', 'organization_id', 'status']  # status: started, completed, failed, cancelled
+)
+
+workflow_execution_duration_seconds = Histogram(
+    'vital_workflow_execution_duration_seconds',
+    'Workflow execution duration',
+    ['workflow_id', 'organization_id'],
+    buckets=(1.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0, 600.0, float('inf'))
+)
+
+# Node execution
+node_executions_total = Counter(
+    'vital_node_executions_total',
+    'Total node executions',
+    ['node_type', 'organization_id', 'status']  # status: success, failure, skipped
+)
+
+node_execution_duration_seconds = Histogram(
+    'vital_node_execution_duration_seconds',
+    'Node execution duration',
+    ['node_type'],
+    buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, float('inf'))
+)
+
+# Expert modes
+expert_mode_requests_total = Counter(
+    'vital_expert_mode_requests_total',
+    'Total expert mode requests',
+    ['mode', 'organization_id', 'is_async']
+)
+
+expert_mode_latency_seconds = Histogram(
+    'vital_expert_mode_latency_seconds',
+    'Expert mode latency',
+    ['mode'],
+    buckets=(0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0, float('inf'))
+)
+
+# Async jobs
+async_jobs_total = Counter(
+    'vital_async_jobs_total',
+    'Total async jobs',
+    ['job_type', 'organization_id', 'status']  # status: submitted, running, completed, failed
+)
+
+async_job_queue_depth = Gauge(
+    'vital_async_job_queue_depth',
+    'Current async job queue depth',
+    ['queue_name']
+)
+
+async_job_wait_time_seconds = Histogram(
+    'vital_async_job_wait_time_seconds',
+    'Time job spent waiting in queue',
+    ['job_type'],
+    buckets=(1.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0, float('inf'))
+)
+
+# Token budget
+token_budget_checks_total = Counter(
+    'vital_token_budget_checks_total',
+    'Total token budget checks',
+    ['organization_id', 'result']  # result: allowed, denied, warning
+)
+
+token_usage_by_organization = Counter(
+    'vital_token_usage_total',
+    'Total tokens used by organization',
+    ['organization_id', 'model', 'operation']
+)
+
+token_budget_remaining = Gauge(
+    'vital_token_budget_remaining',
+    'Remaining token budget',
+    ['organization_id']
+)
+
+# Streaming
+streaming_connections_active = Gauge(
+    'vital_streaming_connections_active',
+    'Active streaming connections',
+    ['stream_type']  # chat, job_status, workflow_execution
+)
+
+streaming_events_total = Counter(
+    'vital_streaming_events_total',
+    'Total streaming events sent',
+    ['stream_type', 'event_type']
+)
+
+# Panel discussions
+panel_discussions_total = Counter(
+    'vital_panel_discussions_total',
+    'Total panel discussions',
+    ['panel_type', 'organization_id', 'status']
+)
+
+panel_consensus_score = Histogram(
+    'vital_panel_consensus_score',
+    'Panel consensus score distribution',
+    ['panel_type'],
+    buckets=(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+)
+
+
+class WorkflowMetricsRecorder:
+    """
+    Helper class to record workflow-related metrics.
+    Complements MetricsRecorder for World-Class Architecture.
+    """
+    
+    @staticmethod
+    def record_workflow_start(workflow_id: str, organization_id: str):
+        """Record workflow execution start."""
+        workflow_executions_total.labels(
+            workflow_id=workflow_id[:8],
+            organization_id=organization_id[:8],
+            status='started'
+        ).inc()
+    
+    @staticmethod
+    def record_workflow_complete(
+        workflow_id: str,
+        organization_id: str,
+        duration_seconds: float,
+        success: bool,
+    ):
+        """Record workflow execution completion."""
+        status = 'completed' if success else 'failed'
+        workflow_executions_total.labels(
+            workflow_id=workflow_id[:8],
+            organization_id=organization_id[:8],
+            status=status
+        ).inc()
+        
+        workflow_execution_duration_seconds.labels(
+            workflow_id=workflow_id[:8],
+            organization_id=organization_id[:8]
+        ).observe(duration_seconds)
+    
+    @staticmethod
+    def record_node_execution(
+        node_type: str,
+        organization_id: str,
+        duration_seconds: float,
+        success: bool,
+    ):
+        """Record individual node execution."""
+        status = 'success' if success else 'failure'
+        node_executions_total.labels(
+            node_type=node_type,
+            organization_id=organization_id[:8],
+            status=status
+        ).inc()
+        
+        node_execution_duration_seconds.labels(
+            node_type=node_type
+        ).observe(duration_seconds)
+    
+    @staticmethod
+    def record_expert_mode_request(
+        mode: int,
+        organization_id: str,
+        is_async: bool,
+        duration_seconds: float = None,
+    ):
+        """Record expert mode request."""
+        expert_mode_requests_total.labels(
+            mode=str(mode),
+            organization_id=organization_id[:8],
+            is_async=str(is_async).lower()
+        ).inc()
+        
+        if duration_seconds is not None:
+            expert_mode_latency_seconds.labels(
+                mode=str(mode)
+            ).observe(duration_seconds)
+    
+    @staticmethod
+    def record_async_job(
+        job_type: str,
+        organization_id: str,
+        status: str,
+        wait_time_seconds: float = None,
+    ):
+        """Record async job status change."""
+        async_jobs_total.labels(
+            job_type=job_type,
+            organization_id=organization_id[:8],
+            status=status
+        ).inc()
+        
+        if wait_time_seconds is not None and status == 'running':
+            async_job_wait_time_seconds.labels(
+                job_type=job_type
+            ).observe(wait_time_seconds)
+    
+    @staticmethod
+    def record_token_usage(
+        organization_id: str,
+        model: str,
+        operation: str,
+        tokens: int,
+        budget_remaining: int = None,
+    ):
+        """Record token usage."""
+        token_usage_by_organization.labels(
+            organization_id=organization_id[:8],
+            model=model,
+            operation=operation
+        ).inc(tokens)
+        
+        if budget_remaining is not None:
+            token_budget_remaining.labels(
+                organization_id=organization_id[:8]
+            ).set(budget_remaining)
+    
+    @staticmethod
+    def record_budget_check(
+        organization_id: str,
+        result: str,  # 'allowed', 'denied', 'warning'
+    ):
+        """Record budget check result."""
+        token_budget_checks_total.labels(
+            organization_id=organization_id[:8],
+            result=result
+        ).inc()
+    
+    @staticmethod
+    def record_streaming_connection(stream_type: str, delta: int = 1):
+        """Record streaming connection change (delta: +1 or -1)."""
+        streaming_connections_active.labels(
+            stream_type=stream_type
+        ).inc(delta)
+    
+    @staticmethod
+    def record_streaming_event(stream_type: str, event_type: str):
+        """Record streaming event sent."""
+        streaming_events_total.labels(
+            stream_type=stream_type,
+            event_type=event_type
+        ).inc()
+    
+    @staticmethod
+    def record_panel_discussion(
+        panel_type: str,
+        organization_id: str,
+        status: str,
+        consensus_score: float = None,
+    ):
+        """Record panel discussion."""
+        panel_discussions_total.labels(
+            panel_type=panel_type,
+            organization_id=organization_id[:8],
+            status=status
+        ).inc()
+        
+        if consensus_score is not None:
+            panel_consensus_score.labels(
+                panel_type=panel_type
+            ).observe(consensus_score)
+
+
 # Export metrics recorder for easy import
 __all__ = [
     'MetricsRecorder',
+    'WorkflowMetricsRecorder',
     'agentos_requests_total',
     'agentos_request_latency_seconds',
     'agentos_confidence_score',
     'agentos_accuracy',
     'agentos_drift_alerts_active',
     'agentos_demographic_parity',
+    # Workflow metrics
+    'workflow_executions_total',
+    'workflow_execution_duration_seconds',
+    'node_executions_total',
+    'expert_mode_requests_total',
+    'async_jobs_total',
+    'token_budget_checks_total',
+    'streaming_connections_active',
 ]
 

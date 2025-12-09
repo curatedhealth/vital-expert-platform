@@ -25,7 +25,7 @@ from services.hitl_websocket_service import (
     get_enhanced_hitl_service,
     EnhancedHITLService,
 )
-from services.postgres_checkpointer import get_postgres_checkpointer
+from langgraph_workflows.postgres_checkpointer import get_postgres_checkpointer
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/hitl", tags=["HITL"])

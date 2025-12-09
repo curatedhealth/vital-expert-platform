@@ -103,9 +103,9 @@ export function PropertyPanel({ selectedNode, onUpdate, onClose }: PropertyPanel
   if (!selectedNode) {
     return (
       <Card className="h-full">
-        <CardContent className="flex items-center justify-center h-full text-gray-500">
+        <CardContent className="flex items-center justify-center h-full text-neutral-500">
           <div className="text-center">
-            <Settings className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+            <Settings className="w-12 h-12 mx-auto mb-2 text-neutral-400" />
             <p className="text-sm">Select a node to edit its properties</p>
           </div>
         </CardContent>
@@ -279,7 +279,7 @@ export function PropertyPanel({ selectedNode, onUpdate, onClose }: PropertyPanel
                   value={[config.temperature || 0.7]}
                   onValueChange={([value]) => handleConfigUpdate('temperature', value)}
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-neutral-500">
                   Lower = more focused, Higher = more creative
                 </p>
               </div>
@@ -348,7 +348,7 @@ export function PropertyPanel({ selectedNode, onUpdate, onClose }: PropertyPanel
                     })()
                   }`}
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-neutral-500">
                   Enter valid JSON format for tool parameters
                 </p>
               </div>

@@ -88,6 +88,7 @@ import { AIChatbot, ChatMessage } from '@/components/langgraph-gui/AIChatbot';
 import { apiEndpoints, setApiBaseUrl } from '@/lib/langgraph-gui/config/api';
 import { expertIdentityManager } from '@/lib/langgraph-gui/expertIdentity';
 import { createDefaultPanelWorkflow, getAvailablePanelTypes, PANEL_CONFIGS } from '@/components/langgraph-gui/panel-workflows';
+import { V0NodeGeneratorModal } from '../modals/V0NodeGeneratorModal';
 
 import type { 
   WorkflowDefinition,
@@ -230,6 +231,9 @@ export function WorkflowDesignerEnhanced({
   const [panelName, setPanelName] = useState('');
   const [panelDescription, setPanelDescription] = useState('');
   const [isSavingPanel, setIsSavingPanel] = useState(false);
+  
+  // v0 AI Generator state
+  const [showV0Generator, setShowV0Generator] = useState(false);
 
   // Save current state to undo stack
   const saveToUndoStack = useCallback(() => {
@@ -1134,6 +1138,26 @@ export function WorkflowDesignerEnhanced({
     input.click();
   }, [setNodes, setEdges, saveToUndoStack, addMessage]);
 
+  // Handle v0-generated node addition
+  const handleV0NodeGenerated = useCallback((
+    nodeDefinition: any,
+    previewUrl: string,
+    chatId: string
+  ) => {
+    // Add a message about the successful generation
+    addMessage({
+      id: `msg-${Date.now()}`,
+      role: 'log',
+      content: `✨ Custom node generated with v0! Preview: ${previewUrl}`,
+      timestamp: new Date().toLocaleTimeString(),
+      level: 'success',
+    });
+    
+    // In a full implementation, this would add the node to the palette
+    // or directly to the canvas. For POC, we just log it.
+    console.log('[v0] Node generated:', { nodeDefinition, previewUrl, chatId });
+  }, [addMessage]);
+
   // View workflow code (Python LangGraph)
   const handleViewCode = useCallback(() => {
     const workflow: WorkflowDefinition = {
@@ -1377,6 +1401,8 @@ workflow = StateGraph(WorkflowState)
             onImportWorkflow={handleImportWorkflow}
             onViewCode={handleViewCode}
             panelType={currentPanelType}
+            onOpenV0Generator={() => setShowV0Generator(true)}
+            v0Enabled={true}
           />
 
           {/* React Flow Canvas */}
@@ -1716,6 +1742,28 @@ workflow = StateGraph(WorkflowState)
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* v0 AI Node Generator Modal */}
+      <V0NodeGeneratorModal
+        open={showV0Generator}
+        onOpenChange={setShowV0Generator}
+        workflowContext={{
+          name: initialWorkflow?.name || 'Untitled Workflow',
+          domain: currentPanelType ? 'Panel Workflow' : 'Custom Workflow',
+          existingNodes: nodes.map(n => n.data?.type || n.type || 'unknown'),
+          currentTask: selectedNode?.label,
+        }}
+        onNodeGenerated={handleV0NodeGenerated}
+        onLog={(message, level) => {
+          addMessage({
+            id: `msg-${Date.now()}`,
+            role: 'log',
+            content: message,
+            timestamp: new Date().toLocaleTimeString(),
+            level,
+          });
+        }}
+      />
     </div>
   );
 }

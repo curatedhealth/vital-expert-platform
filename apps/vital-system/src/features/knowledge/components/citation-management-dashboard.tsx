@@ -136,7 +136,7 @@ const sourceConfig: Record<
   },
   manual: {
     icon: <Edit3 className="h-4 w-4" />,
-    color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    color: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300',
     label: 'Manual Entry',
   },
   web: {

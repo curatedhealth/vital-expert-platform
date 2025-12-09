@@ -131,7 +131,7 @@ export function InvestigationPhase({ onComplete }: InvestigationPhaseProps) {
     if (score >= 85) return { label: "Quick Win", color: "bg-green-100 text-green-700" };
     if (score >= 70) return { label: "Strategic", color: "bg-blue-100 text-blue-700" };
     if (score >= 55) return { label: "Foundation", color: "bg-yellow-100 text-yellow-700" };
-    return { label: "Defer", color: "bg-gray-100 text-gray-700" };
+    return { label: "Defer", color: "bg-neutral-100 text-neutral-700" };
   };
 
   return (
@@ -197,7 +197,7 @@ export function InvestigationPhase({ onComplete }: InvestigationPhaseProps) {
                           "w-full p-3 rounded-lg border-2 text-left transition-all hover:shadow-sm",
                           selectedJTBDs.includes(jtbd.id)
                             ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
-                            : "border-gray-200"
+                            : "border-neutral-200"
                         )}
                       >
                         <div className="flex items-center justify-between">
@@ -245,7 +245,7 @@ export function InvestigationPhase({ onComplete }: InvestigationPhaseProps) {
                   {valueDrivers.slice(0, 12).map((driver) => (
                     <div
                       key={driver.id}
-                      className="p-3 rounded-lg border bg-gray-50 dark:bg-gray-900"
+                      className="p-3 rounded-lg border bg-neutral-50 dark:bg-neutral-900"
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-mono text-xs text-muted-foreground">{driver.code}</span>
@@ -290,7 +290,7 @@ export function InvestigationPhase({ onComplete }: InvestigationPhaseProps) {
                     const jtbd = jtbds.find(j => j.id === id);
                     const score = analyzedJTBDs.get(id) || 0;
                     return (
-                      <div key={id} className="p-3 rounded-lg border bg-white dark:bg-gray-900">
+                      <div key={id} className="p-3 rounded-lg border bg-white dark:bg-neutral-900">
                         <div className="flex items-center justify-between mb-2">
                           <div>
                             <span className="font-mono text-xs text-muted-foreground mr-2">{jtbd?.code}</span>
@@ -332,7 +332,7 @@ export function InvestigationPhase({ onComplete }: InvestigationPhaseProps) {
                   {prioritizedList.map((item, index) => {
                     const priority = getPriorityBadge(item.score);
                     return (
-                      <div key={item.jtbd.id} className="p-4 rounded-lg border bg-white dark:bg-gray-900">
+                      <div key={item.jtbd.id} className="p-4 rounded-lg border bg-white dark:bg-neutral-900">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div
@@ -397,7 +397,7 @@ export function InvestigationPhase({ onComplete }: InvestigationPhaseProps) {
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <CheckCircle2 className={cn(
                       "w-4 h-4 mt-0.5 flex-shrink-0",
-                      i < step ? "text-green-500" : "text-gray-300"
+                      i < step ? "text-green-500" : "text-neutral-300"
                     )} />
                     <span className={cn(i < step && "text-muted-foreground line-through")}>
                       {obj}

@@ -20,11 +20,12 @@ import requests
 router = APIRouter()
 
 # =============================================================================
-# CONFIGURATION
+# CONFIGURATION - Load from environment variables (NEVER hardcode credentials)
 # =============================================================================
+import os
 
-SUPABASE_URL = "https://bomltkhixeatxuoxmolq.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvbWx0a2hpeGVhdHh1b3htb2xxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Mjc4MzkxNSwiZXhwIjoyMDc4MzU5OTE1fQ.dhhJIMib1DMTuIvacv4VnDYjXAgVFRZ5Zrrl_LkpD6Q"
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
 
 HEADERS = {
     "apikey": SUPABASE_KEY,

@@ -158,7 +158,7 @@ export function AgentsTable({ onAgentSelect, onAddToChat }: AgentsTableProps) {
                 {filteredAgents.map((agent) => (
                   <TableRow
                     key={agent.id}
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-neutral-50"
                     onClick={() => onAgentSelect?.(agent)}
                   >
                     <TableCell>
@@ -185,7 +185,7 @@ export function AgentsTable({ onAgentSelect, onAddToChat }: AgentsTableProps) {
                             agent.tier === 2 && 'bg-blue-50 text-blue-700 border-blue-200',
                             agent.tier === 3 && 'bg-green-50 text-green-700 border-green-200',
                             agent.tier === 4 && 'bg-orange-50 text-orange-700 border-orange-200',
-                            agent.tier === 5 && 'bg-gray-50 text-gray-700 border-gray-200'
+                            agent.tier === 5 && 'bg-neutral-50 text-neutral-700 border-neutral-200'
                           )}
                         >
                           L{agent.tier}
@@ -203,7 +203,7 @@ export function AgentsTable({ onAgentSelect, onAddToChat }: AgentsTableProps) {
                           agent.status === 'testing' &&
                             'bg-yellow-100 text-yellow-700 border-yellow-200',
                           agent.status === 'deprecated' && 'bg-red-100 text-red-700 border-red-200',
-                          agent.status === 'inactive' && 'bg-gray-100 text-gray-600 border-gray-200'
+                          agent.status === 'inactive' && 'bg-neutral-100 text-neutral-600 border-neutral-200'
                         )}
                       >
                         {agent.status === 'active'
@@ -224,11 +224,11 @@ export function AgentsTable({ onAgentSelect, onAddToChat }: AgentsTableProps) {
                           {agent.business_function.replace(/_/g, ' ')}
                         </Badge>
                       ) : (
-                        <span className="text-sm text-gray-400">—</span>
+                        <span className="text-sm text-neutral-400">—</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                      <div className="flex items-center gap-1.5 text-xs text-neutral-600">
                         <Brain className="h-3 w-3" />
                         <span className="font-medium">{agent.model}</span>
                       </div>

@@ -85,7 +85,7 @@ export function AdoptionPhase({ onComplete }: AdoptionPhaseProps) {
       case "adopted": return "bg-green-100 text-green-700";
       case "deployed": return "bg-blue-100 text-blue-700";
       case "deploying": return "bg-yellow-100 text-yellow-700";
-      default: return "bg-gray-100 text-gray-700";
+      default: return "bg-neutral-100 text-neutral-700";
     }
   };
 
@@ -170,7 +170,7 @@ export function AdoptionPhase({ onComplete }: AdoptionPhaseProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 {solutions.map((solution) => (
-                  <div key={solution.id} className="p-4 rounded-lg border bg-white dark:bg-gray-900">
+                  <div key={solution.id} className="p-4 rounded-lg border bg-white dark:bg-neutral-900">
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <div className="font-medium">{solution.name}</div>
@@ -294,7 +294,7 @@ export function AdoptionPhase({ onComplete }: AdoptionPhaseProps) {
                         <div className="text-xs text-muted-foreground">{integration.type}</div>
                       </div>
                     </div>
-                    <Badge className={integration.status === "connected" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}>
+                    <Badge className={integration.status === "connected" ? "bg-green-100 text-green-700" : "bg-neutral-100 text-neutral-700"}>
                       {integration.status === "connected" ? "Connected" : "Pending"}
                     </Badge>
                   </div>
@@ -376,7 +376,7 @@ export function AdoptionPhase({ onComplete }: AdoptionPhaseProps) {
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <CheckCircle2 className={cn(
                       "w-4 h-4 mt-0.5 flex-shrink-0",
-                      i < step ? "text-green-500" : "text-gray-300"
+                      i < step ? "text-green-500" : "text-neutral-300"
                     )} />
                     <span className={cn(i < step && "text-muted-foreground line-through")}>
                       {obj}

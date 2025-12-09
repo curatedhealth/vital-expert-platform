@@ -13,6 +13,7 @@ This service runs periodically to keep the graph fresh and accurate.
 
 import asyncio
 import logging
+import os
 from typing import Dict, List, Any, Optional, Tuple, Set
 from datetime import datetime, timedelta
 from collections import defaultdict, Counter
@@ -61,7 +62,7 @@ class ConversationHistoryAnalyzer:
     """
 
     def __init__(self, database_url: Optional[str] = None):
-        self.database_url = database_url or "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+        self.database_url = database_url or os.getenv("DATABASE_URL")
         self.db_pool: Optional[asyncpg.Pool] = None
 
         # Thresholds

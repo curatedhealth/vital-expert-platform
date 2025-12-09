@@ -103,7 +103,7 @@ export function CodePreview({ workflow, onClose }: CodePreviewProps) {
             <Code2 className="w-5 h-5 text-purple-600" />
             <div>
               <CardTitle className="text-base">Generated Code</CardTitle>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-neutral-600 mt-1">
                 {workflow.framework.toUpperCase()} - {workflow.name}
               </p>
             </div>
@@ -147,7 +147,7 @@ export function CodePreview({ workflow, onClose }: CodePreviewProps) {
         {/* Dependencies Badge */}
         {pythonResult.dependencies.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="text-xs text-gray-600">Dependencies:</span>
+            <span className="text-xs text-neutral-600">Dependencies:</span>
             {pythonResult.dependencies.map((dep) => (
               <Badge key={dep} variant="secondary" className="text-xs">
                 {dep}
@@ -221,7 +221,7 @@ export function CodePreview({ workflow, onClose }: CodePreviewProps) {
 // Simple code block component (will be replaced with Monaco Editor later)
 function CodeBlock({ code, language }: { code: string; language: string }) {
   return (
-    <div className="h-full overflow-auto bg-gray-950 text-gray-100 p-4">
+    <div className="h-full overflow-auto bg-neutral-950 text-neutral-100 p-4">
       <pre className="text-sm font-mono">
         <code>{code}</code>
       </pre>

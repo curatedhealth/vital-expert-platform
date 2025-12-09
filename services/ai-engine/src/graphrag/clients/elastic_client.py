@@ -50,8 +50,14 @@ class ElasticClient:
             api_key: API key for authentication
             index_name: Index name for medical documents
         """
-        self.hosts = hosts or getattr(settings, 'elasticsearch_hosts', ['http://localhost:9200'])
-        self.api_key = api_key or getattr(settings, 'elasticsearch_api_key', None)
+        # Parse hosts from env var (comma-separated string) or use provided list
+        if hosts:
+            self.hosts = hosts
+        elif settings.elasticsearch_hosts:
+            self.hosts = [h.strip() for h in settings.elasticsearch_hosts.split(",")]
+        else:
+            self.hosts = []
+        self.api_key = api_key or settings.elasticsearch_api_key or None
         self.index_name = index_name
         self._client = None
         self._is_mock = True  # Set to False when Elasticsearch is deployed

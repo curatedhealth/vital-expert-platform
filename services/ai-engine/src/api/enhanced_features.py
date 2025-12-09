@@ -64,7 +64,11 @@ class Agent(BaseModel):
     name: str
     description: Optional[str] = None
     category: Optional[str] = None
-    tier: Optional[str] = None
+    agent_level: Optional[str] = Field(
+        None,
+        alias="tier",
+        description="Agent level (L1-L5). Alias 'tier' is deprecated."
+    )
     system_prompt: Optional[str] = None
     is_active: bool = True
     prompt_starters: List[PromptStarter] = Field(default_factory=list)
@@ -167,11 +171,11 @@ async def get_all_agents(
     Returns 319 agents with:
     - Enhanced gold-standard system prompts (2025 best practices)
     - 4 prompt starters per agent
-    - Full agent metadata (category, tier, description)
+    - Full agent metadata (category, level, description)
 
     Filters:
     - category: Finance, Healthcare, Technology, etc.
-    - tier: MASTER, EXPERT, SPECIALIST, WORKER, TOOL
+    - agent_level (alias: tier): L1 Master, L2 Expert, L3 Specialist, L4 Worker, L5 Tool
     - is_active: true/false
     - search: Search term for name or description
     """
@@ -226,7 +230,7 @@ async def get_all_agents(
                 name=agent_data.get('name'),
                 description=agent_data.get('description'),
                 category=None,  # Not in database schema
-                tier=None,  # Not in database schema
+                agent_level=None,  # Not in database schema (deprecated: tier)
                 system_prompt=agent_data.get('system_prompt'),
                 is_active=(agent_data.get('status') == 'active'),
                 prompt_starters=prompt_starters,
@@ -294,7 +298,7 @@ async def get_agent_by_id(
             name=agent_data.get('name'),
             description=agent_data.get('description'),
             category=agent_data.get('category'),
-            tier=agent_data.get('tier'),
+            agent_level=agent_data.get('agent_level') or agent_data.get('tier'),
             system_prompt=agent_data.get('system_prompt'),
             is_active=agent_data.get('is_active', True),
             prompt_starters=prompt_starters,
@@ -518,7 +522,7 @@ async def get_agent_statistics(
 
     Returns:
     - Total agent count
-    - Agents by tier
+    - Agents by level (expertise)
     - Agents by category
     - Active vs inactive count
     - Total prompt starters
@@ -544,7 +548,7 @@ async def get_agent_statistics(
                 if status == 'active':
                     active_count += 1
 
-                # Count by expertise level (similar to tier)
+                # Count by expertise level (Level-based)
                 expertise = agent.get('expertise_level', 'unknown')
                 if expertise:
                     expertise_counts[expertise] = expertise_counts.get(expertise, 0) + 1

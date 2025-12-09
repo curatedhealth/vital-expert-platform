@@ -945,7 +945,7 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
                     Home Nursing
                   </span>
                   <div className="flex items-center">
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                       <div className="bg-green-600 h-2 rounded-full" style={{width: `${serviceAvailability.homeNursing}%`}}></div>
                     </div>
                     <span className="font-medium">{serviceAvailability.homeNursing}%</span>
@@ -957,7 +957,7 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
                     Phlebotomy
                   </span>
                   <div className="flex items-center">
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                       <div className="bg-blue-600 h-2 rounded-full" style={{width: `${serviceAvailability.phlebotomy}%`}}></div>
                     </div>
                     <span className="font-medium">{serviceAvailability.phlebotomy}%</span>
@@ -969,7 +969,7 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
                     Mobile Imaging
                   </span>
                   <div className="flex items-center">
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                       <div className="bg-purple-600 h-2 rounded-full" style={{width: `${serviceAvailability.imaging}%`}}></div>
                     </div>
                     <span className="font-medium">{serviceAvailability.imaging}%</span>
@@ -981,7 +981,7 @@ const DecentralizedTrialPlatform: React.FC<DecentralizedTrialPlatformProps> = ({
                     Telemedicine
                   </span>
                   <div className="flex items-center">
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                       <div className="bg-teal-600 h-2 rounded-full" style={{width: `${serviceAvailability.telemedicine}%`}}></div>
                     </div>
                     <span className="font-medium">{serviceAvailability.telemedicine}%</span>

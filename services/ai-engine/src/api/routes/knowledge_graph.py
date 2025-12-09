@@ -775,7 +775,13 @@ async def get_medical_affairs_subgraph(
 @router.get("/graph/agents", response_model=KGResponse)
 async def get_agent_network(
     include_relationships: bool = Query(True),
-    tier_filter: Optional[int] = Query(None, ge=1, le=3),
+    agent_level: Optional[int] = Query(
+        None,
+        ge=1,
+        le=5,
+        alias="tier_filter",
+        description="Filter by agent level (alias: tier_filter, deprecated)"
+    ),
     limit: int = Query(100, ge=1, le=500)
 ):
     """Get agent network with collaboration and escalation relationships."""
@@ -786,7 +792,7 @@ async def get_agent_network(
 
     try:
         async with driver.session(database="neo4j") as session:
-            tier_where = f"WHERE a.tier = {tier_filter}" if tier_filter else ""
+            tier_where = f"WHERE a.tier = {agent_level}" if agent_level else ""
 
             query = f"""
                 MATCH (a:Agent)
@@ -834,7 +840,7 @@ async def get_agent_network(
                 metadata={
                     "mode": "live",
                     "scope": "agent_network",
-                    "tier_filter": tier_filter,
+                    "agent_level": agent_level,
                     "include_relationships": include_relationships
                 }
             )
@@ -1063,10 +1069,10 @@ def _generate_mock_ontology_data() -> KGResponse:
 def _generate_mock_agent_data() -> KGResponse:
     """Generate mock agent network data."""
     nodes = [
-        style_node("Agent", "a1", "Regulatory Expert", {"tier": 3, "status": "active"}),
-        style_node("Agent", "a2", "Clinical Trials Advisor", {"tier": 2, "status": "active"}),
-        style_node("Agent", "a3", "Medical Writer Agent", {"tier": 2, "status": "active"}),
-        style_node("Agent", "a4", "Query Router", {"tier": 1, "status": "active"}),
+        style_node("Agent", "a1", "Regulatory Expert", {"agent_level": 3, "status": "active"}),
+        style_node("Agent", "a2", "Clinical Trials Advisor", {"agent_level": 2, "status": "active"}),
+        style_node("Agent", "a3", "Medical Writer Agent", {"agent_level": 2, "status": "active"}),
+        style_node("Agent", "a4", "Query Router", {"agent_level": 1, "status": "active"}),
     ]
 
     edges = [

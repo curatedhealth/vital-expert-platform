@@ -25,14 +25,10 @@ import urllib.parse
 import uuid
 
 # Internal imports
-from langgraph_workflows.mode1_manual_interactive import Mode1ManualInteractiveWorkflow
+from langgraph_workflows.ask_expert.ask_expert_mode1_workflow import AskExpertMode1Workflow
 from langgraph_workflows.state_schemas import create_initial_state, WorkflowMode
 from services.agent_orchestrator import AgentOrchestrator
 from services.unified_rag_service import UnifiedRAGService
-from services.tool_registry import ToolRegistry
-from services.sub_agent_spawner import SubAgentSpawner
-from services.confidence_calculator import ConfidenceCalculator
-from services.compliance_service import ComplianceService, HumanInLoopValidator
 
 logger = structlog.get_logger()
 
@@ -175,125 +171,255 @@ async def stream_sse_events_realtime(compiled_graph, initial_state: Dict[str, An
     sources_emitted = False
     agent_name = "AI Assistant"
 
-    # Node name to thinking step mapping
+    # Node name to thinking step mapping with detailed descriptions
+    # Each node has: title (displayed message), detail_fn (function to generate detail from state)
     node_descriptions = {
-        "load_or_create_session_node": "Loading session context...",
-        "load_agent_profile_node": "Loading expert agent profile...",
-        "load_conversation_history_node": "Loading conversation history...",
-        "intent_classification_node": "Analyzing query intent...",
-        "rag_retrieval_node": "Retrieving relevant knowledge...",
-        "analysis_node": "Analyzing context and requirements...",
-        "check_tool_requirements_node": "Checking tool requirements...",
-        "execute_l5_tools_node": "Executing specialized tools...",
-        "execute_expert_agent_node": "Generating expert response...",
-        "compliance_check_node": "Running compliance verification...",
-        "confidence_calculation_node": "Calculating confidence score...",
-        "human_review_check_node": "Checking review requirements...",
-        "generate_streaming_response_node": "Preparing response...",
-        "save_to_database_node": "Saving conversation...",
-        "final_response_node": "Finalizing response..."
+        # Session management
+        "load_or_create_session_node": {
+            "title": "Loading session context",
+            "detail": lambda s: f"Session: {s.get('session_id', 'new')[:8]}..." if s.get('session_id') else "Creating new session"
+        },
+        "load_session": {
+            "title": "Loading conversation session",
+            "detail": lambda s: f"Session ID: {s.get('session_id', 'new session')}"
+        },
+        # Agent loading
+        "load_agent_profile_node": {
+            "title": "Activating expert agent",
+            "detail": lambda s: f"Expert: {s.get('agent_profile', {}).get('name', s.get('current_agent_type', 'Loading...'))}"
+        },
+        "load_agent": {
+            "title": "Activating expert agent",
+            "detail": lambda s: f"Expert: {s.get('current_agent_type', 'Loading...')}"
+        },
+        # Conversation context
+        "load_conversation_history_node": {
+            "title": "Loading conversation history",
+            "detail": lambda s: f"Messages: {len(s.get('conversation_history', []))}"
+        },
+        # Input processing
+        "process_input": {
+            "title": "Analyzing your query",
+            "detail": lambda s: f"Understanding: \"{s.get('query', '')[:80]}...\""
+        },
+        "intent_classification_node": {
+            "title": "Classifying query intent",
+            "detail": lambda s: f"Intent: {s.get('classified_intent', s.get('l3_intent', 'analyzing...'))}"
+        },
+        # Tenant validation
+        "validate_tenant": {
+            "title": "Validating access permissions",
+            "detail": lambda s: f"Tenant: {s.get('tenant_id', 'unknown')[:8]}..."
+        },
+        # L3 orchestration
+        "l3_orchestrate": {
+            "title": "Orchestrating knowledge tools",
+            "detail": lambda s: f"Running L3 Context Engineer - {len(s.get('l3_enriched_context', {}).get('sources', []))} sources found"
+        },
+        # RAG retrieval
+        "rag_retrieval_node": {
+            "title": "Searching knowledge base",
+            "detail": lambda s: f"Found {len(s.get('retrieved_documents', s.get('citations', [])))} relevant documents"
+        },
+        "rag_retrieval": {
+            "title": "Searching knowledge base",
+            "detail": lambda s: f"Found {len(s.get('retrieved_documents', []))} relevant documents"
+        },
+        # Analysis
+        "analysis_node": {
+            "title": "Analyzing context",
+            "detail": lambda s: f"Processing {len(s.get('retrieved_documents', []))} sources with {s.get('current_agent_type', 'expert')} expertise"
+        },
+        # Tool execution
+        "check_tool_requirements_node": {
+            "title": "Evaluating tool requirements",
+            "detail": lambda s: f"Tools needed: {len(s.get('requested_tools', []))}"
+        },
+        "execute_l5_tools_node": {
+            "title": "Executing specialized tools",
+            "detail": lambda s: f"Tools: {', '.join(s.get('l5_tools_used', [])) or 'none required'}"
+        },
+        # Expert execution
+        "execute_expert_agent_node": {
+            "title": "Generating expert response",
+            "detail": lambda s: f"Model: {s.get('llm_streaming_config', {}).get('model', 'gpt-4')}"
+        },
+        "execute_expert": {
+            "title": "Preparing expert response",
+            "detail": lambda s: f"Model: {s.get('llm_streaming_config', {}).get('model', 'gpt-4')}, Temp: {s.get('temperature_used', 0.7)}"
+        },
+        # Compliance
+        "compliance_check_node": {
+            "title": "Running compliance verification",
+            "detail": lambda s: f"Checking medical/regulatory compliance"
+        },
+        "confidence_calculation_node": {
+            "title": "Calculating confidence score",
+            "detail": lambda s: f"Confidence: {s.get('confidence', s.get('response_confidence', 0.85)):.0%}"
+        },
+        "human_review_check_node": {
+            "title": "Checking review requirements",
+            "detail": lambda s: "Review required" if s.get('requires_human_review') else "No review needed"
+        },
+        # Response generation
+        "generate_streaming_response_node": {
+            "title": "Streaming response",
+            "detail": lambda s: "Real-time token streaming"
+        },
+        # Save
+        "save_to_database_node": {
+            "title": "Saving to conversation history",
+            "detail": lambda s: "Persisting message for context continuity"
+        },
+        "save_message": {
+            "title": "Saving to conversation history",
+            "detail": lambda s: "Persisting message for context continuity"
+        },
+        # Final
+        "final_response_node": {
+            "title": "Finalizing response",
+            "detail": lambda s: f"Generated {s.get('tokens_count', 0)} tokens"
+        },
+        "format_output": {
+            "title": "Formatting response",
+            "detail": lambda s: "Applying formatting and citations"
+        },
     }
 
     try:
-        # Use LangGraph's streaming with multiple modes:
-        # - "updates": Get state updates after each node (for thinking steps)
-        # - "messages": Get LLM tokens in real-time (for response streaming)
-        async for mode, chunk in compiled_graph.astream(
+        # Use LangGraph's streaming with "updates" mode for per-node progressive events
+        #
+        # CRITICAL FIX (Dec 2025): Using stream_mode="updates" (string) instead of
+        # ["updates", "messages"] (list) because:
+        # 1. List mode batches events until all modes have data - causing 90s delay
+        # 2. String mode emits events immediately as each node completes
+        # 3. LLM token streaming is handled separately via llm_streaming_config
+        #
+        # The frontend receives progressive thinking steps, then streams LLM tokens
+        # via a separate mechanism (done event contains llm_streaming_config)
+        async for chunk in compiled_graph.astream(
             initial_state,
-            stream_mode=["updates", "messages"]
+            stream_mode="updates"  # Single mode = immediate per-node streaming
         ):
-            if mode == "updates":
-                # Node completed - emit thinking step
+            # With single "updates" mode, chunk is directly the node output dict
+            # Format: {node_name: node_output}
+            if isinstance(chunk, dict):
+                # Node completed - emit thinking step with detailed description
                 for node_name, node_output in chunk.items():
-                    # Get human-readable description
-                    description = node_descriptions.get(node_name, f"Processing {node_name}...")
+                    # Update final state first (so detail functions have access)
+                    if isinstance(node_output, dict):
+                        final_state.update(node_output)
+
+                    # Get node info (supports both old string format and new dict format)
+                    node_info = node_descriptions.get(node_name)
+
+                    if isinstance(node_info, dict):
+                        # New format: {title, detail}
+                        title = node_info.get("title", f"Processing {node_name}")
+                        detail_fn = node_info.get("detail")
+                        detail = detail_fn(final_state) if callable(detail_fn) else str(detail_fn) if detail_fn else ""
+                    elif isinstance(node_info, str):
+                        # Old format: just a string
+                        title = node_info
+                        detail = ""
+                    else:
+                        # Fallback
+                        title = f"Processing {node_name}"
+                        detail = ""
 
                     event_data = {
                         "event": "thinking",
                         "step": node_name,
                         "status": "completed",
-                        "message": description
+                        "message": title,
+                        "detail": detail,  # NEW: Include detail for transparency
+                        "timestamp": time.time()
                     }
                     yield f"data: {json.dumps(event_data)}\n\n"
 
-                    # Update final state with node output
-                    if isinstance(node_output, dict):
-                        final_state.update(node_output)
+                    # Extract agent name when available
+                    if isinstance(node_output, dict) and 'agent_profile' in node_output:
+                        agent_profile = node_output['agent_profile']
+                        agent_name = agent_profile.get('display_name') or agent_profile.get('name') or agent_name
 
-                        # Extract agent name when available
-                        if 'agent_profile' in node_output:
-                            agent_profile = node_output['agent_profile']
-                            agent_name = agent_profile.get('display_name') or agent_profile.get('name') or agent_name
+                    # Emit sources when RAG completes
+                    if node_name in ("rag_retrieval_node", "rag_retrieval") and not sources_emitted and isinstance(node_output, dict):
+                        citations = node_output.get('citations', [])
+                        retrieved_docs = node_output.get('retrieved_documents', [])
+                        if citations or retrieved_docs:
+                            # Helper to generate meaningful URL from document
+                            def get_source_url(doc, index):
+                                metadata = doc.get('metadata', {})
+                                # Try various URL sources
+                                url = metadata.get('url') or metadata.get('source_url') or metadata.get('link')
+                                if url and url != '#':
+                                    return url
+                                # Generate DOI-based URL if available
+                                doi = metadata.get('doi')
+                                if doi:
+                                    return f"https://doi.org/{doi}"
+                                # Generate PubMed URL if PMID available
+                                pmid = metadata.get('pmid') or metadata.get('pubmed_id')
+                                if pmid:
+                                    return f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
+                                # Use title as search query fallback
+                                title_str = doc.get('title', '')
+                                if title_str:
+                                    return f"https://scholar.google.com/scholar?q={urllib.parse.quote(title_str[:100])}"
+                                # Last resort: return unique anchor
+                                return f"#source-{index + 1}"
 
-                        # Emit sources when RAG completes
-                        if node_name == "rag_retrieval_node" and not sources_emitted:
-                            citations = node_output.get('citations', [])
-                            retrieved_docs = node_output.get('retrieved_documents', [])
-                            if citations or retrieved_docs:
-                                # Helper to generate meaningful URL from document
-                                def get_source_url(doc, index):
-                                    metadata = doc.get('metadata', {})
-                                    # Try various URL sources
-                                    url = metadata.get('url') or metadata.get('source_url') or metadata.get('link')
-                                    if url and url != '#':
-                                        return url
-                                    # Generate DOI-based URL if available
-                                    doi = metadata.get('doi')
-                                    if doi:
-                                        return f"https://doi.org/{doi}"
-                                    # Generate PubMed URL if PMID available
-                                    pmid = metadata.get('pmid') or metadata.get('pubmed_id')
-                                    if pmid:
-                                        return f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
-                                    # Use title as search query fallback
-                                    title = doc.get('title', '')
-                                    if title:
-                                        return f"https://scholar.google.com/scholar?q={urllib.parse.quote(title[:100])}"
-                                    # Last resort: return unique anchor
-                                    return f"#source-{index + 1}"
+                            sources_data = {
+                                "event": "sources",
+                                "sources": citations if citations else [
+                                    {
+                                        'id': i + 1,
+                                        'title': doc.get('title', f'Source {i+1}'),
+                                        'url': get_source_url(doc, i),
+                                        'excerpt': doc.get('content', '')[:200] if doc.get('content') else '',
+                                        'relevance_score': doc.get('metadata', {}).get('relevance_score', 0.8)
+                                    }
+                                    for i, doc in enumerate(retrieved_docs[:10])
+                                ],
+                                "total": len(citations) if citations else len(retrieved_docs)
+                            }
+                            yield f"data: {json.dumps(sources_data)}\n\n"
+                            sources_emitted = True
 
-                                sources_data = {
-                                    "event": "sources",
-                                    "sources": citations if citations else [
-                                        {
-                                            'title': doc.get('title', f'Source {i+1}'),
-                                            'url': get_source_url(doc, i),
-                                            'excerpt': doc.get('content', '')[:200] if doc.get('content') else '',
-                                            'relevance_score': doc.get('metadata', {}).get('relevance_score', 0.8)
-                                        }
-                                        for i, doc in enumerate(retrieved_docs[:10])
-                                    ],
-                                    "total": len(citations) if citations else len(retrieved_docs)
+                    # Emit tool events
+                    if node_name == "execute_l5_tools_node" and isinstance(node_output, dict):
+                        tools_executed = node_output.get('tools_executed', [])
+                        for tool in tools_executed:
+                            tool_data = {
+                                "event": "tool",
+                                "action": "end",
+                                "tool": tool.get('tool_name', 'unknown'),
+                                "output": str(tool.get('result', ''))[:500]
+                            }
+                            yield f"data: {json.dumps(tool_data)}\n\n"
+
+                    # Check for LLM response in execute_expert node output
+                    # This captures the agent_response from the workflow state
+                    if node_name in ("execute_expert", "execute_expert_agent_node"):
+                        response_content = node_output.get("agent_response", "")
+                        if response_content:
+                            # Stream the response content as tokens
+                            # Split into chunks for progressive display
+                            words = response_content.split()
+                            chunk_size = 5  # Words per token event
+                            for i in range(0, len(words), chunk_size):
+                                token_chunk = " ".join(words[i:i+chunk_size])
+                                if i + chunk_size < len(words):
+                                    token_chunk += " "
+                                full_response += token_chunk
+                                tokens_count += len(token_chunk.split())
+
+                                event_data = {
+                                    "event": "token",
+                                    "content": token_chunk,
+                                    "tokens": tokens_count
                                 }
-                                yield f"data: {json.dumps(sources_data)}\n\n"
-                                sources_emitted = True
-
-                        # Emit tool events
-                        if node_name == "execute_l5_tools_node":
-                            tools_executed = node_output.get('tools_executed', [])
-                            for tool in tools_executed:
-                                tool_data = {
-                                    "event": "tool",
-                                    "action": "end",
-                                    "tool": tool.get('tool_name', 'unknown'),
-                                    "output": str(tool.get('result', ''))[:500]
-                                }
-                                yield f"data: {json.dumps(tool_data)}\n\n"
-
-            elif mode == "messages":
-                # LLM token received - stream it immediately!
-                message_chunk, metadata = chunk
-                if hasattr(message_chunk, 'content') and message_chunk.content:
-                    token = message_chunk.content
-                    full_response += token
-                    tokens_count += 1
-
-                    event_data = {
-                        "event": "token",
-                        "content": token,
-                        "tokens": tokens_count
-                    }
-                    yield f"data: {json.dumps(event_data)}\n\n"
+                                yield f"data: {json.dumps(event_data)}\n\n"
 
         # Calculate final metrics
         processing_time_ms = (time.time() - start_time) * 1000
@@ -598,23 +724,16 @@ async def execute_mode1_interactive(
         # Note: AgentOrchestrator takes rag_service, not rag_pipeline
         agent_orchestrator = AgentOrchestrator(supabase, rag_service=None)
         rag_service = UnifiedRAGService(supabase)
-        tool_registry = ToolRegistry()
-        sub_agent_spawner = SubAgentSpawner()
-        confidence_calculator = ConfidenceCalculator()
-        compliance_service = ComplianceService(supabase)
-        human_validator = HumanInLoopValidator()
-        
-        # Initialize Mode 1 workflow
-        workflow = Mode1ManualInteractiveWorkflow(
+
+        # Initialize Mode 1 workflow (Ask Expert)
+        # Uses L3 Context Engineer for intelligent orchestration (AGENT_OS v6.0)
+        workflow = AskExpertMode1Workflow(
             supabase_client=supabase,
-            rag_pipeline=None,
-            agent_orchestrator=agent_orchestrator,
-            sub_agent_spawner=sub_agent_spawner,
             rag_service=rag_service,
-            tool_registry=tool_registry,
-            confidence_calculator=confidence_calculator,
-            compliance_service=compliance_service,
-            human_validator=human_validator
+            agent_orchestrator=agent_orchestrator,
+            enable_l3_orchestration=True,
+            enable_specialists=True,
+            max_parallel_tools=5,
         )
         
         # Build graph

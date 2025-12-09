@@ -87,7 +87,7 @@ export const WorkflowNode = memo(({ data, isConnectable, selected }: WorkflowNod
           <Icon className="w-4 h-4" style={{ color: nodeDef.color }} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-sm text-gray-900 truncate">
+          <div className="font-semibold text-sm text-neutral-900 truncate">
             {data.label}
           </div>
           <Badge 
@@ -101,15 +101,15 @@ export const WorkflowNode = memo(({ data, isConnectable, selected }: WorkflowNod
 
       {/* Node Description */}
       {data.config.description && (
-        <p className="text-xs text-gray-600 mt-2 line-clamp-2">
+        <p className="text-xs text-neutral-600 mt-2 line-clamp-2">
           {data.config.description}
         </p>
       )}
 
       {/* Node Config Preview */}
       {data.type === 'agent' && data.config.model && (
-        <div className="mt-2 pt-2 border-t border-gray-200">
-          <div className="flex items-center justify-between text-xs text-gray-600">
+        <div className="mt-2 pt-2 border-t border-neutral-200">
+          <div className="flex items-center justify-between text-xs text-neutral-600">
             <span>{data.config.model}</span>
             {data.config.temperature !== undefined && (
               <span>T: {data.config.temperature}</span>
@@ -119,8 +119,8 @@ export const WorkflowNode = memo(({ data, isConnectable, selected }: WorkflowNod
       )}
 
       {data.type === 'tool' && data.config.toolName && (
-        <div className="mt-2 pt-2 border-t border-gray-200">
-          <div className="text-xs text-gray-600 truncate">
+        <div className="mt-2 pt-2 border-t border-neutral-200">
+          <div className="text-xs text-neutral-600 truncate">
             Tool: {data.config.toolName}
           </div>
         </div>

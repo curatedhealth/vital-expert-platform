@@ -100,7 +100,7 @@ export function TrialsPhase({ onComplete }: TrialsPhaseProps) {
       case "completed": return <CheckCircle2 className="w-4 h-4 text-green-500" />;
       case "running": return <Play className="w-4 h-4 text-blue-500 animate-pulse" />;
       case "failed": return <XCircle className="w-4 h-4 text-red-500" />;
-      default: return <Clock className="w-4 h-4 text-gray-400" />;
+      default: return <Clock className="w-4 h-4 text-neutral-400" />;
     }
   };
 
@@ -188,7 +188,7 @@ export function TrialsPhase({ onComplete }: TrialsPhaseProps) {
                       "p-4 rounded-lg border-2 transition-all cursor-pointer",
                       selectedExperiment === exp.id
                         ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20"
-                        : "border-gray-200 hover:border-gray-300"
+                        : "border-neutral-200 hover:border-neutral-300"
                     )}
                     onClick={() => setSelectedExperiment(exp.id)}
                   >
@@ -238,7 +238,7 @@ export function TrialsPhase({ onComplete }: TrialsPhaseProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 {experiments.map((exp) => (
-                  <div key={exp.id} className="p-4 rounded-lg border bg-white dark:bg-gray-900">
+                  <div key={exp.id} className="p-4 rounded-lg border bg-white dark:bg-neutral-900">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         {getStatusIcon(exp.status)}
@@ -289,7 +289,7 @@ export function TrialsPhase({ onComplete }: TrialsPhaseProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 {experiments.filter(e => e.status === "completed").map((exp) => (
-                  <div key={exp.id} className="p-4 rounded-lg border bg-white dark:bg-gray-900">
+                  <div key={exp.id} className="p-4 rounded-lg border bg-white dark:bg-neutral-900">
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <div className="font-medium">{exp.name}</div>
@@ -362,7 +362,7 @@ export function TrialsPhase({ onComplete }: TrialsPhaseProps) {
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <CheckCircle2 className={cn(
                       "w-4 h-4 mt-0.5 flex-shrink-0",
-                      i < step ? "text-green-500" : "text-gray-300"
+                      i < step ? "text-green-500" : "text-neutral-300"
                     )} />
                     <span className={cn(i < step && "text-muted-foreground line-through")}>
                       {obj}

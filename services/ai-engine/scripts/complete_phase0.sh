@@ -14,11 +14,20 @@ PROJECT_ROOT=$(pwd)
 echo "📍 Project Root: $PROJECT_ROOT"
 echo ""
 
+# Load environment from .env
+ENV_FILE="$PROJECT_ROOT/services/ai-engine/.env"
+if [ -f "$ENV_FILE" ]; then
+    echo "📦 Loading environment from .env..."
+    export $(grep -v '^#' "$ENV_FILE" | xargs)
+else
+    echo "⚠️  No .env file found! Create services/ai-engine/.env with credentials."
+    echo "   Required: SUPABASE_URL, SUPABASE_SERVICE_KEY, NEO4J_URI, NEO4J_PASSWORD, PINECONE_API_KEY"
+    exit 1
+fi
+
 # Step 1: Check migrations
 echo "Step 1: Checking if migrations are complete..."
 echo "----------------------------------------------"
-export SUPABASE_URL="https://bomltkhixeatxuoxmolq.supabase.co"
-export SUPABASE_SERVICE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvbWx0a2hpeGVhdHh1b3htb2xxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Mjc4MzkxNSwiZXhwIjoyMDc4MzU5OTE1fQ.dhhJIMib1DMTuIvacv4VnDYjXAgVFRZ5Zrrl_LkpD6Q"
 
 python3 services/ai-engine/scripts/run_migrations.py
 
@@ -39,9 +48,7 @@ echo "Step 2: Re-loading Neo4j knowledge graph..."
 echo "----------------------------------------------"
 cd services/ai-engine || exit 1
 
-export NEO4J_URI="bolt://13067bdb.databases.neo4j.io"
-export NEO4J_USER="neo4j"
-export NEO4J_PASSWORD="kkCxQgpcanSUDv-dKzOzDPcYIhvJHRQRa4tuiNa2Mek"
+# Neo4j credentials already loaded from .env
 
 ./scripts/load_neo4j.sh --clear-existing
 
@@ -57,8 +64,7 @@ if [[ "$pinecone_reload" == "y" ]]; then
     echo "Step 3: Re-loading Pinecone embeddings..."
     echo "----------------------------------------------"
     
-    export PINECONE_API_KEY="pcsk_3sLEoE_F3XwTFxNkzmWcEtJGS3PNrwB4VBLmZUnuFwvoUTz7NkZ9GGTsBvJfFrgypddFEi"
-    export OPENAI_API_KEY="${OPENAI_API_KEY}"
+    # Pinecone credentials already loaded from .env
     
     if [ -z "$OPENAI_API_KEY" ]; then
         echo "⚠️  OPENAI_API_KEY not set. Please set it:"

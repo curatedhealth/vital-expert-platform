@@ -54,7 +54,7 @@ import { CreateCustomPanelDialog } from '@/features/ask-panel/components/CreateC
 import { PANEL_TEMPLATES } from '@/features/ask-panel/constants/panel-templates';
 import type { PanelConfiguration } from '@/features/ask-panel/types/agent';
 import { useSavedPanels, type SavedPanel } from '@/contexts/ask-panel-context';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 // Map emoji categories to lucide-react icons
 const CATEGORY_ICONS: Record<string, any> = {
@@ -224,6 +224,7 @@ export default function AskPanelPage() {
 
   const { savedPanels, loading: loadingSavedPanels, createCustomPanel } = useSavedPanels();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialPanelId = searchParams.get('panelId');
   const [currentPanelId, setCurrentPanelId] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -247,8 +248,8 @@ export default function AskPanelPage() {
         }
         const json = await res.json();
 
-        if (json.success && Array.isArray(json.panels)) {
-          const mapped = json.panels.map((p: any) => {
+        if (json.success && Array.isArray(json.data?.panels)) {
+          const mapped = json.data.panels.map((p: any) => {
             // Find matching template to get the full suggestedAgents list (should be 10)
             const templateMatch = PANEL_TEMPLATES.find(t => t.id === p.slug);
             
@@ -313,16 +314,10 @@ export default function AskPanelPage() {
     setExecutingPanel(null);
   }
 
-  // Handle panel card click - show details
+  // Handle panel card click - navigate to detail page
   const handleViewPanel = (template: typeof PANEL_TEMPLATES[0]) => {
-    const IconComponent = getCategoryIcon(template.category);
-    const panel: SavedPanel = {
-      ...template,
-      purpose: template.description,
-      IconComponent,
-    };
-    setSelectedPanel(panel);
-    setShowPanelDetails(true);
+    // Navigate to detail page using template slug/id
+    router.push(`/ask-panel/${template.id}`);
   };
 
   // Handle customize panel - open create dialog with template pre-selected

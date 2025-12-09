@@ -63,7 +63,7 @@ export const AGENT_LEVEL_COLORS = {
     contrast: 'hsl(0 0% 100%)',    // White
     description: 'Utility and Integration',
     cssVar: 'var(--agent-level-5)',
-    tailwind: 'bg-gray-600 text-white',
+    tailwind: 'bg-neutral-600 text-white',
     count: 50,
   },
 } as const;
@@ -110,14 +110,14 @@ export const AGENT_STATUS_COLORS = {
   development: {
     color: 'hsl(215 16% 47%)',     // Gray
     cssVar: 'var(--agent-status-development)',
-    tailwind: 'bg-gray-600 text-white',
+    tailwind: 'bg-neutral-600 text-white',
     label: 'Development',
     description: 'Under development',
   },
   inactive: {
     color: 'hsl(0 0% 45%)',        // Dark gray
     cssVar: 'var(--agent-status-inactive)',
-    tailwind: 'bg-gray-700 text-white',
+    tailwind: 'bg-neutral-700 text-white',
     label: 'Inactive',
     description: 'Not available',
   },

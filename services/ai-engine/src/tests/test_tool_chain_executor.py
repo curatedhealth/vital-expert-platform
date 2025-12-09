@@ -27,7 +27,7 @@ from langgraph_workflows.tool_chain_executor import (
     ToolChainResult
 )
 from tools.base_tool import BaseTool, ToolInput, ToolOutput
-from services.tool_registry import ToolRegistry
+from integrations.tool_registry import ToolRegistry
 
 
 # ============================================================================

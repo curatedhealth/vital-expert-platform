@@ -10,7 +10,7 @@ from uuid import UUID
 import structlog
 
 from graphrag.clients.postgres_client import get_postgres_client
-from services.tool_registry import get_tool_registry
+from services.tool_registry_service import get_tool_registry
 from ..state import AgentState
 
 logger = structlog.get_logger()

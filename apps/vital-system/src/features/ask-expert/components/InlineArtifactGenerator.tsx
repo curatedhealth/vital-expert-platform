@@ -319,7 +319,7 @@ export function InlineArtifactGenerator({
                               </div>
 
                               <div>
-                                <h4 className="font-medium text-sm text-gray-900">{template.name}</h4>
+                                <h4 className="font-medium text-sm text-neutral-900">{template.name}</h4>
                                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                                   {template.description}
                                 </p>
@@ -381,7 +381,7 @@ export function InlineArtifactGenerator({
                     <div className="space-y-3">
                       {selectedTemplate.requiredFields.map((field) => (
                         <div key={field} className="space-y-1.5">
-                          <Label htmlFor={field} className="text-sm font-medium text-gray-700">
+                          <Label htmlFor={field} className="text-sm font-medium text-neutral-700">
                             {field} <span className="text-red-500">*</span>
                           </Label>
                           <Textarea

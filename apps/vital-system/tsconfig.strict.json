@@ -75,8 +75,13 @@
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "src/app/**/*",
+    "src/features/interactive-chat/**/*",
+    "src/features/mission-control/**/*",
+    "src/features/ask-expert/**/*",
+    "src/components/**/*",
+    "src/hooks/**/*",
+    "src/types/**/*",
     ".next/types/**/*.ts"
   ],
   "exclude": [
@@ -88,6 +93,15 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",
-    "**/*.spec.tsx"
+    "**/*.spec.tsx",
+    "src/features/_legacy_archive/**",
+    "src/features/digital-health/**",
+    "src/features/medical/**",
+    "src/features/monitoring/**",
+    "src/features/solution-builder/**",
+    "src/features/tenant-management/**",
+    "src/features/testing/**",
+    "src/lib/**",
+    "src/shared/**"
   ]
 }

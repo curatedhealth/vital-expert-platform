@@ -21,11 +21,13 @@ class HITLSafetyLevel(str, Enum):
     MINIMAL = "minimal"  # Minimal approvals
 
 
-class AgentTierEnum(str, Enum):
-    """Agent execution tiers"""
-    TIER_1 = "tier_1"  # Rapid response (85-92% accuracy)
-    TIER_2 = "tier_2"  # Expert analysis (90-96% accuracy)
-    TIER_3 = "tier_3"  # Deep reasoning (94-98% accuracy)
+class AgentLevelEnum(str, Enum):
+    """Agent levels (L1-L5)"""
+    L1 = "L1"  # Master Orchestrator
+    L2 = "L2"  # Domain Experts
+    L3 = "L3"  # Specialists
+    L4 = "L4"  # Workers
+    L5 = "L5"  # Tools
 
 
 class PatternType(str, Enum):
@@ -145,7 +147,7 @@ class AskExpertResponse(BaseModel):
     
     # Mode & execution metadata
     mode: str = Field(..., description="Mode used (e.g., 'Manual-Interactive')")
-    tier: AgentTierEnum = Field(..., description="Execution tier (1/2/3)")
+    agent_level: AgentLevelEnum = Field(..., description="Primary agent level (L1-L5)")
     pattern_applied: PatternType = Field(..., description="Deep agent pattern applied")
     
     # Agent selection
@@ -153,7 +155,7 @@ class AskExpertResponse(BaseModel):
     selection_reasoning: Optional[str] = Field(None, description="Why these agents were selected")
     
     # Phase 4 metadata
-    tier_reasoning: str = Field(..., description="Why this tier was chosen")
+    level_reasoning: str = Field(..., description="Why this level was chosen")
     safety_validated: bool = Field(..., description="Constitutional AI validation passed")
     safety_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Safety score")
     
@@ -189,7 +191,7 @@ class AskExpertResponse(BaseModel):
                 ],
                 "confidence": 0.92,
                 "mode": "Manual-Interactive",
-                "tier": "tier_2",
+                "agent_level": "L2",
                 "pattern_applied": "react_constitutional",
                 "selected_agents": [
                     {
@@ -200,7 +202,7 @@ class AskExpertResponse(BaseModel):
                     }
                 ],
                 "selection_reasoning": "User manually selected FDA expert",
-                "tier_reasoning": "Complex regulatory query requires Tier 2 (Expert Analysis)",
+                "level_reasoning": "Complex regulatory query requires L2 expert analysis",
                 "safety_validated": True,
                 "safety_score": 0.98,
                 "session_id": "session-abc-123",

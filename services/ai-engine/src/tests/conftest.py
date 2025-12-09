@@ -138,6 +138,7 @@ def sample_agent_metadata() -> Dict[str, Any]:
     return {
         "name": "Regulatory Expert",
         "tier": 1,
+        "agent_level": 1,
         "specialties": [
             "fda_regulatory",
             "ema_regulatory",
@@ -152,6 +153,7 @@ def tier1_agent_metadata() -> Dict[str, Any]:
     return {
         "name": "Medical Specialist",
         "tier": 1,
+        "agent_level": 1,
         "specialties": ["clinical_research", "regulatory_affairs"]
     }
 
@@ -162,6 +164,7 @@ def tier2_agent_metadata() -> Dict[str, Any]:
     return {
         "name": "Clinical Researcher",
         "tier": 2,
+        "agent_level": 2,
         "specialties": ["clinical_trial_design", "biostatistics"]
     }
 
@@ -172,6 +175,7 @@ def tier3_agent_metadata() -> Dict[str, Any]:
     return {
         "name": "General Medical Agent",
         "tier": 3,
+        "agent_level": 3,
         "specialties": ["general_medicine"]
     }
 
@@ -199,22 +203,232 @@ def mock_openai_embeddings():
 
 @pytest.fixture
 def mock_supabase_client():
-    """Mock Supabase client"""
+    """Mock Supabase client with comprehensive agent data"""
     mock = MagicMock()
-
-    # Mock table operations
-    mock.table.return_value.select.return_value.execute.return_value = {
-        "data": [],
-        "error": None
+    
+    # Mock agent data
+    mock_agent_data = {
+        "id": "test-agent-id",
+        "name": "regulatory-expert",
+        "slug": "regulatory-expert",
+        "display_name": "Regulatory Expert",
+        "description": "Expert in FDA and EMA regulations",
+        "system_prompt": "You are a regulatory affairs expert specializing in FDA and EMA submissions.",
+        "base_model": "claude-sonnet-4-20250514",
+        "personality_type_id": "pt-analytical",
+        "agent_levels": {"level_number": 2, "level_name": "Expert"},
+        "status": "active",
     }
-
+    
+    # Mock personality data
+    mock_personality_data = {
+        "id": "pt-analytical",
+        "slug": "analytical",
+        "display_name": "Analytical",
+        "temperature": 0.2,
+        "top_p": 0.9,
+        "verbosity_level": 40,
+        "formality_level": 70,
+        "technical_level": 80,
+        "reasoning_approach": "analytical",
+        "tone_keywords": ["precise", "evidence-based"],
+    }
+    
+    # Mock capabilities data
+    mock_capabilities_data = [
+        {
+            "capability_id": "cap-1",
+            "proficiency_level": "expert",
+            "is_primary": True,
+            "capabilities": {
+                "id": "cap-1",
+                "capability_name": "regulatory-analysis",
+                "capability_slug": "regulatory-analysis",
+                "display_name": "Regulatory Analysis",
+                "category": "regulatory",
+                "description": "Analyze regulatory requirements",
+            }
+        },
+        {
+            "capability_id": "cap-2",
+            "proficiency_level": "proficient",
+            "is_primary": False,
+            "capabilities": {
+                "id": "cap-2",
+                "capability_name": "compliance-review",
+                "capability_slug": "compliance-review",
+                "display_name": "Compliance Review",
+                "category": "regulatory",
+                "description": "Review compliance status",
+            }
+        }
+    ]
+    
+    # Mock skills data
+    mock_skills_data = [
+        {
+            "skill_id": "skill-1",
+            "importance_level": "core",
+            "skills": {
+                "id": "skill-1",
+                "skill_name": "fda-submission-review",
+                "skill_slug": "fda-submission-review",
+                "display_name": "FDA Submission Review",
+                "category": "regulatory",
+                "skill_type": "analytical",
+                "invocation_method": "analyze_fda_submission",
+            }
+        },
+        {
+            "skill_id": "skill-2",
+            "importance_level": "supplementary",
+            "skills": {
+                "id": "skill-2",
+                "skill_name": "ema-guidance-interpretation",
+                "skill_slug": "ema-guidance-interpretation",
+                "display_name": "EMA Guidance Interpretation",
+                "category": "regulatory",
+                "skill_type": "analytical",
+                "invocation_method": "interpret_ema_guidance",
+            }
+        }
+    ]
+    
+    # Mock agent skills with proficiency
+    mock_agent_skills_data = [
+        {"skill_id": "skill-1", "proficiency_level": "expert", "is_primary": True, "usage_count": 150},
+        {"skill_id": "skill-2", "proficiency_level": "proficient", "is_primary": False, "usage_count": 75},
+    ]
+    
+    # Mock tools data
+    mock_tools_data = [
+        {
+            "tool_id": "tool-1",
+            "is_enabled": True,
+            "priority": 1,
+            "is_required": False,
+            "tools": {
+                "id": "tool-1",
+                "name": "pubmed-search",
+                "display_name": "PubMed Search",
+                "description": "Search PubMed for medical literature",
+                "tool_type": "search",
+                "input_schema": {"query": "string"},
+            }
+        },
+        {
+            "tool_id": "tool-2",
+            "is_enabled": True,
+            "priority": 2,
+            "is_required": True,
+            "tools": {
+                "id": "tool-2",
+                "name": "fda-database",
+                "display_name": "FDA Database",
+                "description": "Search FDA approval database",
+                "tool_type": "database",
+                "input_schema": {"drug_name": "string"},
+            }
+        }
+    ]
+    
+    # Mock context data
+    mock_context_region = {"code": "FDA", "name": "US FDA"}
+    mock_context_domain = {"code": "PHARMA", "name": "Pharmaceuticals"}
+    mock_context_ta = {"code": "ONCOLOGY", "name": "Oncology"}
+    mock_context_phase = {"code": "PHASE3", "name": "Phase III"}
+    
+    # Setup chained mock responses
+    def setup_table_chain(table_name):
+        table_mock = MagicMock()
+        select_mock = MagicMock()
+        eq_mock = MagicMock()
+        single_mock = MagicMock()
+        execute_mock = MagicMock()
+        order_mock = MagicMock()
+        
+        table_mock.select.return_value = select_mock
+        select_mock.eq.return_value = eq_mock
+        eq_mock.eq.return_value = eq_mock
+        eq_mock.single.return_value = single_mock
+        eq_mock.order.return_value = order_mock
+        eq_mock.execute.return_value = execute_mock
+        single_mock.execute.return_value = execute_mock
+        order_mock.execute.return_value = execute_mock
+        
+        # Set data based on table name
+        if table_name == 'agents':
+            execute_mock.data = mock_agent_data
+        elif table_name == 'personality_types':
+            execute_mock.data = mock_personality_data
+        elif table_name == 'agent_capabilities':
+            execute_mock.data = mock_capabilities_data
+        elif table_name == 'capability_skills':
+            execute_mock.data = mock_skills_data
+        elif table_name == 'agent_skills':
+            execute_mock.data = mock_agent_skills_data
+        elif table_name == 'agent_tool_assignments':
+            execute_mock.data = mock_tools_data
+        elif table_name == 'agent_tools':
+            execute_mock.data = mock_tools_data
+        elif table_name == 'context_regions':
+            execute_mock.data = mock_context_region
+        elif table_name == 'context_domains':
+            execute_mock.data = mock_context_domain
+        elif table_name == 'context_therapeutic_areas':
+            execute_mock.data = mock_context_ta
+        elif table_name == 'context_phases':
+            execute_mock.data = mock_context_phase
+        elif table_name == 'agent_sessions':
+            execute_mock.data = {"id": "session-123"}
+        else:
+            execute_mock.data = []
+        
+        return table_mock
+    
+    mock.table = lambda name: setup_table_chain(name)
+    
     # Mock RPC calls
-    mock.rpc.return_value.execute.return_value = {
-        "data": [],
-        "error": None
-    }
+    rpc_mock = MagicMock()
+    rpc_mock.execute.return_value = MagicMock(data={"success": True})
+    mock.rpc.return_value = rpc_mock
 
     return mock
+
+
+@pytest.fixture
+def mock_agent():
+    """Mock agent data for testing"""
+    return {
+        "id": "test-agent-id",
+        "name": "regulatory-expert",
+        "slug": "regulatory-expert",
+        "display_name": "Regulatory Expert",
+        "description": "Expert in FDA and EMA regulations",
+        "system_prompt": "You are a regulatory affairs expert specializing in FDA and EMA submissions.",
+        "base_model": "claude-sonnet-4-20250514",
+        "personality_type_id": "pt-analytical",
+        "agent_levels": {"level_number": 2, "level_name": "Expert"},
+        "status": "active",
+    }
+
+
+@pytest.fixture
+def mock_tenant_id():
+    """Mock tenant ID"""
+    return "tenant-test-123"
+
+
+@pytest.fixture
+def mock_user_id():
+    """Mock user ID"""
+    return "user-test-456"
+
+
+@pytest.fixture
+def mock_agent_id():
+    """Mock agent ID"""
+    return "test-agent-id"
 
 
 @pytest.fixture
@@ -251,6 +465,7 @@ References: FDA Guidance on 510(k), 21 CFR Part 807.""",
         "agent_metadata": {
             "name": "Regulatory Expert",
             "tier": 1,
+            "agent_level": 1,
             "specialties": ["fda_regulatory", "quality_assurance"]
         },
         "rag_results": [
@@ -274,6 +489,7 @@ def medium_quality_scenario() -> Dict[str, Any]:
         "agent_metadata": {
             "name": "General Agent",
             "tier": 3,
+            "agent_level": 3,
             "specialties": ["general_medicine"]
         },
         "rag_results": [
@@ -294,6 +510,7 @@ def low_quality_scenario() -> Dict[str, Any]:
         "agent_metadata": {
             "name": "Basic Agent",
             "tier": 3,
+            "agent_level": 3,
             "specialties": []
         },
         "rag_results": [
@@ -313,22 +530,25 @@ def rag_test_scenarios() -> List[Dict[str, Any]]:
     """Various RAG search scenarios for testing"""
     return [
         {
-            "name": "high_similarity_tier1",
+            "name": "high_similarity_l1",
             "tier": 1,
+            "agent_level": 1,
             "similarity_scores": [0.92, 0.89, 0.87],
             "expected_threshold": 0.60,
             "expected_pass": True
         },
         {
-            "name": "medium_similarity_tier2",
+            "name": "medium_similarity_l2",
             "tier": 2,
+            "agent_level": 2,
             "similarity_scores": [0.78, 0.75, 0.72],
             "expected_threshold": 0.75,
             "expected_pass": True
         },
         {
-            "name": "low_similarity_tier3",
+            "name": "low_similarity_l3",
             "tier": 3,
+            "agent_level": 3,
             "similarity_scores": [0.80, 0.78],
             "expected_threshold": 0.85,
             "expected_pass": False

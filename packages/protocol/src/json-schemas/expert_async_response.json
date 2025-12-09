@@ -1,0 +1,42 @@
+{
+  "$ref": "#/definitions/expert_async_response",
+  "definitions": {
+    "expert_async_response": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "conversationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "running"
+          ]
+        },
+        "estimatedTimeSeconds": {
+          "type": "integer"
+        },
+        "pollUrl": {
+          "type": "string"
+        },
+        "streamUrl": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "jobId",
+        "conversationId",
+        "status",
+        "pollUrl"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

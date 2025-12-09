@@ -373,7 +373,7 @@ export function WorkflowDesigner({
                   >
                     <Redo className="w-4 h-4" />
                   </Button>
-                  <div className="w-px h-6 bg-gray-300 mx-1" />
+                  <div className="w-px h-6 bg-neutral-300 mx-1" />
                   <Button variant="ghost" size="sm" onClick={handleValidate}>
                     Validate
                   </Button>

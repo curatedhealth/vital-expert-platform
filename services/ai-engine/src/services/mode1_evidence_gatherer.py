@@ -30,9 +30,15 @@ from models.l4_l5_config import (
     L5ToolResult,
     L4AggregatedContext
 )
-from services.l5_rag_tool import L5RAGToolAgent, get_l5_rag_tool
-from services.l5_websearch_tool import L5WebSearchToolAgent, get_l5_websearch_tool
-from services.l5_pubmed_tool import L5PubMedToolAgent, get_l5_pubmed_tool, create_l5_pubmed_config
+# Import L5 Tools from the shared agents module
+from agents.l5_tools import (
+    L5BaseTool,
+    create_l5_tool,
+    LITERATURE_TOOL_CONFIGS,
+    GENERAL_TOOL_CONFIGS,
+)
+from agents.l5_tools.l5_general import GeneralL5Tool
+from agents.l5_tools.l5_literature import LiteratureL5Tool
 
 logger = structlog.get_logger()
 
@@ -60,8 +66,8 @@ class Mode1EvidenceGatherer:
     4. Proceed without any evidence (require minimum 1 source)
     """
 
-    # Evidence quality tiers for ranking
-    SOURCE_TIER_WEIGHTS = {
+    # Evidence source weights for ranking (by level of trust)
+    SOURCE_LEVEL_WEIGHTS = {
         "regulatory": 1.0,       # FDA, EMA, WHO
         "scientific": 0.95,      # PubMed, peer-reviewed
         "clinical_trial": 0.90,  # ClinicalTrials.gov
@@ -72,21 +78,22 @@ class Mode1EvidenceGatherer:
 
     def __init__(
         self,
-        l5_rag_tool: Optional[L5RAGToolAgent] = None,
-        l5_websearch_tool: Optional[L5WebSearchToolAgent] = None,
-        l5_pubmed_tool: Optional[L5PubMedToolAgent] = None
+        l5_rag_tool: Optional[L5BaseTool] = None,
+        l5_websearch_tool: Optional[L5BaseTool] = None,
+        l5_pubmed_tool: Optional[L5BaseTool] = None
     ):
         """
         Initialize Mode 1 Evidence Gatherer.
 
         Args:
-            l5_rag_tool: L5 RAG tool agent (uses singleton if not provided)
-            l5_websearch_tool: L5 WebSearch tool agent (uses singleton if not provided)
-            l5_pubmed_tool: L5 PubMed tool agent for fallback (uses singleton if not provided)
+            l5_rag_tool: L5 RAG tool agent (uses factory if not provided)
+            l5_websearch_tool: L5 WebSearch tool agent (uses factory if not provided)
+            l5_pubmed_tool: L5 PubMed tool agent for fallback (uses factory if not provided)
         """
-        self.l5_rag_tool = l5_rag_tool or get_l5_rag_tool()
-        self.l5_websearch_tool = l5_websearch_tool or get_l5_websearch_tool()
-        self.l5_pubmed_tool = l5_pubmed_tool or get_l5_pubmed_tool()
+        # Use the shared L5 tool factory from agents module
+        self.l5_rag_tool = l5_rag_tool or create_l5_tool("rag")
+        self.l5_websearch_tool = l5_websearch_tool or create_l5_tool("web_search")
+        self.l5_pubmed_tool = l5_pubmed_tool or create_l5_tool("pubmed")
         self.execution_count = 0
         self.total_execution_time_ms = 0
 
@@ -196,10 +203,13 @@ class Mode1EvidenceGatherer:
 
             # Execute PubMed fallback search
             try:
-                pubmed_config = create_l5_pubmed_config(
-                    max_findings=config.l5_max_findings_per_tool,
-                    timeout_ms=2000,  # 2 second timeout for fallback
-                    mode1=True
+                # Create config for PubMed fallback
+                from agents.l5_tools.l5_base import ToolConfig
+                pubmed_tool_config = ToolConfig(
+                    id="pubmed_fallback",
+                    slug="pubmed",
+                    name="PubMed Literature Search",
+                    description="Scientific literature fallback search"
                 )
 
                 pubmed_result = await asyncio.wait_for(
@@ -441,7 +451,7 @@ class Mode1EvidenceGatherer:
         Rank findings by relevance score and source authority.
 
         Scoring formula:
-        final_score = relevance_score * source_tier_weight
+        final_score = relevance_score * source_level_weight
 
         Args:
             findings: Deduplicated findings to rank
@@ -451,8 +461,8 @@ class Mode1EvidenceGatherer:
         """
         def get_final_score(finding: L5Finding) -> float:
             source_type = finding.source_type or "web"
-            tier_weight = self.SOURCE_TIER_WEIGHTS.get(source_type, 0.5)
-            return finding.relevance_score * tier_weight
+            level_weight = self.SOURCE_LEVEL_WEIGHTS.get(source_type, 0.5)
+            return finding.relevance_score * level_weight
 
         return sorted(findings, key=get_final_score, reverse=True)
 

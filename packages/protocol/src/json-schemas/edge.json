@@ -1,0 +1,222 @@
+{
+  "$ref": "#/definitions/edge",
+  "definitions": {
+    "edge": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sourceHandle": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "targetHandle": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "type": "string",
+              "const": "default",
+              "default": "default"
+            },
+            "animated": {
+              "type": "boolean"
+            },
+            "label": {
+              "type": "string"
+            },
+            "style": {
+              "type": "object",
+              "properties": {
+                "stroke": {
+                  "type": "string"
+                },
+                "strokeWidth": {
+                  "type": "number"
+                },
+                "strokeDasharray": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "selected": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id",
+            "source",
+            "target"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sourceHandle": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "targetHandle": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "type": "string",
+              "const": "conditional"
+            },
+            "animated": {
+              "type": "boolean"
+            },
+            "label": {
+              "type": "string"
+            },
+            "style": {
+              "type": "object",
+              "properties": {
+                "stroke": {
+                  "type": "string"
+                },
+                "strokeWidth": {
+                  "type": "number"
+                },
+                "strokeDasharray": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "selected": {
+              "type": "boolean"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "condition": {
+                  "type": "string"
+                },
+                "priority": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "default": 0
+                }
+              },
+              "required": [
+                "condition"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "id",
+            "source",
+            "target",
+            "type",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sourceHandle": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "targetHandle": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "type": "string",
+              "const": "animated"
+            },
+            "animated": {
+              "type": "boolean",
+              "const": true
+            },
+            "label": {
+              "type": "string"
+            },
+            "style": {
+              "type": "object",
+              "properties": {
+                "stroke": {
+                  "type": "string"
+                },
+                "strokeWidth": {
+                  "type": "number"
+                },
+                "strokeDasharray": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "selected": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id",
+            "source",
+            "target",
+            "type",
+            "animated"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

@@ -86,7 +86,7 @@ class Neo4jClient:
         capabilities: List[str],
         domains: List[str],
         tenant_id: str,
-        tier: int = 2,
+        agent_level: int = 2,
         embedding: Optional[List[float]] = None,
         metadata: Optional[Dict] = None
     ) -> Dict:
@@ -99,7 +99,7 @@ class Neo4jClient:
             capabilities: List of agent capabilities
             domains: List of domain expertise areas
             tenant_id: Tenant identifier for multi-tenant isolation
-            tier: Agent tier (1=Master, 2=Expert, 3=Specialist, 4=Worker, 5=Tool)
+            agent_level: Agent level (1=Master, 2=Expert, 3=Specialist, 4=Worker, 5=Tool)
             embedding: Optional embedding vector (1536 dimensions)
             metadata: Additional metadata
 
@@ -114,7 +114,7 @@ class Neo4jClient:
                     capabilities: $capabilities,
                     domains: $domains,
                     tenant_id: $tenant_id,
-                    tier: $tier,
+                    agent_level: $agent_level,
                     embedding: $embedding,
                     metadata: $metadata,
                     total_queries: 0,
@@ -133,7 +133,7 @@ class Neo4jClient:
                 capabilities=capabilities,
                 domains=domains,
                 tenant_id=tenant_id,
-                tier=tier,
+                agent_level=agent_level,
                 embedding=embedding,
                 metadata=metadata or {}
             )
@@ -145,7 +145,7 @@ class Neo4jClient:
                 "Agent node created",
                 agent_id=agent_id,
                 name=name,
-                tier=tier,
+                agent_level=agent_level,
                 tenant_id=tenant_id
             )
 
@@ -354,7 +354,7 @@ class Neo4jClient:
                     related.name as name,
                     related.capabilities as capabilities,
                     related.domains as domains,
-                    related.tier as tier,
+                    coalesce(related.agent_level, related.tier, 2) as agent_level,
                     graph_score,
                     similarity,
                     avg_relationship_weight,
@@ -377,7 +377,7 @@ class Neo4jClient:
                     "name": record["name"],
                     "capabilities": record["capabilities"],
                     "domains": record["domains"],
-                    "tier": record["tier"],
+                    "agent_level": record["agent_level"],
                     "graph_score": float(record["graph_score"]),
                     "similarity": float(record.get("similarity", 0.0)),
                     "avg_relationship_weight": float(record.get("avg_relationship_weight", 0.0)),
@@ -563,9 +563,9 @@ class Neo4jClient:
                     count(DISTINCT a) as total_agents,
                     count(DISTINCT CASE WHEN a.is_active THEN a END) as active_agents,
                     count(DISTINCT r) as total_relationships,
-                    count(DISTINCT CASE WHEN a.tier = 1 THEN a END) as master_agents,
-                    count(DISTINCT CASE WHEN a.tier = 2 THEN a END) as expert_agents,
-                    count(DISTINCT CASE WHEN a.tier = 3 THEN a END) as specialist_agents
+                    count(DISTINCT CASE WHEN coalesce(a.agent_level, a.tier) = 1 THEN a END) as master_agents,
+                    count(DISTINCT CASE WHEN coalesce(a.agent_level, a.tier) = 2 THEN a END) as expert_agents,
+                    count(DISTINCT CASE WHEN coalesce(a.agent_level, a.tier) = 3 THEN a END) as specialist_agents
             """)
 
             record = await result.single()

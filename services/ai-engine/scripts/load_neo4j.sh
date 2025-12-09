@@ -1,16 +1,28 @@
 #!/bin/bash
 # Helper script to load agents to Neo4j with environment variables
+# SECURITY: Load credentials from .env file - NEVER hardcode
 
-# Set Neo4j credentials (using bolt for custom SSL context)
-export NEO4J_URI="bolt://13067bdb.databases.neo4j.io"
-export NEO4J_USER="neo4j"
-export NEO4J_PASSWORD="kkCxQgpcanSUDv-dKzOzDPcYIhvJHRQRa4tuiNa2Mek"
+SCRIPT_DIR="$(dirname "$0")"
+ENV_FILE="$SCRIPT_DIR/../.env"
 
-# Set Supabase credentials
-export SUPABASE_URL="https://bomltkhixeatxuoxmolq.supabase.co"
-export SUPABASE_SERVICE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvbWx0a2hpeGVhdHh1b3htb2xxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Mjc4MzkxNSwiZXhwIjoyMDc4MzU5OTE1fQ.dhhJIMib1DMTuIvacv4VnDYjXAgVFRZ5Zrrl_LkpD6Q"
+# Check if .env exists
+if [ -f "$ENV_FILE" ]; then
+    echo "📦 Loading environment from .env..."
+    export $(grep -v '^#' "$ENV_FILE" | xargs)
+else
+    echo "⚠️  No .env file found at $ENV_FILE"
+    echo "   Please create one with: NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, SUPABASE_URL, SUPABASE_SERVICE_KEY"
+    exit 1
+fi
 
-echo "✅ Environment variables set"
+# Verify required vars
+if [ -z "$NEO4J_URI" ] || [ -z "$NEO4J_PASSWORD" ] || [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_KEY" ]; then
+    echo "❌ Missing required environment variables!"
+    echo "   Required: NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, SUPABASE_URL, SUPABASE_SERVICE_KEY"
+    exit 1
+fi
+
+echo "✅ Environment variables loaded from .env"
 echo "🚀 Running Neo4j loading script..."
 
 # Run the script

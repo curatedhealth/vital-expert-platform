@@ -1,4 +1,18 @@
-import { useState, useCallback, useRef } from 'react';
+/**
+ * VITAL Platform - useStreamingResponse Hook
+ * 
+ * @deprecated This hook is deprecated. Use useSSEStream from @/features/ask-expert/hooks instead.
+ * 
+ * Migration guide:
+ * - For Mode 1 (Manual Interactive): import { useMode1Chat } from '@/features/ask-expert/hooks'
+ * - For Mode 2 (Automatic Interactive): import { useMode2Chat } from '@/features/ask-expert/hooks'
+ * - For Mode 3 (Manual Autonomous): import { useMode3Mission } from '@/features/ask-expert/hooks'
+ * - For base SSE handling: import { useSSEStream } from '@/features/ask-expert/hooks'
+ * 
+ * This hook will be removed in a future release.
+ */
+
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface StreamingMessage {
   id: string;
@@ -16,7 +30,19 @@ interface UseStreamingResponseOptions {
   onError?: (error: Error) => void;
 }
 
+/**
+ * @deprecated Use useSSEStream or mode-specific hooks instead.
+ */
 export function useStreamingResponse(options: UseStreamingResponseOptions = { /* TODO: implement */ }) {
+  // Emit deprecation warning in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        '[DEPRECATED] useStreamingResponse is deprecated. ' +
+        'Use useSSEStream, useMode1Chat, useMode2Chat, or useMode3Mission from @/features/ask-expert/hooks instead.'
+      );
+    }
+  }, []);
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentMessage, setCurrentMessage] = useState<StreamingMessage | null>(null);
 

@@ -54,7 +54,7 @@ export function NodePalette({ onDragStart, disabled = false }: NodePaletteProps)
         
         {/* Search */}
         <div className="relative mt-2">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-neutral-400" />
           <Input
             placeholder="Search nodes..."
             value={searchQuery}
@@ -111,7 +111,7 @@ export function NodePalette({ onDragStart, disabled = false }: NodePaletteProps)
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-sm text-gray-900">
+                      <p className="font-semibold text-sm text-neutral-900">
                         {nodeDef.label}
                       </p>
                       <Badge 
@@ -121,7 +121,7 @@ export function NodePalette({ onDragStart, disabled = false }: NodePaletteProps)
                         {nodeDef.category}
                       </Badge>
                     </div>
-                    <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">
+                    <p className="text-xs text-neutral-600 mt-0.5 line-clamp-2">
                       {nodeDef.description}
                     </p>
                   </div>
@@ -130,9 +130,9 @@ export function NodePalette({ onDragStart, disabled = false }: NodePaletteProps)
                   {!disabled && (
                     <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="flex flex-col gap-0.5">
-                        <div className="w-1 h-1 rounded-full bg-gray-400"></div>
-                        <div className="w-1 h-1 rounded-full bg-gray-400"></div>
-                        <div className="w-1 h-1 rounded-full bg-gray-400"></div>
+                        <div className="w-1 h-1 rounded-full bg-neutral-400"></div>
+                        <div className="w-1 h-1 rounded-full bg-neutral-400"></div>
+                        <div className="w-1 h-1 rounded-full bg-neutral-400"></div>
                       </div>
                     </div>
                   )}
@@ -141,7 +141,7 @@ export function NodePalette({ onDragStart, disabled = false }: NodePaletteProps)
             })}
 
             {filteredNodeTypes.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-neutral-500">
                 <p className="text-sm">No nodes found</p>
                 <p className="text-xs mt-1">Try a different search term</p>
               </div>

@@ -1,0 +1,269 @@
+# VITAL Platform - Docker Compose Configuration
+# Production-ready multi-service orchestration
+# Version: 1.0.0
+
+version: '3.8'
+
+services:
+  # =============================================================================
+  # API Server (FastAPI)
+  # =============================================================================
+  api:
+    build:
+      context: ../../services/ai-engine
+      dockerfile: ../../infrastructure/docker/Dockerfile
+      target: api
+    container_name: vital-api
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_ENVIRONMENT=${PINECONE_ENVIRONMENT}
+      - JWT_SECRET=${JWT_SECRET}
+      - PLATFORM_ORGANIZATION_ID=${PLATFORM_ORGANIZATION_ID}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SENTRY_DSN=${SENTRY_DSN}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - vital-network
+    restart: unless-stopped
+    volumes:
+      - api-logs:/app/logs
+
+  # =============================================================================
+  # Celery Workers - Execution Queue (Mode 3/4, Panels, Workflows)
+  # =============================================================================
+  worker-execution:
+    build:
+      context: ../../services/ai-engine
+      dockerfile: ../../infrastructure/docker/Dockerfile.worker
+    container_name: vital-worker-execution
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - CELERY_WORKER_CONCURRENCY=${EXECUTION_CONCURRENCY:-4}
+    command: celery -A workers.config worker -Q execution -l info --concurrency=${EXECUTION_CONCURRENCY:-4}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - vital-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  # =============================================================================
+  # Celery Workers - Ingestion Queue (Document Processing, Embeddings)
+  # =============================================================================
+  worker-ingestion:
+    build:
+      context: ../../services/ai-engine
+      dockerfile: ../../infrastructure/docker/Dockerfile.worker
+    container_name: vital-worker-ingestion
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - CELERY_WORKER_CONCURRENCY=${INGESTION_CONCURRENCY:-2}
+    command: celery -A workers.config worker -Q ingestion -l info --concurrency=${INGESTION_CONCURRENCY:-2}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - vital-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # =============================================================================
+  # Celery Workers - Discovery Queue (Ontology Scanning, Personalization)
+  # =============================================================================
+  worker-discovery:
+    build:
+      context: ../../services/ai-engine
+      dockerfile: ../../infrastructure/docker/Dockerfile.worker
+    container_name: vital-worker-discovery
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CELERY_WORKER_CONCURRENCY=${DISCOVERY_CONCURRENCY:-2}
+    command: celery -A workers.config worker -Q discovery -l info --concurrency=${DISCOVERY_CONCURRENCY:-2}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - vital-network
+    restart: unless-stopped
+
+  # =============================================================================
+  # Celery Beat - Scheduled Tasks
+  # =============================================================================
+  celery-beat:
+    build:
+      context: ../../services/ai-engine
+      dockerfile: ../../infrastructure/docker/Dockerfile.worker
+    container_name: vital-celery-beat
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+    command: celery -A workers.config beat -l info
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - vital-network
+    restart: unless-stopped
+
+  # =============================================================================
+  # Flower - Celery Monitoring Dashboard
+  # =============================================================================
+  flower:
+    build:
+      context: ../../services/ai-engine
+      dockerfile: ../../infrastructure/docker/Dockerfile.worker
+    container_name: vital-flower
+    ports:
+      - "${FLOWER_PORT:-5555}:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_BASIC_AUTH=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
+    command: celery -A workers.config flower --port=5555
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - vital-network
+    restart: unless-stopped
+
+  # =============================================================================
+  # Redis - Message Broker & Cache
+  # =============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: vital-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vital-network
+    restart: unless-stopped
+
+  # =============================================================================
+  # PostgreSQL - Local Development Database (Optional)
+  # Comment out if using Supabase hosted
+  # =============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: vital-postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-vital}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-vital_dev_password}
+      - POSTGRES_DB=${POSTGRES_DB:-vital_dev}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ../../database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vital}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vital-network
+    restart: unless-stopped
+    profiles:
+      - local-db
+
+  # =============================================================================
+  # Next.js Frontend (Optional - for full-stack local dev)
+  # =============================================================================
+  frontend:
+    build:
+      context: ../../apps/vital-system
+      dockerfile: ../../infrastructure/docker/Dockerfile.frontend
+    container_name: vital-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - NEXT_PUBLIC_API_URL=http://api:8000
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+    depends_on:
+      - api
+    networks:
+      - vital-network
+    restart: unless-stopped
+    profiles:
+      - full-stack
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  vital-network:
+    driver: bridge
+    name: vital-network
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  redis-data:
+    name: vital-redis-data
+  postgres-data:
+    name: vital-postgres-data
+  api-logs:
+    name: vital-api-logs
+
+

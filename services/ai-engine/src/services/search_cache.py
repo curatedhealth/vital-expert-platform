@@ -20,6 +20,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import os
 from typing import Dict, List, Any, Optional, Union
 from datetime import datetime, timedelta
 import pickle
@@ -45,12 +46,12 @@ class SearchCache:
 
     def __init__(
         self,
-        redis_url: str = "redis://localhost:6379",
+        redis_url: Optional[str] = None,
         default_ttl: int = 3600,  # 1 hour
         embedding_ttl: int = 86400,  # 24 hours
         max_cache_size_mb: int = 100
     ):
-        self.redis_url = redis_url
+        self.redis_url = redis_url or os.getenv("REDIS_URL")
         self.default_ttl = default_ttl
         self.embedding_ttl = embedding_ttl
         self.max_cache_size_mb = max_cache_size_mb
@@ -117,7 +118,7 @@ class SearchCache:
 
         Args:
             query: Search query text
-            filters: Optional filters (domains, capabilities, tier, etc.)
+            filters: Optional filters (domains, capabilities, level, etc.)
 
         Returns:
             Cached results or None if not found
@@ -449,8 +450,8 @@ class CachedHybridSearch:
         query: str,
         domains: Optional[List[str]] = None,
         capabilities: Optional[List[str]] = None,
-        min_tier: Optional[int] = None,
-        max_tier: Optional[int] = None,
+        min_level: Optional[int] = None,
+        max_level: Optional[int] = None,
         similarity_threshold: float = 0.70,
         max_results: int = 10,
         use_cache: bool = True
@@ -464,8 +465,8 @@ class CachedHybridSearch:
         filters = {
             "domains": domains,
             "capabilities": capabilities,
-            "min_tier": min_tier,
-            "max_tier": max_tier,
+            "min_level": min_level,
+            "max_level": max_level,
             "similarity_threshold": similarity_threshold,
             "max_results": max_results
         }
@@ -481,8 +482,8 @@ class CachedHybridSearch:
             query=query,
             domains=domains,
             capabilities=capabilities,
-            min_tier=min_tier,
-            max_tier=max_tier,
+            min_level=min_level,
+            max_level=max_level,
             similarity_threshold=similarity_threshold,
             max_results=max_results
         )
@@ -492,7 +493,7 @@ class CachedHybridSearch:
             {
                 "agent_id": r.agent_id,
                 "agent_name": r.agent_name,
-                "agent_tier": r.agent_tier,
+                "agent_level": getattr(r, "agent_level", None) or getattr(r, "agent_tier", None),
                 "vector_score": r.vector_score,
                 "domain_score": r.domain_score,
                 "capability_score": r.capability_score,

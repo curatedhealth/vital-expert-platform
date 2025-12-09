@@ -111,7 +111,7 @@ const entityTypeColors: Record<EntityType, string> = {
   gene: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300',
   protein: 'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300',
   trial: 'bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300',
-  unknown: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  unknown: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300',
 };
 
 // Status colors

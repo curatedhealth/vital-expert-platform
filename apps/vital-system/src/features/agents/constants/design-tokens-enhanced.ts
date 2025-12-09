@@ -98,7 +98,7 @@ export const AGENT_LEVEL_COLORS = {
     cssVar: 'var(--agent-level-4)',
     tailwind: {
       bg: 'bg-gradient-to-br from-amber-500 via-orange-500 to-red-500',
-      text: 'text-gray-900',
+      text: 'text-neutral-900',
       border: 'border-amber-400/30',
       glow: 'shadow-[0_0_30px_rgba(245,158,11,0.3)]',
     },
@@ -119,9 +119,9 @@ export const AGENT_LEVEL_COLORS = {
     description: 'Utility and Integration',
     cssVar: 'var(--agent-level-5)',
     tailwind: {
-      bg: 'bg-gradient-to-br from-gray-500 via-slate-600 to-gray-700',
+      bg: 'bg-gradient-to-br from-neutral-500 via-slate-600 to-neutral-700',
       text: 'text-white',
-      border: 'border-gray-400/30',
+      border: 'border-neutral-400/30',
       glow: 'shadow-[0_0_30px_rgba(107,114,128,0.3)]',
     },
   },
@@ -441,6 +441,8 @@ export const DESIGN_TOKENS = {
 } as const;
 
 export default DESIGN_TOKENS;
+
+
 
 
 

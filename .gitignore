@@ -140,6 +140,17 @@ agent-template.json
 # Testing and reports
 junit.xml
 test-report.html
+htmlcov/
+.pytest_cache/
+
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+dist/
 
 # Healthcare/Medical specific entries
 # PHI and sensitive medical data

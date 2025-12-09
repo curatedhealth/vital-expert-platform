@@ -42,6 +42,7 @@ def generate_mock_agent(agent_type: str = "regulatory_expert", tier: int = 1) ->
         "name": f"{agent_type.replace('_', ' ').title()}",
         "type": agent_type,
         "tier": tier,
+        "agent_level": tier,
         "specialties": [agent_type, "general"],
         "status": "active",
         "tenant_id": generate_tenant_id(),

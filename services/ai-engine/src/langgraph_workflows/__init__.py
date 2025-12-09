@@ -13,7 +13,7 @@ Components:
 - checkpoint_manager: State persistence
 - base_workflow: Base class for all workflows
 - observability: LangSmith integration and metrics
-- mode1_interactive_auto_workflow: Mode 1 implementation
+- ask_expert/: Mode 1-4 workflow implementations
 """
 
 from langgraph_workflows.state_schemas import (
@@ -45,11 +45,11 @@ from langgraph_workflows.observability import (
     trace_node
 )
 
-# Workflow implementations
-# Note: mode1_interactive_auto_workflow is planned but not yet implemented
-# from langgraph_workflows.mode1_interactive_auto_workflow import (
-#     Mode1InteractiveAutoWorkflow
-# )
+# Workflow implementations - Ask Expert Modes 1-4
+from langgraph_workflows.ask_expert.ask_expert_mode1_workflow import AskExpertMode1Workflow
+from langgraph_workflows.ask_expert.ask_expert_mode2_workflow import AskExpertMode2Workflow
+from langgraph_workflows.ask_expert.ask_expert_mode3_workflow import AskExpertMode3Workflow
+from langgraph_workflows.ask_expert.ask_expert_mode4_workflow import AskExpertMode4Workflow
 
 __all__ = [
     # State schemas
@@ -77,9 +77,11 @@ __all__ = [
     "trace_workflow",
     "trace_node",
 
-    # Workflow implementations (to be added)
-    # "Mode1InteractiveAutoWorkflow",
+    # Workflow implementations
+    "AskExpertMode1Workflow",
+    "AskExpertMode2Workflow",
+    "AskExpertMode3Workflow",
+    "AskExpertMode4Workflow",
 ]
 
 __version__ = "1.0.0"
-

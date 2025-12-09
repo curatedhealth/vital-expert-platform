@@ -1,0 +1,1768 @@
+{
+  "$ref": "#/definitions/workflow_create",
+  "definitions": {
+    "workflow_create": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "default": "1.0.0"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "published",
+            "archived",
+            "deprecated"
+          ],
+          "default": "draft"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "start"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "initialContext": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "end"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "outputMode": {
+                        "type": "string",
+                        "enum": [
+                          "return",
+                          "store",
+                          "webhook"
+                        ],
+                        "default": "return"
+                      },
+                      "webhookUrl": {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "expert"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "agentId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "mode_1_instant",
+                          "mode_2_standard",
+                          "mode_3_deep_research",
+                          "mode_4_autonomous"
+                        ]
+                      },
+                      "systemPrompt": {
+                        "type": "string"
+                      },
+                      "temperature": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 2,
+                        "default": 0.7
+                      },
+                      "maxTokens": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 128000
+                      },
+                      "streaming": {
+                        "type": "boolean",
+                        "default": true
+                      },
+                      "enabledTools": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "agentId",
+                      "mode"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "panel"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "panelId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "agents": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "agentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "role": {
+                              "type": "string"
+                            },
+                            "weight": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1,
+                              "default": 1
+                            }
+                          },
+                          "required": [
+                            "agentId",
+                            "role"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "consensusStrategy": {
+                        "type": "string",
+                        "enum": [
+                          "majority_vote",
+                          "weighted_average",
+                          "moderator_decision",
+                          "unanimous"
+                        ],
+                        "default": "weighted_average"
+                      },
+                      "consensusThreshold": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "default": 0.7
+                      },
+                      "maxRounds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10,
+                        "default": 3
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "tool"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "toolId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "config": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      },
+                      "inputMapping": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "outputKey": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "toolId"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "rag_query"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "domainId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "topK": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 50,
+                        "default": 10
+                      },
+                      "similarityThreshold": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "default": 0.7
+                      },
+                      "rerank": {
+                        "type": "boolean",
+                        "default": true
+                      },
+                      "filters": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "web_search"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "provider": {
+                        "type": "string",
+                        "enum": [
+                          "tavily",
+                          "serper",
+                          "brave"
+                        ],
+                        "default": "tavily"
+                      },
+                      "maxResults": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 20,
+                        "default": 5
+                      },
+                      "searchDepth": {
+                        "type": "string",
+                        "enum": [
+                          "basic",
+                          "advanced"
+                        ],
+                        "default": "basic"
+                      },
+                      "includeDomains": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "excludeDomains": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "router"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "conditions": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "expression": {
+                              "type": "string"
+                            },
+                            "targetNodeId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "label",
+                            "expression",
+                            "targetNodeId"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "defaultTargetNodeId": {
+                        "type": "string"
+                      },
+                      "evaluationMode": {
+                        "type": "string",
+                        "enum": [
+                          "first_match",
+                          "all_matches"
+                        ],
+                        "default": "first_match"
+                      }
+                    },
+                    "required": [
+                      "conditions",
+                      "defaultTargetNodeId"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "condition"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "expression": {
+                        "type": "string"
+                      },
+                      "trueTargetNodeId": {
+                        "type": "string"
+                      },
+                      "falseTargetNodeId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "expression",
+                      "trueTargetNodeId",
+                      "falseTargetNodeId"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "parallel"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "branches": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "targetNodeId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "label",
+                            "targetNodeId"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "waitForAll": {
+                        "type": "boolean",
+                        "default": true
+                      },
+                      "timeout": {
+                        "type": "integer",
+                        "minimum": 1
+                      }
+                    },
+                    "required": [
+                      "branches"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "merge"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "strategy": {
+                        "type": "string",
+                        "enum": [
+                          "concat",
+                          "merge_objects",
+                          "first",
+                          "custom"
+                        ],
+                        "default": "merge_objects"
+                      },
+                      "customMergeExpression": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "human_input"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "prompt": {
+                        "type": "string"
+                      },
+                      "inputType": {
+                        "type": "string",
+                        "enum": [
+                          "text",
+                          "choice",
+                          "file",
+                          "rating"
+                        ],
+                        "default": "text"
+                      },
+                      "choices": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "value",
+                            "label"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "timeout": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 0
+                      },
+                      "required": {
+                        "type": "boolean",
+                        "default": true
+                      }
+                    },
+                    "required": [
+                      "prompt"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "approval"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "approvalPrompt": {
+                        "type": "string"
+                      },
+                      "contextKeys": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "approverIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "format": "uuid"
+                        }
+                      },
+                      "minApprovals": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 1
+                      },
+                      "timeout": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 0
+                      }
+                    },
+                    "required": [
+                      "approvalPrompt"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "transform"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "expression": {
+                        "type": "string"
+                      },
+                      "inputKeys": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "outputKey": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "expression",
+                      "inputKeys",
+                      "outputKey"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "aggregate"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "aggregation": {
+                        "type": "string",
+                        "enum": [
+                          "concat",
+                          "sum",
+                          "average",
+                          "min",
+                          "max",
+                          "count",
+                          "custom"
+                        ]
+                      },
+                      "inputKeys": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "outputKey": {
+                        "type": "string"
+                      },
+                      "customExpression": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "aggregation",
+                      "inputKeys",
+                      "outputKey"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "delay"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "delayMs": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 300000,
+                        "default": 1000
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "log"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "level": {
+                        "type": "string",
+                        "enum": [
+                          "debug",
+                          "info",
+                          "warn",
+                          "error"
+                        ],
+                        "default": "info"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "includeKeys": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "webhook"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "method": {
+                        "type": "string",
+                        "enum": [
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "PATCH",
+                          "DELETE"
+                        ],
+                        "default": "POST"
+                      },
+                      "headers": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "bodyTemplate": {
+                        "type": "string"
+                      },
+                      "waitForResponse": {
+                        "type": "boolean",
+                        "default": true
+                      },
+                      "timeout": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 60,
+                        "default": 30
+                      }
+                    },
+                    "required": [
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "dragging": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "position",
+                  "data"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "source": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "target": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sourceHandle": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "targetHandle": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "default",
+                    "default": "default"
+                  },
+                  "animated": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "style": {
+                    "type": "object",
+                    "properties": {
+                      "stroke": {
+                        "type": "string"
+                      },
+                      "strokeWidth": {
+                        "type": "number"
+                      },
+                      "strokeDasharray": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "source",
+                  "target"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "source": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "target": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sourceHandle": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "targetHandle": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "conditional"
+                  },
+                  "animated": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "style": {
+                    "type": "object",
+                    "properties": {
+                      "stroke": {
+                        "type": "string"
+                      },
+                      "strokeWidth": {
+                        "type": "number"
+                      },
+                      "strokeDasharray": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "condition": {
+                        "type": "string"
+                      },
+                      "priority": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 0
+                      }
+                    },
+                    "required": [
+                      "condition"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "source",
+                  "target",
+                  "type",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "source": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "target": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sourceHandle": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "targetHandle": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "animated"
+                  },
+                  "animated": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "style": {
+                    "type": "object",
+                    "properties": {
+                      "stroke": {
+                        "type": "string"
+                      },
+                      "strokeWidth": {
+                        "type": "number"
+                      },
+                      "strokeDasharray": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "selected": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "source",
+                  "target",
+                  "type",
+                  "animated"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "viewport": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "zoom": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 4,
+              "default": 1
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        },
+        "entryNodeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exitNodeIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "executionSettings": {
+          "type": "object",
+          "properties": {
+            "maxExecutionTime": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600,
+              "default": 300
+            },
+            "maxTokenBudget": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 100000
+            },
+            "enableStreaming": {
+              "type": "boolean",
+              "default": true
+            },
+            "enableCheckpointing": {
+              "type": "boolean",
+              "default": true
+            },
+            "checkpointInterval": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 1
+            },
+            "allowHumanInLoop": {
+              "type": "boolean",
+              "default": true
+            },
+            "defaultRetryCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5,
+              "default": 2
+            },
+            "retryDelayMs": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 1000
+            }
+          },
+          "additionalProperties": false
+        },
+        "globalVariables": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Tenant identifier for multi-tenancy isolation"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "uuid",
+          "description": "User identifier"
+        }
+      },
+      "required": [
+        "name",
+        "nodes",
+        "edges",
+        "entryNodeId",
+        "exitNodeIds",
+        "tenantId",
+        "createdBy"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

@@ -1,203 +1,87 @@
 # VITAL Platform Documentation
 
-Welcome to the VITAL Platform documentation. This directory contains comprehensive guides, specifications, and reference materials for the platform.
-
-## 📚 Documentation Structure
-
-```
-docs/
-├── README.md                       # This file - documentation index
-├── guides/                         # Step-by-step guides
-│   └── WORKFLOW-DESIGNER-GUIDE.md  # Workflow Designer usage guide
-├── specs/                          # Feature specifications
-└── integrations/                   # Integration documentation
-```
-
-## 🚀 Quick Start
-
-### For Users
-- **[Workflow Designer Guide](./guides/WORKFLOW-DESIGNER-GUIDE.md)** - Learn how to use the visual workflow builder
-
-### For Developers
-- **[Root README](../README.md)** - Project overview and setup
-- **[Documentation Convention](../DOCUMENTATION_CONVENTION.md)** - Documentation naming standards
-- **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute (if exists)
-
-## 📖 Available Documentation
-
-### Guides
-
-Detailed step-by-step guides for using VITAL Platform features:
-
-| Guide | Description |
-|-------|-------------|
-| [Workflow Designer Guide](./guides/WORKFLOW-DESIGNER-GUIDE.md) | Complete guide to using the visual workflow designer |
-
-**Coming Soon:**
-- Getting Started Guide
-- Agent Setup Guide
-- Deployment Guide
-- Testing Guide
-
-### Specifications
-
-Technical specifications for platform features:
-
-**Coming Soon:**
-- Mode 1 Enhanced Specification
-- Agent Selection Specification
-- Workflow Execution Specification
-
-### Integrations
-
-Documentation for external integrations:
-
-**Coming Soon:**
-- LangGraph Integration
-- Supabase Integration
-- OpenAI Integration
-
-### Reference
-
-API and technical reference documentation:
-
-**Coming Soon:**
-- API Reference
-- Database Schema Reference
-- Architecture Overview
-
-## 🔍 Finding Documentation
-
-### By Topic
-
-- **Workflow Designer**: See [Workflow Designer Guide](./guides/WORKFLOW-DESIGNER-GUIDE.md)
-- **AI Agents**: See [Root README - Agent Setup](../README.md)
-- **Database**: See [Root README - Database Setup](../README.md)
-- **Deployment**: See service-specific READMEs in `services/`
-
-### By Component
-
-- **Frontend Apps**:
-  - `apps/vital-system/README.md` - Main VITAL System app
-  - `apps/pharma/README.md` - Pharma app
-  - `apps/digital-health-startup/README.md` - Digital Health Startup app
-
-- **Backend Services**:
-  - `services/ai-engine/README.md` - AI Engine (LangGraph + FastAPI)
-
-- **Features**:
-  - `apps/vital-system/src/features/workflow-designer/README.md` - Workflow Designer
-  - `apps/vital-system/src/components/ai/README.md` - AI Components
-
-## 📝 Documentation Convention
-
-All documentation follows the [Documentation Convention](../DOCUMENTATION_CONVENTION.md) standards:
-
-- **Core docs**: `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md` (UPPERCASE)
-- **Guides**: `{TOPIC}-GUIDE.md` (e.g., `DEPLOYMENT-GUIDE.md`)
-- **Specs**: `{FEATURE}-SPEC.md` (e.g., `MODE1-SPEC.md`)
-- **Integrations**: `{SERVICE}-INTEGRATION.md` (e.g., `SUPABASE-INTEGRATION.md`)
-- **Reference**: `{TOPIC}-REFERENCE.md` (e.g., `API-REFERENCE.md`)
-
-## 🆘 Getting Help
-
-### Common Issues
-
-For troubleshooting common issues:
-1. Check the relevant guide in `docs/guides/`
-2. Check the component's README
-3. Check console logs and error messages
-4. Review the [Workflow Designer Troubleshooting](./guides/WORKFLOW-DESIGNER-GUIDE.md#troubleshooting) section
-
-### Support Resources
-
-- **GitHub Issues**: Report bugs and feature requests
-- **Team Documentation**: Internal team wiki (if available)
-- **Code Comments**: In-code documentation for complex logic
-
-## 🤝 Contributing to Documentation
-
-To contribute or update documentation:
-
-1. Follow the [Documentation Convention](../DOCUMENTATION_CONVENTION.md)
-2. Use clear, concise language
-3. Include code examples where appropriate
-4. Add screenshots for UI features
-5. Test all code examples
-6. Keep documentation up-to-date with code changes
-
-### Documentation Review Checklist
-
-Before submitting documentation:
-
-- [ ] Follows naming convention
-- [ ] In correct directory
-- [ ] Markdown renders correctly
-- [ ] Links work
-- [ ] Code examples tested
-- [ ] No sensitive information
-- [ ] Grammar/spelling checked
-
-## 📋 Documentation Roadmap
-
-### Priority 1 (Needed Soon)
-- [ ] ARCHITECTURE.md - System architecture overview
-- [ ] API-REFERENCE.md - Complete API documentation
-- [ ] DEPLOYMENT-GUIDE.md - Production deployment guide
-
-### Priority 2 (Nice to Have)
-- [ ] TESTING-GUIDE.md - Testing procedures
-- [ ] TROUBLESHOOTING.md - Common issues compendium
-- [ ] GLOSSARY.md - Terms and definitions
-
-### Priority 3 (Future)
-- [ ] VIDEO-TUTORIALS.md - Video tutorial index
-- [ ] BEST-PRACTICES.md - Development best practices
-- [ ] PERFORMANCE-GUIDE.md - Performance optimization
-
-## 📊 Documentation Status
-
-| Category | Status | Count |
-|----------|--------|-------|
-| Guides | 🟡 In Progress | 1 |
-| Specifications | 🔴 Not Started | 0 |
-| Integrations | 🔴 Not Started | 0 |
-| Reference | 🔴 Not Started | 0 |
-
-**Legend**: 🟢 Complete | 🟡 In Progress | 🔴 Not Started
-
-## 🔗 External Resources
-
-- **React Flow**: https://reactflow.dev/
-- **LangGraph**: https://langchain-ai.github.io/langgraph/
-- **Supabase**: https://supabase.com/docs
-- **Next.js**: https://nextjs.org/docs
-- **FastAPI**: https://fastapi.tiangolo.com/
-
-## 📅 Recent Updates
-
-| Date | Update |
-|------|--------|
-| 2024-11-23 | Created documentation structure and naming convention |
-| 2024-11-23 | Moved Workflow Designer guide to standard location |
-| 2024-11-23 | Renamed inconsistent documentation files |
+Welcome to the VITAL Platform developer documentation. This directory contains essential guides for developers, operators, and contributors.
 
 ---
 
-**Last Updated**: 2024-11-23  
-**Maintained By**: VITAL Platform Team
+## ⚠️ IMPORTANT: Documentation Location Rules
 
-For questions about documentation, contact the development team.
+### This `/docs/` folder is for PUBLIC developer-facing documentation ONLY
 
+| ✅ Allowed Here | ❌ NOT Allowed Here |
+|-----------------|---------------------|
+| Getting started guides | Internal PRDs/ARDs |
+| API reference (OpenAPI) | Audit reports |
+| Architecture overview | Implementation details |
+| Deployment guides | Service-specific docs |
+| Development setup | Historical documents |
 
+### For Internal Documentation → Use `/.claude/docs/`
 
+```
+/.claude/docs/
+├── services/ask-expert/     # Ask Expert PRD, ARD, implementation
+├── services/ask-panel/      # Ask Panel documentation
+├── platform/agents/         # Agent definitions & guides
+├── architecture/            # Architecture decisions
+└── operations/              # Deployment, security, monitoring
+```
 
+---
 
+## Directory Structure
 
+```
+docs/
+├── README.md                 # This file
+├── api/
+│   └── openapi.yaml          # OpenAPI specification
+├── architecture/
+│   └── overview.md           # System architecture overview
+├── guides/
+│   ├── getting-started.md    # Quick start guide (15 min)
+│   ├── development.md        # Local development setup
+│   ├── deployment.md         # Production deployment
+│   ├── 01_technical_implementation.md
+│   └── 02_enterprise_ontology_guide.md
+└── platform/
+    └── enterprise_ontology/
+        └── README.md         # Enterprise ontology feature docs
+```
 
+## Quick Links
 
+| Topic | Document | Description |
+|-------|----------|-------------|
+| **Getting Started** | [guides/getting-started.md](guides/getting-started.md) | Get running in 15 minutes |
+| **API Reference** | [api/openapi.yaml](api/openapi.yaml) | Full OpenAPI specification |
+| **Architecture** | [architecture/overview.md](architecture/overview.md) | System design overview |
+| **Development** | [guides/development.md](guides/development.md) | Local dev environment |
+| **Deployment** | [guides/deployment.md](guides/deployment.md) | Production deployment guide |
 
+## Internal Documentation
 
+Comprehensive internal platform documentation is maintained in:
 
+| Location | Content |
+|----------|---------|
+| `/.claude/docs/` | Full platform documentation |
+| `/.claude/docs/services/` | Service-specific PRDs & ARDs |
+| `/.claude/docs/platform/` | Platform features (agents, personas, ontology) |
+| `/.claude/docs/architecture/` | Architecture decisions & standards |
+| `/.claude/docs/operations/` | Deployment, security, monitoring |
 
+## Key Services Documentation
 
+- **Ask Expert**: `/.claude/docs/services/ask-expert/`
+  - `ASK_EXPERT_PRD_MASTER.md` - Product requirements
+  - `ASK_EXPERT_ARD_MASTER.md` - Architecture specification
+  
+- **Ask Panel**: `/.claude/docs/services/ask-panel/`
+
+- **Agent OS**: `/.claude/docs/platform/agents/`
+
+---
+
+**Version**: 1.1.0  
+**Last Updated**: December 6, 2025

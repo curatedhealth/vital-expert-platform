@@ -320,16 +320,16 @@ async def investigator_health_check():
             "service": "value_investigator",
             "workflow": "initialized",
             "reasoning_models": {
-                "tier_1_primary": "claude-opus-4-5-20251101",
-                "tier_2_secondary": "o1",
-                "tier_3_tertiary": "gemini-2.5-pro",
-                "tier_4_opensource": [
+                "level_1_primary": "claude-opus-4-5-20251101",
+                "level_2_secondary": "o1",
+                "level_3_tertiary": "gemini-2.5-pro",
+                "level_4_opensource": [
                     "deepseek-ai/DeepSeek-R1",
                     "Qwen/Qwen2.5-72B-Instruct",
                     "CuratedHealth/meditron70b-qlora-1gpu",
                     "meta-llama/Llama-3.3-70B-Instruct"
                 ],
-                "tier_5_fallback": "gpt-4o"
+                "level_5_fallback": "gpt-4o"
             },
             "model_capabilities": {
                 "claude-opus-4.5": "Extended thinking, deep reasoning, complex analysis (95% confidence)",

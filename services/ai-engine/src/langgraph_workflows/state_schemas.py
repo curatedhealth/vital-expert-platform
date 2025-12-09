@@ -341,6 +341,12 @@ class UnifiedWorkflowState(TypedDict):
     max_results: NotRequired[int]
     temperature: NotRequired[float]
     max_tokens: NotRequired[int]
+
+    # User overrides (None = use agent's database config)
+    # When user explicitly provides model/temperature/max_tokens, these override agent config
+    user_override_model: NotRequired[Optional[str]]
+    user_override_temperature: NotRequired[Optional[float]]
+    user_override_max_tokens: NotRequired[Optional[int]]
     
     # =========================================================================
     # AGENT SELECTION STATE
@@ -428,7 +434,10 @@ class UnifiedWorkflowState(TypedDict):
     agent_response: NotRequired[str]
     response_confidence: NotRequired[float]
     response_cached: NotRequired[bool]  # Cache hit indicator
-    
+
+    # LLM configuration for streaming (passed to route layer)
+    llm_streaming_config: NotRequired[Dict[str, Any]]  # provider, model, temperature, system_prompt, etc.
+
     # LLM metadata
     model_used: NotRequired[str]
     tokens_used: NotRequired[int]
@@ -529,9 +538,9 @@ class UnifiedWorkflowState(TypedDict):
     self_reflections: NotRequired[List[Dict[str, Any]]]
     corrections_applied: NotRequired[List[Dict[str, Any]]]
 
-    # Tier and confidence state
-    tier: NotRequired[int]
-    tier_reasoning: NotRequired[str]
+    # Level and confidence state
+    agent_level: NotRequired[int]
+    level_reasoning: NotRequired[str]
     plan: NotRequired[Dict[str, Any]]
     execution_plan: NotRequired[Dict[str, Any]]
     plan_confidence: NotRequired[float]
@@ -677,6 +686,12 @@ def create_initial_state(
         max_results=kwargs.get('max_results', 5),
         temperature=kwargs.get('temperature', 0.1),
         max_tokens=kwargs.get('max_tokens', 4000),
+
+        # User overrides (None = use agent's database config)
+        # Only set when user explicitly provides values in request
+        user_override_model=kwargs.get('user_override_model'),
+        user_override_temperature=kwargs.get('user_override_temperature'),
+        user_override_max_tokens=kwargs.get('user_override_max_tokens'),
 
         # Agent preferences (citation style, etc.)
         citation_style=kwargs.get('citation_style', 'apa'),

@@ -1,0 +1,592 @@
+openapi: 3.1.0
+info:
+  title: VITAL Platform API
+  description: |
+    AI-powered healthcare intelligence platform API.
+    
+    ## Authentication
+    
+    All endpoints require Bearer token authentication via Supabase Auth.
+    Include the token in the `Authorization` header:
+    
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+    
+    ## Multi-tenancy
+    
+    All data is isolated by `organization_id`. The organization context is 
+    automatically extracted from the JWT token.
+    
+    ## Rate Limiting
+    
+    - Token budget enforced per organization
+    - 429 returned when budget exceeded
+    - Check `/health` for current usage
+  version: 3.0.0
+  contact:
+    name: VITAL Platform Team
+    email: platform@vital.ai
+  license:
+    name: Proprietary
+    
+servers:
+  - url: http://localhost:8000
+    description: Local development
+  - url: https://api.vital.ai
+    description: Production
+
+tags:
+  - name: Health
+    description: Health and status endpoints
+  - name: Expert
+    description: Ask Expert service (Modes 1-4)
+  - name: Workflows
+    description: Workflow management
+  - name: Jobs
+    description: Async job management
+  - name: Streaming
+    description: SSE streaming endpoints
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /ready:
+    get:
+      tags: [Health]
+      summary: Readiness check
+      operationId: readinessCheck
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+        '503':
+          description: Service not ready
+
+  /api/expert/ask:
+    post:
+      tags: [Expert]
+      summary: Ask an expert
+      operationId: askExpert
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpertRequest'
+      responses:
+        '200':
+          description: Synchronous response (Mode 1-2)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpertResponse'
+        '202':
+          description: Async job created (Mode 3-4)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobCreatedResponse'
+        '429':
+          description: Token budget exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetExceededError'
+
+  /api/workflows:
+    get:
+      tags: [Workflows]
+      summary: List workflows
+      operationId: listWorkflows
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of workflows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowListResponse'
+
+    post:
+      tags: [Workflows]
+      summary: Create workflow
+      operationId: createWorkflow
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowCreateRequest'
+      responses:
+        '201':
+          description: Workflow created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+
+  /api/workflows/{id}:
+    get:
+      tags: [Workflows]
+      summary: Get workflow
+      operationId: getWorkflow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Workflow details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '404':
+          description: Workflow not found
+
+  /api/workflows/{id}/execute:
+    post:
+      tags: [Workflows]
+      summary: Execute workflow
+      operationId: executeWorkflow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowExecuteRequest'
+      responses:
+        '202':
+          description: Execution started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobCreatedResponse'
+
+  /api/jobs/{id}/status:
+    get:
+      tags: [Jobs]
+      summary: Get job status
+      operationId: getJobStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatus'
+        '404':
+          description: Job not found
+
+  /api/jobs/{id}/result:
+    get:
+      tags: [Jobs]
+      summary: Get job result
+      operationId: getJobResult
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResult'
+        '404':
+          description: Job not found
+
+  /api/jobs/{id}/cancel:
+    post:
+      tags: [Jobs]
+      summary: Cancel job
+      operationId: cancelJob
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job cancelled
+        '404':
+          description: Job not found
+
+  /stream/workflow/execute:
+    post:
+      tags: [Streaming]
+      summary: Execute workflow with SSE streaming
+      operationId: streamWorkflowExecution
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowExecuteRequest'
+      responses:
+        '200':
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /stream/chat:
+    post:
+      tags: [Streaming]
+      summary: Chat with SSE streaming
+      operationId: streamChat
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        uptime:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+
+    ReadinessResponse:
+      type: object
+      properties:
+        ready:
+          type: boolean
+        checks:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+              latency_ms:
+                type: number
+
+    ExpertRequest:
+      type: object
+      required:
+        - mode
+        - question
+      properties:
+        mode:
+          type: integer
+          enum: [1, 2, 3, 4]
+          description: |
+            - 1: Manual Interactive (user selects expert)
+            - 2: Automatic Interactive (system selects expert)
+            - 3: Manual Autonomous (deep research)
+            - 4: Automatic Autonomous (panel discussion)
+        question:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        agent_id:
+          type: string
+          format: uuid
+          description: Required for Mode 1 and 3
+        conversation_id:
+          type: string
+          format: uuid
+          description: For continuing a conversation
+
+    ExpertResponse:
+      type: object
+      properties:
+        response:
+          type: string
+        selected_agent:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            level:
+              type: integer
+        conversation_id:
+          type: string
+          format: uuid
+        token_usage:
+          type: object
+          properties:
+            prompt_tokens:
+              type: integer
+            completion_tokens:
+              type: integer
+            total_tokens:
+              type: integer
+
+    JobCreatedResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, running]
+        estimated_duration:
+          type: string
+          description: e.g., "2-5 minutes"
+
+    JobStatus:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    JobResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        result:
+          type: object
+        error:
+          type: string
+
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowEdge'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    WorkflowNode:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [start, end, expert, router, panel, tool, memory, delay, transform, aggregator, iteration]
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+        data:
+          type: object
+
+    WorkflowEdge:
+      type: object
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+        target:
+          type: string
+        type:
+          type: string
+          enum: [default, conditional, animated]
+
+    WorkflowListResponse:
+      type: object
+      properties:
+        workflows:
+          type: array
+          items:
+            $ref: '#/components/schemas/Workflow'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    WorkflowCreateRequest:
+      type: object
+      required:
+        - name
+        - nodes
+        - edges
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowEdge'
+
+    WorkflowExecuteRequest:
+      type: object
+      properties:
+        input:
+          type: object
+          description: Initial state variables
+        timeout_seconds:
+          type: integer
+          default: 300
+
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        agent_id:
+          type: string
+          format: uuid
+        conversation_id:
+          type: string
+          format: uuid
+        mode:
+          type: integer
+          enum: [1, 2, 3, 4]
+          default: 1
+
+    BudgetExceededError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: token_budget_exceeded
+        message:
+          type: string
+        limit:
+          type: integer
+        used:
+          type: integer
+        reset_date:
+          type: string
+
+

@@ -361,7 +361,7 @@ export function PanelConsultationView({
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="p-6 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-indigo-100 dark:border-indigo-900/40 shadow-sm"
+              className="p-6 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-neutral-800 dark:to-neutral-900 rounded-2xl border border-indigo-100 dark:border-indigo-900/40 shadow-sm"
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">

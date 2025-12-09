@@ -26,16 +26,17 @@ from neo4j import GraphDatabase
 import logging
 
 # =============================================================================
-# CONFIGURATION
+# CONFIGURATION - Load from environment variables (NEVER hardcode credentials)
 # =============================================================================
+import os
 
-SUPABASE_URL = "https://bomltkhixeatxuoxmolq.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvbWx0a2hpeGVhdHh1b3htb2xxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Mjc4MzkxNSwiZXhwIjoyMDc4MzU5OTE1fQ.dhhJIMib1DMTuIvacv4VnDYjXAgVFRZ5Zrrl_LkpD6Q"
-SUPABASE_REALTIME_URL = "wss://bomltkhixeatxuoxmolq.supabase.co/realtime/v1/websocket"
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+SUPABASE_REALTIME_URL = f"wss://{SUPABASE_URL.replace('https://', '')}/realtime/v1/websocket" if SUPABASE_URL else ""
 
-NEO4J_URI = "neo4j+s://13067bdb.databases.neo4j.io"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "kkCxQgpcanSUDv-dKzOzDPcYIhvJHRQRa4tuiNa2Mek"
+NEO4J_URI = os.getenv("NEO4J_URI", "")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

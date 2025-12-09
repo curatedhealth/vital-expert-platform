@@ -200,7 +200,7 @@ class RecommendationEngine:
                         a.id,
                         a.name,
                         a.display_name,
-                        COALESCE((a.metadata->>'tier')::INTEGER, 2) AS tier,
+                        COALESCE((a.metadata->>'tier')::INTEGER, 2) AS agent_level,
                         a.metadata->'domains' AS domains,
                         1 - (ae.embedding <=> (SELECT embedding FROM agent_embeddings)) AS similarity
                     FROM agents a
@@ -317,7 +317,7 @@ class RecommendationEngine:
                             id,
                             name,
                             display_name,
-                            COALESCE((metadata->>'tier')::INTEGER, 2) AS tier
+                            COALESCE((metadata->>'tier')::INTEGER, 2) AS agent_level
                         FROM agents
                         WHERE id = $1 AND status = 'active'
                     """, agent_id)
@@ -404,7 +404,7 @@ class RecommendationEngine:
                     a.id,
                     a.name,
                     a.display_name,
-                    COALESCE((a.metadata->>'tier')::INTEGER, 2) AS tier,
+                    COALESCE((a.metadata->>'tier')::INTEGER, 2) AS agent_level,
                     a.metadata->'domains' AS domains,
                     ri.user_count,
                     ri.interaction_count,
@@ -492,7 +492,7 @@ class RecommendationEngine:
                     a.id,
                     a.name,
                     a.display_name,
-                    COALESCE((a.metadata->>'tier')::INTEGER, 2) AS tier,
+                    COALESCE((a.metadata->>'tier')::INTEGER, 2) AS agent_level,
                     a.metadata->'domains' AS domains,
                     a.created_at
                 FROM agents a

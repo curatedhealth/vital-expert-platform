@@ -810,7 +810,7 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
                   <div key={index} className="flex justify-between items-center">
                     <span className="text-neutral-600">{metric.label}</span>
                     <div className="flex items-center">
-                      <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                      <div className="w-32 bg-neutral-200 rounded-full h-2 mr-3">
                         <div
                           className={`h-2 rounded-full ${metric.color}`}
                           style={{width: `${metric.value}%`}}

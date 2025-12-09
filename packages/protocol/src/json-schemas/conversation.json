@@ -1,0 +1,245 @@
+{
+  "$ref": "#/definitions/conversation",
+  "definitions": {
+    "conversation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "assistant",
+                  "system",
+                  "tool"
+                ]
+              },
+              "content": {
+                "type": "string"
+              },
+              "citations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "document",
+                        "web",
+                        "database",
+                        "expert"
+                      ]
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "snippet": {
+                      "type": "string"
+                    },
+                    "relevanceScore": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "type",
+                    "title",
+                    "snippet"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "toolCalls": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "arguments": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    },
+                    "result": {},
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "running",
+                        "completed",
+                        "failed"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "arguments",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "thinking": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "step": {
+                      "type": "integer"
+                    },
+                    "thought": {
+                      "type": "string"
+                    },
+                    "action": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "step",
+                    "thought"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "tokenUsage": {
+                "type": "object",
+                "properties": {
+                  "promptTokens": {
+                    "type": "integer"
+                  },
+                  "completionTokens": {
+                    "type": "integer"
+                  },
+                  "totalTokens": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "promptTokens",
+                  "completionTokens",
+                  "totalTokens"
+                ],
+                "additionalProperties": false
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime"
+              },
+              "metadata": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "id",
+              "role",
+              "content",
+              "createdAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "mode_1_instant",
+            "mode_2_standard",
+            "mode_3_deep_research",
+            "mode_4_autonomous"
+          ]
+        },
+        "isActive": {
+          "type": "boolean",
+          "default": true
+        },
+        "totalTokens": {
+          "type": "integer",
+          "default": 0
+        },
+        "totalCostUsd": {
+          "type": "number",
+          "default": 0
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Tenant identifier for multi-tenancy isolation"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "User identifier"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 datetime"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 datetime"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "id",
+        "agentId",
+        "messages",
+        "mode",
+        "tenantId",
+        "userId",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

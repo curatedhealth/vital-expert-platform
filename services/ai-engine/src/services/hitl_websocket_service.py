@@ -38,7 +38,7 @@ try:
 except ImportError:
     REDIS_AVAILABLE = False
 
-from services.postgres_checkpointer import get_postgres_checkpointer
+from langgraph_workflows.postgres_checkpointer import get_postgres_checkpointer
 from services.hitl_service import (
     HITLCheckpoint,
     HITLSafetyLevel,

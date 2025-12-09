@@ -1,6 +1,17 @@
+/**
+ * VITAL Platform - StreamingMarkdown Component
+ * 
+ * @deprecated This component is deprecated. Use VitalStreamText or StreamingResponse instead.
+ * 
+ * Migration guide:
+ * - For Phase 3 components: import { VitalStreamText } from '@/shared/components/vital-ai-ui/conversation'
+ * - For legacy compatibility: import { StreamingResponse } from '@/components/ai/streaming-response'
+ * 
+ * This component will be removed in a future release.
+ */
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { cn } from '@/shared/services/utils';
 
@@ -82,13 +93,25 @@ interface StreamingMarkdownProps {
   return processedText;
 };
 
-// 🌊 Main Streaming Markdown Component
+/**
+ * @deprecated Use VitalStreamText or StreamingResponse instead.
+ */
 export const StreamingMarkdown: React.FC<StreamingMarkdownProps> = ({
   children,
   className,
   isStreaming = false,
   autoComplete = true,
 }) => {
+  // Emit deprecation warning in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        '[DEPRECATED] StreamingMarkdown is deprecated. ' +
+        'Use VitalStreamText from @/shared/components/vital-ai-ui/conversation or ' +
+        'StreamingResponse from @/components/ai/streaming-response instead.'
+      );
+    }
+  }, []);
 
   return (
     <div

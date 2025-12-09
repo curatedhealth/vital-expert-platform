@@ -1,3 +1,14 @@
+/**
+ * VITAL Platform - StreamingResponse Component (shared/ui/ai variant)
+ * 
+ * @deprecated This component is deprecated. Use VitalStreamText or components/ai/StreamingResponse instead.
+ * 
+ * Migration guide:
+ * - For Phase 3 components: import { VitalStreamText } from '@/shared/components/vital-ai-ui/conversation'
+ * - For Streamdown-based rendering: import { StreamingResponse } from '@/components/ai/streaming-response'
+ * 
+ * This component will be removed in a future release.
+ */
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
@@ -14,6 +25,9 @@ interface StreamingResponseProps {
   showCursor?: boolean
 }
 
+/**
+ * @deprecated Use VitalStreamText or components/ai/StreamingResponse instead.
+ */
 export function StreamingResponse({ 
   content, 
   isStreaming = false,
@@ -23,6 +37,17 @@ export function StreamingResponse({
 }: StreamingResponseProps) {
   const [displayedContent, setDisplayedContent] = useState('')
   const [isComplete, setIsComplete] = useState(false)
+
+  // Emit deprecation warning in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        '[DEPRECATED] StreamingResponse (shared/ui/ai) is deprecated. ' +
+        'Use VitalStreamText from @/shared/components/vital-ai-ui/conversation or ' +
+        'StreamingResponse from @/components/ai/streaming-response instead.'
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (!isStreaming) {

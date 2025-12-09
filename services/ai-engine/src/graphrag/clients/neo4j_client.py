@@ -50,9 +50,9 @@ class Neo4jClient:
             password: Database password
             database: Database name
         """
-        self.uri = uri or getattr(settings, 'neo4j_uri', 'bolt://localhost:7687')
-        self.username = username or getattr(settings, 'neo4j_username', 'neo4j')
-        self.password = password or getattr(settings, 'neo4j_password', None)
+        self.uri = uri or settings.neo4j_uri
+        self.username = username or settings.neo4j_username
+        self.password = password or settings.neo4j_password or None
         self.database = database
         self._driver = None
         

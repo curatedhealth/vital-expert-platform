@@ -80,12 +80,13 @@ class SearchRequest(BaseModel):
         example=["fda_submission", "510k_clearance"]
     )
 
-    tier: Optional[int] = Field(
+    agent_level: Optional[int] = Field(
         default=None,
         ge=1,
-        le=3,
-        description="Filter by agent tier (1=highest, 3=lowest)",
-        example=1
+        le=5,
+        alias="tier",
+        description="Filter by agent level (L1-L5). Alias 'tier' is deprecated.",
+        example=2
     )
 
     max_results: int = Field(
@@ -134,7 +135,7 @@ class AgentResult(BaseModel):
     agent_id: str
     name: str
     display_name: Optional[str]
-    tier: int
+    agent_level: int
 
     # Scoring breakdown
     overall_score: float = Field(ge=0.0, le=1.0)
@@ -160,7 +161,7 @@ class AgentResult(BaseModel):
                 "agent_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                 "name": "fda-regulatory-strategist",
                 "display_name": "FDA Regulatory Strategist",
-                "tier": 1,
+                "agent_level": 2,
                 "overall_score": 0.87,
                 "vector_score": 0.92,
                 "domain_score": 0.85,
@@ -244,11 +245,11 @@ async def get_current_user(
         # For development, allow requests without auth
         # In production, uncomment this:
         # raise HTTPException(status_code=401, detail="API key required")
-        return {"user_id": "anonymous", "tier": "free"}
+        return {"user_id": "anonymous", "plan": "free"}
 
     # Simple API key validation (replace with proper auth in production)
     if api_key == settings.internal_api_key if hasattr(settings, 'internal_api_key') else "dev-key-123":
-        return {"user_id": "authenticated", "tier": "premium"}
+        return {"user_id": "authenticated", "plan": "premium"}
 
     raise HTTPException(status_code=401, detail="Invalid API key")
 
@@ -259,8 +260,8 @@ async def check_rate_limit(
     """
     Check rate limits for user
 
-    Free tier: 10 requests/minute
-    Premium tier: 100 requests/minute
+    Free plan: 10 requests/minute
+    Premium plan: 100 requests/minute
     """
     # In production, implement proper rate limiting with Redis
     # For now, this is a placeholder
@@ -270,8 +271,8 @@ async def check_rate_limit(
         "premium": 100
     }
 
-    user_tier = user.get("tier", "free")
-    limit = rate_limits.get(user_tier, 10)
+    user_plan = user.get("plan", "free")
+    limit = rate_limits.get(user_plan, 10)
 
     # TODO: Implement actual rate limit checking with Redis
     # if current_request_count > limit:
@@ -304,8 +305,8 @@ async def check_rate_limit(
     - Cache hit (when available): <5ms
 
     **Rate Limits:**
-    - Free tier: 10 requests/minute
-    - Premium tier: 100 requests/minute
+    - Free plan: 10 requests/minute
+    - Premium plan: 100 requests/minute
     """,
     responses={
         200: {"description": "Successful search", "model": SearchResponse},
@@ -335,7 +336,7 @@ async def search_agents(
                 filters={
                     "domains": request.domains,
                     "capabilities": request.capabilities,
-                    "tier": request.tier,
+                    "agent_level": request.agent_level,
                     "max_results": request.max_results
                 }
             )
@@ -373,9 +374,10 @@ async def search_agents(
             query=request.query,
             domains=request.domains,
             capabilities=request.capabilities,
-            tier=request.tier,
-            max_results=request.max_results,
-            include_graph_context=request.include_graph_context
+            min_tier=request.agent_level,
+            max_tier=request.agent_level,
+            include_graph_context=request.include_graph_context,
+            max_results=request.max_results
         )
         embedding_time_ms = (time.time() - embedding_start) * 1000
 
@@ -386,7 +388,7 @@ async def search_agents(
                 agent_id=str(result["agent_id"]),
                 name=result["name"],
                 display_name=result.get("display_name"),
-                tier=result["tier"],
+                agent_level=result.get("agent_level") or result.get("tier"),
                 overall_score=result["overall_score"],
                 vector_score=result["vector_score"],
                 domain_score=result["domain_score"],
@@ -432,7 +434,7 @@ async def search_agents(
                 filters={
                     "domains": request.domains,
                     "capabilities": request.capabilities,
-                    "tier": request.tier,
+                    "agent_level": request.agent_level,
                     "max_results": request.max_results
                 }
             )
@@ -504,7 +506,7 @@ async def find_similar_agents(
                 agent_id=str(result["agent_id"]),
                 name=result["name"],
                 display_name=result.get("display_name"),
-                tier=result["tier"],
+                agent_level=result.get("agent_level") or result.get("tier"),
                 overall_score=result["overall_score"],
                 vector_score=result["vector_score"],
                 domain_score=result["domain_score"],
@@ -678,7 +680,8 @@ async def websocket_search(websocket: WebSocket, client_id: str):
                         query=data.get("query", ""),
                         domains=data.get("domains"),
                         capabilities=data.get("capabilities"),
-                        tier=data.get("tier"),
+                        min_tier=data.get("agent_level") or data.get("tier"),
+                        max_tier=data.get("agent_level") or data.get("tier"),
                         max_results=data.get("max_results", 10),
                         include_graph_context=data.get("include_graph_context", True)
                     )

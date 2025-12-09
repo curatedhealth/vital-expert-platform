@@ -1,10 +1,20 @@
 /**
- * useAskExpertChat Hook
- *
- * React hook for Ask Expert chat with real-time streaming
+ * VITAL Platform - useAskExpertChat Hook
+ * 
+ * @deprecated This hook is deprecated. Use mode-specific hooks instead.
+ * 
+ * Migration guide:
+ * - For Mode 1 (Manual Interactive): import { useMode1Chat } from '@/features/ask-expert/hooks'
+ * - For Mode 2 (Automatic Interactive): import { useMode2Chat } from '@/features/ask-expert/hooks'
+ * - For Mode 3 (Manual Autonomous): import { useMode3Mission } from '@/features/ask-expert/hooks'
+ * 
+ * This hook will be removed in a future release.
+ * 
+ * @see useMode1Chat - For manual expert selection with multi-turn chat
+ * @see useMode2Chat - For automatic expert selection with Fusion Intelligence
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { streamingService, type WorkflowStep, type ReasoningStep, type Source, type MessageMetadata } from '../services/streaming-service';
 
 export interface Message {
@@ -39,8 +49,21 @@ export interface StreamingState {
   };
 }
 
+/**
+ * @deprecated Use useMode1Chat or useMode2Chat instead.
+ */
 export function useAskExpertChat(options: UseAskExpertChatOptions) {
   const { conversationId, userId, mode, agentId } = options;
+
+  // Emit deprecation warning in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        '[DEPRECATED] useAskExpertChat is deprecated. ' +
+        'Use useMode1Chat (Mode 1) or useMode2Chat (Mode 2) instead.'
+      );
+    }
+  }, []);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [streamingState, setStreamingState] = useState<StreamingState>({

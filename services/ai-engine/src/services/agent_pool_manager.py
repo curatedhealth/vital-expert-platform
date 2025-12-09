@@ -8,7 +8,7 @@ Key Features:
 - Query available agents for tenant
 - Score agents based on query relevance
 - Handle agent availability and load balancing
-- Support domain and tier filtering
+- Support domain and level filtering
 
 Usage:
     pool_manager = AgentPoolManager(supabase, agent_loader)
@@ -34,7 +34,7 @@ class AgentPoolManager:
     Manages agent pools for automatic selection modes (Mode 2 & 4).
 
     Responsibilities:
-    - Load available agents based on filters (domain, tier, etc.)
+    - Load available agents based on filters (domain, level, etc.)
     - Score agents for query relevance
     - Handle agent availability and status
     - Provide ranked agent recommendations
@@ -55,7 +55,7 @@ class AgentPoolManager:
         self,
         tenant_id: str,
         domain: Optional[str] = None,
-        tier: Optional[int] = None,
+        agent_level: Optional[int] = None,
         exclude_ids: Optional[List[str]] = None,
         limit: int = 20
     ) -> List[AgentProfile]:
@@ -68,7 +68,7 @@ class AgentPoolManager:
         Args:
             tenant_id: User's tenant ID
             domain: Optional domain filter (e.g., "regulatory", "medical")
-            tier: Optional tier filter (1, 2, or 3)
+            agent_level: Optional level filter (L1-L5; legacy uses tier)
             exclude_ids: Optional list of agent IDs to exclude
             limit: Maximum agents to return
 
@@ -80,7 +80,7 @@ class AgentPoolManager:
                 "agent_pool.get_available_start",
                 tenant_id=tenant_id,
                 domain=domain,
-                tier=tier,
+                agent_level=agent_level,
                 limit=limit
             )
 
@@ -100,9 +100,9 @@ class AgentPoolManager:
             if domain:
                 query = query.filter("metadata->>domain_expertise", "eq", domain)
 
-            # Apply tier filter
-            if tier:
-                query = query.filter("metadata->>tier", "eq", str(tier))
+            # Apply level filter (stored as tier in metadata for legacy)
+            if agent_level:
+                query = query.filter("metadata->>tier", "eq", str(agent_level))
 
             response = query.execute()
 
@@ -111,7 +111,7 @@ class AgentPoolManager:
                     "agent_pool.no_agents_found",
                     tenant_id=tenant_id,
                     domain=domain,
-                    tier=tier
+                    agent_level=agent_level
                 )
                 return []
 
@@ -171,7 +171,7 @@ class AgentPoolManager:
         1. Keyword matching against capabilities (0.3 per match)
         2. Keyword matching against description (0.1 per word)
         3. Domain relevance check (0.4 if domain keyword in query)
-        4. Tier bonus (0.2 for tier 1, 0.1 for tier 2)
+        4. Level bonus (0.2 for L1, 0.1 for L2)
         5. Priority bonus (0.1 * priority / 10)
 
         Future enhancements:
@@ -240,7 +240,7 @@ class AgentPoolManager:
         - Capability matching: 0.3 per matching capability keyword
         - Description matching: 0.1 per matching word
         - Domain relevance: 0.4 if domain keyword in query
-        - Tier bonus: 0.2 (tier 1), 0.1 (tier 2), 0.0 (tier 3)
+        - Level bonus: 0.2 (L1), 0.1 (L2), 0.0 (L3+)
         - Priority bonus: 0.1 * (priority / 10)
 
         Args:
@@ -284,10 +284,11 @@ class AgentPoolManager:
             if any(kw in query_lower for kw in keywords):
                 score += 0.4
 
-        # 4. Tier bonus (prefer higher tier experts)
-        if agent.tier == 1:
+        # 4. Level bonus (prefer higher-level experts)
+        level = getattr(agent, "agent_level", None) or getattr(agent, "tier", None)
+        if level == 1:
             score += 0.2
-        elif agent.tier == 2:
+        elif level == 2:
             score += 0.1
 
         # 5. Priority bonus (0.0 to 0.1 based on priority 0-10)
@@ -401,7 +402,8 @@ if __name__ == "__main__":
         )
         print(f"Found {len(agents)} regulatory agents")
         for agent in agents[:3]:
-            print(f"  - {agent.display_name} (Tier {agent.tier})")
+            level_val = getattr(agent, "agent_level", getattr(agent, "tier", "?"))
+            print(f"  - {agent.display_name} (Level {level_val})")
 
         # Example 2: Score agents for query
         print("\n=== Example 2: Score Agents for Query ===")

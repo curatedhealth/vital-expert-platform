@@ -1,0 +1,19 @@
+{
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "agents": [
+    {
+      "id": "demo-expert-id",
+      "name": "Regulatory Expert",
+      "agent_level": "L2",
+      "domains": ["fda_regulatory", "ema_regulatory"],
+      "status": "active"
+    },
+    {
+      "id": "demo-master-id",
+      "name": "Master Orchestrator",
+      "agent_level": "L1",
+      "domains": ["orchestration"],
+      "status": "active"
+    }
+  ]
+}

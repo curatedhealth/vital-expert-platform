@@ -2,6 +2,7 @@
  * Enhanced Workflow Toolbar Component
  * 
  * Integrates legacy WorkflowBuilder features into modern designer toolbar
+ * Now includes v0 AI-powered component generation
  */
 
 'use client';
@@ -23,6 +24,7 @@ import {
   Redo,
   Layout as LayoutIcon,
   Sparkles,
+  Wand2,
   Users,
   Workflow as WorkflowIcon,
   Layers,
@@ -32,6 +34,12 @@ import {
   TestTube,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import dynamic from 'next/dynamic';
 
 // Dynamically import modals to avoid SSR issues
@@ -76,6 +84,16 @@ interface EnhancedWorkflowToolbarProps {
   edges?: any[];
   onNodesChange?: (nodes: any[]) => void;
   onEdgesChange?: (edges: any[]) => void;
+  
+  // Export/Import/Code
+  onExportWorkflow?: () => void;
+  onImportWorkflow?: () => void;
+  onViewCode?: () => void;
+  panelType?: string | null;
+  
+  // v0 AI Generation
+  onOpenV0Generator?: () => void;
+  v0Enabled?: boolean;
 }
 
 export function EnhancedWorkflowToolbar({
@@ -97,6 +115,12 @@ export function EnhancedWorkflowToolbar({
   edges = [],
   onNodesChange,
   onEdgesChange,
+  onExportWorkflow,
+  onImportWorkflow,
+  onViewCode,
+  panelType,
+  onOpenV0Generator,
+  v0Enabled = true,
 }: EnhancedWorkflowToolbarProps) {
   const [showAgentConfig, setShowAgentConfig] = useState(false);
   const [showTaskFlow, setShowTaskFlow] = useState(false);
@@ -196,6 +220,32 @@ export function EnhancedWorkflowToolbar({
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+          )}
+          
+          {/* v0 AI Generator Button */}
+          {v0Enabled && onOpenV0Generator && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onOpenV0Generator}
+                    className="gap-2 bg-gradient-to-r from-violet-50 to-purple-50 hover:from-violet-100 hover:to-purple-100 border-violet-200 text-violet-700"
+                  >
+                    <Wand2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Generate with AI</span>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-violet-100 text-violet-700 hidden md:inline-flex">
+                      v0
+                    </Badge>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p className="font-medium">AI Component Generator</p>
+                  <p className="text-xs text-muted-foreground">Generate custom nodes, panels, and solutions with v0</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           
           {/* Advanced Features Dropdown */}

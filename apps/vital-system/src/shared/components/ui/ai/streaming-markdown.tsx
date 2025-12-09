@@ -1,3 +1,14 @@
+/**
+ * VITAL Platform - StreamingMarkdown Component (AI variant)
+ * 
+ * @deprecated This component is deprecated. Use VitalStreamText or StreamingResponse instead.
+ * 
+ * Migration guide:
+ * - For Phase 3 components: import { VitalStreamText } from '@/shared/components/vital-ai-ui/conversation'
+ * - For legacy compatibility: import { StreamingResponse } from '@/components/ai/streaming-response'
+ * 
+ * This component will be removed in a future release.
+ */
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -10,6 +21,9 @@ interface StreamingMarkdownProps {
   isStreaming?: boolean
 }
 
+/**
+ * @deprecated Use VitalStreamText or StreamingResponse instead.
+ */
 export function StreamingMarkdown({ 
   content, 
   className,
@@ -17,6 +31,17 @@ export function StreamingMarkdown({
 }: StreamingMarkdownProps) {
   const [displayedContent, setDisplayedContent] = useState('')
   const [isComplete, setIsComplete] = useState(false)
+
+  // Emit deprecation warning in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        '[DEPRECATED] StreamingMarkdown is deprecated. ' +
+        'Use VitalStreamText from @/shared/components/vital-ai-ui/conversation or ' +
+        'StreamingResponse from @/components/ai/streaming-response instead.'
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (!isStreaming) {
@@ -116,7 +141,9 @@ export function StreamingMarkdown({
   )
 }
 
-// Enhanced streaming markdown with syntax highlighting
+/**
+ * @deprecated Use VitalStreamText or StreamingResponse instead.
+ */
 export function StreamingMarkdownEnhanced({ 
   content, 
   className,
@@ -124,6 +151,17 @@ export function StreamingMarkdownEnhanced({
 }: StreamingMarkdownProps) {
   const [displayedContent, setDisplayedContent] = useState('')
   const [isComplete, setIsComplete] = useState(false)
+
+  // Emit deprecation warning in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        '[DEPRECATED] StreamingMarkdownEnhanced is deprecated. ' +
+        'Use VitalStreamText from @/shared/components/vital-ai-ui/conversation or ' +
+        'StreamingResponse from @/components/ai/streaming-response instead.'
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (!isStreaming) {

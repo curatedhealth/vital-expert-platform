@@ -76,10 +76,7 @@ class GraphRelationshipBuilder:
 
     async def connect_db(self):
         """Connect to PostgreSQL database"""
-        database_url = os.getenv(
-            "DATABASE_URL",
-            "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
-        )
+        database_url = os.getenv("DATABASE_URL")
 
         self.db_pool = await asyncpg.create_pool(
             database_url,
@@ -370,11 +367,11 @@ class GraphRelationshipBuilder:
 
     async def build_escalation_paths(self) -> int:
         """
-        Build escalation paths based on agent tiers and domains.
+        Build escalation paths based on agent levels and domains.
 
         Logic:
-        - Tier 3 → Tier 2 agents in same domain
-        - Tier 2 → Tier 1 agents in same domain
+        - L3 → L2 agents in same domain
+        - L2 → L1 agents in same domain
         - Cross-domain escalations for multi-domain queries
         """
         if not self.db_pool:
@@ -385,7 +382,7 @@ class GraphRelationshipBuilder:
             SELECT
                 a.id,
                 a.name,
-                COALESCE((a.metadata->>'tier')::INTEGER, 2) AS tier,
+                COALESCE((a.metadata->>'tier')::INTEGER, 2) AS agent_level,
                 array_agg(DISTINCT d.name) AS domains
             FROM agents a
             LEFT JOIN agent_domains ad ON a.id = ad.agent_id
@@ -398,24 +395,24 @@ class GraphRelationshipBuilder:
 
         # Build escalation paths
         for from_agent in agents:
-            from_tier = from_agent['tier']
+            from_level = from_agent['agent_level']
             from_domains = set(from_agent['domains'] or [])
 
-            # Find higher tier agents in same domains
+            # Find higher-level agents in same domains (lower number = higher level)
             for to_agent in agents:
-                to_tier = to_agent['tier']
+                to_level = to_agent['agent_level']
                 to_domains = set(to_agent['domains'] or [])
 
-                # Skip if not higher tier
-                if to_tier >= from_tier:
+                # Skip if not higher level
+                if to_level >= from_level:
                     continue
 
                 # Check domain overlap
                 shared_domains = from_domains & to_domains
 
                 if shared_domains:
-                    # Calculate priority based on tier difference and domain overlap
-                    tier_diff = from_tier - to_tier
+                    # Calculate priority based on level difference and domain overlap
+                    tier_diff = from_level - to_level
                     domain_overlap = len(shared_domains) / max(len(from_domains), 1)
                     priority = int((tier_diff * 3) + (domain_overlap * 5))
 

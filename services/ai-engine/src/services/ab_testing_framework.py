@@ -19,6 +19,7 @@ Use Cases:
 
 import asyncio
 import logging
+import os
 from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -108,7 +109,7 @@ class ABTestingFramework:
     """
 
     def __init__(self, database_url: Optional[str] = None):
-        self.database_url = database_url or "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+        self.database_url = database_url or os.getenv("DATABASE_URL")
         self.db_pool: Optional[asyncpg.Pool] = None
 
         # In-memory cache of active experiments

@@ -187,7 +187,7 @@ export function LearningPhase({ onComplete }: LearningPhaseProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 {learnings.map((learning) => (
-                  <div key={learning.id} className="p-4 rounded-lg border bg-white dark:bg-gray-900">
+                  <div key={learning.id} className="p-4 rounded-lg border bg-white dark:bg-neutral-900">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
                         {getTypeIcon(learning.type)}
@@ -277,7 +277,7 @@ export function LearningPhase({ onComplete }: LearningPhaseProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 {expansions.map((exp) => (
-                  <div key={exp.id} className="p-4 rounded-lg border bg-white dark:bg-gray-900">
+                  <div key={exp.id} className="p-4 rounded-lg border bg-white dark:bg-neutral-900">
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <div className="font-medium">{exp.area}</div>
@@ -289,7 +289,7 @@ export function LearningPhase({ onComplete }: LearningPhaseProps) {
                         <Badge className={cn(
                           exp.status === "in_progress" && "bg-green-100 text-green-700",
                           exp.status === "planned" && "bg-blue-100 text-blue-700",
-                          exp.status === "identified" && "bg-gray-100 text-gray-700"
+                          exp.status === "identified" && "bg-neutral-100 text-neutral-700"
                         )}>
                           {exp.status.replace("_", " ").charAt(0).toUpperCase() + exp.status.slice(1).replace("_", " ")}
                         </Badge>
@@ -389,7 +389,7 @@ export function LearningPhase({ onComplete }: LearningPhaseProps) {
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <CheckCircle2 className={cn(
                       "w-4 h-4 mt-0.5 flex-shrink-0",
-                      i < step ? "text-green-500" : "text-gray-300"
+                      i < step ? "text-green-500" : "text-neutral-300"
                     )} />
                     <span className={cn(i < step && "text-muted-foreground line-through")}>
                       {obj}

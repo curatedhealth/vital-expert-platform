@@ -322,7 +322,7 @@ export function AgentsAnalyticsDashboard({
               </div>
               <Progress
                 value={((metrics.total - metrics.active - metrics.testing) / metrics.total) * 100}
-                className="h-2 bg-gray-100"
+                className="h-2 bg-neutral-100"
               />
             </div>
           </CardContent>
@@ -384,7 +384,7 @@ export function AgentsAnalyticsDashboard({
                   {metrics.byLevel.level5} ({((metrics.byLevel.level5 / metrics.total) * 100).toFixed(0)}%)
                 </span>
               </div>
-              <Progress value={(metrics.byLevel.level5 / metrics.total) * 100} className="h-2 bg-gray-100" />
+              <Progress value={(metrics.byLevel.level5 / metrics.total) * 100} className="h-2 bg-neutral-100" />
             </div>
           </CardContent>
         </Card>

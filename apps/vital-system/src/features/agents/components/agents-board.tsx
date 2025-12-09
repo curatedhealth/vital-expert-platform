@@ -440,7 +440,7 @@ export function AgentsBoard({
   };
 
   const getDomainColor = (domains: string[] = []) => {
-    if (domains.length === 0) return 'bg-gray-100 text-gray-800';
+    if (domains.length === 0) return 'bg-neutral-100 text-neutral-800';
 
     const primaryDomain = domains[0];
     const colors = {
@@ -451,7 +451,7 @@ export function AgentsBoard({
       'quality-assurance': 'bg-amber-100 text-amber-800',
       'health-economics': 'bg-rose-100 text-rose-800',
     };
-    return colors[primaryDomain as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[primaryDomain as keyof typeof colors] || 'bg-neutral-100 text-neutral-800';
   };
 
   // Filter: search + business function + department + role + tier + status
@@ -862,7 +862,7 @@ export function AgentsBoard({
                 <Card
                   key={virtualItem.key}
                   className={cn(
-                    "hover:shadow-lg transition-all cursor-pointer group hover:bg-gray-50 absolute left-0 right-0",
+                    "hover:shadow-lg transition-all cursor-pointer group hover:bg-neutral-50 absolute left-0 right-0",
                     isFocused && "ring-2 ring-vital-primary-500 ring-offset-2 bg-vital-primary-50/50"
                   )}
                   style={{

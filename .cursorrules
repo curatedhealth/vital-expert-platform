@@ -1,0 +1,42 @@
+# Cursor AI Rules for VITAL Platform
+
+## 🚫 FILE CREATION RESTRICTIONS (MANDATORY)
+
+### NEVER create files in these locations:
+- ❌ Project root (/) - No .md, .sql, .py, .ts, .json files
+- ❌ /docs/ - Reserved for PUBLIC developer documentation only
+- ❌ /scripts/ root - Use subdirectories like /scripts/codegen/
+- ❌ /apps/ root - Use proper feature directories
+- ❌ Any random location not in the approved structure
+
+### ALWAYS use these locations:
+
+| File Type | Correct Location |
+|-----------|------------------|
+| Internal Documentation | /.claude/docs/ |
+| Public Developer Docs | /docs/guides/, /docs/api/ |
+| Service PRDs/ARDs | /.claude/docs/services/{service}/ |
+| SQL Migrations | /database/migrations/ |
+| Python Backend Code | /services/ai-engine/src/ |
+| Frontend Code | /apps/vital-system/src/ |
+| Build Scripts | /scripts/codegen/, /scripts/build/ |
+
+### Before creating ANY file:
+1. CHECK if the location is approved
+2. VERIFY the correct subdirectory exists
+3. SEARCH for existing similar files first
+4. ASK if unsure about the correct location
+
+## Documentation Rules
+
+- Internal docs (PRDs, ARDs, audits) → /.claude/docs/
+- Public docs (getting started, API) → /docs/
+- NEVER mix internal and public documentation
+
+## Reference Documents
+
+- Read /.claude.md for complete AI assistant rules
+- Read /.claude/VITAL.md for platform guidelines
+- Read /STRUCTURE.md for project structure
+
+

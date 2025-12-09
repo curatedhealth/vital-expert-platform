@@ -69,7 +69,13 @@ class AgentProfile(BaseModel):
     )
 
     # Metadata
-    tier: int = Field(default=2, ge=1, le=3, description="Agent tier (1=expert, 2=advanced, 3=general)")
+    agent_level: int = Field(
+        default=2,
+        ge=1,
+        le=5,
+        alias="tier",
+        description="Agent level (L1-L5). Alias 'tier' for legacy data."
+    )
     priority: int = Field(default=0, description="Selection priority (higher = preferred)")
     status: str = Field(default="active", description="Agent status")
     avatar: str = Field(default="🤖", description="Avatar emoji or URL")
@@ -214,7 +220,7 @@ class UnifiedAgentLoader:
                 agent_id=agent_id,
                 display_name=profile.display_name,
                 domain=profile.domain_expertise,
-                tier=profile.tier,
+                agent_level=profile.agent_level,
                 has_sub_agents=len(profile.sub_agent_pool) > 0
             )
 
@@ -261,7 +267,7 @@ class UnifiedAgentLoader:
             )
 
             # Query for platform agent matching domain
-            # Order by tier (1 = best) and priority (highest first)
+            # Order by level/tier (legacy stored as tier) and priority (highest first)
             response = self.supabase.table("agents") \
                 .select("id") \
                 .eq("tenant_id", self._platform_tenant_id) \
@@ -389,7 +395,7 @@ class UnifiedAgentLoader:
             knowledge_base_ids=metadata.get("knowledge_base_ids", []),
             domain_expertise=metadata.get("domain_expertise", "general"),
             sub_agent_pool=metadata.get("sub_agents", []),
-            tier=int(metadata.get("tier", 2)),
+            agent_level=int(metadata.get("tier", metadata.get("agent_level", 2))),
             priority=int(metadata.get("priority", 0)),
             status=agent_data.get("status", "active"),
             avatar=agent_data.get("avatar_url", "🤖"),
@@ -431,7 +437,7 @@ class UnifiedAgentLoader:
             knowledge_base_ids=[],
             domain_expertise="general",
             sub_agent_pool=[],
-            tier=3,
+            agent_level=3,
             priority=0,
             status="active",
             avatar="🤖",

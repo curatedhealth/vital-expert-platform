@@ -113,8 +113,8 @@ export function VitalJourneyClient() {
                     onClick={() => handlePhaseClick(phase)}
                     className={cn(
                       "group relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
-                      status === "active" && "bg-white dark:bg-gray-800 shadow-md ring-2",
-                      status === "completed" && "bg-white/50 dark:bg-gray-800/50",
+                      status === "active" && "bg-white dark:bg-neutral-800 shadow-md ring-2",
+                      status === "completed" && "bg-white/50 dark:bg-neutral-800/50",
                       status === "upcoming" && "opacity-60 hover:opacity-100"
                     )}
                     style={{
@@ -128,7 +128,7 @@ export function VitalJourneyClient() {
                         "flex items-center justify-center w-10 h-10 rounded-lg font-bold text-lg transition-colors",
                         status === "completed" && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
                         status === "active" && "text-white",
-                        status === "upcoming" && "bg-gray-100 text-gray-500 dark:bg-gray-800"
+                        status === "upcoming" && "bg-neutral-100 text-neutral-500 dark:bg-neutral-800"
                       )}
                       style={{
                         backgroundColor: status === "active" ? config.color : undefined,
@@ -169,7 +169,7 @@ export function VitalJourneyClient() {
                   {/* Connector */}
                   {!isLast && (
                     <div className="flex items-center px-1">
-                      <ChevronRight className="w-4 h-4 text-gray-300" />
+                      <ChevronRight className="w-4 h-4 text-neutral-300" />
                     </div>
                   )}
                 </div>

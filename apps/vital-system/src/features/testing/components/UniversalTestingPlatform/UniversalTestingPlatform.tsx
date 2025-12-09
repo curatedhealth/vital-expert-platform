@@ -757,7 +757,7 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-neutral-200">
                   {filteredProtocols.map((protocol) => (
                     <tr key={protocol.id} className="hover:bg-neutral-50">
                       <td className="px-6 py-4 whitespace-nowrap">

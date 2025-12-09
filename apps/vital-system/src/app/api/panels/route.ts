@@ -1,119 +1,74 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
-import { PANEL_TEMPLATES } from '@/features/ask-panel/constants/panel-templates';
 
-export async function GET(_req: NextRequest) {
+/**
+ * GET /api/panels
+ * List all available panel templates
+ */
+export async function GET(request: Request) {
   try {
-    // Try to get Supabase client, but fall back to hardcoded templates if not configured
-    let supabase;
-    try {
-      supabase = getServiceSupabaseClient();
-    } catch (configError: any) {
-      // Supabase not configured - return hardcoded templates
-      console.warn('[Panels API] Supabase not configured, using hardcoded templates:', configError.message);
-      return NextResponse.json({
-        success: true,
-        panels: PANEL_TEMPLATES.map(template => ({
-          slug: template.id,
-          name: template.name,
-          description: template.description,
-          category: template.category,
-          mode: template.mode,
-          framework: template.framework,
-          suggested_agents: template.suggestedAgents,
-          default_settings: template.defaultSettings,
-          metadata: {
-            icon: template.icon,
-            tags: template.tags,
-            popularity: template.popularity,
-          },
-        })),
-        fallback: true,
-      });
-    }
+    const supabase = getServiceSupabaseClient();
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category');
 
-    // Try to fetch from Supabase
-    const { data, error } = await supabase
+    console.log('[API] Fetching panels list...');
+    const startTime = Date.now();
+
+    // Build query
+    let query = supabase
       .from('panels')
       .select('*')
-      .order('name', { ascending: true });
+      .order('name');
+
+    // Filter by category if provided
+    if (category && category !== 'all') {
+      query = query.eq('category', category);
+    }
+
+    const { data: panels, error } = await query;
 
     if (error) {
-      console.warn('[Panels API] Supabase query error, falling back to hardcoded templates:', error);
-      // Fall back to hardcoded templates on query error
-      return NextResponse.json({
-        success: true,
-        panels: PANEL_TEMPLATES.map(template => ({
-          slug: template.id,
-          name: template.name,
-          description: template.description,
-          category: template.category,
-          mode: template.mode,
-          framework: template.framework,
-          suggested_agents: template.suggestedAgents,
-          default_settings: template.defaultSettings,
-          metadata: {
-            icon: template.icon,
-            tags: template.tags,
-            popularity: template.popularity,
-          },
-        })),
-        fallback: true,
-      });
+      console.error('[API] Panels fetch error:', error);
+      throw error;
     }
 
-    // Return Supabase data if available, otherwise fall back
-    if (data && data.length > 0) {
-      return NextResponse.json({
-        success: true,
-        panels: data,
-        fallback: false,
-      });
-    }
+    // Get stats
+    const stats = {
+      total: panels?.length || 0,
+      by_category: {} as Record<string, number>,
+      by_mode: {} as Record<string, number>,
+    };
 
-    // No data in Supabase, use hardcoded templates
+    panels?.forEach(panel => {
+      stats.by_category[panel.category] = (stats.by_category[panel.category] || 0) + 1;
+      stats.by_mode[panel.mode] = (stats.by_mode[panel.mode] || 0) + 1;
+    });
+
+    const elapsed = Date.now() - startTime;
+    console.log(`[API] ✅ Fetched ${panels?.length || 0} panels in ${elapsed}ms`);
+
     return NextResponse.json({
       success: true,
-      panels: PANEL_TEMPLATES.map(template => ({
-        slug: template.id,
-        name: template.name,
-        description: template.description,
-        category: template.category,
-        mode: template.mode,
-        framework: template.framework,
-        suggested_agents: template.suggestedAgents,
-        default_settings: template.defaultSettings,
-        metadata: {
-          icon: template.icon,
-          tags: template.tags,
-          popularity: template.popularity,
-        },
-      })),
-      fallback: true,
+      data: {
+        panels: panels || [],
+        stats,
+      },
+      timestamp: new Date().toISOString(),
     });
-  } catch (err: any) {
-    console.error('[Panels API] Unexpected error, using hardcoded templates:', err);
-    // Last resort: return hardcoded templates
-    return NextResponse.json({
-      success: true,
-      panels: PANEL_TEMPLATES.map(template => ({
-        slug: template.id,
-        name: template.name,
-        description: template.description,
-        category: template.category,
-        mode: template.mode,
-        framework: template.framework,
-        suggested_agents: template.suggestedAgents,
-        default_settings: template.defaultSettings,
-        metadata: {
-          icon: template.icon,
-          tags: template.tags,
-          popularity: template.popularity,
-        },
-      })),
-      fallback: true,
-    });
+  } catch (error) {
+    console.error('[API] ❌ Error:', error);
+    
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to fetch panels',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        debugInfo: {
+          message: error instanceof Error ? error.message : 'Unknown',
+          code: (error as any)?.code,
+        }
+      },
+      { status: 500 }
+    );
   }
 }
-
-

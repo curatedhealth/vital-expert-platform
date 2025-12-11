@@ -43,10 +43,10 @@ export class DatabaseLibraryLoader {
         capability_id: data.name, // Map database 'name' field to capability_id
         title: data.display_name,
         description: data.description,
-        methodology: data.methodology || { /* TODO: implement */ },
+        methodology: data.methodology || {},
         required_knowledge: data.prerequisite_capabilities || [],
         tools_required: data.tools_required || [],
-        output_format: data.output_format || { /* TODO: implement */ },
+        output_format: data.output_format || {},
         quality_metrics: data.quality_metrics || {
           accuracy_target: "95%",
           time_target: "5 minutes",
@@ -56,7 +56,6 @@ export class DatabaseLibraryLoader {
         limitations: data.limitations || []
       } as Capability;
     } catch (error) {
-      // console.warn(`⚠️  Could not load capability: ${title}`);
       // Return a mock capability for testing
       return {
         capability_id: title.toLowerCase().replace(/\s+/g, '-'),
@@ -113,7 +112,6 @@ export class DatabaseLibraryLoader {
         success_criteria: data.success_criteria?.description || 'Successful completion of task'
       } as PromptTemplate;
     } catch (error) {
-      // console.warn(`⚠️  Could not load prompt: ${title}`);
       // Return a mock prompt for testing
       return {
         prompt_id: title.toLowerCase().replace(/\s+/g, '-'),
@@ -150,7 +148,7 @@ export class DatabaseLibraryLoader {
 
       // If no direct relationships found, try domain matching
       if (!data || data.length === 0) {
-        // const __result = await this.supabaseClient
+        const result = await this.supabaseClient
           .rpc('get_agent_prompt_starters_by_domain', { agent_name_param: agentName });
 
         data = result.data;
@@ -158,13 +156,11 @@ export class DatabaseLibraryLoader {
       }
 
       if (error) {
-        // console.warn(`⚠️  Could not load agent prompt starters: ${agentName}`, error);
         return [];
       }
 
-      // return data || [];
+      return data || [];
     } catch (error) {
-      // console.warn(`⚠️  Error loading agent prompt starters: ${agentName}`, error);
       return [];
     }
   }
@@ -180,13 +176,11 @@ export class DatabaseLibraryLoader {
         .order('agent_name', { ascending: true });
 
       if (error) {
-        // console.warn('⚠️  Could not load agent-prompt relationships', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      // console.warn('⚠️  Error loading agent-prompt relationships', error);
       return [];
     }
   }
@@ -213,13 +207,11 @@ export class DatabaseLibraryLoader {
         .rpc('get_agent_capabilities_detailed', { agent_name_param: agentName });
 
       if (error) {
-        // console.warn(`⚠️  Could not load agent capabilities: ${agentName}`, error);
         return [];
       }
 
-      // return data || [];
+      return data || [];
     } catch (error) {
-      // console.warn(`⚠️  Error loading agent capabilities: ${agentName}`, error);
       return [];
     }
   }
@@ -244,13 +236,11 @@ export class DatabaseLibraryLoader {
         .rpc('get_available_capabilities');
 
       if (error) {
-        // console.warn('⚠️  Could not load available capabilities', error);
         return [];
       }
 
-      // return data || [];
+      return data || [];
     } catch (error) {
-      // console.warn('⚠️  Error loading available capabilities', error);
       return [];
     }
   }
@@ -270,13 +260,11 @@ export class DatabaseLibraryLoader {
         });
 
       if (error) {
-        // console.warn('⚠️  Could not add capability to agent', error);
         return false;
       }
 
-      // return true;
+      return true;
     } catch (error) {
-      // console.warn('⚠️  Error adding capability to agent', error);
       return false;
     }
   }
@@ -293,13 +281,11 @@ export class DatabaseLibraryLoader {
         .eq('capability_id', capabilityId);
 
       if (error) {
-        // console.warn('⚠️  Could not remove capability from agent', error);
         return false;
       }
 
-      // return true;
+      return true;
     } catch (error) {
-      // console.warn('⚠️  Error removing capability from agent', error);
       return false;
     }
   }
@@ -350,9 +336,9 @@ export class DatabaseLibraryLoader {
         capabilities: data.capabilities || [],
         capabilities_list: data.capabilities || [],
         knowledge_domains: data.knowledge_domains || [],
-        competency_levels: data.competency_levels || { /* TODO: implement */ },
-        knowledge_sources: data.knowledge_sources || { /* TODO: implement */ },
-        tool_configurations: data.tool_configurations || { /* TODO: implement */ },
+        competency_levels: data.competency_levels || {},
+        knowledge_sources: data.knowledge_sources || {},
+        tool_configurations: data.tool_configurations || {},
 
         // Business Context
         business_function: data.business_function || 'General',
@@ -366,8 +352,8 @@ export class DatabaseLibraryLoader {
 
         // Validation & Performance
         validation_status: data.validation_status || 'pending',
-        validation_metadata: data.validation_metadata || { /* TODO: implement */ },
-        performance_metrics: data.performance_metrics || { /* TODO: implement */ },
+        validation_metadata: data.validation_metadata || {},
+        performance_metrics: data.performance_metrics || {},
         accuracy_score: data.accuracy_score || 0.85,
         evidence_required: data.evidence_required === true,
 
@@ -386,15 +372,15 @@ export class DatabaseLibraryLoader {
         total_interactions: data.total_interactions || 0,
 
         // Advanced Configuration
-        escalation_rules: data.escalation_rules || { /* TODO: implement */ },
+        escalation_rules: data.escalation_rules || {},
         confidence_thresholds: data.confidence_thresholds || {
           low: 0.7,
           medium: 0.85,
           high: 0.95
         },
-        input_validation_rules: data.input_validation_rules || { /* TODO: implement */ },
-        output_format_rules: data.output_format_rules || { /* TODO: implement */ },
-        citation_requirements: data.citation_requirements || { /* TODO: implement */ },
+        input_validation_rules: data.input_validation_rules || {},
+        output_format_rules: data.output_format_rules || {},
+        citation_requirements: data.citation_requirements || {},
         rate_limits: data.rate_limits || {
           per_minute: 60,
           per_hour: 1000
@@ -403,7 +389,7 @@ export class DatabaseLibraryLoader {
         // Testing & Validation
         test_scenarios: data.test_scenarios || [],
         validation_history: data.validation_history || [],
-        performance_benchmarks: data.performance_benchmarks || { /* TODO: implement */ },
+        performance_benchmarks: data.performance_benchmarks || {},
 
         // Interface
         prompt_starters: data.prompt_starters || [],
@@ -411,7 +397,7 @@ export class DatabaseLibraryLoader {
         // Metadata
         created_at: data.created_at,
         updated_at: data.updated_at,
-        metadata: data.metadata || { /* TODO: implement */ }
+        metadata: data.metadata || {}
       } as DigitalHealthAgentConfig;
     } catch (error) {
       throw new Error(`Failed to load agent config: ${agentName}. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -436,10 +422,10 @@ export class DatabaseLibraryLoader {
       const agents: DigitalHealthAgentConfig[] = [];
       for (const agentData of data || []) {
         try {
-
+          const agent = await this.loadAgentConfig(agentData.name);
           agents.push(agent);
-        } catch (error) {
-          // console.warn(`⚠️  Could not load agent: ${agentData.name}`);
+        } catch (loadError) {
+          // Skip agents that fail to load
         }
       }
 
@@ -468,15 +454,15 @@ export class DatabaseLibraryLoader {
         id: cap.name,
         title: cap.display_name,
         description: cap.description,
-        methodology: cap.methodology || { /* TODO: implement */ },
-        qualityMetrics: cap.quality_metrics || { /* TODO: implement */ },
-        requirements: cap.requirements || { /* TODO: implement */ },
+        methodology: cap.methodology || {},
+        qualityMetrics: cap.quality_metrics || {},
+        requirements: cap.requirements || {},
         deliverables: cap.deliverables || [],
         dependencies: cap.prerequisite_capabilities || [],
         estimatedTime: cap.estimated_duration_hours || 1,
         complexityLevel: cap.complexity_level || 'intermediate',
         domain: cap.domain || 'general',
-        validationCriteria: cap.validation_requirements || { /* TODO: implement */ },
+        validationCriteria: cap.validation_requirements || {},
         tags: cap.compliance_tags || []
       } as unknown as Capability));
     } catch (error) {
@@ -505,11 +491,11 @@ export class DatabaseLibraryLoader {
         description: prompt.description,
         systemPrompt: prompt.system_prompt,
         userPromptTemplate: prompt.user_prompt_template || '',
-        executionInstructions: prompt.execution_instructions || { /* TODO: implement */ },
-        successCriteria: prompt.success_criteria || { /* TODO: implement */ },
-        inputSchema: prompt.input_schema || { /* TODO: implement */ },
-        outputSchema: prompt.output_schema || { /* TODO: implement */ },
-        validationRules: prompt.validation_rules || { /* TODO: implement */ },
+        executionInstructions: prompt.execution_instructions || {},
+        successCriteria: prompt.success_criteria || {},
+        inputSchema: prompt.input_schema || {},
+        outputSchema: prompt.output_schema || {},
+        validationRules: prompt.validation_rules || {},
         modelRequirements: prompt.model_requirements || {
           model: 'gpt-4',
           temperature: 0.7,

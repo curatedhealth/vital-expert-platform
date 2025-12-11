@@ -42,19 +42,32 @@ const config: Config = {
   				800: '#424242',
   				900: '#212121',
   			},
-  			// VITAL Brand Colors
+  			// Warm Stone Neutrals (Brand v6.0)
+  			stone: {
+  				50: '#FAFAF9',
+  				100: '#F5F5F4',
+  				200: '#E7E5E4',
+  				300: '#D6D3D1',
+  				400: '#A8A29E',
+  				500: '#78716C',
+  				600: '#57534E',
+  				700: '#44403C',
+  				800: '#292524',
+  				900: '#1C1917',
+  			},
+  			// VITAL Brand Colors (v6.0 - Warm Purple)
   			vital: {
   				primary: {
-  					50: '#EDE9FE',
-  					100: '#F5EEFD',
-  					200: '#E9DCFB',
-  					300: '#D4B9F7',
-  					400: '#B896F3',
-  					500: '#9B5DE0',   // Expert Purple - main brand
-  					600: '#8B4CD0',
-  					700: '#6D28D9',
-  					800: '#6A35B0',
-  					900: '#5A2AA0',
+  					50: '#FAF5FF',    // Selected backgrounds
+  					100: '#F3E8FF',   // Hover backgrounds
+  					200: '#E9D5FF',
+  					300: '#D8B4FE',
+  					400: '#C084FC',
+  					500: '#A855F7',   // Secondary accent
+  					600: '#9055E0',   // PRIMARY - Warm Purple
+  					700: '#7C3AED',   // Hover state
+  					800: '#6B21A8',   // Active/pressed
+  					900: '#581C87',
   				},
   				secondary: {
   					400: '#00E5FF',
@@ -179,45 +192,65 @@ const config: Config = {
   		},
   		keyframes: {
   			'accordion-down': {
-  				from: {
-  					height: '0'
-  				},
-  				to: {
-  					height: 'var(--radix-accordion-content-height)'
-  				}
+  				from: { height: '0' },
+  				to: { height: 'var(--radix-accordion-content-height)' }
   			},
   			'accordion-up': {
-  				from: {
-  					height: 'var(--radix-accordion-content-height)'
-  				},
-  				to: {
-  					height: '0'
-  				}
+  				from: { height: 'var(--radix-accordion-content-height)' },
+  				to: { height: '0' }
   			},
   			'fade-in': {
-  				from: {
-  					opacity: '0',
-  					transform: 'translateY(20px)'
-  				},
-  				to: {
-  					opacity: '1',
-  					transform: 'translateY(0)'
-  				}
+  				from: { opacity: '0', transform: 'translateY(20px)' },
+  				to: { opacity: '1', transform: 'translateY(0)' }
   			},
   			'journey-pulse': {
+  				'0%, 100%': { opacity: '1' },
+  				'50%': { opacity: '0.5' }
+  			},
+  			// Ask Expert animations
+  			'thinking-pulse': {
   				'0%, 100%': {
-  					opacity: '1'
+  					boxShadow: '0 0 15px rgba(144, 85, 224, 0.1)',
+  					borderColor: 'rgba(144, 85, 224, 0.2)'
   				},
   				'50%': {
-  					opacity: '0.5'
+  					boxShadow: '0 0 25px rgba(144, 85, 224, 0.2)',
+  					borderColor: 'rgba(144, 85, 224, 0.4)'
   				}
+  			},
+  			'cursor-blink': {
+  				'0%, 49%': { opacity: '1' },
+  				'50%, 100%': { opacity: '0' }
+  			},
+  			'shimmer': {
+  				'0%': { transform: 'translateX(-100%)' },
+  				'100%': { transform: 'translateX(100%)' }
+  			},
+  			'pulse-subtle': {
+  				'0%, 100%': { opacity: '1' },
+  				'50%': { opacity: '0.85' }
+  			},
+  			'slide-up': {
+  				from: { opacity: '0', transform: 'translateY(10px)' },
+  				to: { opacity: '1', transform: 'translateY(0)' }
+  			},
+  			'scale-in': {
+  				from: { opacity: '0', transform: 'scale(0.95)' },
+  				to: { opacity: '1', transform: 'scale(1)' }
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
   			'fade-in': 'fade-in 0.5s ease-out',
-  			'journey-pulse': 'journey-pulse 2s ease-in-out infinite'
+  			'journey-pulse': 'journey-pulse 2s ease-in-out infinite',
+  			// Ask Expert animations
+  			'thinking-pulse': 'thinking-pulse 1.5s ease-in-out infinite',
+  			'cursor-blink': 'cursor-blink 1s step-end infinite',
+  			'shimmer': 'shimmer 2s ease-in-out infinite',
+  			'pulse-subtle': 'pulse-subtle 1.5s ease-in-out infinite',
+  			'slide-up': 'slide-up 200ms ease-out',
+  			'scale-in': 'scale-in 200ms ease-out'
   		}
   	}
   },

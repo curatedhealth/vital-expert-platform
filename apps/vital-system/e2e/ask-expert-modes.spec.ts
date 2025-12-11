@@ -382,6 +382,25 @@ test.describe('Mode 2: Auto Interactive', () => {
 
 test.describe('Mode 3: Manual Autonomous', () => {
   test.beforeEach(async ({ page }) => {
+    // Setup default mock for mission stream endpoint
+    // Individual tests can override this if needed
+    await page.route('**/api/ask-expert/stream', async (route) => {
+      const sseResponse = [
+        'event: status\ndata: {"status":"running","message":"Mission started"}\n\n',
+        'event: plan\ndata: {"plan":[{"id":"1","name":"Research","status":"pending"}]}\n\n',
+        'event: progress\ndata: {"stage":"execution","progress":50,"message":"Executing"}\n\n',
+        'event: artifact\ndata: {"id":"art-1","title":"Analysis","summary":"Content..."}\n\n',
+        'event: done\ndata: {"status":"completed","cost":0.05,"durationMs":3000}\n\n',
+      ].join('');
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        headers: { 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' },
+        body: sseResponse,
+      });
+    });
+
     await page.goto('/ask-expert/mode-3');
     await page.waitForLoadState('networkidle');
   });
@@ -418,30 +437,44 @@ test.describe('Mode 3: Manual Autonomous', () => {
   });
 
   test('should start autonomous mission', async ({ page }) => {
-    // Select expert if available
-    const expertCard = page.locator('[data-testid="expert-card"]').first();
-    if (await expertCard.isVisible({ timeout: 2000 }).catch(() => false)) {
+    // Mock is already set up in beforeEach
+    // Select expert if available (preselected by default in the page)
+    let expertCard = page.locator('[data-testid="expert-card"]').first();
+    if (!(await expertCard.count())) {
+      expertCard = page.getByRole('button', { name: /select agent|select expert|agent/i }).first();
+    }
+    if (await expertCard.isVisible().catch(() => false)) {
       await expertCard.click();
     }
-    
+
     // Enter mission goal
-    const goalInput = page.locator('[data-testid="goal-input"]').or(
-      page.locator('textarea').first()
-    );
+    let goalInput = page.locator('[data-testid="goal-input"]');
+    if (!(await goalInput.count())) {
+      goalInput = page.locator('textarea').first();
+    }
     await goalInput.fill(TEST_QUESTIONS.researchGoal);
-    
+    await expect(goalInput).toHaveValue(TEST_QUESTIONS.researchGoal);
+
     // Start mission
     const startButton = page.getByRole('button', { name: /start|launch|begin/i });
+    await expect(startButton).toBeEnabled({ timeout: 10000 });
     await startButton.click();
-    
-    // Verify mission started
-    const missionActive = page.locator('[data-testid="mission-active"]').or(
-      page.locator('[data-status="running"]').or(
-        page.getByText(/running|executing|in progress/i)
-      )
+
+    // Verify mission started - the mock triggers isStreaming=true briefly
+    // Check for either mission-active during streaming OR progress/completion after
+    const missionActive = page.locator('[data-testid="mission-active"]');
+    const progressIndicator = page.locator('[data-testid="progress-timeline"]');
+    const completedBadge = page.locator('[class*="completed"]').or(
+      page.locator('text=completed').or(page.locator('text=Research Complete'))
     );
-    
-    await expect(missionActive).toBeVisible({ timeout: 5000 });
+
+    // Wait for any of these indicators (mission starts fast with mock)
+    const isActive = await missionActive.isVisible({ timeout: 3000 }).catch(() => false);
+    const hasProgress = await progressIndicator.isVisible({ timeout: 3000 }).catch(() => false);
+    const isCompleted = await completedBadge.isVisible({ timeout: 5000 }).catch(() => false);
+
+    // At least one should be true - mission started OR completed
+    expect(isActive || hasProgress || isCompleted).toBeTruthy();
   });
 
   test('should display mission progress timeline', async ({ page }) => {

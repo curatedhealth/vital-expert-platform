@@ -13,18 +13,31 @@
        Visual Philosophy: Clean Modernism - Bauhaus precision with soft, radiant surfaces
        ═══════════════════════════════════════════════════════════════════ */
 
-    /* Canvas Tokens (Primary Backgrounds) */
-    --canvas-primary: #FFFAFA;      /* Snow - Softly Radiant - 80-90% of interface */
-    --canvas-surface: #FFFFFF;      /* Pure white - elevated cards, modals */
-    --canvas-alt: #F8F8FF;          /* Ghost White - Whisper of Cool - alternate surfaces */
-    --canvas-muted: #FAF9F6;        /* Off White - The Soft Touch - subtle backgrounds */
+    /* Canvas Tokens (VITAL Brand v6.0 - Warm, Never Pure White) */
+    --canvas-primary: #FAFAF9;      /* Main app background - warm off-white */
+    --canvas-surface: #F5F5F4;      /* Cards, user messages */
+    --canvas-subtle: #E7E5E4;       /* Wells, nested areas */
+    --canvas-elevated: #FFFFFF;     /* Modals only */
 
-    /* Core Brand Colors - Expert Purple */
-    --vital-primary-50: #EDE9FE;
-    --vital-primary-100: #F5EEFD;
-    --vital-primary-500: #9B5DE0;   /* Expert Purple - main brand color */
-    --vital-primary-600: #8B4CD0;   /* Hover state */
-    --vital-primary-700: #6D28D9;   /* Strong emphasis */
+    /* Warm Stone Neutrals (Text & Borders) */
+    --stone-50: #FAFAF9;
+    --stone-100: #F5F5F4;
+    --stone-200: #E7E5E4;
+    --stone-300: #D6D3D1;
+    --stone-400: #A8A29E;
+    --stone-500: #78716C;
+    --stone-600: #57534E;           /* Body text */
+    --stone-700: #44403C;           /* Section headings */
+    --stone-800: #292524;           /* Page headings */
+    --stone-900: #1C1917;
+
+    /* Core Brand Colors - Warm Purple (VITAL Brand v6.0) */
+    --vital-primary-50: #FAF5FF;    /* Selected backgrounds */
+    --vital-primary-100: #F3E8FF;   /* Hover backgrounds */
+    --vital-primary-500: #A855F7;   /* Secondary accent */
+    --vital-primary-600: #9055E0;   /* PRIMARY - Warm Purple - buttons, links */
+    --vital-primary-700: #7C3AED;   /* Hover state */
+    --vital-primary-800: #6B21A8;   /* Active/pressed */
 
     /* Secondary & Accent Colors */
     --vital-secondary-500: #00CAFF;  /* Secondary cyan */
@@ -179,9 +192,30 @@
     --ease-in: cubic-bezier(0.4, 0, 1, 1);
     --ease-out: cubic-bezier(0, 0, 0.2, 1);
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-    /* Semantic UI Tokens - Using Snow canvas background */
-    --background: 0 100% 99.6%;      /* Snow #FFFAFA - softly radiant */
-    --foreground: 0 0% 13%;          /* Neutral-900 #212121 */
+    /* ═══════════════════════════════════════════════════════════════════
+       ASK EXPERT: Mode-Specific Design Tokens (Brand v6.0)
+       Interactive (Modes 1&2): Blue accent on warm neutral base
+       Autonomous (Modes 3&4): Purple accent with purple-tinted surfaces
+       ═══════════════════════════════════════════════════════════════════ */
+
+    /* Ask Expert - Default (Interactive Mode 1 & 2) */
+    --ae-accent-primary: #9055E0;     /* Warm Purple - main accent */
+    --ae-accent-hover: #7C3AED;       /* Hover state */
+    --ae-accent-light: rgba(144, 85, 224, 0.08);
+    --ae-focus-ring: 0 0 0 3px rgba(144, 85, 224, 0.15);
+    --ae-bg-page: #FAFAF9;            /* Warm stone-50 */
+    --ae-bg-surface: #F5F5F4;         /* stone-100 */
+    --ae-bg-ai-message: transparent;  /* AI messages: NO background */
+    --ae-text-primary: #292524;       /* stone-800 */
+    --ae-text-body: #57534E;          /* stone-600 */
+    --ae-text-secondary: #78716C;     /* stone-500 */
+    --ae-text-muted: #A8A29E;         /* stone-400 */
+    --ae-border-subtle: #E7E5E4;      /* stone-200 */
+    --ae-border-default: #D6D3D1;     /* stone-300 */
+
+    /* Semantic UI Tokens - Using Warm Stone canvas background */
+    --background: 40 5% 98%;          /* Warm stone-50 #FAFAF9 */
+    --foreground: 24 10% 15%;         /* stone-800 #292524 */
     --card: 0 0% 100%;               /* Pure white for elevated cards */
     --card-foreground: 0 0% 13%;     /* Neutral-900 */
     --popover: 0 0% 100%;            /* Pure white */
@@ -214,6 +248,23 @@
     --sidebar-ring: 273 68% 55%;        /* Expert Purple */
     --sidebar-background: 0 100% 99.6%; /* Snow #FFFAFA */
     --destructive-foreground: 0 0% 100%;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     ASK EXPERT: Autonomous Mode (Modes 3 & 4)
+     Purple-tinted backgrounds with enhanced visual feedback
+     ═══════════════════════════════════════════════════════════════════ */
+  [data-mode="autonomous"] {
+    --ae-accent-primary: #9055E0;
+    --ae-accent-secondary: #A855F7;   /* Lighter purple for secondary elements */
+    --ae-accent-hover: #7C3AED;
+    --ae-accent-light: rgba(144, 85, 224, 0.12);  /* Slightly more visible */
+    --ae-focus-ring: 0 0 0 3px rgba(144, 85, 224, 0.20);
+    --ae-bg-page: #FAFAFB;            /* Slight purple tint */
+    --ae-bg-surface: #F5F4F7;         /* Purple-tinted cards */
+    --ae-border-autonomous: rgba(144, 85, 224, 0.2);
+    --ae-thinking-glow: rgba(144, 85, 224, 0.1);
+    --ae-checkpoint-border: rgba(144, 85, 224, 0.3);
   }
 
   /* Multi-Tenant Architecture - Pharma Tenant */
@@ -310,7 +361,90 @@
 
 /* VITAL.expert Design System Components */
 @layer components {
-  /* Animations */
+  /* ═══════════════════════════════════════════════════════════════════
+     ASK EXPERT: Streaming & AI Interaction Animations
+     ═══════════════════════════════════════════════════════════════════ */
+
+  /* Thinking/Reasoning pulse animation */
+  @keyframes thinking-pulse {
+    0%, 100% {
+      box-shadow: 0 0 15px var(--ae-thinking-glow, rgba(144, 85, 224, 0.1));
+      border-color: rgba(144, 85, 224, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 25px var(--ae-thinking-glow, rgba(144, 85, 224, 0.2));
+      border-color: rgba(144, 85, 224, 0.4);
+    }
+  }
+
+  /* Streaming cursor blink */
+  @keyframes cursor-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  /* Glass shimmer effect for thinking component */
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* Subtle pulse for streaming content */
+  @keyframes pulse-subtle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+  }
+
+  /* Slide up animation for messages */
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Scale in animation for checkpoints */
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Animation utility classes */
+  .animate-thinking-pulse {
+    animation: thinking-pulse 1.5s ease-in-out infinite;
+  }
+
+  .animate-cursor-blink {
+    animation: cursor-blink 1s step-end infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  .animate-pulse-subtle {
+    animation: pulse-subtle 1.5s ease-in-out infinite;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 200ms ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 200ms ease-out;
+  }
+
+  /* Legacy Animations */
   @keyframes pulse-dot {
     0%, 100% { transform: translateY(-0.15em) scale(1); opacity: 1; }
     50% { transform: translateY(-0.15em) scale(1.2); opacity: 0.8; }
@@ -342,6 +476,65 @@
 
   .animate-fade-in {
     animation: fadeIn 0.5s ease-out;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     ASK EXPERT: Chat Message Patterns (Claude Style)
+     ═══════════════════════════════════════════════════════════════════ */
+
+  /* User message - right-aligned with subtle background */
+  .ae-message-user {
+    @apply flex justify-end mb-4;
+  }
+
+  .ae-message-user-bubble {
+    @apply max-w-[70%] rounded-2xl px-4 py-3;
+    background-color: var(--ae-bg-surface, #F5F5F4);
+    border: 1px solid var(--ae-border-subtle, #E7E5E4);
+    border-radius: 16px 16px 4px 16px;
+  }
+
+  /* AI message - left-aligned, NO background (transparent) */
+  .ae-message-ai {
+    @apply flex justify-start mb-6;
+    background: transparent;
+  }
+
+  .ae-message-ai-content {
+    @apply max-w-[85%];
+    line-height: 1.625;
+  }
+
+  /* Thinking glass box */
+  .ae-thinking-box {
+    @apply relative overflow-hidden rounded-xl p-4 mb-4;
+    border: 1px solid var(--ae-border-autonomous, rgba(144, 85, 224, 0.2));
+    background: linear-gradient(to bottom right, var(--ae-accent-light, rgba(144, 85, 224, 0.08)), transparent);
+    backdrop-filter: blur(4px);
+  }
+
+  /* Checkpoint gate */
+  .ae-checkpoint {
+    @apply relative rounded-xl p-6 mb-6;
+    border: 2px solid var(--ae-checkpoint-border, rgba(144, 85, 224, 0.3));
+    background: linear-gradient(to bottom right, var(--ae-accent-light, rgba(144, 85, 224, 0.08)), transparent);
+  }
+
+  /* Chat input pill shape */
+  .ae-chat-input {
+    @apply rounded-3xl px-6 py-3.5;
+    border: 1px solid var(--ae-border-subtle, #E7E5E4);
+  }
+
+  .ae-chat-input:focus-within {
+    border-color: var(--ae-accent-primary, #9055E0);
+    box-shadow: var(--ae-focus-ring, 0 0 0 3px rgba(144, 85, 224, 0.15));
+  }
+
+  /* Focus ring utility */
+  .ae-focus-ring:focus {
+    outline: none;
+    box-shadow: var(--ae-focus-ring, 0 0 0 3px rgba(144, 85, 224, 0.15));
   }
 
   /* Typography */

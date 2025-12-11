@@ -51,7 +51,11 @@ import {
 } from '@/features/ask-expert/components';
 
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { PromptInput } from '@/components/prompt-input';
+import { PromptStarters } from '@/components/prompt-starters';
+import { PromptEnhancer } from '@/shared/components/chat/prompt-enhancer';
+import { EnhancedChatInput } from '@/shared/components/chat/enhanced-chat-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -101,6 +105,13 @@ import {
   SourcesContent,
   SourcesTrigger,
 } from '@/components/ai-elements/sources';
+import { ChevronDown } from 'lucide-react';
+import { MissionForm } from '@/components/missions/MissionForm';
+import { MissionPlan } from '@/components/missions/MissionPlan';
+import { MissionProgress, StatusBadge } from '@/components/missions/MissionProgress';
+import { ArtifactViewer } from '@/components/missions/ArtifactViewer';
+import { CheckpointModal as MissionCheckpointModal } from '@/components/missions/CheckpointModal';
+import { useAutonomousMode as useMissionAutonomousMode } from '@/hooks/useAutonomousMode';
 
 // Types - Agent type comes from context
 
@@ -202,6 +213,17 @@ type HITLSafetyLevel = 'strict' | 'balanced' | 'permissive';
 
 // Use Next.js API proxy to avoid CORS issues
 const STREAM_API_URL = '/api/ask-expert/stream';
+const CHECKPOINT_API_URL = '/api/ask-expert/checkpoint';
+const HITL_RESPONSE_API_URL = '/api/ask-expert/hitl-response';
+
+function getCsrfTokenFromCookie(): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const match = document.cookie
+    .split(';')
+    .map((c) => c.trim())
+    .find((c) => c.startsWith('__Host-csrf-token='));
+  return match ? decodeURIComponent(match.split('=')[1]) : undefined;
+}
 
 // Ordered workflow steps with icons - covers all backend step keys
 const WORKFLOW_STEPS: { key: string; label: string; icon: LucideIcon }[] = [
@@ -392,11 +414,72 @@ export default function AskExpertV2Page() {
     return agents.find(a => a.id === selectedAgents[0]) || null;
   }, [agents, selectedAgents]);
 
+  // Fetch prompt starters for the selected agent
+  useEffect(() => {
+    const fetchStarters = async () => {
+      if (!selectedAgent) {
+        setAgentStarters([]);
+        return;
+      }
+      // Reset starters visibility when switching agents
+      setShowAgentStarters(true);
+      try {
+        setAgentStartersLoading(true);
+        const resp = await fetch('/api/prompt-starters', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentIds: [selectedAgent.id] }),
+        });
+        if (!resp.ok) {
+          const errBody = await resp.text();
+          console.error('Failed to load starters', resp.status, errBody);
+          throw new Error(`Failed to load starters: ${resp.status} ${errBody}`);
+        }
+        const data = await resp.json();
+        console.log('Starters API payload', data);
+        const starters = (data.prompts || []).map((p: any) => {
+          const starterText = p.prompt_starter || p.text || '';
+          const fullPrompt =
+            p.full_prompt ||
+            p.fullPrompt ||
+            p.prompt?.detailed_prompt ||
+            p.text ||
+            starterText ||
+            '';
+          console.log('Starter mapped', {
+            id: p.id,
+            starterText,
+            fullPromptLength: fullPrompt.length,
+            hasDetailed: !!p.prompt?.detailed_prompt,
+          });
+          return {
+            id: p.id || starterText,
+            promptId: p.prompt_id || p.promptId || p.prompt?.id || null,
+            starterText,
+            fullPrompt,
+            icon: p.icon || 'Zap',
+            category: p.category || 'starter',
+            complexity: p.complexity_level || p.complexityLevel || 'intermediate',
+          };
+        });
+        setAgentStarters(starters);
+      } catch (err) {
+        console.error('Error loading starters', err);
+        setAgentStarters([]);
+      } finally {
+        setAgentStartersLoading(false);
+      }
+    };
+    fetchStarters();
+  }, [selectedAgent]);
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(() => uuidv4());
   const [mode, setMode] = useState<Mode>('1');
+  const isAutonomousMode = mode === '3' || mode === '4';
+  const mission = useMissionAutonomousMode();
   const [pendingHITL, setPendingHITL] = useState<HITLCheckpoint | null>(null);
 
   // Model selection for PromptInput
@@ -411,6 +494,7 @@ export default function AskExpertV2Page() {
   const [hitlSafetyLevel, setHitlSafetyLevel] = useState<HITLSafetyLevel>('balanced');
   const [executionGoal, setExecutionGoal] = useState('');
   const [executionContext, setExecutionContext] = useState('');
+  const [showMissionForm, setShowMissionForm] = useState(true);
 
   // Track whether autonomous mode has been configured this session
   // Once configured, subsequent sends skip the modal and use saved settings
@@ -519,11 +603,15 @@ export default function AskExpertV2Page() {
     // Clear pending HITL state
     setPendingHITL(null);
 
-    // Send approval/rejection to backend
+      // Send approval/rejection to backend
     try {
+      const csrfToken = getCsrfTokenFromCookie();
       await fetch('/api/ask-expert/hitl-response', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+        },
         body: JSON.stringify({
           checkpoint_id: checkpointId,
           decision,
@@ -553,6 +641,15 @@ export default function AskExpertV2Page() {
 
   // Intercept send action for autonomous modes - show config modal on first send, then skip
   const handleSendOrConfigure = useCallback(() => {
+    // Hide prompt starters after user launches a query
+    setShowAgentStarters(false);
+
+    // Mode 1 and 3 require a user-selected agent
+    if ((mode === '1' || mode === '3') && !selectedAgent) {
+      console.warn('[AskExpertV2] Cannot send: select an agent for mode', mode);
+      return;
+    }
+
     const isAutonomousMode = mode === '3' || mode === '4';
     const currentMessage = inputValue.trim();
 
@@ -586,6 +683,19 @@ export default function AskExpertV2Page() {
   // Mode 3 specific parameters (set via UserPromptModal)
   const [hitlEnabled, setHitlEnabled] = useState(true);
   const [maxIterations, setMaxIterations] = useState(5);
+  const [agentStarters, setAgentStarters] = useState<
+    Array<{
+      id: string;
+      starterText: string;
+      fullPrompt?: string;
+      icon?: string;
+      category?: string;
+      promptId?: string | null;
+      complexity?: string;
+    }>
+  >([]);
+  const [agentStartersLoading, setAgentStartersLoading] = useState(false);
+  const [showAgentStarters, setShowAgentStarters] = useState(true);
 
   // Handle user prompt submission (for autonomous modes)
   const handlePromptSubmit = useCallback((data: {
@@ -781,9 +891,13 @@ export default function AskExpertV2Page() {
     if (!pendingFinalReview) return;
 
     try {
+      const csrfToken = getCsrfTokenFromCookie();
       await fetch('/api/ask-expert/hitl-response', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+        },
         body: JSON.stringify({
           checkpoint_id: pendingFinalReview.id,
           checkpoint_type: 'final',
@@ -866,8 +980,8 @@ export default function AskExpertV2Page() {
       console.warn('[AskExpertV2] Cannot send: message is empty');
       return;
     }
-    // Mode 2 auto-selects agent on backend via L1 Orchestrator - allow without pre-selection
-    if (!selectedAgent && mode !== '2') {
+    // Mode 1 and 3 require explicit agent selection. Mode 2/4 auto-select on backend.
+    if ((mode === '1' || mode === '3') && !selectedAgent) {
       console.warn('[AskExpertV2] Cannot send: no agent selected (required for mode ' + mode + ')');
       return;
     }
@@ -914,31 +1028,59 @@ export default function AskExpertV2Page() {
       // For Mode 2, selectedAgent may be undefined - use default tenant
       const tenantId = selectedAgent?.tenant_id || '00000000-0000-0000-0000-000000000001';
 
-      const response = await fetch(STREAM_API_URL, {
+      // Single proxy endpoint routes to the correct backend path:
+      // - Modes 1/2 -> /api/expert/stream
+      // - Modes 3/4 -> /api/missions/stream
+      const streamEndpoint = '/api/ask-expert/stream';
+
+      const modeNumber = Number(mode);
+
+      const csrfToken = getCsrfTokenFromCookie();
+
+      const response = await fetch(streamEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
           'x-tenant-id': tenantId,
+          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
         },
         body: JSON.stringify({
-          // Mode 2 auto-selects expert on backend - expert_id may be undefined
-          expert_id: selectedAgent?.id,
-          message: userMessage.content,
+          // Common fields
+          mission_id: sessionId, // reuse chat session as mission id for deterministic tracing
           session_id: sessionId,
-          mode,
-          // Mode 3 specific parameters - use values from UserPromptModal
+          message: userMessage.content,
+          goal: userMessage.content,
+          mode: modeNumber,
+          expert_id: selectedAgent?.id,
+          // Mode 3 specifics
           ...(mode === '3' && {
             hitl_enabled: hitlEnabled,
             hitl_safety_level: hitlSafetyLevel,
             max_iterations: maxIterations,
             enable_rag: enableRAG,
+            enable_websearch: enableRAG,
             enable_tools: enableTools,
+          }),
+          // Mode 4 specifics
+          ...(mode === '4' && {
+            options: {
+              enable_rag: enableRAG,
+              enable_websearch: enableRAG,
+              enable_all_tools: enableTools,
+            },
           }),
         }),
         signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        console.error('[AskExpertV2] Stream request failed', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText,
+        });
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
@@ -1349,6 +1491,229 @@ export default function AskExpertV2Page() {
     }
   };
 
+  // Render the polished mission experience for autonomous modes (3/4)
+  if (isAutonomousMode) {
+    const {
+      missionId,
+      title,
+      objective,
+      status,
+      plan,
+      currentStep,
+      totalSteps,
+      currentStage,
+      thinking,
+      artifacts,
+      sources,
+      checkpoint,
+      finalContent,
+      error,
+      selectedTeam,
+      budgetSpent,
+      budgetLimit,
+      startedAt,
+      startMission,
+      respondToCheckpoint,
+      abortMission,
+      reset,
+      isIdle,
+      isPlanning,
+      isRunning,
+      isAwaitingCheckpoint,
+      isComplete,
+      hasFailed,
+      isActive,
+      progress,
+    } = mission;
+
+    const chosenMode = mode === '4' ? 4 : 3;
+
+    const handleMissionStart = (data: {
+      objective: string;
+      budgetLimit: number;
+      title?: string;
+      templateId?: string;
+      selectedAgents?: string[];
+    }) => {
+      if (chosenMode === 3 && !selectedAgent) {
+        console.warn('[AskExpertV2] Cannot start mission: select an agent first.');
+        return;
+      }
+      startMission({
+        objective: data.objective,
+        mode: chosenMode,
+        selectedAgents:
+          chosenMode === 3 && selectedAgent
+            ? [selectedAgent.id]
+            : chosenMode === 3 && data.selectedAgents && data.selectedAgents.length > 0
+              ? data.selectedAgents
+              : [],
+        budgetLimit: data.budgetLimit,
+        title: data.title,
+        templateId: data.templateId,
+      });
+    };
+
+    return (
+      <div className="flex h-[calc(100vh-4rem)] flex-col bg-gray-50">
+        <div className="border-b bg-white px-4 py-3 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Bot className="h-6 w-6 text-primary" />
+              <div>
+                <h1 className="text-lg font-semibold">Autonomous Mission</h1>
+                <p className="text-xs text-muted-foreground">
+                  Mode {chosenMode}: {chosenMode === 4 ? 'AI-selected team' : 'Manual expert'} • Ask Expert
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {isActive && <span className="text-sm text-gray-500">{Math.round(progress)}%</span>}
+              {!isIdle && <StatusBadge status={status} />}
+              {(isComplete || hasFailed) && (
+                <Button variant="outline" size="sm" onClick={reset} className="gap-2">
+                  <RefreshCw className="h-4 w-4" />
+                  New Mission
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <main className="container mx-auto max-w-5xl flex-1 overflow-y-auto px-4 py-6 space-y-6">
+          {chosenMode === 3 && !selectedAgent && (
+            <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+              Select an expert from the sidebar to launch a Mode 3 mission.
+            </div>
+          )}
+
+          {isIdle && (
+            <div className="rounded-xl border bg-white p-0 shadow-sm overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowMissionForm((v) => !v)}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  <div className="text-left">
+                    <h2 className="text-sm font-semibold">Mission Setup</h2>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedAgent ? `Expert: ${selectedAgent.name}` : 'Select an expert in the sidebar'} • Mode {chosenMode}
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={`h-4 w-4 text-muted-foreground transition-transform ${showMissionForm ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {showMissionForm && (
+                <div className="px-6 pb-6">
+                  <MissionForm
+                    onSubmit={handleMissionStart}
+                    isLoading={isPlanning}
+                    disabled={chosenMode === 3 && !selectedAgent}
+                    initialMode={chosenMode}
+                    lockMode
+                    presetAgents={selectedAgent ? [selectedAgent.id] : []}
+                    lockAgentSelection
+                    initialObjective={pendingAutonomousGoal || executionGoal}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {isActive && (
+            <>
+              <div className="rounded-xl border bg-white p-6 shadow-sm">
+                <MissionProgress
+                  currentStep={currentStep}
+                  totalSteps={totalSteps}
+                  stage={currentStage}
+                  thinking={thinking}
+                  status={status}
+                  budgetSpent={budgetSpent}
+                  budgetLimit={budgetLimit}
+                  startedAt={startedAt}
+                />
+              </div>
+
+              {objective && (
+                <div className="rounded-xl border bg-white p-6 shadow-sm">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Objective</h3>
+                  <p className="text-gray-900">{objective}</p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className={`text-xs px-2 py-1 rounded-full ${chosenMode === 4 ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                      Mode {chosenMode === 4 ? '4 (Automatic)' : '3 (Manual)'}
+                    </span>
+                    {selectedTeam.length > 0 && <span className="text-xs text-gray-500">Team: {selectedTeam.join(', ')}</span>}
+                    {selectedAgent && chosenMode === 3 && (
+                      <span className="text-xs text-gray-500">Expert: {selectedAgent.name}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {plan.length > 0 && (
+                <div className="rounded-xl border bg-white p-6 shadow-sm">
+                  <MissionPlan steps={plan} currentStep={currentStep} />
+                </div>
+              )}
+
+              {artifacts.length > 0 && (
+                <div className="rounded-xl border bg-white p-6 shadow-sm">
+                  <ArtifactViewer artifacts={artifacts} />
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <Button variant="ghost" className="gap-2 text-red-600 hover:text-red-700" onClick={abortMission}>
+                  <AlertTriangle className="h-4 w-4" />
+                  Abort Mission
+                </Button>
+              </div>
+            </>
+          )}
+
+          {isComplete && (
+            <div className="rounded-xl border bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold mb-2">Final Output</h2>
+              <div className="prose max-w-none whitespace-pre-wrap text-sm text-gray-900">{finalContent || 'Mission completed.'}</div>
+              {sources.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Sources</h3>
+                  <ArtifactViewer artifacts={artifacts} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {hasFailed && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <div>
+                  <h3 className="text-base font-semibold text-red-800">Mission failed</h3>
+                  <p className="text-sm text-red-700 mt-1">{error || 'An unexpected error occurred.'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        <MissionCheckpointModal
+          checkpoint={checkpoint}
+          isOpen={isAwaitingCheckpoint}
+          onRespond={(checkpointId, decision, action, additionalData) =>
+            respondToCheckpoint(checkpointId, decision, action, additionalData)
+          }
+          onDismiss={() => abortMission()}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       {/* Header with Mode and Agent Selectors */}
@@ -1666,50 +2031,73 @@ export default function AskExpertV2Page() {
       </ScrollArea>
 
       {/* Input Area - Enhanced PromptInput with mode toggles */}
-      <div className="border-t bg-background/95 px-4 py-4 backdrop-blur">
-        <PromptInput
-          value={inputValue}
-          onChange={setInputValue}
-          onSubmit={handleSendOrConfigure}
-          isLoading={isLoading}
-          placeholder={
-            selectedAgent
-              ? `Ask ${selectedAgent.name}...`
-              : 'Select an agent to start...'
-          }
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
-          isAutomatic={mode === '2' || mode === '4'}
-          onAutomaticChange={(isAuto) => {
-            // Toggle between manual and automatic while preserving autonomous
-            const isAutonomous = mode === '3' || mode === '4';
-            if (isAuto) {
-              setMode(isAutonomous ? '4' : '2');
-            } else {
-              setMode(isAutonomous ? '3' : '1');
+      <div className="border-t bg-background/95 px-4 py-4 backdrop-blur space-y-3">
+        {selectedAgent && showAgentStarters && (
+          <PromptStarters
+            prompts={agentStarters.map((s) => ({
+              id: s.id,
+              prompt_starter: s.starterText,
+              name: s.starterText,
+              display_name: s.starterText,
+              description: s.starterText,
+              full_prompt: s.fullPrompt,
+              domain: s.category || 'general',
+              complexity_level: s.complexity || 'intermediate',
+            }))}
+            isLoading={agentStartersLoading}
+            onSelectPrompt={(text) => setInputValue(text)}
+          />
+        )}
+        <div className="flex items-start gap-2">
+          <PromptInput
+            value={inputValue}
+            onChange={setInputValue}
+            onSubmit={handleSendOrConfigure}
+            isLoading={isLoading}
+            placeholder={
+              selectedAgent
+                ? `Ask ${selectedAgent.name}...`
+                : 'Select an agent to start...'
             }
-          }}
-          isAutonomous={mode === '3' || mode === '4'}
-          onAutonomousChange={(isAuto) => {
-            // Toggle between interactive and autonomous while preserving automatic
-            const isAutomatic = mode === '2' || mode === '4';
-            if (isAuto) {
-              // Scenario 1: When toggling autonomous ON, show the UserPromptModal
-              setMode(isAutomatic ? '4' : '3');
-              setShowPromptModal(true);
-            } else {
-              // Switching to interactive mode - reset autonomous config
-              setMode(isAutomatic ? '2' : '1');
-              setAutonomousConfigured(false);
-            }
-          }}
-          // Scenario 3: "Define Goal" button click in PromptInput when autonomous is active
-          onDefineGoalClick={() => setShowPromptModal(true)}
-          enableRAG={enableRAG}
-          onEnableRAGChange={setEnableRAG}
-          enableTools={enableTools}
-          onEnableToolsChange={setEnableTools}
-        />
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            isAutomatic={mode === '2' || mode === '4'}
+            onAutomaticChange={(isAuto) => {
+              // Toggle between manual and automatic while preserving autonomous
+              const isAutonomous = mode === '3' || mode === '4';
+              if (isAuto) {
+                setMode(isAutonomous ? '4' : '2');
+              } else {
+                setMode(isAutonomous ? '3' : '1');
+              }
+            }}
+            isAutonomous={mode === '3' || mode === '4'}
+            onAutonomousChange={(isAuto) => {
+              // Toggle between interactive and autonomous while preserving automatic
+              const isAutomatic = mode === '2' || mode === '4';
+              if (isAuto) {
+                // Scenario 1: When toggling autonomous ON, show the UserPromptModal
+                setMode(isAutomatic ? '4' : '3');
+                setShowPromptModal(true);
+              } else {
+                // Switching to interactive mode - reset autonomous config
+                setMode(isAutomatic ? '2' : '1');
+                setAutonomousConfigured(false);
+              }
+            }}
+            // Scenario 3: "Define Goal" button click in PromptInput when autonomous is active
+            onDefineGoalClick={() => setShowPromptModal(true)}
+            enableRAG={enableRAG}
+            onEnableRAGChange={setEnableRAG}
+            enableTools={enableTools}
+            onEnableToolsChange={setEnableTools}
+          />
+          <PromptEnhancer
+            value={inputValue}
+            selectedAgentName={selectedAgent?.name}
+            onApply={(enhanced) => setInputValue(enhanced)}
+          />
+        </div>
       </div>
 
       {/* Mode Selection Modal (2x2 Grid) */}

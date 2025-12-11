@@ -13,6 +13,7 @@ export interface PromptStarter {
   name: string;
   display_name: string;
   description: string;
+  full_prompt?: string;
   domain: string;
   complexity_level: string;
 }
@@ -100,7 +101,7 @@ export function PromptStarters({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            onClick={() => onSelectPrompt(prompt.prompt_starter)}
+            onClick={() => onSelectPrompt(prompt.full_prompt || prompt.prompt_starter)}
             className={`group relative text-left p-4 rounded-xl border-2 transition-all duration-200 ${getComplexityColor(
               prompt.complexity_level
             )}`}

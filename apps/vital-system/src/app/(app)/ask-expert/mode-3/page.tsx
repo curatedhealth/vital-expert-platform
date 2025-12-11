@@ -103,7 +103,15 @@ export default function Mode3DeepResearchPage() {
     onCheckpoint: (cp) => console.log('Checkpoint received:', cp),
     onStepComplete: (step) => console.log('Step complete:', step),
     onMissionComplete: (result) => console.log('Mission complete:', result),
+    tenantId: '00000000-0000-0000-0000-000000000001',
   });
+
+  // Preselect first expert so the start button can enable immediately
+  useEffect(() => {
+    if (!selectedExpert && RESEARCH_EXPERTS.length > 0) {
+      selectExpert(RESEARCH_EXPERTS[0]);
+    }
+  }, [selectedExpert, selectExpert]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -142,12 +150,14 @@ export default function Mode3DeepResearchPage() {
         </div>
 
         {/* Expert Selection */}
-        <div className="p-4 border-b">
+        <div className="p-4 border-b" data-testid="expert-selector">
           <h3 className="text-sm font-medium mb-3">Select Research Lead</h3>
           <div className="space-y-2">
             {RESEARCH_EXPERTS.map((expert) => (
               <Card
                 key={expert.id}
+                data-testid="expert-card"
+                data-selected={selectedExpert?.id === expert.id}
                 className={`cursor-pointer transition-all hover:border-primary ${
                   selectedExpert?.id === expert.id ? 'border-primary bg-primary/5' : ''
                 } ${isRunning ? 'opacity-50 pointer-events-none' : ''}`}
@@ -181,6 +191,7 @@ export default function Mode3DeepResearchPage() {
             placeholder="Describe your research goal in detail..."
             className="flex-1 min-h-[120px] resize-none"
             disabled={isRunning}
+            data-testid="goal-input"
           />
           
           {/* Action Buttons */}
@@ -189,6 +200,7 @@ export default function Mode3DeepResearchPage() {
               <Button 
                 onClick={handleStartMission} 
                 className="w-full"
+                data-testid="start-mission"
                 disabled={!goalInput.trim() || !isExpertSelected || isRunning}
               >
                 <Play className="h-4 w-4 mr-2" />
@@ -221,7 +233,7 @@ export default function Mode3DeepResearchPage() {
 
         {/* Cost Tracker */}
         {currentCost && (
-          <div className="p-4 border-t">
+          <div className="p-4 border-t" data-testid="cost-tracker">
             <VitalCostTracker
               currentCost={currentCost.currentCost}
               budgetLimit={currentCost.budgetLimit}
@@ -234,7 +246,7 @@ export default function Mode3DeepResearchPage() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col" data-testid={isRunning ? 'mission-active' : undefined}>
         {/* Mission Header */}
         <header className="px-6 py-4 border-b">
           <div className="flex items-center justify-between">
@@ -271,7 +283,7 @@ export default function Mode3DeepResearchPage() {
 
           {/* Progress Bar */}
           {progress && (
-            <div className="mt-4">
+            <div className="mt-4" data-testid="progress-timeline">
               <VitalWorkflowProgress
                 steps={progress.subSteps?.map((s, i) => ({
                   id: String(i),

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Streamdown from 'streamdown';
 
 interface VitalStreamTextProps {
   content: string;
@@ -87,11 +86,9 @@ export function VitalStreamText({
         )}
       </Button>
 
-      {/* Streamdown component for jitter-free streaming */}
-      <Streamdown
-        content={content}
+      <div
         className={cn(
-          'prose prose-slate dark:prose-invert max-w-none',
+          'prose prose-slate dark:prose-invert max-w-none whitespace-pre-wrap break-words',
           'prose-headings:font-semibold prose-headings:tracking-tight',
           'prose-p:leading-relaxed',
           'prose-code:before:content-none prose-code:after:content-none',
@@ -102,10 +99,9 @@ export function VitalStreamText({
           'prose-table:text-sm',
           isStreaming && 'animate-pulse-subtle'
         )}
-        // Security: restrict image and link origins
-        allowedImageOrigins={allowedImageOrigins}
-        allowedLinkOrigins={allowedLinkOrigins}
-      />
+      >
+        {content}
+      </div>
 
       {/* Streaming indicator */}
       {isStreaming && (

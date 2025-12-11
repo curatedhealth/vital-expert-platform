@@ -290,6 +290,7 @@ async def _init_dependent_services():
     try:
         from services.agent_orchestrator import AgentOrchestrator
         orchestrator = AgentOrchestrator(client, _services["unified_rag_service"])
+        # Initialize (no-op but keeps health happy) and store service
         await asyncio.wait_for(orchestrator.initialize(), timeout=5.0)
         _services["agent_orchestrator"] = orchestrator
         logger.info("✅ Agent orchestrator initialized")

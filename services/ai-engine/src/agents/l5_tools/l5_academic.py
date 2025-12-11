@@ -17,7 +17,7 @@ from enum import Enum
 import structlog
 import xml.etree.ElementTree as ET
 
-from .l5_base import L5BaseTool, ToolTier, L5Result
+from .l5_base import L5BaseTool, ToolConfig, ToolTier, L5Result
 
 logger = structlog.get_logger()
 
@@ -74,10 +74,10 @@ class AcademicResult(L5Result):
 class AcademicL5Tool(L5BaseTool[AcademicResult]):
     """
     Unified academic data source tool.
-    
+
     Supports multiple academic databases via source parameter.
     """
-    
+
     def __init__(
         self,
         source: AcademicSource,
@@ -85,20 +85,29 @@ class AcademicL5Tool(L5BaseTool[AcademicResult]):
         email: Optional[str] = None,  # For polite pool access
         **kwargs
     ):
-        config = ACADEMIC_SOURCE_CONFIG[source]
-        
-        super().__init__(
-            source_type=ToolTier(source.value),
-            base_url=config["base_url"],
-            api_key=api_key,
-            cache_ttl_hours=config.get("cache_ttl", 24),
-            **kwargs
+        source_config = ACADEMIC_SOURCE_CONFIG[source]
+
+        # Create ToolConfig for base class
+        tool_config = ToolConfig(
+            id=f"L5-{source.value.upper()}",
+            name=f"Academic {source.value.title()} Tool",
+            slug=source.value,
+            description=f"Academic {source.value} search tool",
+            category="academic",
+            tier=1,
+            base_url=source_config.get("base_url", ""),
+            cache_ttl=source_config.get("cache_ttl", 24) * 3600,
         )
-        
+
+        super().__init__(config=tool_config)
+
         self.source = source
-        self.config = config
+        self.source_config = source_config
+        self.source_name = source.value
+        self.api_key = api_key
         self.email = email
-        
+        self.base_url = source_config.get("base_url", "")
+
         # Source-specific handlers
         self._search_handlers = {
             AcademicSource.PUBMED: self._search_pubmed,
@@ -106,7 +115,75 @@ class AcademicL5Tool(L5BaseTool[AcademicResult]):
             AcademicSource.OPENALEX: self._search_openalex,
             AcademicSource.GOOGLE_SCHOLAR: self._search_google_scholar,
         }
-    
+
+    async def _execute_impl(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute the tool via the standardized L5 interface.
+        Maps the execute(params) pattern to the search() method.
+        """
+        query = params.get("query", "")
+        max_results = params.get("max_results", 20)
+        extra_kwargs = {k: v for k, v in params.items() if k not in ["query", "max_results"]}
+
+        results = await self.search(query, max_results=max_results, **extra_kwargs)
+
+        return {
+            "results": [
+                {
+                    "id": r.id,
+                    "title": r.title,
+                    "content": r.content,
+                    "source": r.source,
+                    "url": r.url,
+                    "authors": r.authors,
+                    "journal": r.journal,
+                    "publication_date": r.publication_date,
+                    "doi": r.doi,
+                    "pmid": r.pmid,
+                    "arxiv_id": r.arxiv_id,
+                    "cited_by_count": r.cited_by_count,
+                    "abstract": r.abstract,
+                    "is_open_access": r.is_open_access,
+                    "pdf_url": r.pdf_url,
+                }
+                for r in results
+            ],
+            "total": len(results),
+            "source_type": self.source.value,
+        }
+
+    async def _make_request(
+        self,
+        method: str,
+        url: str,
+        params: Optional[Dict] = None,
+        json_data: Optional[Dict] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Make HTTP request using httpx client."""
+        try:
+            if method.upper() == "GET":
+                response = await self.client.get(url, params=params)
+            elif method.upper() == "POST":
+                response = await self.client.post(url, json=json_data)
+            else:
+                return None
+
+            response.raise_for_status()
+
+            # Check if response is XML
+            content_type = response.headers.get("content-type", "")
+            if "xml" in content_type or response.text.strip().startswith("<?xml"):
+                return {"_xml": response.text}
+
+            return response.json()
+        except Exception as e:
+            logger.error(
+                f"vital_l5_{self.source_name}_request_error",
+                url=url,
+                error=str(e),
+            )
+            return None
+
     async def search(
         self,
         query: str,
@@ -114,25 +191,29 @@ class AcademicL5Tool(L5BaseTool[AcademicResult]):
         **kwargs
     ) -> List[AcademicResult]:
         """Search academic data source."""
-        self._log_search_start(query, max_results=max_results)
-        
-        cache_key = self._get_cache_key("search", query, max_results)
-        cached = self._get_cached(cache_key)
-        if cached:
-            return cached
-        
+        logger.info(
+            f"vital_l5_{self.source_name}_search_start",
+            query=query[:100],
+            max_results=max_results,
+        )
+
         try:
             handler = self._search_handlers.get(self.source)
             if not handler:
                 return []
-            
+
             results = await handler(query, max_results, **kwargs)
-            self._set_cached(cache_key, results)
-            self._log_search_complete(len(results))
+            logger.info(
+                f"vital_l5_{self.source_name}_search_complete",
+                result_count=len(results),
+            )
             return results
-            
+
         except Exception as e:
-            self._log_error("search", e)
+            logger.error(
+                f"vital_l5_{self.source_name}_search_error",
+                error=str(e),
+            )
             return []
     
     async def get_by_id(

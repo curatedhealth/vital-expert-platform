@@ -78,6 +78,7 @@ export default async function proxy(request: NextRequest) {
     '/api/knowledge',    // Knowledge management endpoints (uses service role internally)
     '/api/metrics',  // Prometheus metrics endpoint
     '/api/health',    // Health check endpoint
+    '/api/prompt-enhancer', // Prompt enhancer (CSRF exempt)
   ];
   const isPublicApiRoute = publicApiRoutes.some(route => url.pathname.startsWith(route));
 
@@ -311,4 +312,3 @@ export const config = {
 
 // Note: This file serves as Next.js middleware (using proxy.ts convention)
 // The default export is the middleware handler
-

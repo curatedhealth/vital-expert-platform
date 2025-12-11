@@ -243,3 +243,7 @@ $$;
 GRANT EXECUTE ON FUNCTION hybrid_search_knowledge TO authenticated;
 
 
+
+
+
+

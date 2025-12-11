@@ -157,3 +157,85 @@ class L2DomainLead(BaseAgent):
             "analysis": result.get("content"),  # For compatibility with l2_nodes.py
             "citations": result.get("citations", []),
         }
+
+    async def execute_streaming(
+        self, task: str, params: Dict[str, Any], context: Dict[str, Any]
+    ):
+        """
+        Execute agent task with token-by-token streaming.
+
+        Yields chunks as they are generated, enabling real-time UI updates.
+
+        Args:
+            task: The task description
+            params: Execution parameters
+            context: Execution context with enriched data
+
+        Yields:
+            Dict with either 'token' (partial text) or 'complete' (final result)
+        """
+        goal = params.get("goal") or context.get("goal") or task
+
+        if params.get("action") == "plan":
+            # Planning is not streamed - return immediately
+            plan_result = await self.plan(goal, params.get("strategy"))
+            yield {"complete": True, "output": plan_result, "citations": []}
+            return
+
+        if not self._llm:
+            yield {"complete": True, "output": "LLM not available for generation.", "citations": []}
+            return
+
+        # Build context from enriched data
+        enriched = context.get("enriched_context") or context
+        citations = enriched.get("citations") or []
+        evidence_text = ""
+        if citations:
+            evidence_text = "\n\n## Available Evidence:\n"
+            for i, cite in enumerate(citations[:5], 1):
+                title = cite.get("title", "Unknown")
+                snippet = cite.get("snippet", cite.get("text", ""))[:200]
+                evidence_text += f"{i}. {title}: {snippet}...\n"
+
+        # Construct messages
+        from langchain_core.messages import SystemMessage, HumanMessage
+
+        messages = [
+            SystemMessage(content=self.system_prompt),
+            HumanMessage(content=f"{goal}{evidence_text}"),
+        ]
+
+        try:
+            # Stream tokens using LangChain's astream
+            full_content = ""
+            async for chunk in self._llm.astream(messages):
+                token = chunk.content if hasattr(chunk, "content") else str(chunk)
+                if token:
+                    full_content += token
+                    yield {"token": token, "complete": False}
+
+            logger.info(
+                "l2_domain_lead_streamed",
+                agent_id=self.config.id,
+                response_length=len(full_content),
+            )
+
+            # Yield final result
+            yield {
+                "complete": True,
+                "output": full_content,
+                "analysis": full_content,
+                "citations": citations,
+            }
+        except Exception as exc:
+            logger.error(
+                "l2_domain_lead_streaming_failed",
+                agent_id=self.config.id,
+                error=str(exc),
+            )
+            yield {
+                "complete": True,
+                "output": f"Streaming failed: {str(exc)}",
+                "citations": [],
+                "error": str(exc),
+            }

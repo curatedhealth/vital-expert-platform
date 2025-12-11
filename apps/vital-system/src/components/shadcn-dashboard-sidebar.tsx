@@ -82,7 +82,7 @@ const navigationItems = [
   },
   {
     title: 'Prompt PRISM',
-    href: '/prism',
+    href: '/prompts',
     icon: Lightbulb,
   },
   {

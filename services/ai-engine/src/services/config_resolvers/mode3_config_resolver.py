@@ -52,10 +52,11 @@ class Mode3ConfigResolver:
     }
 
     # Depth to token budget multiplier
+    # Increased multipliers for world-class comprehensive research outputs
     DEPTH_TO_BUDGET_MULTIPLIER = {
-        "concise": 0.5,
-        "standard": 1.0,
-        "comprehensive": 1.5
+        "concise": 1.0,       # Was 0.5 - still produce complete thoughts
+        "standard": 2.0,      # Was 1.0 - comprehensive by default
+        "comprehensive": 3.0  # Was 1.5 - full research depth
     }
 
     def resolve(
@@ -101,9 +102,11 @@ class Mode3ConfigResolver:
         react_config = agent_metadata.get('react_config', {})
 
         # LLM Configuration
+        # Increased defaults for world-class research outputs
         model = request_model or agent_model or "gpt-4"
         temperature = agent_temperature or 0.7
-        max_tokens = agent_max_tokens or 4000
+        # Mode 3 deep research requires higher token limits (8000 default)
+        max_tokens = agent_max_tokens or 8000
 
         # L4 Context Engineer Configuration
         l4_enabled = (

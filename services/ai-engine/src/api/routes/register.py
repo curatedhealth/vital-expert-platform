@@ -259,9 +259,11 @@ def _register_mission_routes(app: FastAPI) -> None:
     """Register Missions and Templates routes for autonomous modes."""
     try:
         from api.routes import missions as mission_routes
+        from api.routes import missions_status
         from api.routes import templates as template_routes
 
         app.include_router(mission_routes.router, prefix="", tags=["missions"])
+        app.include_router(missions_status.router, prefix="", tags=["missions"])
         app.include_router(template_routes.router, prefix="", tags=["templates"])
         logger.info("✅ Missions and Templates routes registered")
     except ImportError as e:

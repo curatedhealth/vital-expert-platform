@@ -120,3 +120,7 @@ CREATE INDEX IF NOT EXISTS idx_knowledge_documents_shared
 ON knowledge_documents(is_shared) WHERE is_shared = true;
 
 
+
+
+
+

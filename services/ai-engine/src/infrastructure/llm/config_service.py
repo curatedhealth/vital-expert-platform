@@ -110,17 +110,20 @@ def _get_env_defaults() -> Dict[str, Any]:
         "L2": {
             "model": os.getenv("L2_LLM_MODEL") or os.getenv("DEFAULT_LLM_MODEL", "gpt-4o"),
             "temperature": float(os.getenv("L2_LLM_TEMPERATURE", "0.5")),
-            "max_tokens": int(os.getenv("L2_LLM_MAX_TOKENS", "4000")),
+            # Increased to 8000 for world-class comprehensive research outputs
+            "max_tokens": int(os.getenv("L2_LLM_MAX_TOKENS", "8000")),
         },
         "L3": {
             "model": os.getenv("L3_LLM_MODEL") or os.getenv("DEFAULT_LLM_MODEL", "gpt-4o-mini"),
             "temperature": float(os.getenv("L3_LLM_TEMPERATURE", "0.7")),
-            "max_tokens": int(os.getenv("L3_LLM_MAX_TOKENS", "2000")),
+            # Increased from 2000 to 8000 for comprehensive specialist analysis
+            "max_tokens": int(os.getenv("L3_LLM_MAX_TOKENS", "8000")),
         },
         "L4": {
             "model": os.getenv("L4_LLM_MODEL") or os.getenv("DEFAULT_LLM_MODEL", "gpt-4o-mini"),
             "temperature": float(os.getenv("L4_LLM_TEMPERATURE", "0.2")),
-            "max_tokens": int(os.getenv("L4_LLM_MAX_TOKENS", "4000")),
+            # Increased to 8000 for deep evidence synthesis
+            "max_tokens": int(os.getenv("L4_LLM_MAX_TOKENS", "8000")),
         },
         "L5": {
             "model": os.getenv("L5_LLM_MODEL") or os.getenv("DEFAULT_LLM_MODEL", "gpt-3.5-turbo"),

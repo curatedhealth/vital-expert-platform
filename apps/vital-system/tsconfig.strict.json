@@ -70,7 +70,10 @@
       "@/components/*": ["./src/components/*"],
       "@/stores/*": ["./src/stores/*"],
       "@/hooks/*": ["./src/hooks/*"],
-      "@/utils/*": ["./src/utils/*"]
+      "@/utils/*": ["./src/utils/*"],
+      "@vital/ui": ["../../packages/ui/src/index.ts"],
+      "@vital/ui/*": ["../../packages/ui/src/*"],
+      "@vital/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": [

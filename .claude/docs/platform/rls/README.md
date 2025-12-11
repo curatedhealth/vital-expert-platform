@@ -1,6 +1,6 @@
 # Row-Level Security (RLS) Documentation
 
-**Last Updated:** 2025-11-26  
+**Last Updated:** 2025-12-05  
 **Status:** ✅ Deployed  
 **Security Level:** Enterprise-Grade Multi-Level Privacy
 
@@ -26,6 +26,7 @@
 - **`migrations/20251126_009_critical_enable_rls_on_policy_tables.sql`** ✅ DEPLOYED - Critical P0 fix
 - **`migrations/20251126_010_phase2_migrate_agents_data.sql`** ✅ DEPLOYED - Data migration + dual-mechanism RLS
 - **`migrations/audit_security_definer_views_cloud.sql`** ✅ COMPLETE - Security audit
+- **`migrations/ADD_BUDGET_FUNCTIONS.sql`** 📋 OPTIONAL - Token budget tracking functions
 
 ---
 
@@ -135,6 +136,14 @@ grant_agent_access(agent_id, tenant_id, granted_by)    -- Share agent
 revoke_agent_access(agent_id, tenant_id)               -- Revoke access
 create_user_private_agent(data, user_id, tenant_id)    -- Create private
 create_tenant_shared_agent(data, user_id, tenant_id)   -- Create shared
+```
+
+### **Budget Tracking (Optional - see ADD_BUDGET_FUNCTIONS.sql):**
+```sql
+check_token_budget(user_id, estimated_tokens)   -- Pre-request budget check
+get_user_token_usage('month', user_id)          -- Usage reporting
+search_document_chunks(embedding, threshold)    -- Vector search with RLS
+get_user_organization_id()                      -- Get user's organization
 ```
 
 ---

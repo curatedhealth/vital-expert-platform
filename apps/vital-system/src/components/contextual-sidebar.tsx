@@ -852,7 +852,7 @@ function DefaultNavigationContent() {
     { title: 'Agents', href: '/agents', icon: UsersIcon },
     { title: 'Tools', href: '/tools', icon: Hammer },
     { title: 'Knowledge', href: '/knowledge', icon: BookOpen },
-    { title: 'PROMPTS', href: '/prism', icon: Lightbulb },
+    { title: 'PROMPTS', href: '/prompts', icon: Lightbulb },
     { title: 'Capabilities', href: '/capabilities', icon: Shield },
     { title: 'Workflows', href: '/workflows', icon: Workflow },
     { title: 'Admin', href: '/admin', icon: Settings, badge: 'Admin' },
@@ -956,7 +956,7 @@ export function ContextualSidebar() {
     if (pathname.startsWith('/ask-panel')) return <AskPanelSidebarContent />;
     if (pathname.startsWith('/agents')) return <AgentsSidebarContent />;
     if (pathname.startsWith('/knowledge')) return <KnowledgeSidebarContent />;
-    if (pathname.startsWith('/prism')) return <PromptPrismSidebarContent />;
+    if (pathname.startsWith('/prompts')) return <PromptPrismSidebarContent />;
     if (pathname.startsWith('/workflows')) return <WorkflowsSidebarContent />;
     if (pathname.startsWith('/admin')) return <AdminSidebarContent />;
 

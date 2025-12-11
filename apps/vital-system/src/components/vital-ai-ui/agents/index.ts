@@ -53,3 +53,6 @@ export type {
   InstantiatedAgent,
   AgentSession,
 } from './useAgentContext';
+
+// Delegation timeline (placeholder for missions)
+export { VitalDelegationFlow, type DelegationStep } from './VitalDelegationFlow';

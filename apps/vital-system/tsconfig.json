@@ -31,6 +31,12 @@
       ],
       "@vital/shared/*": [
         "../../packages/shared/src/*"
+      ],
+      "@vital/ui": [
+        "../../packages/ui/src/index.ts"
+      ],
+      "@vital/ui/*": [
+        "../../packages/ui/src/*"
       ]
     }
   },

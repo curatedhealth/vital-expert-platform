@@ -16,23 +16,26 @@ export interface Icon {
   sort_order?: number;
 }
 
+interface ApiResponse {
+  icons?: Icon[];
+  icon?: Icon;
+  error?: string;
+}
+
 export class IconService {
   private baseUrl = '/api/icons';
 
-  private async fetchAPI(endpoint: string, options?: RequestInit): Promise<unknown> {
+  private async fetchAPI(endpoint: string, options?: RequestInit): Promise<ApiResponse> {
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, options);
       const data = await response.json();
 
-      // eslint-disable-next-line security/detect-object-injection
       if (!response.ok) {
-        // eslint-disable-next-line security/detect-object-injection
         throw new Error(data.error || 'API request failed');
       }
 
-      return data;
+      return data as ApiResponse;
     } catch (error) {
-      // console.error('IconService API error:', error);
       throw error;
     }
   }
@@ -42,11 +45,9 @@ export class IconService {
    */
   async getAllIcons(): Promise<Icon[]> {
     try {
-
-      // eslint-disable-next-line security/detect-object-injection
+      const response = await this.fetchAPI('');
       return response.icons || [];
     } catch (error) {
-      // console.error('Error in getAllIcons:', error);
       return this.getFallbackIcons();
     }
   }
@@ -56,11 +57,9 @@ export class IconService {
    */
   async getIconsByCategory(category: Icon['category']): Promise<Icon[]> {
     try {
-
-      // eslint-disable-next-line security/detect-object-injection
+      const response = await this.fetchAPI(`?category=${encodeURIComponent(category)}`);
       return response.icons || [];
     } catch (error) {
-      // console.error('Error in getIconsByCategory:', error);
       return [];
     }
   }
@@ -70,11 +69,9 @@ export class IconService {
    */
   async getIconsByCategories(categories: Icon['category'][]): Promise<Icon[]> {
     try {
-
-      // eslint-disable-next-line security/detect-object-injection
+      const response = await this.fetchAPI(`?categories=${encodeURIComponent(categories.join(','))}`);
       return response.icons || [];
     } catch (error) {
-      // console.error('Error in getIconsByCategories:', error);
       return [];
     }
   }
@@ -84,15 +81,13 @@ export class IconService {
    */
   async searchIcons(query: string, category?: Icon['category']): Promise<Icon[]> {
     try {
-
+      const params = new URLSearchParams({ query });
       if (category) {
         params.append('category', category);
       }
-
-      // eslint-disable-next-line security/detect-object-injection
+      const response = await this.fetchAPI(`/search?${params.toString()}`);
       return response.icons || [];
     } catch (error) {
-      // console.error('Error in searchIcons:', error);
       return [];
     }
   }
@@ -102,13 +97,10 @@ export class IconService {
    */
   async getIconByName(name: string): Promise<Icon | null> {
     try {
-
-      // eslint-disable-next-line security/detect-object-injection
-
-      // eslint-disable-next-line security/detect-object-injection
+      const response = await this.fetchAPI(`?name=${encodeURIComponent(name)}`);
+      const icons = response.icons || [];
       return icons.find((icon: Icon) => icon.name === name) || null;
     } catch (error) {
-      // console.error('Error in getIconByName:', error);
       return null;
     }
   }
@@ -118,15 +110,13 @@ export class IconService {
    */
   async addIcon(iconData: Omit<Icon, 'id' | 'created_at' | 'updated_at'>): Promise<Icon | null> {
     try {
-
+      const response = await this.fetchAPI('', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(iconData)
       });
-      // eslint-disable-next-line security/detect-object-injection
       return response.icon || null;
     } catch (error) {
-      // console.error('Error in addIcon:', error);
       return null;
     }
   }
@@ -136,15 +126,13 @@ export class IconService {
    */
   async updateIcon(id: string, updates: Partial<Omit<Icon, 'id' | 'created_at' | 'updated_at'>>): Promise<Icon | null> {
     try {
-
+      const response = await this.fetchAPI(`/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
-      // eslint-disable-next-line security/detect-object-injection
       return response.icon || null;
     } catch (error) {
-      // console.error('Error in updateIcon:', error);
       return null;
     }
   }
@@ -157,7 +145,6 @@ export class IconService {
       await this.fetchAPI(`/${id}`, { method: 'DELETE' });
       return true;
     } catch (error) {
-      // console.error('Error in deleteIcon:', error);
       return false;
     }
   }
@@ -169,7 +156,6 @@ export class IconService {
     try {
       return await this.getIconsByCategory('avatar');
     } catch (error) {
-      // eslint-disable-next-line security/detect-object-injection
       return this.getFallbackIcons().filter(icon => icon.category === 'avatar' || icon.category === 'medical');
     }
   }
@@ -181,9 +167,7 @@ export class IconService {
     try {
       return await this.getIconsByCategories(['prompt', 'medical', 'regulatory', 'process']);
     } catch (error) {
-      // eslint-disable-next-line security/detect-object-injection
       return this.getFallbackIcons().filter(icon =>
-        // eslint-disable-next-line security/detect-object-injection
         ['prompt', 'medical', 'regulatory', 'process'].includes(icon.category)
       );
     }
@@ -196,7 +180,6 @@ export class IconService {
     try {
       return await this.getIconsByCategory('process');
     } catch (error) {
-      // eslint-disable-next-line security/detect-object-injection
       return this.getFallbackIcons().filter(icon => icon.category === 'process');
     }
   }
@@ -212,8 +195,8 @@ export class IconService {
         display_name: 'Medical Document',
         category: 'medical',
         description: 'Medical document icon',
-        file_path: '📋',
-        file_url: '📋',
+        file_path: '/icons/png/avatars/avatar_0001.png',
+        file_url: '/icons/png/avatars/avatar_0001.png',
         tags: ['medical', 'document'],
         is_active: true,
         created_at: new Date().toISOString(),
@@ -225,8 +208,8 @@ export class IconService {
         display_name: 'Healthcare Analysis',
         category: 'medical',
         description: 'Healthcare analysis icon',
-        file_path: '🔍',
-        file_url: '🔍',
+        file_path: '/icons/png/avatars/avatar_0002.png',
+        file_url: '/icons/png/avatars/avatar_0002.png',
         tags: ['healthcare', 'analysis'],
         is_active: true,
         created_at: new Date().toISOString(),
@@ -238,8 +221,8 @@ export class IconService {
         display_name: 'Stethoscope',
         category: 'medical',
         description: 'Medical stethoscope icon',
-        file_path: '🩺',
-        file_url: '🩺',
+        file_path: '/icons/png/avatars/avatar_0003.png',
+        file_url: '/icons/png/avatars/avatar_0003.png',
         tags: ['stethoscope', 'medical'],
         is_active: true,
         created_at: new Date().toISOString(),
@@ -251,8 +234,8 @@ export class IconService {
         display_name: 'Checklist',
         category: 'process',
         description: 'Checklist process icon',
-        file_path: '✅',
-        file_url: '✅',
+        file_path: '/icons/png/avatars/avatar_0004.png',
+        file_url: '/icons/png/avatars/avatar_0004.png',
         tags: ['checklist', 'process'],
         is_active: true,
         created_at: new Date().toISOString(),
@@ -264,8 +247,8 @@ export class IconService {
         display_name: 'Thermometer',
         category: 'medical',
         description: 'Medical thermometer icon',
-        file_path: '🌡️',
-        file_url: '🌡️',
+        file_path: '/icons/png/avatars/avatar_0005.png',
+        file_url: '/icons/png/avatars/avatar_0005.png',
         tags: ['thermometer', 'medical'],
         is_active: true,
         created_at: new Date().toISOString(),
@@ -277,8 +260,8 @@ export class IconService {
         display_name: 'X-Ray',
         category: 'medical',
         description: 'Medical X-ray icon',
-        file_path: '🩻',
-        file_url: '🩻',
+        file_path: '/icons/png/avatars/avatar_0006.png',
+        file_url: '/icons/png/avatars/avatar_0006.png',
         tags: ['xray', 'medical'],
         is_active: true,
         created_at: new Date().toISOString(),
@@ -290,8 +273,8 @@ export class IconService {
         display_name: 'Heart',
         category: 'medical',
         description: 'Heart medical icon',
-        file_path: '❤️',
-        file_url: '❤️',
+        file_path: '/icons/png/avatars/avatar_0007.png',
+        file_url: '/icons/png/avatars/avatar_0007.png',
         tags: ['heart', 'medical'],
         is_active: true,
         created_at: new Date().toISOString(),
@@ -303,8 +286,8 @@ export class IconService {
         display_name: 'Pill',
         category: 'medical',
         description: 'Medical pill icon',
-        file_path: '💊',
-        file_url: '💊',
+        file_path: '/icons/png/avatars/avatar_0008.png',
+        file_url: '/icons/png/avatars/avatar_0008.png',
         tags: ['pill', 'medical'],
         is_active: true,
         created_at: new Date().toISOString(),
@@ -316,8 +299,8 @@ export class IconService {
         display_name: 'Hospital',
         category: 'medical',
         description: 'Hospital building icon',
-        file_path: '🏥',
-        file_url: '🏥',
+        file_path: '/icons/png/avatars/avatar_0009.png',
+        file_url: '/icons/png/avatars/avatar_0009.png',
         tags: ['hospital', 'medical'],
         is_active: true,
         created_at: new Date().toISOString(),
@@ -329,8 +312,8 @@ export class IconService {
         display_name: 'DNA',
         category: 'medical',
         description: 'DNA research icon',
-        file_path: '🧬',
-        file_url: '🧬',
+        file_path: '/icons/png/avatars/avatar_0010.png',
+        file_url: '/icons/png/avatars/avatar_0010.png',
         tags: ['dna', 'research'],
         is_active: true,
         created_at: new Date().toISOString(),

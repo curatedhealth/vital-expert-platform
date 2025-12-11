@@ -52,6 +52,11 @@ class CacheManager:
         if not REDIS_AVAILABLE or not self.redis_url:
             logger.warning("Redis caching disabled - no Redis URL provided or Redis not installed")
             return
+
+        # Validate URL scheme to avoid noisy errors when unset/mis-set
+        if not any(self.redis_url.startswith(scheme) for scheme in ("redis://", "rediss://", "unix://")):
+            logger.warning("Redis caching disabled - invalid Redis URL scheme", redis_url=self.redis_url)
+            return
         
         try:
             self.redis = await aioredis.from_url(
@@ -379,4 +384,3 @@ async def initialize_cache_manager(redis_url: Optional[str] = None) -> CacheMana
     await _cache_manager.initialize()
     
     return _cache_manager
-

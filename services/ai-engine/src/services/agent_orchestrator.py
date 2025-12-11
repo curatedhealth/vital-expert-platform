@@ -33,6 +33,18 @@ class AgentOrchestrator:
         self.rag_service = rag_service
         self._agent_cache: Dict[str, Dict[str, Any]] = {}
 
+    async def initialize(self) -> None:
+        """
+        Compatibility initializer (no-op).
+        """
+        return None
+
+    async def cleanup(self) -> None:
+        """
+        Compatibility cleanup (no-op).
+        """
+        return None
+
     async def load_agent(self, agent_id: str) -> Optional[Dict[str, Any]]:
         """
         Load agent profile from database.

@@ -19,7 +19,8 @@ import {
   Layers,
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  ChevronDown
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import type { LucideIcon } from 'lucide-react';
@@ -30,6 +31,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vita
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@vital/ui';
 import { Input } from '@vital/ui';
 import { useToast } from '@vital/ui';
+import { PromptEnhancer } from '@/shared/components/chat/prompt-enhancer';
 
 interface Prompt {
   id: string;
@@ -151,82 +153,77 @@ export default function PromptLibrary() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
   const [dataSource, setDataSource] = useState<string>('');
+  const [sortMode, setSortMode] = useState<'recent' | 'popular' | 'validated'>('recent');
   const { toast } = useToast();
+  const [enhancedContent, setEnhancedContent] = useState<string>('');
+
+  const loadFallback = async () => {
+    const fallbackResponse = await fetch('/api/prompts-crud?showAll=true');
+    if (!fallbackResponse.ok) throw new Error('Fallback API failed');
+
+    const fallbackData = await fallbackResponse.json();
+    const promptsArray = Array.isArray(fallbackData) ? fallbackData : (fallbackData.prompts || []);
+
+    setPrompts(promptsArray);
+
+    const defaultSuites = DEFAULT_PRISM_SUITES.map((s, idx) => ({
+      id: s.code,
+      code: s.code,
+      name: s.name,
+      fullName: s.description,
+      description: s.description,
+      icon: '',
+      color: s.color,
+      promptCount: promptsArray.filter((p: Prompt) => p.suite === s.name).length,
+      sortOrder: idx
+    }));
+    setSuites(defaultSuites);
+    setActiveTab(defaultSuites[0]?.name || 'RULES™');
+    setDataSource('fallback');
+  };
 
   const fetchPrompts = async () => {
     try {
       setLoading(true);
-      
-      // First try the new PRISM API
       const response = await fetch('/api/prism');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch from PRISM API');
-      }
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        // Use data from PRISM API
-        if (data.suites && data.suites.length > 0) {
-          setSuites(data.suites);
-          setActiveTab(data.suites[0]?.name || 'RULES™');
-        } else {
-          // Use default suites if none in DB
-          const defaultSuites = DEFAULT_PRISM_SUITES.map((s, idx) => ({
-            id: s.code,
-            code: s.code,
-            name: s.name,
-            fullName: s.description,
-            description: s.description,
-            icon: '',
-            color: s.color,
-            promptCount: 0,
-            sortOrder: idx
-          }));
-          setSuites(defaultSuites);
-          setActiveTab('RULES™');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          if (data.suites && data.suites.length > 0) {
+            setSuites(data.suites);
+            setActiveTab(data.suites[0]?.name || 'RULES™');
+          } else {
+            const defaultSuites = DEFAULT_PRISM_SUITES.map((s, idx) => ({
+              id: s.code,
+              code: s.code,
+              name: s.name,
+              fullName: s.description,
+              description: s.description,
+              icon: '',
+              color: s.color,
+              promptCount: 0,
+              sortOrder: idx
+            }));
+            setSuites(defaultSuites);
+            setActiveTab('RULES™');
+          }
+
+          setSubSuites(data.subSuites || []);
+          setPrompts(data.prompts || []);
+          setDataSource(data.source || 'api');
+
+          if (data.message) {
+            console.log('PRISM API message:', data.message);
+          }
+          return;
         }
-        
-        setSubSuites(data.subSuites || []);
-        setPrompts(data.prompts || []);
-        setDataSource(data.source || 'api');
-        
-        if (data.message) {
-          console.log('PRISM API message:', data.message);
-        }
-      } else {
-        throw new Error(data.error || 'Failed to fetch prompts');
       }
+
+      // If we reach here, use fallback
+      await loadFallback();
     } catch (error) {
-      console.error('Error fetching from PRISM API, falling back to prompts-crud:', error);
-      
-      // Fallback to old API
       try {
-        const fallbackResponse = await fetch('/api/prompts-crud?showAll=true');
-        if (!fallbackResponse.ok) throw new Error('Fallback API failed');
-        
-        const fallbackData = await fallbackResponse.json();
-        const promptsArray = Array.isArray(fallbackData) ? fallbackData : 
-                           (fallbackData.prompts || []);
-        
-        setPrompts(promptsArray);
-        
-        // Use default suites
-        const defaultSuites = DEFAULT_PRISM_SUITES.map((s, idx) => ({
-          id: s.code,
-          code: s.code,
-          name: s.name,
-          fullName: s.description,
-          description: s.description,
-          icon: '',
-          color: s.color,
-          promptCount: promptsArray.filter((p: Prompt) => p.suite === s.name).length,
-          sortOrder: idx
-        }));
-        setSuites(defaultSuites);
-        setActiveTab('RULES™');
-        setDataSource('fallback');
+        await loadFallback();
       } catch (fallbackError) {
         console.error('Fallback API also failed:', fallbackError);
         setPrompts([]);
@@ -245,6 +242,10 @@ export default function PromptLibrary() {
     fetchPrompts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    setEnhancedContent('');
+  }, [selectedPrompt]);
 
   const copyPrompt = async (prompt: Prompt) => {
     try {
@@ -306,12 +307,14 @@ export default function PromptLibrary() {
     if (!searchQuery.trim()) return suitePrompts;
     
     const query = searchQuery.toLowerCase();
-    return suitePrompts.filter(prompt => 
+    const results = suitePrompts.filter(prompt => 
       (prompt.display_name || prompt.name || '').toLowerCase().includes(query) ||
       (prompt.description || '').toLowerCase().includes(query) ||
       (prompt.title || '').toLowerCase().includes(query) ||
       (prompt.tags || []).some(tag => tag.toLowerCase().includes(query))
     );
+
+    return results;
   }, [prompts, activeTab, activeSubSuite, promptTypeFilter, searchQuery]);
   
   // Count prompts by type for current suite
@@ -349,21 +352,53 @@ export default function PromptLibrary() {
   const totalPrompts = prompts.length;
   const currentSubSuites = getSubSuitesForSuite(activeTab);
 
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-neutral-600 dark:text-neutral-400">Loading PRISM Library...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const sortPrompts = (items: Prompt[]) => {
+    if (sortMode === 'popular') {
+      return [...items].sort((a, b) => (b.usage_count || 0) - (a.usage_count || 0));
+    }
+    if (sortMode === 'validated') {
+      return [...items].sort((a, b) => Number(b.expert_validated || 0) - Number(a.expert_validated || 0));
+    }
+    return [...items]; // keep natural order (recent from API)
+  };
+
+  const renderSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {Array.from({ length: 6 }).map((_, idx) => (
+        <Card key={idx} className="border-l-4 border-l-neutral-200">
+          <CardHeader className="pb-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-5 w-10" />
+            </div>
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-5/6" />
+            <div className="flex gap-2">
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-5 w-12" />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0 flex gap-2">
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 
   const activeSuite = suites.find((s) => s.name === activeTab);
   const ActiveIcon = getSuiteIcon(activeTab);
+
+  const getObjective = (prompt: Prompt | null | undefined) => {
+    if (!prompt) return '';
+    if (prompt.description) return prompt.description;
+    const text = (prompt.content || prompt.title || prompt.name || '').trim();
+    if (!text) return '';
+    const taskSplit = text.split(/(?:\n\s*Task:|\n\s*Output format:)/i)[0];
+    const firstLine = taskSplit.split('\n').filter(Boolean)[0] || taskSplit;
+    return firstLine.slice(0, 220);
+  };
 
   return (
     <div className="container mx-auto p-6">
@@ -371,12 +406,6 @@ export default function PromptLibrary() {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <h1 className="text-3xl font-bold">PRISM™ Prompt Library</h1>
-          {dataSource && (
-            <Badge variant="outline" className="text-xs">
-              {dataSource === 'normalized_tables' ? 'Database' : 
-               dataSource === 'flat_table_with_categorization' ? 'Categorized' : 'Fallback'}
-            </Badge>
-          )}
         </div>
         <p className="text-neutral-600 dark:text-neutral-400 mb-4">
           Professional Healthcare Prompt Templates & Strategies
@@ -434,45 +463,38 @@ export default function PromptLibrary() {
         </div>
       </div>
 
-      {/* Prompt Type Filter */}
-      <div className="flex flex-wrap items-center gap-4 mb-4">
-        <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Prompt Type:</span>
+      {/* Prompt Type & Sort */}
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="flex gap-2">
-          <button
-            onClick={() => setPromptTypeFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
-              promptTypeFilter === 'all'
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-canvas-surface text-neutral-700 border-neutral-300 hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-600 dark:hover:bg-neutral-700'
-            }`}
+          {(['all', 'detailed', 'starter'] as PromptTypeFilter[]).map((type) => (
+            <button
+              key={type}
+              onClick={() => setPromptTypeFilter(type)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                promptTypeFilter === type
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-canvas-surface text-neutral-700 border-neutral-300 hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-600 dark:hover:bg-neutral-700'
+              }`}
+            >
+              {type === 'all' ? 'All' : type === 'detailed' ? 'Detailed' : 'Starters'}
+            </button>
+          ))}
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-sm text-neutral-600 dark:text-neutral-400">Sort:</span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={() =>
+              setSortMode((prev) =>
+                prev === 'recent' ? 'popular' : prev === 'popular' ? 'validated' : 'recent'
+              )
+            }
           >
-            All Prompts
-            <span className="ml-1.5 text-xs opacity-70">({promptTypeCounts.all})</span>
-          </button>
-          <button
-            onClick={() => setPromptTypeFilter('detailed')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
-              promptTypeFilter === 'detailed'
-                ? 'bg-green-600 text-white border-green-600'
-                : 'bg-canvas-surface text-neutral-700 border-neutral-300 hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-600 dark:hover:bg-neutral-700'
-            }`}
-          >
-            <PenTool className="h-3 w-3 inline mr-1" />
-            Detailed Templates
-            <span className="ml-1.5 text-xs opacity-70">({promptTypeCounts.detailed})</span>
-          </button>
-          <button
-            onClick={() => setPromptTypeFilter('starter')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
-              promptTypeFilter === 'starter'
-                ? 'bg-purple-600 text-white border-purple-600'
-                : 'bg-canvas-surface text-neutral-700 border-neutral-300 hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-600 dark:hover:bg-neutral-700'
-            }`}
-          >
-            <Zap className="h-3 w-3 inline mr-1" />
-            Conversation Starters
-            <span className="ml-1.5 text-xs opacity-70">({promptTypeCounts.starter})</span>
-          </button>
+            {sortMode === 'recent' ? 'Recent' : sortMode === 'popular' ? 'Popular' : 'Validated'}
+            <ChevronDown className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -528,37 +550,42 @@ export default function PromptLibrary() {
 
         {filteredPrompts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredPrompts.map(prompt => {
+            {sortPrompts(filteredPrompts).map(prompt => {
               const isDetailedPrompt = prompt.user_template && prompt.user_template.trim().length > 0;
               return (
-              <Card key={prompt.id} className={`hover:shadow-lg transition-shadow group ${isDetailedPrompt ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-purple-500'}`}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 pr-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        {isDetailedPrompt ? (
-                          <Badge className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                            <PenTool className="h-3 w-3 mr-1" />
-                            Template
+                <Card key={prompt.id} className="hover:shadow-lg transition-shadow group border border-neutral-200 dark:border-neutral-800">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className="text-xs" variant="outline">
+                            {prompt.sub_suite_name || prompt.sub_suite || prompt.suite}
                           </Badge>
-                        ) : (
-                          <Badge className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                            <Zap className="h-3 w-3 mr-1" />
-                            Starter
+                          {prompt.complexity && (
+                            <Badge className={`text-xs ${getComplexityColor(prompt.complexity)}`}>
+                              {prompt.complexity}
+                            </Badge>
+                          )}
+                          {prompt.expert_validated && (
+                            <Badge className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Validated
+                            </Badge>
+                          )}
+                          <Badge className="text-xs bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+                            {isDetailedPrompt ? 'Detailed' : 'Starter'}
                           </Badge>
+                        </div>
+                        <CardTitle className="text-base font-semibold line-clamp-2">
+                          {prompt.display_name || prompt.title || prompt.name}
+                        </CardTitle>
+                        {prompt.prompt_code && (
+                          <span className="text-xs text-neutral-400 font-mono">{prompt.prompt_code}</span>
                         )}
+                        <CardDescription className="text-sm line-clamp-3 mt-1">
+                          {getObjective(prompt)}
+                        </CardDescription>
                       </div>
-                      <CardTitle className="text-sm font-medium line-clamp-2">
-                        {prompt.display_name || prompt.title || prompt.name}
-                      </CardTitle>
-                      {prompt.prompt_code && (
-                        <span className="text-xs text-neutral-400 font-mono">{prompt.prompt_code}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {prompt.expert_validated && (
-                        <CheckCircle2 className="h-4 w-4 text-green-500" title="Expert Validated" />
-                      )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -567,63 +594,31 @@ export default function PromptLibrary() {
                         <Star className={`h-4 w-4 ${prompt.is_favorite ? 'fill-yellow-400 text-yellow-400' : 'text-neutral-400'}`} />
                       </Button>
                     </div>
-                  </div>
-                  <CardDescription className="text-xs line-clamp-3 mt-1">
-                    {prompt.description}
-                  </CardDescription>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {prompt.complexity && (
-                      <Badge className={`text-xs ${getComplexityColor(prompt.complexity)}`}>
-                        {prompt.complexity}
-                      </Badge>
-                    )}
-                    {prompt.category && (
-                      <Badge variant="secondary" className="text-xs">
-                        {prompt.category}
-                      </Badge>
-                    )}
-                    {prompt.sub_suite && (
-                      <Badge variant="outline" className="text-xs">
-                        {prompt.sub_suite_name || prompt.sub_suite}
-                      </Badge>
-                    )}
-                    {prompt.estimated_time_minutes && (
-                      <Badge variant="outline" className="text-xs flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {prompt.estimated_time_minutes}m
-                      </Badge>
-                    )}
-                    {isDetailedPrompt && prompt.variables && prompt.variables.length > 0 && (
-                      <Badge variant="outline" className="text-xs flex items-center gap-1 bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
-                        {prompt.variables.length} variables
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedPrompt(prompt)}
-                      className="flex-1"
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      View
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyPrompt(prompt)}
-                      className="flex-1"
-                    >
-                      <Copy className="h-3 w-3 mr-1" />
-                      Copy
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedPrompt(prompt)}
+                        className="flex-1"
+                      >
+                        <Eye className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyPrompt(prompt)}
+                        className="flex-1"
+                      >
+                        <Copy className="h-3 w-3 mr-1" />
+                        Copy
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
             })}
           </div>
         ) : (
@@ -665,9 +660,9 @@ export default function PromptLibrary() {
                 </Badge>
               )}
             </div>
-            <DialogDescription>
-              {selectedPrompt?.description}
-            </DialogDescription>
+          <DialogDescription>
+              {getObjective(selectedPrompt as Prompt)}
+          </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 mt-4">
@@ -713,6 +708,17 @@ export default function PromptLibrary() {
               </div>
             )}
 
+            {/* Starter / Objective */}
+            <div className="bg-neutral-50 dark:bg-neutral-900 p-4 rounded-lg border border-neutral-200 dark:border-neutral-800">
+              <h4 className="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 flex items-center gap-2">
+                <Zap className="h-4 w-4" />
+                Prompt Starter / Objective
+              </h4>
+              <p className="text-sm text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap">
+                {getObjective(selectedPrompt as Prompt)}
+              </p>
+            </div>
+
             {/* System Prompt */}
             {selectedPrompt?.system_prompt && (
               <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -741,9 +747,18 @@ export default function PromptLibrary() {
 
             {/* Main Content */}
             <div className="bg-neutral-50 dark:bg-neutral-900 p-4 rounded-lg">
-              <h4 className="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300">Prompt Content</h4>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Prompt Content
+                </h4>
+                {enhancedContent && (
+                  <Badge variant="outline" className="text-xs text-blue-700 border-blue-200 dark:text-blue-200 dark:border-blue-800">
+                    AI enhanced
+                  </Badge>
+                )}
+              </div>
               <pre className="text-sm whitespace-pre-wrap font-mono text-neutral-800 dark:text-neutral-200 max-h-96 overflow-y-auto">
-                {selectedPrompt?.content || 'No content available'}
+                {enhancedContent || selectedPrompt?.content || 'No content available'}
               </pre>
             </div>
 
@@ -762,14 +777,22 @@ export default function PromptLibrary() {
             )}
 
             {/* Actions */}
-            <div className="flex justify-end gap-2 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => selectedPrompt && copyPrompt(selectedPrompt)}
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Copy to Clipboard
-              </Button>
+            <div className="flex items-center justify-between gap-3 pt-4 border-t">
+              <div className="flex items-center gap-2">
+                {selectedPrompt && (
+                  <PromptEnhancer
+                    value={selectedPrompt.content || selectedPrompt.user_template || selectedPrompt.system_prompt || ''}
+                    onApply={(val) => setEnhancedContent(val)}
+                    triggerClassName="h-9 w-9"
+                  />
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={copySelectedContent}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy {enhancedContent ? 'Enhanced' : 'Original'}
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
@@ -777,3 +800,21 @@ export default function PromptLibrary() {
     </div>
   );
 }
+  const copySelectedContent = async () => {
+    if (!selectedPrompt) return;
+    try {
+      const textToCopy = enhancedContent || selectedPrompt.content || selectedPrompt.system_prompt || '';
+      await navigator.clipboard.writeText(textToCopy);
+      toast({
+        title: "Copied!",
+        description: enhancedContent ? "Enhanced prompt copied to clipboard" : "Prompt copied to clipboard",
+      });
+    } catch (error) {
+      console.error("Failed to copy prompt:", error);
+      toast({
+        title: "Error",
+        description: "Failed to copy the prompt",
+        variant: "destructive"
+      });
+    }
+  };

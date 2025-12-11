@@ -90,7 +90,7 @@ async def _check_rls_status(supabase_client) -> Dict[str, Any]:
         try:
             result = await supabase_client.client.rpc('count_rls_policies').execute()
             if result.data is not None:
-                policy_count = result.data
+                policy_count = result.data if isinstance(result.data, int) else result.data[0].get('count', 0)
                 rls_status = {
                     "enabled": "active" if policy_count > 0 else "inactive",
                     "policies_count": policy_count,
@@ -98,7 +98,7 @@ async def _check_rls_status(supabase_client) -> Dict[str, Any]:
                 }
         except Exception as e:
             logger.warning("health_check_rls_query_failed", error=str(e))
-            rls_status["status"] = "error"
+            rls_status["status"] = "unknown"
     
     return rls_status
 

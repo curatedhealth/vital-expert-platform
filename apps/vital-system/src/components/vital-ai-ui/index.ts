@@ -10,11 +10,18 @@
  * This file exists for backward compatibility and to provide the UI bindings.
  */
 
-// Re-export everything from shared package
-export * from '@vital/ai-ui';
-
-// Re-export hooks
-export * from '@vital/ai-ui/hooks';
+// Local re-exports (no external @vital/ai-ui dependency)
+export * from './conversation';
+export * from './reasoning';
+export * from './workflow';
+export * from './data';
+export * from './documents';
+export * from './agents';
+export * from './layout';
+export * from './fusion';
+export * from './hooks';
+export * from './artifacts';
+export * from './error';
 
 // ============================================================================
 // Convenience Aliases (Backward Compatibility)
@@ -28,7 +35,7 @@ export {
   VitalModelSelector as ModelSelector,
   VitalSuggestionChips as SuggestionChips,
   VitalQuickActions as QuickActions,
-} from '@vital/ai-ui/conversation';
+} from './conversation';
 
 // Reasoning
 export {
@@ -39,7 +46,7 @@ export {
   VitalToolInvocation as ToolInvocation,
   VitalSourcePreview as SourcePreview,
   VitalDelegationTrace as DelegationTrace,
-} from '@vital/ai-ui/reasoning';
+} from './reasoning';
 
 // Workflow
 export {
@@ -49,13 +56,13 @@ export {
   VitalCircuitBreaker as CircuitBreaker,
   VitalApprovalCard as ApprovalCard,
   VitalTimeoutWarning as TimeoutWarning,
-} from '@vital/ai-ui/workflow';
+} from './workflow';
 
 // Data
 export {
   VitalDataTable as DataTable,
   VitalMetricCard as MetricCard,
-} from '@vital/ai-ui/data';
+} from './data';
 
 // Documents
 export {
@@ -64,13 +71,13 @@ export {
   VitalDocumentPreview as DocumentPreview,
   VitalFileUpload as FileUpload,
   VitalDownloadCard as DownloadCard,
-} from '@vital/ai-ui/documents';
+} from './documents';
 
 // Agents
 export {
   VitalAgentCard as AgentCard,
   VitalTeamView as TeamView,
-} from '@vital/ai-ui/agents';
+} from './agents';
 
 // Layout
 export {
@@ -79,7 +86,7 @@ export {
   VitalContextPanel as ContextPanel,
   VitalChatLayout as ChatLayout,
   VitalDashboardLayout as DashboardLayout,
-} from '@vital/ai-ui/layout';
+} from './layout';
 
 // Fusion
 export {
@@ -88,4 +95,21 @@ export {
   VitalRRFVisualization as RRFVisualization,
   VitalTeamRecommendation as TeamRecommendation,
   VitalRetrieverResults as RetrieverResults,
-} from '@vital/ai-ui/fusion';
+} from './fusion';
+
+// Mission
+export {
+  VitalTeamAssemblyView as TeamAssemblyView,
+} from './mission/VitalTeamAssemblyView';
+
+// Artifacts (Horizontal Capability)
+export {
+  VitalArtifactPanel as ArtifactPanel,
+  VitalArtifactCard as ArtifactCard,
+} from './artifacts';
+
+// Error Handling
+export {
+  VitalStreamErrorBoundary as StreamErrorBoundary,
+  createStreamError,
+} from './error';

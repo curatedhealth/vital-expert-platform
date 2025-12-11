@@ -1,187 +1,152 @@
-# VITAL Path Platform - Complete Documentation Index
+# VITAL Platform Documentation Index
 
-**Last Updated:** 2025-11-26  
-**Status:** ✅ All Systems Operational
-
----
-
-## 📁 **Documentation Structure**
-
-### **🤖 Services**
-
-#### **Ask Expert System** (`/services/ask-expert/`)
-Complete AI agent consultation system with 4 operational modes.
-
-**Key Files:**
-- `README.md` - Documentation index
-- `IMPLEMENTATION_STATUS.md` - Current status (all 4 modes)
-- `IMPLEMENTATION_SUMMARY.md` - Complete implementation details
-- `BUG_FIXES_REPORT.md` - Bug fixes applied
-- `TEST_REPORT.md` - Test results
-- `MODE3_OPTIMIZATIONS.py` - Performance optimizations
-- `MODE4_OPTIMIZATIONS.py` - Performance optimizations
-
-**Status:** ✅ Production-Ready (100% test success rate)
+**Version**: 4.0  
+**Last Updated**: December 6, 2025
 
 ---
 
-### **🔐 Platform Security**
+## Architecture
 
-#### **Row-Level Security (RLS)** (`/platform/rls/`)
-Enterprise-grade 4-level privacy and multi-tenant data isolation.
+### Core Architecture
+| File | Description |
+|------|-------------|
+| `architecture/VITAL_WORLD_CLASS_STRUCTURE_FINAL.md` | ⭐ **Master Architecture** - World-class structure v4.0 |
 
-**Key Files:**
-- `README.md` - RLS documentation index
-- `MULTI_LEVEL_PRIVACY_GUIDE.md` - 4-level privacy system
-- `MULTI_TENANT_STRATEGY.md` - Multi-tenant sharing
-- `RLS_DEPLOYMENT_GUIDE.md` - Deployment guide
+### API
+| File | Description |
+|------|-------------|
+| `architecture/api/API_DOCUMENTATION.md` | API endpoint documentation |
+| `architecture/api/conversations-api.md` | Conversations API reference |
+| `architecture/api/DATA_VIEW_ENDPOINTS.md` | Data view endpoints |
 
-**Migrations:**
-- `001_rls_tenant_context.sql` ✅ DEPLOYED
-- `005_rls_smart_policies.sql` ✅ DEPLOYED  
-- `007_rls_multi_level_privacy.sql` ✅ DEPLOYED
+### Backend
+| File | Description |
+|------|-------------|
+| `architecture/backend/BACKEND_AUDIT_REPORT_2025_Q4.md` | Q4 2025 backend audit |
+| `architecture/backend/BACKEND_REPOSITORY_STRUCTURE.md` | Repository structure |
 
-**Status:** ✅ Deployed and Active
+### Frontend
+| File | Description |
+|------|-------------|
+| `architecture/frontend/` | Frontend architecture docs |
 
----
-
-## 🎯 **Quick Reference**
-
-### **Ask Expert - 4 Modes:**
-
-| Mode | Type | Selection | Performance | Endpoint |
-|------|------|-----------|-------------|----------|
-| **1** | Interactive-Manual | User | ~475ms | `/api/mode1/manual` |
-| **2** | Interactive-Automatic | AI | ~335ms | `/api/mode2/automatic` |
-| **3** | Manual-Autonomous | User | ~1951ms | `/api/mode3/autonomous-automatic` |
-| **4** | Automatic-Autonomous | AI | ~4665ms | `/api/mode4/autonomous-manual` |
-
-### **RLS - Privacy Levels:**
-
-| Level | Visibility | Use Case |
-|-------|-----------|----------|
-| **👤 User-Private** | Creator only | Personal agents |
-| **🏢 Tenant-Shared** | All users in org | Team agents |
-| **🤝 Multi-Tenant** | Specific tenants | Partner agents |
-| **🌍 Public** | Everyone | VITAL agents |
+### Data Schema
+| File | Description |
+|------|-------------|
+| `architecture/data-schema/` | Database schema documentation |
 
 ---
 
-## 🚀 **Recent Updates (2025-11-26)**
+## Platform Components
 
-### **Bug Fixes:**
-- ✅ Agent UUID validation fixed (UUID/string support)
-- ✅ RAG namespace callable fixed (Pinecone API)
-- ✅ RLS functions deployed (tenant/user context)
+### Agents
+| File | Description |
+|------|-------------|
+| `platform/agents/` | 248+ agent definitions |
+| `platform/agents/AGENT_LEVEL_REMAPPING_COMPLETE.md` | Agent level mapping |
 
-### **Performance:**
-- ⚡ Mode 3: 15% faster (2285ms → 1951ms)
-- ⚡ Mode 4: 3-expert limit, timeouts added
-- ⚡ Execution timeouts prevent hangs
+### Capabilities
+| File | Description |
+|------|-------------|
+| `platform/capabilities/CAPABILITY_TAXONOMY.md` | Master capability taxonomy |
+| `platform/capabilities/FINAL_CAPABILITIES_STATUS.md` | Implementation status |
 
-### **Security:**
-- 🔐 4-level privacy system deployed
-- 🔐 Multi-tenant sharing enabled
-- 🔐 User-level privacy active
-- 🔐 RLS policies enforced
+### Enterprise Ontology
+| File | Description |
+|------|-------------|
+| `platform/enterprise_ontology/SCHEMA_DOCUMENTATION.md` | Ontology schema |
+| `platform/enterprise_ontology/NEO4J_SYNC_STRATEGY.md` | Neo4j sync strategy |
 
----
+### Row-Level Security
+| File | Description |
+|------|-------------|
+| `platform/rls/README.md` | RLS overview |
+| `platform/rls/MULTI_TENANT_STRATEGY.md` | Multi-tenant strategy |
+| `platform/rls/migrations/` | RLS SQL migrations |
 
-## 📖 **Documentation by Topic**
+### Personas
+| File | Description |
+|------|-------------|
+| `platform/personas/` | 50+ persona definitions |
 
-### **Implementation & Setup:**
-- `/services/ask-expert/IMPLEMENTATION_STATUS.md`
-- `/services/ask-expert/IMPLEMENTATION_SUMMARY.md`
-- `/platform/rls/RLS_DEPLOYMENT_GUIDE.md`
-
-### **Architecture & Design:**
-- `/services/ask-expert/4_MODE_SYSTEM_FINAL.md`
-- `/services/ask-expert/VITAL_Ask_Expert_PRD_ENHANCED_v2.md`
-- `/services/ask-expert/VITAL_Ask_Expert_ARD_ENHANCED_v2.md`
-
-### **Performance:**
-- `/services/ask-expert/MODE3_OPTIMIZATIONS.py`
-- `/services/ask-expert/MODE4_OPTIMIZATIONS.py`
-- `/services/ask-expert/TEST_REPORT.md`
-
-### **Security:**
-- `/platform/rls/MULTI_LEVEL_PRIVACY_GUIDE.md`
-- `/platform/rls/MULTI_TENANT_STRATEGY.md`
-- `/platform/rls/migrations/`
+### Responsibilities
+| File | Description |
+|------|-------------|
+| `platform/responsibilities/RESPONSIBILITY_TAXONOMY.md` | Responsibility taxonomy |
 
 ---
 
-## 🎓 **Learning Path**
+## Services
 
-### **For Developers (Backend):**
-1. Read: `/services/ask-expert/README.md` (5 min)
-2. Read: `/services/ask-expert/IMPLEMENTATION_STATUS.md` (10 min)
-3. Read: `/platform/rls/README.md` (5 min)
-4. Review: Mode implementations in actual code
+### Ask Expert
+| File | Description |
+|------|-------------|
+| `services/ask-expert/README.md` | Service overview |
+| `services/ask-expert/4_MODE_SYSTEM_FINAL.md` | 4-mode system design |
+| `services/ask-expert/MODE_3_IMPLEMENTATION_GUIDE.md` | Mode 3 implementation |
 
-### **For DevOps/Infrastructure:**
-1. Read: `/platform/rls/RLS_DEPLOYMENT_GUIDE.md` (10 min)
-2. Run: Verification queries
-3. Monitor: Database performance
-4. Review: Migration files
-
-### **For Product/Business:**
-1. Read: `/services/ask-expert/4_MODE_SYSTEM_FINAL.md` (15 min)
-2. Read: `/services/ask-expert/VITAL_Ask_Expert_PRD_ENHANCED_v2.md` (20 min)
-3. Review: Test results and performance metrics
+### Ask Panel
+| File | Description |
+|------|-------------|
+| `services/ask-panel/` | Panel discussion service docs |
 
 ---
 
-## 🔗 **Cross-References**
+## Coordination
 
-### **Ask Expert → RLS:**
-- Ask Expert uses RLS for agent isolation
-- Set context in middleware before agent queries
-- User-private agents require user context
-
-### **RLS → Ask Expert:**
-- RLS protects agent catalog
-- Privacy levels control agent visibility
-- Multi-tenant sharing enables collaboration
+| File | Description |
+|------|-------------|
+| `coordination/AGENT_COORDINATION_GUIDE.md` | Agent coordination |
+| `coordination/DOCUMENTATION_CONVENTION.md` | Documentation standards |
+| `coordination/DOCUMENTATION_STYLE_GUIDE.md` | Style guidelines |
 
 ---
 
-## 📊 **System Health**
+## Strategy
 
-### **Services:**
-- ✅ AI Engine: Operational
-- ✅ Database: Healthy
-- ✅ OpenAI API: Connected
-- ✅ RAG Pipeline: Functional
+### Architecture Requirements
+| File | Description |
+|------|-------------|
+| `strategy/ard/VITAL_Ask_Expert_ARD.md` | Ask Expert ARD |
 
-### **Security:**
-- ✅ RLS: Active
-- ✅ Tenant Isolation: Enforced
-- ✅ User Privacy: Protected
-- ✅ Multi-Tenant: Supported
+### Product Requirements
+| File | Description |
+|------|-------------|
+| `strategy/prd/VITAL_Ask_Expert_PRD.md` | Ask Expert PRD |
 
-### **Performance:**
-- ✅ Mode 1 & 2: Fast (<500ms)
-- ⚠️ Mode 3 & 4: Functional (need further optimization)
-- ✅ 100% Success Rate
-
----
-
-## 🏆 **Summary**
-
-**VITAL Path Platform Status:** 🟢 **PRODUCTION-READY**
-
-- ✅ 4 operational AI modes
-- ✅ Enterprise security (RLS)
-- ✅ Multi-tenant isolation
-- ✅ User-level privacy
-- ✅ 100% test success
-- ✅ Comprehensive documentation
-
-**Ready for production deployment!** 🚀
+### Vision
+| File | Description |
+|------|-------------|
+| `strategy/vision/STRATEGIC_PLAN.md` | Strategic plan |
+| `strategy/vision/VITAL_PLATFORM_VISION_STRATEGY_GOLD_STANDARD.md` | Platform vision |
 
 ---
 
-**Platform Version:** 2.0  
-**Documentation Version:** 1.0  
-**Last Major Update:** 2025-11-26
+## Brand
+
+| File | Description |
+|------|-------------|
+| `brand/VITAL_BRAND_GUIDELINES_V5.0.md` | Current brand guidelines |
+| `brand/VITAL_VISUAL_ASSET_INVENTORY.md` | Visual assets |
+
+---
+
+## Launch
+
+| File | Description |
+|------|-------------|
+| `launch/LAUNCH_RUNBOOK.md` | Launch runbook |
+| `launch/CUSTOMER_ONBOARDING_GUIDE.md` | Customer onboarding |
+| `launch/GO_NO_GO_FRAMEWORK.md` | Go/no-go decisions |
+
+---
+
+## Archive
+
+Historical and outdated documents are stored in `_archive/`:
+- `_archive/root-meta/` - Old root-level meta files
+- `_archive/architecture-versions/` - Previous architecture versions
+
+---
+
+**Note**: SQL migrations should be in `/database/migrations/`, not in docs.

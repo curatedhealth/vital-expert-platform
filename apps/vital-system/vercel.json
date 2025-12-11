@@ -1,6 +1,8 @@
 {
-  "buildCommand": "cd ../.. && pnpm install && cd apps/digital-health-startup && pnpm run build",
-  "installCommand": "cd ../.. && pnpm install --filter=@vital/digital-health-startup...",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm --filter vital-system build",
+  "installCommand": "pnpm install",
+  "outputDirectory": ".next",
   "framework": "nextjs",
   "functions": {
     "src/app/api/**/*.ts": {

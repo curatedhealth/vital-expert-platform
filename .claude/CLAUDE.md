@@ -31,6 +31,26 @@
 | Apps | `apps/` |
 | Documentation | `docs/` |
 
+### Service Documentation (Canonical Sources)
+
+**Ask Expert Service** (Verified December 9, 2025):
+| Mode | Status | Grade |
+|------|--------|-------|
+| Mode 1 (Interactive) | ✅ Working | B+ (85%) |
+| Mode 2 (Auto-Select) | ✅ Working | B (80%) |
+| Mode 3 (Deep Research) | ❌ Stubbed | F (20%) |
+| Mode 4 (Background) | ❌ Stubbed | F (20%) |
+
+**Overall Grade**: C (68/100)
+
+**Canonical Documentation**:
+- ⭐ **Single Source of Truth**: `.claude/docs/services/ask-expert/ASK_EXPERT_UNIFIED_AUDIT_REPORT.md`
+- **PRD v8.0 FINAL**: `.claude/docs/services/ask-expert/ASK_EXPERT_PRD/`
+- **ARD v8.0 FINAL**: `.claude/docs/services/ask-expert/ASK_EXPERT_ARD/`
+- **Implementation Plans**: `.claude/docs/services/ask-expert/ASK_EXPERT_PLAN/`
+
+⚠️ **All other Ask Expert audits are SUPERSEDED by the unified audit report.**
+
 ---
 
 ## 🔴 CRITICAL: Evidence-Based Operation (MANDATORY)
@@ -293,6 +313,72 @@ Before creating or updating an agent, verify:
 - ❌ Missing EVIDENCE REQUIREMENTS for business-critical/regulated agents
 - ❌ Creating agents without system prompts following the 6-section framework
 - ❌ Activating agents that haven't been validated
+
+## 🏗️ CURRENT ARCHITECTURE IMPLEMENTATION STATUS
+
+### World-Class Architecture Transformation (Active)
+
+**Reference Document**: `.claude/docs/architecture/VITAL_WORLD_CLASS_STRUCTURE_FINAL.md`
+
+#### Implementation Progress
+
+```
+Phase 1 ████████████████████ 100% ✅ Foundation (COMPLETE)
+Phase 2 ████████████████████ 100% ✅ Backend Core (COMPLETE)
+Phase 3 ████████████████████ 100% ✅ Backend Features (COMPLETE)
+Phase 4 ████████████████████ 100% ✅ Frontend (COMPLETE)
+Phase 5 ████████████████████ 100% ✅ Integration & Testing (COMPLETE)
+Wiring ████████████████████ 100% ✅ Architecture Wired (COMPLETE)
+```
+
+#### Wiring Status (December 5, 2025)
+
+| Component | Status | Verification |
+|-----------|--------|--------------|
+| Protocol Build | ✅ | `dist/index.js` (35KB), 12 JSON schemas |
+| Type Sync | ✅ | 12 Pydantic models, 126 exports |
+| RLS Policies | ✅ | Combined SQL file (1,252 lines) ready for Supabase |
+| Node Registry | ✅ | All node types registered (start, end, expert, router, panel, tool, memory, aggregator, iteration) |
+| Integration Tests | ✅ | 26/26 tests passing |
+
+#### Phase 1 Evidence (Verified December 5, 2025)
+
+| Component | Files | Command to Verify |
+|-----------|-------|-------------------|
+| Protocol Package | 14 TS files | `find packages/protocol -name "*.ts" \| wc -l` |
+| JSON Schemas | 12 JSON files | `ls packages/protocol/src/json-schemas/` |
+| Pydantic Models | 12 PY files | `ls services/ai-engine/src/api/schemas/_generated/` |
+| RLS Policies | 8 SQL files | `find database/policies -name "*.sql" \| wc -l` |
+| Translator Module | 6 PY files | `find services/ai-engine/src/modules/translator -name "*.py"` |
+| Domain Layer | 11 PY files | `find services/ai-engine/src/domain -name "*.py"` |
+| Workers Layer | 7 PY files | `find services/ai-engine/src/workers -name "*.py"` |
+| Core Layer | 2 PY files | `find services/ai-engine/src/core -name "*.py"` |
+| API Middleware | 4 PY files | `find services/ai-engine/src/api/middleware -name "*.py"` |
+| API Routes | 3 PY files | `find services/ai-engine/src/api/routes -name "*.py"` |
+| LLM Infrastructure | 4 PY files | `find services/ai-engine/src/infrastructure/llm -name "*.py"` |
+| Execution Module | 5 PY files | `find services/ai-engine/src/modules/execution -name "*.py"` |
+| Conversation Repo | 1 PY file | `ls services/ai-engine/src/infrastructure/database/repositories/conversation_repo.py` |
+| Streaming Routes | 1 PY file | `ls services/ai-engine/src/api/routes/streaming.py` |
+| Streaming Feature (FE) | 10 files | `find apps/vital-system/src/features/streaming -type f` |
+| Protocol Integration | 2 files | `ls apps/vital-system/src/lib/protocol/` |
+| Shared Hooks | 4 files | `ls apps/vital-system/src/lib/hooks/` |
+| Integration Tests | 4 files | `find services/ai-engine/tests/integration -name "test_*.py"` |
+| Test Fixtures | 1 file | `ls services/ai-engine/tests/conftest_phase5.py` |
+
+#### Key Commands
+
+```bash
+# Regenerate types (run after schema changes)
+make sync-types
+
+# Apply RLS policies
+make db-policies
+
+# Run all development commands
+make help
+```
+
+---
 
 ## Phase 2: Standardization Guidelines (Active)
 

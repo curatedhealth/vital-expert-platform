@@ -31,6 +31,7 @@ export type SSEEventType =
   | 'citation'        // Evidence citation
   | 'tool_call'       // L5 tool invocation
   | 'tool'            // Backend alias for tool_call
+  | 'status'          // Status updates (planning/running/etc.)
   | 'tool_result'     // L5 tool result
   | 'delegation'      // Agent delegation
   | 'checkpoint'      // HITL checkpoint
@@ -120,12 +121,20 @@ export interface ProgressEvent {
   stage: string;
   progress: number; // 0-100
   message: string;
+  status?: string;
   subSteps?: Array<{ name: string; status: 'pending' | 'active' | 'complete' | 'error' }>;
+}
+
+export interface StatusEvent {
+  status: string;
+  message?: string;
 }
 
 export interface PlanEvent {
   plan: Array<{ id?: string; name?: string; description?: string; status?: string }>;
   plan_confidence?: number | null;
+  status?: string;
+  message?: string;
 }
 
 export interface StepProgressEvent {
@@ -134,6 +143,8 @@ export interface StepProgressEvent {
   total_steps?: number;
   percentage?: number;
   message?: string;
+  status?: string;
+  stage?: string;
 }
 
 export interface ArtifactEvent {
@@ -187,14 +198,18 @@ export interface ErrorEvent {
 }
 
 export interface DoneEvent {
-  messageId: string;
-  totalTokens: number;
-  inputTokens: number;
-  outputTokens: number;
-  cost: number;
-  durationMs: number;
-  citationCount: number;
-  toolCallCount: number;
+  messageId?: string;
+  totalTokens?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  cost?: number;
+  durationMs?: number;
+  citationCount?: number;
+  toolCallCount?: number;
+  status?: string;
+  message?: string;
+  final?: unknown;
+  artifacts?: unknown;
 }
 
 // =============================================================================
@@ -206,6 +221,8 @@ export interface UseSSEStreamOptions {
   headers?: Record<string, string>;
   onToken?: (event: TokenEvent) => void;
   onReasoning?: (event: ReasoningEvent) => void;
+  onPlan?: (event: PlanEvent) => void;
+  onStatus?: (event: StatusEvent) => void;
   onCitation?: (event: CitationEvent) => void;
   onToolCall?: (event: ToolCallEvent) => void;
   onDelegation?: (event: DelegationEvent) => void;
@@ -241,6 +258,8 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
     headers = {},
     onToken,
     onReasoning,
+    onPlan,
+    onStatus,
     onCitation,
     onToolCall,
     onDelegation,
@@ -265,6 +284,7 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
   const abortControllerRef = useRef<AbortController | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
   const lastBodyRef = useRef<Record<string, unknown> | null>(null);
+  const isConnectingRef = useRef(false); // Guard against race conditions
 
   // Handle individual events
   const handleEvent = useCallback(
@@ -279,15 +299,17 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
           break;
         case 'plan': {
           const planEvent = event.data as PlanEvent;
+          onPlan?.(planEvent);
           if (onProgress) {
             const subSteps = (planEvent.plan || []).map((step, idx) => ({
               name: step.name || step.description || `Step ${idx + 1}`,
-              status: 'pending' as const,
+              status: (step.status as 'pending' | 'active' | 'complete') || 'pending',
             }));
             onProgress({
               stage: 'planning',
               progress: 0,
-              message: 'Plan generated',
+              message: planEvent.message || 'Plan generated',
+              status: planEvent.status || 'planning',
               subSteps,
             });
           }
@@ -296,9 +318,10 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
         case 'step_progress': {
           const progressEvent = event.data as StepProgressEvent;
           onProgress?.({
-            stage: progressEvent.step || 'execution',
+            stage: progressEvent.stage || progressEvent.step || 'execution',
             progress: progressEvent.percentage ?? 0,
             message: progressEvent.message || 'Executing mission',
+            status: progressEvent.status,
             subSteps: undefined,
           });
           break;
@@ -346,6 +369,9 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
         case 'checkpoint':
           onCheckpoint?.(event.data as CheckpointEvent);
           break;
+        case 'status':
+          onStatus?.(event.data as StatusEvent);
+          break;
         case 'progress':
           onProgress?.(event.data as ProgressEvent);
           break;
@@ -373,6 +399,13 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
   // Connect and start streaming
   const connect = useCallback(
     async (body: Record<string, unknown>) => {
+      // Guard against race conditions from rapid connect() calls
+      if (isConnectingRef.current) {
+        console.warn('[useSSEStream] Connection already in progress, ignoring duplicate connect()');
+        return;
+      }
+      isConnectingRef.current = true;
+
       // Clean up any existing connection
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -396,7 +429,8 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          const errText = await response.text().catch(() => '');
+          throw new Error(`HTTP ${response.status}: ${response.statusText}${errText ? ` | ${errText}` : ''}`);
         }
 
         if (!response.body) {
@@ -454,6 +488,7 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
           }
         }
       } finally {
+        isConnectingRef.current = false; // Reset guard for next connection
         setIsConnected(false);
         setIsStreaming(false);
         onConnectionChange?.(false);
@@ -464,6 +499,7 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
 
   // Disconnect
   const disconnect = useCallback(() => {
+    isConnectingRef.current = false; // Reset guard on disconnect
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -544,10 +580,11 @@ function normalizeArtifact(data: any): ArtifactEvent {
   return {
     id: data?.id || data?.artifact_id || `artifact-${Date.now()}`,
     artifactType: data?.artifactType || data?.type,
-    title: data?.title || data?.name || 'Artifact',
-    content: data?.content || data?.text || '',
+    title: data?.title || data?.name || data?.step || 'Artifact',
+    // Backend sends summary for missions, content for documents
+    content: data?.content || data?.summary || data?.text || '',
     format: data?.format,
-    downloadUrl: data?.downloadUrl,
+    downloadUrl: data?.downloadUrl || data?.artifactPath,
     citations,
   };
 }

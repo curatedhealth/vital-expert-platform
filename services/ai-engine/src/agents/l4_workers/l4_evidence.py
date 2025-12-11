@@ -361,6 +361,14 @@ class L4EvidenceSynthesizer(L4BaseWorker):
         """
         Synthesize evidence results using LLM.
         Formats gathered evidence into a coherent, evidence-based response.
+
+        Handles ALL L5 tool response formats:
+        - PubMed: {articles: [...]}
+        - ClinicalTrials: {trials: [...]}
+        - Cochrane: {reviews: [...]}
+        - WebSearch: {results: [...]}
+        - RAG: {documents: [...]}
+        - OpenFDA: {results: [...]}
         """
         # Gather evidence snippets from results
         evidence_snippets = []
@@ -369,21 +377,75 @@ class L4EvidenceSynthesizer(L4BaseWorker):
             if not data:
                 continue
 
-            # Handle different data formats
+            # Handle different data formats from various L5 tools
             if isinstance(data, dict):
-                # Extract articles/citations from common formats
-                articles = data.get("articles", []) or data.get("citations", []) or data.get("results", [])
-                if articles and isinstance(articles, list):
-                    for art in articles[:5]:  # Limit per source
+                # Extract items from all known L5 response formats
+                items = (
+                    data.get("articles", []) or      # PubMed
+                    data.get("trials", []) or        # ClinicalTrials
+                    data.get("reviews", []) or       # Cochrane
+                    data.get("papers", []) or        # Academic sources
+                    data.get("documents", []) or     # RAG
+                    data.get("results", []) or       # WebSearch, OpenFDA
+                    data.get("citations", []) or     # Generic citations
+                    data.get("sources", []) or       # Generic sources
+                    []
+                )
+
+                source_type = res.get("tool", res.get("source", f"Source {i}"))
+
+                if items and isinstance(items, list):
+                    for art in items[:8]:  # Limit per source (increased from 5)
                         if isinstance(art, dict):
-                            title = art.get("title", "Unknown")
-                            snippet = art.get("snippet", art.get("abstract", art.get("text", "")))[:300]
-                            source = art.get("source", res.get("source", f"Source {i}"))
-                            evidence_snippets.append(f"- [{source}] {title}: {snippet}...")
+                            # Extract title from various field names
+                            title = (
+                                art.get("title") or
+                                art.get("name") or
+                                art.get("official_title") or
+                                art.get("brief_title") or
+                                art.get("headline") or
+                                "Unknown"
+                            )
+
+                            # Extract content snippet from various field names
+                            snippet = (
+                                art.get("snippet") or
+                                art.get("abstract") or
+                                art.get("brief_summary") or
+                                art.get("description") or
+                                art.get("text") or
+                                art.get("content") or
+                                ""
+                            )[:400]
+
+                            # Extract URL if available
+                            url = art.get("url") or art.get("link") or art.get("href") or ""
+
+                            # Extract additional metadata
+                            authors = art.get("authors", [])
+                            author_str = ", ".join(authors[:3]) if isinstance(authors, list) else str(authors) if authors else ""
+                            pub_date = art.get("publication_date") or art.get("start_date") or art.get("date") or ""
+
+                            # Build rich evidence snippet
+                            evidence_line = f"- [{source_type}] **{title}**"
+                            if author_str:
+                                evidence_line += f" ({author_str})"
+                            if pub_date:
+                                evidence_line += f" [{pub_date}]"
+                            if snippet:
+                                evidence_line += f"\n  {snippet}..."
+                            if url:
+                                evidence_line += f"\n  Source: {url}"
+
+                            evidence_snippets.append(evidence_line)
+
+                        elif isinstance(art, str):
+                            evidence_snippets.append(f"- [{source_type}] {art[:300]}...")
                 else:
-                    evidence_snippets.append(f"- Source {i}: {str(data)[:300]}")
+                    # Fallback for unexpected formats
+                    evidence_snippets.append(f"- [{source_type}]: {str(data)[:400]}")
             else:
-                evidence_snippets.append(f"- Source {i}: {str(data)[:300]}")
+                evidence_snippets.append(f"- Source {i}: {str(data)[:400]}")
 
         if not evidence_snippets:
             return f"No evidence found for query: {query}"

@@ -100,3 +100,7 @@ RUN pip install pytest pytest-asyncio pytest-cov httpx
 CMD ["pytest", "tests/", "-v", "--cov=src", "--cov-report=xml"]
 
 
+
+
+
+

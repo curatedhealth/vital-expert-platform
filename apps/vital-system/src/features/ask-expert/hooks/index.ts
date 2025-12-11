@@ -31,6 +31,23 @@ export {
 } from './useSSEStream';
 
 // =============================================================================
+// STREAM STATE REDUCER (All 15 SSE Event Types)
+// =============================================================================
+
+export {
+  streamReducer,
+  initialStreamState,
+  streamSelectors,
+  streamActions,
+  type StreamState,
+  type StreamAction,
+  type StreamStatus,
+  type StreamError,
+  type SourceEvent,
+  type AgentSelectedEvent,
+} from './streamReducer';
+
+// =============================================================================
 // MODE-SPECIFIC HOOKS
 // =============================================================================
 
@@ -109,7 +126,7 @@ export {
   type AgentInfo,
   type FusionEvidence,
   type ReasoningStep,
-} from '@vital/ai-ui/hooks';
+} from '@/components/vital-ai-ui/hooks';
 
 // Mission stream (shared)
 export { useMissionStream } from '@/features/missions/hooks';

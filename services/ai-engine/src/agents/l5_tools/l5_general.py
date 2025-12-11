@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import structlog
 
-from .l5_base import L5BaseTool, ToolTier, L5Result
+from .l5_base import L5BaseTool, ToolConfig, ToolTier, L5Result
 
 logger = structlog.get_logger()
 
@@ -55,9 +55,17 @@ GENERAL_SOURCE_CONFIG = {
 @dataclass
 class GeneralResult(L5Result):
     """Extended result for general tools."""
-    snippet: str = ""
+    # Web search result fields
+    id: str = ""                      # URL or unique identifier
+    title: str = ""                   # Result title
+    content: str = ""                 # Full content
+    source: str = ""                  # Source name (tavily, serpapi, duckduckgo)
+    score: float = 0.0                # Relevance score
+    url: str = ""                     # Full URL
+    snippet: str = ""                 # Content snippet/summary
     published_date: Optional[str] = None
-    domain: str = ""
+    domain: str = ""                  # Extracted domain from URL
+    # World Bank specific fields
     country: str = ""
     indicator: str = ""
     year: Optional[int] = None
@@ -67,10 +75,10 @@ class GeneralResult(L5Result):
 class GeneralL5Tool(L5BaseTool[GeneralResult]):
     """
     Unified general-purpose tool.
-    
+
     Supports RAG, Web Search, and World Bank data.
     """
-    
+
     def __init__(
         self,
         source: GeneralSource,
@@ -86,18 +94,25 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
         serpapi_key: Optional[str] = None,
         **kwargs
     ):
-        config = GENERAL_SOURCE_CONFIG[source]
-        
-        super().__init__(
-            source_type=ToolTier(source.value),
-            base_url=config["base_url"],
-            api_key=api_key,
-            cache_ttl_hours=config.get("cache_ttl", 24),
-            **kwargs
+        source_config = GENERAL_SOURCE_CONFIG[source]
+
+        # Create ToolConfig for base class
+        tool_config = ToolConfig(
+            id=f"L5-{source.value.upper()}",
+            name=f"General {source.value.title()} Tool",
+            slug=source.value,
+            description=f"General-purpose {source.value} search tool",
+            category="general",
+            tier=2,
+            base_url=source_config.get("base_url", ""),
+            cache_ttl=source_config.get("cache_ttl", 24) * 3600,  # Convert hours to seconds
         )
-        
+
+        super().__init__(config=tool_config)
+
         self.source = source
-        self.config = config
+        self.source_config = source_config  # Keep source config separate from tool config
+        self.source_name = source.value
         
         # RAG components
         self.supabase = supabase_client
@@ -116,7 +131,29 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
             GeneralSource.WEB_SEARCH: self._search_web,
             GeneralSource.WORLD_BANK: self._search_world_bank,
         }
-    
+
+    async def _make_request(
+        self,
+        method: str,
+        url: str,
+        params: Optional[Dict] = None,
+        json_data: Optional[Dict] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Make HTTP request using base class client."""
+        try:
+            if method.upper() == "GET":
+                return await self._get(url, params=params)
+            elif method.upper() == "POST":
+                return await self._post(url, json_data=json_data)
+            return None
+        except Exception as e:
+            logger.error(
+                f"vital_l5_{self.source_name}_request_error",
+                url=url,
+                error=str(e),
+            )
+            return None
+
     async def search(
         self,
         query: str,
@@ -124,25 +161,29 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
         **kwargs
     ) -> List[GeneralResult]:
         """Search general data source."""
-        self._log_search_start(query, max_results=max_results)
-        
-        cache_key = self._get_cache_key("search", query, max_results)
-        cached = self._get_cached(cache_key)
-        if cached:
-            return cached
-        
+        logger.info(
+            f"vital_l5_{self.source_name}_search_start",
+            query=query[:100],
+            max_results=max_results,
+        )
+
         try:
             handler = self._search_handlers.get(self.source)
             if not handler:
                 return []
-            
+
             results = await handler(query, max_results, **kwargs)
-            self._set_cached(cache_key, results)
-            self._log_search_complete(len(results))
+            logger.info(
+                f"vital_l5_{self.source_name}_search_complete",
+                result_count=len(results),
+            )
             return results
-            
+
         except Exception as e:
-            self._log_error("search", e)
+            logger.error(
+                f"vital_l5_{self.source_name}_search_error",
+                error=str(e),
+            )
             return []
     
     async def get_by_id(
@@ -154,6 +195,40 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
         if self.source == GeneralSource.RAG:
             return await self._get_rag_document(item_id, kwargs.get('tenant_id', ''))
         return None
+
+    async def _execute_impl(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute the tool via the standardized L5 interface.
+
+        Maps the execute(params) pattern to the search() method.
+        Expected params: {"query": str, "max_results": int, ...}
+        """
+        query = params.get("query", "")
+        max_results = params.get("max_results", 20)
+
+        # Extract additional kwargs
+        extra_kwargs = {k: v for k, v in params.items() if k not in ["query", "max_results"]}
+
+        results = await self.search(query, max_results=max_results, **extra_kwargs)
+
+        # Convert results to standardized format
+        return {
+            "results": [
+                {
+                    "id": r.id,
+                    "title": r.title,
+                    "content": r.content,
+                    "source": r.source,
+                    "score": r.score,
+                    "url": r.url,
+                    "snippet": r.snippet,
+                    "metadata": r.metadata,
+                }
+                for r in results
+            ],
+            "total": len(results),
+            "source_type": self.source.value,
+        }
     
     # ==================== RAG ====================
     async def _search_rag(
@@ -375,6 +450,8 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
         results = []
         for item in data.get('results', []):
             results.append(GeneralResult(
+                success=True,
+                tool_id=self.config.id,
                 id=item.get('url', ''),
                 title=item.get('title', ''),
                 content=item.get('content', ''),
@@ -384,9 +461,9 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
                 snippet=item.get('content', ''),
                 domain=self._extract_domain(item.get('url', '')),
             ))
-        
+
         return results
-    
+
     async def _search_serpapi(
         self,
         query: str,
@@ -410,6 +487,8 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
         results = []
         for i, item in enumerate(data.get('organic_results', [])):
             results.append(GeneralResult(
+                success=True,
+                tool_id=self.config.id,
                 id=item.get('link', ''),
                 title=item.get('title', ''),
                 content=item.get('snippet', ''),
@@ -419,9 +498,9 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
                 snippet=item.get('snippet', ''),
                 domain=self._extract_domain(item.get('link', '')),
             ))
-        
+
         return results
-    
+
     async def _search_duckduckgo(
         self,
         query: str,
@@ -437,6 +516,8 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
             results = []
             for i, item in enumerate(search_results):
                 results.append(GeneralResult(
+                    success=True,
+                    tool_id=self.config.id,
                     id=item.get('href', ''),
                     title=item.get('title', ''),
                     content=item.get('body', ''),
@@ -446,7 +527,7 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
                     snippet=item.get('body', ''),
                     domain=self._extract_domain(item.get('href', '')),
                 ))
-            
+
             return results
             
         except ImportError:
@@ -506,6 +587,8 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
             
             if query_lower in name or query_lower in source_note:
                 results.append(GeneralResult(
+                    success=True,
+                    tool_id=self.config.id,
                     id=item.get('id', ''),
                     title=item.get('name', ''),
                     content=item.get('sourceNote', '')[:500],
@@ -548,6 +631,8 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
         for item in data[1][:max_results]:
             value = item.get('value')
             results.append(GeneralResult(
+                success=True,
+                tool_id=self.config.id,
                 id=f"{item.get('countryiso3code', '')}_{item.get('date', '')}",
                 title=item.get('indicator', {}).get('value', ''),
                 content=f"{item.get('country', {}).get('value', '')}: {value}",
@@ -558,7 +643,7 @@ class GeneralL5Tool(L5BaseTool[GeneralResult]):
                 year=int(item.get('date', 0)),
                 value=float(value) if value is not None else None,
             ))
-        
+
         return results
 
 

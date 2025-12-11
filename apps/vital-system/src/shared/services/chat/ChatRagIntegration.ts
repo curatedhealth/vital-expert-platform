@@ -41,15 +41,17 @@ export interface AgentChatContext {
 }
 
 export class ChatRagIntegration {
+  private static ragService = RagService;
+
   /**
    * Initialize chat context with agent's RAG assignments
    */
   static async initializeChatContext(agentName: string, conversationId: string): Promise<AgentChatContext | null> {
     try {
-      // const _ragContext = await RagService.getAgentRagContext(agentName);
+      const ragContext = await RagService.getAgentRagContext(agentName);
 
       if (ragContext.assigned_rags.length === 0) {
-        // return null;
+        return null;
       }
 
       return {
@@ -59,7 +61,7 @@ export class ChatRagIntegration {
         rag_assignments: ragContext.assigned_rags
       };
     } catch (error) {
-      // console.error('❌ Failed to initialize chat context:', error);
+      // Return null if RAG context initialization fails
       return null;
     }
   }
@@ -74,7 +76,7 @@ export class ChatRagIntegration {
       maxRagResults?: number;
       similarityThreshold?: number;
       useAllRags?: boolean;
-    } = { /* TODO: implement */ }
+    } = {}
   ): Promise<{
     enhanced_message: string;
     system_context: string;
@@ -96,7 +98,7 @@ export class ChatRagIntegration {
       }> = [];
 
       // Determine which RAG databases to query
-      const ragsToQuery = context.rag_assignments.length <= 3
+      const ragsToQuery = options.useAllRags || context.rag_assignments.length <= 3
         ? context.rag_assignments
         : context.rag_assignments
             .sort((a, b) => {
@@ -110,7 +112,7 @@ export class ChatRagIntegration {
       // Query each RAG database
       for (const rag of ragsToQuery) {
         try {
-          const results = await this.ragService.queryRAG(rag.id, query, {
+          const results = await this.ragService.queryRag(rag.id, message, {
             maxResults: options.maxRagResults || 5,
             similarityThreshold: options.similarityThreshold || 0.7,
             agentId: context.agent_id,
@@ -124,12 +126,13 @@ export class ChatRagIntegration {
               rag_name: rag.name,
               content: result.content,
               relevance_score: result.score,
-              document_source: result.metadata.document_name || 'Unknown Document'
+              document_source: (result.metadata.document_name as string) || 'Unknown Document'
             });
           });
 
         } catch (error) {
-          console.error(`❌ Failed to query RAG ${rag.name}:`, error);
+          // Continue with other RAGs if one fails
+          console.error(`Failed to query RAG ${rag.name}:`, error);
         }
       }
 
@@ -143,13 +146,12 @@ export class ChatRagIntegration {
         context
       );
 
-      // return {
+      return {
         enhanced_message,
         system_context,
         rag_sources: ragSources
       };
     } catch (error) {
-      // console.error('❌ Failed to enhance message with RAG:', error);
       // Return original message if RAG enhancement fails
       return {
         enhanced_message: message,
@@ -174,7 +176,7 @@ export class ChatRagIntegration {
     context: AgentChatContext
   ): { enhanced_message: string; system_context: string } {
     // Build system context with RAG descriptions
-
+    let systemContext = '';
     systemContext += `AVAILABLE KNOWLEDGE BASES:\n`;
     context.rag_assignments.forEach(rag => {
       systemContext += `• ${rag.name}: ${rag.description}\n`;
@@ -189,6 +191,7 @@ export class ChatRagIntegration {
     });
 
     // Build enhanced message with relevant context
+    let enhancedMessage = originalMessage;
 
     if (ragSources.length > 0) {
       enhancedMessage += `\n\nRELEVANT KNOWLEDGE CONTEXT:\n`;
@@ -208,6 +211,7 @@ export class ChatRagIntegration {
    * Build basic system context when no RAG sources are available
    */
   private static buildBasicSystemContext(context: AgentChatContext): string {
+    let systemContext = '';
 
     if (context.rag_assignments.length > 0) {
       systemContext += `You have access to ${context.rag_assignments.length} specialized knowledge base(s), but no relevant context was found for this query. `;
@@ -242,7 +246,7 @@ export class ChatRagIntegration {
       metadata: {
         agent_name: context.agent_name,
         conversation_id: context.conversation_id,
-        rag_databases_queried: ragSources.map((s: any) => s.rag_name),
+        rag_databases_queried: ragSources.map((s) => s.rag_name),
         total_rag_sources: ragSources.length,
         avg_relevance_score: ragSources.length > 0
           ? ragSources.reduce((sum, s) => sum + s.relevance_score, 0) / ragSources.length
@@ -263,9 +267,11 @@ export class ChatRagIntegration {
     last_updated: string;
   }> {
     try {
+      const ragContext = await RagService.getAgentRagContext(agentName);
+      const primaryRag = ragContext.assigned_rags.find(r => r.is_primary);
 
       // Extract domains from RAG descriptions (would be actual data in real implementation)
-
+      const domainsCovered = [
         'regulatory',
         'clinical_trials',
         'pharmacovigilance',
@@ -279,7 +285,6 @@ export class ChatRagIntegration {
         last_updated: new Date().toISOString()
       };
     } catch (error) {
-      // console.error('❌ Failed to get RAG context summary:', error);
       return {
         total_rags: 0,
         domains_covered: [],
@@ -314,8 +319,10 @@ export class ChatRagIntegration {
       confidence_score: number;
     }> = [];
 
-    availableRags.forEach(rag => {
+    const queryLower = query.toLowerCase();
 
+    availableRags.forEach(rag => {
+      let score = 0;
       const reasons: string[] = [];
 
       // Check description match

@@ -19,6 +19,17 @@
  */
 
 // ============================================================================
+// Layout Components - ADAPTIVE WORKSPACE SHELL
+// ============================================================================
+
+export {
+  VitalWorkspace,
+  type VitalWorkspaceProps,
+  type WorkspaceMode,
+  type SidebarPosition,
+} from './VitalWorkspace';
+
+// ============================================================================
 // Mode Selection (5 components) - ASK EXPERT SPECIFIC
 // ============================================================================
 // These implement the 4-Mode Execution Matrix UI specific to Ask Expert

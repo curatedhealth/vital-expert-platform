@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { useAskExpert, type AskExpertMode } from '@vital/ai-ui/hooks';
+import { useAskExpert, type AskExpertMode } from '@/components/vital-ai-ui/hooks';
 
 /**
  * Ask Expert Mode Configuration

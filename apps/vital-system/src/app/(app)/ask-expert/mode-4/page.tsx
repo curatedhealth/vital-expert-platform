@@ -190,13 +190,13 @@ export default function Mode4BackgroundDashboardPage() {
   return (
     <div className="flex h-[calc(100vh-4rem)]">
       {/* Left Panel - Mission Creation */}
-      <aside className="w-96 border-r bg-muted/30 flex flex-col">
+      <aside className="w-96 border-r bg-muted/30 flex flex-col" data-testid="mission-form">
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
+            <h1 className="text-lg font-semibold flex items-center gap-2">
               <Rocket className="h-5 w-5 text-primary" />
               Background Mission
-            </h2>
+            </h1>
             {isPolling && (
               <Badge variant="outline" className="text-xs">
                 <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
@@ -219,6 +219,7 @@ export default function Mode4BackgroundDashboardPage() {
                 onChange={(e) => setTitleInput(e.target.value)}
                 placeholder="e.g., Q4 Market Analysis"
                 disabled={!!mission}
+                data-testid="mission-title"
               />
             </div>
 
@@ -230,6 +231,7 @@ export default function Mode4BackgroundDashboardPage() {
                 placeholder="Describe your research objective in detail. The AI will automatically assemble the best expert team and execute autonomously."
                 className="min-h-[160px] resize-none"
                 disabled={!!mission}
+                data-testid="goal-input"
               />
             </div>
 
@@ -308,7 +310,7 @@ export default function Mode4BackgroundDashboardPage() {
                   </Button>
                 )}
                 {preFlightPassed === true && (
-                  <Button onClick={launchMission} className="w-full">
+                  <Button onClick={launchMission} className="w-full" data-testid="start-mission">
                     <Rocket className="h-4 w-4 mr-2" />
                     Launch Mission
                   </Button>
@@ -328,7 +330,7 @@ export default function Mode4BackgroundDashboardPage() {
 
         {/* Running Mission Controls */}
         {mission && (mission.status === 'running' || mission.status === 'paused' || mission.status === 'queued') && (
-          <div className="p-4 space-y-4">
+          <div className="p-4 space-y-4" data-testid="mission-active">
             {/* Mission Status Card */}
             <Card>
               <CardHeader className="pb-2">
@@ -340,7 +342,7 @@ export default function Mode4BackgroundDashboardPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Progress value={mission.progress} className="h-2 mb-2" />
+                <Progress value={mission.progress} className="h-2 mb-2" data-testid="progress-timeline" />
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>{mission.progress}% complete</span>
                   {currentPhase && <span>{currentPhase}</span>}

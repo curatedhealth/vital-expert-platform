@@ -212,11 +212,19 @@ def _register_domain(
     tool_class: Type[L5BaseTool],
     factory: callable
 ):
-    """Register all tools from a domain."""
+    """Register all tools from a domain.
+
+    Handles both string keys and Enum keys by normalizing to string values.
+    This ensures create_l5_tool("rag") works even when the config uses
+    GeneralSource.RAG as the key.
+    """
+    from enum import Enum
     for key, config in configs.items():
-        TOOL_DOMAIN_MAP[key] = tool_class
-        TOOL_FACTORY_MAP[key] = factory
-        ALL_TOOL_CONFIGS[key] = config
+        # Normalize enum keys to their string values
+        str_key = key.value if isinstance(key, Enum) else key
+        TOOL_DOMAIN_MAP[str_key] = tool_class
+        TOOL_FACTORY_MAP[str_key] = factory
+        ALL_TOOL_CONFIGS[str_key] = config
 
 
 # Register all domains
@@ -243,13 +251,63 @@ _register_domain(GENERAL_TOOL_CONFIGS, GeneralL5Tool, create_general_tool)
 # FACTORY FUNCTIONS
 # ============================================================================
 
-def create_l5_tool(tool_key: str) -> L5BaseTool:
-    """Factory function to create any L5 tool by key."""
+def create_l5_tool(tool_key: str, **override_kwargs) -> L5BaseTool:
+    """Factory function to create any L5 tool by key.
+
+    Args:
+        tool_key: The tool identifier (e.g., 'web_search', 'rag', 'pubmed')
+        **override_kwargs: Optional overrides for tool configuration
+
+    Returns:
+        Configured L5 tool instance
+    """
+    import os
+
     if tool_key not in TOOL_FACTORY_MAP:
         raise ValueError(f"Unknown tool: {tool_key}. Available: {list(ALL_TOOL_CONFIGS.keys())}")
-    
+
     factory = TOOL_FACTORY_MAP[tool_key]
-    return factory(tool_key)
+
+    # Build kwargs with environment-based API keys
+    kwargs = {}
+
+    # Inject API keys from environment for specific tools
+    if tool_key == 'web_search':
+        tavily_key = os.getenv('TAVILY_API_KEY')
+        serpapi_key = os.getenv('SERPAPI_API_KEY')
+        if tavily_key:
+            kwargs['tavily_key'] = tavily_key
+        if serpapi_key:
+            kwargs['serpapi_key'] = serpapi_key
+
+    elif tool_key == 'rag':
+        # RAG uses Supabase/Pinecone - configure later if needed
+        pinecone_key = os.getenv('PINECONE_API_KEY')
+        pinecone_index = os.getenv('PINECONE_INDEX', 'vital-knowledge')
+        if pinecone_key:
+            kwargs['use_pinecone'] = True
+            kwargs['pinecone_index'] = pinecone_index
+
+    elif tool_key in ('pubmed', 'pmc'):
+        # PubMed/PMC uses NCBI API key
+        ncbi_key = os.getenv('NCBI_API_KEY')
+        if ncbi_key:
+            kwargs['api_key'] = ncbi_key
+
+    elif tool_key in ('clinicaltrials',):
+        # ClinicalTrials.gov - no key needed but may want base URL override
+        pass
+
+    elif tool_key in ('openfda', 'fda'):
+        # OpenFDA API key
+        openfda_key = os.getenv('OPENFDA_API_KEY')
+        if openfda_key:
+            kwargs['api_key'] = openfda_key
+
+    # Allow caller overrides
+    kwargs.update(override_kwargs)
+
+    return factory(tool_key, **kwargs)
 
 
 def get_tool_config(tool_key: str) -> ToolConfig:

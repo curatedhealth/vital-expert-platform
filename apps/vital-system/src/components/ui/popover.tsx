@@ -89,3 +89,8 @@ export const __PopoverContent = ({
     </div>
   )
 }
+
+// Backwards-compatible named exports expected by existing UI components
+export const Popover = __Popover;
+export const PopoverTrigger = __PopoverTrigger;
+export const PopoverContent = __PopoverContent;

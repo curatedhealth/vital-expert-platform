@@ -480,8 +480,53 @@ export interface Tokens {
 
 ---
 
+---
+
+## 11. Migration Notes
+
+### 11.1 Gray to Neutral Migration (Dec 2024)
+
+All hardcoded Tailwind CSS `gray-*` classes have been migrated to `neutral-*` to align with the token system defined in Section 1.3.
+
+**Migration Pattern:**
+```
+bg-gray-* → bg-neutral-*
+text-gray-* → text-neutral-*
+border-gray-* → border-neutral-*
+hover:bg-gray-* → hover:bg-neutral-*
+dark:*-gray-* → dark:*-neutral-*
+```
+
+**Exceptions (preserved):**
+- `vital-gray-*` - Brand CSS variables
+- `bg-white/20`, `bg-black/10` - Opacity overlays
+
+**Files migrated:** ~120 files
+**Tokens fixed:** ~900+ occurrences
+
+See `GRAY_TO_NEUTRAL_MIGRATION.md` for complete migration log.
+
+### 11.2 Recommended Usage
+
+| Use Case | Token | Example Class |
+|----------|-------|---------------|
+| Page background | `--neutral-50` | `bg-neutral-50` |
+| Card surface | `--neutral-100` | `bg-neutral-100` |
+| Borders/dividers | `--neutral-200` | `border-neutral-200` |
+| Input borders | `--neutral-300` | `border-neutral-300` |
+| Disabled text | `--neutral-400` | `text-neutral-400` |
+| Placeholder | `--neutral-500` | `placeholder-neutral-500` |
+| Secondary text | `--neutral-600` | `text-neutral-600` |
+| Body text | `--neutral-700` | `text-neutral-700` |
+| Headings | `--neutral-800` | `text-neutral-800` |
+| Primary text | `--neutral-900` | `text-neutral-900` |
+| Dark code blocks | `--neutral-950` | `bg-neutral-950` |
+
+---
+
 ## Document History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | Dec 2024 | Design Team | Initial specification |
+| 2.0 | Dec 2024 | Claude | Added gray→neutral migration notes |

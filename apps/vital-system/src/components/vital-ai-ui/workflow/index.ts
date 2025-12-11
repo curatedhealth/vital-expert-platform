@@ -11,6 +11,8 @@ export { VitalProgressTimeline, default as ProgressTimeline } from './VitalProgr
 export { VitalCircuitBreaker, default as CircuitBreaker } from './VitalCircuitBreaker';
 export { VitalApprovalCard } from './VitalApprovalCard';
 export { VitalTimeoutWarning, VitalTimeoutBadge } from './VitalTimeoutWarning';
+export { VitalWorkflowProgress, type WorkflowStep } from './VitalWorkflowProgress';
+export { VitalHITLCheckpoint } from './VitalHITLCheckpoint';
 
 // Re-export types
 export type {

@@ -1,174 +1,159 @@
-# VITAL Platform Documentation
+# VITAL Platform - Internal Documentation
 
-**Version**: 1.0
-**Last Updated**: November 23, 2025
-**Purpose**: Single source of truth for all VITAL Platform documentation
+**Version**: 4.1  
+**Last Updated**: December 6, 2025  
+**Purpose**: Comprehensive internal documentation for AI assistants and developers
 
 ---
 
-## 📂 Documentation Structure
+## 🔴 CRITICAL: This is the ONLY Location for Internal Documentation
+
+### AI Agents: ALL internal documentation goes here!
 
 ```
-.claude/docs/                    ← SINGLE SOURCE OF TRUTH
+✅ CORRECT: /.claude/docs/{category}/your-doc.md
+❌ WRONG:   /your-doc.md (project root)
+❌ WRONG:   /docs/your-doc.md (public docs only)
+❌ WRONG:   /scripts/your-doc.md
+❌ WRONG:   /apps/your-doc.md
+```
+
+### Before Creating Any Documentation:
+1. ✅ Use this directory (`/.claude/docs/`)
+2. ✅ Find the correct subdirectory (see structure below)
+3. ✅ Check if a similar file already exists
+4. ❌ NEVER create docs in project root
+5. ❌ NEVER create docs in `/docs/` (that's for PUBLIC developer guides only)
+
+---
+
+## 📁 Directory Structure
+
+```
+.claude/docs/
+├── README.md                     # This file
+├── DOCUMENTATION_INDEX.md        # Full index of all docs
 │
-├── README.md                    ← This file
-├── INDEX.md                     ← Quick navigation index
+├── architecture/                 # 🏗️ System Architecture
+│   ├── VITAL_WORLD_CLASS_STRUCTURE_FINAL.md  # ⭐ MASTER ARCHITECTURE
+│   ├── api/                      # API documentation (13 files)
+│   ├── backend/                  # Backend architecture
+│   ├── frontend/                 # Frontend/sidebar docs (9 files)
+│   ├── database/                 # Database/migration docs (15 files)
+│   ├── data-schema/              # Database schemas
+│   └── rag-pipeline/             # RAG pipeline docs
 │
-├── strategy/                    ← Vision, Strategy, Business
-│   ├── vision/                  ← Platform vision documents
-│   ├── prd/                     ← Product Requirements Documents
-│   ├── ard/                     ← Architecture Requirements Documents
-│   ├── business/                ← Business requirements
-│   └── roadmap/                 ← Product roadmap
+├── brand/                        # 🎨 Brand Guidelines
+│   ├── VITAL_BRAND_GUIDELINES_V5.0.md
+│   └── Visual assets & avatars
 │
-├── platform/                    ← Platform Assets
-│   ├── agents/                  ← Agent definitions & specifications
-│   ├── personas/                ← User personas
-│   ├── prompts/                 ← Prompt library
-│   ├── workflows/               ← Workflow templates
-│   ├── jtbds/                   ← Jobs-to-be-done
-│   ├── knowledge-domains/       ← Knowledge domain definitions
-│   ├── capabilities/            ← Platform capabilities
-│   └── skills/                  ← Skill definitions
+├── coordination/                 # 🤝 Agent Coordination
+│   ├── AGENT_COORDINATION_GUIDE.md
+│   ├── DOCUMENTATION_CONVENTION.md
+│   ├── QUICK_START_GUIDE.md
+│   └── Style guides & workflows
 │
-├── services/                    ← Service Documentation
-│   ├── ask-expert/              ← Ask Expert service (1:1 consultation)
-│   ├── ask-panel/               ← Ask Panel service (multi-expert)
-│   ├── ask-committee/           ← Ask Committee service (deliberation)
-│   └── byoai-orchestration/     ← BYOAI custom workflows
+├── launch/                       # 🚀 Launch Planning
+│   ├── LAUNCH_RUNBOOK.md
+│   └── Phase-specific docs
 │
-├── architecture/                ← Technical Architecture
-│   ├── data-schema/             ← Database schemas & migrations
-│   ├── architecture/            ← System architecture documents
-│   ├── api/                     ← API specifications
-│   ├── backend/                 ← Backend architecture
-│   ├── frontend/                ← Frontend architecture
-│   ├── infrastructure/          ← Infrastructure as code
-│   └── rag-pipeline/            ← RAG pipeline design
+├── methodology/                  # 📋 Methodology
+│   └── Development methodologies
 │
-├── workflows/                   ← Workflow Guides
-│   └── WORKFLOW-DESIGNER-GUIDE.md
+├── operations/                   # ⚙️ Operations
+│   ├── deployment/               # Deployment guides (13 files)
+│   ├── environment/              # Environment setup (3 files)
+│   ├── fixes/                    # Bug fixes & issues (11 files)
+│   └── testing/                  # Test documentation (6 files)
 │
-├── operations/                  ← Operations & DevOps
-│   ├── deployment/              ← Deployment guides
-│   ├── monitoring/              ← Monitoring setup
-│   ├── maintenance/             ← Maintenance procedures
-│   ├── runbooks/                ← Operational runbooks
-│   └── scripts/                 ← Operational scripts
+├── platform/                     # 💻 Platform Components
+│   ├── agents/                   # Agent definitions
+│   ├── capabilities/             # Capability taxonomy
+│   ├── data-loading/             # Data loading docs (6 files)
+│   ├── enterprise_ontology/      # Ontology & JTBD
+│   ├── knowledge-graph/          # Knowledge graph (6 files)
+│   ├── organizations/            # Organization structure (3 files)
+│   ├── personas/                 # User personas
+│   ├── prompts/                  # Prompt templates
+│   ├── responsibilities/         # Responsibility mapping
+│   ├── rls/                      # Row-Level Security
+│   └── workflows/                # Workflow definitions
 │
-├── testing/                     ← Testing Documentation
-│   ├── testing/                 ← Test strategies
-│   ├── compliance/              ← Compliance testing
-│   ├── performance/             ← Performance testing
-│   └── security/                ← Security testing
+├── services/                     # 🔧 Service Documentation
+│   ├── ask-expert/               # Ask Expert service (58 files)
+│   └── ask-panel/                # Ask Panel service (28 files)
 │
-└── coordination/                ← Agent Coordination
-    ├── AGENT_COORDINATION_GUIDE.md
-    ├── AGENT_IMPLEMENTATION_GUIDE.md
-    ├── AGENTS_DOCUMENTATION_GUIDE.md
-    ├── QUICK_START_VISUAL_GUIDE.md
-    ├── RECOMMENDED_AGENT_STRUCTURE.md
-    ├── SQL_SUPABASE_SPECIALIST_GUIDE.md
-    ├── DOCUMENTATION_CONVENTION.md
-    └── VITAL_SYSTEM_SOURCE_OF_TRUTH.md
+├── strategy/                     # 📈 Strategy Documents
+│   ├── ard/                      # Architecture Req Docs
+│   ├── prd/                      # Product Req Docs
+│   └── vision/                   # Platform vision
+│
+├── testing/                      # 🧪 Testing
+│   └── Test documentation
+│
+├── _historical/                  # 📜 Historical Documents
+│   ├── phases/                   # Phase completion docs (19 files)
+│   ├── migrations/               # Migration history (3 files)
+│   └── Legacy & completed docs
+│
+└── _archive/                     # 📦 Archived Documents
+    └── Old/outdated docs
 ```
 
 ---
 
-## 🎯 Quick Navigation
+## ⭐ Key Documents
 
-### For Product & Strategy
-- **Vision**: `strategy/vision/`
-- **Product Requirements**: `strategy/prd/`
-- **Architecture Requirements**: `strategy/ard/`
-- **Roadmap**: `strategy/roadmap/`
+### Architecture (Start Here)
+| Document | Purpose |
+|----------|---------|
+| [VITAL_WORLD_CLASS_STRUCTURE_FINAL.md](architecture/VITAL_WORLD_CLASS_STRUCTURE_FINAL.md) | **Master Architecture Blueprint** |
 
-### For Platform Assets
-- **Agent Definitions**: `platform/agents/`
-- **User Personas**: `platform/personas/`
-- **Prompt Library**: `platform/prompts/`
-- **Workflow Templates**: `platform/workflows/`
+### Platform Configuration
+| Document | Purpose |
+|----------|---------|
+| [platform/rls/README.md](platform/rls/README.md) | Row-Level Security documentation |
+| [platform/agents/](platform/agents/) | Agent definitions & taxonomies |
+| [platform/enterprise_ontology/](platform/enterprise_ontology/) | Enterprise ontology & JTBDs |
 
-### For Services
-- **Ask Expert**: `services/ask-expert/`
-- **Ask Panel**: `services/ask-panel/`
-- **BYOAI Orchestration**: `services/byoai-orchestration/`
+### Services
+| Document | Purpose |
+|----------|---------|
+| [services/ask-expert/](services/ask-expert/) | Ask Expert service docs |
+| [services/ask-panel/](services/ask-panel/) | Ask Panel service docs |
 
-### For Architecture
-- **Database Schemas**: `architecture/data-schema/`
-- **System Architecture**: `architecture/architecture/`
-- **API Specs**: `architecture/api/`
-- **Frontend/Backend**: `architecture/frontend/`, `architecture/backend/`
-
-### For Operations
-- **Deployment**: `operations/deployment/`
-- **Monitoring**: `operations/monitoring/`
-- **Runbooks**: `operations/runbooks/`
-
-### For Testing
-- **Test Strategies**: `testing/testing/`
-- **Compliance**: `testing/compliance/`
-- **Performance**: `testing/performance/`
-
-### For Agent Coordination
-- **Coordination Guide**: `coordination/AGENT_COORDINATION_GUIDE.md`
-- **Implementation Guide**: `coordination/AGENT_IMPLEMENTATION_GUIDE.md`
-- **Agent Structure**: `coordination/RECOMMENDED_AGENT_STRUCTURE.md`
+### Operations
+| Document | Purpose |
+|----------|---------|
+| [operations/deployment/](operations/deployment/) | Deployment guides |
+| [operations/environment/](operations/environment/) | Environment setup |
+| [operations/fixes/](operations/fixes/) | Bug fixes & resolutions |
 
 ---
 
-## 📊 Documentation Statistics
+## 🔗 Related Locations
 
-**Total Files**: 645+ markdown files
-**Categories**: 8 main categories
-**Subcategories**: 30+ organized folders
+**Root Documentation**:
+- `/.claude/VITAL.md` - Master reference
+- `/.claude/CLAUDE.md` - Claude guidelines
 
----
-
-## 🔍 Finding Documentation
-
-### By Category
-Browse the directory structure above to find documentation by category.
-
-### By Search
-Use grep to search across all documentation:
-```bash
-grep -r "search term" .claude/docs/
-```
-
-### By Index
-See `INDEX.md` for a comprehensive navigation index.
+**Public Docs**: `/docs/`  
+**Database**: `/database/migrations/`, `/database/queries/`  
+**Scripts**: `/scripts/diagnostics/`, `/scripts/testing/`
 
 ---
 
-## 📝 Documentation Standards
+## 📝 Documentation Guidelines
 
-All documentation follows standards defined in:
-- `coordination/DOCUMENTATION_CONVENTION.md` - Naming conventions
-- `coordination/AGENTS_DOCUMENTATION_GUIDE.md` - Documentation best practices
-
----
-
-## 🤝 Contributing
-
-When adding new documentation:
-
-1. **Choose the right category** - Place docs in the appropriate folder
-2. **Follow naming conventions** - Use UPPERCASE for main docs
-3. **Update INDEX.md** - Add your doc to the navigation index
-4. **Cross-reference** - Link related documents
-5. **Keep it organized** - One topic per document
+1. **New architecture docs** → `architecture/`
+2. **Service-specific docs** → `services/<service-name>/`
+3. **Platform config docs** → `platform/<component>/`
+4. **Operations docs** → `operations/<category>/`
+5. **SQL files** → `/database/queries/` or `/database/migrations/`
+6. **Historical docs** → `_historical/`
+7. **Outdated docs** → `_archive/`
 
 ---
 
-## 🚀 Quick Start Guides
-
-- **Agent Coordination**: `coordination/QUICK_START_VISUAL_GUIDE.md`
-- **SQL/Supabase**: `coordination/SQL_SUPABASE_SPECIALIST_GUIDE.md`
-- **Workflow Designer**: `workflows/WORKFLOW-DESIGNER-GUIDE.md`
-
----
-
-**This is the single source of truth for all VITAL Platform documentation.**
-
-All Claude Code agents have access to this documentation and use it to provide context-aware assistance.
+**Maintained by**: Platform Team  
+**Last Reorganization**: December 6, 2025

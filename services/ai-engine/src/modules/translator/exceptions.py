@@ -52,3 +52,7 @@ class ConditionNotFoundError(TranslatorError):
         super().__init__(f"No condition evaluator registered: {condition_id}")
 
 
+
+
+
+

@@ -208,7 +208,7 @@ export function useBaseAutonomous(
     onArtifact,
     onNotification,
     baseUrl = '/api/expert',
-    streamBaseUrl = '/api/ask-expert',
+    streamBaseUrl = '/api/missions',
     missionBaseUrl = '/api/expert/mission',
     mode,
     pollingInterval = 5000,
@@ -216,7 +216,12 @@ export function useBaseAutonomous(
 
   // Determine endpoints based on mode
   const modePrefix = mode === 'mode3_manual_autonomous' ? 'mode3' : 'mode4';
-  const streamUrl = `${streamBaseUrl}/stream`;
+  // Missions stream (aligned to backend /api/missions/stream)
+  const resolvedStreamBase =
+    process.env.NEXT_PUBLIC_MISSIONS_STREAM_BASE ||
+    streamBaseUrl ||
+    '/api/ask-expert';
+  const streamUrl = `${resolvedStreamBase.replace(/\/$/, '')}/stream`;
 
   // ==========================================================================
   // STATE
@@ -299,6 +304,20 @@ export function useBaseAutonomous(
     };
   }, [mission?.status, isPaused, refreshStatus, pollingInterval]);
 
+  // Cleanup checkpoint timer on unmount (fixes memory leak)
+  useEffect(() => {
+    return () => {
+      if (checkpointTimerRef.current) {
+        clearInterval(checkpointTimerRef.current);
+        checkpointTimerRef.current = null;
+      }
+      if (pollingTimerRef.current) {
+        clearInterval(pollingTimerRef.current);
+        pollingTimerRef.current = null;
+      }
+    };
+  }, []);
+
   // ==========================================================================
   // EVENT HANDLERS (Shared)
   // ==========================================================================
@@ -340,7 +359,7 @@ export function useBaseAutonomous(
 
   const handleDelegation = useCallback((event: DelegationEvent) => {
     setCurrentDelegations((prev) => [...prev, event]);
-    onNotification?.(`Task delegated to ${event.targetAgent}`, 'info');
+    onNotification?.(`Task delegated to ${event.toAgentName}`, 'info');
   }, [onNotification]);
 
   // Mode 4: Fusion event handler
@@ -425,12 +444,23 @@ export function useBaseAutonomous(
     const artifact: MissionArtifact = {
       id: event.id,
       type: event.artifactType as MissionArtifact['type'],
-      title: event.title,
-      content: event.content,
+      title: event.title || 'Artifact',
+      content: event.content || '',
       format: event.format,
       downloadUrl: event.downloadUrl,
     };
     setArtifacts((prev) => [...prev, artifact]);
+
+    // Missions backend sends content via artifacts, not tokens
+    // Accumulate artifact content to show in real-time
+    const artifactContent = event.content || (event as any).summary || '';
+    if (artifactContent) {
+      setCurrentContent((prev) => {
+        const separator = prev ? '\n\n---\n\n' : '';
+        return prev + separator + artifactContent;
+      });
+    }
+
     onArtifact?.(artifact);
     onNotification?.(`Artifact generated: ${artifact.title}`, 'success');
   }, [onArtifact, onNotification]);
@@ -445,19 +475,35 @@ export function useBaseAutonomous(
       if (pollingTimerRef.current) {
         clearInterval(pollingTimerRef.current);
       }
-      
+
+      // Extract final content from done event or artifacts
+      // Missions backend sends artifacts in done event, not tokens
+      let finalContent = currentContent;
+      if (!finalContent && event.artifacts) {
+        // Combine artifact summaries/content as final output
+        const artifactList = Array.isArray(event.artifacts) ? event.artifacts : [];
+        finalContent = artifactList
+          .map((a: any) => a.summary || a.content || '')
+          .filter(Boolean)
+          .join('\n\n');
+      }
+      if (!finalContent && event.final) {
+        // Try final.content if available
+        finalContent = (event.final as any)?.content || '';
+      }
+
       // Finalize current step
       if (currentStep) {
         const completedStep: MissionStep = {
           ...currentStep,
           status: 'complete',
           endTime: new Date(),
-          output: currentContent,
+          output: finalContent,
           reasoning: [...currentReasoning],
         };
-        
+
         onStepComplete?.(completedStep);
-        
+
         setMission((prev) =>
           prev
             ? {
@@ -465,7 +511,7 @@ export function useBaseAutonomous(
                 status: 'completed',
                 progress: 100,
                 steps: [...prev.steps, completedStep],
-                finalOutput: currentContent,
+                finalOutput: finalContent,
                 citations: currentCitations,
                 artifacts,
                 totalCost: event.cost,
@@ -481,7 +527,7 @@ export function useBaseAutonomous(
           ...mission,
           status: 'completed' as const,
           progress: 100,
-          finalOutput: currentContent,
+          finalOutput: finalContent,
           citations: currentCitations,
           artifacts,
           totalCost: event.cost,
@@ -519,6 +565,7 @@ export function useBaseAutonomous(
 
   const { connect, disconnect, isConnected, isStreaming, error } = useSSEStream({
     url: streamUrl,
+    headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
     onToken: handleToken,
     onReasoning: handleReasoning,
     onCitation: handleCitation,

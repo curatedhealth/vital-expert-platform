@@ -349,3 +349,7 @@ class BudgetService:
         return Decimal(str(round(prompt_cost + completion_cost, 6)))
 
 
+
+
+
+

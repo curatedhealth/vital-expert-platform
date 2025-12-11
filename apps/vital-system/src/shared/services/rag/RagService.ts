@@ -123,13 +123,11 @@ export class RagService {
       const { data, error } = await supabase.rpc('get_global_rag_databases');
 
       if (error) {
-        // console.error('❌ Error fetching global RAG databases:', error);
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      // console.error('❌ Failed to fetch global RAG databases:', error);
       throw error;
     }
   }
@@ -144,13 +142,11 @@ export class RagService {
       });
 
       if (error) {
-        // console.error('❌ Error fetching available RAG for agent:', error);
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      // console.error('❌ Failed to fetch available RAG for agent:', error);
       throw error;
     }
   }
@@ -165,13 +161,11 @@ export class RagService {
       });
 
       if (error) {
-        // console.error('❌ Error fetching assigned RAG for agent:', error);
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      // console.error('❌ Failed to fetch assigned RAG for agent:', error);
       throw error;
     }
   }
@@ -204,13 +198,11 @@ export class RagService {
         .single();
 
       if (error) {
-        // console.error('❌ Error creating RAG knowledge base:', error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      // console.error('❌ Failed to create RAG knowledge base:', error);
       throw error;
     }
   }
@@ -240,13 +232,11 @@ export class RagService {
         .single();
 
       if (error) {
-        // console.error('❌ Error assigning RAG to agent:', error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      // console.error('❌ Failed to assign RAG to agent:', error);
       throw error;
     }
   }
@@ -267,13 +257,11 @@ export class RagService {
         .single();
 
       if (error) {
-        // console.error('❌ Error updating agent RAG assignment:', error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      // console.error('❌ Failed to update agent RAG assignment:', error);
       throw error;
     }
   }
@@ -290,11 +278,9 @@ export class RagService {
         .eq('rag_id', ragId);
 
       if (error) {
-        // console.error('❌ Error unassigning RAG from agent:', error);
         throw error;
       }
     } catch (error) {
-      // console.error('❌ Failed to unassign RAG from agent:', error);
       throw error;
     }
   }
@@ -311,13 +297,11 @@ export class RagService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        // console.error('❌ Error fetching RAG documents:', error);
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      // console.error('❌ Failed to fetch RAG documents:', error);
       throw error;
     }
   }
@@ -348,13 +332,11 @@ export class RagService {
         .single();
 
       if (error) {
-        // console.error('❌ Error adding document to RAG:', error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      // console.error('❌ Failed to add document to RAG:', error);
       throw error;
     }
   }
@@ -371,7 +353,7 @@ export class RagService {
       filters?: Record<string, unknown>;
       agentId?: string;
       conversationId?: string;
-    } = { /* TODO: implement */ }
+    } = {}
   ): Promise<{
     results: Array<{
       content: string;
@@ -387,6 +369,8 @@ export class RagService {
       avg_score: number;
     };
   }> {
+    const startTime = Date.now();
+
     try {
       // In a real implementation, this would:
       // 1. Generate embeddings for the query
@@ -396,7 +380,7 @@ export class RagService {
       // 5. Return formatted results
 
       // Simulate vector search results
-
+      const mockResults = [
         {
           content: 'Sample relevant content from the RAG database...',
           metadata: {
@@ -408,6 +392,8 @@ export class RagService {
           document_id: 'doc_123'
         }
       ];
+
+      const responseTime = Date.now() - startTime;
 
       // Log analytics
       await this.logRagUsage({
@@ -432,7 +418,6 @@ export class RagService {
         }
       };
     } catch (error) {
-      // console.error('❌ Failed to query RAG:', error);
       throw error;
     }
   }
@@ -447,11 +432,10 @@ export class RagService {
         .insert([analytics]);
 
       if (error) {
-        // console.error('❌ Error logging RAG usage:', error);
         // Don't throw here to avoid breaking the main query flow
       }
     } catch (error) {
-      // console.error('❌ Failed to log RAG usage:', error);
+      // Silent fail for analytics logging
     }
   }
 
@@ -467,6 +451,9 @@ export class RagService {
     }
   ): Promise<RagUsageAnalytics[]> {
     try {
+      let query = supabase
+        .from('rag_usage_analytics')
+        .select('*');
 
       if (ragId) {
         query = query.eq('rag_id', ragId);
@@ -485,13 +472,11 @@ export class RagService {
       const { data, error } = await query.order('query_timestamp', { ascending: false });
 
       if (error) {
-        // console.error('❌ Error fetching RAG analytics:', error);
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      // console.error('❌ Failed to fetch RAG analytics:', error);
       throw error;
     }
   }
@@ -514,8 +499,10 @@ export class RagService {
     context_summary: string;
   }> {
     try {
+      const assignedRags = await this.getAgentAssignedRag(agentName);
 
       // Generate context summary for the agent
+      const contextSummary = this.generateRagContextSummary(assignedRags);
 
       return {
         assigned_rags: assignedRags.map(rag => ({
@@ -531,7 +518,6 @@ export class RagService {
         context_summary: contextSummary
       };
     } catch (error) {
-      // console.error('❌ Failed to get agent RAG context:', error);
       throw error;
     }
   }
@@ -543,6 +529,9 @@ export class RagService {
     if (assignments.length === 0) {
       return 'No RAG knowledge bases assigned to this agent.';
     }
+
+    const primaryRag = assignments.find(a => a.is_primary);
+    let summary = `You have access to ${assignments.length} knowledge base(s). `;
 
     if (primaryRag) {
       summary += `Your primary knowledge base should be used for most queries. `;

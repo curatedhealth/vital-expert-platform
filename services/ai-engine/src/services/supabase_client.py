@@ -3,6 +3,7 @@ Supabase client for VITAL Path AI Services
 Handles database operations and vector storage
 """
 
+import os
 import asyncio
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
@@ -56,8 +57,9 @@ class SupabaseClient:
                     raise
 
             # Optional: Initialize direct database connection for vector operations
-            # Only if DATABASE_URL is provided and valid
-            if self.settings.database_url and "postgresql" in self.settings.database_url.lower():
+            # Only if explicitly enabled and DATABASE_URL is provided
+            direct_db_enabled = os.getenv("SUPABASE_DIRECT_DB_ENABLED", "false").lower() == "true"
+            if direct_db_enabled and self.settings.database_url and "postgresql" in self.settings.database_url.lower():
                 try:
                     # Initialize SQLAlchemy engine for direct SQL operations
                     self.engine = create_engine(self.settings.database_url)
@@ -82,7 +84,7 @@ class SupabaseClient:
                     self.vx = None
                     self.vector_collection = None
             else:
-                logger.info("ℹ️ DATABASE_URL not provided, using Supabase REST API only")
+                logger.info("ℹ️ Direct database access disabled or DATABASE_URL not provided - using Supabase REST API only")
 
             logger.info("✅ Supabase client initialized successfully")
 

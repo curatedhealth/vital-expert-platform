@@ -267,3 +267,7 @@ class PanelRouter:
         logger.info(f"Registered new panel template: {template.name}")
 
 
+
+
+
+

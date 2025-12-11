@@ -108,3 +108,7 @@ CREATE INDEX IF NOT EXISTS idx_conversations_tenant_user_updated
 ON conversations(tenant_id, user_id, updated_at DESC);
 
 
+
+
+
+

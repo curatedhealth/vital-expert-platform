@@ -407,11 +407,260 @@ class TenantIsolation:
 
 
 # =============================================================================
-# Rate Limiting (In-Memory for Development)
+# Rate Limiting (Production Redis + Development In-Memory)
 # =============================================================================
 
 from collections import defaultdict
 from threading import Lock
+import os
+
+# Redis availability flag (set during initialization)
+_REDIS_AVAILABLE: Optional[bool] = None
+_redis_client: Optional[Any] = None
+
+
+def _get_redis_client() -> Optional[Any]:
+    """
+    Get Redis client singleton with lazy initialization.
+
+    Returns:
+        Redis client or None if unavailable
+    """
+    global _REDIS_AVAILABLE, _redis_client
+
+    if _REDIS_AVAILABLE is False:
+        return None
+
+    if _redis_client is not None:
+        return _redis_client
+
+    redis_url = os.getenv("REDIS_URL")
+
+    if not redis_url:
+        # Try local Redis
+        redis_url = "redis://localhost:6379/0"
+
+    try:
+        import redis
+        client = redis.from_url(
+            redis_url,
+            socket_timeout=2,
+            socket_connect_timeout=2,
+            retry_on_timeout=True,
+            decode_responses=True,
+        )
+        # Test connection
+        client.ping()
+        _redis_client = client
+        _REDIS_AVAILABLE = True
+        logger.info("redis_rate_limiter_connected", url=redis_url[:30] + "...")
+        return client
+    except Exception as e:
+        _REDIS_AVAILABLE = False
+        logger.warning(
+            "redis_rate_limiter_unavailable_fallback_to_memory",
+            error=str(e)[:100],
+        )
+        return None
+
+
+class RedisRateLimiter:
+    """
+    Production-grade Redis-based rate limiter for multi-instance deployments.
+
+    Features:
+    - Sliding window algorithm (more accurate than fixed windows)
+    - Atomic operations with Lua scripts
+    - Automatic fallback to in-memory if Redis unavailable
+    - Per-minute and per-hour limits
+    - TTL-based cleanup (no manual cleanup needed)
+
+    Suitable for:
+    - Multi-instance/horizontally scaled deployments
+    - Kubernetes/Docker Swarm environments
+    - Load-balanced configurations
+    """
+
+    # Lua script for atomic sliding window rate limiting
+    SLIDING_WINDOW_SCRIPT = """
+    local key = KEYS[1]
+    local now = tonumber(ARGV[1])
+    local window = tonumber(ARGV[2])
+    local limit = tonumber(ARGV[3])
+
+    -- Remove old entries outside the window
+    redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
+
+    -- Count current entries
+    local count = redis.call('ZCARD', key)
+
+    if count < limit then
+        -- Add new entry with current timestamp as score
+        redis.call('ZADD', key, now, now .. ':' .. math.random(1000000))
+        -- Set TTL for automatic cleanup
+        redis.call('EXPIRE', key, window)
+        return {1, limit - count - 1}  -- allowed, remaining
+    else
+        return {0, 0}  -- denied, remaining
+    end
+    """
+
+    def __init__(
+        self,
+        requests_per_minute: int = 60,
+        requests_per_hour: int = 1000,
+    ):
+        """
+        Initialize Redis rate limiter.
+
+        Args:
+            requests_per_minute: Maximum requests per minute per identifier
+            requests_per_hour: Maximum requests per hour per identifier
+        """
+        self.requests_per_minute = requests_per_minute
+        self.requests_per_hour = requests_per_hour
+        self._script_sha: Optional[str] = None
+        self._fallback = InMemoryRateLimiter(requests_per_minute, requests_per_hour)
+
+    def _get_script_sha(self, client) -> str:
+        """Load Lua script and cache SHA."""
+        if self._script_sha is None:
+            self._script_sha = client.script_load(self.SLIDING_WINDOW_SCRIPT)
+        return self._script_sha
+
+    def check_rate_limit(self, identifier: str) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Check if request is within rate limits using Redis sliding window.
+
+        Args:
+            identifier: Unique identifier (user ID, IP, tenant_id, etc.)
+
+        Returns:
+            Tuple of (allowed, metadata)
+        """
+        client = _get_redis_client()
+
+        if client is None:
+            # Fallback to in-memory rate limiting
+            return self._fallback.check_rate_limit(identifier)
+
+        now = datetime.now(timezone.utc).timestamp()
+
+        try:
+            script_sha = self._get_script_sha(client)
+
+            # Check minute limit
+            minute_key = f"ratelimit:minute:{identifier}"
+            minute_result = client.evalsha(
+                script_sha, 1, minute_key,
+                str(now), str(60), str(self.requests_per_minute)
+            )
+            minute_allowed, minute_remaining = minute_result
+
+            if not minute_allowed:
+                return False, {
+                    "reason": "minute_limit_exceeded",
+                    "limit": self.requests_per_minute,
+                    "remaining": 0,
+                    "reset_in_seconds": 60,
+                    "backend": "redis",
+                }
+
+            # Check hour limit
+            hour_key = f"ratelimit:hour:{identifier}"
+            hour_result = client.evalsha(
+                script_sha, 1, hour_key,
+                str(now), str(3600), str(self.requests_per_hour)
+            )
+            hour_allowed, hour_remaining = hour_result
+
+            if not hour_allowed:
+                return False, {
+                    "reason": "hour_limit_exceeded",
+                    "limit": self.requests_per_hour,
+                    "remaining": 0,
+                    "reset_in_seconds": 3600,
+                    "backend": "redis",
+                }
+
+            return True, {
+                "remaining_minute": minute_remaining,
+                "remaining_hour": hour_remaining,
+                "backend": "redis",
+            }
+
+        except Exception as e:
+            logger.warning(
+                "redis_rate_limit_error_fallback_to_memory",
+                error=str(e)[:100],
+                identifier=identifier[:20] if identifier else "unknown",
+            )
+            # Fallback to in-memory on Redis errors
+            return self._fallback.check_rate_limit(identifier)
+
+    def get_current_usage(self, identifier: str) -> Dict[str, Any]:
+        """
+        Get current rate limit usage for an identifier.
+
+        Args:
+            identifier: Unique identifier
+
+        Returns:
+            Current usage statistics
+        """
+        client = _get_redis_client()
+
+        if client is None:
+            return {"backend": "memory", "available": False}
+
+        try:
+            now = datetime.now(timezone.utc).timestamp()
+
+            minute_key = f"ratelimit:minute:{identifier}"
+            hour_key = f"ratelimit:hour:{identifier}"
+
+            # Count entries in current windows
+            minute_count = client.zcount(minute_key, now - 60, now)
+            hour_count = client.zcount(hour_key, now - 3600, now)
+
+            return {
+                "minute_used": minute_count,
+                "minute_limit": self.requests_per_minute,
+                "minute_remaining": max(0, self.requests_per_minute - minute_count),
+                "hour_used": hour_count,
+                "hour_limit": self.requests_per_hour,
+                "hour_remaining": max(0, self.requests_per_hour - hour_count),
+                "backend": "redis",
+            }
+        except Exception as e:
+            logger.warning("redis_usage_check_error", error=str(e)[:100])
+            return {"backend": "redis", "error": str(e)[:100]}
+
+    def reset_limits(self, identifier: str) -> bool:
+        """
+        Reset rate limits for an identifier (admin use only).
+
+        Args:
+            identifier: Unique identifier
+
+        Returns:
+            True if successful
+        """
+        client = _get_redis_client()
+
+        if client is None:
+            return False
+
+        try:
+            minute_key = f"ratelimit:minute:{identifier}"
+            hour_key = f"ratelimit:hour:{identifier}"
+            client.delete(minute_key, hour_key)
+            logger.info("rate_limits_reset", identifier=identifier[:20])
+            return True
+        except Exception as e:
+            logger.error("rate_limit_reset_error", error=str(e)[:100])
+            return False
+
 
 class InMemoryRateLimiter:
     """
@@ -540,38 +789,99 @@ def sanitize_inputs(*input_names: str):
 # Global Rate Limiter (Singleton)
 # =============================================================================
 
+# Type alias for rate limiter (can be either Redis or InMemory)
+RateLimiterType = Union[RedisRateLimiter, InMemoryRateLimiter]
+
 # Global rate limiter instance for streaming endpoints
-_global_rate_limiter: Optional[InMemoryRateLimiter] = None
+_global_rate_limiter: Optional[RateLimiterType] = None
 
 
 def get_rate_limiter(
     requests_per_minute: int = 30,
     requests_per_hour: int = 500,
-) -> InMemoryRateLimiter:
+    force_memory: bool = False,
+) -> RateLimiterType:
     """
     Get or create the global rate limiter instance.
+
+    Production Behavior:
+    - Uses Redis-based rate limiting by default (supports multi-instance)
+    - Automatically falls back to in-memory if Redis unavailable
+    - Set RATE_LIMIT_USE_REDIS=false to force in-memory mode
 
     Args:
         requests_per_minute: Max requests per minute per identifier
         requests_per_hour: Max requests per hour per identifier
+        force_memory: Force in-memory rate limiting (for testing)
 
     Returns:
-        InMemoryRateLimiter singleton instance
+        Rate limiter instance (RedisRateLimiter or InMemoryRateLimiter)
+
+    Environment Variables:
+        REDIS_URL: Redis connection URL (enables Redis mode)
+        RATE_LIMIT_USE_REDIS: Set to "false" to disable Redis rate limiting
     """
     global _global_rate_limiter
 
     if _global_rate_limiter is None:
-        _global_rate_limiter = InMemoryRateLimiter(
-            requests_per_minute=requests_per_minute,
-            requests_per_hour=requests_per_hour,
-        )
-        logger.info(
-            "rate_limiter_initialized",
-            requests_per_minute=requests_per_minute,
-            requests_per_hour=requests_per_hour,
-        )
+        # Check if Redis should be used
+        use_redis = os.getenv("RATE_LIMIT_USE_REDIS", "true").lower() == "true"
+
+        if force_memory or not use_redis:
+            _global_rate_limiter = InMemoryRateLimiter(
+                requests_per_minute=requests_per_minute,
+                requests_per_hour=requests_per_hour,
+            )
+            logger.info(
+                "rate_limiter_initialized",
+                backend="memory",
+                requests_per_minute=requests_per_minute,
+                requests_per_hour=requests_per_hour,
+            )
+        else:
+            # Use Redis-based rate limiter (with automatic fallback)
+            _global_rate_limiter = RedisRateLimiter(
+                requests_per_minute=requests_per_minute,
+                requests_per_hour=requests_per_hour,
+            )
+            logger.info(
+                "rate_limiter_initialized",
+                backend="redis_with_fallback",
+                requests_per_minute=requests_per_minute,
+                requests_per_hour=requests_per_hour,
+            )
 
     return _global_rate_limiter
+
+
+def get_rate_limiter_status() -> Dict[str, Any]:
+    """
+    Get current rate limiter status and backend information.
+
+    Returns:
+        Status dictionary with backend type and availability
+    """
+    limiter = get_rate_limiter()
+    backend = "redis" if isinstance(limiter, RedisRateLimiter) else "memory"
+
+    status = {
+        "backend_type": backend,
+        "requests_per_minute": limiter.requests_per_minute,
+        "requests_per_hour": limiter.requests_per_hour,
+    }
+
+    if backend == "redis":
+        client = _get_redis_client()
+        status["redis_available"] = client is not None
+        if client:
+            try:
+                status["redis_ping"] = client.ping()
+            except Exception:
+                status["redis_ping"] = False
+    else:
+        status["redis_available"] = False
+
+    return status
 
 
 def check_rate_limit_or_raise(

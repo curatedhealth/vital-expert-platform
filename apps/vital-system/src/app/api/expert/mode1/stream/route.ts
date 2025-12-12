@@ -2,13 +2,13 @@
  * VITAL Platform - Mode 1 Streaming BFF Route
  *
  * Mode 1: Manual Interactive (Expert Chat)
- * User MANUALLY selects expert → single-turn conversation.
+ * User MANUALLY selects agent → single-turn conversation.
  *
  * ARCHITECTURE (Dec 2025):
  * - Mode 1 and Mode 2 use the SAME interactive executor
  * - The only difference is agent selection:
- *   - Mode 1: expert_id is provided (manual selection)
- *   - Mode 2: expert_id is null (Fusion auto-selection)
+ *   - Mode 1: agent_id is provided (manual selection)
+ *   - Mode 2: agent_id is null (Fusion auto-selection)
  *
  * Backend Endpoint: /api/expert/interactive (unified interactive endpoint)
  */
@@ -38,11 +38,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       conversation_id,
-      expert_id,
+      agent_id,   // Primary field name (standard across all modes)
+      expert_id,  // Backwards compatibility alias
       message,
       mode,
+      session_id,
+      tenant_id,
       options = {},
     } = body;
+
+    // agent_id is primary, expert_id kept for backwards compatibility
+    const effectiveAgentId = agent_id || expert_id;
 
     // Validate required fields
     if (!message?.trim()) {
@@ -52,15 +58,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!expert_id) {
+    if (!effectiveAgentId) {
       return new Response(
-        JSON.stringify({ error: 'Expert ID is required for Mode 1' }),
+        JSON.stringify({ error: 'Agent ID is required for Mode 1' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     // Forward to Python backend - Unified Interactive endpoint
-    // Mode 1 = expert_id provided → backend uses manual selection
+    // Mode 1 = agent_id provided → backend uses manual selection
     const backendResponse = await fetch(`${AI_ENGINE_URL}/api/expert/interactive`, {
       method: 'POST',
       headers: {
@@ -72,10 +78,11 @@ export async function POST(request: NextRequest) {
         'Accept': 'text/event-stream',
       },
       body: JSON.stringify({
-        mode: 1, // Mode 1 = Manual Interactive (expert pre-selected)
-        expert_id: expert_id,
+        mode: 1, // Mode 1 = Manual Interactive (agent pre-selected)
+        agent_id: effectiveAgentId,   // Primary field name
+        expert_id: effectiveAgentId,  // Backwards compatibility
         message,
-        session_id: conversation_id || crypto.randomUUID(),
+        session_id: session_id || conversation_id || crypto.randomUUID(),
         enable_rag: options.enable_rag ?? true,
         enable_web_search: options.enable_web_search ?? true,
         response_depth: options.response_depth || 'standard',

@@ -308,16 +308,17 @@ export type {
 } from './polish';
 
 // ============================================================================
-// Legacy HITL Components (kept for backwards compatibility)
+// Legacy HITL Components (ARCHIVED - moved to shared or replaced)
 // ============================================================================
-// NOTE: Prefer using VitalCheckpoint from ./autonomous for new implementations
-
-export { PlanApprovalModal } from '../_archived_moved_to_shared/PlanApprovalModal';
-export { UserPromptModal } from '../_archived_moved_to_shared/UserPromptModal';
-export { ProgressTracker } from '../_archived_moved_to_shared/ProgressTracker';
-export { ToolExecutionCard } from '../_archived_moved_to_shared/ToolExecutionCard';
-export { SubAgentApprovalCard } from '../_archived_moved_to_shared/SubAgentApprovalCard';
-export { FinalReviewPanel } from '../_archived_moved_to_shared/FinalReviewPanel';
+// NOTE: Use VitalCheckpoint from ./autonomous for new HITL implementations
+//
+// ARCHIVED exports (removed December 12, 2025 - files no longer exist):
+// - PlanApprovalModal → Use autonomous/VitalCheckpoint
+// - UserPromptModal → Use autonomous/VitalCheckpoint
+// - ProgressTracker → Use VitalProgressTimeline from vital-ai-ui
+// - ToolExecutionCard → Use reasoning/VitalToolInvocation from vital-ai-ui
+// - SubAgentApprovalCard → Use autonomous/VitalCheckpoint
+// - FinalReviewPanel → Use autonomous/VitalArtifactPreview
 
 // ============================================================================
 // COMPONENT SUMMARY (Phase 4 Complete + Phase 3 Final)

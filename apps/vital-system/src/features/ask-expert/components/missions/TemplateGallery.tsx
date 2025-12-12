@@ -22,6 +22,14 @@ import {
   Clock,
   DollarSign,
   Sparkles,
+  FlaskConical,
+  BarChart3,
+  Target,
+  FileEdit,
+  Eye,
+  Lightbulb,
+  Settings,
+  type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TemplateCard, type TemplateCardData } from './TemplateCard';
@@ -68,15 +76,15 @@ interface FilterState {
 // CONSTANTS
 // =============================================================================
 
-const FAMILY_TABS: { family: MissionFamily; label: string; icon: string }[] = [
-  { family: 'DEEP_RESEARCH', label: 'Research', icon: '🔬' },
-  { family: 'EVALUATION', label: 'Evaluation', icon: '📊' },
-  { family: 'INVESTIGATION', label: 'Investigation', icon: '🔍' },
-  { family: 'STRATEGY', label: 'Strategy', icon: '🎯' },
-  { family: 'PREPARATION', label: 'Preparation', icon: '📝' },
-  { family: 'MONITORING', label: 'Monitoring', icon: '👁️' },
-  { family: 'PROBLEM_SOLVING', label: 'Problem Solving', icon: '💡' },
-  { family: 'GENERIC', label: 'General', icon: '⚙️' },
+const FAMILY_TABS: { family: MissionFamily; label: string; icon: LucideIcon }[] = [
+  { family: 'DEEP_RESEARCH', label: 'Research', icon: FlaskConical },
+  { family: 'EVALUATION', label: 'Evaluation', icon: BarChart3 },
+  { family: 'INVESTIGATION', label: 'Investigation', icon: Search },
+  { family: 'STRATEGY', label: 'Strategy', icon: Target },
+  { family: 'PREPARATION', label: 'Preparation', icon: FileEdit },
+  { family: 'MONITORING', label: 'Monitoring', icon: Eye },
+  { family: 'PROBLEM_SOLVING', label: 'Problem Solving', icon: Lightbulb },
+  { family: 'GENERIC', label: 'General', icon: Settings },
 ];
 
 const COMPLEXITY_OPTIONS: MissionComplexity[] = ['low', 'medium', 'high', 'critical'];
@@ -296,6 +304,7 @@ export function TemplateGallery({
             </button>
             {availableFamilies.map((tab) => {
               const count = templates.filter((t) => t.family === tab.family).length;
+              const TabIcon = tab.icon;
               return (
                 <button
                   key={tab.family}
@@ -307,7 +316,7 @@ export function TemplateGallery({
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   )}
                 >
-                  <span>{tab.icon}</span>
+                  <TabIcon className="w-4 h-4" />
                   {tab.label} ({count})
                 </button>
               );

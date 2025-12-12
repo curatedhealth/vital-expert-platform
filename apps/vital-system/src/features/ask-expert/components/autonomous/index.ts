@@ -11,11 +11,11 @@
  */
 
 // =============================================================================
-// MASTER ORCHESTRATOR
+// MASTER ORCHESTRATOR (from views/ - canonical location)
 // =============================================================================
 
-export { AutonomousView } from './AutonomousView';
-export type { AutonomousViewProps } from './AutonomousView';
+export { AutonomousView } from '../../views/AutonomousView';
+export type { AutonomousViewProps } from '../../views/AutonomousView';
 
 // =============================================================================
 // MISSION SELECTION & CONFIGURATION

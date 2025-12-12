@@ -9,7 +9,7 @@ import { BaseTool, ToolContext, ToolExecutionResult } from './base-tool';
 
 type CalculationType = 'dosing' | 'statistics' | 'cost' | 'general';
 
-export interface CalculatorToolInput {
+export interface CalculatorToolInput extends Record<string, unknown> {
   calculation_type: CalculationType;
   formula: string;
   parameters?: Record<string, number | string | boolean>;

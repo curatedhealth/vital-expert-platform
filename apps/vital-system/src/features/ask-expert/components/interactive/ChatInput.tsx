@@ -307,14 +307,15 @@ export function ChatInput({
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 text-sm rounded-t-xl border border-b-0 border-red-200">
-              <AlertCircle className="h-4 w-4 shrink-0" />
+            <div className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 text-sm rounded-t-xl border border-b-0 border-red-200" role="alert">
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span>{error}</span>
               <button
                 onClick={() => setError(null)}
                 className="ml-auto hover:text-red-800"
+                aria-label="Dismiss error"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           </motion.div>
@@ -338,8 +339,9 @@ export function ChatInput({
             onClick={handleAttachClick}
             disabled={disabled || attachments.length >= MAX_ATTACHMENTS}
             className="h-9 w-9 shrink-0 text-slate-500 hover:text-slate-700"
+            aria-label="Attach file"
           >
-            <Paperclip className="h-5 w-5" />
+            <Paperclip className="h-5 w-5" aria-hidden="true" />
           </Button>
         )}
 
@@ -351,6 +353,8 @@ export function ChatInput({
           accept={ALLOWED_FILE_TYPES.join(',')}
           onChange={handleFileSelect}
           className="hidden"
+          aria-hidden="true"
+          tabIndex={-1}
         />
 
         {/* Text input */}
@@ -390,8 +394,9 @@ export function ChatInput({
             size="icon"
             disabled={disabled}
             className="h-9 w-9 shrink-0 text-slate-500 hover:text-slate-700"
+            aria-label="Voice input"
           >
-            <Mic className="h-5 w-5" />
+            <Mic className="h-5 w-5" aria-hidden="true" />
           </Button>
         )}
 
@@ -402,8 +407,9 @@ export function ChatInput({
             size="icon"
             onClick={handleStop}
             className="h-9 w-9 shrink-0"
+            aria-label="Stop generation"
           >
-            <StopCircle className="h-5 w-5" />
+            <StopCircle className="h-5 w-5" aria-hidden="true" />
           </Button>
         ) : (
           <Button
@@ -417,11 +423,12 @@ export function ChatInput({
                 ? 'bg-blue-600 hover:bg-blue-700'
                 : 'bg-slate-200 text-slate-400'
             )}
+            aria-label={disabled ? "Sending message" : "Send message"}
           >
             {disabled ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
             ) : (
-              <Send className="h-5 w-5" />
+              <Send className="h-5 w-5" aria-hidden="true" />
             )}
           </Button>
         )}

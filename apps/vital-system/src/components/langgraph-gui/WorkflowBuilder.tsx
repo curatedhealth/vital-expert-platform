@@ -2420,7 +2420,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
             targetHandle: e.targetHandle
           })),
           metadata: {
-            panel_type: panelType === 'mode1' ? 'mode1' : panelType,
+            panel_type: panelType as string,
             system_prompt: orchestratorPrompt,  // Workflow-level system prompt
             rounds: nodes.filter(n => {
               const taskData = n.data as any;
@@ -2439,7 +2439,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
         const panelExecuteUrl = `${apiBaseUrl || '/api/langgraph-gui'}/panels/execute`;
         console.log('[WorkflowBuilder] Executing panel workflow:', {
           url: panelExecuteUrl,
-          panelType: panelType === 'mode1' ? 'mode1' : panelType,
+          panelType: panelType as string,
           workflowId: currentWorkflowId,
           nodeCount: nodes.length,
           edgeCount: edges.length
@@ -2457,7 +2457,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
             ollama_base_url: apiKeys.ollama_base_url || 'http://localhost:11434',
             ollama_model: apiKeys.ollama_model || 'qwen3:4b',
             workflow: workflowDefinition,
-            panel_type: panelType === 'mode1' ? 'mode1' : panelType,  // Explicit panel type (mode1, structured, or open)
+            panel_type: panelType as string,  // Explicit panel type (mode1, structured, or open)
             user_id: 'user'
           }),
           signal: abortController.signal,

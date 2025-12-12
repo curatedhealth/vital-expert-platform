@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-import { WorkflowDefinition } from '../types/workflow';
+import { WorkflowDefinition } from '@/features/workflow-designer/types/workflow';
 
 interface TaskNodeProps {
   id: string;

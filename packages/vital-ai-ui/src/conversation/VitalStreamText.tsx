@@ -17,15 +17,15 @@ interface VitalStreamTextProps {
    */
   highlightCode?: boolean;
   /**
-   * Allow images from these origins (security)
-   * @default []
+   * Enable Mermaid diagram rendering
+   * @default true
    */
-  allowedImageOrigins?: string[];
+  enableMermaid?: boolean;
   /**
-   * Allow links to these origins (security)
-   * @default []
+   * Show copy controls for code blocks and tables
+   * @default true
    */
-  allowedLinkOrigins?: string[];
+  showControls?: boolean;
 }
 
 /**
@@ -48,8 +48,8 @@ export function VitalStreamText({
   className,
   onComplete,
   highlightCode = true,
-  allowedImageOrigins = [],
-  allowedLinkOrigins = [],
+  enableMermaid = true,
+  showControls = true,
 }: VitalStreamTextProps) {
   const [copied, setCopied] = useState(false);
   const contentRef = useRef<string>('');
@@ -88,24 +88,36 @@ export function VitalStreamText({
       </Button>
 
       {/* Streamdown component for jitter-free streaming */}
-      <Streamdown
-        content={content}
+      <div
         className={cn(
           'prose prose-slate dark:prose-invert max-w-none',
           'prose-headings:font-semibold prose-headings:tracking-tight',
-          'prose-p:leading-relaxed',
+          'prose-p:leading-relaxed prose-p:my-2',
           'prose-code:before:content-none prose-code:after:content-none',
-          'prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded',
-          'prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700',
+          'prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm',
+          'prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 prose-pre:my-3',
           'prose-a:text-primary prose-a:no-underline hover:prose-a:underline',
           'prose-blockquote:border-l-primary prose-blockquote:not-italic',
           'prose-table:text-sm',
-          isStreaming && 'animate-pulse-subtle'
+          'prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5',
+          // Streamdown-specific styling
+          '[&_.streamdown-code-block]:relative [&_.streamdown-code-block]:my-3',
+          '[&_.streamdown-mermaid]:my-4 [&_.streamdown-mermaid]:flex [&_.streamdown-mermaid]:justify-center',
         )}
-        // Security: restrict image and link origins
-        allowedImageOrigins={allowedImageOrigins}
-        allowedLinkOrigins={allowedLinkOrigins}
-      />
+      >
+        <Streamdown
+          parseIncompleteMarkdown={isStreaming}
+          isAnimating={isStreaming}
+          shikiTheme={['github-light', 'github-dark']}
+          controls={{ code: true, table: true, mermaid: true }}
+          mermaidConfig={{
+            theme: 'neutral',
+            securityLevel: 'strict',
+          }}
+        >
+          {content || '\u00A0'}
+        </Streamdown>
+      </div>
 
       {/* Streaming indicator */}
       {isStreaming && (

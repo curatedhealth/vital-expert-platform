@@ -40,6 +40,7 @@ from pydantic import BaseModel, Field
 from api.sse import SSEEventTransformer, transform_and_format
 from core.security import InputSanitizer, ErrorSanitizer, TenantIsolation, check_rate_limit_or_raise
 from core.resilience import retry_with_backoff, CircuitOpenError, CircuitBreaker, CircuitBreakerConfig
+from streaming.token_streamer import stream_with_context
 
 # Initialize circuit breakers for LLM providers
 LLM_CIRCUIT_BREAKER = CircuitBreaker(
@@ -636,8 +637,74 @@ async def stream_consultation_message(
                                     }, transformer)
                                     yield sse_text
 
+                            # NEW: Real token streaming via llm_streaming_config handoff
+                            elif "llm_streaming_config" in node_output:
+                                llm_config = node_output["llm_streaming_config"]
+                                logger.info(
+                                    "real_token_streaming_started",
+                                    provider=llm_config.get("provider"),
+                                    model=llm_config.get("model"),
+                                    consultation_id=sanitized_consultation_id,
+                                )
+
+                                # Emit thinking_start event for Glass Box UI
+                                sse_text = transform_and_format("thinking_start", {
+                                    "agent_id": sanitized_agent_id,
+                                    "step": "generating_response",
+                                }, transformer)
+                                yield sse_text
+
+                                # Stream real tokens from LLM using stream_with_context
+                                token_count = 0
+                                try:
+                                    async for token_text, token_idx in stream_with_context(llm_config):
+                                        if token_text:
+                                            full_response += token_text
+                                            token_count += 1
+                                            # Emit real token event (match frontend TokenEvent interface)
+                                            sse_text = transform_and_format("token", {
+                                                "content": token_text,
+                                                "tokenIndex": token_idx,
+                                            }, transformer)
+                                            yield sse_text
+                                except Exception as stream_err:
+                                    logger.error(
+                                        "real_token_streaming_error",
+                                        error=str(stream_err),
+                                        consultation_id=sanitized_consultation_id,
+                                    )
+                                    # Fallback: emit partial response as single chunk
+                                    if full_response:
+                                        sse_text = transform_and_format("token", {
+                                            "text": "[Streaming interrupted]",
+                                        }, transformer)
+                                        yield sse_text
+
+                                # Emit thinking_end event
+                                sse_text = transform_and_format("thinking_end", {
+                                    "agent_id": sanitized_agent_id,
+                                    "step": "generating_response",
+                                }, transformer)
+                                yield sse_text
+
+                                total_tokens = token_count
+                                logger.info(
+                                    "real_token_streaming_completed",
+                                    tokens_streamed=token_count,
+                                    consultation_id=sanitized_consultation_id,
+                                )
+
+                                # Handle citations from the config
+                                citations = node_output.get("citations", [])
+                                if citations:
+                                    collected_citations.extend(citations)
+                                    sse_text = transform_and_format("citations", {
+                                        "citations": citations,
+                                    }, transformer)
+                                    yield sse_text
+
                             elif "response" in node_output or "content" in node_output:
-                                # Token streaming
+                                # Fallback: Token streaming for legacy node outputs (without llm_streaming_config)
                                 content = node_output.get("response") or node_output.get("content", "")
                                 if content:
                                     full_response += content

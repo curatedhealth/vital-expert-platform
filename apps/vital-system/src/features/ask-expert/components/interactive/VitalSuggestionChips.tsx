@@ -17,7 +17,7 @@
  * Phase 2 Implementation - December 11, 2025
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
@@ -248,7 +248,7 @@ interface SuggestionChipProps {
   onFocus: () => void;
 }
 
-const SuggestionChip = motion.forwardRef<HTMLButtonElement, SuggestionChipProps>(
+const SuggestionChip = forwardRef<HTMLButtonElement, SuggestionChipProps>(
   function SuggestionChip({ suggestion, index, isFocused, onClick, onFocus }, ref) {
     const config = CATEGORY_CONFIG[suggestion.category || 'default'] || CATEGORY_CONFIG.default;
     const Icon = config.icon;

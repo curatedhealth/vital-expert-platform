@@ -27,6 +27,7 @@ export interface Tool {
   usage_guide?: string; // Step-by-step usage instructions
   category: string | null; // Now text, not FK
   category_id?: string | null; // Legacy support
+  category_parent?: string | null; // Parent category for hierarchical filtering
   category_obj?: ToolCategory; // Renamed from 'category'
   tool_type: 'ai_function' | 'software_reference' | 'database' | 'saas' | 'api' | 'ai_framework';
   implementation_type?: 'custom' | 'langchain_tool' | 'api' | 'function';

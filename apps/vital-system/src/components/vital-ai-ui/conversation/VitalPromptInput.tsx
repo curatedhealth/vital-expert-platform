@@ -1,9 +1,17 @@
 'use client';
 
-import { useState, useRef, KeyboardEvent, useCallback, ChangeEvent, DragEvent } from 'react';
+import { useState, useRef, KeyboardEvent, useCallback, ChangeEvent, DragEvent, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Paperclip,
   Send,
@@ -14,7 +22,12 @@ import {
   X,
   FileText,
   Image as ImageIcon,
-  File
+  File,
+  Bot,
+  Zap,
+  Settings2,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -22,6 +35,10 @@ import {
   TooltipTrigger,
   TooltipProvider
 } from '@/components/ui/tooltip';
+
+// =============================================================================
+// TYPES
+// =============================================================================
 
 interface Attachment {
   id: string;
@@ -31,8 +48,27 @@ interface Attachment {
   preview?: string;
 }
 
+/** Response length options with word count ranges */
+export type ResponseLength = 'short' | 'medium' | 'long';
+
+/** Model options available for selection */
+export type ModelOption = 'gpt-4o' | 'gpt-4o-mini' | 'claude-3-5-sonnet' | 'claude-3-opus';
+
+/** Derived mode from toggle states */
+export type DerivedMode = 1 | 2 | 3 | 4;
+
+/** Options passed to onSubmit for request customization */
+export interface SubmitOptions {
+  model: ModelOption;
+  responseLength: ResponseLength;
+  autonomous: boolean;
+  automatic: boolean;
+  derivedMode: DerivedMode;
+  maxTokens: number;
+}
+
 interface VitalPromptInputProps {
-  onSubmit: (message: string, attachments?: Attachment[]) => void;
+  onSubmit: (message: string, attachments?: Attachment[], options?: SubmitOptions) => void;
   onEnhance?: (message: string) => Promise<string>;
   placeholder?: string;
   disabled?: boolean;
@@ -42,12 +78,57 @@ interface VitalPromptInputProps {
   showAttachments?: boolean;
   showEnhance?: boolean;
   showVoice?: boolean;
+  /** Show advanced controls (model, toggles, length) */
+  showAdvancedControls?: boolean;
+  /** Default model selection */
+  defaultModel?: ModelOption;
+  /** Default response length */
+  defaultResponseLength?: ResponseLength;
+  /** Default autonomous toggle state */
+  defaultAutonomous?: boolean;
+  /** Default automatic toggle state */
+  defaultAutomatic?: boolean;
+  /** Called when mode changes due to toggle changes */
+  onModeChange?: (mode: DerivedMode) => void;
+  /** Called when model changes */
+  onModelChange?: (model: ModelOption) => void;
   className?: string;
+}
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const MODEL_OPTIONS: { value: ModelOption; label: string; description: string }[] = [
+  { value: 'gpt-4o', label: 'GPT-4o', description: 'Most capable model' },
+  { value: 'gpt-4o-mini', label: 'GPT-4o Mini', description: 'Fast and efficient' },
+  { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet', description: 'Balanced performance' },
+  { value: 'claude-3-opus', label: 'Claude 3 Opus', description: 'Best reasoning' },
+];
+
+const RESPONSE_LENGTH_OPTIONS: { value: ResponseLength; label: string; words: string; maxTokens: number }[] = [
+  { value: 'short', label: 'Short', words: '~250 words', maxTokens: 500 },
+  { value: 'medium', label: 'Medium', words: '500-1000 words', maxTokens: 2000 },
+  { value: 'long', label: 'Long', words: '2000-3000 words', maxTokens: 6000 },
+];
+
+/**
+ * Derive the mode from toggle states
+ * - Both ON → Mode 4 (Auto Autonomous)
+ * - Automatic only ON → Mode 2 (Auto Interactive)
+ * - Autonomous only ON → Mode 3 (Manual Autonomous)
+ * - Neither ON → Mode 1 (Manual Interactive)
+ */
+function deriveMode(autonomous: boolean, automatic: boolean): DerivedMode {
+  if (autonomous && automatic) return 4;
+  if (automatic) return 2;
+  if (autonomous) return 3;
+  return 1;
 }
 
 /**
  * VitalPromptInput - Feature-rich multi-modal prompt input
- * 
+ *
  * Features:
  * - Auto-resizing textarea
  * - File attachments with drag-and-drop
@@ -55,6 +136,15 @@ interface VitalPromptInputProps {
  * - Voice input (optional)
  * - Character counter
  * - Stop generation button
+ * - Model selection (GPT-4o, Claude, etc.)
+ * - Autonomous/Automatic toggles for mode derivation
+ * - Response length selector (short/medium/long)
+ *
+ * Mode Derivation Logic:
+ * - Both toggles ON → Mode 4 (Auto Autonomous)
+ * - Automatic only ON → Mode 2 (Auto Interactive)
+ * - Autonomous only ON → Mode 3 (Manual Autonomous)
+ * - Neither ON → Mode 1 (Manual Interactive)
  */
 export function VitalPromptInput({
   onSubmit,
@@ -67,14 +157,46 @@ export function VitalPromptInput({
   showAttachments = true,
   showEnhance = true,
   showVoice = false,
+  showAdvancedControls = true,
+  defaultModel = 'gpt-4o',
+  defaultResponseLength = 'medium',
+  defaultAutonomous = false,
+  defaultAutomatic = false,
+  onModeChange,
+  onModelChange,
   className
 }: VitalPromptInputProps) {
+  // Core input state
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Advanced controls state
+  const [selectedModel, setSelectedModel] = useState<ModelOption>(defaultModel);
+  const [responseLength, setResponseLength] = useState<ResponseLength>(defaultResponseLength);
+  const [autonomous, setAutonomous] = useState(defaultAutonomous);
+  const [automatic, setAutomatic] = useState(defaultAutomatic);
+  const [showSettings, setShowSettings] = useState(false);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Derive the current mode from toggle states
+  const derivedMode = deriveMode(autonomous, automatic);
+
+  // Get current max tokens from response length
+  const currentMaxTokens = RESPONSE_LENGTH_OPTIONS.find(o => o.value === responseLength)?.maxTokens || 2000;
+
+  // Notify parent when mode changes
+  useEffect(() => {
+    onModeChange?.(derivedMode);
+  }, [derivedMode, onModeChange]);
+
+  // Notify parent when model changes
+  useEffect(() => {
+    onModelChange?.(selectedModel);
+  }, [selectedModel, onModelChange]);
   
   // Auto-resize textarea
   const handleTextChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -89,15 +211,26 @@ export function VitalPromptInput({
   
   const handleSubmit = useCallback(() => {
     if (!message.trim() || disabled || isLoading) return;
-    onSubmit(message, attachments.length > 0 ? attachments : undefined);
+
+    // Build submit options with all advanced controls
+    const options: SubmitOptions = {
+      model: selectedModel,
+      responseLength,
+      autonomous,
+      automatic,
+      derivedMode,
+      maxTokens: currentMaxTokens,
+    };
+
+    onSubmit(message, attachments.length > 0 ? attachments : undefined, options);
     setMessage('');
     setAttachments([]);
-    
+
     // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
-  }, [message, attachments, disabled, isLoading, onSubmit]);
+  }, [message, attachments, disabled, isLoading, onSubmit, selectedModel, responseLength, autonomous, automatic, derivedMode, currentMaxTokens]);
   
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -189,19 +322,171 @@ export function VitalPromptInput({
           </div>
         )}
         
+        {/* Advanced Controls Bar */}
+        {showAdvancedControls && (
+          <div className="mb-3">
+            {/* Toggle to show/hide settings */}
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-2 transition-colors"
+            >
+              <Settings2 className="h-3.5 w-3.5" />
+              <span>Advanced Settings</span>
+              {showSettings ? (
+                <ChevronUp className="h-3 w-3" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
+              {/* Mode indicator badge */}
+              <span className={cn(
+                "ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium",
+                derivedMode === 1 && "bg-blue-100 text-blue-700",
+                derivedMode === 2 && "bg-purple-100 text-purple-700",
+                derivedMode === 3 && "bg-amber-100 text-amber-700",
+                derivedMode === 4 && "bg-emerald-100 text-emerald-700",
+              )}>
+                Mode {derivedMode}
+              </span>
+            </button>
+
+            {/* Expanded settings panel */}
+            {showSettings && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-muted/50 rounded-lg border">
+                {/* Model Selection */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <Bot className="h-3 w-3" />
+                    Model
+                  </label>
+                  <Select
+                    value={selectedModel}
+                    onValueChange={(value) => setSelectedModel(value as ModelOption)}
+                    disabled={disabled || isLoading}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MODEL_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value} className="text-xs">
+                          <div className="flex flex-col">
+                            <span>{option.label}</span>
+                            <span className="text-[10px] text-muted-foreground">{option.description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Response Length */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Response Length
+                  </label>
+                  <Select
+                    value={responseLength}
+                    onValueChange={(value) => setResponseLength(value as ResponseLength)}
+                    disabled={disabled || isLoading}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RESPONSE_LENGTH_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value} className="text-xs">
+                          <div className="flex flex-col">
+                            <span>{option.label}</span>
+                            <span className="text-[10px] text-muted-foreground">{option.words}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Automatic Toggle (Auto agent selection) */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <Zap className="h-3 w-3" />
+                    Automatic
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={automatic}
+                      onCheckedChange={setAutomatic}
+                      disabled={disabled || isLoading}
+                      className="scale-75 origin-left"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {automatic ? 'AI selects agent' : 'Manual selection'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Autonomous Toggle (Deep research) */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <Bot className="h-3 w-3" />
+                    Autonomous
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={autonomous}
+                      onCheckedChange={setAutonomous}
+                      disabled={disabled || isLoading}
+                      className="scale-75 origin-left"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {autonomous ? 'Deep research' : 'Interactive'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Compact mode indicator when settings are hidden */}
+            {!showSettings && (
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Bot className="h-3 w-3" />
+                  {MODEL_OPTIONS.find(m => m.value === selectedModel)?.label}
+                </span>
+                <span className="text-muted-foreground/50">•</span>
+                <span>{RESPONSE_LENGTH_OPTIONS.find(r => r.value === responseLength)?.label}</span>
+                {automatic && (
+                  <>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span className="flex items-center gap-1">
+                      <Zap className="h-3 w-3" />
+                      Auto
+                    </span>
+                  </>
+                )}
+                {autonomous && (
+                  <>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span>Deep Research</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Attachments preview */}
         {attachments.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2">
             {attachments.map((attachment) => {
               const Icon = getFileIcon(attachment.type);
               return (
-                <div 
+                <div
                   key={attachment.id}
                   className="flex items-center gap-2 bg-muted rounded px-2 py-1 text-sm"
                 >
                   {attachment.preview ? (
-                    <img 
-                      src={attachment.preview} 
+                    <img
+                      src={attachment.preview}
                       alt={attachment.name}
                       className="h-6 w-6 object-cover rounded"
                     />
@@ -220,7 +505,7 @@ export function VitalPromptInput({
             })}
           </div>
         )}
-        
+
         {/* Input area */}
         <div className="flex items-end gap-2 bg-background border rounded-lg p-2">
           <Textarea

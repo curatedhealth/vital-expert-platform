@@ -1,8 +1,8 @@
 // Skill Detail Page with CRUD capability
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, use, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { PageHeader } from '@/components/page-header';
+import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import {
   ArrowLeft,
@@ -168,17 +169,21 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export default function SkillDetailPage({ params }: PageProps) {
-  const resolvedParams = use(params);
-  const { slug } = resolvedParams;
+// Inner component that uses useSearchParams
+function SkillDetailContent({ slug }: { slug: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { userProfile } = useAuth();
   const isAdmin = userProfile?.role === 'super_admin' || userProfile?.role === 'admin';
+
+  // Check if edit mode is requested via query param
+  const editParam = searchParams.get('edit');
+  const startInEditMode = editParam === 'true' && isAdmin;
 
   const [skill, setSkill] = useState<Skill | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(startInEditMode);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Skill>>({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -187,6 +192,13 @@ export default function SkillDetailPage({ params }: PageProps) {
   useEffect(() => {
     loadSkill();
   }, [slug]);
+
+  // Enter edit mode after skill is loaded if query param is set
+  useEffect(() => {
+    if (skill && startInEditMode && !isEditing) {
+      setIsEditing(true);
+    }
+  }, [skill, startInEditMode]);
 
   const loadSkill = async () => {
     try {
@@ -338,6 +350,18 @@ export default function SkillDetailPage({ params }: PageProps) {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Breadcrumb */}
+      <div className="px-6 pt-4">
+        <VitalBreadcrumb
+          showHome
+          items={[
+            { label: 'Discover', href: '/discover' },
+            { label: 'Skills', href: '/discover/skills' },
+            { label: skill.name },
+          ]}
+        />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center gap-4">
@@ -567,7 +591,7 @@ export default function SkillDetailPage({ params }: PageProps) {
                   <CardContent className="space-y-4">
                     <div>
                       <Label className="text-gray-500">Type</Label>
-                      <p className="font-medium capitalize">{skill.implementation_type.replace('_', ' ')}</p>
+                      <p className="font-medium capitalize">{skill.implementation_type?.replace('_', ' ') || 'Unknown'}</p>
                     </div>
                     {skill.implementation_ref && (
                       <div>
@@ -663,5 +687,43 @@ export default function SkillDetailPage({ params }: PageProps) {
         </div>
       )}
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function SkillDetailLoading() {
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="px-6 pt-4">
+        <div className="h-6 w-64 bg-gray-200 animate-pulse rounded" />
+      </div>
+      <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="flex items-center gap-4">
+          <div className="h-8 w-16 bg-gray-200 animate-pulse rounded" />
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 bg-gray-200 animate-pulse rounded" />
+            <div>
+              <div className="h-6 w-48 bg-gray-200 animate-pulse rounded mb-2" />
+              <div className="h-4 w-32 bg-gray-200 animate-pulse rounded" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    </div>
+  );
+}
+
+// Page component that wraps content in Suspense for useSearchParams
+export default function SkillDetailPage({ params }: PageProps) {
+  const resolvedParams = use(params);
+  const { slug } = resolvedParams;
+
+  return (
+    <Suspense fallback={<SkillDetailLoading />}>
+      <SkillDetailContent slug={slug} />
+    </Suspense>
   );
 }

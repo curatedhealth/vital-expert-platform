@@ -52,12 +52,13 @@ export type {
 
 // ============================================================================
 // CONSTANTS & UTILITIES
+// Prefixed to avoid conflicts with ./assets exports
 // ============================================================================
 
 export {
   TOOL_CATEGORIES,
   DEFAULT_TOOL_CATEGORY,
-  LIFECYCLE_BADGES,
+  LIFECYCLE_BADGES as TOOL_LIFECYCLE_BADGES,
   HEALTH_STATUS_CONFIG,
   TOOL_TYPE_CONFIG,
   getCategoryConfig as getToolCategoryConfig,

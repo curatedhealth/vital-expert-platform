@@ -21,6 +21,15 @@ import {
   Info,
   Users,
   Play,
+  FlaskConical,
+  BarChart3,
+  Search,
+  Target,
+  FileEdit,
+  Eye,
+  Lightbulb,
+  Settings,
+  type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -88,18 +97,23 @@ function formatCost(min: number, max: number): string {
   return `$${min.toFixed(2)}-$${max.toFixed(2)}`;
 }
 
-function getFamilyIcon(family: MissionFamily): string {
-  const icons: Record<MissionFamily, string> = {
-    DEEP_RESEARCH: '🔬',
-    EVALUATION: '📊',
-    INVESTIGATION: '🔍',
-    STRATEGY: '🎯',
-    PREPARATION: '📝',
-    MONITORING: '👁️',
-    PROBLEM_SOLVING: '💡',
-    GENERIC: '⚙️',
-  };
-  return icons[family] || icons.GENERIC;
+// =============================================================================
+// MISSION FAMILY ICONS - Lucide React components only (no emojis)
+// =============================================================================
+
+const FAMILY_ICONS: Record<MissionFamily, LucideIcon> = {
+  DEEP_RESEARCH: FlaskConical,
+  EVALUATION: BarChart3,
+  INVESTIGATION: Search,
+  STRATEGY: Target,
+  PREPARATION: FileEdit,
+  MONITORING: Eye,
+  PROBLEM_SOLVING: Lightbulb,
+  GENERIC: Settings,
+};
+
+function getFamilyIcon(family: MissionFamily): LucideIcon {
+  return FAMILY_ICONS[family] || FAMILY_ICONS.GENERIC;
 }
 
 function getFamilyLabel(family: MissionFamily): string {
@@ -159,9 +173,10 @@ export function TemplateCard({
         )}
       >
         {/* Icon */}
-        <div className={cn('text-2xl', familyColor)}>
-          {getFamilyIcon(template.family)}
-        </div>
+        {(() => {
+          const FamilyIcon = getFamilyIcon(template.family);
+          return <FamilyIcon className={cn('w-6 h-6', familyColor)} />;
+        })()}
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -221,7 +236,10 @@ export function TemplateCard({
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">{getFamilyIcon(template.family)}</span>
+            {(() => {
+              const FamilyIcon = getFamilyIcon(template.family);
+              return <FamilyIcon className={cn('w-6 h-6', familyColor)} />;
+            })()}
             <div>
               <h3 className="font-semibold text-slate-900">{template.name}</h3>
               <span className="text-xs text-slate-500">{getFamilyLabel(template.family)}</span>

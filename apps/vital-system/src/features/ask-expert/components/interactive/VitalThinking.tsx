@@ -17,7 +17,7 @@
  * Phase 2 Implementation - December 11, 2025
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -158,12 +158,17 @@ export function VitalThinking({
           'hover:bg-blue-50/50 transition-colors',
           'text-left'
         )}
+        aria-expanded={isExpanded}
+        aria-controls="thinking-steps"
       >
         {/* Thinking indicator */}
-        <div className={cn(
-          'relative p-2 rounded-lg',
-          isActive ? 'bg-blue-100' : 'bg-slate-100'
-        )}>
+        <div
+          className={cn(
+            'relative p-2 rounded-lg',
+            isActive ? 'bg-blue-100' : 'bg-slate-100'
+          )}
+          aria-hidden="true"
+        >
           {isActive ? (
             <>
               <Brain className="h-4 w-4 text-blue-600" />
@@ -197,10 +202,13 @@ export function VitalThinking({
         </div>
 
         {/* Expand/collapse chevron */}
-        <ChevronDown className={cn(
-          'h-4 w-4 text-slate-400 transition-transform',
-          isExpanded && 'rotate-180'
-        )} />
+        <ChevronDown
+          className={cn(
+            'h-4 w-4 text-slate-400 transition-transform',
+            isExpanded && 'rotate-180'
+          )}
+          aria-hidden="true"
+        />
       </button>
 
       {/* Steps List */}
@@ -213,7 +221,12 @@ export function VitalThinking({
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-2 max-h-[300px] overflow-y-auto">
+            <div
+              id="thinking-steps"
+              className="px-4 pb-4 space-y-2 max-h-[300px] overflow-y-auto"
+              aria-live={isActive ? 'polite' : 'off'}
+              aria-label="AI reasoning steps"
+            >
               {steps.map((step, index) => (
                 <ThinkingStepCard
                   key={step.id}
@@ -266,7 +279,7 @@ interface ThinkingStepCardProps {
   isLast: boolean;
 }
 
-const ThinkingStepCard = motion.forwardRef<HTMLDivElement, ThinkingStepCardProps>(
+const ThinkingStepCard = forwardRef<HTMLDivElement, ThinkingStepCardProps>(
   function ThinkingStepCard({ step, index, isLast }, ref) {
     const config = STEP_TYPE_CONFIG[step.type || 'analysis'] || STEP_TYPE_CONFIG.analysis;
     const Icon = config.icon;

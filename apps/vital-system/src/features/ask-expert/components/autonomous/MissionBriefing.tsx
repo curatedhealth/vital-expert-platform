@@ -49,7 +49,12 @@ import {
 } from 'lucide-react';
 
 import type { Expert } from '../interactive/ExpertPicker';
-import type { MissionTemplate, MissionConfig, InputField, CheckpointConfig } from '../../views/AutonomousView';
+import type { MissionTemplate, MissionConfig, InputField, Checkpoint, CheckpointType, MissionTask } from '../../types/mission-runners';
+
+// Helper to get field key (use `name` from canonical schema)
+function getFieldKey(field: InputField): string {
+  return field.name;
+}
 
 // =============================================================================
 // TYPES
@@ -137,10 +142,11 @@ export function MissionBriefing({
     const errors: Record<string, string> = {};
 
     template.requiredInputs.forEach((input) => {
+      const fieldKey = getFieldKey(input);
       if (input.required) {
-        const value = inputs[input.id];
+        const value = inputs[fieldKey];
         if (!value || (typeof value === 'string' && value.trim() === '')) {
-          errors[input.id] = `${input.name} is required`;
+          errors[fieldKey] = `${input.name} is required`;
         }
       }
     });
@@ -194,7 +200,7 @@ export function MissionBriefing({
         </button>
 
         <div className="flex items-center gap-4">
-          <span className="text-4xl">{template.icon}</span>
+          <span className="text-4xl">🎯</span>
           <div>
             <h2 className="text-2xl font-semibold text-slate-900">
               {template.name}
@@ -209,15 +215,15 @@ export function MissionBriefing({
         <div className="flex items-center gap-4 mt-4">
           <Badge variant="outline" className="gap-1">
             <Clock className="w-3 h-3" />
-            {template.estimatedDuration}
+            {template.estimatedDurationMin}-{template.estimatedDurationMax} min
           </Badge>
           <Badge variant="outline" className="gap-1">
             <FileText className="w-3 h-3" />
-            {template.steps.length} steps
+            {template.tasks.length} tasks
           </Badge>
           <Badge variant="outline" className="gap-1">
             <AlertCircle className="w-3 h-3" />
-            {template.defaultCheckpoints.length} checkpoints
+            {template.checkpoints.length} checkpoints
           </Badge>
         </div>
       </div>
@@ -233,15 +239,18 @@ export function MissionBriefing({
             </h3>
 
             <div className="space-y-4">
-              {template.requiredInputs.map((field) => (
-                <InputField
-                  key={field.id}
-                  field={field}
-                  value={inputs[field.id]}
-                  onChange={(value) => handleInputChange(field.id, value)}
-                  error={isValidating ? validationErrors[field.id] : undefined}
-                />
-              ))}
+              {template.requiredInputs.map((field) => {
+                const fieldKey = getFieldKey(field);
+                return (
+                  <InputFieldComponent
+                    key={fieldKey}
+                    field={field}
+                    value={inputs[fieldKey]}
+                    onChange={(value) => handleInputChange(fieldKey, value)}
+                    error={isValidating ? validationErrors[fieldKey] : undefined}
+                  />
+                );
+              })}
             </div>
           </section>
 
@@ -292,22 +301,22 @@ export function MissionBriefing({
 
             <div className="bg-slate-50 rounded-xl p-4">
               <div className="space-y-3">
-                {template.steps.map((step, index) => (
-                  <div key={step.id} className="flex items-start gap-3">
+                {template.tasks.map((task: MissionTask, index: number) => (
+                  <div key={task.id} className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-medium shrink-0">
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-slate-900">{step.name}</span>
-                        <span className="text-xs text-slate-500">{step.estimatedDuration}</span>
+                        <span className="font-medium text-slate-900">{task.name}</span>
+                        <span className="text-xs text-slate-500">{task.estimatedMinutes} min</span>
                       </div>
-                      <p className="text-sm text-slate-600">{step.description}</p>
-                      {step.tools && step.tools.length > 0 && (
+                      <p className="text-sm text-slate-600">{task.description}</p>
+                      {task.tools && task.tools.length > 0 && (
                         <div className="flex items-center gap-1 mt-1">
                           <Zap className="w-3 h-3 text-amber-500" />
                           <span className="text-xs text-slate-500">
-                            Tools: {step.tools.join(', ')}
+                            Tools: {task.tools.join(', ')}
                           </span>
                         </div>
                       )}
@@ -330,14 +339,14 @@ export function MissionBriefing({
                 </div>
 
                 <div className="space-y-2">
-                  {template.defaultCheckpoints.map((checkpoint, index) => {
+                  {template.checkpoints.map((checkpoint: Checkpoint, index: number) => {
                     const isEnabled = checkpointOverrides[checkpoint.type] ?? getDefaultCheckpointEnabled(checkpoint.type, autonomyBand);
 
                     return (
-                      <div key={index} className="flex items-center justify-between">
+                      <div key={checkpoint.id || index} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <CheckpointBadge type={checkpoint.type} />
-                          <span className="text-sm text-slate-600">{checkpoint.description}</span>
+                          <span className="text-sm text-slate-600">{checkpoint.description || checkpoint.name}</span>
                         </div>
                         {showAdvanced ? (
                           <Switch
@@ -412,14 +421,17 @@ interface InputFieldProps {
   error?: string;
 }
 
-function InputField({ field, value, onChange, error }: InputFieldProps) {
+function InputFieldRenderer({ field, value, onChange, error }: InputFieldProps) {
   const handleChange = (newValue: string | string[]) => {
     onChange(newValue);
   };
 
+  // Use field.name as the key (canonical schema)
+  const fieldKey = getFieldKey(field);
+
   return (
     <div>
-      <Label htmlFor={field.id} className="flex items-center gap-1">
+      <Label htmlFor={fieldKey} className="flex items-center gap-1">
         {field.name}
         {field.required && <span className="text-red-500">*</span>}
       </Label>
@@ -430,7 +442,7 @@ function InputField({ field, value, onChange, error }: InputFieldProps) {
 
       {field.type === 'textarea' ? (
         <Textarea
-          id={field.id}
+          id={fieldKey}
           value={(value as string) || ''}
           onChange={(e) => handleChange(e.target.value)}
           placeholder={field.placeholder}
@@ -482,7 +494,7 @@ function InputField({ field, value, onChange, error }: InputFieldProps) {
         </div>
       ) : (
         <Input
-          id={field.id}
+          id={fieldKey}
           type="text"
           value={(value as string) || ''}
           onChange={(e) => handleChange(e.target.value)}
@@ -502,19 +514,20 @@ function InputField({ field, value, onChange, error }: InputFieldProps) {
 }
 
 interface CheckpointBadgeProps {
-  type: CheckpointConfig['type'];
+  type: CheckpointType;
 }
 
 function CheckpointBadge({ type }: CheckpointBadgeProps) {
-  const configs: Record<CheckpointConfig['type'], { label: string; color: string; bgColor: string }> = {
-    plan: { label: 'Plan', color: 'text-blue-700', bgColor: 'bg-blue-100' },
-    tool: { label: 'Tool', color: 'text-amber-700', bgColor: 'bg-amber-100' },
-    subagent: { label: 'Sub-agent', color: 'text-purple-700', bgColor: 'bg-purple-100' },
-    critical: { label: 'Critical', color: 'text-red-700', bgColor: 'bg-red-100' },
-    final: { label: 'Final', color: 'text-green-700', bgColor: 'bg-green-100' },
+  // Map canonical CheckpointType values to display configs
+  const configs: Record<CheckpointType, { label: string; color: string; bgColor: string }> = {
+    plan_approval: { label: 'Plan', color: 'text-blue-700', bgColor: 'bg-blue-100' },
+    tool_approval: { label: 'Tool', color: 'text-amber-700', bgColor: 'bg-amber-100' },
+    sub_agent_approval: { label: 'Sub-agent', color: 'text-purple-700', bgColor: 'bg-purple-100' },
+    critical_decision: { label: 'Critical', color: 'text-red-700', bgColor: 'bg-red-100' },
+    final_review: { label: 'Final', color: 'text-green-700', bgColor: 'bg-green-100' },
   };
 
-  const config = configs[type];
+  const config = configs[type] || { label: type, color: 'text-slate-700', bgColor: 'bg-slate-100' };
 
   return (
     <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', config.bgColor, config.color)}>
@@ -527,14 +540,16 @@ function CheckpointBadge({ type }: CheckpointBadgeProps) {
 // HELPERS
 // =============================================================================
 
-function getDefaultCheckpointEnabled(checkpointType: CheckpointConfig['type'], autonomyBand: AutonomyBand): boolean {
+function getDefaultCheckpointEnabled(checkpointType: CheckpointType, autonomyBand: AutonomyBand): boolean {
   switch (autonomyBand) {
     case 'supervised':
       return true; // All checkpoints enabled
     case 'guided':
-      return checkpointType === 'critical' || checkpointType === 'final';
+      // Only critical and final review checkpoints enabled in guided mode
+      return checkpointType === 'critical_decision' || checkpointType === 'final_review';
     case 'autonomous':
-      return checkpointType === 'final';
+      // Only final review checkpoint enabled in autonomous mode
+      return checkpointType === 'final_review';
   }
 }
 

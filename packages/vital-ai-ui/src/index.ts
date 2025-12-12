@@ -137,6 +137,12 @@ export * from './tools';
 export * from './navigation';
 
 // ============================================================================
+// Domain R: Assets (Unified Tools, Skills, Workflows, Prompts)
+// VitalAssetCard, VitalAssetGrid, VitalAssetList, VitalAssetTable, VitalAssetKanban, VitalAssetView
+// ============================================================================
+export * from './assets';
+
+// ============================================================================
 // Hooks (Vercel AI SDK integration)
 // ============================================================================
 export * from './hooks';

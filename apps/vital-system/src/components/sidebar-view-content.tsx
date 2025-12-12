@@ -7,6 +7,7 @@ import {
   Activity,
   ArrowRight,
   BarChart,
+  BarChart3,
   BookOpen,
   Bot,
   Building2,
@@ -19,8 +20,12 @@ import {
   FolderOpen,
   History,
   Home,
+  Kanban,
   Layers,
+  LayoutDashboard,
+  LayoutGrid,
   LineChart,
+  List,
   MessageSquare,
   Pen,
   Puzzle,
@@ -30,6 +35,7 @@ import {
   Shield,
   ShieldCheck,
   Star,
+  Table,
   Target,
   TrendingUp,
   Upload,
@@ -1611,13 +1617,68 @@ export function SidebarSolutionBuilderContent() {
 }
 
 export function SidebarPromptPrismContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Get current filters from URL
+  const currentView = searchParams.get("view") || "overview"
+  const currentSuite = searchParams.get("suite") || ""
+  const currentSubSuite = searchParams.get("subSuite") || ""
+  const currentComplexity = searchParams.get("complexity") || ""
+
+  // PRISM Suites configuration
+  const PRISM_SUITES = [
+    { code: 'RULES', name: 'RULES™', icon: Shield, color: 'text-blue-600' },
+    { code: 'TRIALS', name: 'TRIALS™', icon: FlaskConical, color: 'text-violet-600' },
+    { code: 'GUARD', name: 'GUARD™', icon: ShieldCheck, color: 'text-red-600' },
+    { code: 'VALUE', name: 'VALUE™', icon: DollarSign, color: 'text-emerald-600' },
+    { code: 'BRIDGE', name: 'BRIDGE™', icon: Users, color: 'text-orange-600' },
+    { code: 'PROOF', name: 'PROOF™', icon: BarChart3, color: 'text-cyan-600' },
+    { code: 'CRAFT', name: 'CRAFT™', icon: Pen, color: 'text-purple-600' },
+    { code: 'SCOUT', name: 'SCOUT™', icon: Target, color: 'text-lime-600' },
+    { code: 'PROJECT', name: 'PROJECT™', icon: ClipboardList, color: 'text-indigo-600' },
+    { code: 'FORGE', name: 'FORGE™', icon: Zap, color: 'text-amber-600' },
+  ]
+
+  // Build URL with params
+  const buildUrl = (params: Record<string, string | null>) => {
+    const newParams = new URLSearchParams(searchParams.toString())
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === "") {
+        newParams.delete(key)
+      } else {
+        newParams.set(key, value)
+      }
+    })
+    const queryString = newParams.toString()
+    return `/prompts${queryString ? '?' + queryString : ''}`
+  }
+
+  // Check if item is active
+  const isViewActive = (view: string) => currentView === view
+  const isSuiteActive = (suite: string) => currentSuite === suite
+  const isComplexityActive = (complexity: string) => currentComplexity === complexity
+
   return (
     <>
+      {/* Title */}
+      <div className="px-2 py-3 mb-2">
+        <div className="flex items-center gap-2">
+          <FileText className="h-5 w-5 text-primary" />
+          <span className="text-base font-semibold">Prompts</span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1 ml-7">Healthcare prompt templates</p>
+      </div>
+
+      {/* Views */}
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              Prompt Assets
+              <span className="flex items-center gap-2">
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                Views
+              </span>
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
@@ -1625,15 +1686,43 @@ export function SidebarPromptPrismContent() {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton>
-                    <Pen className="h-4 w-4" />
-                    <span>Prompt Library</span>
+                  <SidebarMenuButton asChild data-active={isViewActive("overview")}>
+                    <Link href={buildUrl({ view: "overview" })}>
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Overview</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton>
-                    <Star className="h-4 w-4" />
-                    <span>Favorites</span>
+                  <SidebarMenuButton asChild data-active={isViewActive("grid")}>
+                    <Link href={buildUrl({ view: "grid" })}>
+                      <LayoutGrid className="h-4 w-4" />
+                      <span>Grid</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("list")}>
+                    <Link href={buildUrl({ view: "list" })}>
+                      <List className="h-4 w-4" />
+                      <span>List</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("table")}>
+                    <Link href={buildUrl({ view: "table" })}>
+                      <Table className="h-4 w-4" />
+                      <span>Table</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("kanban")}>
+                    <Link href={buildUrl({ view: "kanban" })}>
+                      <Kanban className="h-4 w-4" />
+                      <span>Kanban</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -1642,11 +1731,15 @@ export function SidebarPromptPrismContent() {
         </SidebarGroup>
       </Collapsible>
 
+      {/* Browse Hierarchy */}
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              Actions
+              <span className="flex items-center gap-2">
+                <FolderOpen className="h-3.5 w-3.5" />
+                Browse
+              </span>
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
@@ -1654,15 +1747,165 @@ export function SidebarPromptPrismContent() {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton>
-                    <Wand2 className="h-4 w-4" />
-                    <span>Create Prompt</span>
+                  <SidebarMenuButton asChild data-active={!currentSuite && !currentComplexity}>
+                    <Link href={buildUrl({ suite: null, subSuite: null, complexity: null })}>
+                      <BookOpen className="h-4 w-4" />
+                      <span>All Prompts</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton>
-                    <Settings className="h-4 w-4" />
-                    <span>Prompt Settings</span>
+                  <SidebarMenuButton asChild>
+                    <Link href="/prompts/suites">
+                      <LayersIcon className="h-4 w-4" />
+                      <span>Browse Suites</span>
+                      <ArrowRight className="h-3 w-3 ml-auto opacity-50" />
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* PRISM Suites Filter */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5" />
+                PRISM™ Suites
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <ScrollArea className="h-auto max-h-[280px]">
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild data-active={!currentSuite}>
+                      <Link href={buildUrl({ suite: null, subSuite: null })}>
+                        <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                        <span>All Suites</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  {PRISM_SUITES.map((suite) => {
+                    const Icon = suite.icon
+                    return (
+                      <SidebarMenuItem key={suite.code}>
+                        <SidebarMenuButton
+                          asChild
+                          data-active={isSuiteActive(suite.code)}
+                        >
+                          <Link href={buildUrl({ suite: suite.code, subSuite: null })}>
+                            <Icon className={`h-4 w-4 ${suite.color}`} />
+                            <span>{suite.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </ScrollArea>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Complexity Filter */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Activity className="h-3.5 w-3.5" />
+                Complexity
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={!currentComplexity}>
+                    <Link href={buildUrl({ complexity: null })}>
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <span>All Levels</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isComplexityActive("basic")}>
+                    <Link href={buildUrl({ complexity: "basic" })}>
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span>Basic</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isComplexityActive("intermediary")}>
+                    <Link href={buildUrl({ complexity: "intermediary" })}>
+                      <Clock className="h-4 w-4 text-blue-500" />
+                      <span>Intermediary</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isComplexityActive("advanced")}>
+                    <Link href={buildUrl({ complexity: "advanced" })}>
+                      <Zap className="h-4 w-4 text-orange-500" />
+                      <span>Advanced</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isComplexityActive("expert")}>
+                    <Link href={buildUrl({ complexity: "expert" })}>
+                      <Star className="h-4 w-4 text-red-500" />
+                      <span>Expert</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Actions */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Wand2 className="h-3.5 w-3.5" />
+                Actions
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/prompts?action=create">
+                      <Plus className="h-4 w-4" />
+                      <span>Create Prompt</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/prompts/suites">
+                      <FolderOpen className="h-4 w-4" />
+                      <span>Manage Suites</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -3295,6 +3538,802 @@ export function SidebarKnowledgeBuilderContent() {
                     <Link href="/designer">
                       <GitBranch className="h-4 w-4" />
                       <span>Process Builder</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+    </>
+  )
+}
+
+// ============================================================================
+// TOOLS SIDEBAR CONTENT - Context-specific for /discover/tools
+// ============================================================================
+
+export function SidebarToolsContent() {
+  const searchParams = useSearchParams()
+
+  // Get current filters from URL
+  const currentView = searchParams.get("view") || "overview"
+  const currentCategory = searchParams.get("category") || ""
+  const currentStatus = searchParams.get("status") || ""
+  const currentType = searchParams.get("type") || ""
+
+  // Build URL with params (preserves existing params)
+  const buildUrl = (params: Record<string, string | null>) => {
+    const newParams = new URLSearchParams(searchParams.toString())
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === "") {
+        newParams.delete(key)
+      } else {
+        newParams.set(key, value)
+      }
+    })
+    const queryString = newParams.toString()
+    return `/discover/tools${queryString ? '?' + queryString : ''}`
+  }
+
+  // Check if item is active
+  const isViewActive = (view: string) => currentView === view
+  const isCategoryActive = (category: string) => currentCategory === category
+  const isStatusActive = (status: string) => currentStatus === status
+  const isTypeActive = (type: string) => currentType === type
+
+  return (
+    <>
+      {/* Title */}
+      <div className="px-2 py-3 mb-2">
+        <div className="flex items-center gap-2">
+          <Settings className="h-5 w-5 text-primary" />
+          <span className="text-base font-semibold">Tools</span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1 ml-7">Healthcare AI tools registry</p>
+      </div>
+
+      {/* Views */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                Views
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("overview")}>
+                    <Link href={buildUrl({ view: "overview" })}>
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Overview</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("grid")}>
+                    <Link href={buildUrl({ view: "grid" })}>
+                      <LayoutGrid className="h-4 w-4" />
+                      <span>Grid</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("list")}>
+                    <Link href={buildUrl({ view: "list" })}>
+                      <List className="h-4 w-4" />
+                      <span>List</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("table")}>
+                    <Link href={buildUrl({ view: "table" })}>
+                      <Table className="h-4 w-4" />
+                      <span>Table</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("kanban")}>
+                    <Link href={buildUrl({ view: "kanban" })}>
+                      <Kanban className="h-4 w-4" />
+                      <span>Kanban</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Browse */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <FolderOpen className="h-3.5 w-3.5" />
+                Browse
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={!currentCategory && !currentStatus && !currentType}>
+                    <Link href={buildUrl({ category: null, status: null, type: null })}>
+                      <BookOpen className="h-4 w-4" />
+                      <span>All Tools</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Filter by Category */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <FolderOpen className="h-3.5 w-3.5" />
+                Categories
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={!currentCategory}>
+                    <Link href={buildUrl({ category: null })}>
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <span>All Categories</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isCategoryActive("healthcare")}>
+                    <Link href={buildUrl({ category: "healthcare" })}>
+                      <HeartPulse className="h-4 w-4 text-red-500" />
+                      <span>Healthcare</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isCategoryActive("research")}>
+                    <Link href={buildUrl({ category: "research" })}>
+                      <FlaskConical className="h-4 w-4 text-cyan-500" />
+                      <span>Research</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isCategoryActive("fhir")}>
+                    <Link href={buildUrl({ category: "fhir" })}>
+                      <Activity className="h-4 w-4 text-blue-500" />
+                      <span>FHIR/Interop</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isCategoryActive("clinical-nlp")}>
+                    <Link href={buildUrl({ category: "clinical-nlp" })}>
+                      <Stethoscope className="h-4 w-4 text-purple-500" />
+                      <span>Clinical NLP</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isCategoryActive("deidentification")}>
+                    <Link href={buildUrl({ category: "deidentification" })}>
+                      <ShieldCheck className="h-4 w-4 text-orange-500" />
+                      <span>De-identification</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Filter by Lifecycle */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Activity className="h-3.5 w-3.5" />
+                Lifecycle
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={!currentStatus}>
+                    <Link href={buildUrl({ status: null })}>
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <span>All Statuses</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isStatusActive("production")}>
+                    <Link href={buildUrl({ status: "production" })}>
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span>Production</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isStatusActive("testing")}>
+                    <Link href={buildUrl({ status: "testing" })}>
+                      <Clock className="h-4 w-4 text-yellow-500" />
+                      <span>Testing</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isStatusActive("development")}>
+                    <Link href={buildUrl({ status: "development" })}>
+                      <Settings className="h-4 w-4 text-gray-500" />
+                      <span>Development</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Filter by Type */}
+      <Collapsible className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Server className="h-3.5 w-3.5" />
+                Tool Type
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={!currentType}>
+                    <Link href={buildUrl({ type: null })}>
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <span>All Types</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isTypeActive("langchain")}>
+                    <Link href={buildUrl({ type: "langchain" })}>
+                      <Zap className="h-4 w-4 text-purple-500" />
+                      <span>LangChain Tools</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isTypeActive("api")}>
+                    <Link href={buildUrl({ type: "api" })}>
+                      <Cloud className="h-4 w-4 text-blue-500" />
+                      <span>API Tools</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isTypeActive("function")}>
+                    <Link href={buildUrl({ type: "function" })}>
+                      <Workflow className="h-4 w-4 text-green-500" />
+                      <span>Function Tools</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Actions */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Wand2 className="h-3.5 w-3.5" />
+                Actions
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/discover/tools?action=create">
+                      <Plus className="h-4 w-4" />
+                      <span>Create Tool</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Related */}
+      <Collapsible className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <ArrowRight className="h-3.5 w-3.5" />
+                Related
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/discover/skills">
+                      <Sparkles className="h-4 w-4" />
+                      <span>Skills Registry</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/agents">
+                      <Bot className="h-4 w-4" />
+                      <span>Agents</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/workflows">
+                      <Workflow className="h-4 w-4" />
+                      <span>Workflows</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+    </>
+  )
+}
+
+// ============================================================================
+// SKILLS SIDEBAR CONTENT - Context-specific for /discover/skills
+// ============================================================================
+
+export function SidebarSkillsContent() {
+  const searchParams = useSearchParams()
+
+  // Get current filters from URL
+  const currentView = searchParams.get("view") || "overview"
+  const currentCategory = searchParams.get("category") || ""
+  const currentComplexity = searchParams.get("complexity") || ""
+  const currentType = searchParams.get("type") || ""
+
+  // Build URL with params (preserves existing params)
+  const buildUrl = (params: Record<string, string | null>) => {
+    const newParams = new URLSearchParams(searchParams.toString())
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === "") {
+        newParams.delete(key)
+      } else {
+        newParams.set(key, value)
+      }
+    })
+    const queryString = newParams.toString()
+    return `/discover/skills${queryString ? '?' + queryString : ''}`
+  }
+
+  // Check if item is active
+  const isViewActive = (view: string) => currentView === view
+  const isCategoryActive = (category: string) => currentCategory === category
+  const isComplexityActive = (complexity: string) => currentComplexity === complexity
+  const isTypeActive = (type: string) => currentType === type
+
+  return (
+    <>
+      {/* Title */}
+      <div className="px-2 py-3 mb-2">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <span className="text-base font-semibold">Skills</span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1 ml-7">AI agent capabilities</p>
+      </div>
+
+      {/* Views */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                Views
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("overview")}>
+                    <Link href={buildUrl({ view: "overview" })}>
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Overview</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("grid")}>
+                    <Link href={buildUrl({ view: "grid" })}>
+                      <LayoutGrid className="h-4 w-4" />
+                      <span>Grid</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("list")}>
+                    <Link href={buildUrl({ view: "list" })}>
+                      <List className="h-4 w-4" />
+                      <span>List</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("table")}>
+                    <Link href={buildUrl({ view: "table" })}>
+                      <Table className="h-4 w-4" />
+                      <span>Table</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isViewActive("kanban")}>
+                    <Link href={buildUrl({ view: "kanban" })}>
+                      <Kanban className="h-4 w-4" />
+                      <span>Kanban</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Browse */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <FolderOpen className="h-3.5 w-3.5" />
+                Browse
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={!currentCategory && !currentComplexity && !currentType}>
+                    <Link href={buildUrl({ category: null, complexity: null, type: null })}>
+                      <BookOpen className="h-4 w-4" />
+                      <span>All Skills</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Filter by Category */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <FolderOpen className="h-3.5 w-3.5" />
+                Categories
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={!currentCategory}>
+                    <Link href={buildUrl({ category: null })}>
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <span>All Categories</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isCategoryActive("analysis")}>
+                    <Link href={buildUrl({ category: "analysis" })}>
+                      <BarChart className="h-4 w-4 text-blue-500" />
+                      <span>Analysis</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isCategoryActive("research")}>
+                    <Link href={buildUrl({ category: "research" })}>
+                      <FlaskConical className="h-4 w-4 text-cyan-500" />
+                      <span>Research</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isCategoryActive("communication")}>
+                    <Link href={buildUrl({ category: "communication" })}>
+                      <MessageSquare className="h-4 w-4 text-green-500" />
+                      <span>Communication</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isCategoryActive("reasoning")}>
+                    <Link href={buildUrl({ category: "reasoning" })}>
+                      <Stethoscope className="h-4 w-4 text-purple-500" />
+                      <span>Reasoning</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isCategoryActive("automation")}>
+                    <Link href={buildUrl({ category: "automation" })}>
+                      <Workflow className="h-4 w-4 text-orange-500" />
+                      <span>Automation</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Filter by Complexity */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <TrendingUp className="h-3.5 w-3.5" />
+                Complexity
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={!currentComplexity}>
+                    <Link href={buildUrl({ complexity: null })}>
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <span>All Levels</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isComplexityActive("basic")}>
+                    <Link href={buildUrl({ complexity: "basic" })}>
+                      <div className="h-4 w-4 flex items-center justify-center">
+                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                      </div>
+                      <span>Basic (1-3)</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isComplexityActive("intermediate")}>
+                    <Link href={buildUrl({ complexity: "intermediate" })}>
+                      <div className="h-4 w-4 flex items-center justify-center">
+                        <div className="h-2 w-2 rounded-full bg-blue-500" />
+                      </div>
+                      <span>Intermediate (4-6)</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isComplexityActive("advanced")}>
+                    <Link href={buildUrl({ complexity: "advanced" })}>
+                      <div className="h-4 w-4 flex items-center justify-center">
+                        <div className="h-2 w-2 rounded-full bg-orange-500" />
+                      </div>
+                      <span>Advanced (7-8)</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isComplexityActive("expert")}>
+                    <Link href={buildUrl({ complexity: "expert" })}>
+                      <div className="h-4 w-4 flex items-center justify-center">
+                        <div className="h-2 w-2 rounded-full bg-red-500" />
+                      </div>
+                      <span>Expert (9-10)</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Filter by Implementation */}
+      <Collapsible className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Server className="h-3.5 w-3.5" />
+                Implementation
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={!currentType}>
+                    <Link href={buildUrl({ type: null })}>
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <span>All Types</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isTypeActive("prompt")}>
+                    <Link href={buildUrl({ type: "prompt" })}>
+                      <Pen className="h-4 w-4 text-blue-500" />
+                      <span>Prompt-based</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isTypeActive("tool")}>
+                    <Link href={buildUrl({ type: "tool" })}>
+                      <Settings className="h-4 w-4 text-purple-500" />
+                      <span>Tool-based</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isTypeActive("workflow")}>
+                    <Link href={buildUrl({ type: "workflow" })}>
+                      <Workflow className="h-4 w-4 text-green-500" />
+                      <span>Workflow-based</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={isTypeActive("agent_graph")}>
+                    <Link href={buildUrl({ type: "agent_graph" })}>
+                      <GitBranch className="h-4 w-4 text-orange-500" />
+                      <span>Agent Graph</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Actions */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Wand2 className="h-3.5 w-3.5" />
+                Actions
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/discover/skills?action=create">
+                      <Plus className="h-4 w-4" />
+                      <span>Create Skill</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Related */}
+      <Collapsible className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <ArrowRight className="h-3.5 w-3.5" />
+                Related
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/discover/tools">
+                      <Settings className="h-4 w-4" />
+                      <span>Tools Registry</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/agents">
+                      <Bot className="h-4 w-4" />
+                      <span>Agents</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/prompts">
+                      <FileText className="h-4 w-4" />
+                      <span>Prompts Library</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

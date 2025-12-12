@@ -52,10 +52,10 @@ export interface ReasoningStep {
 }
 
 const MODE_ENDPOINTS: Record<AskExpertMode, string> = {
-  1: '/api/ask-expert/mode1',
-  2: '/api/ask-expert/mode2',
-  3: '/api/ask-expert/mode3',
-  4: '/api/ask-expert/mode4',
+  1: '/api/expert/mode1/stream',
+  2: '/api/expert/mode2/stream',
+  3: '/api/expert/mode3/stream',
+  4: '/api/expert/mode4/stream',
 };
 
 export function useAskExpert(options: AskExpertOptions) {
@@ -185,7 +185,7 @@ export function useExpertCompletion(options: Pick<AskExpertOptions, 'tenantId' |
     isLoading,
     error,
   } = useCompletion({
-    api: '/api/ask-expert/mode1/completion',
+    api: '/api/expert/mode1/stream',
     body: {
       tenant_id: tenantId,
     },

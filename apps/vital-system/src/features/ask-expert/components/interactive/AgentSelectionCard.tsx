@@ -66,15 +66,15 @@ const LEVEL_CONFIG: Record<string, { label: string; color: string; bgColor: stri
 // CONFIDENCE COLORS
 // =============================================================================
 
-function getConfidenceColor(confidence: number): { text: string; bg: string; border: string } {
+function getConfidenceColor(confidence: number): { text: string; bg: string; border: string; label: string } {
   if (confidence >= 0.9) {
-    return { text: 'text-green-700', bg: 'bg-green-50', border: 'border-green-300' };
+    return { text: 'text-green-700', bg: 'bg-green-50', border: 'border-green-300', label: 'Excellent match' };
   } else if (confidence >= 0.75) {
-    return { text: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-300' };
+    return { text: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-300', label: 'Good match' };
   } else if (confidence >= 0.6) {
-    return { text: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-300' };
+    return { text: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-300', label: 'Moderate match' };
   } else {
-    return { text: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-300' };
+    return { text: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-300', label: 'Low match' };
   }
 }
 
@@ -122,13 +122,15 @@ export function AgentSelectionCard({
           confidenceColors.border,
           className
         )}
+        role="status"
+        aria-label={`Selected expert: ${agentName}, ${levelConfig.label} level, ${Math.round(confidence * 100)}% confidence - ${confidenceColors.label}`}
       >
-        <Target className={cn('h-3.5 w-3.5', confidenceColors.text)} />
+        <Target className={cn('h-3.5 w-3.5', confidenceColors.text)} aria-hidden="true" />
         <span className="text-sm font-medium text-slate-700">{agentName}</span>
         <Badge className={cn('text-xs', levelConfig.bgColor, levelConfig.color)}>
           {levelConfig.label}
         </Badge>
-        <span className={cn('text-xs font-medium', confidenceColors.text)}>
+        <span className={cn('text-xs font-medium', confidenceColors.text)} aria-hidden="true">
           {Math.round(confidence * 100)}%
         </span>
       </motion.div>
@@ -155,10 +157,13 @@ export function AgentSelectionCard({
       <div className="p-4">
         <div className="flex items-start gap-3">
           {/* Selection indicator icon */}
-          <div className={cn(
-            'p-2 rounded-full shrink-0',
-            confidence >= 0.9 ? 'bg-green-100' : 'bg-blue-100'
-          )}>
+          <div
+            className={cn(
+              'p-2 rounded-full shrink-0',
+              confidence >= 0.9 ? 'bg-green-100' : 'bg-blue-100'
+            )}
+            aria-hidden="true"
+          >
             {confidence >= 0.9 ? (
               <CheckCircle2 className="h-5 w-5 text-green-600" />
             ) : (
@@ -173,14 +178,18 @@ export function AgentSelectionCard({
                 'text-xs font-medium uppercase tracking-wide',
                 confidenceColors.text
               )}>
-                <Sparkles className="h-3 w-3 inline mr-1" />
+                <Sparkles className="h-3 w-3 inline mr-1" aria-hidden="true" />
                 VITAL Selected
               </span>
-              <Badge variant="outline" className={cn(
-                'text-xs',
-                confidenceColors.border,
-                confidenceColors.text
-              )}>
+              <Badge
+                variant="outline"
+                className={cn(
+                  'text-xs',
+                  confidenceColors.border,
+                  confidenceColors.text
+                )}
+                title={confidenceColors.label}
+              >
                 {Math.round(confidence * 100)}% match
               </Badge>
             </div>
@@ -210,18 +219,24 @@ export function AgentSelectionCard({
             <button
               onClick={handleToggleDetails}
               className="mt-3 flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors w-full"
+              aria-expanded={showDetails}
+              aria-controls="selection-reasoning"
             >
-              <Info className="h-3.5 w-3.5" />
+              <Info className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Why this expert?</span>
-              <ChevronDown className={cn(
-                'h-4 w-4 ml-auto transition-transform',
-                showDetails && 'rotate-180'
-              )} />
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 ml-auto transition-transform',
+                  showDetails && 'rotate-180'
+                )}
+                aria-hidden="true"
+              />
             </button>
 
             <AnimatePresence>
               {showDetails && (
                 <motion.div
+                  id="selection-reasoning"
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}

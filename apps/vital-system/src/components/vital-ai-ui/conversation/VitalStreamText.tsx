@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Streamdown } from 'streamdown';
 
 interface VitalStreamTextProps {
   content: string;
@@ -16,29 +17,28 @@ interface VitalStreamTextProps {
    */
   highlightCode?: boolean;
   /**
-   * Allow images from these origins (security)
-   * @default []
+   * Enable Mermaid diagram rendering
+   * @default true
    */
-  allowedImageOrigins?: string[];
+  enableMermaid?: boolean;
   /**
-   * Allow links to these origins (security)
-   * @default []
+   * Show copy controls for code blocks and tables
+   * @default true
    */
-  allowedLinkOrigins?: string[];
+  showControls?: boolean;
 }
 
 /**
  * VitalStreamText - Jitter-free streaming markdown component
- * 
+ *
  * Uses Streamdown (https://streamdown.ai/) for:
- * - Jitter-free AI streaming
+ * - Jitter-free AI streaming with parseIncompleteMarkdown
  * - Built-in syntax highlighting with Shiki
  * - GitHub Flavored Markdown (GFM)
- * - CJK language support
- * - Security hardening (origin restrictions)
- * - Unterminated block parsing
+ * - Mermaid diagram rendering
+ * - Unterminated block parsing during streaming
  * - Math expressions with KaTeX
- * 
+ *
  * @see https://streamdown.ai/
  */
 export function VitalStreamText({
@@ -47,8 +47,8 @@ export function VitalStreamText({
   className,
   onComplete,
   highlightCode = true,
-  allowedImageOrigins = [],
-  allowedLinkOrigins = [],
+  enableMermaid = true,
+  showControls = true,
 }: VitalStreamTextProps) {
   const [copied, setCopied] = useState(false);
   const contentRef = useRef<string>('');
@@ -69,15 +69,16 @@ export function VitalStreamText({
 
   return (
     <div className={cn('relative group', className)}>
-      {/* Copy button */}
+      {/* Copy entire response button */}
       <Button
         variant="ghost"
         size="icon"
         className={cn(
-          'absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity',
+          'absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10',
           'bg-background/80 backdrop-blur-sm'
         )}
         onClick={handleCopy}
+        title="Copy entire response"
       >
         {copied ? (
           <Check className="h-3.5 w-3.5 text-green-500" />
@@ -88,24 +89,41 @@ export function VitalStreamText({
 
       <div
         className={cn(
-          'prose prose-slate dark:prose-invert max-w-none whitespace-pre-wrap break-words',
+          'prose prose-slate dark:prose-invert max-w-none',
           'prose-headings:font-semibold prose-headings:tracking-tight',
-          'prose-p:leading-relaxed',
+          'prose-p:leading-relaxed prose-p:my-2',
           'prose-code:before:content-none prose-code:after:content-none',
-          'prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded',
-          'prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700',
+          'prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm',
+          'prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 prose-pre:my-3',
           'prose-a:text-primary prose-a:no-underline hover:prose-a:underline',
           'prose-blockquote:border-l-primary prose-blockquote:not-italic',
           'prose-table:text-sm',
-          isStreaming && 'animate-pulse-subtle'
+          'prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5',
+          // Streamdown-specific styling
+          '[&_.streamdown-code-block]:relative [&_.streamdown-code-block]:my-3',
+          '[&_.streamdown-mermaid]:my-4 [&_.streamdown-mermaid]:flex [&_.streamdown-mermaid]:justify-center',
         )}
       >
-        {content}
+        <Streamdown
+          parseIncompleteMarkdown={isStreaming}
+          isAnimating={isStreaming}
+          shikiTheme={['github-light', 'github-dark']}
+          controls={showControls ? { code: true, table: true, mermaid: enableMermaid } : false}
+          mermaidConfig={{
+            theme: 'neutral',
+            securityLevel: 'strict',
+          }}
+        >
+          {content || '\u00A0'}
+        </Streamdown>
       </div>
 
-      {/* Streaming indicator */}
+      {/* Streaming cursor indicator */}
       {isStreaming && (
-        <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-0.5 align-middle" />
+        <span
+          className="inline-block w-0.5 h-4 bg-primary animate-pulse ml-0.5 align-baseline"
+          aria-hidden="true"
+        />
       )}
     </div>
   );

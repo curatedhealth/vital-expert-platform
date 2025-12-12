@@ -31,6 +31,13 @@ import {
   Info,
   ArrowRight,
   Sparkles,
+  FlaskConical,
+  BarChart3,
+  Search,
+  FileEdit,
+  Eye,
+  Settings,
+  type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -117,18 +124,23 @@ function formatCost(min: number, max: number): string {
   return `$${min.toFixed(2)} - $${max.toFixed(2)}`;
 }
 
-function getFamilyIcon(family: MissionFamily): string {
-  const icons: Record<MissionFamily, string> = {
-    DEEP_RESEARCH: '🔬',
-    EVALUATION: '📊',
-    INVESTIGATION: '🔍',
-    STRATEGY: '🎯',
-    PREPARATION: '📝',
-    MONITORING: '👁️',
-    PROBLEM_SOLVING: '💡',
-    GENERIC: '⚙️',
-  };
-  return icons[family] || icons.GENERIC;
+// =============================================================================
+// MISSION FAMILY ICONS - Lucide React components only (no emojis)
+// =============================================================================
+
+const FAMILY_ICONS: Record<MissionFamily, LucideIcon> = {
+  DEEP_RESEARCH: FlaskConical,
+  EVALUATION: BarChart3,
+  INVESTIGATION: Search,
+  STRATEGY: Target,
+  PREPARATION: FileEdit,
+  MONITORING: Eye,
+  PROBLEM_SOLVING: Lightbulb,
+  GENERIC: Settings,
+};
+
+function getFamilyIcon(family: MissionFamily): LucideIcon {
+  return FAMILY_ICONS[family] || FAMILY_ICONS.GENERIC;
 }
 
 function getFamilyLabel(family: MissionFamily): string {
@@ -224,7 +236,10 @@ export function TemplatePreview({
               <div className="relative px-6 py-5 text-white">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-4xl">{getFamilyIcon(template.family)}</span>
+                    {(() => {
+                      const FamilyIcon = getFamilyIcon(template.family);
+                      return <FamilyIcon className="w-10 h-10 text-white/90" />;
+                    })()}
                     <div>
                       <h2 className="text-2xl font-bold">{template.name}</h2>
                       <p className="text-white/80 text-sm mt-0.5">

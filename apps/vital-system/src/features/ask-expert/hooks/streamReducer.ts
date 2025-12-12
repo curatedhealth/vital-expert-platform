@@ -92,6 +92,18 @@ export interface StreamState {
 
   // Completion data
   completion: DoneEvent | null;
+
+  // Follow-up suggestions (generated after response)
+  suggestions: SuggestionItem[];
+}
+
+// Suggestion type for VitalSuggestionChips
+export interface SuggestionItem {
+  id: string;
+  text: string;
+  category?: 'followup' | 'clarification' | 'deep-dive' | 'compare' | 'example' | 'warning' | 'action';
+  confidence?: number;
+  metadata?: Record<string, unknown>;
 }
 
 export type StreamStatus =
@@ -232,6 +244,9 @@ export const initialStreamState: StreamState = {
   startedAt: null,
   completedAt: null,
   completion: null,
+
+  // Suggestions
+  suggestions: [],
 };
 
 // =============================================================================

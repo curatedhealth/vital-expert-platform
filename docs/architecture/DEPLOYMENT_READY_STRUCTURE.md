@@ -78,8 +78,8 @@ Layer 4 (Services - Depends on Layer 3)
 
 | Priority | Asset/Service | Risk | Dependencies | Status |
 |----------|--------------|------|--------------|--------|
-| 1 | **Skills & Tools** | Very Low | None | ⬜ Pending |
-| 2 | **Evidence Sources** | Very Low | None | ⬜ Pending |
+| 1 | **Skills & Tools** | Very Low | None | ✅ FULLY Complete (Dec 12) |
+| 2 | **Evidence Sources** | Very Low | None | 🔄 In Progress |
 | 3 | **Prompts** | Low | Self-contained | ⬜ Pending |
 | 4 | **Knowledge Bases** | Low | Evidence | ⬜ Pending |
 | 5 | **Roles** | Medium | Skills, Tools | ⬜ Pending |
@@ -88,6 +88,559 @@ Layer 4 (Services - Depends on Layer 3)
 | 8 | **Workflows** | High | Agents | ⬜ Pending |
 | 9 | **Ask Expert** | High | Many deps | ⬜ Pending |
 | 10 | **Mission Service** | Very High | Most complex | ⬜ Pending |
+
+---
+
+## Asset Page Refactoring Plan (COMPLETE)
+
+### Refactoring Summary (December 12, 2025)
+
+Successfully refactored Tools and Skills pages to use shared components, reducing code by 40%.
+
+#### File Size Comparison
+
+| File | Before | After | Reduction |
+|------|--------|-------|-----------|
+| `/discover/tools/page.tsx` | 669 lines (25KB) | 436 lines (15KB) | **35%** |
+| `/discover/skills/page.tsx` | 893 lines (31KB) | 495 lines (16KB) | **45%** |
+| **Total** | 1,562 lines (56KB) | 931 lines (31KB) | **40%** |
+
+#### New Shared Components Created
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `components/shared/AssetOverviewStats.tsx` | 96 | Reusable stats cards with color variants |
+| `components/shared/RecentAssetsCard.tsx` | 102 | Recent items grid with badges |
+| `components/shared/ActiveFiltersBar.tsx` | 101 | Active filter chips with remove/clear |
+| `components/shared/index.ts` | 19 | Barrel exports for all shared components |
+| `hooks/useAssetFilters.ts` | 153 | URL-based filter/view management hook |
+| `features/skills/components/SkillModals.tsx` | 341 | Create/Edit/Delete dialogs for Skills |
+
+#### Refactoring Checklist
+
+- [x] Extract `AssetOverviewStats` - Stats cards with configurable variants
+- [x] Extract `RecentAssetsCard` - Recent items grid component
+- [x] Extract `ActiveFiltersBar` - Filter chips with color schemes
+- [x] Create `useAssetFilters` hook - URL-based state management
+- [x] Extract `SkillModals` - CRUD dialogs moved to features/skills
+- [x] Refactor Tools page - Uses all shared components
+- [x] Refactor Skills page - Uses all shared components + modals
+- [x] Update shared/index.ts - Barrel exports
+
+---
+
+## Shared Components Library Reference
+
+This section documents all shared components available for reuse across views and services.
+
+### View Pattern (Tools/Skills Template)
+
+The Tools and Skills pages establish a **standard view pattern** for all asset pages:
+
+```
+URL Pattern: /{section}/{asset}?view={mode}&{filters}
+
+View Modes:
+├── overview (default) - Dashboard with stats, metrics, recent items
+├── grid              - Card grid layout
+├── list              - Compact list layout
+├── table             - Data table with sorting/filtering
+└── kanban            - Draggable kanban board
+
+Sidebar Structure:
+├── Views section     - Links to each view mode
+├── Filters section   - Category, status, type filters
+└── Quick Actions     - Create, import buttons (admin only)
+```
+
+### Package: `@vital/ai-ui` (72+ Components)
+
+Import from `@vital/ai-ui` or specific domains.
+
+#### Domain R: Assets (PRIMARY - Use for all asset pages)
+
+| Component | Description | Used By |
+|-----------|-------------|---------|
+| `VitalAssetView` | **Unified view** with grid/list/table/kanban | Tools, Skills, Prompts, Workflows |
+| `VitalAssetCard` | Flexible card for any asset type | All asset pages |
+| `VitalAssetGrid` | Responsive grid container | Grid view mode |
+| `VitalAssetList` | Vertical list container | List view mode |
+| `VitalAssetTable` | Data table with sorting | Table view mode |
+| `VitalAssetKanban` | Draggable kanban board | Kanban view mode |
+
+**Types & Constants:**
+```typescript
+import {
+  // Types
+  VitalAsset, VitalToolAsset, VitalSkillAsset, VitalWorkflowAsset, VitalPromptAsset,
+  AssetType, AssetLifecycleStage, AssetComplexityLevel,
+  // Constants
+  ASSET_TYPE_CONFIG, ASSET_CATEGORIES, LIFECYCLE_BADGES, COMPLEXITY_BADGES,
+  // Helpers
+  getComplexityLevel, isToolAsset, isSkillAsset,
+} from '@vital/ai-ui';
+```
+
+#### Domain A: Core Conversation (7 components)
+
+| Component | Description |
+|-----------|-------------|
+| `VitalConversation` | Full conversation container |
+| `VitalMessage` | Individual message display |
+| `VitalPromptInput` | Chat input with attachments |
+| `VitalResponse` | AI response with streaming |
+| `VitalModelSelector` | LLM model picker |
+| `VitalSuggestion` | Suggested prompts |
+| `VitalVoiceInterface` | Voice input/output |
+
+#### Domain B: Reasoning & Evidence (11 components)
+
+| Component | Description |
+|-----------|-------------|
+| `VitalThinking` | Chain-of-thought display |
+| `VitalReasoning` | Reasoning steps visualization |
+| `VitalChainOfThought` | Detailed reasoning chain |
+| `VitalSources` | Source list |
+| `VitalCitation` | Inline citation |
+| `VitalInlineCitation` | Hover citation preview |
+| `VitalSourcePreview` | Source detail preview |
+| `VitalSourceList` | Scrollable source list |
+| `VitalEvidencePanel` | Evidence panel |
+| `VitalConfidenceMeter` | Confidence score display |
+| `VitalRedPenPanel` | Error/correction display |
+
+#### Domain C: Workflow & Safety (11 components)
+
+| Component | Description |
+|-----------|-------------|
+| `VitalCheckpoint` | Workflow checkpoint |
+| `VitalPlan` | Plan display |
+| `VitalPlanCard` | Compact plan card |
+| `VitalTask` | Task item |
+| `VitalQueue` | Task queue |
+| `VitalTool` | Tool execution display |
+| `VitalToolInvocation` | Tool call visualization |
+| `VitalLoader` | Loading indicator |
+| `VitalProgressTimeline` | Progress timeline |
+| `VitalPreFlightCheck` | Pre-flight checklist |
+| `VitalConfirmation` | Confirmation dialog |
+
+#### Domain F: Agent & Collaboration (10+ components)
+
+| Component | Description |
+|-----------|-------------|
+| `VitalAgentCard` | Agent card (rich/compact/minimal) |
+| `VitalAgentCardGrid` | Agent grid container |
+| `VitalAgentAvatar` | Agent avatar with status |
+| `VitalAgentStatus` | Status badge |
+| `VitalAgentActions` | Action buttons |
+| `VitalAgentMetrics` | Performance metrics |
+| `VitalLevelBadge` | Agent tier badge |
+| `VitalTeamView` | Multi-agent team display |
+| `VitalExpertAgentCard` | Expert agent card |
+| `VitalToolExecutionCard` | Tool execution card |
+
+#### Domain G: Navigation & Layout (7 components)
+
+| Component | Description |
+|-----------|-------------|
+| `VitalDashboardLayout` | Dashboard wrapper |
+| `VitalChatLayout` | Chat interface layout |
+| `VitalSplitPanel` | Resizable split panel |
+| `VitalSidebar` | Collapsible sidebar |
+| `VitalContextPanel` | Context/detail panel |
+| `VitalLoadingStates` | Loading skeletons |
+| `VitalShimmer` | Shimmer effect |
+
+#### Domain H: Fusion Intelligence (5 components)
+
+| Component | Description |
+|-----------|-------------|
+| `VitalFusionExplanation` | RAG fusion explanation |
+| `VitalRRFVisualization` | RRF scoring visualization |
+| `VitalRetrieverResults` | Retriever results display |
+| `VitalDecisionTrace` | Decision trace |
+| `VitalTeamRecommendation` | Team recommendation |
+
+#### Domain I: HITL Controls (6 components)
+
+| Component | Description |
+|-----------|-------------|
+| `VitalHITLControls` | Human-in-the-loop controls |
+| `VitalHITLCheckpointModal` | Checkpoint approval modal |
+| `VitalToolApproval` | Tool execution approval |
+| `VitalPlanApprovalModal` | Plan approval modal |
+| `VitalSubAgentApprovalCard` | Sub-agent approval |
+| `VitalFinalReviewPanel` | Final review panel |
+
+#### Domain K: Canvas & Visualization (6 components)
+
+| Component | Description |
+|-----------|-------------|
+| `VitalCanvas` | Base canvas |
+| `VitalGraphCanvas` | Knowledge graph canvas |
+| `VitalFlow` | React Flow wrapper |
+| `VitalAgentHierarchyTree` | Agent hierarchy tree |
+| `VitalPanel` | Canvas panel |
+| `VitalControls` | Canvas controls |
+
+#### Domain M: Mission & Team (4 components)
+
+| Component | Description |
+|-----------|-------------|
+| `VitalMissionTemplateSelector` | Mission template picker |
+| `VitalTemplateRecommendation` | Template recommendations |
+| `VitalTeamAssemblyView` | Team assembly UI |
+| `VitalGenericTemplateOption` | Generic template option |
+
+#### Domain N: v0 AI Generation (4 components)
+
+| Component | Description |
+|-----------|-------------|
+| `VitalV0GeneratorPanel` | v0 generation panel |
+| `VitalV0PromptInput` | v0 prompt input |
+| `VitalV0TypeSelector` | Component type selector |
+| `VitalV0PreviewFrame` | Preview iframe |
+
+### Package: App-Level Shared Components
+
+Location: `apps/vital-system/src/components/shared/`
+
+| Component | Description | Import |
+|-----------|-------------|--------|
+| `VitalBreadcrumb` | Breadcrumb navigation | `@/components/shared/VitalBreadcrumb` |
+
+### Package: `@vital/ui` (shadcn Base)
+
+45+ shadcn/ui primitives. Import from `@vital/ui`.
+
+| Component | Description |
+|-----------|-------------|
+| `Button`, `Card`, `Badge` | Core UI elements |
+| `Dialog`, `Popover`, `Tooltip` | Overlays |
+| `Input`, `Select`, `Checkbox` | Form controls |
+| `Table`, `Tabs`, `Accordion` | Data display |
+| `Avatar`, `Separator`, `Label` | Utilities |
+
+### Sidebar Content Components
+
+Location: `apps/vital-system/src/components/sidebar-view-content.tsx`
+
+| Component | Route | Description |
+|-----------|-------|-------------|
+| `SidebarToolsContent` | `/discover/tools` | Tools sidebar with views & filters |
+| `SidebarSkillsContent` | `/discover/skills` | Skills sidebar with views & filters |
+| `SidebarAgentsContent` | `/agents` | Agents sidebar |
+| `SidebarPromptsContent` | `/prompts` | Prompts sidebar |
+| `SidebarWorkflowsContent` | `/workflows` | Workflows sidebar |
+
+### Usage Example: New Asset Page (Complete Template)
+
+```tsx
+// Example: /discover/prompts/page.tsx
+'use client';
+
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/page-header';
+import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
+import { AssetOverviewStats, StatCardConfig } from '@/components/shared/AssetOverviewStats';
+import { RecentAssetsCard, RecentAssetItem } from '@/components/shared/RecentAssetsCard';
+import { ActiveFiltersBar } from '@/components/shared/ActiveFiltersBar';
+import { useAssetFilters } from '@/hooks/useAssetFilters';
+import { useAuth } from '@/lib/auth/supabase-auth-context';
+import { FileText, Plus, Shield, Loader2 } from 'lucide-react';
+import { VitalAssetView, type VitalAsset } from '@vital/ai-ui';
+
+function PromptsPageContent() {
+  const router = useRouter();
+  const { userProfile } = useAuth();
+  const isAdmin = userProfile?.role === 'super_admin' || userProfile?.role === 'admin';
+
+  // 1. Use shared filter hook - handles all URL state
+  const {
+    viewParam,
+    isOverviewMode,
+    handleViewModeChange,
+    searchParam,
+    handleSearchChange,
+    getFilterParam,
+    activeFilters,
+    removeFilter,
+    clearAllFilters,
+  } = useAssetFilters({
+    basePath: '/discover/prompts',
+    filterKeys: ['category', 'type', 'status'], // Define your filter keys
+  });
+
+  // 2. Local state for data
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [stats, setStats] = useState({ total: 0, active: 0, /* ... */ });
+  const [loading, setLoading] = useState(true);
+
+  // 3. Load data
+  useEffect(() => { loadPrompts(); }, []);
+
+  // 4. Filter data based on URL params
+  const filteredPrompts = useMemo(() => /* filter logic */, [prompts, ...]);
+
+  // 5. Configure stats cards
+  const statsCards: StatCardConfig[] = [
+    { label: 'Total', value: stats.total },
+    { label: 'Active', value: stats.active, icon: CheckCircle2, variant: 'success' },
+    // ... more stats
+  ];
+
+  // 6. Configure recent items
+  const recentItems: RecentAssetItem[] = filteredPrompts.slice(0, 6).map(/* ... */);
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Breadcrumb */}
+      <div className="px-6 pt-4">
+        <VitalBreadcrumb
+          showHome
+          items={[{ label: 'Discover', href: '/discover' }, { label: 'Prompts' }]}
+        />
+      </div>
+
+      {/* Page Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b">
+        <PageHeader icon={FileText} title="Prompts Library" description={`...`} />
+        {isAdmin && <Button><Plus /> Create Prompt</Button>}
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
+          {/* Admin Badge (optional) */}
+          {isAdmin && <div className="...">Admin mode</div>}
+
+          {/* Active Filters Bar - always visible when filters active */}
+          <ActiveFiltersBar
+            filters={activeFilters}
+            filteredCount={filteredPrompts.length}
+            totalCount={stats.total}
+            onRemoveFilter={removeFilter}
+            onClearAll={clearAllFilters}
+            colorScheme="blue" // or 'purple', 'green', 'orange'
+          />
+
+          {/* Overview Mode - Stats & Recent Items */}
+          {isOverviewMode && (
+            <>
+              <AssetOverviewStats stats={statsCards} />
+              {/* Custom cards specific to this asset type */}
+              <RecentAssetsCard
+                title="Recent Prompts"
+                items={recentItems}
+                onItemClick={(item) => router.push(`/discover/prompts/${item.id}`)}
+              />
+            </>
+          )}
+
+          {/* Non-Overview Modes - VitalAssetView */}
+          {/* NOTE: viewParam includes 'overview' but VitalAssetView expects ExtendedViewMode */}
+          {/* Use ternary to convert 'overview' to 'grid' fallback */}
+          {!isOverviewMode && (
+            <VitalAssetView
+              assets={assets}
+              viewMode={(viewParam === 'overview' ? 'grid' : viewParam) || 'grid'}
+              onViewModeChange={handleViewModeChange}
+              showViewToggle
+              availableViews={['grid', 'list', 'table', 'kanban']}
+              showSearch
+              searchValue={searchParam || ''}
+              onSearchChange={handleSearchChange}
+              showSort
+              showRefresh
+              onRefresh={loadPrompts}
+              isAdmin={isAdmin}
+              onAssetClick={handleClick}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function PromptsPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <PromptsPageContent />
+    </Suspense>
+  );
+}
+```
+
+### Implementation Checklist for New Asset Pages
+
+When creating a new asset page, follow this checklist:
+
+- [ ] **1. Create page file** at `src/app/(app)/{section}/{asset}/page.tsx`
+- [ ] **2. Import shared components:**
+  ```tsx
+  import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
+  import { AssetOverviewStats, StatCardConfig } from '@/components/shared/AssetOverviewStats';
+  import { RecentAssetsCard, RecentAssetItem } from '@/components/shared/RecentAssetsCard';
+  import { ActiveFiltersBar } from '@/components/shared/ActiveFiltersBar';
+  import { useAssetFilters } from '@/hooks/useAssetFilters';
+  import { VitalAssetView, type VitalAsset } from '@vital/ai-ui';
+  ```
+- [ ] **3. Configure `useAssetFilters`** with correct `basePath` and `filterKeys`
+- [ ] **4. Define stats configuration** using `StatCardConfig[]`
+- [ ] **5. Define recent items** using `RecentAssetItem[]`
+- [ ] **6. Update sidebar** in `sidebar-view-content.tsx` with views section
+- [ ] **7. Add Suspense boundary** for `useSearchParams` compatibility
+- [ ] **8. Test all view modes:** Overview, Grid, List, Table, Kanban
+
+### Sidebar Updates Required
+
+For each new asset page, update `sidebar-view-content.tsx`:
+
+```tsx
+// Add to the relevant Sidebar{Asset}Content component:
+{/* Views */}
+<Collapsible defaultOpen className="group/collapsible">
+  <SidebarGroup>
+    <SidebarGroupLabel asChild>
+      <CollapsibleTrigger>
+        <LayoutDashboard className="h-3.5 w-3.5" />
+        Views
+      </CollapsibleTrigger>
+    </SidebarGroupLabel>
+    <CollapsibleContent>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/discover/{asset}?view=overview">
+                <BarChart3 className="h-4 w-4" />
+                <span>Overview</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          {/* Grid, List, Table, Kanban links */}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </CollapsibleContent>
+  </SidebarGroup>
+</Collapsible>
+```
+
+---
+
+## Priority #1: Skills & Tools Cleanup ✅ COMPLETE
+
+### Asset Overview
+
+**Skills & Tools** are the foundational assets with zero dependencies - completed as template for all other assets.
+
+| Component | Location | Status |
+|-----------|----------|--------|
+| Tools Page | `src/app/(app)/discover/tools/page.tsx` | ✅ Refactored (436 lines) |
+| Skills Page | `src/app/(app)/discover/skills/page.tsx` | ✅ Refactored (495 lines) |
+| Tool Registry Service | `src/lib/services/tool-registry-service.ts` | ✅ Clean |
+| Skill Registry Service | `src/lib/services/skill-registry-service.ts` | ✅ Clean |
+| Sidebar Tools | `src/components/sidebar-view-content.tsx` | ✅ Views section added |
+| Sidebar Skills | `src/components/sidebar-view-content.tsx` | ✅ Views section added |
+| VitalAssetView | `@vital/ai-ui` package | ✅ Shared component |
+| API Routes | `src/app/api/tools-crud/`, `src/app/api/skills/` | ✅ Working |
+
+### Completed Work (December 12, 2025)
+
+#### Phase 1: URL-Based Filter Wiring ✅
+- Tools page reads URL params from sidebar navigation
+- Skills page reads URL params from sidebar navigation
+- Active filters UI shows applied filters with remove buttons
+- View mode switching (overview/grid/list/table/kanban) works via URL
+- Default view is now Overview (shows stats dashboard)
+
+#### Phase 2: Component Extraction & Refactoring ✅
+- Extracted `AssetOverviewStats` - Reusable stats cards
+- Extracted `RecentAssetsCard` - Recent items grid
+- Extracted `ActiveFiltersBar` - Filter chips with clear
+- Created `useAssetFilters` hook - URL state management
+- Extracted `SkillModals` - CRUD dialogs for Skills
+- Refactored both pages to use shared components
+- **Result: 40% code reduction** (1,562 → 931 lines)
+3. **`tool-registry-service.ts`** - Added `category_parent` property to Tool interface
+
+### Cleanup Summary ✅ COMPLETE
+
+#### STEP 1: AUDIT ✅
+Files identified and mapped above.
+
+#### STEP 2: IDENTIFY ISSUES ✅
+- [x] No duplicate tool/skill components found
+- [x] No orphan files in `components/tools/` or `components/skills/`
+- [x] 4 backup files found and archived
+
+#### STEP 3: ARCHIVE ✅
+- [x] Moved 4 backup files to `_archive/2025-12-12/backup-files/`
+- [x] Created ARCHIVE_NOTES.md documenting why
+
+#### STEP 4: FIX BACKEND ✅
+- [x] Backend tool registries verified (3 layered services - not duplicates)
+- [x] No cleanup needed - properly architected
+
+#### STEP 5: FIX FRONTEND ✅
+- [x] Fixed `skill.implementation_type` null error in skills/[slug]/page.tsx
+- [x] Fixed `CalculatorToolInput` interface to extend Record<string, unknown>
+- [x] Removed dead exports from ask-expert/components/index.ts
+- [x] Fixed ViewMode type error in Skills page (line 419) - 'overview' not assignable to `ExtendedViewMode`
+- [x] Fixed ViewMode type error in Tools page (line 380) - same fix
+- [x] Fixed export conflicts in `@vital/ai-ui` package:
+  - `COMPLEXITY_BADGES` → `SKILL_COMPLEXITY_BADGES` (skills module)
+  - `DEFAULT_CATEGORY` → `SKILL_DEFAULT_CATEGORY` (skills module)
+  - `IMPLEMENTATION_BADGES` → `SKILL_IMPLEMENTATION_BADGES` (skills module)
+  - `getComplexityLevel` → `getSkillComplexityLevel` (skills module)
+  - `LIFECYCLE_BADGES` → `TOOL_LIFECYCLE_BADGES` (tools module)
+  - Canonical exports remain in `./assets` module for use by asset pages
+
+#### STEP 6: VERIFY BUILD ✅
+- [x] TypeScript check passes for Skills page - no errors
+- [x] TypeScript check passes for Tools page - no errors
+- [x] TypeScript check passes for Skills [slug] page - no errors
+- [x] TypeScript check passes for Tools [slug] page - no errors
+- [x] Export conflicts in @vital/ai-ui resolved
+- Note: Other components have TypeScript errors but are outside Skills/Tools scope
+
+#### STEP 7: UPDATE DOCUMENTATION ✅
+- [x] Updated DEPLOYMENT_READY_STRUCTURE.md with completion status
+
+#### STEP 8: COMMIT ✅
+- [x] All Skills & Tools cleanup complete and documented
+- [ ] Ready for commit when user requests
+
+---
+
+## Priority #2: Evidence Sources Cleanup (ACTIVE)
+
+### Asset Overview
+
+**Evidence Sources** provide citations and references for agents - zero dependencies.
+
+| Component | Location | Files | Status |
+|-----------|----------|-------|--------|
+| Evidence API | `apps/vital-system/src/app/api/evidence/` | TBD | ⬜ Audit |
+| Evidence Types | `apps/vital-system/src/types/` | TBD | ⬜ Audit |
+| Evidence Service | `apps/vital-system/src/lib/services/` | TBD | ⬜ Audit |
+| Database Schema | `database/` | TBD | ⬜ Audit |
+
+### Cleanup Tasks
+
+#### STEP 1: AUDIT
+- [ ] Identify all evidence-related files
+- [ ] Map database tables (evidence_sources, evidence_links)
+- [ ] List API routes and components
+
+#### STEP 2-8: Pending audit results
 
 ### Per-Asset Cleanup Checklist (8 Steps)
 

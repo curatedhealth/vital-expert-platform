@@ -21,6 +21,11 @@
     "./mission": "./src/mission/index.ts",
     "./v0": "./src/v0/index.ts",
     "./hooks": "./src/hooks/index.ts",
+    "./skills": "./src/skills/index.ts",
+    "./tools": "./src/tools/index.ts",
+    "./navigation": "./src/navigation/index.ts",
+    "./assets": "./src/assets/index.ts",
+    "./ui": "./src/ui/index.ts",
     "./lib/utils": "./src/lib/utils.ts"
   },
   "peerDependencies": {

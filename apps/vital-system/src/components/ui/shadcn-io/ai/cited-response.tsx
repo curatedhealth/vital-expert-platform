@@ -12,7 +12,7 @@ import {
   InlineCitationCarouselItem,
   InlineCitationSource,
 } from './inline-citation';
-import { __Response as Response } from './response';
+import { Response } from './response';
 
 interface Source {
   id?: string;

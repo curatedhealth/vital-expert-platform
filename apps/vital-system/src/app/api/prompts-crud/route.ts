@@ -24,21 +24,47 @@ export async function GET(request: NextRequest) {
 
     console.log('Prompts API: Loading prompts...', { tenantId, showAll });
 
-    // Get specific prompt by ID
+    // Get specific prompt by ID or slug/prompt_code
     if (action === 'get' && id) {
+      // First try by UUID (if it looks like a UUID)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
       let promptQuery = supabase
         .from('prompts')
-        .select('*')
-        .eq('id', id);
+        .select('*');
+
+      if (isUUID) {
+        promptQuery = promptQuery.eq('id', id);
+      } else {
+        // Try by slug or prompt_code
+        promptQuery = promptQuery.or(`slug.eq.${id},prompt_code.eq.${id}`);
+      }
 
       // Apply tenant filter using allowed_tenants array unless showAll is true
       if (!showAll && tenantId) {
         promptQuery = promptQuery.contains('allowed_tenants', [tenantId]);
       }
 
-      const { data: prompt, error } = await promptQuery.single();
+      const { data: prompt, error } = await promptQuery.maybeSingle();
 
-      if (error) {
+      // If UUID lookup failed, also try slug/prompt_code as fallback
+      if (!prompt && isUUID) {
+        let fallbackQuery = supabase
+          .from('prompts')
+          .select('*')
+          .or(`slug.eq.${id},prompt_code.eq.${id}`);
+
+        if (!showAll && tenantId) {
+          fallbackQuery = fallbackQuery.contains('allowed_tenants', [tenantId]);
+        }
+
+        const { data: fallbackPrompt } = await fallbackQuery.maybeSingle();
+        if (fallbackPrompt) {
+          return NextResponse.json({ success: true, prompt: fallbackPrompt });
+        }
+      }
+
+      if (error || !prompt) {
         return NextResponse.json({ error: 'Prompt not found' }, { status: 404 });
       }
 

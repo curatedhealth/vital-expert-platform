@@ -10,26 +10,36 @@
  * - Live token streaming with typing effect
  * - Glass box thinking visualization
  * - Agent selection card (Mode 2)
- * - Inline citations as they arrive
+ * - Inline citations using ai-elements HoverCard components
+ * - Sources section at end of response
  * - Tool call progress display
  * - Cursor animation
  *
  * Design System: VITAL Brand v6.0
- * Phase 2 Implementation - December 11, 2025
+ * Phase 2 Implementation - December 12, 2025
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Brain, Loader2 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+
+// Use CitedResponse for inline citations with ai-elements components
+import { CitedResponse } from '@/components/ui/shadcn-io/ai/cited-response';
+
+// Sources section at end of response
+import {
+  Sources,
+  SourcesTrigger,
+  SourcesContent,
+  Source,
+} from '@/components/ai-elements/sources';
 
 import type { Expert } from './ExpertPicker';
 import type { StreamState } from '../../hooks/streamReducer';
 import type { InteractiveMode } from '../../views/InteractiveView';
 import { AgentSelectionCard } from './AgentSelectionCard';
 import { VitalThinking } from './VitalThinking';
-import { CitationList } from './CitationList';
 import { ToolCallList } from './ToolCallList';
 import { VitalLevelBadge } from './AgentSelectionCard';
 
@@ -59,21 +69,6 @@ export function StreamingMessage({
   className,
 }: StreamingMessageProps) {
   const contentRef = useRef<HTMLDivElement>(null);
-  const [showCursor, setShowCursor] = useState(true);
-
-  // Blink cursor while streaming
-  useEffect(() => {
-    if (state.status !== 'streaming') {
-      setShowCursor(false);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setShowCursor(prev => !prev);
-    }, 530);
-
-    return () => clearInterval(interval);
-  }, [state.status]);
 
   // Auto-scroll content into view
   useEffect(() => {
@@ -82,7 +77,43 @@ export function StreamingMessage({
 
   const isThinking = state.isThinking || state.status === 'thinking';
   const isStreaming = state.status === 'streaming';
+  const isComplete = state.status === 'complete';
   const hasContent = state.content.length > 0;
+
+  // Transform CitationEvent[] to the format expected by CitedResponse
+  const citationSources = useMemo(() => {
+    return state.citations.map((citation) => ({
+      id: `src-${citation.index}`,
+      url: citation.url || `https://${citation.source}.gov/citation/${citation.id}`,
+      title: citation.title,
+      description: citation.excerpt,
+      excerpt: citation.excerpt,
+      similarity: citation.confidence,
+    }));
+  }, [state.citations]);
+
+  // Combine citations + sources for the Sources section
+  const allSources = useMemo(() => {
+    const fromCitations = state.citations.map((c) => ({
+      id: c.id,
+      title: c.title,
+      url: c.url || `https://${c.source}.gov/citation/${c.id}`,
+      type: c.source,
+    }));
+    const fromSources = state.sources.map((s) => ({
+      id: s.id,
+      title: s.title,
+      url: s.url || '#',
+      type: s.type,
+    }));
+    // Deduplicate by ID
+    const seen = new Set<string>();
+    return [...fromCitations, ...fromSources].filter((s) => {
+      if (seen.has(s.id)) return false;
+      seen.add(s.id);
+      return true;
+    });
+  }, [state.citations, state.sources]);
 
   // =========================================================================
   // RENDER
@@ -131,13 +162,15 @@ export function StreamingMessage({
           </div>
         )}
 
-        {/* Glass Box Thinking (Claude.ai style) */}
+        {/* Glass Box Thinking (Claude.ai style) - Auto-expands during streaming */}
         <AnimatePresence>
           {state.reasoning.length > 0 && (
             <VitalThinking
               steps={state.reasoning}
-              isExpanded={false}
+              isExpanded={isStreaming || isThinking}
               isActive={isThinking}
+              showTimings={true}
+              showAgentLevels={true}
             />
           )}
         </AnimatePresence>
@@ -158,47 +191,21 @@ export function StreamingMessage({
           )}
         </AnimatePresence>
 
-        {/* Streaming Content */}
+        {/* Streaming Content - Uses CitedResponse for inline citations */}
         {(hasContent || isStreaming) && (
           <div
             ref={contentRef}
             className="rounded-2xl rounded-bl-md bg-slate-100 px-4 py-3 max-w-[85%]"
           >
-            <div className="prose prose-sm max-w-none text-slate-800">
-              <ReactMarkdown
-                components={{
-                  a: ({ children, href }) => (
-                    <a
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      {children}
-                    </a>
-                  ),
-                  code: ({ className, children }) => {
-                    const isInline = !className;
-                    return isInline ? (
-                      <code className="px-1 py-0.5 rounded bg-slate-200 text-sm">
-                        {children}
-                      </code>
-                    ) : (
-                      <code className={className}>{children}</code>
-                    );
-                  },
-                }}
-              >
-                {state.content}
-              </ReactMarkdown>
-
-              {/* Streaming cursor */}
+            <div className="prose prose-slate dark:prose-invert max-w-none text-slate-800">
+              <CitedResponse
+                content={state.content || '\u00A0'}
+                sources={citationSources}
+              />
+              {/* Streaming cursor indicator */}
               {isStreaming && (
                 <span
-                  className={cn(
-                    'inline-block w-2 h-4 bg-slate-600 ml-0.5 align-text-bottom',
-                    showCursor ? 'opacity-100' : 'opacity-0'
-                  )}
+                  className="inline-block w-0.5 h-4 bg-primary animate-pulse ml-0.5 align-baseline"
                   aria-hidden="true"
                 />
               )}
@@ -216,19 +223,27 @@ export function StreamingMessage({
           </div>
         )}
 
-        {/* Inline Citations (as they arrive) */}
+        {/* Sources Section - Shows at end of response when complete */}
         <AnimatePresence>
-          {state.citations.length > 0 && (
+          {isComplete && allSources.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="max-w-[85%]"
+              exit={{ opacity: 0, y: -5 }}
+              className="max-w-[85%] mt-3"
             >
-              <CitationList
-                citations={state.citations}
-                inline={true}
-                isStreaming={isStreaming}
-              />
+              <Sources defaultOpen={false}>
+                <SourcesTrigger count={allSources.length} />
+                <SourcesContent>
+                  {allSources.map((source) => (
+                    <Source
+                      key={source.id}
+                      href={source.url}
+                      title={source.title}
+                    />
+                  ))}
+                </SourcesContent>
+              </Sources>
             </motion.div>
           )}
         </AnimatePresence>

@@ -2,7 +2,7 @@
  * VITAL Platform - Mode 3 Streaming BFF Route
  *
  * Mode 3: Manual Autonomous (Deep Research)
- * User MANUALLY selects expert → system executes autonomously with HITL checkpoints.
+ * User MANUALLY selects agent → system executes autonomously with HITL checkpoints.
  *
  * ARCHITECTURE (Dec 2025):
  * - Mode 3 and Mode 4 use the SAME mission executor (master_graph.py)
@@ -10,7 +10,7 @@
  *   - Mode 3: agent_id is provided (manual selection)
  *   - Mode 4: agent_id is null (Fusion auto-selection)
  *
- * Backend Endpoint: /api/expert/autonomous (unified autonomous endpoint)
+ * Backend Endpoint: /ask-expert/autonomous (unified autonomous endpoint)
  */
 
 import { NextRequest } from 'next/server';
@@ -38,11 +38,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       mission_id,
-      expert_id,
+      agent_id,   // Primary field name (standard across all modes)
+      expert_id,  // Backwards compatibility alias
       goal,
       template_id,
       options = {},
     } = body;
+
+    // agent_id is primary, expert_id kept for backwards compatibility
+    const effectiveAgentId = agent_id || expert_id;
 
     // Validate required fields
     if (!goal?.trim()) {
@@ -52,9 +56,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!expert_id) {
+    if (!effectiveAgentId) {
       return new Response(
-        JSON.stringify({ error: 'Expert ID is required for Mode 3 (manual selection)' }),
+        JSON.stringify({ error: 'Agent ID is required for Mode 3 (manual selection)' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -73,7 +77,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         // Mode 3: agent_id is provided for manual selection
-        agent_id: expert_id,
+        agent_id: effectiveAgentId,
         goal,
         template_id: template_id || 'deep-research', // Default template
         inputs: options.inputs || {},

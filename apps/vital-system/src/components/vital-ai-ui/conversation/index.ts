@@ -5,7 +5,8 @@
  * 6 components total.
  */
 
-export { VitalStreamText, default as StreamText } from './VitalStreamText';
+export { VitalStreamText, VitalStreamText as StreamText, VitalAIStreamText } from './VitalStreamText';
+export type { VitalStreamTextProps } from './VitalStreamText';
 export { VitalMessage, default as Message } from './VitalMessage';
 export { VitalPromptInput, default as PromptInput } from './VitalPromptInput';
 export { VitalModelSelector, default as ModelSelector } from './VitalModelSelector';

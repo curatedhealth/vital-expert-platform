@@ -48,17 +48,18 @@ export type {
   VitalSkillCardListProps,
 } from './types';
 
-export { getComplexityLevel } from './types';
+export { getComplexityLevel as getSkillComplexityLevel } from './types';
 
 // ============================================================================
 // CONSTANTS & UTILITIES
+// Prefixed to avoid conflicts with ./assets exports
 // ============================================================================
 
 export {
   SKILL_CATEGORIES,
-  DEFAULT_CATEGORY,
-  COMPLEXITY_BADGES,
-  IMPLEMENTATION_BADGES,
+  DEFAULT_CATEGORY as SKILL_DEFAULT_CATEGORY,
+  COMPLEXITY_BADGES as SKILL_COMPLEXITY_BADGES,
+  IMPLEMENTATION_BADGES as SKILL_IMPLEMENTATION_BADGES,
   getCategoryConfig as getSkillCategoryConfig,
   getComplexityConfig as getSkillComplexityConfig,
   getImplementationConfig as getSkillImplementationConfig,

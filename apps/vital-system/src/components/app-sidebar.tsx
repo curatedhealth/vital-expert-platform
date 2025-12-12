@@ -28,6 +28,8 @@ import {
   SidebarValueContent,
   SidebarKnowledgeBuilderContent,
   SidebarMedicalStrategyContent,
+  SidebarToolsContent,
+  SidebarSkillsContent,
 } from "@/components/sidebar-view-content"
 
 export function AppSidebar({
@@ -90,7 +92,7 @@ export function AppSidebar({
     if (pathname.startsWith("/knowledge")) {
       return <SidebarKnowledgeContent />
     }
-    if (pathname.startsWith("/prism")) {
+    if (pathname.startsWith("/prism") || pathname.startsWith("/prompts")) {
       return <SidebarPromptPrismContent />
     }
     if (pathname.startsWith("/personas")) {
@@ -104,6 +106,13 @@ export function AppSidebar({
     }
     if (pathname.startsWith("/ontology-explorer")) {
       return <SidebarMedicalStrategyContent />
+    }
+    // Context-specific sidebars for /discover pages
+    if (pathname.startsWith("/discover/tools")) {
+      return <SidebarToolsContent />
+    }
+    if (pathname.startsWith("/discover/skills")) {
+      return <SidebarSkillsContent />
     }
     return <SidebarDashboardContent />
   }

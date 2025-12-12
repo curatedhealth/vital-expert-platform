@@ -23,9 +23,14 @@
  * Phase 3 Implementation - December 11, 2025
  */
 
-import { useState, useReducer, useCallback, useMemo } from 'react';
+import { useState, useReducer, useCallback, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import {
+  BookOpen,
+  BarChart3,
+  type LucideIcon,
+} from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 // Streaming infrastructure
@@ -35,21 +40,28 @@ import {
   streamActions,
   streamSelectors,
 } from '../hooks/streamReducer';
-import { useSSEStream } from '../hooks/useSSEStream';
+import {
+  useSSEStream,
+  type TokenEvent,
+  type ReasoningEvent,
+  type CitationEvent,
+  type ToolCallEvent,
+  type CheckpointEvent,
+  type ProgressEvent,
+  type ArtifactEvent,
+  type DoneEvent,
+  type ErrorEvent,
+} from '../hooks/useSSEStream';
 
 // Phase 2 Interactive components (reused for expert selection)
+// Expert type is defined in ExpertPicker
 import { ExpertPicker, type Expert } from '../components/interactive/ExpertPicker';
 import { FusionSelector } from '../components/interactive/FusionSelector';
 
-// Phase 3 Autonomous components - WIRED December 11, 2025
-import { MissionTemplateSelector } from '../components/autonomous/MissionTemplateSelector';
-import { MissionBriefing } from '../components/autonomous/MissionBriefing';
-import { MissionExecutionView } from '../components/autonomous/MissionExecutionView';
-import { MissionCompleteView } from '../components/autonomous/MissionCompleteView';
-import { VitalCheckpoint } from '../components/autonomous/VitalCheckpoint';
-import type { MissionTemplate as RunnerMissionTemplate, MissionConfig as RunnerMissionConfig } from '../components/autonomous';
+// Mission Input Component for research goal entry
+import { MissionInput, type MissionConfig as MissionInputConfig } from '../components/MissionInput';
 
-// Phase 3 Mission Template System - WIRED December 11, 2025
+// Phase 3 Mission Template System - CANONICAL TYPES
 import {
   TemplateGallery,
   TemplatePreview,
@@ -58,32 +70,40 @@ import {
   type TemplatePreviewData,
   type MissionCustomizations,
   DEFAULT_MISSION_TEMPLATES,
-  FAMILY_COLORS,
 } from '../components/missions';
 
+// Canonical types from mission-runners.ts
+import type {
+  MissionTemplate as CanonicalMissionTemplate,
+  MissionConfig as CanonicalMissionConfig,
+  InputField as CanonicalInputField,
+} from '../types/mission-runners';
+
 // =============================================================================
-// TYPES
+// TYPES (Local view-specific types that extend canonical types)
 // =============================================================================
 
 export type AutonomousMode = 'mode3' | 'mode4';
 
-export type MissionPhase = 'selection' | 'template' | 'briefing' | 'execution' | 'complete';
+export type MissionPhase = 'selection' | 'goal' | 'template' | 'briefing' | 'execution' | 'complete';
 
-export interface MissionTemplate {
+// Local simplified template for the view's internal state
+// Uses legacy format for backward compatibility with existing UI
+interface LocalMissionTemplate {
   id: string;
   name: string;
   description: string;
-  icon: string;
+  icon: LucideIcon;
   category: 'research' | 'analysis' | 'report' | 'review' | 'synthesis';
   estimatedDuration: string;
   complexity: 'simple' | 'moderate' | 'complex';
-  requiredInputs: InputField[];
-  defaultCheckpoints: CheckpointConfig[];
-  steps: MissionStep[];
+  requiredInputs: LocalInputField[];
+  defaultCheckpoints: LocalCheckpointConfig[];
+  steps: LocalMissionStep[];
   tags: string[];
 }
 
-export interface InputField {
+interface LocalInputField {
   id: string;
   name: string;
   type: 'text' | 'textarea' | 'file' | 'select' | 'multiselect';
@@ -93,7 +113,7 @@ export interface InputField {
   description?: string;
 }
 
-export interface MissionStep {
+interface LocalMissionStep {
   id: string;
   name: string;
   description: string;
@@ -101,14 +121,14 @@ export interface MissionStep {
   tools?: string[];
 }
 
-export interface CheckpointConfig {
+interface LocalCheckpointConfig {
   type: 'plan' | 'tool' | 'subagent' | 'critical' | 'final';
   description: string;
   timeout?: number;
   autoApprove?: boolean;
 }
 
-export interface MissionConfig {
+interface LocalMissionConfig {
   inputs: Record<string, unknown>;
   autonomyBand: 'supervised' | 'guided' | 'autonomous';
   checkpointOverrides?: Record<string, boolean>;
@@ -137,12 +157,12 @@ export interface AutonomousViewProps {
 // MOCK DATA (Replace with real API calls)
 // =============================================================================
 
-const MOCK_TEMPLATES: MissionTemplate[] = [
+const MOCK_TEMPLATES: LocalMissionTemplate[] = [
   {
     id: 'literature-review',
     name: 'Literature Review',
     description: 'Comprehensive review of scientific literature on a topic',
-    icon: '📚',
+    icon: BookOpen,
     category: 'research',
     estimatedDuration: '15-30 min',
     complexity: 'moderate',
@@ -180,7 +200,7 @@ const MOCK_TEMPLATES: MissionTemplate[] = [
     id: 'competitive-analysis',
     name: 'Competitive Analysis',
     description: 'Analyze competitor landscape and market positioning',
-    icon: '📊',
+    icon: BarChart3,
     category: 'analysis',
     estimatedDuration: '20-45 min',
     complexity: 'complex',
@@ -249,10 +269,11 @@ export function AutonomousView({
 
   // Mission state
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<MissionTemplate | null>(
+  const [selectedTemplate, setSelectedTemplate] = useState<LocalMissionTemplate | null>(
     initialTemplateId ? MOCK_TEMPLATES.find(t => t.id === initialTemplateId) || null : null
   );
-  const [missionConfig, setMissionConfig] = useState<MissionConfig | null>(null);
+  const [missionConfig, setMissionConfig] = useState<LocalMissionConfig | null>(null);
+  const [missionGoal, setMissionGoal] = useState<string>('');
 
   // Template preview/customizer modals
   const [previewTemplate, setPreviewTemplate] = useState<TemplatePreviewData | null>(null);
@@ -262,6 +283,11 @@ export function AutonomousView({
 
   // Stream state (centralized via reducer)
   const [streamState, dispatch] = useReducer(streamReducer, initialStreamState);
+
+  // Debug: Track phase changes
+  useEffect(() => {
+    console.log('[AutonomousView] Phase changed to:', phase, '| mode:', mode, '| selectedExpert:', selectedExpert?.name || 'none');
+  }, [phase, mode, selectedExpert]);
 
   // =========================================================================
   // DERIVED STATE
@@ -280,21 +306,20 @@ export function AutonomousView({
   // Convert DEFAULT_MISSION_TEMPLATES to TemplateCardData format for gallery
   const galleryTemplates: TemplateCardData[] = useMemo(() => {
     return DEFAULT_MISSION_TEMPLATES.map((template) => ({
-      id: template.id,
-      name: template.name,
-      family: template.family,
-      category: template.category,
-      description: template.description,
-      complexity: template.complexity,
-      estimatedDurationMin: template.estimatedDurationMinutes,
-      estimatedDurationMax: template.estimatedDurationMaxMinutes,
-      estimatedCostMin: template.estimatedCostMin,
-      estimatedCostMax: template.estimatedCostMax,
-      tags: template.tags,
+      id: template.id!,
+      name: template.name!,
+      family: template.family!,
+      category: template.category!,
+      description: template.description!,
+      complexity: template.complexity!,
+      estimatedDurationMin: template.estimatedDurationMin ?? 30,
+      estimatedDurationMax: template.estimatedDurationMax ?? 60,
+      estimatedCostMin: template.estimatedCostMin ?? 1.0,
+      estimatedCostMax: template.estimatedCostMax ?? 5.0,
+      tags: template.tags ?? [],
       minAgents: template.minAgents,
       maxAgents: template.maxAgents,
       exampleQueries: template.exampleQueries,
-      popularityScore: template.popularityScore,
     }));
   }, []);
 
@@ -304,22 +329,22 @@ export function AutonomousView({
 
   const { connect, disconnect } = useSSEStream({
     url: mode === 'mode3'
-      ? '/api/ask-expert/mode-3/missions/stream'
-      : '/api/ask-expert/mode-4/missions/stream',
+      ? '/api/expert/mode3/stream'
+      : '/api/expert/mode4/stream',
 
-    onToken: useCallback((event) => {
+    onToken: useCallback((event: TokenEvent) => {
       dispatch(streamActions.appendContent(event));
     }, []),
 
-    onReasoning: useCallback((event) => {
+    onReasoning: useCallback((event: ReasoningEvent) => {
       dispatch(streamActions.addReasoning(event));
     }, []),
 
-    onCitation: useCallback((event) => {
+    onCitation: useCallback((event: CitationEvent) => {
       dispatch(streamActions.addCitation(event));
     }, []),
 
-    onToolCall: useCallback((event) => {
+    onToolCall: useCallback((event: ToolCallEvent) => {
       if (event.status === 'calling') {
         dispatch(streamActions.startTool(event));
       } else {
@@ -327,25 +352,25 @@ export function AutonomousView({
       }
     }, []),
 
-    onCheckpoint: useCallback((event) => {
+    onCheckpoint: useCallback((event: CheckpointEvent) => {
       dispatch({ type: 'CHECKPOINT_RECEIVED', payload: event });
     }, []),
 
-    onProgress: useCallback((event) => {
+    onProgress: useCallback((event: ProgressEvent) => {
       dispatch({ type: 'PROGRESS_UPDATE', payload: event });
     }, []),
 
-    onArtifact: useCallback((event) => {
+    onArtifact: useCallback((event: ArtifactEvent) => {
       dispatch(streamActions.addArtifact(event));
     }, []),
 
-    onDone: useCallback((event) => {
+    onDone: useCallback((event: DoneEvent) => {
       dispatch(streamActions.complete(event));
       setPhase('complete');
       onMissionComplete?.(missionId, streamState.artifacts);
     }, [missionId, streamState.artifacts, onMissionComplete]),
 
-    onError: useCallback((event) => {
+    onError: useCallback((event: ErrorEvent) => {
       dispatch(streamActions.error(event));
       onMissionFail?.(new Error(event.message));
     }, [onMissionFail]),
@@ -360,16 +385,28 @@ export function AutonomousView({
   // =========================================================================
 
   const handleExpertSelect = useCallback((expert: Expert) => {
+    console.log('[AutonomousView] Expert selected:', expert.name, '- transitioning to goal phase');
     setSelectedExpert(expert);
-    setPhase('template');
+    setPhase('goal');  // Go to mission goal input phase
   }, []);
 
-  const handleTemplateSelect = useCallback((template: MissionTemplate) => {
+  // Handle mission start from MissionInput component
+  const handleMissionStart = useCallback((goal: string, config: MissionInputConfig) => {
+    setMissionGoal(goal);
+    // Store the config from MissionInput for later use
+    setMissionConfig({
+      inputs: { goal },
+      autonomyBand: config.hitlEnabled ? 'guided' : 'autonomous',
+    });
+    setPhase('template');  // Proceed to template selection
+  }, []);
+
+  const handleTemplateSelect = useCallback((template: LocalMissionTemplate) => {
     setSelectedTemplate(template);
     setPhase('briefing');
   }, []);
 
-  const handleLaunch = useCallback(async (config: MissionConfig) => {
+  const handleLaunch = useCallback(async (config: LocalMissionConfig) => {
     if (!selectedTemplate || !selectedExpert) return;
 
     setMissionConfig(config);
@@ -400,7 +437,7 @@ export function AutonomousView({
     });
 
     try {
-      await fetch(`/api/ask-expert/missions/${missionId}/checkpoints/${checkpointId}`, {
+      await fetch(`/api/expert/mission/checkpoint/${checkpointId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ decision, data }),
@@ -418,12 +455,17 @@ export function AutonomousView({
   const handleBackToSelection = useCallback(() => {
     setPhase('selection');
     setSelectedExpert(null);
+    setMissionGoal('');
+  }, []);
+
+  const handleBackToGoal = useCallback(() => {
+    setPhase('goal');
   }, []);
 
   // Template Preview/Customizer handlers - WIRED December 11, 2025
   const handleTemplatePreview = useCallback((templateId: string) => {
     const template = DEFAULT_MISSION_TEMPLATES.find((t) => t.id === templateId);
-    if (template) {
+    if (template && template.id && template.name && template.family && template.category && template.description && template.complexity) {
       // Convert to preview data format
       const previewData: TemplatePreviewData = {
         id: template.id,
@@ -433,26 +475,25 @@ export function AutonomousView({
         description: template.description,
         longDescription: template.description, // Could be extended
         complexity: template.complexity,
-        estimatedDurationMin: template.estimatedDurationMinutes,
-        estimatedDurationMax: template.estimatedDurationMaxMinutes,
-        estimatedCostMin: template.estimatedCostMin,
-        estimatedCostMax: template.estimatedCostMax,
-        tags: template.tags,
+        estimatedDurationMin: template.estimatedDurationMin ?? 30,
+        estimatedDurationMax: template.estimatedDurationMax ?? 60,
+        estimatedCostMin: template.estimatedCostMin ?? 1.0,
+        estimatedCostMax: template.estimatedCostMax ?? 5.0,
+        tags: template.tags ?? [],
         minAgents: template.minAgents,
         maxAgents: template.maxAgents,
         exampleQueries: template.exampleQueries,
-        expectedInputs: template.inputs?.map((input) => ({
+        expectedInputs: template.requiredInputs?.map((input) => ({
           name: input.name,
           type: input.type as 'text' | 'file' | 'url' | 'selection',
           description: input.description || '',
-          required: input.required,
+          required: input.required ?? false,
           example: input.placeholder,
         })),
-        expectedOutputs: template.outputs?.map((output) => ({
-          name: output.name,
-          type: output.type as 'report' | 'analysis' | 'summary' | 'data' | 'recommendation',
-          description: output.description,
-          format: output.format,
+        expectedOutputs: template.tasks?.map((task) => ({
+          name: task.name,
+          type: 'report' as const,
+          description: task.description || '',
         })),
       };
       setPreviewTemplate(previewData);
@@ -462,7 +503,7 @@ export function AutonomousView({
 
   const handleTemplateSelectFromGallery = useCallback((templateId: string) => {
     const template = DEFAULT_MISSION_TEMPLATES.find((t) => t.id === templateId);
-    if (template) {
+    if (template && template.id && template.name && template.family && template.category && template.description && template.complexity) {
       // Convert to customizer format and open customizer
       const customizerData: TemplateCardData = {
         id: template.id,
@@ -471,11 +512,11 @@ export function AutonomousView({
         category: template.category,
         description: template.description,
         complexity: template.complexity,
-        estimatedDurationMin: template.estimatedDurationMinutes,
-        estimatedDurationMax: template.estimatedDurationMaxMinutes,
-        estimatedCostMin: template.estimatedCostMin,
-        estimatedCostMax: template.estimatedCostMax,
-        tags: template.tags,
+        estimatedDurationMin: template.estimatedDurationMin ?? 30,
+        estimatedDurationMax: template.estimatedDurationMax ?? 60,
+        estimatedCostMin: template.estimatedCostMin ?? 1.0,
+        estimatedCostMax: template.estimatedCostMax ?? 5.0,
+        tags: template.tags ?? [],
         minAgents: template.minAgents,
         maxAgents: template.maxAgents,
         exampleQueries: template.exampleQueries,
@@ -491,7 +532,7 @@ export function AutonomousView({
     setIsCustomizerOpen(false);
 
     // Convert customizations to mission config
-    const config: MissionConfig = {
+    const config: LocalMissionConfig = {
       inputs: {},
       autonomyBand: customizations.requireHumanApproval ? 'supervised' : 'autonomous',
       maxBudget: customizations.maxBudget ?? undefined,
@@ -544,19 +585,66 @@ export function AutonomousView({
               <ExpertPicker
                 tenantId={tenantId}
                 onSelect={handleExpertSelect}
-                theme="purple"
-                title="Select Expert for Deep Research"
-                subtitle="Choose an expert to lead your autonomous research mission"
+                initialCategory="deep-research"
               />
             ) : (
               <FusionSelector
                 tenantId={tenantId}
                 mode="mode4"
+                onQuerySubmit={(query) => {
+                  // In Mode 4, submitting query starts mission configuration
+                  setMissionGoal(query);
+                  setPhase('goal');  // Go to goal phase for additional config
+                }}
                 onExpertSelected={handleExpertSelect}
-                title="Describe Your Mission"
-                subtitle="Our AI will select the best expert for your background task"
               />
             )}
+          </motion.div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════
+            MISSION GOAL INPUT PHASE
+            User enters their research question/goal and configures options
+            Uses MissionInput component for rich input experience
+            ═══════════════════════════════════════════════════════════════ */}
+        {phase === 'goal' && (
+          <motion.div
+            key="goal"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="flex-1 overflow-auto"
+          >
+            <div className="max-w-3xl mx-auto p-6">
+              {/* Back navigation */}
+              <div className="mb-6">
+                <button
+                  onClick={handleBackToSelection}
+                  className={cn(
+                    'text-sm flex items-center gap-1 transition-colors',
+                    mode === 'mode3'
+                      ? 'text-emerald-600 hover:text-emerald-800'
+                      : 'text-amber-600 hover:text-amber-800'
+                  )}
+                >
+                  ← Back to expert selection
+                </button>
+              </div>
+
+              {/* Mission Input Component */}
+              <MissionInput
+                autoSelect={mode === 'mode4'}
+                selectedExpert={selectedExpert ? {
+                  id: selectedExpert.id,
+                  name: selectedExpert.name,
+                  level: selectedExpert.level || 'L2',
+                  specialty: selectedExpert.domain || selectedExpert.tagline || '',
+                } : null}
+                onStartMission={handleMissionStart}
+                isRunning={isExecuting}
+              />
+            </div>
           </motion.div>
         )}
 
@@ -578,10 +666,10 @@ export function AutonomousView({
             <div className="flex-shrink-0 p-4 border-b bg-gradient-to-r from-purple-50 to-white">
               <div className="flex items-center justify-between">
                 <button
-                  onClick={handleBackToSelection}
+                  onClick={handleBackToGoal}
                   className="text-sm text-purple-600 hover:text-purple-800 flex items-center gap-1"
                 >
-                  ← Back to expert selection
+                  ← Back to mission goal
                 </button>
                 {selectedExpert && (
                   <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -656,7 +744,10 @@ export function AutonomousView({
 
               <div className="bg-gradient-to-r from-purple-50 to-white p-6 rounded-xl border border-purple-100 mb-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="text-3xl">{selectedTemplate?.icon}</span>
+                  {selectedTemplate?.icon && (() => {
+                    const TemplateIcon = selectedTemplate.icon;
+                    return <TemplateIcon className="w-8 h-8 text-purple-600" />;
+                  })()}
                   <div>
                     <h2 className="text-xl font-semibold text-slate-900">
                       {selectedTemplate?.name}
@@ -764,7 +855,10 @@ export function AutonomousView({
               <div className="border-b bg-gradient-to-r from-purple-50 to-white p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{selectedTemplate?.icon}</span>
+                    {selectedTemplate?.icon && (() => {
+                      const TemplateIcon = selectedTemplate.icon;
+                      return <TemplateIcon className="w-6 h-6 text-purple-600" />;
+                    })()}
                     <div>
                       <h2 className="font-semibold text-slate-900">
                         {selectedTemplate?.name}
@@ -790,18 +884,18 @@ export function AutonomousView({
                     <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
                   )}
                   <span className="text-sm font-medium text-slate-700">
-                    {streamState.progress?.task || 'Initializing mission...'}
+                    {streamState.progress?.stage || 'Initializing mission...'}
                   </span>
                 </div>
                 <div className="h-2 bg-purple-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500"
-                    style={{ width: `${streamState.progress?.percentage || 0}%` }}
+                    style={{ width: `${streamState.progress?.progress || 0}%` }}
                   />
                 </div>
                 <div className="flex justify-between text-xs text-slate-500 mt-1">
-                  <span>Step {streamState.progress?.current || 0} of {streamState.progress?.total || '?'}</span>
-                  <span>{streamState.progress?.percentage || 0}%</span>
+                  <span>Step {(streamState.progress?.subSteps?.filter(s => s.status === 'complete').length ?? 0) + 1} of {streamState.progress?.subSteps?.length ?? '?'}</span>
+                  <span>{streamState.progress?.progress || 0}%</span>
                 </div>
               </div>
 
@@ -817,7 +911,7 @@ export function AutonomousView({
                         Checkpoint: {streamState.checkpoint.type}
                       </h3>
                       <p className="text-sm text-amber-700 mt-1">
-                        {streamState.checkpoint.message}
+                        {streamState.checkpoint.description}
                       </p>
                       <div className="flex gap-2 mt-3">
                         <button
@@ -857,7 +951,7 @@ export function AutonomousView({
                             step.status === 'thinking' && 'border-purple-500 animate-spin border-t-transparent',
                             step.status === 'complete' && 'bg-purple-500 border-purple-500'
                           )} />
-                          <span className="font-medium">{step.title}</span>
+                          <span className="font-medium">{step.step}</span>
                         </div>
                         <p className="text-sm text-purple-600 mt-1 ml-6">{step.content}</p>
                       </div>
@@ -882,10 +976,10 @@ export function AutonomousView({
                           <span className={cn(
                             'w-2 h-2 rounded-full',
                             tool.status === 'calling' && 'bg-amber-500 animate-pulse',
-                            tool.status === 'complete' && 'bg-green-500',
+                            tool.status === 'success' && 'bg-green-500',
                             tool.status === 'error' && 'bg-red-500'
                           )} />
-                          <span className="text-slate-600">{tool.name}</span>
+                          <span className="text-slate-600">{tool.toolName}</span>
                         </div>
                       ))}
                     </div>

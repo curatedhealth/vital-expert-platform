@@ -8,12 +8,14 @@
  *
  * Features:
  * - Research goal textarea with examples
+ * - Mission template selection (always visible, 20+ templates)
  * - Advanced configuration options (collapsible)
  * - Expert display (Mode 3) or auto-selection indicator (Mode 4)
- * - Mission templates quick-select
+ *
+ * Updated: December 12, 2025 - Added comprehensive mission templates
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,6 +34,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import {
@@ -48,7 +52,16 @@ import {
   Lightbulb,
   User,
   Users,
+  BookOpen,
+  BarChart3,
+  Search,
+  FileText,
+  Eye,
+  Zap,
 } from 'lucide-react';
+
+// Import comprehensive mission templates
+import { DEFAULT_MISSION_TEMPLATES, type MissionFamily } from '../types/mission-runners';
 
 export interface MissionConfig {
   enableRag: boolean;
@@ -86,13 +99,17 @@ const EXAMPLE_GOALS = [
   'Synthesize HTA submission requirements for EU5 markets',
 ];
 
-// Mission templates
-const MISSION_TEMPLATES = [
-  { id: 'deep-research', name: 'Deep Research', description: 'Comprehensive multi-source analysis' },
-  { id: 'competitive-intel', name: 'Competitive Intelligence', description: 'Market and competitor analysis' },
-  { id: 'regulatory-review', name: 'Regulatory Review', description: 'Compliance and guidance analysis' },
-  { id: 'literature-review', name: 'Literature Review', description: 'Systematic evidence synthesis' },
-];
+// Mission family display info
+const FAMILY_INFO: Record<MissionFamily, { label: string; icon: typeof BookOpen }> = {
+  DEEP_RESEARCH: { label: '🔬 Deep Research', icon: Search },
+  EVALUATION: { label: '⚖️ Evaluation', icon: BarChart3 },
+  INVESTIGATION: { label: '🔍 Investigation', icon: Eye },
+  STRATEGY: { label: '🎯 Strategy', icon: Target },
+  PREPARATION: { label: '📋 Preparation', icon: FileText },
+  MONITORING: { label: '📡 Monitoring', icon: Eye },
+  PROBLEM_SOLVING: { label: '🧩 Problem Solving', icon: Zap },
+  GENERIC: { label: '📝 General', icon: BookOpen },
+};
 
 export function MissionInput({
   autoSelect,
@@ -108,8 +125,41 @@ export function MissionInput({
     enableWebSearch: true,
     maxIterations: 15,
     hitlEnabled: true,
-    templateId: 'deep-research',
+    templateId: 'comprehensive_analysis',
   });
+
+  // Group templates by family for organized dropdown
+  // Filter to only include templates with required fields (id, name)
+  const groupedTemplates = useMemo(() => {
+    const groups = new Map<MissionFamily, Array<{ id: string; name: string; family: MissionFamily; description?: string; complexity?: string; estimatedDurationMin?: number; estimatedDurationMax?: number; checkpoints?: Array<{ name: string }> }>>();
+
+    DEFAULT_MISSION_TEMPLATES.forEach((template) => {
+      // Skip templates without id or name
+      if (!template.id || !template.name) return;
+
+      const family = template.family || 'GENERIC';
+      if (!groups.has(family)) {
+        groups.set(family, []);
+      }
+      groups.get(family)!.push({
+        id: template.id,
+        name: template.name,
+        family: family,
+        description: template.description,
+        complexity: template.complexity,
+        estimatedDurationMin: template.estimatedDurationMin,
+        estimatedDurationMax: template.estimatedDurationMax,
+        checkpoints: template.checkpoints?.map(c => ({ name: c.name })),
+      });
+    });
+
+    return groups;
+  }, []);
+
+  // Get current template info for display
+  const selectedTemplate = useMemo(() => {
+    return DEFAULT_MISSION_TEMPLATES.find(t => t.id === config.templateId);
+  }, [config.templateId]);
 
   const handleStartMission = useCallback(() => {
     if (!goal.trim()) return;
@@ -249,6 +299,97 @@ export function MissionInput({
           </div>
         </div>
 
+        {/* Mission Template Selection - ALWAYS VISIBLE (20+ templates grouped by family) */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">Mission Template</Label>
+            <Badge variant="outline" className="text-xs">
+              {DEFAULT_MISSION_TEMPLATES.length} templates
+            </Badge>
+          </div>
+          <Select
+            value={config.templateId}
+            onValueChange={(value) => setConfig({ ...config, templateId: value })}
+            disabled={isRunning}
+          >
+            <SelectTrigger className="h-auto min-h-[44px]">
+              <SelectValue>
+                {selectedTemplate ? (
+                  <div className="flex flex-col items-start py-1">
+                    <span className="font-medium">{selectedTemplate.name}</span>
+                    <span className="text-xs text-muted-foreground line-clamp-1">
+                      {selectedTemplate.description}
+                    </span>
+                  </div>
+                ) : (
+                  'Select a mission template...'
+                )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="max-h-[400px]">
+              {Array.from(groupedTemplates.entries()).map(([family, templates]) => (
+                <SelectGroup key={family}>
+                  <SelectLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {FAMILY_INFO[family]?.label || family}
+                  </SelectLabel>
+                  {templates.map((template) => (
+                    <SelectItem
+                      key={template.id}
+                      value={template.id}
+                      className="py-2"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{template.name}</span>
+                          {template.complexity && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              {template.complexity}
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground line-clamp-2">
+                          {template.description}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
+          {/* Show selected template details */}
+          {selectedTemplate && (
+            <div className="p-3 rounded-lg bg-muted/50 border border-dashed text-sm space-y-2">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{selectedTemplate.name}</span>
+                {selectedTemplate.estimatedDurationMin && selectedTemplate.estimatedDurationMax && (
+                  <Badge variant="secondary" className="text-xs ml-auto">
+                    ~{selectedTemplate.estimatedDurationMin}-{selectedTemplate.estimatedDurationMax} min
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {selectedTemplate.description}
+              </p>
+              {selectedTemplate.checkpoints && selectedTemplate.checkpoints.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {selectedTemplate.checkpoints.slice(0, 3).map((checkpoint, i) => (
+                    <Badge key={i} variant="outline" className="text-[10px]">
+                      {checkpoint.name}
+                    </Badge>
+                  ))}
+                  {selectedTemplate.checkpoints.length > 3 && (
+                    <Badge variant="outline" className="text-[10px]">
+                      +{selectedTemplate.checkpoints.length - 3} more
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Advanced Configuration (Collapsible) */}
         <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
           <CollapsibleTrigger asChild>
@@ -265,32 +406,6 @@ export function MissionInput({
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="pt-4 space-y-4">
-            {/* Mission Template */}
-            <div className="space-y-2">
-              <Label className="text-sm">Mission Template</Label>
-              <Select
-                value={config.templateId}
-                onValueChange={(value) => setConfig({ ...config, templateId: value })}
-                disabled={isRunning}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {MISSION_TEMPLATES.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
-                      <div className="flex flex-col">
-                        <span>{template.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {template.description}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Feature Toggles */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center justify-between p-3 rounded-lg border">

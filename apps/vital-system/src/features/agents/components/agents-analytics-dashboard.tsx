@@ -77,18 +77,24 @@ function calculateAgentMetrics(agents: ClientAgent[], usageData?: AgentUsageData
   const active = agents.filter((a) => a.status === 'active').length;
   const testing = agents.filter((a) => a.status === 'testing').length;
 
+  // Count by agent level (L1-L5 hierarchy)
+  const getAgentLevelNumber = (agent: ClientAgent): number => {
+    return agent.agent_levels?.level_number || agent.tier || 0;
+  };
+
   const byLevel = {
-    level1: agents.filter((a) => a.tier === '1' || a.tier === 1).length,
-    level2: agents.filter((a) => a.tier === '2' || a.tier === 2).length,
-    level3: agents.filter((a) => a.tier === '3' || a.tier === 3).length,
-    level4: agents.filter((a) => a.tier === '4' || a.tier === 4).length,
-    level5: agents.filter((a) => a.tier === '5' || a.tier === 5).length,
+    level1: agents.filter((a) => getAgentLevelNumber(a) === 1).length,
+    level2: agents.filter((a) => getAgentLevelNumber(a) === 2).length,
+    level3: agents.filter((a) => getAgentLevelNumber(a) === 3).length,
+    level4: agents.filter((a) => getAgentLevelNumber(a) === 4).length,
+    level5: agents.filter((a) => getAgentLevelNumber(a) === 5).length,
   };
 
   const totalQueries = usageData?.reduce((sum, d) => sum + d.totalQueries, 0) || 0;
   const totalCost = usageData?.reduce((sum, d) => sum + d.totalCost, 0) || 0;
+  const usageLength = usageData?.length || 1;
   const averageSatisfaction =
-    usageData?.reduce((sum, d) => sum + d.userSatisfactionScore, 0) / (usageData?.length || 1) || 0;
+    (usageData?.reduce((sum, d) => sum + d.userSatisfactionScore, 0) || 0) / usageLength;
 
   const successRate =
     usageData && usageData.length > 0

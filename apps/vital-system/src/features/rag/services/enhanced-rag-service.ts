@@ -242,7 +242,7 @@ export class EnhancedRAGService {
   }> {
     if (!this.config.enableSemanticChunking) {
       // Fallback to basic chunking
-      const splitter = new (await import('langchain/text_splitter')).RecursiveCharacterTextSplitter({
+      const splitter = new (await import('@langchain/textsplitters')).RecursiveCharacterTextSplitter({
         chunkSize: 2000,
         chunkOverlap: 300,
       });

@@ -1,11 +1,17 @@
 /**
  * VITAL Platform - Mode 4 Streaming BFF Route
- * 
+ *
  * Mode 4: Auto Autonomous (Background Dashboard)
- * System automatically selects expert team via Fusion Intelligence,
- * then executes the mission in the background with periodic updates.
- * 
- * Phase 4: Integration & Streaming
+ * System AUTO-SELECTS expert team via Fusion Intelligence,
+ * then executes the mission autonomously with HITL checkpoints.
+ *
+ * ARCHITECTURE (Dec 2025):
+ * - Mode 3 and Mode 4 use the SAME mission executor (master_graph.py)
+ * - The only difference is agent selection:
+ *   - Mode 3: agent_id is provided (manual selection)
+ *   - Mode 4: agent_id is null (Fusion auto-selection)
+ *
+ * Backend Endpoint: /api/expert/autonomous (unified autonomous endpoint)
  */
 
 import { NextRequest } from 'next/server';
@@ -34,7 +40,7 @@ export async function POST(request: NextRequest) {
     const {
       mission_id,
       goal,
-      mode,
+      template_id,
       options = {},
     } = body;
 
@@ -46,74 +52,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Forward to Python backend - Mode 4 auto-autonomous execution
-    const backendResponse = await fetch(`${AI_ENGINE_URL}/api/v1/expert/background`, {
+    // Note: Mode 4 does NOT require expert_id - Fusion Intelligence auto-selects
+
+    // Forward to Python backend - Unified Autonomous endpoint
+    // Mode 4 = NO agent_id → backend uses Fusion auto-selection
+    const backendResponse = await fetch(`${AI_ENGINE_URL}/ask-expert/autonomous`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session.accessToken}`,
-        'X-Tenant-ID': tenantId,
-        'X-Request-ID': crypto.randomUUID(),
-        'X-User-ID': session.user.id,
-        'Accept': 'text/event-stream',
+        'x-tenant-id': tenantId,
+        'x-request-id': mission_id || crypto.randomUUID(),
+        'x-user-id': session.user.id,
+        'Accept': 'application/json',
       },
       body: JSON.stringify({
-        mission_id: mission_id || crypto.randomUUID(),
+        // Mode 4: NO agent_id - Fusion Intelligence selects automatically
+        // agent_id: undefined,  // Explicitly omitted for Mode 4
         goal,
-        mode: mode || 'mode4_auto_autonomous',
-        tenant_id: tenantId,
-        user_id: session.user.id,
-        options: {
-          // Fusion Intelligence for automatic team selection
-          fusion_enabled: options.fusion_enabled ?? true,
-          fusion_weights: options.fusion_weights || {
-            vector: 0.4,
-            graph: 0.35,
-            relational: 0.25,
-          },
-          // RAG and search options
-          enable_rag: options.enable_rag ?? true,
-          enable_websearch: options.enable_websearch ?? true,
-          enable_all_tools: options.enable_all_tools ?? true,
-          // Execution constraints
-          max_duration: options.max_duration || 3600, // 1 hour default
-          budget_limit: options.budget_limit,
-          max_iterations: options.max_iterations || 50,
-          // HITL configuration for Mode 4
-          hitl_enabled: true, // Always enabled for pre-flight
-          hitl_checkpoints: [
-            'pre_flight_validation',
-            'critical_decision',
-            'budget_exceeded',
-            'final_review',
-          ],
-          hitl_timeout_seconds: options.hitl_timeout_seconds || 600, // 10 minutes default
-          hitl_auto_action: options.hitl_auto_action || 'reject', // Auto-reject on timeout
-          // Background execution options
-          enable_sub_agents: true,
-          enable_react_loop: true,
-          enable_artifact_generation: true,
-          enable_notifications: options.notify_on_complete ?? true,
-          enable_checkpoint_notifications: options.notify_on_checkpoint ?? true,
-          // Mode 4 specific
-          execution_mode: 'background',
-          priority: options.priority || 'normal',
-          // Automatic team assembly
-          min_team_size: 2,
-          max_team_size: 5,
-          require_l2_lead: true, // L2 expert must lead Mode 4 missions
+        template_id: template_id || 'deep-research', // Default template
+        inputs: options.inputs || {},
+        budget_limit: options.budget_limit,
+        timeout_minutes: options.timeout_minutes || 60,
+        auto_approve_checkpoints: options.auto_approve_checkpoints ?? false,
+        // Fusion-specific options (Mode 4 auto-selection)
+        fusion_weights: options.fusion_weights || {
+          vector: 0.4,
+          graph: 0.35,
+          relational: 0.25,
         },
       }),
     });
 
     if (!backendResponse.ok) {
       const errorText = await backendResponse.text();
-      console.error('[Mode4 Stream] Backend error:', backendResponse.status, errorText);
-      
+      console.error('[Mode4 Stream] Mission creation error:', backendResponse.status, errorText);
+
       return new Response(
         `event: error\ndata: ${JSON.stringify({
           code: `BACKEND_${backendResponse.status}`,
-          message: errorText || 'Backend request failed',
+          message: errorText || 'Failed to create mission',
           recoverable: backendResponse.status >= 500,
         })}\n\n`,
         {
@@ -126,18 +104,64 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Stream response to client
-    return new Response(backendResponse.body, {
+    // Step 1 complete: Mission created, get mission_id
+    const missionData = await backendResponse.json();
+    const createdMissionId = missionData.id;
+
+    if (!createdMissionId) {
+      return new Response(
+        `event: error\ndata: ${JSON.stringify({
+          code: 'MISSION_CREATE_FAILED',
+          message: 'Mission created but no ID returned',
+          recoverable: false,
+        })}\n\n`,
+        { status: 500, headers: { 'Content-Type': 'text/event-stream' } }
+      );
+    }
+
+    // Step 2: Connect to mission stream
+    const streamResponse = await fetch(
+      `${AI_ENGINE_URL}/ask-expert/missions/${createdMissionId}/stream`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.accessToken}`,
+          'x-tenant-id': tenantId,
+          'Accept': 'text/event-stream',
+        },
+      }
+    );
+
+    if (!streamResponse.ok) {
+      const errorText = await streamResponse.text();
+      console.error('[Mode4 Stream] Stream connection error:', streamResponse.status, errorText);
+
+      return new Response(
+        `event: error\ndata: ${JSON.stringify({
+          code: `STREAM_${streamResponse.status}`,
+          message: errorText || 'Failed to connect to mission stream',
+          recoverable: true,
+        })}\n\n`,
+        {
+          status: streamResponse.status,
+          headers: { 'Content-Type': 'text/event-stream' },
+        }
+      );
+    }
+
+    // Stream mission events to client
+    return new Response(streamResponse.body, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache, no-transform',
         'Connection': 'keep-alive',
         'X-Accel-Buffering': 'no',
+        'X-Mission-ID': createdMissionId,
       },
     });
   } catch (error) {
     console.error('[Mode4 Stream] Error:', error);
-    
+
     return new Response(
       `event: error\ndata: ${JSON.stringify({
         code: 'INTERNAL_ERROR',

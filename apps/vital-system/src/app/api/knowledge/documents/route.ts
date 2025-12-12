@@ -63,7 +63,8 @@ export async function GET(request: NextRequest) {
         tags,
         metadata,
         tenant_id,
-        user_id
+        user_id,
+        chunk_count
       `)
       .order('created_at', { ascending: false });
 
@@ -116,7 +117,7 @@ export async function GET(request: NextRequest) {
           name: doc.title || doc.file_name || 'Untitled',
           type: doc.file_type || 'unknown',
           size: doc.file_size || 0,
-          uploadedAt: doc.created_at || doc.processed_at || new Date().toISOString(),
+          uploadedAt: doc.created_at || new Date().toISOString(),
           status: doc.status || 'pending', // Use status directly (completed, processing, failed, pending)
           domain: doc.domain || null,
           isGlobal: false, // All documents are tenant-scoped in RAG system

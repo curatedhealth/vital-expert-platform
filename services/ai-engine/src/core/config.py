@@ -127,8 +127,17 @@ class SecurityConfig:
         if not origins or origins == [""]:
             origins = default_origins.get(env, [])
         
+        # SECURITY: Require JWT_SECRET in production - no insecure defaults
+        jwt_secret = os.getenv("JWT_SECRET")
+        if not jwt_secret:
+            if env == "production":
+                raise RuntimeError("JWT_SECRET environment variable is required in production")
+            # Generate random secret for development only
+            import secrets
+            jwt_secret = f"dev-only-{secrets.token_hex(32)}"
+
         return cls(
-            jwt_secret=os.getenv("JWT_SECRET", "dev-secret-change-in-prod"),
+            jwt_secret=jwt_secret,
             jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256"),
             jwt_expiry_hours=int(os.getenv("JWT_EXPIRY_HOURS", "24")),
             allowed_origins=origins,
@@ -142,7 +151,7 @@ class BudgetConfig:
     default_monthly_limit: int = 1_000_000
     warning_threshold_percent: float = 80.0
     hard_limit_enabled: bool = True
-    
+
     @classmethod
     def from_env(cls) -> "BudgetConfig":
         """Create config from environment variables."""
@@ -150,6 +159,46 @@ class BudgetConfig:
             default_monthly_limit=int(os.getenv("DEFAULT_MONTHLY_TOKEN_LIMIT", "1000000")),
             warning_threshold_percent=float(os.getenv("BUDGET_WARNING_THRESHOLD", "80.0")),
             hard_limit_enabled=os.getenv("BUDGET_HARD_LIMIT_ENABLED", "true").lower() == "true",
+        )
+
+
+@dataclass
+class WorkflowConfig:
+    """LangGraph workflow configuration - centralizes previously hardcoded values."""
+    # Confidence thresholds
+    default_response_confidence: float = 0.85
+    min_confidence_threshold: float = 0.7
+    high_confidence_threshold: float = 0.9
+
+    # Budget defaults for autonomous modes
+    default_budget_remaining: float = 100.0
+    default_estimated_cost: float = 1.0
+    budget_warning_threshold: float = 20.0
+
+    # HITL (Human-in-the-Loop) settings
+    hitl_auto_approve_in_dev: bool = True  # Auto-approve plans in development
+    hitl_timeout_seconds: int = 300  # 5 minutes to respond to HITL checkpoint
+
+    # Quality gates
+    quality_gate_enabled: bool = True
+    min_citation_count: int = 1
+    max_reflection_rounds: int = 3
+
+    @classmethod
+    def from_env(cls, env: Environment) -> "WorkflowConfig":
+        """Create config from environment variables."""
+        return cls(
+            default_response_confidence=float(os.getenv("WORKFLOW_DEFAULT_CONFIDENCE", "0.85")),
+            min_confidence_threshold=float(os.getenv("WORKFLOW_MIN_CONFIDENCE", "0.7")),
+            high_confidence_threshold=float(os.getenv("WORKFLOW_HIGH_CONFIDENCE", "0.9")),
+            default_budget_remaining=float(os.getenv("WORKFLOW_DEFAULT_BUDGET", "100.0")),
+            default_estimated_cost=float(os.getenv("WORKFLOW_ESTIMATED_COST", "1.0")),
+            budget_warning_threshold=float(os.getenv("WORKFLOW_BUDGET_WARNING", "20.0")),
+            hitl_auto_approve_in_dev=env in (Environment.DEVELOPMENT, Environment.TESTING),
+            hitl_timeout_seconds=int(os.getenv("WORKFLOW_HITL_TIMEOUT", "300")),
+            quality_gate_enabled=os.getenv("WORKFLOW_QUALITY_GATE_ENABLED", "true").lower() == "true",
+            min_citation_count=int(os.getenv("WORKFLOW_MIN_CITATIONS", "1")),
+            max_reflection_rounds=int(os.getenv("WORKFLOW_MAX_REFLECTIONS", "3")),
         )
 
 
@@ -224,6 +273,7 @@ class AppConfig:
     llm: LLMConfig
     security: SecurityConfig
     budget: BudgetConfig
+    workflow: WorkflowConfig
     worker: WorkerConfig
     observability: ObservabilityConfig
     
@@ -252,6 +302,7 @@ class AppConfig:
             llm=LLMConfig.from_env(),
             security=SecurityConfig.from_env(env),
             budget=BudgetConfig.from_env(),
+            workflow=WorkflowConfig.from_env(env),
             worker=WorkerConfig.from_env(env),
             observability=ObservabilityConfig.from_env(env),
             platform_organization_id=os.getenv(

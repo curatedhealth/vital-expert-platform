@@ -59,7 +59,7 @@ interface AIModelNavbarProps {
 }
 
 // 🔧 Model Provider Icons
-
+const getProviderIcon = (provider: string) => {
   switch (provider) {
     case 'openai':
       return '🤖';
@@ -77,7 +77,7 @@ interface AIModelNavbarProps {
 };
 
 // 🎨 Model Status Badge
-
+const ModelStatusBadge = ({ status }: { status: string }) => {
   switch (status) {
     case 'stable':
       return <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50">Stable</Badge>;
@@ -91,7 +91,7 @@ interface AIModelNavbarProps {
 };
 
 // 📊 Capability Rating Stars
-
+const CapabilityRating = ({ rating }: { rating: number }) => {
   return (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
@@ -110,10 +110,11 @@ interface AIModelNavbarProps {
 };
 
 // 🚀 Enhanced Model Selector Dropdown
-
+const EnhancedModelSelector = () => {
   const { selectedModel, currentModel, handleModelChange } = useModelSelection();
   const [isOpen, setIsOpen] = useState(false);
 
+  const groupedModels = AVAILABLE_MODELS.reduce((acc, model) => {
     // eslint-disable-next-line security/detect-object-injection
     if (!acc[model.provider]) {
       // eslint-disable-next-line security/detect-object-injection
@@ -248,7 +249,7 @@ interface AIModelNavbarProps {
 };
 
 // 👤 User Menu Dropdown
-
+const UserMenuDropdown = ({ user, onSignOut }: { user?: AIModelNavbarProps['user']; onSignOut?: () => void }) => {
   if (!user) return null;
 
   return (
@@ -306,11 +307,15 @@ export const AIModelNavbar: React.FC<AIModelNavbarProps> = ({
   showUserMenu = true,
   showQuickActions = true,
 }) => {
+  const router = useRouter();
+  const pathname = usePathname();
 
+  const handleNewChat = () => {
     onNewChat?.();
     router.push('/chat');
   };
 
+  const isActivePath = (path: string) => {
     return pathname === path || pathname.startsWith(path + '/');
   };
 

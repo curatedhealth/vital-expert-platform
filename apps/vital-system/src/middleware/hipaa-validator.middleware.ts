@@ -4,7 +4,7 @@
  */
 
 // PHI (Protected Health Information) identifiers as defined by HIPAA
-
+const PHI_PATTERNS = {
   // Direct identifiers
   SSN: /\b\d{3}-\d{2}-\d{4}\b/g,
   PHONE: /\b(?:\+?1[-.\s]?)?(?:\(?[0-9]{3}\)?[-.\s]?)?[0-9]{3}[-.\s]?[0-9]{4}\b/g,
@@ -36,7 +36,7 @@
 };
 
 // HIPAA-safe geographical subdivisions (populations > 20,000)
-
+const SAFE_GEOGRAPHIC_AREAS = new Set([
   'united states', 'california', 'texas', 'florida', 'new york', 'pennsylvania',
   'illinois', 'ohio', 'georgia', 'north carolina', 'michigan', 'new jersey',
   'virginia', 'washington', 'arizona', 'massachusetts', 'tennessee', 'indiana',
@@ -52,7 +52,7 @@ interface HIPAAValidationResult {
   compliant: boolean;
   violations: HIPAAViolation[];
   riskLevel: 'low' | 'medium' | 'high' | 'critical';
-  sanitizedContent?: any;
+  sanitizedContent?: unknown;
 }
 
 interface HIPAAViolation {
@@ -77,7 +77,7 @@ export async function validateHIPAACompliance(
   }
 
   // Convert content to searchable string
-
+  const searchableContent = typeof content === 'string'
     ? content
     : JSON.stringify(content, null, 2);
 
@@ -85,9 +85,9 @@ export async function validateHIPAACompliance(
 
   // Check for each PHI pattern
   for (const [patternName, regex] of Object.entries(PHI_PATTERNS)) {
-
+    const matches = searchableContent.match(regex) || [];
     if (matches.length > 0) {
-
+      const matchedText = [...new Set(matches)];
       violations.push({
         type: patternName,
         pattern: regex.source,
@@ -100,13 +100,13 @@ export async function validateHIPAACompliance(
   }
 
   // Check for location information that might be too specific
-
+  const locationViolations = await checkLocationCompliance(searchableContent);
   violations.push(...locationViolations);
 
   // Determine overall risk level
-
+  const riskLevel = determineRiskLevel(violations);
   // Determine compliance status
-
+  const compliant = violations.length === 0 || riskLevel === 'low';
   return {
     compliant,
     violations,
@@ -182,10 +182,10 @@ async function checkLocationCompliance(content: string): Promise<HIPAAViolation[
   const violations: HIPAAViolation[] = [];
 
   // Look for ZIP codes and verify they represent populations > 20,000
-
+  const zipMatches = content.match(/\b\d{5}(?:-\d{4})?\b/g);
   if (zipMatches) {
     for (const zip of zipMatches) {
-
+      const isCompliant = await checkZipCodeCompliance(zip);
       if (!isCompliant) {
         violations.push({
           type: 'SMALL_POPULATION_ZIP',
@@ -205,9 +205,9 @@ async function checkLocationCompliance(content: string): Promise<HIPAAViolation[
 async function checkZipCodeCompliance(zipCode: string): Promise<boolean> {
   // In production, this would query a demographic database
   // For now, implement basic heuristics
-
+  const firstTwo = zipCode.substring(0, 2);
   // Rural state ZIP codes more likely to be small populations
-
+  const ruralStateZips = ['57', '58', '59', '82', '83', '97', '98', '99'];
   if (ruralStateZips.includes(firstTwo)) {
     return false; // Potentially non-compliant
   }
@@ -218,7 +218,7 @@ async function checkZipCodeCompliance(zipCode: string): Promise<boolean> {
 
 function determineRiskLevel(violations: HIPAAViolation[]): 'low' | 'medium' | 'high' | 'critical' {
   if (violations.length === 0) return 'low';
-
+  const maxSeverity = Math.max(...violations.map(v => {
     switch (v.severity) {
       case 'critical': return 4;
       case 'high': return 3;
@@ -238,7 +238,7 @@ function determineRiskLevel(violations: HIPAAViolation[]): 'low' | 'medium' | 'h
 
 function isHealthcareEndpoint(endpoint?: string): boolean {
   if (!endpoint) return false;
-
+  const healthcareEndpoints = [
     '/api/agents/',
     '/api/clinical/',
     '/api/medical/',
@@ -250,7 +250,7 @@ function isHealthcareEndpoint(endpoint?: string): boolean {
 
 async function sanitizeContent(content: unknown, violations: HIPAAViolation[]): Promise<unknown> {
   if (typeof content === 'string') {
-
+    let sanitized = content;
     for (const violation of violations) {
       for (const match of violation.matches) {
         switch (violation.type) {
@@ -267,7 +267,7 @@ async function sanitizeContent(content: unknown, violations: HIPAAViolation[]): 
             sanitized = sanitized.replace(match, 'XXX-XXX-XXXX');
             break;
           case 'EMAIL':
-
+            const domain = match.split('@')[1] || 'domain.com';
             sanitized = sanitized.replace(match, `[REDACTED]@${domain}`);
             break;
           default:
@@ -288,7 +288,7 @@ async function sanitizeContent(content: unknown, violations: HIPAAViolation[]): 
 async function sanitizeObjectContent(obj: unknown, violations: HIPAAViolation[]): Promise<unknown> {
   if (!obj || typeof obj !== 'object') return obj;
 
-  const sanitized: unknown = Array.isArray(obj) ? [] : { /* TODO: implement */ };
+  const sanitized: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'string') {

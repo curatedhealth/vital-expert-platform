@@ -2,7 +2,6 @@ export { TemplateGallery, type TemplateGalleryProps, type TemplateItem } from '.
 export { MissionPlanPanel, type MissionPlanPanelProps } from './MissionPlanPanel';
 export { MissionArtifactsPanel, type MissionArtifactsPanelProps } from './MissionArtifactsPanel';
 export { MissionCheckpointModal, type MissionCheckpointModalProps } from './MissionCheckpointModal';
-export { TemplateGallery, type TemplateGalleryProps, type TemplateItem } from './TemplateGallery';
 export { MissionForm, type MissionFormData } from './MissionForm';
 export { MissionPlan } from './MissionPlan';
 export { MissionProgress, StatusBadge } from './MissionProgress';

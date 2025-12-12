@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   Download, 
   FileText, 
@@ -12,8 +12,8 @@ import {
   CheckCircle,
   ExternalLink
 } from 'lucide-react';
-import { Button } from '../../ui/button';
-import { Progress } from '../../ui/progress';
+import { Button } from '@vital/ui';
+import { Progress } from '@vital/ui';
 
 type FileFormat = 'pdf' | 'csv' | 'xlsx' | 'json' | 'docx' | 'txt' | 'md';
 

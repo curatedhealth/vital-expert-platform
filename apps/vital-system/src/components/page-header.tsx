@@ -21,6 +21,8 @@ interface PageHeaderProps {
   actions?: React.ReactNode;
   /** Additional CSS classes for the container */
   className?: string;
+  /** Children content (not typically used but available for edge cases) */
+  children?: React.ReactNode;
 }
 
 /**

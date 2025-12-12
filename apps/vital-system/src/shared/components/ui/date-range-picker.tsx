@@ -25,6 +25,7 @@ export function DatePickerWithRange({
 }: DatePickerWithRangeProps) {
   const [selectedDate, setSelectedDate] = React.useState<DateRange | undefined>(date)
 
+  const handleDateChange = (newDate: DateRange | undefined) => {
     setSelectedDate(newDate)
     onDateChange?.(newDate)
   }
@@ -66,7 +67,8 @@ export function DatePickerWithRange({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-
+                  const today = new Date();
+                  const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
                   handleDateChange({ from: lastWeek, to: today })
                 }}
               >
@@ -76,7 +78,8 @@ export function DatePickerWithRange({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-
+                  const today = new Date();
+                  const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
                   handleDateChange({ from: lastMonth, to: today })
                 }}
               >
@@ -86,7 +89,8 @@ export function DatePickerWithRange({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-
+                  const today = new Date();
+                  const lastYear = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
                   handleDateChange({ from: lastYear, to: today })
                 }}
               >

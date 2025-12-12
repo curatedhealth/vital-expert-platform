@@ -129,6 +129,55 @@ export interface WorkflowPlan {
 }
 
 // ============================================================================
+// Artifact Types
+// ============================================================================
+
+/**
+ * Supported artifact types for rich content rendering
+ *
+ * Aligned with v5 World-Class UI Implementation Guide (9 types):
+ * - document, code, react, chart, table, diagram, html, json, csv
+ * Plus: image, file for generic handling
+ */
+export type ArtifactType =
+  | 'document'  // Markdown/text documents
+  | 'code'      // Source code with syntax highlighting
+  | 'react'     // Interactive React components (sandboxed iframe)
+  | 'chart'     // Data visualizations (line, bar, pie, etc.)
+  | 'table'     // Tabular data with sorting/search
+  | 'diagram'   // Mermaid diagrams (flowcharts, sequence, class, etc.)
+  | 'html'      // Sanitized HTML content
+  | 'json'      // JSON tree viewer with syntax highlighting
+  | 'csv'       // CSV data parsing and display
+  | 'image'     // Images and photos
+  | 'file';     // Generic file attachments
+
+/**
+ * Artifact metadata for tracking versions and provenance
+ */
+export interface ArtifactMetadata {
+  version?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+  createdBy?: string;
+  language?: string;  // For code artifacts
+  chartType?: string; // For chart artifacts
+  mimeType?: string;  // For file artifacts
+  size?: number;      // File size in bytes
+}
+
+/**
+ * Full artifact definition
+ */
+export interface Artifact {
+  id: string;
+  type: ArtifactType;
+  name: string;
+  content: string;
+  metadata?: ArtifactMetadata;
+}
+
+// ============================================================================
 // Message Types (Ask Expert specific extensions)
 // ============================================================================
 
@@ -148,12 +197,7 @@ export interface AskExpertMessage {
     excerpt: string;
     url?: string;
   }>;
-  artifacts?: Array<{
-    id: string;
-    type: 'document' | 'code' | 'data' | 'image';
-    name: string;
-    content: string;
-  }>;
+  artifacts?: Artifact[];
   metadata?: {
     tokensUsed?: number;
     latencyMs?: number;

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-import { cn } from "@/shared/services/utils"
+import { cn } from "../lib/utils"
 
 export interface ScrollAreaProps extends React.HTMLAttributes<HTMLDivElement> {}
 

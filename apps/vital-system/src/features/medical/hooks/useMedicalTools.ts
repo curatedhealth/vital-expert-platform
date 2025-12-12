@@ -80,10 +80,13 @@ interface UseMedicalToolsOptions {
   onError?: (error: Error) => void;
 }
 
-export function useMedicalTools(options: UseMedicalToolsOptions = { /* TODO: implement */ }) {
+export function useMedicalTools(options: UseMedicalToolsOptions = {}) {
   const [activeCalculations, setActiveCalculations] = useState<MedicalCalculation[]>([]);
   const [references, setReferences] = useState<MedicalReference[]>([]);
   const [searchResults, setSearchResults] = useState<MedicalReference[]>([]);
+
+  const createCalculation = useCallback((calculatorName: string) => {
+    const template = medicalCalculators.find(c => c.name === calculatorName);
 
     if (!template) {
       throw new Error(`Calculator '${calculatorName}' not found`);
@@ -99,9 +102,11 @@ export function useMedicalTools(options: UseMedicalToolsOptions = { /* TODO: imp
     return calculation.id;
   }, []);
 
+  const updateCalculationInput = useCallback((calculationId: string, inputId: string, value: any) => {
     setActiveCalculations(prev => prev.map(calc => {
       if (calc.id !== calculationId) return calc;
 
+      const updatedInputs = calc.inputs.map(input =>
         input.id === inputId ? { ...input, value } : input
       );
 
@@ -109,12 +114,16 @@ export function useMedicalTools(options: UseMedicalToolsOptions = { /* TODO: imp
     }));
   }, []);
 
+  const performCalculation = useCallback((calculationId: string) => {
+    const calculation = activeCalculations.find(c => c.id === calculationId);
+
     if (!calculation) {
       throw new Error('Calculation not found');
     }
 
     try {
       // Validate all required inputs are filled
+      const missingInputs = calculation.inputs.filter(i => i.required && i.value === undefined);
 
       if (missingInputs.length > 0) {
         throw new Error(`Missing required inputs: ${missingInputs.map((i: any) => i.label).join(', ')}`);
@@ -144,19 +153,21 @@ export function useMedicalTools(options: UseMedicalToolsOptions = { /* TODO: imp
         calc.id === calculationId ? { ...calc, result } : calc
       ));
 
+      const completedCalculation = { ...calculation, result };
       options.onCalculationComplete?.(completedCalculation);
 
       return result;
 
     } catch (error) {
-
+      const err = error instanceof Error ? error : new Error('Calculation failed');
       options.onError?.(err);
       throw err;
     }
   }, [activeCalculations, options]);
 
+  const searchMedicalReferences = useCallback(async (query: string, category?: string) => {
     try {
-
+      const response = await fetch('/api/medical/references/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, category }),
@@ -176,6 +187,7 @@ export function useMedicalTools(options: UseMedicalToolsOptions = { /* TODO: imp
     }
   }, [options]);
 
+  const getAvailableCalculators = useCallback(() => {
     return medicalCalculators.map(calc => ({
       name: calc.name,
       category: calc.category
@@ -196,10 +208,21 @@ export function useMedicalTools(options: UseMedicalToolsOptions = { /* TODO: imp
 
 // Helper calculation functions
 function calculateEGFR(inputs: MedicalCalculation['inputs']) {
+  const creatinine = inputs.find(i => i.id === 'creatinine')?.value as number;
+  const age = inputs.find(i => i.id === 'age')?.value as number;
+  const gender = inputs.find(i => i.id === 'gender')?.value as string;
+  const race = inputs.find(i => i.id === 'race')?.value as string;
 
-                Math.pow(Math.max(creatinine / kappa, 1), -1.209) *
-                Math.pow(0.993, age) * genderMultiplier * raceMultiplier;
+  const kappa = gender === 'Female' ? 0.7 : 0.9;
+  const alpha = gender === 'Female' ? -0.329 : -0.411;
+  const genderMultiplier = gender === 'Female' ? 1.018 : 1;
+  const raceMultiplier = race === 'African American' ? 1.159 : 1;
 
+  const eGFR = 141 * Math.min(creatinine / kappa, 1) ** alpha *
+               Math.pow(Math.max(creatinine / kappa, 1), -1.209) *
+               Math.pow(0.993, age) * genderMultiplier * raceMultiplier;
+
+  let interpretation = '';
   let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
 
   if (eGFR >= 90) {
@@ -233,13 +256,22 @@ function calculateEGFR(inputs: MedicalCalculation['inputs']) {
 }
 
 function calculateASCVDRisk(inputs: MedicalCalculation['inputs']) {
-  // Simplified ASCVD risk calculation (actual formula is more complex)
+  const age = inputs.find(i => i.id === 'age')?.value as number;
+  const systolicBP = inputs.find(i => i.id === 'systolicBP')?.value as number;
+  const totalCholesterol = inputs.find(i => i.id === 'totalCholesterol')?.value as number;
+  const hdl = inputs.find(i => i.id === 'hdl')?.value as number;
+  const diabetes = inputs.find(i => i.id === 'diabetes')?.value as boolean;
+  const smoker = inputs.find(i => i.id === 'smoker')?.value as boolean;
 
+  // Simplified ASCVD risk calculation (actual formula is more complex)
+  let risk = (age - 40) * 0.5;
+  risk += (totalCholesterol - 200) * 0.02;
+  risk += (200 - hdl) * 0.05;
   if (systolicBP > 140) risk += 10;
   if (diabetes) risk += 15;
   if (smoker) risk += 10;
 
-  risk = Math.min(risk, 100); // Cap at 100%
+  risk = Math.max(0, Math.min(risk, 100)); // Cap between 0-100%
 
   let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
   if (risk >= 20) riskLevel = 'high';
@@ -259,7 +291,13 @@ function calculateASCVDRisk(inputs: MedicalCalculation['inputs']) {
 }
 
 function calculateBMI(inputs: MedicalCalculation['inputs']) {
+  const weight = inputs.find(i => i.id === 'weight')?.value as number;
+  const height = inputs.find(i => i.id === 'height')?.value as number;
 
+  const heightInMeters = height / 100;
+  const bmi = weight / (heightInMeters * heightInMeters);
+
+  let interpretation = '';
   let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
 
   if (bmi < 18.5) {
@@ -290,7 +328,12 @@ function calculateBMI(inputs: MedicalCalculation['inputs']) {
 }
 
 function calculateAverageGlucose(inputs: MedicalCalculation['inputs']) {
+  const hba1c = inputs.find(i => i.id === 'hba1c')?.value as number;
 
+  // eAG = 28.7 × HbA1c − 46.7
+  const avgGlucose = 28.7 * hba1c - 46.7;
+
+  let interpretation = '';
   let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
 
   if (hba1c < 5.7) {

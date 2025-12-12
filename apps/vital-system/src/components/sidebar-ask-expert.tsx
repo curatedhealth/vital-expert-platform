@@ -15,21 +15,21 @@ import {
   Pin,
   PinOff,
   Archive,
-  Clock,
-  Calendar,
   MoreVertical,
-  Star,
+  Target,
+  Zap,
+  User,
 } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
 import { useAskExpert } from "@/contexts/ask-expert-context"
 import { useAuth } from "@/lib/auth/supabase-auth-context"
-import { AgentAvatar } from "@vital/ui"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import {
   Collapsible,
@@ -54,7 +54,6 @@ import {
 } from "@/components/ui/sidebar"
 import { useKeyboardShortcuts, type KeyboardShortcut } from "@/hooks/use-keyboard-shortcuts"
 import { KeyboardShortcutsOverlay } from "@/components/keyboard-shortcuts-overlay"
-import { AgentPreviewCard } from "@/components/agent-preview-card"
 
 // Helper function to clean agent display names
 function cleanDisplayName(displayName: string): string {
@@ -70,6 +69,16 @@ function cleanDisplayName(displayName: string): string {
     .join(' ');
 }
 
+// Helper to get agent level display (L1, L2, etc.)
+function getAgentLevelDisplay(tier: number): string {
+  switch (tier) {
+    case 1: return 'L1'
+    case 2: return 'L2'
+    case 3: return 'L3'
+    default: return `L${tier}`
+  }
+}
+
 export function SidebarAskExpert() {
   const {
     agents,
@@ -83,11 +92,28 @@ export function SidebarAskExpert() {
     createNewSession,
     refreshSessions,
     refreshAgents,
-    addAgentToUserList,
-    removeAgentFromUserList,
   } = useAskExpert()
 
   const { user } = useAuth()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  // Determine current mode from path and query params
+  const isInteractive = pathname?.includes('/interactive')
+  const isAutonomous = pathname?.includes('/autonomous')
+  const isAutoMode = searchParams?.get('mode') === 'auto'
+
+  // Mode configuration
+  const currentMode = useMemo(() => {
+    if (isInteractive && !isAutoMode) return { mode: 1, title: 'Interactive Manual', icon: User, color: 'blue', nickname: 'Expert Chat' }
+    if (isInteractive && isAutoMode) return { mode: 2, title: 'Interactive Auto', icon: SparklesIcon, color: 'violet', nickname: 'Smart Copilot' }
+    if (isAutonomous && !isAutoMode) return { mode: 3, title: 'Research Manual', icon: Target, color: 'emerald', nickname: 'Mission Control' }
+    if (isAutonomous && isAutoMode) return { mode: 4, title: 'Research Auto', icon: Zap, color: 'amber', nickname: 'Background Mission' }
+    return null
+  }, [isInteractive, isAutonomous, isAutoMode])
+
+  // State for Mode 3 expert selection
+  const [selectedResearchExpert, setSelectedResearchExpert] = useState<string | null>(null)
 
   // Debug logging moved to useEffect to avoid logging on every render
   // Only logs when agents.length changes
@@ -178,13 +204,12 @@ export function SidebarAskExpert() {
     return filtered;
   }, [agents, searchQuery, filterTier])
 
-  const agentsByTier = useMemo(() => {
-    return filteredAgents.reduce((acc, agent) => {
-      if (!acc[agent.tier]) acc[agent.tier] = []
-      acc[agent.tier].push(agent)
-      return acc
-    }, {} as Record<number, typeof filteredAgents>)
-  }, [filteredAgents])
+  // Auto-select first agent for Mode 3 when agents load
+  useEffect(() => {
+    if (currentMode?.mode === 3 && !selectedResearchExpert && filteredAgents.length > 0) {
+      setSelectedResearchExpert(filteredAgents[0].id)
+    }
+  }, [currentMode?.mode, selectedResearchExpert, filteredAgents])
 
   // Group conversations by time period
   const groupedSessions = useMemo(() => {
@@ -492,8 +517,223 @@ export function SidebarAskExpert() {
     )
   }
 
+  // Color classes for mode-specific styling
+  const modeColorClasses = {
+    blue: { icon: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
+    violet: { icon: 'text-violet-500', bg: 'bg-violet-500/10', border: 'border-violet-500/30' },
+    emerald: { icon: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+    amber: { icon: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
+  }
+
+  // Emit expert selection change for Mode 1 (interactive page ChatDashboard listens)
+  useEffect(() => {
+    if (currentMode?.mode === 1 && selectedAgents.length > 0) {
+      const selectedAgent = agents.find(a => a.id === selectedAgents[0])
+      if (selectedAgent) {
+        window.dispatchEvent(new CustomEvent('ask-expert:expert-selected', {
+          detail: {
+            expertId: selectedAgents[0],
+            expert: {
+              id: selectedAgent.id,
+              name: selectedAgent.displayName,
+              level: getAgentLevelDisplay(selectedAgent.tier),
+              specialty: selectedAgent.description?.slice(0, 50) || ''
+            }
+          }
+        }))
+      }
+    }
+  }, [currentMode?.mode, selectedAgents, agents])
+
+  // Emit expert selection change for Mode 3 (autonomous page listens)
+  useEffect(() => {
+    if (currentMode?.mode === 3 && selectedResearchExpert) {
+      const selectedAgent = agents.find(a => a.id === selectedResearchExpert)
+      if (selectedAgent) {
+        window.dispatchEvent(new CustomEvent('ask-expert:expert-selected', {
+          detail: {
+            expertId: selectedResearchExpert,
+            expert: {
+              id: selectedAgent.id,
+              name: selectedAgent.displayName,
+              level: getAgentLevelDisplay(selectedAgent.tier),
+              specialty: selectedAgent.description?.slice(0, 50) || ''
+            }
+          }
+        }))
+      }
+    }
+  }, [currentMode?.mode, selectedResearchExpert, agents])
+
+  // Listen for requests to re-emit the current selection (from interactive/autonomous page on mount)
+  useEffect(() => {
+    const handleRequestSelection = () => {
+      // Mode 1: Emit from selectedAgents
+      if (currentMode?.mode === 1 && selectedAgents.length > 0) {
+        const selectedAgent = agents.find(a => a.id === selectedAgents[0])
+        if (selectedAgent) {
+          window.dispatchEvent(new CustomEvent('ask-expert:expert-selected', {
+            detail: {
+              expertId: selectedAgents[0],
+              expert: {
+                id: selectedAgent.id,
+                name: selectedAgent.displayName,
+                level: getAgentLevelDisplay(selectedAgent.tier),
+                specialty: selectedAgent.description?.slice(0, 50) || ''
+              }
+            }
+          }))
+        }
+      }
+      // Mode 3: Emit from selectedResearchExpert
+      if (currentMode?.mode === 3 && selectedResearchExpert) {
+        const selectedAgent = agents.find(a => a.id === selectedResearchExpert)
+        if (selectedAgent) {
+          window.dispatchEvent(new CustomEvent('ask-expert:expert-selected', {
+            detail: {
+              expertId: selectedResearchExpert,
+              expert: {
+                id: selectedAgent.id,
+                name: selectedAgent.displayName,
+                level: getAgentLevelDisplay(selectedAgent.tier),
+                specialty: selectedAgent.description?.slice(0, 50) || ''
+              }
+            }
+          }))
+        }
+      }
+    }
+
+    window.addEventListener('ask-expert:request-selection', handleRequestSelection)
+    return () => {
+      window.removeEventListener('ask-expert:request-selection', handleRequestSelection)
+    }
+  }, [currentMode?.mode, selectedAgents, selectedResearchExpert, agents])
+
   return (
     <>
+      {/* Mode Header (shown when in a specific mode) */}
+      {currentMode && (
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          <div className={cn(
+            "mx-2 p-3 rounded-lg border",
+            modeColorClasses[currentMode.color as keyof typeof modeColorClasses]?.bg,
+            modeColorClasses[currentMode.color as keyof typeof modeColorClasses]?.border
+          )}>
+            <div className="flex items-center gap-2">
+              <currentMode.icon className={cn("h-5 w-5", modeColorClasses[currentMode.color as keyof typeof modeColorClasses]?.icon)} />
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm">{currentMode.title}</h3>
+                <p className="text-xs text-muted-foreground">"{currentMode.nickname}"</p>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                Mode {currentMode.mode}
+              </Badge>
+            </div>
+          </div>
+        </SidebarGroup>
+      )}
+
+      {/* Agent Selection for Manual Modes (Mode 1 & 3) */}
+      {currentMode && (currentMode.mode === 1 || currentMode.mode === 3) && (
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          <SidebarGroupLabel>
+            {currentMode.mode === 3 ? 'Select Research Lead' : 'Select Expert'}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <div className="px-2 space-y-2">
+              {/* Agent Search */}
+              <div className="relative">
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search experts..."
+                  className="h-8 pl-9 text-sm"
+                />
+              </div>
+
+              <ScrollArea className="max-h-[240px]">
+                <div className="space-y-1">
+                  {filteredAgents.slice(0, 15).map((agent) => {
+                    const isSelected = currentMode.mode === 3
+                      ? selectedResearchExpert === agent.id
+                      : selectedAgents.includes(agent.id)
+                    const colorClass = currentMode.mode === 3 ? 'emerald' : 'blue'
+
+                    return (
+                      <button
+                        key={agent.id}
+                        type="button"
+                        onClick={() => {
+                          if (currentMode.mode === 3) {
+                            setSelectedResearchExpert(agent.id)
+                          } else {
+                            // Mode 1: single select
+                            setSelectedAgents(isSelected ? [] : [agent.id])
+                          }
+                        }}
+                        className={cn(
+                          "w-full px-3 py-2 rounded-md text-left transition-all flex items-center gap-2",
+                          isSelected && currentMode.mode === 3 && "bg-emerald-500/10 border border-emerald-500/50",
+                          isSelected && currentMode.mode === 1 && "bg-blue-500/10 border border-blue-500/50",
+                          !isSelected && "hover:bg-muted/50"
+                        )}
+                      >
+                        <span className="font-medium text-sm truncate flex-1">
+                          {cleanDisplayName(agent.displayName)}
+                        </span>
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {getAgentLevelDisplay(agent.tier)}
+                        </Badge>
+                        {isSelected && (
+                          <CheckIcon className={cn(
+                            "h-4 w-4 shrink-0",
+                            currentMode.mode === 3 ? "text-emerald-500" : "text-blue-500"
+                          )} />
+                        )}
+                      </button>
+                    )
+                  })}
+                  {filteredAgents.length === 0 && !agentsLoading && (
+                    <p className="text-xs text-muted-foreground text-center py-4">
+                      No agents found
+                    </p>
+                  )}
+                  {agentsLoading && (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
+
+      {/* Fusion Intelligence Card for Auto Modes (Mode 2 & 4) */}
+      {currentMode && isAutoMode && (
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          <SidebarGroupLabel>Intelligence Engine</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <div className="px-2">
+              <div className="p-4 rounded-lg bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 border border-purple-200 dark:border-purple-800 text-center">
+                <SparklesIcon className="h-8 w-8 mx-auto text-purple-500 mb-2" />
+                <h3 className="font-medium text-sm">Fusion Intelligence</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {currentMode.mode === 4
+                    ? 'Auto-assembles optimal expert team for your research goal.'
+                    : 'Auto-routes your query to the best expert in real-time.'}
+                </p>
+              </div>
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
+
+      <Separator className="my-2" />
+
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
@@ -670,169 +910,75 @@ export function SidebarAskExpert() {
         </SidebarGroup>
       </Collapsible>
 
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              My Agents
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              {/* Agent Search */}
-              <div className="relative px-2 mb-2">
-                <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search agents…"
-                  className="h-8 pl-8 text-sm"
-                />
-              </div>
+      {/* Browse Agents - only show when on landing page (no mode) */}
+      {!currentMode && (
+        <Collapsible defaultOpen className="group/collapsible">
+          <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+                Browse Agents
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                {/* Agent Search */}
+                <div className="relative px-2 mb-2">
+                  <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search agents…"
+                    className="h-8 pl-8 text-sm"
+                  />
+                </div>
 
-              <ScrollArea className="max-h-[280px]">
-                <SidebarMenu>
-                  {agentsLoading && (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton disabled>
-                        <Loader2Icon className="h-4 w-4 animate-spin" />
-                        <span>Loading agents…</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )}
-
-                  {!agentsLoading && filteredAgents.length === 0 && agents.length === 0 && (
-                    <div className="p-3 text-center">
-                      <SparklesIcon className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm font-medium">No agents yet</p>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Add agents from the Agent Store
-                      </p>
-                      <Link href="/agents">
-                        <Button size="sm" variant="outline">
-                          <SparklesIcon className="h-4 w-4 mr-1" />
-                          Browse Agent Store
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-
-                  {!agentsLoading && filteredAgents.length === 0 && agents.length > 0 && (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton disabled>
-                        <SearchIcon className="h-4 w-4" />
-                        <span>No agents match your search</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )}
-
-                  {Object.entries(agentsByTier)
-                    .sort(([a], [b]) => Number(b) - Number(a))
-                    .map(([tier, tierAgents]) => (
-                      <div key={tier}>
-                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-                          Tier {tier}
-                        </div>
-                        {tierAgents.map((agent) => {
-                          const isSelected = selectedAgents.includes(agent.id)
-                          return (
-                            <SidebarMenuItem key={agent.id}>
-                              <AgentPreviewCard
-                                agent={agent}
-                                isSelected={isSelected}
-                                onSelect={() => {
-                                  // Single-select: clicking replaces selection (not appends)
-                                  // If clicking already-selected agent, deselect it
-                                  const nextSelection = isSelected ? [] : [agent.id]
-                                  console.log('🔄 [Sidebar] Agent selection changed:', { agentId: agent.id, isSelected, nextSelection })
-                                  setSelectedAgents(nextSelection)
-                                }}
-                                stats={{
-                                  totalConversations: Math.floor(Math.random() * 50) + 10,
-                                  avgResponseTime: `${(Math.random() * 2 + 0.5).toFixed(1)}s`,
-                                  successRate: Math.floor(Math.random() * 15) + 85,
-                                }}
-                              >
-                                <SidebarMenuButton
-                                  isActive={isSelected}
-                                  onClick={() => {
-                                    // Single-select: clicking replaces selection (not appends)
-                                    const nextSelection = isSelected ? [] : [agent.id]
-                                    setSelectedAgents(nextSelection)
-                                  }}
-                                >
-                                  <AgentAvatar
-                                    agent={agent}
-                                    size="sm"
-                                    className="w-6 h-6 rounded-md"
-                                  />
-                                  <span className="flex-1 text-sm truncate">
-                                    {cleanDisplayName(agent.displayName)}
-                                  </span>
-                                  {isSelected && (
-                                    <CheckIcon className="h-4 w-4 text-primary flex-shrink-0" />
-                                  )}
-                                  {!agent.isUserAdded ? (
-                                    <div
-                                      role="button"
-                                      tabIndex={0}
-                                      className="h-6 w-6 p-0 inline-flex items-center justify-center rounded-md hover:bg-accent cursor-pointer"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        addAgentToUserList(agent.id)
-                                      }}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                          e.preventDefault()
-                                          e.stopPropagation()
-                                          addAgentToUserList(agent.id)
-                                        }
-                                      }}
-                                      title="Add to chat list"
-                                    >
-                                      <PlusIcon className="h-4 w-4" />
-                                    </div>
-                                  ) : (
-                                    <div
-                                      role="button"
-                                      tabIndex={0}
-                                      className="h-6 w-6 p-0 inline-flex items-center justify-center rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 hover:text-red-700 cursor-pointer"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        removeAgentFromUserList(agent.id)
-                                      }}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                          e.preventDefault()
-                                          e.stopPropagation()
-                                          removeAgentFromUserList(agent.id)
-                                        }
-                                      }}
-                                      title="Remove from chat list"
-                                    >
-                                      <Trash2Icon className="h-4 w-4" />
-                                    </div>
-                                  )}
-                                </SidebarMenuButton>
-                              </AgentPreviewCard>
-                            </SidebarMenuItem>
-                          )
-                        })}
+                <ScrollArea className="max-h-[280px]">
+                  <div className="space-y-1 px-2">
+                    {agentsLoading && (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
                       </div>
-                    ))}
-                </SidebarMenu>
-              </ScrollArea>
+                    )}
 
-              {isMobile && (
-                <Button variant="outline" size="sm" onClick={() => router.push("/agents")}>
-                  Manage Agents
-                </Button>
-              )}
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
+                    {!agentsLoading && filteredAgents.length === 0 && agents.length === 0 && (
+                      <div className="p-3 text-center">
+                        <SparklesIcon className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm font-medium">No agents yet</p>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Add agents from the Agent Store
+                        </p>
+                        <Link href="/agents">
+                          <Button size="sm" variant="outline">
+                            <SparklesIcon className="h-4 w-4 mr-1" />
+                            Browse Agent Store
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+
+                    {!agentsLoading && filteredAgents.slice(0, 15).map((agent) => (
+                      <button
+                        key={agent.id}
+                        type="button"
+                        onClick={() => router.push(`/agents/${agent.id}`)}
+                        className="w-full px-3 py-2 rounded-md text-left transition-all flex items-center gap-2 hover:bg-muted/50"
+                      >
+                        <span className="font-medium text-sm truncate flex-1">
+                          {cleanDisplayName(agent.displayName)}
+                        </span>
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {getAgentLevelDisplay(agent.tier)}
+                        </Badge>
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
+      )}
 
       {/* Keyboard Shortcuts Overlay */}
       <KeyboardShortcutsOverlay shortcuts={shortcuts} />

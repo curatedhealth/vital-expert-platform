@@ -156,7 +156,8 @@ export const canLevelSpawn = (
   parentLevel: AgentLevel,
   childLevel: AgentLevel
 ): boolean => {
-  return SPAWNING_RULES[parentLevel].canSpawn.includes(childLevel);
+  // Cast to number[] to satisfy TypeScript's includes() type checking
+  return (SPAWNING_RULES[parentLevel].canSpawn as readonly number[]).includes(childLevel);
 };
 
 // ============================================================================

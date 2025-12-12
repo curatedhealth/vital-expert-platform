@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { Copy, Check } from 'lucide-react';
-import { Button } from '../../ui/button';
-import Streamdown from 'streamdown';
+import { Button } from '@vital/ui';
+import { Streamdown } from 'streamdown';
 
 interface VitalStreamTextProps {
   content: string;

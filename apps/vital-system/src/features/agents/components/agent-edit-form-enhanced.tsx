@@ -1,11 +1,31 @@
 /**
  * Enhanced Agent Edit Form Component
  * Comprehensive form for editing all agent attributes with:
- * - 9 tabs for comprehensive configuration
+ * - 14 tabs for comprehensive configuration
  * - Slider controls for adjustable attributes
  * - 6-section prompt builder
  * - AI-suggested model configuration
  * - Personality and communication style settings
+ *
+ * REFACTORING STATUS (December 2025): ✅ COMPLETE
+ * - Shared types extracted to: ./edit-form-tabs/types.ts
+ * - All 14 tabs extracted to: ./edit-form-tabs/
+ *
+ * EXTRACTED TABS:
+ * ✅ identity-tab.tsx - Agent identity (name, tagline, avatar, status)
+ * ✅ org-tab.tsx - Organization assignment (function, department, role)
+ * ✅ level-tab.tsx - Agent level and tier configuration
+ * ✅ models-tab.tsx - LLM model selection with fit scoring
+ * ✅ personality-tab.tsx - Personality type and slider configuration
+ * ✅ prompts-tab.tsx - Prompt starters management
+ * ✅ system-prompt-tab.tsx - 6-section system prompt builder
+ * ✅ hierarchy-tab.tsx - Agent hierarchy and delegation settings
+ * ✅ criteria-tab.tsx - Success criteria configuration
+ * ✅ safety-tab.tsx - Safety, compliance, and expertise settings
+ * ✅ capabilities-tab.tsx - Capabilities and skills assignment
+ * ✅ knowledge-tab.tsx - Knowledge domains and RAG settings
+ * ✅ tools-tab.tsx - Tool assignment
+ * ✅ admin-tab.tsx - Admin controls (tenant, visibility, status)
  */
 
 'use client';
@@ -45,18 +65,20 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { LabeledSlider, SliderGroup, SuccessCriteriaSlider } from '@/components/ui/labeled-slider';
-import type {
-  Agent,
-  AgentLevelNumber,
-  AgentEditFormState,
-  AgentSuccessCriteria,
+import {
+  AgentStatus,
+  ValidationStatus,
   DataClassification,
-  ExpertiseLevel,
-  GeographicScope,
-  ResponseFormat,
-  PersonaArchetypeCode,
-  CommunicationStyleCode,
-  SubagentHierarchyConfig,
+  type ExpertiseLevel,
+  type GeographicScope,
+  type Agent,
+  type AgentLevelNumber,
+  type AgentEditFormState,
+  type AgentSuccessCriteria,
+  type ResponseFormat,
+  type PersonaArchetypeCode,
+  type CommunicationStyleCode,
+  type SubagentHierarchyConfig,
 } from '../types/agent.types';
 import { SubagentSelector } from './subagent-selector';
 import {
@@ -146,6 +168,26 @@ const PersonalityIcon = ({ iconName, className }: { iconName?: string; className
   return <IconComponent className={className} />;
 };
 import { supabase } from '@vital/sdk/client';
+
+// Import all extracted tab components
+import {
+  IdentityTab,
+  OrgTab,
+  LevelTab,
+  ModelsTab,
+  PersonalityTab,
+  PromptsTab,
+  SystemPromptTab,
+  HierarchyTab,
+  CriteriaTab,
+  SafetyTab,
+  CapabilitiesTab,
+  KnowledgeTab,
+  ToolsTab,
+  AdminTab,
+  type EditFormTabProps,
+  type EditFormOptions,
+} from './edit-form-tabs';
 
 // ============================================================================
 // TYPES
@@ -989,7 +1031,7 @@ export const AgentEditFormEnhanced: React.FC<AgentEditFormEnhancedProps> = ({
     comm_warmth: 50,
 
     // Tab 4b: Personality Type (affects temperature)
-    personality_type: 'strategic' as keyof typeof PERSONALITY_TYPES,
+    personality_type: 'strategic',
 
     // Tab 5: Response Preferences
     preferred_response_format: 'balanced',
@@ -1025,7 +1067,7 @@ export const AgentEditFormEnhanced: React.FC<AgentEditFormEnhancedProps> = ({
     // Tab 9: Safety & Compliance
     hipaa_compliant: false,
     audit_trail_enabled: false,
-    data_classification: 'internal' as DataClassification,
+    data_classification: DataClassification.INTERNAL,
     expertise_level: 'senior' as ExpertiseLevel,
     expertise_years: 10,
     geographic_scope: 'global' as GeographicScope,
@@ -1046,14 +1088,16 @@ export const AgentEditFormEnhanced: React.FC<AgentEditFormEnhancedProps> = ({
     tools: [] as string[],
 
     // Status
-    status: 'development' as any,
-    validation_status: 'pending' as any,
+    status: AgentStatus.DEVELOPMENT,
+    validation_status: ValidationStatus.PENDING,
 
     // Admin Controls (Super Admin only)
     tenant_id: '' as string,
     is_public: false,
     allow_duplicate: true,
     personality_type_id: '' as string,
+    // Flexible metadata for hierarchy configs, extensions, etc.
+    metadata: {} as Record<string, unknown>,
   });
 
   // Note: Manual input states removed - now using MultiSelectDropdown with Supabase data
@@ -1117,13 +1161,13 @@ export const AgentEditFormEnhanced: React.FC<AgentEditFormEnhancedProps> = ({
         can_use_worker_pool: agent.can_use_worker_pool ?? false,
         hipaa_compliant: agent.hipaa_compliant ?? false,
         audit_trail_enabled: agent.audit_trail_enabled ?? false,
-        data_classification: agent.data_classification || 'internal',
-        expertise_level: agent.expertise_level || 'senior',
+        data_classification: agent.data_classification || DataClassification.INTERNAL,
+        expertise_level: agent.expertise_level || ('senior' as ExpertiseLevel),
         expertise_years: agent.expertise_years || 10,
-        geographic_scope: agent.geographic_scope || 'global',
+        geographic_scope: agent.geographic_scope || ('global' as GeographicScope),
         industry_specialization: agent.industry_specialization || 'pharmaceuticals',
-        status: agent.status || 'development',
-        validation_status: agent.validation_status || 'pending',
+        status: agent.status || AgentStatus.DEVELOPMENT,
+        validation_status: agent.validation_status || ValidationStatus.PENDING,
         // Admin controls
         tenant_id: (agent as any).tenant_id || '',
         is_public: (agent as any).is_public ?? false,
@@ -1138,6 +1182,8 @@ export const AgentEditFormEnhanced: React.FC<AgentEditFormEnhancedProps> = ({
         agent_specific_rag: (agent as any).agent_specific_rag ?? false,
         rag_content_files: (agent as any).rag_content_files || [],
         tools: (agent as any).tools || [],
+        // Flexible metadata
+        metadata: agent.metadata || {},
       }));
     }
   }, [agent]);
@@ -1174,15 +1220,17 @@ export const AgentEditFormEnhanced: React.FC<AgentEditFormEnhancedProps> = ({
     try {
       console.log('[AgentEditForm] Saving agent with data:', {
         id: agent.id,
-        display_name: formState.display_name,
+        name: formState.name,
         model: formState.base_model,
         fieldsCount: Object.keys(formState).length,
       });
+      // Note: Form state has some differences from Agent type (e.g., responsibilities as string[] vs AgentResponsibility[])
+      // The API handles the transformation, so we cast through unknown
       await onSave({
         id: agent.id,
         ...formState,
         model: formState.base_model, // Alias for compatibility
-      });
+      } as unknown as Partial<Agent>);
       console.log('[AgentEditForm] Save successful!');
       onOpenChange(false);
     } catch (error) {
@@ -1476,6 +1524,11 @@ export const AgentEditFormEnhanced: React.FC<AgentEditFormEnhancedProps> = ({
     setFormState(prev => ({ ...prev, [field]: value }));
   };
 
+  // Update multiple fields at once
+  const updateMultipleFields = (updates: Partial<AgentEditFormState>) => {
+    setFormState(prev => ({ ...prev, ...updates }));
+  };
+
   // Update personality/communication slider
   const updateSlider = (field: string, value: number) => {
     setFormState(prev => ({ ...prev, [field]: value }));
@@ -1566,6 +1619,32 @@ export const AgentEditFormEnhanced: React.FC<AgentEditFormEnhancedProps> = ({
   if (!agent) return null;
 
   const currentLevel = agent.agent_levels?.level_number || 3;
+
+  // Create options object for extracted tab components
+  const editFormOptions: EditFormOptions = {
+    functions: dropdownData.functions,
+    departments: dropdownData.departments,
+    roles: dropdownData.roles,
+    capabilities: dropdownData.capabilities,
+    skills: dropdownData.skills,
+    knowledgeDomains: dropdownData.knowledgeDomains,
+    avatars: dropdownData.avatars,
+    personalityTypes: dropdownData.personalityTypes,
+    promptStarters: dropdownData.promptStarters,
+    tools: dropdownData.tools,
+    levels: [], // Will be populated from agent_levels table
+    allAgents: availableAgents || [],
+  };
+
+  // Common props for all tab components
+  const tabProps: EditFormTabProps = {
+    formState,
+    updateField,
+    updateMultipleFields,
+    options: editFormOptions,
+    isLoading: loadingDropdowns,
+    agent,
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1842,2189 +1921,139 @@ export const AgentEditFormEnhanced: React.FC<AgentEditFormEnhancedProps> = ({
             </ScrollArea>
           </div>
 
-          {/* Content Area */}
+          {/* Content Area - Using Extracted Tab Components */}
           <ScrollArea className="flex-1 px-6 max-h-[60vh]">
             {/* TAB 1: IDENTITY */}
             <TabsContent value="identity" className="space-y-4 py-4">
-              <div className="grid gap-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Agent Name (ID)</Label>
-                    <Input
-                      id="name"
-                      value={formState.name}
-                      onChange={(e) => updateField('name', e.target.value)}
-                      placeholder="unique-agent-name"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="version">Version</Label>
-                    <Input
-                      id="version"
-                      value={formState.version}
-                      onChange={(e) => updateField('version', e.target.value)}
-                      placeholder="1.0"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="tagline">Tagline</Label>
-                  <Input
-                    id="tagline"
-                    value={formState.tagline}
-                    onChange={(e) => updateField('tagline', e.target.value)}
-                    placeholder="Brief one-liner describing the agent's purpose"
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formState.description}
-                    onChange={(e) => updateField('description', e.target.value)}
-                    placeholder="Detailed agent description"
-                    rows={4}
-                  />
-                </div>
-
-                {/* Avatar Picker Section */}
-                <Card className="border-dashed">
-                  <CardContent className="py-4">
-                    <div className="flex items-center gap-4">
-                      {/* Avatar Preview */}
-                      <div className="relative flex-shrink-0">
-                        <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-border bg-muted flex items-center justify-center">
-                          {formState.avatar_url ? (
-                            <img
-                              src={formState.avatar_url}
-                              alt="Agent Avatar"
-                              className="w-full h-full object-contain"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = '/assets/vital/avatars/vital_avatar_expert_analytics_insights_01.svg';
-                              }}
-                            />
-                          ) : (
-                            <User className="h-8 w-8 text-muted-foreground" />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Avatar Selection */}
-                      <div className="flex-1 space-y-2">
-                        <Label>Agent Avatar</Label>
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setAvatarPickerOpen(true)}
-                          >
-                            <Sparkles className="h-4 w-4 mr-1" />
-                            Choose Avatar
-                          </Button>
-                          {formState.avatar_url && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => updateField('avatar_url', '')}
-                            >
-                              <X className="h-4 w-4 mr-1" />
-                              Clear
-                            </Button>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {formState.avatar_url ? formState.avatar_url.split('/').pop() : 'No avatar selected'}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Avatar Picker Modal */}
-                <Dialog open={avatarPickerOpen} onOpenChange={setAvatarPickerOpen}>
-                  <DialogContent className="max-w-3xl max-h-[80vh]">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2">
-                        <Sparkles className="h-5 w-5" />
-                        Select Agent Avatar
-                      </DialogTitle>
-                      <DialogDescription>
-                        Choose from {dropdownData.avatars.length || 100} VITAL avatars organized by persona type
-                      </DialogDescription>
-                    </DialogHeader>
-
-                    {/* Filter */}
-                    <div className="flex gap-2 mb-4">
-                      <Input
-                        placeholder="Search avatars..."
-                        value={avatarFilter}
-                        onChange={(e) => setAvatarFilter(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Select
-                        value={avatarFilter || 'all'}
-                        onValueChange={(value) => setAvatarFilter(value === 'all' ? '' : value)}
-                      >
-                        <SelectTrigger className="w-40">
-                          <SelectValue placeholder="Filter type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Types</SelectItem>
-                          <SelectItem value="expert">Expert</SelectItem>
-                          <SelectItem value="foresight">Foresight</SelectItem>
-                          <SelectItem value="medical">Medical</SelectItem>
-                          <SelectItem value="pharma">Pharma</SelectItem>
-                          <SelectItem value="startup">Startup</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Avatar Grid */}
-                    <ScrollArea className="h-[400px]">
-                      {dropdownData.avatars.length > 0 ? (
-                        <div className="grid grid-cols-6 gap-2">
-                          {dropdownData.avatars
-                            .filter(a => {
-                              if (!avatarFilter) return true;
-                              return (
-                                a.persona_type?.toLowerCase().includes(avatarFilter.toLowerCase()) ||
-                                a.business_function?.toLowerCase().includes(avatarFilter.toLowerCase()) ||
-                                a.display_name?.toLowerCase().includes(avatarFilter.toLowerCase())
-                              );
-                            })
-                            .map((avatar) => (
-                              <button
-                                key={avatar.id}
-                                type="button"
-                                onClick={() => {
-                                  updateField('avatar_url', avatar.public_url);
-                                  setAvatarPickerOpen(false);
-                                }}
-                                className={cn(
-                                  'p-2 rounded-lg border-2 hover:border-primary/50 transition-all',
-                                  formState.avatar_url === avatar.public_url
-                                    ? 'border-primary bg-primary/10'
-                                    : 'border-border'
-                                )}
-                              >
-                                <img
-                                  src={avatar.public_url}
-                                  alt={avatar.display_name || avatar.filename}
-                                  className="w-12 h-12 object-contain mx-auto"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = '/assets/vital/avatars/vital_avatar_expert_analytics_insights_01.svg';
-                                  }}
-                                />
-                                <p className="text-xs text-center truncate mt-1 text-muted-foreground">
-                                  {avatar.persona_type || 'Expert'}
-                                </p>
-                              </button>
-                            ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <p>No avatars loaded from database.</p>
-                          <p className="text-sm mt-2">Using local avatar paths instead.</p>
-                          {/* Fallback: Show sample avatars from local paths */}
-                          <div className="grid grid-cols-6 gap-2 mt-4">
-                            {['expert', 'foresight', 'medical', 'pharma', 'startup'].map((type) =>
-                              ['analytics_insights', 'commercial_marketing', 'market_access', 'medical_affairs', 'product_innovation'].map((func) =>
-                                [1, 2, 3, 4].map((num) => {
-                                  const path = `/assets/vital/avatars/vital_avatar_${type}_${func}_${String(num).padStart(2, '0')}.svg`;
-                                  return (
-                                    <button
-                                      key={path}
-                                      type="button"
-                                      onClick={() => {
-                                        updateField('avatar_url', path);
-                                        setAvatarPickerOpen(false);
-                                      }}
-                                      className={cn(
-                                        'p-2 rounded-lg border-2 hover:border-primary/50 transition-all',
-                                        formState.avatar_url === path
-                                          ? 'border-primary bg-primary/10'
-                                          : 'border-border'
-                                      )}
-                                    >
-                                      <img
-                                        src={path}
-                                        alt={`${type} ${func} ${num}`}
-                                        className="w-12 h-12 object-contain mx-auto"
-                                        onError={(e) => {
-                                          (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                      />
-                                    </button>
-                                  );
-                                })
-                              )
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </ScrollArea>
-                  </DialogContent>
-                </Dialog>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="avatar_url_manual">Avatar URL (Manual)</Label>
-                    <Input
-                      id="avatar_url_manual"
-                      value={formState.avatar_url}
-                      onChange={(e) => updateField('avatar_url', e.target.value)}
-                      placeholder="/assets/vital/avatars/..."
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={formState.status}
-                      onValueChange={(value) => updateField('status', value as any)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="development">Development</SelectItem>
-                        <SelectItem value="testing">Testing</SelectItem>
-                        <SelectItem value="deprecated">Deprecated</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
+              <IdentityTab {...tabProps} avatars={dropdownData.avatars} />
             </TabsContent>
 
             {/* TAB 2: ORGANIZATION */}
             <TabsContent value="org" className="space-y-4 py-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Building className="h-4 w-4" />
-                    Organizational Context
-                  </CardTitle>
-                  <CardDescription>
-                    Define where this agent fits in the organizational structure. Select Tenant first, then Function, Department, and Role.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                  {/* TENANT - Top level of hierarchy */}
-                  <div className="grid gap-2">
-                    <Label className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-purple-500" />
-                      Tenant Organization
-                      <Badge variant="outline" className="text-xs">{dropdownData.tenants.length} available</Badge>
-                    </Label>
-                    {loadingDropdowns ? (
-                      <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm text-muted-foreground">Loading tenants...</span>
-                      </div>
-                    ) : (
-                      <Select
-                        value={formState.tenant_id || 'none'}
-                        onValueChange={(value) => {
-                          const newTenantId = value === 'none' ? '' : value;
-                          // Clear ALL dependent selections when tenant changes
-                          setFormState(prev => ({
-                            ...prev,
-                            tenant_id: newTenantId,
-                            function_id: '', // Clear function
-                            department_id: '', // Clear department
-                            role_id: '',       // Clear role
-                          }));
-                        }}
-                      >
-                        <SelectTrigger className={formState.tenant_id ? 'border-purple-500/50' : ''}>
-                          <SelectValue placeholder="Select tenant organization..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">
-                            <span className="text-muted-foreground">All Tenants</span>
-                          </SelectItem>
-                          {dropdownData.tenants.map((tenant) => (
-                            <SelectItem key={tenant.id} value={tenant.id}>
-                              <div className="flex items-center gap-2">
-                                <Building2 className="h-3 w-3 text-muted-foreground" />
-                                {tenant.name}
-                                {tenant.tenant_key && (
-                                  <span className="text-xs text-muted-foreground capitalize">({tenant.tenant_key.replace(/-/g, ' ')})</span>
-                                )}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-
-                  {/* FUNCTION - Filtered by Tenant via junction table */}
-                  <div className="grid gap-2">
-                    <Label className="flex items-center gap-2">
-                      Business Function
-                      {formState.tenant_id && (
-                        <Badge variant="secondary" className="text-xs">
-                          {/* Filter functions using function_tenants junction table */}
-                          {dropdownData.functions.filter(f =>
-                            dropdownData.functionTenants.some(ft => ft.function_id === f.id && ft.tenant_id === formState.tenant_id)
-                          ).length} for selected tenant
-                        </Badge>
-                      )}
-                      {!formState.tenant_id && (
-                        <Badge variant="outline" className="text-xs">{dropdownData.functions.length} available</Badge>
-                      )}
-                    </Label>
-                    {loadingDropdowns ? (
-                      <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm text-muted-foreground">Loading functions...</span>
-                      </div>
-                    ) : (
-                      <Select
-                        value={formState.function_id || 'none'}
-                        onValueChange={(value) => {
-                          const newFunctionId = value === 'none' ? '' : value;
-                          // Clear dependent selections when function changes
-                          setFormState(prev => ({
-                            ...prev,
-                            function_id: newFunctionId,
-                            department_id: '', // Clear department
-                            role_id: '',       // Clear role
-                          }));
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={formState.tenant_id ? "Select function..." : "Select a tenant first or choose from all..."} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">
-                            <span className="text-muted-foreground">All Functions</span>
-                          </SelectItem>
-                          {/* Filter functions by selected tenant using junction table, or show all if no tenant selected */}
-                          {(formState.tenant_id
-                            ? dropdownData.functions.filter(func =>
-                                dropdownData.functionTenants.some(ft => ft.function_id === func.id && ft.tenant_id === formState.tenant_id)
-                              )
-                            : dropdownData.functions
-                          ).map((func) => (
-                            <SelectItem key={func.id} value={func.id}>
-                              {func.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                    {!formState.tenant_id && (
-                      <p className="text-xs text-amber-600">Select a tenant to filter functions</p>
-                    )}
-                  </div>
-
-                  {/* DEPARTMENT - Filtered by Function (DISABLED until Function selected) */}
-                  <div className="grid gap-2">
-                    <Label className="flex items-center gap-2">
-                      Department
-                      {formState.function_id && (
-                        <Badge variant="secondary" className="text-xs">
-                          {dropdownData.departments.filter(d => d.function_id === formState.function_id).length} for selected function
-                        </Badge>
-                      )}
-                      {!formState.function_id && (
-                        <Badge variant="outline" className="text-xs text-muted-foreground">Select function first</Badge>
-                      )}
-                    </Label>
-                    {loadingDropdowns ? (
-                      <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm text-muted-foreground">Loading departments...</span>
-                      </div>
-                    ) : (
-                      <Select
-                        value={formState.department_id || 'none'}
-                        onValueChange={(value) => {
-                          const newDepartmentId = value === 'none' ? '' : value;
-                          // Clear role when department changes
-                          setFormState(prev => ({
-                            ...prev,
-                            department_id: newDepartmentId,
-                            role_id: '', // Clear role
-                          }));
-                        }}
-                        disabled={!formState.function_id}
-                      >
-                        <SelectTrigger className={!formState.function_id ? 'opacity-50 cursor-not-allowed' : ''}>
-                          <SelectValue placeholder={formState.function_id ? "Select department..." : "Select a function first..."} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">
-                            <span className="text-muted-foreground">No Department (Skip)</span>
-                          </SelectItem>
-                          {/* Filter departments by selected function */}
-                          {dropdownData.departments
-                            .filter(dept => dept.function_id === formState.function_id)
-                            .map((dept) => (
-                              <SelectItem key={dept.id} value={dept.id}>
-                                {dept.name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                    {!formState.function_id && (
-                      <p className="text-xs text-amber-600 flex items-center gap-1">
-                        <Info className="h-3 w-3" />
-                        Select a function first to unlock department selection
-                      </p>
-                    )}
-                  </div>
-
-                  {/* ROLE - Filtered by Department (DISABLED until Department selected) */}
-                  <div className="grid gap-2">
-                    <Label className="flex items-center gap-2">
-                      Role
-                      {formState.department_id && (
-                        <Badge variant="secondary" className="text-xs">
-                          {dropdownData.roles.filter(r => r.department_id === formState.department_id).length} for selected department
-                        </Badge>
-                      )}
-                      {!formState.department_id && (
-                        <Badge variant="outline" className="text-xs text-muted-foreground">Select department first</Badge>
-                      )}
-                    </Label>
-                    {loadingDropdowns ? (
-                      <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm text-muted-foreground">Loading roles...</span>
-                      </div>
-                    ) : (
-                      <Select
-                        value={formState.role_id || 'none'}
-                        onValueChange={(value) => updateField('role_id', value === 'none' ? '' : value)}
-                        disabled={!formState.department_id}
-                      >
-                        <SelectTrigger className={!formState.department_id ? 'opacity-50 cursor-not-allowed' : ''}>
-                          <SelectValue placeholder={formState.department_id ? "Select role..." : "Select a department first..."} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">
-                            <span className="text-muted-foreground">No Role (Skip)</span>
-                          </SelectItem>
-                          {/* Filter roles by selected department */}
-                          {dropdownData.roles
-                            .filter(role => role.department_id === formState.department_id)
-                            .map((role) => (
-                              <SelectItem key={role.id} value={role.id}>
-                                {role.name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                    {!formState.department_id && (
-                      <p className="text-xs text-amber-600 flex items-center gap-1">
-                        <Info className="h-3 w-3" />
-                        Select a department first to unlock role selection
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Selection Summary */}
-                  {(formState.tenant_id || formState.function_id || formState.department_id || formState.role_id) && (
-                    <div className="p-3 bg-muted/50 rounded-lg space-y-1">
-                      <Label className="text-xs text-muted-foreground">Current Selection:</Label>
-                      <div className="flex flex-wrap gap-2 items-center">
-                        {formState.tenant_id && (
-                          <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                            <Building2 className="h-3 w-3 mr-1" />
-                            {dropdownData.tenants.find(t => t.id === formState.tenant_id)?.name || 'Unknown'}
-                          </Badge>
-                        )}
-                        {formState.function_id && (
-                          <Badge variant="outline">
-                            {formState.tenant_id && '→ '}{dropdownData.functions.find(f => f.id === formState.function_id)?.name || 'Unknown'}
-                          </Badge>
-                        )}
-                        {formState.department_id && (
-                          <Badge variant="outline">
-                            → {dropdownData.departments.find(d => d.id === formState.department_id)?.name || 'Unknown'}
-                          </Badge>
-                        )}
-                        {formState.role_id && (
-                          <Badge variant="default">
-                            → {dropdownData.roles.find(r => r.id === formState.role_id)?.name || 'Unknown'}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <OrgTab
+                {...tabProps}
+                tenants={dropdownData.tenants}
+                functionTenants={dropdownData.functionTenants}
+              />
             </TabsContent>
 
-            {/* TAB 3: ROLE & LEVEL */}
+            {/* TAB 3: LEVEL & TIER */}
             <TabsContent value="level" className="space-y-4 py-4">
-              {/* Agent Level Selection */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Layers className="h-4 w-4" />
-                    Agent Level
-                  </CardTitle>
-                  <CardDescription>
-                    Select the agent's position in the hierarchy (L1 = Orchestrator, L5 = Tool)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-5 gap-2">
-                    {([1, 2, 3, 4, 5] as AgentLevelNumber[]).map((level) => {
-                      const config = AGENT_LEVEL_COLORS[level];
-                      const isSelected = currentLevel === level;
-                      return (
-                        <button
-                          key={level}
-                          type="button"
-                          onClick={() => handleLevelChange(level)}
-                          className={cn(
-                            'p-4 border-2 rounded-lg text-center transition-all',
-                            isSelected
-                              ? 'border-primary bg-primary/10'
-                              : 'border-border hover:border-primary/50'
-                          )}
-                        >
-                          <div className="font-bold text-lg">L{level}</div>
-                          <div className="text-sm font-medium">{config.name}</div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {level === 1 && 'Full autonomy'}
-                            {level === 2 && 'High autonomy'}
-                            {level === 3 && 'Specialist'}
-                            {level === 4 && 'Task executor'}
-                            {level === 5 && 'API/Tool'}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Level Description */}
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Layers className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="space-y-1">
-                        <h4 className="font-semibold">
-                          Level {currentLevel}: {AGENT_LEVEL_COLORS[currentLevel]?.name}
-                        </h4>
-                        <p className="text-sm text-muted-foreground">
-                          {currentLevel === 1 && 'Top-level orchestrators that coordinate entire workflows and manage other agents. Full decision-making authority.'}
-                          {currentLevel === 2 && 'Expert advisors with high autonomy. Can manage L3-L5 agents and make domain-specific decisions.'}
-                          {currentLevel === 3 && 'Specialized agents focused on specific domains. Execute complex tasks within their expertise.'}
-                          {currentLevel === 4 && 'Task-focused agents that execute specific operations. Reliable, repeatable task execution.'}
-                          {currentLevel === 5 && 'Pure tools and APIs. Deterministic, fast execution. May use LLM for parameter extraction.'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Responsibilities */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <List className="h-4 w-4" />
-                    Responsibilities
-                  </CardTitle>
-                  <CardDescription>
-                    Define what this agent is accountable for at Level {currentLevel}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="w-full max-w-full overflow-hidden">
-                    <MultiSelectDropdown
-                      options={dropdownData.responsibilities}
-                      selected={formState.responsibilities}
-                      onChange={(selected) => updateField('responsibilities', selected)}
-                      placeholder="Search responsibilities..."
-                      loading={loadingDropdowns}
-                      emptyMessage="No responsibilities found in database"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+              <LevelTab
+                {...tabProps}
+                currentLevel={currentLevel as 1 | 2 | 3 | 4 | 5}
+                responsibilities={dropdownData.responsibilities}
+                onLevelChange={handleLevelChange}
+                MultiSelectDropdown={MultiSelectDropdown}
+              />
             </TabsContent>
 
-            {/* TAB 3.5: MODELS */}
+            {/* TAB 4: MODELS */}
             <TabsContent value="models" className="space-y-4 py-4">
-              {/* Model Filters & Sort */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filter & Sort Models
-                  </CardTitle>
-                  <CardDescription>
-                    AI-powered recommendations based on agent profile
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Provider Filter */}
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Provider:</Label>
-                    <div className="flex gap-2 flex-wrap">
-                      {MODEL_PROVIDERS.map((provider) => (
-                        <Badge
-                          key={provider}
-                          variant={providerFilter === provider ? 'default' : 'outline'}
-                          className="cursor-pointer hover:bg-primary/10"
-                          onClick={() => setProviderFilter(provider)}
-                        >
-                          {provider}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Sort By */}
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Sort by:</Label>
-                    <div className="flex gap-2 flex-wrap">
-                      {[
-                        { id: 'recommended', label: 'Recommended', icon: Sparkles },
-                        { id: 'cost', label: 'Cost (Low→High)', icon: DollarSign },
-                        { id: 'reasoning', label: 'Reasoning', icon: Brain },
-                        { id: 'medical', label: 'Medical', icon: Heart },
-                        { id: 'coding', label: 'Coding', icon: Cpu },
-                        { id: 'speed', label: 'Speed', icon: Zap },
-                      ].map((sort) => (
-                        <Badge
-                          key={sort.id}
-                          variant={modelSortBy === sort.id ? 'default' : 'outline'}
-                          className={cn(
-                            'cursor-pointer hover:bg-primary/10',
-                            modelSortBy === sort.id && sort.id === 'recommended' && 'bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0'
-                          )}
-                          onClick={() => setModelSortBy(sort.id as typeof modelSortBy)}
-                        >
-                          <sort.icon className="h-3 w-3 mr-1" />
-                          {sort.label}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Model Selection Feedback Banner */}
-              {(() => {
-                const selectedFunction = dropdownData.functions.find(f => f.id === formState.function_id);
-                const modelsWithFit = calculateModelFit(LLM_MODELS, {
-                  functionId: formState.function_id,
-                  functionName: selectedFunction?.name,
-                  knowledgeDomains: formState.knowledge_domains,
-                  capabilities: formState.capabilities,
-                  description: formState.description,
-                });
-
-                const selectedModel = modelsWithFit.find(m => m.value === formState.base_model);
-                const topModel = modelsWithFit[0];
-                const isOptimalChoice = selectedModel && topModel && selectedModel.value === topModel.value;
-                const isGoodChoice = selectedModel && selectedModel.fitScore >= 75;
-                const betterAlternatives = selectedModel ? modelsWithFit.filter(m => m.fitScore > selectedModel.fitScore).slice(0, 3) : [];
-
-                if (!formState.base_model || !selectedModel) return null;
-
-                return (
-                  <Card className={cn(
-                    'border-2',
-                    isOptimalChoice ? 'border-green-500 bg-green-50 dark:bg-green-950/20' :
-                    isGoodChoice ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20' :
-                    'border-amber-500 bg-amber-50 dark:bg-amber-950/20'
-                  )}>
-                    <CardContent className="pt-4">
-                      <div className="flex items-start gap-3">
-                        {isOptimalChoice ? (
-                          <>
-                            <div className="rounded-full bg-green-500 p-2">
-                              <Crown className="h-4 w-4 text-white" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
-                                <ThumbsUp className="h-4 w-4" />
-                                Excellent Choice!
-                              </div>
-                              <p className="text-sm text-green-600 dark:text-green-500 mt-1">
-                                <strong>{selectedModel.label}</strong> is the best match for this agent profile with a {selectedModel.fitScore}% fit score.
-                                {selectedModel.fitReason && ` ${selectedModel.fitReason}.`}
-                              </p>
-                            </div>
-                          </>
-                        ) : isGoodChoice ? (
-                          <>
-                            <div className="rounded-full bg-blue-500 p-2">
-                              <Check className="h-4 w-4 text-white" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="font-semibold text-blue-700 dark:text-blue-400 flex items-center gap-2">
-                                <ThumbsUp className="h-4 w-4" />
-                                Good Choice
-                              </div>
-                              <p className="text-sm text-blue-600 dark:text-blue-500 mt-1">
-                                <strong>{selectedModel.label}</strong> has a {selectedModel.fitScore}% fit score.
-                                {betterAlternatives.length > 0 && (
-                                  <span> For better performance, consider: <strong>{betterAlternatives.map(m => m.label).join(', ')}</strong></span>
-                                )}
-                              </p>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="rounded-full bg-amber-500 p-2">
-                              <AlertTriangle className="h-4 w-4 text-white" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-2">
-                                <ArrowUp className="h-4 w-4" />
-                                Consider Better Alternatives
-                              </div>
-                              <p className="text-sm text-amber-600 dark:text-amber-500 mt-1">
-                                <strong>{selectedModel.label}</strong> has a {selectedModel.fitScore}% fit score which is suboptimal for this agent.
-                              </p>
-                              {betterAlternatives.length > 0 && (
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  {betterAlternatives.map(alt => (
-                                    <button
-                                      key={alt.value}
-                                      type="button"
-                                      onClick={() => updateField('base_model', alt.value)}
-                                      className="inline-flex items-center gap-1 px-2 py-1 bg-white dark:bg-amber-900 rounded border border-amber-300 text-xs font-medium hover:bg-amber-100 dark:hover:bg-amber-800 transition-colors"
-                                    >
-                                      <Sparkles className="h-3 w-3 text-amber-600" />
-                                      {alt.label} ({alt.fitScore}%)
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })()}
-
-              {/* Model Comparison Table */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Cpu className="h-4 w-4" />
-                    Model Comparison
-                  </CardTitle>
-                  <CardDescription>
-                    {LLM_MODELS.length} models available • Click a row to select
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <ScrollArea className="h-[400px]">
-                    <Table>
-                      <TableHeader className="sticky top-0 bg-background z-10">
-                        <TableRow>
-                          <TableHead className="w-[200px]">Model</TableHead>
-                          <TableHead className="w-[80px] text-center">Fit</TableHead>
-                          <TableHead className="w-[70px] text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              <Brain className="h-3 w-3" />
-                              <span className="sr-only sm:not-sr-only">Reason</span>
-                            </div>
-                          </TableHead>
-                          <TableHead className="w-[70px] text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              <Heart className="h-3 w-3" />
-                              <span className="sr-only sm:not-sr-only">Medical</span>
-                            </div>
-                          </TableHead>
-                          <TableHead className="w-[70px] text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              <Cpu className="h-3 w-3" />
-                              <span className="sr-only sm:not-sr-only">Code</span>
-                            </div>
-                          </TableHead>
-                          <TableHead className="w-[70px] text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              <Zap className="h-3 w-3" />
-                              <span className="sr-only sm:not-sr-only">Speed</span>
-                            </div>
-                          </TableHead>
-                          <TableHead className="w-[80px] text-right">Cost</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {(() => {
-                          const selectedFunction = dropdownData.functions.find(f => f.id === formState.function_id);
-                          const modelsWithFit = calculateModelFit(LLM_MODELS, {
-                            functionId: formState.function_id,
-                            functionName: selectedFunction?.name,
-                            knowledgeDomains: formState.knowledge_domains,
-                            capabilities: formState.capabilities,
-                            description: formState.description,
-                          });
-
-                          let filtered = modelsWithFit.filter(m =>
-                            providerFilter === 'All' || m.provider === providerFilter
-                          );
-
-                          if (modelSortBy === 'cost') {
-                            filtered = [...filtered].sort((a, b) => a.costValue - b.costValue);
-                          } else if (modelSortBy === 'reasoning') {
-                            filtered = [...filtered].sort((a, b) => b.reasoning - a.reasoning);
-                          } else if (modelSortBy === 'medical') {
-                            filtered = [...filtered].sort((a, b) => b.medical - a.medical);
-                          } else if (modelSortBy === 'coding') {
-                            filtered = [...filtered].sort((a, b) => b.coding - a.coding);
-                          } else if (modelSortBy === 'speed') {
-                            filtered = [...filtered].sort((a, b) => b.speed - a.speed);
-                          }
-
-                          const topRecommended = modelsWithFit.slice(0, 3).map(m => m.value);
-
-                          return filtered.slice(0, 30).map((model, index) => {
-                            const isSelected = formState.base_model === model.value;
-                            const isTop = index === 0 && modelSortBy === 'recommended';
-                            const isRecommended = topRecommended.includes(model.value);
-
-                            return (
-                              <TableRow
-                                key={model.value}
-                                className={cn(
-                                  'cursor-pointer transition-colors',
-                                  isSelected && 'bg-primary/10 border-l-4 border-l-primary',
-                                  !isSelected && isRecommended && 'bg-violet-50 dark:bg-violet-950/20',
-                                  'hover:bg-muted/50'
-                                )}
-                                onClick={() => updateField('base_model', model.value)}
-                              >
-                                <TableCell className="font-medium">
-                                  <div className="flex items-center gap-2">
-                                    {isSelected && <Check className="h-4 w-4 text-primary" />}
-                                    <div>
-                                      <div className="flex items-center gap-1.5">
-                                        <span>{model.label}</span>
-                                        {model.isLatest && (
-                                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-orange-100 text-orange-700 border-orange-300">
-                                            <Flame className="h-2.5 w-2.5 mr-0.5" />
-                                            New
-                                          </Badge>
-                                        )}
-                                        {isTop && (
-                                          <Badge className="text-[10px] px-1 py-0 h-4 bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0">
-                                            <Crown className="h-2.5 w-2.5 mr-0.5" />
-                                            Best
-                                          </Badge>
-                                        )}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                        <span>{model.provider}</span>
-                                        {model.trainingCutoff && (
-                                          <>
-                                            <span>•</span>
-                                            <Clock className="h-3 w-3" />
-                                            <span>{model.trainingCutoff}</span>
-                                          </>
-                                        )}
-                                        {model.supportsVision && (
-                                          <Eye className="h-3 w-3 text-blue-500" title="Supports Vision" />
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <div className={cn(
-                                    'inline-flex items-center justify-center w-12 h-6 rounded-full text-xs font-bold',
-                                    model.fitScore >= 85 ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
-                                    model.fitScore >= 70 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
-                                    model.fitScore >= 50 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300' :
-                                    'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-                                  )}>
-                                    {model.fitScore}%
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <div className="flex items-center justify-center gap-1">
-                                    <div className="w-8 h-1.5 bg-muted rounded-full overflow-hidden">
-                                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${model.reasoning}%` }} />
-                                    </div>
-                                    <span className="text-xs text-muted-foreground w-6">{model.reasoning}</span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <div className="flex items-center justify-center gap-1">
-                                    <div className="w-8 h-1.5 bg-muted rounded-full overflow-hidden">
-                                      <div className="h-full bg-green-500 rounded-full" style={{ width: `${model.medical}%` }} />
-                                    </div>
-                                    <span className="text-xs text-muted-foreground w-6">{model.medical}</span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <div className="flex items-center justify-center gap-1">
-                                    <div className="w-8 h-1.5 bg-muted rounded-full overflow-hidden">
-                                      <div className="h-full bg-purple-500 rounded-full" style={{ width: `${model.coding}%` }} />
-                                    </div>
-                                    <span className="text-xs text-muted-foreground w-6">{model.coding}</span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <div className="flex items-center justify-center gap-1">
-                                    <div className="w-8 h-1.5 bg-muted rounded-full overflow-hidden">
-                                      <div className="h-full bg-amber-500 rounded-full" style={{ width: `${model.speed}%` }} />
-                                    </div>
-                                    <span className="text-xs text-muted-foreground w-6">{model.speed}</span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-right text-xs">
-                                  <span className={cn(
-                                    'font-medium',
-                                    model.costValue <= 0.02 ? 'text-green-600' :
-                                    model.costValue <= 0.10 ? 'text-blue-600' :
-                                    'text-amber-600'
-                                  )}>
-                                    {model.cost}
-                                  </span>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          });
-                        })()}
-                      </TableBody>
-                    </Table>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-
-              {/* Model Parameters */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
-                    Model Parameters
-                  </CardTitle>
-                  <CardDescription>
-                    Fine-tune the model behavior for this agent
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <SliderGroup
-                    title=""
-                    sliders={MODEL_SLIDERS}
-                    values={{
-                      temperature: formState.temperature,
-                      max_tokens: formState.max_tokens,
-                      context_window: formState.context_window,
-                    }}
-                    onChange={updateSlider}
-                    columns={1}
-                  />
-
-                  <Separator />
-
-                  <SliderGroup
-                    title="Token Budget"
-                    sliders={TOKEN_BUDGET_SLIDERS}
-                    values={{
-                      token_budget_min: formState.token_budget_min,
-                      token_budget_max: formState.token_budget_max,
-                      token_budget_recommended: formState.token_budget_recommended,
-                    }}
-                    onChange={updateSlider}
-                    columns={3}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Model Evidence */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Info className="h-4 w-4" />
-                    Model Justification
-                  </CardTitle>
-                  <CardDescription>
-                    Document why this model was selected (required for evidence-based operations)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="model_justification">Justification</Label>
-                    <Textarea
-                      id="model_justification"
-                      value={formState.model_justification}
-                      onChange={(e) => updateField('model_justification', e.target.value)}
-                      placeholder="e.g., Ultra-specialist requiring highest accuracy for pharmacovigilance. GPT-4 achieves 86.7% on MedQA (USMLE)."
-                      rows={3}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="model_citation">Citation</Label>
-                    <Input
-                      id="model_citation"
-                      value={formState.model_citation}
-                      onChange={(e) => updateField('model_citation', e.target.value)}
-                      placeholder="e.g., OpenAI (2023). GPT-4 Technical Report. arXiv:2303.08774"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+              <ModelsTab
+                {...tabProps}
+                llmModels={LLM_MODELS}
+                modelProviders={MODEL_PROVIDERS}
+                calculateModelFit={calculateModelFit}
+              />
             </TabsContent>
 
-            {/* TAB 4: PERSONALITY & STYLE */}
+            {/* TAB 5: PERSONALITY */}
             <TabsContent value="personality" className="space-y-4 py-4">
-              {/* Personality Type Selection - Affects Temperature */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Brain className="h-4 w-4" />
-                    Personality Type
-                  </CardTitle>
-                  <CardDescription>
-                    Select a thinking style - this sets the agent's temperature and communication approach
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Personality Type Dropdown */}
-                  <Select
-                    value={formState.personality_type_id || formState.personality_type || ''}
-                    onValueChange={(value) => {
-                      const selected = personalityTypes.find(pt => pt.id === value || pt.slug === value);
-                      if (selected) handlePersonalityTypeChange(selected);
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a personality type..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {personalityTypes.map((pt) => (
-                        <SelectItem key={pt.id} value={pt.id || pt.slug}>
-                          <div className="flex items-center gap-3">
-                            <PersonalityIcon iconName={pt.icon} className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{pt.display_name || pt.name}</span>
-                            <span className="text-xs text-muted-foreground">T:{pt.temperature}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Selected personality details */}
-                  {(formState.personality_type_id || formState.personality_type) && (
-                    <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-2">
-                      {(() => {
-                        const selected = personalityTypes.find(
-                          pt => pt.id === formState.personality_type_id || pt.slug === formState.personality_type
-                        );
-                        if (!selected) return null;
-                        return (
-                          <>
-                            <div className="flex items-center justify-between">
-                              <span className="font-semibold">{selected.display_name || selected.name}</span>
-                              <Badge variant="outline">Icon: {selected.icon}</Badge>
-                            </div>
-                            <p className="text-muted-foreground text-xs">{selected.description}</p>
-                            <div className="flex gap-2 text-xs">
-                              <Badge variant="secondary">Temperature: {selected.temperature}</Badge>
-                              <Badge variant="secondary" className="capitalize">Category: {selected.category}</Badge>
-                              <Badge variant="secondary">Style: {selected.style}</Badge>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Personality Sliders */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Fine-Tune Personality Traits</CardTitle>
-                  <CardDescription>
-                    Adjust specific characteristics (0-100 scale)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <SliderGroup
-                    sliders={PERSONALITY_SLIDERS}
-                    values={{
-                      personality_formality: formState.personality_formality,
-                      personality_empathy: formState.personality_empathy,
-                      personality_directness: formState.personality_directness,
-                      personality_detail_orientation: formState.personality_detail_orientation,
-                      personality_proactivity: formState.personality_proactivity,
-                      personality_risk_tolerance: formState.personality_risk_tolerance,
-                    }}
-                    onChange={updateSlider}
-                    columns={2}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Communication Sliders */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Communication Style</CardTitle>
-                  <CardDescription>
-                    Adjust how the agent communicates
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <SliderGroup
-                    sliders={COMMUNICATION_SLIDERS}
-                    values={{
-                      comm_verbosity: formState.comm_verbosity,
-                      comm_technical_level: formState.comm_technical_level,
-                      comm_warmth: formState.comm_warmth,
-                    }}
-                    onChange={updateSlider}
-                    columns={3}
-                  />
-                </CardContent>
-              </Card>
+              <PersonalityTab
+                {...tabProps}
+                personalityTypes={personalityTypes}
+                onPersonalityTypeChange={handlePersonalityTypeChange}
+              />
             </TabsContent>
 
-            {/* TAB 5: PROMPT STARTERS (separate from personality) */}
+            {/* TAB 6: PROMPT STARTERS */}
             <TabsContent value="prompts" className="space-y-4 py-4">
-              {/* Prompt Starters Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Prompt Starters
-                    <Badge variant="outline" className="ml-auto text-xs">
-                      {dropdownData.promptStarters.length > 0 ? 'Synced with DB' : 'Local'}
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    Suggested conversation starters shown to users (max 5). Stored in Supabase prompt_starters table.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Current starters from DB */}
-                  {dropdownData.promptStarters.length > 0 && (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Saved starters:</Label>
-                      {dropdownData.promptStarters.map((starter) => (
-                        <div key={starter.id} className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">{starter.title}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-1">{starter.prompt_text}</p>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removePromptStarter(
-                              dropdownData.promptStarters.indexOf(starter),
-                              starter.id
-                            )}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Local starters (not yet saved) */}
-                  {formState.prompt_starters.length > 0 && dropdownData.promptStarters.length === 0 && (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Unsaved starters:</Label>
-                      {formState.prompt_starters.map((starter, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-                          <span className="flex-1 text-sm">{starter}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removePromptStarter(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Add new starter */}
-                  {(dropdownData.promptStarters.length + formState.prompt_starters.length) < 5 && (
-                    <div className="space-y-3 p-3 border border-dashed rounded-lg">
-                      <Label>Add New Prompt Starter</Label>
-                      <Input
-                        placeholder="Title (e.g., 'Clinical Trial Query')"
-                        value={newPromptStarter.title}
-                        onChange={(e) => setNewPromptStarter(prev => ({ ...prev, title: e.target.value }))}
-                      />
-                      <Input
-                        placeholder="Prompt text (e.g., 'What are the latest clinical trial results for...')"
-                        value={newPromptStarter.prompt}
-                        onChange={(e) => setNewPromptStarter(prev => ({ ...prev, prompt: e.target.value }))}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && newPromptStarter.title && newPromptStarter.prompt) {
-                            e.preventDefault();
-                            addPromptStarter(newPromptStarter.title, newPromptStarter.prompt);
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (newPromptStarter.title && newPromptStarter.prompt) {
-                            addPromptStarter(newPromptStarter.title, newPromptStarter.prompt);
-                          }
-                        }}
-                        disabled={!newPromptStarter.title || !newPromptStarter.prompt}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Starter
-                      </Button>
-                    </div>
-                  )}
-
-                  <p className="text-xs text-muted-foreground">
-                    {dropdownData.promptStarters.length + formState.prompt_starters.length}/5 prompt starters configured
-                  </p>
-                </CardContent>
-              </Card>
+              <PromptsTab
+                {...tabProps}
+                savedPromptStarters={dropdownData.promptStarters.map(p => ({
+                  id: p.id,
+                  title: p.title,
+                  prompt_text: p.prompt_text,
+                  category: p.category,
+                }))}
+                onAddPromptStarter={addPromptStarter}
+                onRemovePromptStarter={removePromptStarter}
+              />
             </TabsContent>
 
-            {/* TAB 6: 6-SECTION PROMPT BUILDER */}
-            {/* NEW: SYSTEM PROMPT TAB - Single YAML+MD Form */}
-            <TabsContent value="system-prompt" className="space-y-4 py-4">
-              <Card className="border-primary/30">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <FileText className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-base">System Prompt (YAML + Markdown)</CardTitle>
-                        <CardDescription>
-                          The complete system prompt that defines your agent&apos;s behavior. Use AI to generate or edit manually.
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleEnhanceWithAI}
-                        disabled={enhancingPrompt || !formState.name}
-                        className="gap-2"
-                      >
-                        {enhancingPrompt ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="h-4 w-4" />
-                            Generate with AI
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          // Copy to clipboard
-                          const systemPrompt = generateYamlMdPrompt();
-                          navigator.clipboard.writeText(systemPrompt);
-                        }}
-                        className="gap-2"
-                      >
-                        <Copy className="h-4 w-4" />
-                        Copy
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Success/Error messages */}
-                  {enhanceSuccess && (
-                    <div className="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="text-sm text-green-700 dark:text-green-400">
-                        System prompt generated successfully! Review and adjust as needed.
-                      </span>
-                    </div>
-                  )}
-                  {enhanceError && (
-                    <div className="mt-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-2">
-                      <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-destructive">Failed to generate prompt</p>
-                        <p className="text-sm text-destructive/80">{enhanceError}</p>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => setEnhanceError(null)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  {/* Preview of YAML frontmatter */}
-                  <div className="mb-4 p-3 bg-muted/50 rounded-lg border">
-                    <p className="text-xs font-mono text-muted-foreground mb-2">YAML Frontmatter (auto-generated from form data):</p>
-                    <pre className="text-xs font-mono text-muted-foreground overflow-x-auto">
-{`---
-agent_name: "${formState.name || 'untitled'}"
-version: "${formState.version || '1.0'}"
-model: "${formState.base_model || 'gpt-4'}"
-temperature: ${formState.temperature || 0.4}
-max_tokens: ${formState.max_tokens || 3000}
-expertise_level: "${formState.expertise_level || 'senior'}"
-hipaa_compliant: ${formState.hipaa_compliant || false}
----`}
-                    </pre>
-                  </div>
-
-                  {/* Single large textarea for the markdown body */}
-                  <div className="grid gap-2">
-                    <Label htmlFor="system_prompt" className="text-sm font-medium">
-                      Markdown System Prompt
-                    </Label>
-                    <Textarea
-                      id="system_prompt"
-                      value={generateYamlMdPrompt()}
-                      onChange={(e) => parseYamlMdPrompt(e.target.value)}
-                      placeholder={`## YOU ARE
-[Define the agent's specific role and unique positioning...]
-
-## YOU DO
-[List 3-7 specific capabilities with measurable outcomes...]
-
-## YOU NEVER
-[Define 3-5 safety-critical boundaries with rationale...]
-
-## SUCCESS CRITERIA
-[Define measurable performance targets...]
-
-## WHEN UNSURE
-[Define escalation protocol with confidence thresholds...]
-
-## EVIDENCE REQUIREMENTS
-[Define what sources to cite, evidence hierarchy...]`}
-                      className="font-mono text-sm min-h-[500px] resize-y"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Use the 6-section framework: YOU ARE, YOU DO, YOU NEVER, SUCCESS CRITERIA, WHEN UNSURE, EVIDENCE REQUIREMENTS
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* TAB 7: HIERARCHY & RELATIONSHIPS */}
+            {/* TAB 7: HIERARCHY */}
             <TabsContent value="hierarchy" className="space-y-4 py-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Reporting Structure</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label>Reports To</Label>
-                    <Select
-                      value={formState.reports_to_agent_id}
-                      onValueChange={(value) => updateField('reports_to_agent_id', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select parent agent..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {availableAgents.map((a) => (
-                          <SelectItem key={a.id} value={a.id}>
-                            {a.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label>Escalates To</Label>
-                    <Select
-                      value={formState.can_escalate_to}
-                      onValueChange={(value) => updateField('can_escalate_to', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select escalation target..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        <SelectItem value="HITL">Human in the Loop</SelectItem>
-                        <SelectItem value="L1">L1 Master</SelectItem>
-                        <SelectItem value="L2">L2 Expert</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Spawning Capabilities</CardTitle>
-                  <CardDescription>
-                    What lower-level agents can this agent spawn?
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Can Spawn L2 (Expert)</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Spawn domain expert agents
-                      </p>
-                    </div>
-                    <Switch
-                      checked={formState.can_spawn_l2}
-                      onCheckedChange={(checked) => updateField('can_spawn_l2', checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Can Spawn L3 (Specialist)</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Spawn task specialists
-                      </p>
-                    </div>
-                    <Switch
-                      checked={formState.can_spawn_l3}
-                      onCheckedChange={(checked) => updateField('can_spawn_l3', checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Can Spawn L4 (Worker)</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Spawn worker agents for data tasks
-                      </p>
-                    </div>
-                    <Switch
-                      checked={formState.can_spawn_l4}
-                      onCheckedChange={(checked) => updateField('can_spawn_l4', checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Can Use Worker Pool</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Access shared worker pool for parallel tasks
-                      </p>
-                    </div>
-                    <Switch
-                      checked={formState.can_use_worker_pool}
-                      onCheckedChange={(checked) => updateField('can_use_worker_pool', checked)}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* L4/L5 Agent Selection - Only show for agents that can spawn */}
-              {(formState.can_spawn_l4 || formState.can_spawn_l3) && agent && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Configure L4/L5 Agents</CardTitle>
-                    <CardDescription>
-                      Select specific L4 Workers and L5 Tools this agent can spawn. AI will recommend agents based on domain expertise.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <SubagentSelector
-                      agent={agent}
-                      onSave={(config: SubagentHierarchyConfig) => {
-                        // Update the agent's metadata with the hierarchy config
-                        updateField('metadata', {
-                          ...formState.metadata,
-                          hierarchy: config,
-                        });
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              )}
+              <HierarchyTab
+                {...tabProps}
+                availableAgents={availableAgents}
+              />
             </TabsContent>
 
             {/* TAB 8: SUCCESS CRITERIA */}
             <TabsContent value="criteria" className="space-y-4 py-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Success Criteria Targets</CardTitle>
-                  <CardDescription>
-                    Adjust target percentages for success metrics (auto-populated based on agent level)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Success criteria will be auto-generated when the agent is saved based on the selected level.
-                    You can customize targets after creation.
-                  </p>
-                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                    <Info className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      Current Level: <strong>L{currentLevel}</strong> -
-                      Default success criteria will be applied
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+              <CriteriaTab
+                {...tabProps}
+                currentLevel={currentLevel as 1 | 2 | 3 | 4 | 5}
+              />
             </TabsContent>
 
             {/* TAB 9: SAFETY & COMPLIANCE */}
             <TabsContent value="safety" className="space-y-4 py-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Compliance Flags</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>HIPAA Compliant</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Agent handles PHI according to HIPAA regulations
-                      </p>
-                    </div>
-                    <Switch
-                      checked={formState.hipaa_compliant}
-                      onCheckedChange={(checked) => updateField('hipaa_compliant', checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Audit Trail Enabled</Label>
-                      <p className="text-xs text-muted-foreground">
-                        All interactions are logged for compliance
-                      </p>
-                    </div>
-                    <Switch
-                      checked={formState.audit_trail_enabled}
-                      onCheckedChange={(checked) => updateField('audit_trail_enabled', checked)}
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label>Data Classification</Label>
-                    <Select
-                      value={formState.data_classification}
-                      onValueChange={(value) => updateField('data_classification', value as DataClassification)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="public">Public</SelectItem>
-                        <SelectItem value="internal">Internal</SelectItem>
-                        <SelectItem value="confidential">Confidential</SelectItem>
-                        <SelectItem value="restricted">Restricted</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Expertise Profile</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label>Expertise Level</Label>
-                      <Select
-                        value={formState.expertise_level}
-                        onValueChange={(value) => updateField('expertise_level', value as ExpertiseLevel)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="entry">Entry</SelectItem>
-                          <SelectItem value="mid">Mid</SelectItem>
-                          <SelectItem value="senior">Senior</SelectItem>
-                          <SelectItem value="expert">Expert</SelectItem>
-                          <SelectItem value="thought_leader">Thought Leader</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="expertise_years">Years of Experience</Label>
-                      <Input
-                        id="expertise_years"
-                        type="number"
-                        min="0"
-                        max="50"
-                        value={formState.expertise_years}
-                        onChange={(e) => updateField('expertise_years', parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label>Geographic Scope</Label>
-                      <Select
-                        value={formState.geographic_scope}
-                        onValueChange={(value) => updateField('geographic_scope', value as GeographicScope)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="local">Local</SelectItem>
-                          <SelectItem value="regional">Regional</SelectItem>
-                          <SelectItem value="national">National</SelectItem>
-                          <SelectItem value="global">Global</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="industry">Industry Specialization</Label>
-                      <Input
-                        id="industry"
-                        value={formState.industry_specialization}
-                        onChange={(e) => updateField('industry_specialization', e.target.value)}
-                        placeholder="e.g., pharmaceuticals"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <SafetyTab {...tabProps} />
             </TabsContent>
 
             {/* TAB 10: CAPABILITIES & SKILLS */}
             <TabsContent value="capabilities" className="space-y-4 py-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Zap className="h-4 w-4" />
-                    Capabilities
-                    <Badge variant="outline" className="ml-auto text-xs">
-                      {formState.capabilities.length} selected
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    Select capabilities this agent possesses. Skills will filter based on selected capabilities.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Capability Category Filter Badges */}
-                  <div className="flex gap-2 flex-wrap">
-                    {CAPABILITY_CATEGORIES.map((category) => (
-                      <Badge
-                        key={category}
-                        variant={capabilityFilter === category ? 'default' : 'outline'}
-                        className="cursor-pointer hover:bg-primary/10"
-                        onClick={() => setCapabilityFilter(category)}
-                      >
-                        {category}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  <div className="w-full max-w-full overflow-hidden">
-                    <MultiSelectDropdown
-                      options={
-                        capabilityFilter === 'All'
-                          ? dropdownData.capabilities
-                          : dropdownData.capabilities.filter(cap =>
-                              cap.category?.toLowerCase().includes(capabilityFilter.toLowerCase()) ||
-                              cap.name?.toLowerCase().includes(capabilityFilter.toLowerCase())
-                            )
-                      }
-                      selected={formState.capabilities}
-                      onChange={(selected) => {
-                        updateField('capabilities', selected);
-                        // Clear skills that don't belong to selected capabilities if needed
-                      }}
-                      placeholder="Search capabilities..."
-                      loading={loadingDropdowns}
-                      emptyMessage={
-                        capabilityFilter !== 'All'
-                          ? `No capabilities found for "${capabilityFilter}"`
-                          : 'No capabilities found in database'
-                      }
-                    />
-                  </div>
-                  {formState.capabilities.length > 0 && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {formState.capabilities.length} capability(ies) selected - skills below are filtered accordingly
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    Skills
-                    {formState.capabilities.length > 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        Filtered by {formState.capabilities.length} capabilities
-                      </Badge>
-                    )}
-                  </CardTitle>
-                  <CardDescription>
-                    {formState.capabilities.length > 0
-                      ? 'Showing skills related to selected capabilities'
-                      : 'Select capabilities first to filter skills, or choose from all skills'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="w-full max-w-full overflow-hidden">
-                    <MultiSelectDropdown
-                      options={
-                        formState.capabilities.length > 0
-                          ? dropdownData.skills.filter(skill =>
-                              // If skill has capability_id, filter by selected capabilities
-                              // Otherwise show all skills
-                              !skill.capability_id ||
-                              formState.capabilities.includes(skill.capability_id)
-                            )
-                          : dropdownData.skills
-                      }
-                      selected={formState.skills}
-                      onChange={(selected) => updateField('skills', selected)}
-                      placeholder="Search skills..."
-                      loading={loadingDropdowns}
-                      emptyMessage={
-                        formState.capabilities.length > 0
-                          ? 'No skills found for selected capabilities'
-                          : 'No skills found in database'
-                      }
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
+              <CapabilitiesTab
+                {...tabProps}
+                capabilities={dropdownData.capabilities}
+                skills={dropdownData.skills}
+                loadingDropdowns={loadingDropdowns}
+                MultiSelectDropdown={MultiSelectDropdown}
+              />
             </TabsContent>
 
             {/* TAB 11: KNOWLEDGE & RAG */}
             <TabsContent value="knowledge" className="space-y-4 py-4">
-              {/* Global RAG Toggle */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Brain className="h-4 w-4" />
-                    Platform Knowledge (RAG)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Enable Platform RAG</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Agent accesses shared VITAL knowledge base
-                      </p>
-                    </div>
-                    <Switch
-                      checked={formState.rag_enabled}
-                      onCheckedChange={(checked) => updateField('rag_enabled', checked)}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Agent-Specific RAG */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    Agent-Specific RAG
-                  </CardTitle>
-                  <CardDescription>
-                    Upload custom knowledge for this agent only
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Enable Agent-Specific Knowledge</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Agent uses custom documents uploaded below
-                      </p>
-                    </div>
-                    <Switch
-                      checked={formState.agent_specific_rag}
-                      onCheckedChange={(checked) => updateField('agent_specific_rag', checked)}
-                    />
-                  </div>
-
-                  {formState.agent_specific_rag && (
-                    <div className="space-y-3 pt-2">
-                      <Label>Content Files</Label>
-                      <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                        <div className="flex flex-col items-center gap-2">
-                          <FileText className="h-8 w-8 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">
-                            Drag & drop files here, or click to browse
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Supports PDF, TXT, DOCX, MD (max 10MB each)
-                          </p>
-                          <Button variant="outline" size="sm" type="button">
-                            Upload Files
-                          </Button>
-                        </div>
-                      </div>
-                      {formState.rag_content_files.length > 0 && (
-                        <div className="space-y-2">
-                          {formState.rag_content_files.map((file, index) => (
-                            <div key={index} className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-                              <FileText className="h-4 w-4" />
-                              <span className="flex-1 text-sm truncate">{file}</span>
-                              <Button variant="ghost" size="sm" type="button">
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Knowledge Domains with Filter */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Knowledge Domains</CardTitle>
-                  <CardDescription>
-                    Filter and select knowledge domains this agent can access
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {/* Category Filter */}
-                  <div className="flex gap-2 flex-wrap">
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary/10"
-                      onClick={() => {/* Filter by category */}}
-                    >
-                      All Domains
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary/10"
-                    >
-                      Clinical
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary/10"
-                    >
-                      Regulatory
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary/10"
-                    >
-                      Commercial
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary/10"
-                    >
-                      Medical Affairs
-                    </Badge>
-                  </div>
-
-                  <MultiSelectDropdown
-                    options={dropdownData.knowledgeDomains}
-                    selected={formState.knowledge_domains}
-                    onChange={(selected) => updateField('knowledge_domains', selected)}
-                    placeholder="Search knowledge domains..."
-                    loading={loadingDropdowns}
-                    emptyMessage="No knowledge domains found in database"
-                  />
-                  {formState.knowledge_domains.length === 0 && !loadingDropdowns && (
-                    <p className="text-xs text-muted-foreground italic">
-                      No domains selected - agent will have access to all knowledge
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+              <KnowledgeTab
+                {...tabProps}
+                knowledgeDomains={dropdownData.knowledgeDomains}
+                loadingDropdowns={loadingDropdowns}
+                MultiSelectDropdown={MultiSelectDropdown}
+              />
             </TabsContent>
 
             {/* TAB 12: TOOLS */}
             <TabsContent value="tools" className="space-y-4 py-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Wrench className="h-4 w-4" />
-                    Tools & Integrations
-                  </CardTitle>
-                  <CardDescription>
-                    Filter and select tools this agent can use from the registry
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {/* Category Filter */}
-                  <div className="flex gap-2 flex-wrap">
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary/10"
-                    >
-                      All Tools
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary/10"
-                    >
-                      Data
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary/10"
-                    >
-                      Analysis
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary/10"
-                    >
-                      Communication
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary/10"
-                    >
-                      Integration
-                    </Badge>
-                  </div>
-
-                  <MultiSelectDropdown
-                    options={dropdownData.tools}
-                    selected={formState.tools}
-                    onChange={(selected) => updateField('tools', selected)}
-                    placeholder="Search tools..."
-                    loading={loadingDropdowns}
-                    emptyMessage="No tools found in database"
-                  />
-
-                  {formState.tools.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {formState.tools.length} tool(s) selected
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+              <ToolsTab
+                {...tabProps}
+                tools={dropdownData.tools}
+                loadingDropdowns={loadingDropdowns}
+                MultiSelectDropdown={MultiSelectDropdown}
+              />
             </TabsContent>
 
-            {/* TAB 13: ADMIN CONTROLS (Super Admin Only) */}
+            {/* TAB 13: SYSTEM PROMPT (6-Section Builder) */}
+            <TabsContent value="system-prompt" className="space-y-4 py-4">
+              <SystemPromptTab
+                {...tabProps}
+                generateYamlMdPrompt={generateYamlMdPrompt}
+                parseYamlMdPrompt={parseYamlMdPrompt}
+                onEnhanceWithAI={handleEnhanceWithAI}
+                enhancingPrompt={enhancingPrompt}
+                enhanceSuccess={enhanceSuccess}
+                enhanceError={enhanceError}
+                onClearError={() => setEnhanceError(null)}
+              />
+            </TabsContent>
+
+            {/* TAB 14: ADMIN */}
             <TabsContent value="admin" className="space-y-4 py-4">
-              {/* Tenant Assignment */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    Tenant Assignment
-                  </CardTitle>
-                  <CardDescription>
-                    Assign this agent to a specific tenant organization
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="tenant_id">Assigned Tenant</Label>
-                    <Select
-                      value={formState.tenant_id || 'none'}
-                      onValueChange={(value) => updateField('tenant_id', value === 'none' ? '' : value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select tenant..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">
-                          <span className="text-muted-foreground">No tenant (Platform-wide)</span>
-                        </SelectItem>
-                        {dropdownData.tenants.map((tenant) => (
-                          <SelectItem key={tenant.id} value={tenant.id}>
-                            <div className="flex items-center gap-2">
-                              <span>{tenant.name}</span>
-                              {tenant.tenant_key && (
-                                <span className="text-xs text-muted-foreground">({tenant.tenant_key})</span>
-                              )}
-                              {!tenant.is_active && (
-                                <Badge variant="secondary" className="text-xs">Inactive</Badge>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Agents can be tenant-specific or platform-wide (no tenant assigned)
-                    </p>
-                  </div>
-
-                  {formState.tenant_id && (
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <p className="text-xs text-blue-800">
-                        This agent is assigned to:{' '}
-                        <strong>
-                          {dropdownData.tenants.find(t => t.id === formState.tenant_id)?.name || 'Unknown'}
-                        </strong>
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Visibility & Access Controls */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Globe className="h-4 w-4" />
-                    Visibility & Access
-                  </CardTitle>
-                  <CardDescription>
-                    Control who can see and interact with this agent
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Public Toggle */}
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                        <Label htmlFor="is_public" className="font-medium">
-                          Public Access
-                        </Label>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        When enabled, this agent is visible to all users in the agent store
-                      </p>
-                    </div>
-                    <Switch
-                      id="is_public"
-                      checked={formState.is_public}
-                      onCheckedChange={(checked) => updateField('is_public', checked)}
-                    />
-                  </div>
-
-                  {/* Duplicate Toggle */}
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <Copy className="h-4 w-4 text-muted-foreground" />
-                        <Label htmlFor="allow_duplicate" className="font-medium">
-                          Allow Duplication
-                        </Label>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        When enabled, users can create their own copy of this agent
-                      </p>
-                    </div>
-                    <Switch
-                      id="allow_duplicate"
-                      checked={formState.allow_duplicate}
-                      onCheckedChange={(checked) => updateField('allow_duplicate', checked)}
-                    />
-                  </div>
-
-                  {/* Status Summary */}
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <Label className="text-xs text-muted-foreground mb-2 block">Current Visibility:</Label>
-                    <div className="flex gap-2 flex-wrap">
-                      {formState.is_public ? (
-                        <Badge variant="default" className="bg-green-600">Public</Badge>
-                      ) : (
-                        <Badge variant="secondary">Private</Badge>
-                      )}
-                      {formState.allow_duplicate ? (
-                        <Badge variant="outline">Duplicatable</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-red-600 border-red-300">No Duplication</Badge>
-                      )}
-                      {formState.tenant_id ? (
-                        <Badge variant="outline">Tenant-specific</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-blue-600 border-blue-300">Platform-wide</Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Agent Metadata */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <UserCog className="h-4 w-4" />
-                    Agent Metadata
-                  </CardTitle>
-                  <CardDescription>
-                    Additional administrative information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <Label className="text-xs text-muted-foreground">Agent ID</Label>
-                      <p className="font-mono text-xs mt-1 truncate">{agent?.id || 'Not saved yet'}</p>
-                    </div>
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <Label className="text-xs text-muted-foreground">Status</Label>
-                      <p className="font-medium text-sm mt-1 capitalize">{formState.status}</p>
-                    </div>
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <Label className="text-xs text-muted-foreground">Validation</Label>
-                      <p className="font-medium text-sm mt-1 capitalize">{formState.validation_status}</p>
-                    </div>
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <Label className="text-xs text-muted-foreground">Personality Type ID</Label>
-                      <p className="font-mono text-xs mt-1 truncate">{formState.personality_type_id || 'None'}</p>
-                    </div>
-                  </div>
-
-                  {/* Status Change */}
-                  <div className="grid gap-2">
-                    <Label htmlFor="status">Agent Status</Label>
-                    <Select
-                      value={formState.status}
-                      onValueChange={(value) => updateField('status', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="development">Development</SelectItem>
-                        <SelectItem value="testing">Testing</SelectItem>
-                        <SelectItem value="active">Active (Production)</SelectItem>
-                        <SelectItem value="deprecated">Deprecated</SelectItem>
-                        <SelectItem value="archived">Archived</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
+              <AdminTab
+                {...tabProps}
+                tenants={dropdownData.tenants}
+              />
             </TabsContent>
           </ScrollArea>
         </Tabs>

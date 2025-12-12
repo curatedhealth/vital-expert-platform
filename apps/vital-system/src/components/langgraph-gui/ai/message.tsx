@@ -33,7 +33,7 @@ const getParticipantColor = (name: string, role: string): { bg: string; text: st
   return PARTICIPANT_COLORS[index]
 }
 
-interface MessageProps extends React.HTMLAttributes<HTMLDivElement> {
+interface MessageProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'color'> {
   from: "user" | "assistant" | "log" | "expert" | "moderator"
   avatar?: string
   name?: string

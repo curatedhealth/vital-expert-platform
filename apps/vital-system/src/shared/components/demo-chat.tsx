@@ -31,6 +31,7 @@ export function DemoChat() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
@@ -46,13 +47,15 @@ export function DemoChat() {
     setIsLoading(true);
 
     try {
-
+      const response = await fetch('/api/expert-panel/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ query: input }),
       });
+
+      const data = await response.json();
 
       if (data.success) {
         const assistantMessage: ChatMessage = {
@@ -82,6 +85,7 @@ export function DemoChat() {
     }
   };
 
+  const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'

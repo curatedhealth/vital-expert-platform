@@ -8,9 +8,11 @@ import { JSDOM } from 'jsdom';
 import { NextRequest } from 'next/server';
 
 // Initialize DOMPurify for server-side use
+const window = new JSDOM('').window;
+const purify = DOMPurify(window);
 
 // Healthcare-specific dangerous patterns
-
+const DANGEROUS_PATTERNS = {
   // SQL Injection patterns
   SQL_INJECTION: [
     /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b)/gi,
@@ -58,7 +60,7 @@ import { NextRequest } from 'next/server';
 };
 
 // Maximum input lengths for different types
-
+const INPUT_LIMITS = {
   QUERY: 10000,
   NAME: 100,
   EMAIL: 254,
@@ -71,7 +73,7 @@ import { NextRequest } from 'next/server';
 };
 
 // Allowed characters for different input types
-
+const ALLOWED_PATTERNS = {
   ALPHANUMERIC: /^[a-zA-Z0-9\s\-_.]+$/,
   ALPHA: /^[a-zA-Z\s\-']+$/,
   NUMERIC: /^[0-9\-+().]+$/,
@@ -90,18 +92,19 @@ interface SanitizationResult {
 export async function sanitizeInput(request: NextRequest): Promise<NextRequest | null> {
   try {
     // Clone request for modification
-
+    const url = new URL(request.url);
     // Sanitize URL parameters
-
+    const sanitizedParams = sanitizeQueryParams(url.searchParams);
     url.search = sanitizedParams.toString();
 
     // Sanitize headers
-
+    const sanitizedHeaders = sanitizeHeaders(request.headers);
     // For methods with body, sanitize the body
     let sanitizedBody: unknown = null;
     if (request.method !== 'GET' && request.method !== 'DELETE') {
       try {
-
+        const body = await request.json();
+        const bodyResult = sanitizeRequestBody(body);
         if (bodyResult.blocked) {
           return null; // Block dangerous requests
         }
@@ -110,7 +113,8 @@ export async function sanitizeInput(request: NextRequest): Promise<NextRequest |
       } catch {
         // Not JSON body, handle as text or form data
         try {
-
+          const text = await request.text();
+          const textResult = sanitizeText(text);
           if (textResult.blocked) {
             return null;
           }
@@ -123,13 +127,13 @@ export async function sanitizeInput(request: NextRequest): Promise<NextRequest |
     }
 
     // Create new request with sanitized data
-
+    const sanitizedRequest = new Request(url.toString(), {
       method: request.method,
       headers: sanitizedHeaders,
       body: sanitizedBody ? JSON.stringify(sanitizedBody) : undefined
     });
 
-    return sanitizedRequest;
+    return sanitizedRequest as NextRequest;
 
   } catch (error) {
     // console.error('Input sanitization error:', error);
@@ -138,12 +142,12 @@ export async function sanitizeInput(request: NextRequest): Promise<NextRequest |
 }
 
 function sanitizeQueryParams(params: URLSearchParams): URLSearchParams {
-
+  const sanitized = new URLSearchParams();
   for (const [key, value] of params.entries()) {
     // Sanitize parameter key
-
+    const cleanKey = key.replace(/[<>'"]/g, '');
     // Sanitize parameter value
-
+    const cleanValue = value.replace(/[<>'"]/g, '');
     // Only add if both key and value are clean
     // eslint-disable-next-line security/detect-object-injection
     if (cleanKey && cleanValue && !detectDangerousPatterns(cleanValue).blocked) {
@@ -155,9 +159,9 @@ function sanitizeQueryParams(params: URLSearchParams): URLSearchParams {
 }
 
 function sanitizeHeaders(headers: Headers): Headers {
-
+  const sanitized = new Headers();
   // List of safe headers to preserve
-
+  const safeHeaders = [
     'content-type',
     'accept',
     'authorization',
@@ -168,11 +172,11 @@ function sanitizeHeaders(headers: Headers): Headers {
   ];
 
   for (const [key, value] of headers.entries()) {
-
+    const lowerKey = key.toLowerCase();
     // eslint-disable-next-line security/detect-object-injection
     if (safeHeaders.includes(lowerKey)) {
       // Additional sanitization for specific headers
-
+      let cleanValue = value;
       // eslint-disable-next-line security/detect-object-injection
       if (lowerKey === 'authorization') {
         // Basic sanitization for auth header
@@ -196,13 +200,13 @@ function sanitizeRequestBody(body: unknown): SanitizationResult {
   }
 
   const warnings: string[] = [];
-
+  let blocked = false;
   let reason: string | undefined;
 
   // Recursively sanitize object properties
-
+  const sanitized = sanitizeObjectRecursive(body, warnings);
   // Check for dangerous patterns in the entire object
-
+  const dangerCheck = detectDangerousPatterns(JSON.stringify(body));
   if (dangerCheck.blocked) {
     blocked = true;
     reason = dangerCheck.reason;
@@ -217,20 +221,21 @@ function sanitizeObjectRecursive(obj: unknown, warnings: string[]): unknown {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map((item: any) => sanitizeObjectRecursive(item, warnings));
+    return obj.map((item) => sanitizeObjectRecursive(item, warnings));
   }
 
   if (typeof obj === 'object') {
-    const sanitized: unknown = { /* TODO: implement */ };
+    const sanitized: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(obj)) {
       // Sanitize property key
-
+      const cleanKey = key.replace(/[<>'"]/g, '');
       if (typeof value === 'string') {
         // Determine appropriate sanitization based on key name
-
+        const sanitizationType = determineSanitizationType(key);
+        const result = sanitizeText(value, sanitizationType);
         if (result.warnings.length > 0) {
-          warnings.push(...result.warnings.map((w: any) => `${key}: ${w}`));
+          warnings.push(...result.warnings.map((w) => `${key}: ${w}`));
         }
 
         // eslint-disable-next-line security/detect-object-injection
@@ -256,11 +261,13 @@ function sanitizeText(
   }
 
   const warnings: string[] = [];
-
+  let sanitized = text;
+  let blocked = false;
   let reason: string | undefined;
 
   // Check input length
   // eslint-disable-next-line security/detect-object-injection
+  const limit = INPUT_LIMITS[type as keyof typeof INPUT_LIMITS];
 
   if (limit && text.length > limit) {
     warnings.push(`Input truncated from ${text.length} to ${limit} characters`);
@@ -268,7 +275,7 @@ function sanitizeText(
   }
 
   // Check for dangerous patterns
-
+  const dangerCheck = detectDangerousPatterns(sanitized);
   if (dangerCheck.blocked) {
     blocked = true;
     reason = dangerCheck.reason;
@@ -280,7 +287,7 @@ function sanitizeText(
 
   // Apply pattern-based sanitization
   // eslint-disable-next-line security/detect-object-injection
-
+  const pattern = ALLOWED_PATTERNS[type as keyof typeof ALLOWED_PATTERNS];
   if (pattern && !pattern.test(sanitized)) {
     if (type === 'MEDICAL_TEXT' || type === 'QUERY') {
       // For medical text and queries, be more permissive but clean dangerous chars
@@ -318,7 +325,7 @@ function detectDangerousPatterns(input: string): { blocked: boolean; reason?: st
 }
 
 function determineSanitizationType(key: string): keyof typeof INPUT_LIMITS | keyof typeof ALLOWED_PATTERNS {
-
+  const keyLower = key.toLowerCase();
   if (keyLower.includes('email')) return 'EMAIL';
   if (keyLower.includes('phone')) return 'PHONE';
   if (keyLower.includes('name')) return 'ALPHA';
@@ -330,7 +337,7 @@ function determineSanitizationType(key: string): keyof typeof INPUT_LIMITS | key
 }
 
 function sanitizeMedicalContent(text: string): string {
-
+  let sanitized = text;
   // Remove potential PHI patterns while preserving medical context
   sanitized = sanitized.replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[SSN-REDACTED]');
   sanitized = sanitized.replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL-REDACTED]');

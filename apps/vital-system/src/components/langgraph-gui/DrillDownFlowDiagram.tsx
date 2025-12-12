@@ -1,7 +1,12 @@
 import React from 'react';
 import { Node, Edge } from 'reactflow';
 import { ChevronRight, Edit2, ChevronLeft, Workflow } from 'lucide-react';
-import { getNodesAtLevel, getBreadcrumbPath, hasNestedTasks, getNestedTaskCount } from '../utils/taskHierarchy';
+// Stub implementations - taskHierarchy utilities need to be implemented
+const getNodesAtLevel = (nodes: Node[], edges: Edge[], currentPath: string[]): Node[] => nodes;
+const getBreadcrumbPath = (nodes: Node[], currentPath: string[]): Array<{id: string, name: string}> =>
+  currentPath.map((id, i) => ({ id, name: `Level ${i+1}` }));
+const hasNestedTasks = (node: any): boolean => false;
+const getNestedTaskCount = (node: any): number => 0;
 import { TaskDefinition } from './TaskLibrary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

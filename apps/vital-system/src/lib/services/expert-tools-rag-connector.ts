@@ -4,7 +4,7 @@
  */
 
 import { getEmbeddingService } from '@/lib/services/embeddings/embedding-service-factory';
-import ragService from '@/shared/services/rag/rag-service';
+import { supabaseRAGService as ragService } from '@/lib/rag/supabase-rag-service';
 
 // API Gateway URL for Python AI Engine
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';

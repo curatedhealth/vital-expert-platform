@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   User, 
   CheckCircle, 
@@ -10,16 +10,18 @@ import {
   Star,
   TrendingUp
 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
-import { Badge } from '../../ui/badge';
-import { Button } from '../../ui/button';
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Badge,
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../ui/dropdown-menu';
-import { Progress } from '../../ui/progress';
+  Progress
+} from '@vital/ui';
 
 type AgentLevel = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
 type AgentStatus = 'idle' | 'active' | 'busy' | 'offline';
@@ -67,6 +69,9 @@ const statusConfig: Record<AgentStatus, { color: string; label: string }> = {
   offline: { color: 'bg-slate-400', label: 'Offline' },
 };
 
+// Default status for when agent.status is undefined or not in config
+const defaultStatus = { color: 'bg-slate-400', label: 'Unknown' };
+
 /**
  * VitalAgentCard - Agent display card component
  * 
@@ -81,7 +86,7 @@ export function VitalAgentCard({
   onViewDetails,
   className
 }: VitalAgentCardProps) {
-  const status = statusConfig[agent.status];
+  const status = statusConfig[agent.status] ?? defaultStatus;
   
   if (variant === 'compact') {
     return (

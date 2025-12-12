@@ -29,11 +29,31 @@ from typing import Dict, Any, Optional, Tuple, List
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import structlog
-import uuid
+import uuid as uuid_module
 
 from infrastructure.llm.config_service import get_llm_config_for_level
 
 logger = structlog.get_logger()
+
+
+# =============================================================================
+# UUID VALIDATION HELPERS
+# =============================================================================
+
+def _is_valid_uuid(value: Optional[str]) -> bool:
+    """Check if a string is a valid UUID format."""
+    if not value or value == "anonymous" or value == "None":
+        return False
+    try:
+        uuid_module.UUID(str(value))
+        return True
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+
+def _get_valid_uuid_or_none(value: Optional[str]) -> Optional[str]:
+    """Return the value if it's a valid UUID, otherwise return None."""
+    return value if _is_valid_uuid(value) else None
 
 # Get default max_tokens from L2 config (most common agent level for personalities)
 _DEFAULT_MAX_TOKENS = get_llm_config_for_level("L2").max_tokens
@@ -387,14 +407,17 @@ class AgentInstantiationService:
         expires_in_hours: int,
     ) -> str:
         """Create agent session record."""
-        session_id = str(uuid.uuid4())
+        session_id = str(uuid_module.uuid4())
         expires_at = datetime.utcnow() + timedelta(hours=expires_in_hours)
-        
+
+        # Validate user_id - must be valid UUID or None for PostgreSQL
+        validated_user_id = _get_valid_uuid_or_none(user_id)
+
         try:
             self.supabase.table('agent_sessions').insert({
                 'id': session_id,
                 'agent_id': agent_id,
-                'user_id': user_id,
+                'user_id': validated_user_id,
                 'tenant_id': tenant_id,
                 'context_region_id': region_id,
                 'context_domain_id': domain_id,
@@ -943,7 +966,7 @@ class AgentInstantiationService:
         }
         
         return InstantiatedAgentConfig(
-            session_id=str(uuid.uuid4()),  # No session for stateless workers
+            session_id=str(uuid_module.uuid4()),  # No session for stateless workers
             agent_id=agent_id,
             agent_name=agent.get('name', 'Unknown Worker'),
             agent_display_name=agent.get('display_name'),
@@ -979,7 +1002,7 @@ class AgentInstantiationService:
         
         # L5 tools don't use LLM - return minimal config
         return InstantiatedAgentConfig(
-            session_id=str(uuid.uuid4()),
+            session_id=str(uuid_module.uuid4()),
             agent_id=agent_id,
             agent_name=agent.get('name', 'Unknown Tool'),
             agent_display_name=agent.get('display_name'),

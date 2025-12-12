@@ -209,11 +209,13 @@ export interface Agent {
   // Core Identity
   id?: string;
   name: string;
+  display_name?: string; // Alias for name - used by some UI components
   slug?: string;
   tagline?: string;
   description: string;
   title?: string;
   avatar_url?: string;
+  avatar?: string; // Legacy alias for avatar_url
   avatar_description?: string;
   color?: string;
   version?: string;
@@ -344,10 +346,8 @@ export interface Agent {
   // Compliance
   regulatory_context?: RegulatoryContext;
   compliance_tags?: string[];
-  hipaa_compliant?: boolean;
-  gdpr_compliant?: boolean;
-  audit_trail_enabled?: boolean;
-  data_classification?: DataClassification;
+  // Note: hipaa_compliant, gdpr_compliant, audit_trail_enabled, data_classification
+  // are defined in "Safety Flags (normalized columns)" section above
 
   // Domain-Specific Optional - Medical
   medical_specialty?: string;
@@ -410,6 +410,10 @@ export interface Agent {
   created_by?: string;
   updated_by?: string;
   metadata?: Record<string, unknown>;
+
+  // Simple arrays (for backward compatibility with simpler components)
+  tools?: string[]; // Simple tool names/IDs
+  skills?: string[]; // Simple skill names/IDs
 
   // Enriched Junction Table Data (from API joins)
   enriched_capabilities?: EnrichedCapability[];
@@ -669,9 +673,12 @@ export interface ImportSummary {
   };
 }
 
+// Sort options for agents
+export type AgentSortOption = 'name' | 'created_at' | 'updated_at' | 'level' | 'function' | 'department' | 'created' | 'updated' | 'status';
+
 // Filter interfaces
 export interface AgentFilters {
-  status?: AgentStatus[];
+  status?: AgentStatus[] | 'all';
   domain_expertise?: DomainExpertise[];
   tier?: number[];
   business_function?: string[];
@@ -682,11 +689,33 @@ export interface AgentFilters {
   created_before?: string;
   accuracy_min?: number;
   is_custom?: boolean;
+  is_featured?: boolean;
+  // Organizational hierarchy filters (L1-L5 architecture)
+  levels?: number[];      // Agent levels (1-5)
+  functions?: string[];   // Business functions (L1)
+  departments?: string[]; // Departments (L2)
+  roles?: string[];       // Roles (L3)
+  // Pagination & sorting
+  sort?: AgentSortOption;
+  order?: 'asc' | 'desc';
+  page?: number;
+  pageSize?: number;
 }
 
 export interface AgentSort {
   field: keyof Agent;
   direction: 'asc' | 'desc';
+}
+
+// Store state interface
+export interface AgentStoreState {
+  agents: Agent[];
+  filteredAgents: Agent[];
+  selectedAgent: Agent | null;
+  filters: AgentFilters;
+  viewMode: 'grid' | 'list' | 'kanban';
+  loading: boolean;
+  error: Error | null;
 }
 
 // Audit log interface
@@ -874,11 +903,21 @@ export interface AgentEditFormState {
   comm_technical_level: number;
   comm_warmth: number;
 
+  // Tab 4b: Personality Type (affects temperature)
+  personality_type: string;
+  personality_type_id: string;
+
   // Tab 5: Response Preferences
   preferred_response_format: ResponseFormat;
+  citation_style: string;
   include_citations: boolean;
   include_confidence_scores: boolean;
   include_limitations: boolean;
+  insights_enabled: boolean;
+  insights_depth: 'brief' | 'balanced' | 'detailed';
+
+  // Prompt starters (quick suggestions for users)
+  prompt_starters: string[];
 
   // Tab 6: 6-Section Prompt Builder
   prompt_section_you_are: string;
@@ -916,6 +955,8 @@ export interface AgentEditFormState {
   // Tab 11: Knowledge & RAG
   knowledge_domains: string[];
   rag_enabled: boolean;
+  agent_specific_rag: boolean;
+  rag_content_files: string[];
 
   // Tab 12: Tools
   tools: string[];
@@ -923,6 +964,14 @@ export interface AgentEditFormState {
   // Status
   status: AgentStatus;
   validation_status: ValidationStatus;
+
+  // Admin Controls (Super Admin only)
+  tenant_id: string;
+  is_public: boolean;
+  allow_duplicate: boolean;
+
+  // Flexible metadata for hierarchy configs, extensions, etc.
+  metadata: Record<string, unknown>;
 }
 
 /**
@@ -1295,7 +1344,7 @@ export interface RecommendedSubagent {
   agent_id: string;
   agent_name: string;
   agent_level: AgentLevelNumber;
-  domain_expertise?: DomainExpertise;
+  domain_expertise?: DomainExpertiseMetadata;
   match_score: number; // 0-1 confidence score
   match_reasons: string[]; // Why this agent was recommended
 }
@@ -1399,12 +1448,21 @@ export interface SpawningRelationship {
 }
 
 /**
+ * Domain expertise metadata stored in agent metadata
+ */
+export interface DomainExpertiseMetadata {
+  primary_domain?: string;
+  sub_domains?: string[];
+  expertise_level?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+}
+
+/**
  * Request to fetch recommended subagents based on parent agent's domain
  */
 export interface RecommendSubagentsRequest {
   parent_agent_id: string;
   target_level: AgentLevelNumber;
-  domain_expertise?: DomainExpertise;
+  domain_expertise?: DomainExpertiseMetadata;
   department_name?: string;
   function_name?: string;
   limit?: number;

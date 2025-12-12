@@ -30,6 +30,7 @@ import { Button } from '@vital/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@vital/ui';
 import { Input } from '@vital/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@vital/ui';
 import { useToast } from '@vital/ui';
 import { PromptEnhancer } from '@/shared/components/chat/prompt-enhancer';
 
@@ -426,108 +427,238 @@ export default function PromptLibrary() {
         />
       </div>
 
-      {/* Suite Tabs */}
-      <div className="border-b border-neutral-200 dark:border-neutral-700 mb-6">
-        <div className="flex overflow-x-auto pb-px -mb-px scrollbar-hide">
-          {suites.map(suite => {
-            const count = getPromptsForSuite(suite.name).length;
-            const SuiteIcon = getSuiteIcon(suite.name);
-            return (
-              <button
-                key={suite.id}
-                onClick={() => {
-                  setActiveTab(suite.name);
-                  setActiveSubSuite(null);
-                }}
-                className={`
-                  flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap
-                  border-b-2 transition-colors min-w-fit
-                  ${activeTab === suite.name
-                    ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300 dark:text-neutral-400 dark:hover:text-neutral-300'
-                  }
-                `}
-              >
-                <SuiteIcon className="h-4 w-4" />
-                <span>{suite.name}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  activeTab === suite.name 
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' 
-                    : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'
-                }`}>
-                  {count}
-                </span>
+      <div className="grid grid-cols-1 lg:grid-cols-[320px,1fr] gap-6">
+        {/* Sidebar */}
+        <aside className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-4 space-y-6 h-fit sticky top-4">
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">Suites</div>
+            <div className="space-y-1">
+              {suites.map((suite) => {
+                const count = getPromptsForSuite(suite.name).length;
+                const SuiteIcon = getSuiteIcon(suite.name);
+                const active = activeTab === suite.name;
+                return (
+                  <button
+                    key={suite.id}
+                    onClick={() => {
+                      setActiveTab(suite.name);
+                      setActiveSubSuite(null);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors border ${
+                      active
+                        ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-200'
+                        : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <SuiteIcon className="h-4 w-4" />
+                      {suite.name}
+                    </span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {currentSubSuites.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">Sub-suites</div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setActiveSubSuite(null)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    !activeSubSuite
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
+                  }`}
+                >
+                  All
+                </button>
+                {currentSubSuites.map((subSuite) => (
+                  <button
+                    key={subSuite.id}
+                    onClick={() => setActiveSubSuite(subSuite.code)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      activeSubSuite === subSuite.code
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
+                    }`}
+                  >
+                    {subSuite.name || subSuite.code}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">Prompt type</div>
+            <div className="flex flex-wrap gap-2">
+              {(['all', 'detailed', 'starter'] as PromptTypeFilter[]).map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setPromptTypeFilter(type)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                    promptTypeFilter === type
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white dark:bg-neutral-900 text-neutral-700 border-neutral-300 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                  }`}
+                >
+                  {type === 'all' ? 'All' : type === 'detailed' ? 'Detailed' : 'Starters'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">Quick actions</div>
+            <div className="space-y-2">
+              <button className="w-full text-left px-3 py-2 rounded-lg border bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                Start new prompt
               </button>
-            );
-          })}
+              <button className="w-full text-left px-3 py-2 rounded-lg border bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                Upload prompt
+              </button>
+              <button className="w-full text-left px-3 py-2 rounded-lg border bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                Manage prompts
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">Sort</div>
+            <Select
+              value={sortMode}
+              onValueChange={(val) =>
+                setSortMode(val as 'recent' | 'popular' | 'validated')
+              }
+            >
+              <SelectTrigger className="w-full border-2 border-purple-200 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Recent</SelectItem>
+                <SelectItem value="popular">Popular</SelectItem>
+                <SelectItem value="validated">Validated</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </aside>
+
+        {/* Active Tab Content */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <ActiveIcon className="h-6 w-6" />
+            <h2 className="text-2xl font-semibold">{activeTab}</h2>
+            <Badge variant="outline" className="text-sm">{activeSuite?.fullName || activeSuite?.description}</Badge>
+            {searchQuery && (
+              <Badge variant="secondary" className="text-sm">
+                {filteredPrompts.length} results
+              </Badge>
+            )}
+            {activeSubSuite && (
+              <Badge variant="secondary" className="text-sm flex items-center gap-1">
+                <Layers className="h-3 w-3" />
+                {activeSubSuite}
+              </Badge>
+            )}
+          </div>
+
+          {filteredPrompts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sortPrompts(filteredPrompts).map(prompt => {
+                const isDetailedPrompt = prompt.user_template && prompt.user_template.trim().length > 0;
+                return (
+                  <Card key={prompt.id} className="hover:shadow-lg transition-shadow group border border-neutral-200 dark:border-neutral-800">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge className="text-xs" variant="outline">
+                              {prompt.sub_suite_name || prompt.sub_suite || prompt.suite}
+                            </Badge>
+                            {prompt.complexity && (
+                              <Badge className={`text-xs ${getComplexityColor(prompt.complexity)}`}>
+                                {prompt.complexity}
+                              </Badge>
+                            )}
+                            {prompt.expert_validated && (
+                              <Badge className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex items-center gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Validated
+                              </Badge>
+                            )}
+                            <Badge className="text-xs bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+                              {isDetailedPrompt ? 'Detailed' : 'Starter'}
+                            </Badge>
+                          </div>
+                          <CardTitle className="text-base font-semibold line-clamp-2">
+                            {prompt.display_name || prompt.title || prompt.name}
+                          </CardTitle>
+                          {prompt.prompt_code && (
+                            <span className="text-xs text-neutral-400 font-mono">{prompt.prompt_code}</span>
+                          )}
+                          <CardDescription className="text-sm line-clamp-3 mt-1">
+                            {getObjective(prompt)}
+                          </CardDescription>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Star className={`h-4 w-4 ${prompt.is_favorite ? 'fill-yellow-400 text-yellow-400' : 'text-neutral-400'}`} />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedPrompt(prompt)}
+                          className="flex-1"
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyPrompt(prompt)}
+                          className="flex-1"
+                        >
+                          <Copy className="h-3 w-3 mr-1" />
+                          Copy
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center text-neutral-400 py-16 border-2 border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg">
+              {searchQuery ? (
+                <>
+                  <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">No matching prompts found</p>
+                  <p className="text-sm">Try adjusting your search query</p>
+                </>
+              ) : (
+                <>
+                  <Layers className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">No prompts in this suite yet</p>
+                  <p className="text-sm">Check back later for new {activeTab} prompts</p>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Prompt Type & Sort */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
-        <div className="flex gap-2">
-          {(['all', 'detailed', 'starter'] as PromptTypeFilter[]).map((type) => (
-            <button
-              key={type}
-              onClick={() => setPromptTypeFilter(type)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
-                promptTypeFilter === type
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-canvas-surface text-neutral-700 border-neutral-300 hover:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-600 dark:hover:bg-neutral-700'
-              }`}
-            >
-              {type === 'all' ? 'All' : type === 'detailed' ? 'Detailed' : 'Starters'}
-            </button>
-          ))}
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-sm text-neutral-600 dark:text-neutral-400">Sort:</span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={() =>
-              setSortMode((prev) =>
-                prev === 'recent' ? 'popular' : prev === 'popular' ? 'validated' : 'recent'
-              )
-            }
-          >
-            {sortMode === 'recent' ? 'Recent' : sortMode === 'popular' ? 'Popular' : 'Validated'}
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Sub-Suite Pills (if available) */}
-      {currentSubSuites.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400 self-center mr-2">Sub-Suite:</span>
-          <button
-            onClick={() => setActiveSubSuite(null)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              !activeSubSuite
-                ? 'bg-blue-600 text-white'
-                : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
-            }`}
-          >
-            All
-          </button>
-          {currentSubSuites.map(subSuite => (
-            <button
-              key={subSuite.id}
-              onClick={() => setActiveSubSuite(subSuite.code)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                activeSubSuite === subSuite.code
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
-              }`}
-            >
-              {subSuite.name}
-              <span className="ml-1.5 text-xs opacity-70">({subSuite.promptCount})</span>
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Active Tab Content */}
       <div className="space-y-4">

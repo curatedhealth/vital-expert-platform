@@ -46,6 +46,7 @@ export function PromptManagementPanel({ className = '' }: PromptManagementPanelP
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDomain, setFilterDomain] = useState('all');
   const [filterComplexity, setFilterComplexity] = useState('all');
+  const [filterSuite, setFilterSuite] = useState('all');
   const [selectedPrompt, setSelectedPrompt] = useState<PromptStarter | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -58,13 +59,20 @@ export function PromptManagementPanel({ className = '' }: PromptManagementPanelP
                          prompt.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDomain = filterDomain === 'all' || prompt.domain === filterDomain;
     const matchesComplexity = filterComplexity === 'all' || prompt.complexity_level === filterComplexity;
+    const suite = (prompt as any).suite;
+    const matchesSuite = filterSuite === 'all' || suite === filterSuite;
     
-    return matchesSearch && matchesDomain && matchesComplexity;
+    return matchesSearch && matchesDomain && matchesComplexity && matchesSuite;
   });
 
   // Get unique domains and complexity levels for filters
   const domains = [...new Set(prompts.map((p: any) => p.domain))];
   const complexityLevels = [...new Set(prompts.map((p: any) => p.complexity_level))];
+  const suites = [...new Set(prompts.map((p: any) => p.suite).filter(Boolean))];
+
+  useEffect(() => {
+    loadPrompts();
+  }, [loadPrompts]);
 
   // Load performance data
   useEffect(() => {
@@ -112,25 +120,16 @@ export function PromptManagementPanel({ className = '' }: PromptManagementPanelP
         </TabsList>
 
         <TabsContent value="prompts" className="space-y-4">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">Prompt Management</h2>
-              <p className="text-muted-foreground">
-                Create, edit, and manage PRISM prompts
-              </p>
-            </div>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Prompt
-            </Button>
-          </div>
-
-          {/* Filters */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex gap-4">
-                <div className="flex-1">
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
+            {/* Sidebar filters */}
+            <Card className="h-fit">
+              <CardHeader>
+                <CardTitle>Filters</CardTitle>
+                <CardDescription>Filter prompts by domain, level, suite</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Search</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -141,117 +140,154 @@ export function PromptManagementPanel({ className = '' }: PromptManagementPanelP
                     />
                   </div>
                 </div>
-                <Select value={filterDomain} onValueChange={setFilterDomain}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by domain" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Domains</SelectItem>
-                    {domains.map((domain: any) => (
-                      <SelectItem key={domain} value={domain}>
-                        {domain.replace('_', ' ').toUpperCase()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={filterComplexity} onValueChange={setFilterComplexity}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by complexity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Levels</SelectItem>
-                    {complexityLevels.map(level => (
-                      <SelectItem key={level} value={level}>
-                        {level.charAt(0).toUpperCase() + level.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Domain</label>
+                  <Select value={filterDomain} onValueChange={setFilterDomain}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Domains" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Domains</SelectItem>
+                      {domains.map((domain: any) => (
+                        <SelectItem key={domain} value={domain}>
+                          {domain.replace('_', ' ').toUpperCase()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Complexity</label>
+                  <Select value={filterComplexity} onValueChange={setFilterComplexity}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Levels" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Levels</SelectItem>
+                      {complexityLevels.map(level => (
+                        <SelectItem key={level} value={level}>
+                          {level.charAt(0).toUpperCase() + level.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Suite</label>
+                  <Select value={filterSuite} onValueChange={setFilterSuite}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Suites" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Suites</SelectItem>
+                      {suites.map((suite: any) => (
+                        <SelectItem key={suite} value={suite}>
+                          {suite}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Prompts Table */}
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Domain</TableHead>
-                    <TableHead>Complexity</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Usage</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredPrompts.map((prompt) => (
-                    <TableRow key={prompt.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{prompt.display_name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {prompt.description.substring(0, 60)}...
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {prompt.domain.replace('_', ' ').toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {prompt.complexity_level}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={(prompt as any).status === 'active' ? 'default' : 'secondary'}>
-                          {(prompt as any).status || 'active'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {/* This would show actual usage data */}
-                          <div>0 uses</div>
-                          <div className="text-muted-foreground">0% success</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedPrompt(prompt);
-                              setIsEditDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDuplicatePrompt(prompt)}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeletePrompt(prompt.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+            {/* Main content */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">Prompt Management</h2>
+                  <p className="text-muted-foreground">
+                    Create, edit, and manage PRISM prompts
+                  </p>
+                </div>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Prompt
+                </Button>
+              </div>
+
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Domain</TableHead>
+                        <TableHead>Complexity</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Usage</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPrompts.map((prompt) => (
+                        <TableRow key={prompt.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{prompt.display_name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {prompt.description.substring(0, 60)}...
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {prompt.domain.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {prompt.complexity_level}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={(prompt as any).status === 'active' ? 'default' : 'secondary'}>
+                              {(prompt as any).status || 'active'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {/* This would show actual usage data */}
+                              <div>0 uses</div>
+                              <div className="text-muted-foreground">0% success</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedPrompt(prompt);
+                                  setIsEditDialogOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDuplicatePrompt(prompt)}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeletePrompt(prompt.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-4">

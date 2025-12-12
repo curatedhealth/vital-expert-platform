@@ -2,8 +2,10 @@
 
 import * as React from "react"
 
-interface PopoverProps {
+export interface PopoverProps {
   children: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 interface PopoverTriggerProps {
@@ -23,8 +25,19 @@ const PopoverContext = React.createContext<{
   setIsOpen: (open: boolean) => void
 } | null>(null)
 
-export const __Popover = ({ children }: PopoverProps) => {
-  const [isOpen, setIsOpen] = React.useState(false)
+export const __Popover = ({ children, open, onOpenChange }: PopoverProps) => {
+  const [internalOpen, setInternalOpen] = React.useState(false)
+
+  // Support both controlled and uncontrolled mode
+  const isOpen = open !== undefined ? open : internalOpen
+  const setIsOpen = (newOpen: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(newOpen)
+    }
+    if (open === undefined) {
+      setInternalOpen(newOpen)
+    }
+  }
 
   return (
     <PopoverContext.Provider value={{ isOpen, setIsOpen }}>
@@ -45,9 +58,9 @@ export const __PopoverTrigger = ({ children, asChild = false, onClick }: Popover
   }
 
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children, {
+    return React.cloneElement(children as React.ReactElement<{ onClick?: () => void }>, {
       onClick: handleClick,
-    } as unknown)
+    })
   }
 
   return (

@@ -20,6 +20,9 @@ export type Source = {
   abstract?: string;
 };
 
+/** Citation is an alias for Source - used for inline citations */
+export type Citation = Source;
+
 export type Agent = {
   id: string;
   name: string;

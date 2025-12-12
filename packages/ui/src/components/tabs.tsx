@@ -16,9 +16,10 @@ interface TabsProps {
   onValueChange?: (value: string) => void
   defaultValue?: string
   children: React.ReactNode
+  className?: string
 }
 
-const Tabs = ({ value: controlledValue, onValueChange, defaultValue, children }: TabsProps) => {
+const Tabs = ({ value: controlledValue, onValueChange, defaultValue, children, className }: TabsProps) => {
   const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue)
 
   const value = controlledValue !== undefined ? controlledValue : uncontrolledValue
@@ -26,7 +27,7 @@ const Tabs = ({ value: controlledValue, onValueChange, defaultValue, children }:
 
   return (
     <TabsContext.Provider value={{ value, onValueChange: handleValueChange }}>
-      <div>{children}</div>
+      <div className={className}>{children}</div>
     </TabsContext.Provider>
   )
 }

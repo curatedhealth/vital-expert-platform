@@ -32,6 +32,7 @@ interface PromptEditorProps {
   mode: 'create' | 'edit' | 'copy';
 }
 
+const DOMAINS = [
   { value: 'medical_affairs', label: 'Medical Affairs' },
   { value: 'commercial', label: 'Commercial' },
   { value: 'compliance', label: 'Compliance' },
@@ -40,6 +41,7 @@ interface PromptEditorProps {
   { value: 'general', label: 'General' }
 ];
 
+const PROMPT_TEMPLATES: Record<string, string> = {
   medical_affairs: `You are a medical affairs professional with expertise in {therapeutic_area}. Your role is to provide evidence-based insights and support clinical decision-making.
 
 Context:
@@ -123,6 +125,7 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
     }
   }, [prompt, isOpen, mode]);
 
+  const validateForm = () => {
     const newErrors: Record<string, string> = { /* TODO: implement */ };
 
     if (!formData.name.trim()) {
@@ -145,6 +148,7 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleSave = () => {
     if (!validateForm()) {
       toast({
         title: "Validation Error",
@@ -162,6 +166,7 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
     onClose();
   };
 
+  const handleDomainChange = (domain: string) => {
     setFormData(prev => ({
       ...prev,
       domain,
@@ -169,6 +174,7 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
     }));
   };
 
+  const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       toast({
@@ -184,6 +190,7 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
     }
   };
 
+  const getTitle = () => {
     switch (mode) {
       case 'create': return 'Create New Prompt';
       case 'edit': return 'Edit Prompt';

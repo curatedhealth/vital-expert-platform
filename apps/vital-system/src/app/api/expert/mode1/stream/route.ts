@@ -2,13 +2,15 @@
  * VITAL Platform - Mode 1 Streaming BFF Route
  *
  * Mode 1: Manual Interactive (Expert Chat)
- * Forwards SSE stream from Python backend to frontend.
+ * User MANUALLY selects expert → single-turn conversation.
  *
- * REWIRED Dec 2025: Now calls /api/expert/stream with mode: 1
- * (previously called non-existent /api/mode1/interactive-manual)
+ * ARCHITECTURE (Dec 2025):
+ * - Mode 1 and Mode 2 use the SAME interactive executor
+ * - The only difference is agent selection:
+ *   - Mode 1: expert_id is provided (manual selection)
+ *   - Mode 2: expert_id is null (Fusion auto-selection)
  *
- * Backend: /api/expert/stream (unified Mode 1 & Mode 2 endpoint)
- * Frontend Hook: useMode1Chat → useBaseInteractive → useSSEStream
+ * Backend Endpoint: /api/expert/interactive (unified interactive endpoint)
  */
 
 import { NextRequest } from 'next/server';
@@ -57,10 +59,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Forward to Python backend - Unified Expert Stream endpoint
-    // CRITICAL FIX (Dec 2025): Changed from /api/mode1/interactive-manual to /api/expert/stream
-    // The unified endpoint handles both Mode 1 (manual) and Mode 2 (auto-select)
-    const backendResponse = await fetch(`${AI_ENGINE_URL}/api/expert/stream`, {
+    // Forward to Python backend - Unified Interactive endpoint
+    // Mode 1 = expert_id provided → backend uses manual selection
+    const backendResponse = await fetch(`${AI_ENGINE_URL}/api/expert/interactive`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

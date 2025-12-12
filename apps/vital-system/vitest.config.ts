@@ -1,4 +1,4 @@
-# Vitest Configuration for Digital Health Startup
+// Vitest Configuration for Digital Health Startup
 
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';

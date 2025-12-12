@@ -107,6 +107,7 @@ export const CopyAction: React.FC<{ content: string; className?: string }> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
+  const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(content);
       setCopied(true);
@@ -143,6 +144,7 @@ export const LikeAction: React.FC<{
 }) => {
   const [liked, setLiked] = useState(isLiked);
 
+  const handleLike = () => {
     setLiked(!liked);
     onLike?.();
   };
@@ -173,6 +175,7 @@ export const DislikeAction: React.FC<{
 }) => {
   const [disliked, setDisliked] = useState(isDisliked);
 
+  const handleDislike = () => {
     setDisliked(!disliked);
     onDislike?.();
   };
@@ -203,7 +206,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
   showRegenerate = false,
   className,
 }) => {
-
+  const handleShare = () => {
     if (navigator.share) {
       navigator.share({
         title: 'AI Response',
@@ -211,16 +214,18 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
       }).catch(console.error);
     } else {
       // Fallback to copying link
-
+      const url = window.location.href;
       navigator.clipboard.writeText(url).catch(console.error);
     }
     onShare?.();
   };
 
+  const handleBookmark = () => {
     // Implement bookmark functionality
     onBookmark?.();
   };
 
+  const handleRegenerate = () => {
     onRegenerate?.();
   };
 

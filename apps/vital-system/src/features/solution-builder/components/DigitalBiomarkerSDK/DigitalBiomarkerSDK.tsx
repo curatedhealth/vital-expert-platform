@@ -353,6 +353,8 @@ const DigitalBiomarkerSDK: React.FC = () => {
     setProjects([sampleProject]);
   }, []);
 
+  const generateBiomarkerCode = (biomarker: BiomarkerDefinition, framework: 'python' | 'javascript' | 'r') => {
+    const templates: { [key: string]: string } = {
       python: `
 # Digital Biomarker: ${biomarker.name}
 import numpy as np
@@ -586,6 +588,7 @@ extract_features <- function(data) {
     return templates[framework];
   };
 
+  const exportBiomarkerSDK = (biomarker: BiomarkerDefinition) => {
     const sdkPackage = {
       name: biomarker.name.replace(/\s+/g, '-').toLowerCase(),
       version: '1.0.0',
@@ -621,6 +624,7 @@ extract_features <- function(data) {
     URL.revokeObjectURL(url);
   };
 
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'fda_cleared': return 'bg-green-100 text-green-800';
       case 'published': return 'bg-blue-100 text-blue-800';
@@ -630,6 +634,7 @@ extract_features <- function(data) {
     }
   };
 
+  const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'activity': return '🏃';
       case 'physiological': return '❤️';

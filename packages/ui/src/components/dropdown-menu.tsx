@@ -4,7 +4,7 @@ import { Check, ChevronRight, Circle } from "lucide-react"
 import * as React from "react"
 import { createPortal } from "react-dom"
 
-import { cn } from "@/shared/services/utils"
+import { cn } from "../lib/utils"
 
 interface DropdownMenuContextValue {
   open: boolean
@@ -76,8 +76,8 @@ const DropdownMenuPortal = ({ children }: { children: React.ReactNode }) => {
 
 const DropdownMenuContent = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { sideOffset?: number }
->(({ className, sideOffset = 4, children, ...props }, ref) => {
+  React.HTMLAttributes<HTMLDivElement> & { sideOffset?: number; align?: 'start' | 'center' | 'end' }
+>(({ className, sideOffset = 4, align = 'center', children, ...props }, ref) => {
   const context = React.useContext(DropdownMenuContext)
   const contentRef = React.useRef<HTMLDivElement>(null)
 

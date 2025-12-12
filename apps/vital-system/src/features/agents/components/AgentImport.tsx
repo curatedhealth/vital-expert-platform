@@ -26,13 +26,35 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { AgentService } from '@/services/agent.service';
 import { AgentBulkImport, DomainExpertise, ValidationStatus, AgentStatus, RiskLevel } from '@/types/agent.types';
 
+interface ImportError {
+  agent: string;
+  error: string;
+}
+
+interface ImportWarning {
+  agent: string;
+  warning: string;
+  recommendation?: string;
+}
+
+interface ImportResult {
+  success: boolean;
+  imported: number;
+  total: number;
+  errors: ImportError[];
+  warnings?: ImportWarning[];
+  summary?: {
+    by_domain: Record<string, number>;
+  };
+}
+
 export const AgentImport: React.FC = () => {
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<unknown>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [importMode, setImportMode] = useState<'create' | 'update' | 'upsert'>('upsert');
-  const [validationErrors, setValidationErrors] = useState<any[]>([]);
+  const [validationErrors, setValidationErrors] = useState<ImportError[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const agentService = new AgentService();
 
@@ -77,10 +99,10 @@ export const AgentImport: React.FC = () => {
       const importResult = await agentService.bulkImportAgents(importData);
       setProgress(100);
 
-      setResult(importResult);
+      setResult(importResult as ImportResult);
 
-      if (importResult.errors.length > 0) {
-        setValidationErrors(importResult.errors);
+      if (importResult.errors?.length > 0) {
+        setValidationErrors(importResult.errors as ImportError[]);
       }
 
     } catch (err) {
@@ -311,7 +333,8 @@ export const AgentImport: React.FC = () => {
     // eslint-disable-next-line security/detect-object-injection
     const example = examples[domain];
     if (example) {
-      const template: AgentBulkImport = {
+      // Use type assertion since this is a template with only required import fields
+      const template = {
         agents: [{
           ...example,
           domain_expertise: domain,
@@ -368,7 +391,7 @@ export const AgentImport: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="upload" className="w-full">
+          <Tabs defaultValue="upload">
             <TabsList>
               <TabsTrigger value="upload">Upload</TabsTrigger>
               <TabsTrigger value="templates">Templates</TabsTrigger>
@@ -381,7 +404,7 @@ export const AgentImport: React.FC = () => {
                 {/* Import Mode Selection */}
                 <div>
                   <label className="block text-sm font-medium mb-2">Import Mode</label>
-                  <Select value={importMode} onValueChange={(value: unknown) => setImportMode(value)}>
+                  <Select value={importMode} onValueChange={(value) => setImportMode(value as 'create' | 'update' | 'upsert')}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -575,7 +598,7 @@ export const AgentImport: React.FC = () => {
                 <div>
                   <h4 className="font-medium mb-2 text-red-600">Errors</h4>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {result.errors.map((err: unknown, i: number) => (
+                    {result.errors.map((err: ImportError, i: number) => (
                       <Alert key={i} variant="destructive">
                         <AlertDescription>
                           <strong>{err.agent}:</strong> {err.error}
@@ -591,7 +614,7 @@ export const AgentImport: React.FC = () => {
                 <div>
                   <h4 className="font-medium mb-2 text-yellow-600">Warnings</h4>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {result.warnings.map((warning: unknown, i: number) => (
+                    {result.warnings.map((warning: ImportWarning, i: number) => (
                       <Alert key={i}>
                         <Info className="h-4 w-4" />
                         <AlertDescription>

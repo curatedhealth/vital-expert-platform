@@ -10,10 +10,10 @@
  * - And more...
  */
 
-export { VitalStreamText, default as StreamText } from './VitalStreamText';
-export { VitalSuggestionChips, default as SuggestionChips } from './VitalSuggestionChips';
-export { VitalQuickActions, default as QuickActions } from './VitalQuickActions';
-export { VitalVoiceInterface, default as VoiceInterface } from './VitalVoiceInterface';
+export { VitalStreamText, VitalStreamText as StreamText } from './VitalStreamText';
+export { VitalSuggestionChips, VitalSuggestionChips as SuggestionChips } from './VitalSuggestionChips';
+export { VitalQuickActions, VitalQuickActions as QuickActions } from './VitalQuickActions';
+export { VitalVoiceInterface, VitalVoiceInterface as VoiceInterface } from './VitalVoiceInterface';
 
 // Suggestion component suite (ai-elements compatible)
 export {
@@ -261,10 +261,6 @@ export type {
   VitalConversationEmptyStateProps,
   VitalConversationScrollButtonProps,
 } from './VitalConversation';
-
-export type {
-  VitalResponseProps,
-} from './VitalResponse';
 
 export type {
   VitalOpenInProps,

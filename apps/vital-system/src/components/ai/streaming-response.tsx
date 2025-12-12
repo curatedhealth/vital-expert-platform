@@ -7,7 +7,6 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import { Streamdown } from 'streamdown';
 import hardenReactMarkdown from 'harden-react-markdown';
-import type { PluggableList } from 'unified';
 
 import { cn } from '@/lib/utils';
 import { __CodeBlock as CodeBlock, __CodeBlockCopyButton as CodeBlockCopyButton } from '@/components/ui/shadcn-io/ai/code-block';
@@ -112,8 +111,8 @@ export type StreamingResponseProps = Omit<HTMLAttributes<HTMLDivElement>, 'child
   >['defaultOrigin'];
   parseIncompleteMarkdown?: boolean;
   isAnimating?: boolean;
-  remarkPlugins?: PluggableList;
-  rehypePlugins?: PluggableList;
+  remarkPlugins?: any[];
+  rehypePlugins?: any[];
   components?: Options['components'];
 };
 
@@ -230,7 +229,8 @@ const components: Options['components'] = {
       {children}
     </blockquote>
   ),
-  code: ({ node, className, inline, ...props }) => {
+  code: ({ node, className, ...props }: any) => {
+    const inline = (props as any).inline;
     if (!inline) {
       return <code className={className} {...props} />;
     }
@@ -339,17 +339,19 @@ export const StreamingResponse = memo(
         {...domProps}
       >
         <Streamdown isAnimating={isAnimating}>
-          <HardenedMarkdown
-            allowedImagePrefixes={allowedImagePrefixes ?? ['*']}
-            allowedLinkPrefixes={allowedLinkPrefixes ?? ['*']}
-            components={mergedComponents}
-            defaultOrigin={defaultOrigin}
-            rehypePlugins={mergedRehypePlugins}
-            remarkPlugins={mergedRemarkPlugins}
-            {...options}
-          >
-            {parsedChildren}
-          </HardenedMarkdown>
+          {(
+            <HardenedMarkdown
+              allowedImagePrefixes={allowedImagePrefixes ?? ['*']}
+              allowedLinkPrefixes={allowedLinkPrefixes ?? ['*']}
+              components={mergedComponents}
+              defaultOrigin={defaultOrigin}
+              rehypePlugins={mergedRehypePlugins}
+              remarkPlugins={mergedRemarkPlugins}
+              {...options}
+            >
+              {typeof parsedChildren === 'string' ? parsedChildren : String(parsedChildren)}
+            </HardenedMarkdown>
+          ) as any}
         </Streamdown>
       </div>
     );

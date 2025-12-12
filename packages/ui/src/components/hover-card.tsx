@@ -18,7 +18,9 @@ interface HoverCardProps {
   children: React.ReactNode
 }
 
-const HoverCard = ({ openDelay = 200, closeDelay = 300, children }: HoverCardProps) => {
+const HoverCard = ({ openDelay: _openDelay = 200, closeDelay: _closeDelay = 300, children }: HoverCardProps) => {
+  // Note: openDelay and closeDelay are kept for API compatibility but not currently used
+  void _openDelay; void _closeDelay;
   const [open, setOpen] = React.useState(false)
 
   return (

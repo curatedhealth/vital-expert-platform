@@ -33,6 +33,7 @@ interface AgentRAGConfig {
   knowledgeDomains: string[];
   filterPreferences: unknown;
   priority: number;
+  isConfigured?: boolean;
 }
 
 interface AgentRAGConfigurationProps {
@@ -48,12 +49,37 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<string>(agentId || '');
-  const [configurations, setConfigurations] = useState<unknown[]>([]);
+  const [configurations, setConfigurations] = useState<AgentRAGConfig[]>([]);
   const [currentConfig, setCurrentConfig] = useState<AgentRAGConfig | null>(null);
   const [availableRAGSystems, setAvailableRAGSystems] = useState<RAGSystemConfig[]>([]);
   const [testQuery, setTestQuery] = useState('');
-  const [testResults, setTestResults] = useState<unknown>(null);
+  const [testResults, setTestResults] = useState<{
+    ragResponse?: {
+      sources?: unknown[];
+      text?: string;
+      confidence?: number;
+      sourcesFound?: number;
+      ragSystemsUsed?: string[];
+      answer?: string;
+    };
+    processingTime?: number;
+  }>({});
   const [testing, setTesting] = useState(false);
+
+  // Computed values for validation
+  const totalWeight = currentConfig?.ragSystems.reduce((sum, s) => sum + s.weight, 0) || 0;
+  const isValidConfiguration = totalWeight >= 0.99 && totalWeight <= 1.01; // Allow small tolerance
+
+  // Helper functions for RAG system management
+  const updateRAGSystemWeight = (systemId: string, weight: number) => {
+    handleWeightChange(systemId, weight);
+  };
+  const addRAGSystem = (systemId: string, systemType: string) => {
+    handleAddRAGSystem(systemId, systemType);
+  };
+  const removeRAGSystem = (systemId: string) => {
+    handleRemoveRAGSystem(systemId);
+  };
 
   // Load configurations on mount
   useEffect(() => {
@@ -357,8 +383,11 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
                           variant="outline"
                           size="sm"
                           onClick={() => {
-
-                            setCurrentConfig(updatedConfig);
+                            const newConfig = {
+                              ...currentConfig,
+                              defaultRAG: system.systemId
+                            };
+                            setCurrentConfig(newConfig);
                           }}
                           disabled={currentConfig.defaultRAG === system.systemId}
                         >
@@ -435,12 +464,12 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap gap-2">
-                  {currentConfig.knowledgeDomains.map((domain, index) => (
+                  {currentConfig.knowledgeDomains.map((domainItem, index) => (
                     <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                      {domain}
+                      {domainItem}
                       <button
                         onClick={() => {
-
+                          const updatedDomains = currentConfig.knowledgeDomains.filter((_, i) => i !== index);
                           setCurrentConfig({ ...currentConfig, knowledgeDomains: updatedDomains });
                         }}
                         className="ml-1 hover:text-red-600"
@@ -458,11 +487,11 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
                       placeholder="Enter domain (e.g., regulatory_compliance)"
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
-
-                          if (domain && !currentConfig.knowledgeDomains.includes(domain)) {
+                          const newDomain = (e.target as HTMLInputElement).value.trim();
+                          if (newDomain && !currentConfig.knowledgeDomains.includes(newDomain)) {
                             setCurrentConfig({
                               ...currentConfig,
-                              knowledgeDomains: [...currentConfig.knowledgeDomains, domain]
+                              knowledgeDomains: [...currentConfig.knowledgeDomains, newDomain]
                             });
                             (e.target as HTMLInputElement).value = '';
                           }
@@ -513,28 +542,28 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
                 </Button>
 
                 {/* Test Results */}
-                {testResults && (
+                {testResults?.ragResponse && (
                   <div className="space-y-4 pt-4 border-t">
                     <h4 className="font-medium">Test Results</h4>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">{testResults.ragResponse.sourcesFound}</div>
+                        <div className="text-2xl font-bold text-blue-600">{testResults.ragResponse.sourcesFound ?? 0}</div>
                         <div className="text-xs text-muted-foreground">Sources Found</div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
-                          {(testResults.ragResponse.confidence * 100).toFixed(0)}%
+                          {((testResults.ragResponse.confidence ?? 0) * 100).toFixed(0)}%
                         </div>
                         <div className="text-xs text-muted-foreground">Confidence</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">{testResults.processingTime}ms</div>
+                        <div className="text-2xl font-bold text-purple-600">{testResults.processingTime ?? 0}ms</div>
                         <div className="text-xs text-muted-foreground">Processing Time</div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-orange-600">
-                          {testResults.ragResponse.ragSystemsUsed.length}
+                          {testResults.ragResponse.ragSystemsUsed?.length ?? 0}
                         </div>
                         <div className="text-xs text-muted-foreground">Systems Used</div>
                       </div>
@@ -544,7 +573,7 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
                       <div>
                         <h5 className="font-medium text-sm">RAG Systems Used:</h5>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {testResults.ragResponse.ragSystemsUsed.map((system: string, index: number) => (
+                          {(testResults.ragResponse.ragSystemsUsed ?? []).map((system: string, index: number) => (
                             <Badge key={index} variant="outline">{system}</Badge>
                           ))}
                         </div>
@@ -553,23 +582,26 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
                       <div>
                         <h5 className="font-medium text-sm">Sample Answer:</h5>
                         <div className="p-3 bg-neutral-50 rounded text-sm">
-                          {testResults.ragResponse.answer}
+                          {testResults.ragResponse.answer ?? 'No answer generated'}
                         </div>
                       </div>
 
-                      {testResults.ragResponse.sources.length > 0 && (
+                      {(testResults.ragResponse.sources?.length ?? 0) > 0 && (
                         <div>
                           <h5 className="font-medium text-sm">Top Sources:</h5>
                           <div className="space-y-2 mt-1">
-                            {testResults.ragResponse.sources.map((source: unknown, index: number) => (
-                              <div key={index} className="p-2 border rounded text-sm">
-                                <div className="font-medium">{source.title}</div>
-                                <div className="text-muted-foreground text-xs mt-1">{source.snippet}</div>
-                                <div className="text-right text-xs text-blue-600 mt-1">
-                                  {(source.relevance * 100).toFixed(0)}% relevance
+                            {(testResults.ragResponse.sources ?? []).map((source: unknown, index: number) => {
+                              const src = source as { title?: string; snippet?: string; relevance?: number };
+                              return (
+                                <div key={index} className="p-2 border rounded text-sm">
+                                  <div className="font-medium">{src.title ?? 'Unknown'}</div>
+                                  <div className="text-muted-foreground text-xs mt-1">{src.snippet ?? ''}</div>
+                                  <div className="text-right text-xs text-blue-600 mt-1">
+                                    {((src.relevance ?? 0) * 100).toFixed(0)}% relevance
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       )}

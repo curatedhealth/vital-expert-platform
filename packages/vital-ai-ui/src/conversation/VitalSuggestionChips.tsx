@@ -1,8 +1,8 @@
 'use client';
 
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { Sparkles, ArrowRight, RefreshCw } from 'lucide-react';
-import { Button } from '../../ui/button';
+import { Button } from '@vital/ui';
 
 interface Suggestion {
   id: string;

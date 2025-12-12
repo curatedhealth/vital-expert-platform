@@ -19,9 +19,9 @@ import {
 import Link from 'next/link'
 
 export default function ProfilePage() {
-  const { user, userProfile, isLoading } = useAuth()
+  const { user, userProfile, loading } = useAuth()
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -78,7 +78,7 @@ export default function ProfilePage() {
           <CardHeader>
             <div className="flex items-center gap-6">
               <Avatar className="h-24 w-24 border-4 border-primary/10">
-                <AvatarImage src={userProfile?.avatar_url || ''} alt={userProfile?.full_name || 'User'} />
+                <AvatarImage src={(userProfile as any)?.avatar_url || ''} alt={userProfile?.full_name || 'User'} />
                 <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                   {initials}
                 </AvatarFallback>

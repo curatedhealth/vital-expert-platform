@@ -73,10 +73,11 @@ export interface Agent {
   department?: string;
   role?: string;
   organizational_role?: string; // Mapped from role_id
-  tier?: 1 | 2 | 3;
+  tier?: 1 | 2 | 3 | 4 | 5;
   priority?: number;
   implementation_phase?: 1 | 2 | 3;
   is_custom?: boolean;
+  is_library_agent?: boolean;
   cost_per_query?: number;
   target_users?: string[];
 

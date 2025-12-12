@@ -21,6 +21,8 @@ export interface PersonalityType {
   icon?: string;
   color?: string;
   category: string;
+  is_active?: boolean;
+  sort_order?: number;
 }
 
 /**

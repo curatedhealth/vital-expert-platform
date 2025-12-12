@@ -117,6 +117,7 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
     }
   ];
 
+  const getStatusColor = (status: ProjectStatus) => {
     switch (status) {
       case 'design': return 'bg-blue-100 text-blue-800';
       case 'development': return 'bg-yellow-100 text-yellow-800';
@@ -127,6 +128,7 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
     }
   };
 
+  const handleCreateProject = (projectData: { name?: string; description?: string; type?: SolutionType }) => {
     const newProject: SolutionProject = {
       id: `proj-${Date.now()}`,
       name: projectData.name || 'Untitled Project',
@@ -152,6 +154,7 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
     setSelectedProject(newProject);
   };
 
+  const NewProjectModal = () => {
     const [formData, setFormData] = useState({
       name: '',
       description: '',
@@ -312,7 +315,10 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                 <div
                   key={project.id}
                   className="bg-canvas-surface rounded-lg shadow-sm border border-neutral-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick=() => setSelectedProject(project) onKeyDown=() => setSelectedProject(project) role="button" tabIndex={0}
+                  onClick={() => setSelectedProject(project)}
+                  onKeyDown={() => setSelectedProject(project)}
+                  role="button"
+                  tabIndex={0}
                 >
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="text-lg font-semibold text-neutral-900">{project.name}</h3>
@@ -360,7 +366,7 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
 
                   <button
                     onClick={() => {
-
+                      const newProjectData = {
                         name: `${type.label} Solution`,
                         description: type.description,
                         type: type.value

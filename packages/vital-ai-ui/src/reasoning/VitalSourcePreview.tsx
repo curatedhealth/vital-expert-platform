@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import {
   ExternalLink,
   FileText,
@@ -17,29 +17,29 @@ import {
   Building,
   Tag,
 } from 'lucide-react';
-import { Button } from '../../ui/button';
+import { Button } from '@vital/ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../ui/card';
-import { Badge } from '../../ui/badge';
-import { ScrollArea } from '../../ui/scroll-area';
+} from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { ScrollArea } from '@vital/ui';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../../ui/dialog';
+} from '@vital/ui';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '../../ui/tooltip';
-import { Separator } from '../../ui/separator';
+} from '@vital/ui';
+import { Separator } from '@vital/ui';
 
 type SourceType =
   | 'pubmed'

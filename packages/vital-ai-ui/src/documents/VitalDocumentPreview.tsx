@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   FileText, 
   Image as ImageIcon, 
@@ -17,14 +17,14 @@ import {
   ZoomIn,
   ZoomOut
 } from 'lucide-react';
-import { Button } from '../../ui/button';
+import { Button } from '@vital/ui';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '../../ui/dialog';
-import { Badge } from '../../ui/badge';
+} from '@vital/ui';
+import { Badge } from '@vital/ui';
 
 type DocumentType = 'pdf' | 'image' | 'text' | 'code' | 'spreadsheet' | 'unknown';
 

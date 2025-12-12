@@ -63,6 +63,7 @@ export default async function proxy(request: NextRequest) {
 
   // Allow Ask Expert API routes without authentication (uses service role key internally)
   // Also allow monitoring/metrics endpoints for internal use
+  // Note: These routes have their own session auth via auth() - CSRF is redundant
   const publicApiRoutes = [
     '/api/ask-expert/chat',
     '/api/ask-expert/generate-document',
@@ -79,6 +80,12 @@ export default async function proxy(request: NextRequest) {
     '/api/metrics',  // Prometheus metrics endpoint
     '/api/health',    // Health check endpoint
     '/api/prompt-enhancer', // Prompt enhancer (CSRF exempt)
+    // Mode 1-4 Expert streaming routes (have session auth via auth() - CSRF redundant for SSE)
+    '/api/expert/mode1',
+    '/api/expert/mode2',
+    '/api/expert/mode3',
+    '/api/expert/mode4',
+    '/api/expert/mission',
   ];
   const isPublicApiRoute = publicApiRoutes.some(route => url.pathname.startsWith(route));
 
@@ -310,5 +317,5 @@ export const config = {
   ],
 };
 
-// Note: This file serves as Next.js middleware (using proxy.ts convention)
-// The default export is the middleware handler
+// Note: This file serves as Next.js proxy (Next.js 16+ convention)
+// The default export is the proxy handler

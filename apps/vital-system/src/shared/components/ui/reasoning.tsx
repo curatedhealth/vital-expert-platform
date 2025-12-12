@@ -31,7 +31,7 @@ interface ReasoningContentProps {
 }
 
 // 🎯 Reasoning Context
-
+const ReasoningContext = React.createContext<{
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   isStreaming: boolean;
@@ -120,7 +120,7 @@ export const ReasoningTrigger: React.FC<ReasoningTriggerProps> = ({
 };
 
 // 🎨 Rich Text Formatter Function - Convert markdown to HTML
-
+const formatRichText = (text: string): string => {
   if (typeof text !== 'string') return text;
 
   // Convert **text** to <strong>text</strong>

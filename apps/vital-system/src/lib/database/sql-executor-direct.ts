@@ -36,7 +36,6 @@ export class DirectSQLExecutor {
         }
         // Use safe array access
         const statement = statements.slice(i, i + 1)[0] || '';
-        }...`);
 
         try {
           const result = await this.executeStatement(statement);
@@ -216,7 +215,7 @@ export class DirectSQLExecutor {
       throw new Error(`HTTP ${response.status}: ${await response.text()}`);
     }
 
-    const data = await response.json().catch(() => ({ /* TODO: implement */ }));
+    const data = await response.json().catch(() => ({}));
     return { success: true, data };
   }
 

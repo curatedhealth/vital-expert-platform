@@ -39,22 +39,36 @@ async def delegate_to_l3(
     exec_context = {**(context or {}), "runner": runner} if runner else (context or {})
 
     # Execute L5 tools (runner + plan tools)
+    # Phase 2: Use database-driven agent tools when agent_id is available
     l5_exec = get_l5_executor()
     l5_summary: L5ExecutionSummary = L5ExecutionSummary()
-    runner_code = runner.get("run_code") if runner else None
-    if runner_code:
-        l5_summary = await l5_exec.execute_for_runner(runner_code=runner_code, query=task, params=exec_context)
+    agent_id = (context or {}).get("agent_id")
     plan_tools = context.get("plan_tools") if context else None
-    if plan_tools:
-        l5_plan_summary = await l5_exec.execute_for_plan_tools(plan_tools=plan_tools, query=task, params=exec_context)
-        for slug in l5_plan_summary.tool_slugs_called:
-            if slug not in l5_summary.tool_slugs_called:
-                l5_summary.tool_slugs_called.append(slug)
-        l5_summary.total_cost_usd += l5_plan_summary.total_cost_usd
-        l5_summary.total_execution_time_ms += l5_plan_summary.total_execution_time_ms
-        l5_summary.total_api_calls += l5_plan_summary.total_api_calls
-        l5_summary.all_sources.extend(l5_plan_summary.all_sources)
-        l5_summary.raw_results.extend(l5_plan_summary.raw_results)
+
+    if agent_id:
+        # Database-driven: use agent_tool_assignments table
+        logger.info("l3_using_agent_tools", agent_id=agent_id[:8], specialist_code=specialist_code)
+        l5_summary = await l5_exec.execute_for_agent(
+            agent_id=agent_id,
+            query=task,
+            params=exec_context,
+            tool_filter=plan_tools,  # Apply plan_tools as filter
+        )
+    else:
+        # Legacy: use runner code mapping
+        runner_code = runner.get("run_code") if runner else None
+        if runner_code:
+            l5_summary = await l5_exec.execute_for_runner(runner_code=runner_code, query=task, params=exec_context)
+        if plan_tools:
+            l5_plan_summary = await l5_exec.execute_for_plan_tools(plan_tools=plan_tools, query=task, params=exec_context)
+            for slug in l5_plan_summary.tool_slugs_called:
+                if slug not in l5_summary.tool_slugs_called:
+                    l5_summary.tool_slugs_called.append(slug)
+            l5_summary.total_cost_usd += l5_plan_summary.total_cost_usd
+            l5_summary.total_execution_time_ms += l5_plan_summary.total_execution_time_ms
+            l5_summary.total_api_calls += l5_plan_summary.total_api_calls
+            l5_summary.all_sources.extend(l5_plan_summary.all_sources)
+            l5_summary.raw_results.extend(l5_plan_summary.raw_results)
 
     try:
         result = await expert.execute(task=task, params={"query": task, "runner": runner}, context=exec_context)

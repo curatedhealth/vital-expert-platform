@@ -6,6 +6,7 @@
  */
 
 import type { Agent as StoreAgent } from '@/lib/stores/agents-store';
+import type { AgentLevel, AgentLevelNumber } from './agent.types';
 
 /**
  * ClientAgent - Frontend representation of an agent
@@ -21,8 +22,14 @@ export interface ClientAgent {
   avatar: string;
   color?: string;
 
+  // Agent Level (L1-L5 Hierarchy)
+  agent_level_id?: string;
+  agent_levels?: AgentLevel; // Populated via join
+
+  // Legacy tier field (deprecated - use agent_levels instead)
+  tier?: AgentLevelNumber;
+
   // Configuration
-  tier: '1' | '2' | '3';
   model: string;
   system_prompt: string;
   temperature: number;
@@ -36,14 +43,17 @@ export interface ClientAgent {
   domain_expertise?: string;
 
   // Status & Metadata
-  status: 'active' | 'testing' | 'inactive';
+  status: 'active' | 'testing' | 'development' | 'inactive' | 'deprecated';
   is_custom: boolean;
   rag_enabled?: boolean;
 
   // Organization (optional)
-  business_function?: string | null;
-  department?: string | null;
-  role?: string | null;
+  function_name?: string | null;
+  department_name?: string | null;
+  role_name?: string | null;
+  business_function?: string | null; // Alias
+  department?: string | null; // Alias
+  role?: string | null; // Alias
   organizational_role?: string | null;
 
   // Healthcare Compliance (optional)
@@ -83,13 +93,10 @@ export interface AgentUsageData {
  */
 export function convertToClientAgent(agent: StoreAgent): ClientAgent {
   // Map status from store to client format
-  let status: 'active' | 'testing' | 'inactive' = 'inactive';
-  if (agent.status === 'active') status = 'active';
-  else if (agent.status === 'testing') status = 'testing';
-  else if (agent.status === 'development' || agent.status === 'deprecated') status = 'inactive';
+  const status = agent.status || 'inactive';
 
-  // Map tier to string format (1, 2, 3)
-  const tier = String(agent.tier || 1) as '1' | '2' | '3';
+  // Map tier to AgentLevelNumber (1-5)
+  const tier = (agent.tier >= 1 && agent.tier <= 5 ? agent.tier : undefined) as AgentLevelNumber | undefined;
 
   return {
     id: agent.id,
@@ -99,6 +106,7 @@ export function convertToClientAgent(agent: StoreAgent): ClientAgent {
     description: agent.description,
     avatar: agent.avatar || '🤖',
     color: agent.color,
+    // Agent Level - store uses numeric tier, mapped to legacy field
     tier,
     model: agent.model || 'gpt-4',
     system_prompt: agent.system_prompt || '',
@@ -110,7 +118,10 @@ export function convertToClientAgent(agent: StoreAgent): ClientAgent {
     domain_expertise: agent.domain_expertise,
     status,
     is_custom: agent.is_custom ?? false,
-    rag_enabled: agent.rag_enabled ?? true, // RAG enabled by default for all agents
+    rag_enabled: agent.rag_enabled ?? true,
+    function_name: agent.function_name,
+    department_name: agent.department_name,
+    role_name: agent.role_name,
     business_function: agent.business_function,
     department: agent.department,
     role: agent.role,
@@ -139,6 +150,9 @@ export function convertToStoreAgent(client: ClientAgent): Partial<StoreAgent> {
   else if (client.status === 'testing') status = 'testing';
   else if (client.status === 'active') status = 'active';
 
+  // Get tier from agent_levels or legacy tier field
+  const tier = client.agent_levels?.level_number || client.tier || 1;
+
   return {
     id: client.id,
     name: client.name,
@@ -146,7 +160,7 @@ export function convertToStoreAgent(client: ClientAgent): Partial<StoreAgent> {
     description: client.description,
     avatar: client.avatar,
     color: client.color,
-    tier: parseInt(client.tier, 10),
+    tier,
     model: client.model,
     system_prompt: client.system_prompt,
     temperature: client.temperature,

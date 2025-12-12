@@ -16,7 +16,7 @@
  * Mode 4 extends this: + Fusion auto-selection + Pre-flight check
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   useSSEStream,
   TokenEvent,
@@ -32,6 +32,27 @@ import {
   ErrorEvent,
   ArtifactEvent,
 } from './useSSEStream';
+
+// =============================================================================
+// CSRF TOKEN HELPER
+// =============================================================================
+
+/**
+ * Get CSRF token from cookie (client-side)
+ * Supports __Host-csrf-token and csrf_token cookie names
+ */
+function getCsrfTokenFromCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const parts = document.cookie?.split(';') || [];
+  for (const c of parts) {
+    const [name, ...rest] = c.trim().split('=');
+    if (!name) continue;
+    if (name === '__Host-csrf-token' || name === 'csrf_token') {
+      return decodeURIComponent(rest.join('='));
+    }
+  }
+  return null;
+}
 
 // =============================================================================
 // SHARED TYPES (Autonomous Modes)
@@ -563,9 +584,22 @@ export function useBaseAutonomous(
   // SSE CONNECTION
   // ==========================================================================
 
+  // Build headers with tenant ID and CSRF token
+  const sseHeaders = useMemo(() => {
+    const headers: Record<string, string> = {};
+    if (tenantId) {
+      headers['x-tenant-id'] = tenantId;
+    }
+    const csrfToken = getCsrfTokenFromCookie();
+    if (csrfToken) {
+      headers['x-csrf-token'] = csrfToken;
+    }
+    return Object.keys(headers).length > 0 ? headers : undefined;
+  }, [tenantId]);
+
   const { connect, disconnect, isConnected, isStreaming, error } = useSSEStream({
     url: streamUrl,
-    headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+    headers: sseHeaders,
     onToken: handleToken,
     onReasoning: handleReasoning,
     onCitation: handleCitation,

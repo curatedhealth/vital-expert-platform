@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   Database, 
   Network, 
@@ -8,8 +8,8 @@ import {
   ArrowRight,
   Sparkles
 } from 'lucide-react';
-import { Progress } from '../../ui/progress';
-import { Badge } from '../../ui/badge';
+import { Progress } from '@vital/ui';
+import { Badge } from '@vital/ui';
 
 interface RankedItem {
   id: string;

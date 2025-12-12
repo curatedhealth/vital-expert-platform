@@ -173,10 +173,14 @@ export const AgentNode: React.FC<AgentNodeProps> = ({
           <div className="flex items-start justify-between gap-1 mb-1">
             <p className="font-bold text-sm text-neutral-900 truncate leading-tight">{displayName}</p>
             {isConfigured && (
-              <Check size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" title="Configured" />
+              <span title="Configured">
+                <Check size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+              </span>
             )}
             {!isConfigured && (
-              <AlertCircle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" title="Not configured" />
+              <span title="Not configured">
+                <AlertCircle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
+              </span>
             )}
           </div>
           <div className="flex items-center gap-1">

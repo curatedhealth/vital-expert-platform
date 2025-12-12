@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, ReactNode } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { GripVertical } from 'lucide-react';
 
 interface VitalSplitPanelProps {

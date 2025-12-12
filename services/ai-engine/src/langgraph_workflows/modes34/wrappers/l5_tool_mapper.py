@@ -1,16 +1,24 @@
 """
 L5 Tool Mapper - Maps runner codes and plan tools to L5 tool slugs.
 
+Phase 2 Enhanced: Database-driven tool assignment via ToolRegistry.
+
 Bridges the gap between:
 - Runner codes from vital_runners (e.g., "scan", "synthesize")
 - Plan tool names (e.g., "pubmed_search", "clinical_trials")
 - L5 tool slugs used by create_l5_tool() (e.g., "rag", "web_search", "pubmed")
+- Agent-specific tools from agent_tool_assignments table
 
-Also handles L5 execution and cost rollup.
+Features:
+- Static mapping for runner codes → L5 tool slugs
+- Database-driven agent tool permissions
+- Cost tracking and source aggregation
+- Parallel tool execution support
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -18,6 +26,14 @@ from typing import Any, Dict, List, Optional
 
 # Import the existing L5 factory (absolute import to avoid package resolution issues)
 from agents.l5_tools import create_l5_tool, get_tool_config
+
+# Database-driven tool registry (Phase 2)
+try:
+    from agents.l5_tools.tool_registry import ToolRegistry
+    TOOL_REGISTRY_AVAILABLE = True
+except ImportError:
+    ToolRegistry = None  # type: ignore
+    TOOL_REGISTRY_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -339,6 +355,225 @@ class L5ToolExecutor:
         summary.all_sources = uniq_sources
 
         return summary
+
+    # =========================================================================
+    # Phase 2: Database-Driven Agent Tool Execution
+    # =========================================================================
+
+    async def get_agent_tools(self, agent_id: str) -> List[str]:
+        """
+        Get list of L5 tool IDs assigned to an agent from database.
+
+        Uses ToolRegistry to query agent_tool_assignments table.
+        Falls back to default tools if registry unavailable.
+
+        Args:
+            agent_id: Agent UUID
+
+        Returns:
+            List of L5 tool IDs (e.g., ["L5-PM", "L5-CT", "L5-WEB"])
+        """
+        if not TOOL_REGISTRY_AVAILABLE or ToolRegistry is None:
+            logger.debug("tool_registry_not_available_using_defaults")
+            return ["L5-PM", "L5-CT", "L5-WEB", "L5-RAG"]
+
+        try:
+            tools = await ToolRegistry.get_agent_tools(agent_id)
+            logger.info(
+                "agent_tools_loaded_from_db",
+                agent_id=agent_id[:8],
+                tool_count=len(tools),
+                tools=tools[:5],  # Log first 5
+            )
+            return tools or ["L5-PM", "L5-CT", "L5-WEB", "L5-RAG"]
+        except Exception as e:
+            logger.warning(
+                "agent_tools_load_failed",
+                agent_id=agent_id[:8],
+                error=str(e)[:100],
+            )
+            return ["L5-PM", "L5-CT", "L5-WEB", "L5-RAG"]
+
+    async def execute_for_agent(
+        self,
+        agent_id: str,
+        query: str,
+        params: Optional[Dict[str, Any]] = None,
+        tool_filter: Optional[List[str]] = None,
+    ) -> L5ExecutionSummary:
+        """
+        Execute L5 tools for a specific agent using database-driven permissions.
+
+        Phase 2 Enhancement: Queries agent_tool_assignments to get allowed tools,
+        then executes only those tools.
+
+        Args:
+            agent_id: Agent UUID
+            query: Search query
+            params: Additional parameters
+            tool_filter: Optional list to further filter tools (intersection)
+
+        Returns:
+            L5ExecutionSummary with aggregated results
+        """
+        # Get agent's allowed tools from database
+        agent_tools = await self.get_agent_tools(agent_id)
+
+        # Apply additional filter if provided
+        if tool_filter:
+            # Convert plan_tools/slugs to L5 IDs for intersection
+            filter_l5_ids = []
+            for tool in tool_filter:
+                # Map slug to L5 ID if needed
+                l5_slug = self.map_plan_tool_to_l5(tool)
+                if l5_slug:
+                    # Convert slug to L5 ID format
+                    l5_id = self._slug_to_l5_id(l5_slug)
+                    filter_l5_ids.append(l5_id)
+                else:
+                    # Might already be L5 ID format
+                    filter_l5_ids.append(tool.upper() if not tool.startswith("L5-") else tool)
+
+            # Intersection: only tools that are both assigned and requested
+            agent_tools = [t for t in agent_tools if t in filter_l5_ids or t.lower().replace("l5-", "") in [f.lower().replace("l5-", "") for f in filter_l5_ids]]
+
+        if not agent_tools:
+            logger.warning(
+                "no_tools_for_agent_after_filter",
+                agent_id=agent_id[:8],
+                filter=tool_filter,
+            )
+            return L5ExecutionSummary()
+
+        # Execute via ToolRegistry if available, else fall back to slug-based execution
+        if TOOL_REGISTRY_AVAILABLE and ToolRegistry is not None:
+            return await self._execute_via_registry(agent_id, agent_tools, query, params)
+        else:
+            # Convert L5 IDs to slugs and use standard execution
+            slugs = [self._l5_id_to_slug(t) for t in agent_tools]
+            return await self._execute_multiple(slugs, query, params)
+
+    async def _execute_via_registry(
+        self,
+        agent_id: str,
+        tool_ids: List[str],
+        query: str,
+        params: Optional[Dict[str, Any]],
+    ) -> L5ExecutionSummary:
+        """Execute tools via ToolRegistry with proper permission checking."""
+        summary = L5ExecutionSummary()
+        params = params or {}
+        tool_params = {"query": query, **params}
+        outputs = []
+
+        for tool_id in tool_ids:
+            start_time = datetime.utcnow()
+            try:
+                result = await ToolRegistry.execute_for_agent(agent_id, tool_id, tool_params)
+                exec_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+
+                summary.tool_slugs_called.append(tool_id)
+                summary.total_execution_time_ms += exec_ms
+                summary.total_api_calls += 1
+
+                if result.get("success", True) and not result.get("error"):
+                    summary.success_count += 1
+                    # Extract sources from result
+                    sources = self._extract_sources_from_registry_result(result, tool_id)
+                    summary.all_sources.extend(sources)
+                    summary.raw_results.append({
+                        "tool": tool_id,
+                        "data": result.get("data") or result,
+                        "cached": result.get("cached", False),
+                    })
+
+                    # Build output string
+                    data = result.get("data") or result
+                    if isinstance(data, str):
+                        outputs.append(f"[{tool_id}]: {data}")
+                    elif isinstance(data, dict):
+                        if "response" in data:
+                            outputs.append(f"[{tool_id}]: {data['response']}")
+                        elif "results" in data:
+                            outputs.append(f"[{tool_id}]: {len(data['results'])} results found")
+                else:
+                    summary.error_count += 1
+                    error_msg = result.get("error", "Unknown error")
+                    summary.errors.append(f"{tool_id}: {error_msg}")
+
+            except Exception as e:
+                exec_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+                summary.tool_slugs_called.append(tool_id)
+                summary.total_execution_time_ms += exec_ms
+                summary.error_count += 1
+                summary.errors.append(f"{tool_id}: {str(e)[:100]}")
+                logger.error(
+                    "registry_tool_execution_failed",
+                    tool_id=tool_id,
+                    agent_id=agent_id[:8],
+                    error=str(e)[:100],
+                )
+
+        summary.combined_output = "\n\n".join(outputs)
+
+        # Deduplicate sources
+        seen = set()
+        uniq_sources = []
+        for source in summary.all_sources:
+            url = source.get("url") or source.get("title") or ""
+            if url not in seen:
+                seen.add(url)
+                uniq_sources.append(source)
+        summary.all_sources = uniq_sources
+
+        return summary
+
+    def _extract_sources_from_registry_result(self, result: Dict, tool_id: str) -> List[Dict]:
+        """Extract sources from ToolRegistry result format."""
+        sources = []
+        data = result.get("data") or result
+
+        if isinstance(data, dict):
+            # Common source field names
+            for key in ["sources", "citations", "references", "results"]:
+                if key in data and isinstance(data[key], list):
+                    for item in data[key]:
+                        if isinstance(item, dict):
+                            src = self._item_to_source(item, tool_id)
+                            if src:
+                                sources.append(src)
+                        elif isinstance(item, str):
+                            sources.append({"title": item, "source_type": tool_id})
+
+        return sources
+
+    def _slug_to_l5_id(self, slug: str) -> str:
+        """Convert tool slug to L5 ID format."""
+        slug_to_id = {
+            "pubmed": "L5-PM",
+            "clinicaltrials": "L5-CT",
+            "clinical_trials": "L5-CT",
+            "web_search": "L5-WEB",
+            "rag": "L5-RAG",
+            "openfda": "L5-OPENFDA",
+            "regulatory": "L5-OPENFDA",
+            "heor": "L5-HEOR",
+            "general": "L5-GEN",
+        }
+        return slug_to_id.get(slug.lower(), f"L5-{slug.upper()}")
+
+    def _l5_id_to_slug(self, l5_id: str) -> str:
+        """Convert L5 ID to tool slug."""
+        id_to_slug = {
+            "L5-PM": "pubmed",
+            "L5-CT": "clinicaltrials",
+            "L5-WEB": "web_search",
+            "L5-RAG": "rag",
+            "L5-OPENFDA": "openfda",
+            "L5-HEOR": "heor",
+            "L5-GEN": "general",
+        }
+        return id_to_slug.get(l5_id.upper(), l5_id.lower().replace("l5-", ""))
 
     def _extract_sources(self, result: Any, tool_slug: str) -> List[Dict]:
         """Extract sources/citations from L5 result data."""

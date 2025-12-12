@@ -37,7 +37,7 @@ from langgraph_workflows.shared.events import (
     thinking_end_event,
     hitl_checkpoint_event,
 )
-from langgraph_workflows.modes34.master_graph import build_master_graph
+from langgraph_workflows.modes34.unified_autonomous_workflow import build_master_graph
 from langgraph_workflows.modes34.agent_selector import select_team
 from services.runner_registry import runner_registry
 from services.checkpoint_store import checkpoint_store
@@ -158,6 +158,7 @@ async def mission_stream(
             template_family = tpl.get("family") or tpl.get("category")
             template_cat = tpl.get("cat_code") or tpl.get("category")
             template_checkpoints = tpl.get("checkpoints") or tpl.get("default_checkpoints") or []
+            template_outputs = tpl.get("outputs") or []  # For output validation (Gap 5)
             if template_plan:
                 initial_state["plan"] = template_plan
             if template_family:
@@ -166,6 +167,8 @@ async def mission_stream(
                 initial_state["template_cat"] = template_cat
             if template_checkpoints:
                 initial_state["template_checkpoints"] = template_checkpoints
+            if template_outputs:
+                initial_state["template_outputs"] = template_outputs
 
             # Validate template required_inputs against user_context
             required_inputs = tpl.get("required_inputs") or []

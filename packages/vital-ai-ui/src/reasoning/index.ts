@@ -6,10 +6,9 @@
  */
 
 export { VitalThinking, default as Thinking } from './VitalThinking';
-export { 
-  VitalCitation, 
-  CitationList, 
-  InlineCitation,
+export {
+  VitalCitation,
+  CitationList,
   Citation,
   // Utilities
   sourceIcons as citationSourceIcons,
@@ -155,7 +154,7 @@ export type {
 } from './VitalSources';
 
 export type {
-  Source,
+  Source as SourceListItem,
   VitalSourceListProps,
 } from './VitalSourceList';
 

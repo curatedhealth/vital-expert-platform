@@ -17,14 +17,17 @@ interface PromptEnhancementInterfaceProps {
   onPromptEnhanced?: (enhancedPrompt: string, systemPrompt: string) => void;
   initialPrompt?: string;
   className?: string;
+  mode?: 'light' | 'advanced';
 }
 
 export function PromptEnhancementInterface({
   agentId,
   onPromptEnhanced,
   initialPrompt = '',
-  className = ''
+  className = '',
+  mode = 'advanced'
 }: PromptEnhancementInterfaceProps) {
+  const isAdvanced = mode === 'advanced';
   const {
     prompts,
     agentPrompts,
@@ -89,10 +92,10 @@ export function PromptEnhancementInterface({
   return (
     <div className={`space-y-6 ${className}`}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className={`grid w-full ${isAdvanced ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <TabsTrigger value="enhance">Enhance Prompt</TabsTrigger>
           <TabsTrigger value="browse">Browse Prompts</TabsTrigger>
-          <TabsTrigger value="admin">Admin Panel</TabsTrigger>
+          {isAdvanced && <TabsTrigger value="admin">Admin Panel</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="enhance" className="space-y-4">
@@ -264,20 +267,24 @@ export function PromptEnhancementInterface({
                     )}
 
                     <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDuplicatePrompt(prompt)}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowAdminPanel(true)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      {isAdvanced && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDuplicatePrompt(prompt)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowAdminPanel(true)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -292,28 +299,30 @@ export function PromptEnhancementInterface({
           )}
         </TabsContent>
 
-        <TabsContent value="admin" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Prompt Management</CardTitle>
-              <CardDescription>
-                Create, edit, and manage PRISM prompts
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Button onClick={() => setShowAdminPanel(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Prompt
-                </Button>
-                
-                <div className="text-sm text-muted-foreground">
-                  Admin panel functionality will be implemented here for creating, editing, and managing prompts.
+        {isAdvanced && (
+          <TabsContent value="admin" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Prompt Management</CardTitle>
+                <CardDescription>
+                  Create, edit, and manage PRISM prompts
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Button onClick={() => setShowAdminPanel(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create New Prompt
+                  </Button>
+                  
+                  <div className="text-sm text-muted-foreground">
+                    Admin panel functionality will be implemented here for creating, editing, and managing prompts.
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

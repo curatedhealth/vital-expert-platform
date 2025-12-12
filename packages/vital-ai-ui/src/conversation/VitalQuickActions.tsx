@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   Copy, 
   RotateCcw, 
@@ -13,20 +13,20 @@ import {
   Edit,
   Trash2
 } from 'lucide-react';
-import { Button } from '../../ui/button';
+import { Button } from '@vital/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../../ui/dropdown-menu';
+} from '@vital/ui';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
   TooltipProvider
-} from '../../ui/tooltip';
+} from '@vital/ui';
 import { useState } from 'react';
 
 type FeedbackType = 'positive' | 'negative' | null;

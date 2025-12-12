@@ -22,13 +22,13 @@ import { Sparkles, Plus, ExternalLink, Code, Copy, Check } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Import shared v0 components from @vital/ai-ui package
-// Using package path - ensure package is linked/built
-import { 
+// TODO: Configure @vital/ai-ui path alias for production
+import {
   VitalV0GeneratorPanel,
   VitalV0PreviewFrame,
   type V0GenerationResponse,
   type V0WorkflowContext,
-} from '@/../../packages/vital-ai-ui/src/v0';
+} from '../../../../../../../packages/vital-ai-ui/src/v0';
 
 import type { NodeTypeDefinition } from '../../constants/node-types';
 

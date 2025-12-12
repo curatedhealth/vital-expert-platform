@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   AlertTriangle, 
   RefreshCw, 
@@ -9,8 +9,8 @@ import {
   Clock,
   Zap
 } from 'lucide-react';
-import { Button } from '../../ui/button';
-import { Progress } from '../../ui/progress';
+import { Button } from '@vital/ui';
+import { Progress } from '@vital/ui';
 
 type CircuitState = 'closed' | 'open' | 'half-open';
 

@@ -122,7 +122,8 @@ const filterAgents = (agents: Agent[], filters: AgentFilters): Agent[] => {
 
   // Filter by status
   if (filters.status && filters.status !== 'all') {
-    filtered = filtered.filter((agent) => agent.status === filters.status);
+    const statusFilter = Array.isArray(filters.status) ? filters.status : [filters.status];
+    filtered = filtered.filter((agent) => agent.status && statusFilter.includes(agent.status));
   }
 
   // Filter by featured
@@ -170,12 +171,14 @@ const sortAgents = (
         bValue = b.department_name?.toLowerCase() || '';
         break;
       case 'created':
-        aValue = new Date(a.created_at).getTime();
-        bValue = new Date(b.created_at).getTime();
+      case 'created_at':
+        aValue = a.created_at ? new Date(a.created_at).getTime() : 0;
+        bValue = b.created_at ? new Date(b.created_at).getTime() : 0;
         break;
       case 'updated':
-        aValue = new Date(a.updated_at).getTime();
-        bValue = new Date(b.updated_at).getTime();
+      case 'updated_at':
+        aValue = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+        bValue = b.updated_at ? new Date(b.updated_at).getTime() : 0;
         break;
       default:
         aValue = a.name.toLowerCase();

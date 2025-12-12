@@ -140,13 +140,14 @@ const ClinicalTrialDesigner: React.FC = () => {
 
   const [simulationResults, setSimulationResults] = useState<SimulationResult | null>(null);
 
+  const runTrialSimulation = () => {
     // Simulate trial execution
     const enrollmentTimeline: SimulationDataPoint[] = [];
     const costProjection: SimulationDataPoint[] = [];
 
-    for (let __month = 1; month <= trialDesign.duration + 6; month++) {
+    for (let month = 1; month <= trialDesign.duration + 6; month++) {
       // Enrollment simulation based on sites and virtual components
-
+      const baseEnrollment = Math.min(
         trialDesign.sampleSize,
         (month * trialDesign.sites * 15) // 15 patients per site per month
       );
@@ -168,6 +169,8 @@ const ClinicalTrialDesigner: React.FC = () => {
       });
 
       // Cost projection
+      const baseCost = month * trialDesign.sites * 50000;
+      const virtualCost = month * trialDesign.virtualComponents.length * 10000;
 
       costProjection.push({
         month,
@@ -221,6 +224,7 @@ const ClinicalTrialDesigner: React.FC = () => {
     setSimulationResults(mockResults);
   };
 
+  const optimizeTrial = (optimization: 'reduce_cost' | 'improve_enrollment' | 'reduce_risk') => {
     switch (optimization) {
       case 'reduce_cost':
         setTrialDesign({
@@ -262,6 +266,8 @@ const ClinicalTrialDesigner: React.FC = () => {
     }
   };
 
+  const exportTrialProtocol = () => {
+    const protocol = {
       title: trialDesign.title,
       phase: trialDesign.phase,
       design_summary: {

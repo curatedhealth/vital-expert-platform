@@ -28,6 +28,14 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔄 Starting agent sync to Pinecone - Agent: ${agentId || 'all'}, Sync All: ${syncAll}`);
 
+    // Check if Pinecone is configured
+    if (!pineconeVectorService) {
+      return NextResponse.json(
+        { error: 'Vector search is not configured (PINECONE_API_KEY not set)' },
+        { status: 503 }
+      );
+    }
+
     if (agentId && !syncAll) {
       // Sync single agent
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -98,6 +106,14 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Check if Pinecone is configured
+    if (!pineconeVectorService) {
+      return NextResponse.json(
+        { error: 'Vector search is not configured (PINECONE_API_KEY not set)' },
+        { status: 503 }
+      );
+    }
+
     // Get Pinecone index stats for agents namespace
     const stats = await pineconeVectorService.getIndexStats('agents');
     

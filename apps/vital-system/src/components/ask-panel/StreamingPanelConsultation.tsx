@@ -10,6 +10,7 @@ import { Users, Bot, FileText, Sparkles, Copy, Download, Loader2 } from "lucide-
 import ReactMarkdown from "react-markdown";
 
 interface Message {
+  id?: string;
   type: "orchestrator" | "agent" | "summary" | "system";
   role: string;
   content: string;

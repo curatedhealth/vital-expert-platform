@@ -37,10 +37,11 @@ export const Suggestion: React.FC<SuggestionProps> = ({
   category,
   complexity = 'medium',
 }) => {
-
+  const handleClick = () => {
     onClick?.(suggestion);
   };
 
+  const getVariantStyles = () => {
     switch (variant) {
       case 'contextual':
         return 'bg-blue-50 border-blue-200 text-blue-900 hover:bg-blue-100 hover:border-blue-300';
@@ -53,6 +54,7 @@ export const Suggestion: React.FC<SuggestionProps> = ({
     }
   };
 
+  const getComplexityIndicator = () => {
     switch (complexity) {
       case 'high':
         return <div className="w-1.5 h-1.5 bg-red-400 rounded-full" />;
@@ -115,6 +117,8 @@ export const Suggestions: React.FC<SuggestionsProps> = ({
   variant = 'horizontal',
   maxVisible = 6,
 }) => {
+  const childrenArray = React.Children.toArray(children);
+  const visibleChildren = childrenArray.slice(0, maxVisible);
 
   if (variant === 'grid') {
     return (
@@ -183,7 +187,7 @@ export const __generateContextualSuggestions = (
   category?: string,
   agentType?: string
 ): Array<{ suggestion: string; variant: SuggestionProps['variant']; category?: string; complexity?: SuggestionProps['complexity'] }> => {
-
+  const baseFollowUps = [
     {
       suggestion: "Can you elaborate on this approach?",
       variant: 'follow-up' as const,
@@ -206,6 +210,7 @@ export const __generateContextualSuggestions = (
     }
   ];
 
+  const regulatoryFollowUps = [
     {
       suggestion: "What FDA guidance documents apply?",
       variant: 'expert' as const,
@@ -226,6 +231,7 @@ export const __generateContextualSuggestions = (
     }
   ];
 
+  const clinicalFollowUps = [
     {
       suggestion: "What endpoints should I prioritize?",
       variant: 'expert' as const,
@@ -246,6 +252,7 @@ export const __generateContextualSuggestions = (
     }
   ];
 
+  const commercialFollowUps = [
     {
       suggestion: "What's the estimated timeline to market?",
       variant: 'contextual' as const,

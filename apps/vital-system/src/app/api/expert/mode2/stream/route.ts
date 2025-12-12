@@ -1,10 +1,16 @@
 /**
  * VITAL Platform - Mode 2 Streaming BFF Route
- * 
+ *
  * Mode 2: Automatic Interactive (Smart Chat)
- * System automatically selects experts via Fusion Intelligence.
- * 
- * Phase 4: Integration & Streaming
+ * System AUTO-SELECTS expert via Fusion Intelligence.
+ *
+ * ARCHITECTURE (Dec 2025):
+ * - Mode 1 and Mode 2 use the SAME interactive executor
+ * - The only difference is agent selection:
+ *   - Mode 1: expert_id is provided (manual selection)
+ *   - Mode 2: expert_id is null (Fusion auto-selection)
+ *
+ * Backend Endpoint: /api/expert/interactive (unified interactive endpoint)
  */
 
 import { NextRequest } from 'next/server';
@@ -33,7 +39,6 @@ export async function POST(request: NextRequest) {
     const {
       conversation_id,
       message,
-      mode,
       options = {},
     } = body;
 
@@ -45,8 +50,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Forward to Python backend - Mode 2 uses automatic selection
-    const backendResponse = await fetch(`${AI_ENGINE_URL}/api/v1/expert/stream`, {
+    // Note: Mode 2 does NOT require expert_id - Fusion Intelligence auto-selects
+
+    // Forward to Python backend - Unified Interactive endpoint
+    // Mode 2 = NO expert_id → backend uses Fusion auto-selection
+    const backendResponse = await fetch(`${AI_ENGINE_URL}/api/expert/interactive`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -57,24 +65,18 @@ export async function POST(request: NextRequest) {
         'Accept': 'text/event-stream',
       },
       body: JSON.stringify({
-        conversation_id: conversation_id || crypto.randomUUID(),
+        mode: 2, // Mode 2 = Automatic Interactive (Fusion auto-selection)
+        // expert_id: undefined,  // Explicitly omitted for Mode 2
         message,
-        mode: mode || 'mode2_automatic_interactive',
-        tenant_id: tenantId,
-        user_id: session.user.id,
-        options: {
-          enable_rag: options.enable_rag ?? true,
-          enable_websearch: options.enable_websearch ?? true,
-          response_depth: options.response_depth || 'standard',
-          max_experts: options.max_experts || 3,
-          preferred_domains: options.preferred_domains || [],
-          // Mode 2 specific - enable Fusion Intelligence
-          enable_fusion: true,
-          fusion_weights: {
-            vector: 0.4,
-            graph: 0.35,
-            relational: 0.25,
-          },
+        session_id: conversation_id || crypto.randomUUID(),
+        enable_rag: options.enable_rag ?? true,
+        enable_web_search: options.enable_web_search ?? true,
+        response_depth: options.response_depth || 'standard',
+        // Fusion-specific options (Mode 2 auto-selection)
+        fusion_weights: options.fusion_weights || {
+          vector: 0.4,
+          graph: 0.35,
+          relational: 0.25,
         },
       }),
     });
@@ -82,7 +84,7 @@ export async function POST(request: NextRequest) {
     if (!backendResponse.ok) {
       const errorText = await backendResponse.text();
       console.error('[Mode2 Stream] Backend error:', backendResponse.status, errorText);
-      
+
       return new Response(
         `event: error\ndata: ${JSON.stringify({
           code: `BACKEND_${backendResponse.status}`,
@@ -110,7 +112,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('[Mode2 Stream] Error:', error);
-    
+
     return new Response(
       `event: error\ndata: ${JSON.stringify({
         code: 'INTERNAL_ERROR',

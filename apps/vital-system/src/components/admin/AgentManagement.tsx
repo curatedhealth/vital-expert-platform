@@ -328,7 +328,7 @@ export function AgentManagement() {
             id: undefined,
             name: `${agent.name} (Copy)`,
             title: `${agent.title || agent.name} (Copy)`,
-            slug: `${agent.slug || agent.name.toLowerCase()}-copy-${Date.now()}`,
+            slug: `${(agent as any).slug || agent.name.toLowerCase()}-copy-${Date.now()}`,
             created_at: undefined,
             updated_at: undefined,
             is_active: false,

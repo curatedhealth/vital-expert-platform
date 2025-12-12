@@ -67,13 +67,13 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
       const data = await response.json();
 
       // Filter for medical models
-      const medicalModels = data.filter((model: unknown) =>
-        model.provider_name.toLowerCase().includes('meditron') ||
-        model.provider_name.toLowerCase().includes('clinical') ||
-        model.provider_name.toLowerCase().includes('bio') ||
-        model.provider_name.toLowerCase().includes('med-') ||
-        model.provider_name.toLowerCase().includes('scibert') ||
-        (model.capabilities && model.capabilities.medical_knowledge)
+      const medicalModels = data.filter((model: any) =>
+        model.provider_name?.toLowerCase().includes('meditron') ||
+        model.provider_name?.toLowerCase().includes('clinical') ||
+        model.provider_name?.toLowerCase().includes('bio') ||
+        model.provider_name?.toLowerCase().includes('med-') ||
+        model.provider_name?.toLowerCase().includes('scibert') ||
+        (model.capabilities && (model.capabilities as any).medical_knowledge)
       );
 
       setModels(medicalModels);
@@ -176,9 +176,9 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
 
   const activeModels = models.filter((m: any) => m.is_active);
   const hipaaCompliantModels = models.filter((m: any) => m.is_hipaa_compliant);
-  const clinicalTrialModels = models.filter((m: any) => (m as unknown)?.capabilities?.clinical_trials);
+  const clinicalTrialModels = models.filter((m: any) => (m as any)?.capabilities?.clinical_trials);
   const avgAccuracy = models.length > 0
-    ? models.reduce((sum, m) => sum + (m.medical_accuracy_score || 0), 0) / models.length
+    ? models.reduce((sum: number, m: any) => sum + (m.medical_accuracy_score || 0), 0) / models.length
     : 0;
 
   // If a specific model is selected, show its details
@@ -282,14 +282,14 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Clinical Trials</span>
-                  <Badge variant={(model as unknown)?.capabilities?.clinical_trials ? 'default' : 'secondary'}>
-                    {(model as unknown)?.capabilities?.clinical_trials ? 'Active' : 'None'}
+                  <Badge variant={(model as any)?.capabilities?.clinical_trials ? 'default' : 'secondary'}>
+                    {(model as any)?.capabilities?.clinical_trials ? 'Active' : 'None'}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">FDA Approved</span>
-                  <Badge variant={(model as unknown)?.capabilities?.fda_approved ? 'default' : 'secondary'}>
-                    {(model as unknown)?.capabilities?.fda_approved ? 'Yes' : 'Pending'}
+                  <Badge variant={(model as any)?.capabilities?.fda_approved ? 'default' : 'secondary'}>
+                    {(model as any)?.capabilities?.fda_approved ? 'Yes' : 'Pending'}
                   </Badge>
                 </div>
               </CardContent>
@@ -305,7 +305,7 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {/* eslint-disable-next-line security/detect-object-injection */}
-                  {(model as unknown)?.capabilities?.medical_specialties?.map((specialty: string, index: number) => {
+                  {(model as any)?.capabilities?.medical_specialties?.map((specialty: string, index: number) => {
                     const SpecialtyIcon = getSpecialtyIcon(specialty);
                     return (
                       <Badge key={index} variant="outline" className="flex items-center gap-1">
@@ -455,18 +455,18 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
                   </div>
 
                   {/* eslint-disable-next-line security/detect-object-injection */}
-                  {(model as unknown)?.capabilities?.medical_specialties && (
+                  {(model as any)?.capabilities?.medical_specialties && (
                     <div className="flex flex-wrap gap-1">
                       {/* eslint-disable-next-line security/detect-object-injection */}
-                      {(model as unknown)?.capabilities?.medical_specialties?.slice(0, 3).map((specialty: string, index: number) => (
+                      {(model as any)?.capabilities?.medical_specialties?.slice(0, 3).map((specialty: string, index: number) => (
                         <Badge key={index} variant="secondary" className="text-xs">
                           {specialty.replace(/_/g, ' ')}
                         </Badge>
                       ))}
                       {/* eslint-disable-next-line security/detect-object-injection */}
-                      {((model as unknown)?.capabilities?.medical_specialties?.length || 0) > 3 && (
+                      {((model as any)?.capabilities?.medical_specialties?.length || 0) > 3 && (
                         <Badge variant="secondary" className="text-xs">
-                          +{((model as unknown)?.capabilities?.medical_specialties?.length || 0) - 3} more
+                          +{((model as any)?.capabilities?.medical_specialties?.length || 0) - 3} more
                         </Badge>
                       )}
                     </div>

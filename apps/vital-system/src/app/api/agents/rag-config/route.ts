@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { agentRAGIntegration } from '@/shared/services/rag/agent-rag-integration';
+import { agentRAGIntegration } from '@/lib/services/rag/agent-rag-integration';
 
 
 

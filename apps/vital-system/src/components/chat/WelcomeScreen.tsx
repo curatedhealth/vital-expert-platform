@@ -37,6 +37,11 @@ interface WelcomeScreenProps {
   welcomeMessage?: WelcomeMessage;
 }
 
+const AGENT_STATS = [
+  { label: 'Active Agents', count: 15 },
+  { label: 'Ready to Assist', count: 15 },
+];
+
 const FEATURES = [
   {
     icon: Bot,
@@ -107,7 +112,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
           {/* Agent Status */}
           <div className="flex items-center justify-center gap-6 mt-6">
-            {AGENT_STATS.map((stat) => (
+            {AGENT_STATS.map((stat: { label: string; count: number }) => (
               <div key={stat.label} className="flex items-center gap-2">
                 <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
                 <span className="text-sm text-muted-foreground">

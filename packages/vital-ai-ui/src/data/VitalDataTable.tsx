@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   ChevronDown, 
   ChevronUp, 
@@ -10,8 +10,8 @@ import {
   Search,
   ArrowUpDown
 } from 'lucide-react';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
+import { Button } from '@vital/ui';
+import { Input } from '@vital/ui';
 import {
   Table,
   TableBody,
@@ -19,9 +19,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../ui/table';
-import { Badge } from '../../ui/badge';
-import { ScrollArea, ScrollBar } from '../../ui/scroll-area';
+} from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { ScrollArea, ScrollBar } from '@vital/ui';
 
 interface Column<T> {
   key: keyof T;

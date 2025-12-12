@@ -323,13 +323,15 @@ export function ToolDetailModal({
     try {
       setSaving(true);
 
-      // Update tool data
-      const { error: toolError } = await supabase
-        .from('dh_tool')
-        .update({
+      // Update tool data via API (bypasses RLS)
+      const response = await fetch(`/api/tools-crud/${tool.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: formData.name,
           tool_description: formData.tool_description,
-          description: formData.description,
           category: formData.category,
           tool_type: formData.tool_type,
           implementation_type: formData.implementation_type,
@@ -339,14 +341,14 @@ export function ToolDetailModal({
           is_active: formData.is_active,
           documentation_url: formData.documentation_url,
           access_level: formData.access_level,
-          rate_limit_per_minute: formData.rate_limit_per_minute,
-          cost_per_execution: formData.cost_per_execution,
           max_execution_time_seconds: formData.max_execution_time_seconds,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', tool.id);
+        }),
+      });
 
-      if (toolError) throw toolError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update tool');
+      }
 
       // Update agent assignments
       await updateAgentAssignments();

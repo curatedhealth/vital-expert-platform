@@ -74,29 +74,37 @@ interface RowData {
 const ROW_HEIGHT = 72; // Height of each row in pixels
 const HEADER_HEIGHT = 48; // Height of header row
 
-const TIER_ICONS = {
+const TIER_ICONS: Record<string, typeof Brain> = {
   '1': Brain,
   '2': Sparkles,
   '3': Zap,
-} as const;
+  '4': Sparkles,
+  '5': Zap,
+};
 
-const TIER_COLORS = {
+const TIER_COLORS: Record<string, string> = {
   '1': 'bg-blue-50 text-blue-700 border-blue-200',
   '2': 'bg-purple-50 text-purple-700 border-purple-200',
   '3': 'bg-amber-50 text-amber-700 border-amber-200',
-} as const;
+  '4': 'bg-orange-50 text-orange-700 border-orange-200',
+  '5': 'bg-neutral-50 text-neutral-700 border-neutral-200',
+};
 
-const STATUS_ICONS = {
+const STATUS_ICONS: Record<string, typeof CheckCircle2> = {
   active: CheckCircle2,
   testing: AlertCircle,
   inactive: Clock,
-} as const;
+  development: AlertCircle,
+  deprecated: Clock,
+};
 
-const STATUS_COLORS = {
+const STATUS_COLORS: Record<string, string> = {
   active: 'bg-green-50 text-green-700 border-green-200',
   testing: 'bg-yellow-50 text-yellow-700 border-yellow-200',
   inactive: 'bg-neutral-50 text-neutral-700 border-neutral-200',
-} as const;
+  development: 'bg-blue-50 text-blue-700 border-blue-200',
+  deprecated: 'bg-red-50 text-red-700 border-red-200',
+};
 
 // ============================================================================
 // Helper Functions
@@ -454,8 +462,7 @@ export function AgentsTableVirtualized({
         {/* Checkbox Column */}
         <div className="flex items-center">
           <Checkbox
-            checked={allSelected}
-            indeterminate={someSelected ? true : undefined}
+            checked={allSelected || (someSelected ? 'indeterminate' : false)}
             onCheckedChange={handleSelectAll}
             aria-label="Select all agents"
           />
@@ -511,7 +518,7 @@ export function AgentsTableVirtualized({
           </div>
         ) : (
           <AutoSizer>
-            {({ height, width }) => (
+            {({ height, width }: { height: number; width: number }) => (
               <div style={{ height, width }}>
                 <List
                   listRef={listRef}

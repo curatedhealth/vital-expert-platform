@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { performanceMetricsService } from '@/shared/services/monitoring/performance-metrics.service';
+import { performanceMetricsService } from '@/lib/services/monitoring/performance-metrics.service';
 
 // GET /api/monitoring/performance - Get performance metrics
 export async function GET(request: NextRequest) {

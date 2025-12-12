@@ -30,7 +30,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { streamReducer, initialStreamState, streamActions, type StreamState } from '../hooks/streamReducer';
 import { useSSEStream, type TokenEvent, type ReasoningEvent, type CitationEvent, type ToolCallEvent, type DoneEvent, type ErrorEvent } from '../hooks/useSSEStream';
 
-// Components (will be created next)
+// Components
 import { ExpertPicker, type Expert } from '../components/interactive/ExpertPicker';
 import { FusionSelector } from '../components/interactive/FusionSelector';
 import { ExpertHeader } from '../components/interactive/ExpertHeader';
@@ -38,6 +38,12 @@ import { VitalMessage, type Message } from '../components/interactive/VitalMessa
 import { StreamingMessage } from '../components/interactive/StreamingMessage';
 import { VitalSuggestionChips } from '../components/interactive/VitalSuggestionChips';
 import { ChatInput } from '../components/interactive/ChatInput';
+
+// HITL Components (Human-in-the-Loop)
+import { HITLCheckpointModal, type CheckpointData, type CheckpointDecision } from '../components/interactive/HITLCheckpointModal';
+import { PlanApprovalCard, type ExecutionPlan } from '../components/interactive/PlanApprovalCard';
+import { SubAgentDelegationCard, type SubAgentDelegation } from '../components/interactive/SubAgentDelegationCard';
+import { ToolExecutionFeedback, type ToolExecution } from '../components/interactive/ToolExecutionFeedback';
 
 // =============================================================================
 // TYPES
@@ -130,6 +136,12 @@ export function InteractiveView({
 
   // Stream state (centralized via reducer)
   const [streamState, dispatch] = useReducer(streamReducer, initialStreamState);
+
+  // HITL state
+  const [activeCheckpoint, setActiveCheckpoint] = useState<CheckpointData | null>(null);
+  const [activePlan, setActivePlan] = useState<ExecutionPlan | null>(null);
+  const [activeDelegations, setActiveDelegations] = useState<SubAgentDelegation[]>([]);
+  const [toolExecutions, setToolExecutions] = useState<ToolExecution[]>([]);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -256,6 +268,77 @@ export function InteractiveView({
   }, [mode, onModeChange]);
 
   // =========================================================================
+  // HITL HANDLERS
+  // =========================================================================
+
+  const handleCheckpointDecision = useCallback((
+    checkpointId: string,
+    decision: CheckpointDecision,
+    data?: unknown
+  ) => {
+    // Send decision to backend
+    console.log('Checkpoint decision:', checkpointId, decision, data);
+    // Close the modal
+    setActiveCheckpoint(null);
+    // TODO: Send to backend via API or SSE response
+  }, []);
+
+  const handleCheckpointTimeout = useCallback((checkpointId: string) => {
+    console.log('Checkpoint timed out:', checkpointId);
+    setActiveCheckpoint(null);
+  }, []);
+
+  const handleCheckpointExtend = useCallback((checkpointId: string, additionalSeconds: number) => {
+    console.log('Extending checkpoint:', checkpointId, 'by', additionalSeconds, 'seconds');
+    // TODO: Notify backend of extension
+  }, []);
+
+  const handlePlanApprove = useCallback((planId: string) => {
+    console.log('Plan approved:', planId);
+    setActivePlan(null);
+    // TODO: Send approval to backend
+  }, []);
+
+  const handlePlanReject = useCallback((planId: string, reason?: string) => {
+    console.log('Plan rejected:', planId, reason);
+    setActivePlan(null);
+    // TODO: Send rejection to backend
+  }, []);
+
+  const handlePlanModify = useCallback((planId: string, modifications: string) => {
+    console.log('Plan modified:', planId, modifications);
+    setActivePlan(null);
+    // TODO: Send modifications to backend
+  }, []);
+
+  const handleDelegationApprove = useCallback((delegationId: string) => {
+    setActiveDelegations(prev =>
+      prev.map(d =>
+        d.id === delegationId ? { ...d, status: 'approved' as const } : d
+      )
+    );
+    // TODO: Send approval to backend
+  }, []);
+
+  const handleDelegationReject = useCallback((delegationId: string, reason?: string) => {
+    setActiveDelegations(prev =>
+      prev.map(d =>
+        d.id === delegationId ? { ...d, status: 'rejected' as const } : d
+      )
+    );
+    // TODO: Send rejection to backend
+  }, []);
+
+  const handleToolCancel = useCallback((executionId: string) => {
+    setToolExecutions(prev =>
+      prev.map(e =>
+        e.id === executionId ? { ...e, status: 'cancelled' as const } : e
+      )
+    );
+    // TODO: Send cancellation to backend
+  }, []);
+
+  // =========================================================================
   // RENDER
   // =========================================================================
 
@@ -332,6 +415,41 @@ export function InteractiveView({
                 />
               ))}
 
+              {/* Tool Execution Feedback (visible during streaming) */}
+              {toolExecutions.length > 0 && (
+                <ToolExecutionFeedback
+                  executions={toolExecutions}
+                  compact={false}
+                  maxVisible={5}
+                  allowCancel={true}
+                  onCancel={handleToolCancel}
+                  className="mb-4"
+                />
+              )}
+
+              {/* Active Plan Approval Card */}
+              {activePlan && (
+                <PlanApprovalCard
+                  plan={activePlan}
+                  onApprove={handlePlanApprove}
+                  onReject={handlePlanReject}
+                  onModify={handlePlanModify}
+                  className="mb-4"
+                />
+              )}
+
+              {/* Active Sub-Agent Delegations */}
+              {activeDelegations.filter(d => d.status === 'pending_approval' || d.status === 'in_progress').map(delegation => (
+                <SubAgentDelegationCard
+                  key={delegation.id}
+                  delegation={delegation}
+                  onApprove={handleDelegationApprove}
+                  onReject={handleDelegationReject}
+                  requiresApproval={delegation.status === 'pending_approval'}
+                  className="mb-4"
+                />
+              ))}
+
               {/* Streaming Message (while receiving) */}
               {isStreaming && (
                 <StreamingMessage
@@ -384,6 +502,15 @@ export function InteractiveView({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* HITL Checkpoint Modal (floats above everything) */}
+      <HITLCheckpointModal
+        checkpoint={activeCheckpoint}
+        isOpen={activeCheckpoint !== null}
+        onDecision={handleCheckpointDecision}
+        onExtend={handleCheckpointExtend}
+        onTimeout={handleCheckpointTimeout}
+      />
     </div>
   );
 }

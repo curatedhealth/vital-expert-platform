@@ -34,8 +34,9 @@ export async function POST(req: NextRequest) {
     headers,
     body: req.body,
     // Required for Node.js streaming requests in Next.js route handlers.
+    // Type assertion needed as 'duplex' is Node.js-specific
     duplex: 'half',
-  });
+  } as RequestInit & { duplex: 'half' });
 
   // Stream the upstream response back to the client.
   return new Response(upstream.body, {

@@ -26,9 +26,10 @@ Naming Convention:
 2×2 Matrix Position: Row=Interactive, Col=Manual
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import datetime
 import structlog
+import uuid as uuid_module
 
 from langgraph.graph import StateGraph, END
 
@@ -52,6 +53,22 @@ from .shared.nodes.rag_retriever import create_ask_expert_rag_node
 from .shared.nodes.l3_context_engineer import create_l3_context_engineer_node
 
 logger = structlog.get_logger()
+
+
+def _is_valid_uuid(value: Optional[str]) -> bool:
+    """Check if a string is a valid UUID format."""
+    if not value or value == "anonymous":
+        return False
+    try:
+        uuid_module.UUID(str(value))
+        return True
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+
+def _get_valid_uuid_or_none(value: Optional[str]) -> Optional[str]:
+    """Return the value if it's a valid UUID, otherwise return None."""
+    return value if _is_valid_uuid(value) else None
 
 
 class AskExpertMode1Workflow(BaseWorkflow, AskExpertStreamingMixin):
@@ -195,11 +212,25 @@ class AskExpertMode1Workflow(BaseWorkflow, AskExpertStreamingMixin):
                     }
             
             # Create new session
-            agent_id = state.get('selected_agents', [None])[0]
+            # Both agent_id and user_id are UUID columns in ask_expert_sessions table
+            # Validate both to prevent "invalid input syntax for type uuid" errors
+            raw_agent_id = state.get('selected_agents', [None])[0]
+            agent_id = _get_valid_uuid_or_none(raw_agent_id)
+            user_id = _get_valid_uuid_or_none(state.get('user_id'))
+
+            # Log validation for debugging
+            logger.debug(
+                "ask_expert_mode1_session_ids_validated",
+                raw_agent_id=raw_agent_id,
+                validated_agent_id=agent_id,
+                raw_user_id=state.get('user_id'),
+                validated_user_id=user_id,
+            )
+
             new_session = self.supabase.table('ask_expert_sessions') \
                 .insert({
                     'tenant_id': tenant_id,
-                    'user_id': state.get('user_id'),
+                    'user_id': user_id,
                     'agent_id': agent_id,
                     'mode': 'ask_expert_mode1',
                     'status': 'active',

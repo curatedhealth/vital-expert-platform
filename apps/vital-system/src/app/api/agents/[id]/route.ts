@@ -37,7 +37,7 @@ const updateAgentSchema = z.object({
   system_prompt: z.string().optional().nullable(), // Allow empty system prompt
   capabilities: z.array(z.string()).optional().nullable(),
   knowledge_domains: z.array(z.string()).optional().nullable(),
-  metadata: z.record(z.any()).optional().nullable(),
+  metadata: z.record(z.unknown()).optional().nullable(),
   avatar: z.string().optional().nullable(),
   function_id: optionalUuid,
   function_name: z.string().optional().nullable(),
@@ -100,26 +100,23 @@ export const PUT = withAgentAuth(async (
     }
 
     // Prepare update payload
-    const updatePayload: any = {};
-    
+    const updatePayload: Record<string, unknown> = {};
+    let metadataUpdate: Record<string, unknown> = {};
+
     // Handle display_name - store ONLY in metadata (not as direct column)
     if (validatedData.display_name !== undefined) {
-      if (!updatePayload.metadata) {
-        updatePayload.metadata = currentAgent.metadata || {};
-      }
-      updatePayload.metadata = {
-        ...updatePayload.metadata,
+      metadataUpdate = {
+        ...(currentAgent.metadata as Record<string, unknown> || {}),
+        ...metadataUpdate,
         display_name: validatedData.display_name,
       };
     }
 
     // Handle avatar - store in metadata.avatar
     if (validatedData.avatar !== undefined) {
-      if (!updatePayload.metadata) {
-        updatePayload.metadata = currentAgent.metadata || {};
-      }
-      updatePayload.metadata = {
-        ...updatePayload.metadata,
+      metadataUpdate = {
+        ...(currentAgent.metadata as Record<string, unknown> || {}),
+        ...metadataUpdate,
         avatar: validatedData.avatar,
       };
     }
@@ -187,7 +184,7 @@ export const PUT = withAgentAuth(async (
     };
 
     // Process all validated fields
-    const extraMetadata: Record<string, any> = {};
+    const extraMetadata: Record<string, unknown> = {};
 
     Object.entries(validatedData).forEach(([key, value]) => {
       if (value === undefined) return;
@@ -216,10 +213,11 @@ export const PUT = withAgentAuth(async (
       updatePayload.base_model = validatedData.model;
     }
 
-    // Handle metadata updates (merge all: current, user-provided, and extra fields)
+    // Handle metadata updates (merge all: current, user-provided, metadataUpdate, and extra fields)
     updatePayload.metadata = {
-      ...(currentAgent.metadata || {}),
+      ...(currentAgent.metadata as Record<string, unknown> || {}),
       ...(validatedData.metadata || {}),
+      ...metadataUpdate,
       ...extraMetadata,
     };
 
@@ -242,7 +240,8 @@ export const PUT = withAgentAuth(async (
     // TypeScript uses: 'entry', 'mid', 'senior', 'expert', 'thought_leader'
     // Database enum has: 'beginner', 'intermediate', 'advanced', 'expert'
     if ('expertise_level' in updatePayload && updatePayload.expertise_level) {
-      const mappedLevel = EXPERTISE_LEVEL_MAPPING[updatePayload.expertise_level];
+      const expertiseLevel = updatePayload.expertise_level as string;
+      const mappedLevel = EXPERTISE_LEVEL_MAPPING[expertiseLevel];
       if (mappedLevel) {
         updatePayload.expertise_level = mappedLevel;
       } else {
@@ -253,7 +252,7 @@ export const PUT = withAgentAuth(async (
           originalValue: updatePayload.expertise_level,
         });
         updatePayload.metadata = {
-          ...updatePayload.metadata,
+          ...(updatePayload.metadata as Record<string, unknown> || {}),
           original_expertise_level: updatePayload.expertise_level,
         };
         updatePayload.expertise_level = null;
@@ -336,11 +335,13 @@ export const PUT = withAgentAuth(async (
       );
 
       const embeddingData = await agentEmbeddingService.generateAgentEmbedding(normalizedAgent);
-      await pineconeVectorService.syncAgentToPinecone({
-        agentId: embeddingData.agentId,
-        embedding: embeddingData.embedding,
-        metadata: embeddingData.metadata,
-      });
+      if (pineconeVectorService) {
+        await pineconeVectorService.syncAgentToPinecone({
+          agentId: embeddingData.agentId,
+          embedding: embeddingData.embedding,
+          metadata: embeddingData.metadata,
+        });
+      }
 
       await agentEmbeddingService.storeAgentEmbeddingInSupabase(
         embeddingData.agentId,
@@ -494,13 +495,14 @@ export const DELETE = withAgentAuth(async (
       const { pineconeVectorService } = await import(
         '@/lib/services/vectorstore/pinecone-vector-service'
       );
-      await pineconeVectorService.deleteAgentFromPinecone(id);
-
-      logger.debug('agent_delete_pinecone_deleted', {
-        operation: 'DELETE /api/agents/[id]',
-        operationId,
-        agentId: id,
-      });
+      if (pineconeVectorService) {
+        await pineconeVectorService.deleteAgentFromPinecone(id);
+        logger.debug('agent_delete_pinecone_deleted', {
+          operation: 'DELETE /api/agents/[id]',
+          operationId,
+          agentId: id,
+        });
+      }
     } catch (error) {
       logger.warn('agent_delete_pinecone_failed', {
         operation: 'DELETE /api/agents/[id]',

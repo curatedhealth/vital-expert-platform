@@ -65,7 +65,7 @@ async function fetchRagContext(question: string): Promise<RagContext | null> {
     }));
 
     const summary = formattedSources
-      .map((src, index) => {
+      .map((src: { title: string; snippet?: string; citation?: string; year?: string }, index: number) => {
         const yearLabel = src.year ? ` (${src.year})` : '';
         const snippet = src.snippet
           ? ` – ${src.snippet.slice(0, 220)}${src.snippet.length > 220 ? '…' : ''}`

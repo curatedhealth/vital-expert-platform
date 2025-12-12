@@ -5,6 +5,37 @@ import { withAgentAuth, type AgentPermissionContext } from '@/middleware/agent-a
 import { createLogger } from '@/lib/services/observability/structured-logger';
 import { STARTUP_TENANT_ID } from '@/lib/constants/tenant';
 
+// Tool schema for validation
+interface ToolInput {
+  name: string;
+  code: string;
+  tool_description?: string;
+  llm_description?: string;
+  category?: string;
+  category_parent?: string;
+  tool_type?: 'function' | 'api' | 'workflow' | 'mcp';
+  implementation_type?: string;
+  function_name?: string;
+  implementation_path?: string;
+  input_schema?: Record<string, unknown>;
+  output_schema?: Record<string, unknown>;
+  documentation_url?: string;
+  vendor?: string;
+  version?: string;
+  tags?: string[];
+  capabilities?: string[];
+  max_execution_time_seconds?: number;
+  access_level?: 'public' | 'premium' | 'restricted';
+  is_active?: boolean;
+  langgraph_compatible?: boolean;
+  lifecycle_stage?: string;
+  health_status?: string;
+  business_impact?: string;
+  usage_guide?: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+}
+
 export const GET = withAgentAuth(async (
   request: NextRequest,
   context: AgentPermissionContext
@@ -269,5 +300,134 @@ export const GET = withAgentAuth(async (
       limit: parseInt(request.nextUrl.searchParams.get('limit') || '10000'),
       offset: parseInt(request.nextUrl.searchParams.get('offset') || '0'),
     });
+  }
+});
+
+/**
+ * POST /api/tools-crud - Create a new tool (admin only)
+ */
+export const POST = withAgentAuth(async (
+  request: NextRequest,
+  context: AgentPermissionContext
+) => {
+  const logger = createLogger();
+  const operationId = `tools_create_${Date.now()}`;
+
+  try {
+    const { profile } = context;
+
+    // Check if user is superadmin or admin
+    if (profile.role !== 'super_admin' && profile.role !== 'admin') {
+      logger.warn('tools_create_unauthorized', {
+        operationId,
+        userId: context.user.id,
+        role: profile.role,
+      });
+      return NextResponse.json(
+        { error: 'Unauthorized. Only super_admin or admin can create tools.' },
+        { status: 403 }
+      );
+    }
+
+    const body: ToolInput = await request.json();
+
+    // Validate required fields
+    if (!body.name || !body.code) {
+      return NextResponse.json(
+        { error: 'Name and code are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate code format (slug-like)
+    if (!/^[a-z0-9_-]+$/.test(body.code)) {
+      return NextResponse.json(
+        { error: 'Code must be lowercase alphanumeric with hyphens/underscores only' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getServiceSupabaseClient();
+
+    logger.info('tools_create_started', {
+      operationId,
+      userId: context.user.id,
+      toolName: body.name,
+      toolCode: body.code,
+    });
+
+    // Generate a unique_id if not provided
+    const uniqueId = `tool_${body.code}_${Date.now()}`;
+
+    // Create the tool in dh_tool table
+    const { data: tool, error } = await supabase
+      .from('dh_tool')
+      .insert({
+        name: body.name,
+        code: body.code,
+        unique_id: uniqueId,
+        tool_description: body.tool_description || body.llm_description || null,
+        llm_description: body.llm_description || body.tool_description || null,
+        category: body.category || 'General',
+        category_parent: body.category_parent || body.category || 'General',
+        tool_type: body.tool_type || 'function',
+        implementation_type: body.implementation_type || body.tool_type || 'function',
+        function_name: body.function_name || null,
+        implementation_path: body.implementation_path || null,
+        input_schema: body.input_schema || null,
+        output_schema: body.output_schema || null,
+        documentation_url: body.documentation_url || null,
+        vendor: body.vendor || null,
+        version: body.version || '1.0.0',
+        tags: body.tags || [],
+        capabilities: body.capabilities || [],
+        max_execution_time_seconds: body.max_execution_time_seconds || 30,
+        access_level: body.access_level || 'public',
+        is_active: body.is_active ?? true,
+        langgraph_compatible: body.langgraph_compatible ?? true,
+        lifecycle_stage: body.lifecycle_stage || 'production',
+        health_status: body.health_status || 'healthy',
+        business_impact: body.business_impact || null,
+        usage_guide: body.usage_guide || null,
+        notes: body.notes || null,
+        metadata: body.metadata || {},
+        tenant_id: STARTUP_TENANT_ID,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      logger.error('tools_create_error', new Error(error.message), {
+        operationId,
+        code: error.code,
+      });
+
+      if (error.code === '23505') {
+        return NextResponse.json(
+          { error: 'A tool with this code already exists' },
+          { status: 409 }
+        );
+      }
+
+      return NextResponse.json(
+        { error: 'Failed to create tool', details: error.message },
+        { status: 500 }
+      );
+    }
+
+    logger.info('tools_create_success', {
+      operationId,
+      toolId: tool.id,
+      toolCode: tool.code,
+    });
+
+    return NextResponse.json({ tool }, { status: 201 });
+  } catch (err) {
+    const errorObj = err instanceof Error ? err : new Error('Unknown error');
+    logger.error('tools_create_exception', errorObj, { operationId });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 });

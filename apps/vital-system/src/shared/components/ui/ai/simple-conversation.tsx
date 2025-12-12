@@ -10,7 +10,9 @@ export interface SimpleConversationProps extends React.HTMLAttributes<HTMLDivEle
   autoScroll?: boolean;
 }
 
+const SimpleConversation = forwardRef<HTMLDivElement, SimpleConversationProps>(
   ({ className, messages, isLoading, autoScroll = true, ...props }, ref) => {
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
       if (autoScroll && scrollRef.current) {

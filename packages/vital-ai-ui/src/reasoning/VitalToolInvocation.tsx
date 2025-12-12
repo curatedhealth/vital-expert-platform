@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   Wrench, 
   CheckCircle, 
@@ -15,8 +15,8 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger
-} from '../../ui/collapsible';
-import { Badge } from '../../ui/badge';
+} from '@vital/ui';
+import { Badge } from '@vital/ui';
 
 type ToolStatus = 'pending' | 'running' | 'success' | 'error' | 'timeout';
 

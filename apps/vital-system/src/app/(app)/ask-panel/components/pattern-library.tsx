@@ -8,7 +8,31 @@ import { Button } from '@vital/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
 import { Input } from '@vital/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
-import type { OrchestrationPattern, PatternNode, PatternEdge } from '@/lib/services/langgraph-orchestrator';
+
+// Types for orchestration patterns (previously from langgraph-orchestrator)
+interface PatternNode {
+  id: string;
+  type: 'consult_parallel' | 'consult_sequential' | 'check_consensus' | 'synthesize' | 'cluster_themes' | 'custom';
+  label: string;
+  config?: Record<string, unknown>;
+  interruptBefore?: boolean;
+}
+
+interface PatternEdge {
+  from: string;
+  to: string;
+  condition?: string;
+}
+
+interface OrchestrationPattern {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  nodes: PatternNode[];
+  edges: PatternEdge[];
+  config?: Record<string, unknown>;
+}
 
 // Built-in patterns (these come from the orchestrator)
 const BUILT_IN_PATTERNS: OrchestrationPattern[] = [
@@ -364,7 +388,7 @@ export default function PatternLibrary() {
                 <div>
                   <h3 className="font-semibold mb-2">Configuration</h3>
                   <div className="text-sm text-muted-foreground">
-                    Max Rounds: {selectedPattern.config?.maxRounds || 3}
+                    Max Rounds: {typeof selectedPattern.config?.maxRounds === 'number' ? selectedPattern.config.maxRounds : 3}
                   </div>
                 </div>
               </CardContent>

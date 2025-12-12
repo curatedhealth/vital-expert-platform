@@ -48,6 +48,23 @@ from services.cache_manager import CacheManager
 
 logger = structlog.get_logger()
 
+# UUID validation helpers
+import uuid as uuid_module
+
+def _is_valid_uuid(value) -> bool:
+    """Check if a value is a valid UUID format."""
+    if value is None or value == "anonymous" or value == "None":
+        return False
+    try:
+        uuid_module.UUID(str(value))
+        return True
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+def _get_valid_uuid_str_or_none(value) -> Optional[str]:
+    """Return the string value if it's a valid UUID, otherwise return None."""
+    return str(value) if _is_valid_uuid(value) else None
+
 
 class Memory(BaseModel):
     """Represents a stored memory."""
@@ -131,11 +148,16 @@ class SessionMemoryService:
                 cache_key_prefix=f"memory:{tenant_id}"
             )
             
-            # Prepare memory data
+            # Prepare memory data - use validated UUIDs to prevent "None" string errors
+            validated_user_id = _get_valid_uuid_str_or_none(user_id)
+            if not validated_user_id:
+                logger.warning("Cannot store memory without valid user_id", user_id=user_id)
+                raise ValueError("Valid user_id required for memory storage")
+
             memory_data = {
                 'id': str(uuid4()),
                 'tenant_id': str(tenant_id),
-                'user_id': str(user_id),
+                'user_id': validated_user_id,
                 'session_id': session_id,
                 'memory_type': memory_type,
                 'content': content,
@@ -214,13 +236,19 @@ class SessionMemoryService:
                 cache_key_prefix=f"query:{tenant_id}"
             )
             
+            # Validate user_id before RPC call - return empty if invalid
+            validated_user_id = _get_valid_uuid_str_or_none(user_id)
+            if not validated_user_id:
+                logger.debug("Recall skipped - no valid user_id", user_id=user_id)
+                return []
+
             # Call database function for semantic search
             result = self.supabase.rpc(
                 'search_memories_by_embedding',
                 {
                     'query_embedding': query_embedding.embedding,
                     'p_tenant_id': str(tenant_id),
-                    'p_user_id': str(user_id),
+                    'p_user_id': validated_user_id,
                     'p_memory_types': memory_types,
                     'p_session_id': session_id,
                     'p_min_importance': min_importance,
@@ -316,11 +344,17 @@ class SessionMemoryService:
             List of Memory objects
         """
         try:
+            # Validate user_id before RPC call - return empty if invalid
+            validated_user_id = _get_valid_uuid_str_or_none(user_id)
+            if not validated_user_id:
+                logger.debug("get_recent_memories skipped - no valid user_id", user_id=user_id)
+                return []
+
             result = self.supabase.rpc(
                 'get_recent_memories',
                 {
                     'p_tenant_id': str(tenant_id),
-                    'p_user_id': str(user_id),
+                    'p_user_id': validated_user_id,
                     'p_memory_types': memory_types,
                     'p_days': days,
                     'p_limit': max_results

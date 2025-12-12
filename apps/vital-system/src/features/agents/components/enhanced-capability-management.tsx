@@ -294,11 +294,11 @@ export default function EnhancedCapabilityManagement({
 
   // Filter capabilities based on selected criteria
   const filteredCapabilities = capabilities.filter((capability) => {
-    const matchesStage = !selectedStage || capability.lifecycle_stage === selectedStage;
-    const matchesVitalComponent = !selectedVitalComponent || capability.vital_component === selectedVitalComponent;
-    const matchesPriority = !selectedPriority || capability.priority === selectedPriority;
-    const matchesNewFilter = !showOnlyNew || capability.is_new;
-    const matchesPanelRecommended = !showOnlyPanelRecommended || capability.panel_recommended;
+    const matchesStage = selectedStage === 'all' || capability.stage === selectedStage;
+    const matchesVitalComponent = selectedVitalComponent === 'all' || capability.vital_component === selectedVitalComponent;
+    const matchesPriority = selectedPriority === 'all' || capability.priority === selectedPriority;
+    const matchesNewFilter = !showNewOnly || capability.is_new;
+    const matchesPanelRecommended = !showPanelRecommended || capability.panel_recommended;
     const matchesSearch = !searchQuery ||
       capability.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       capability.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -310,6 +310,10 @@ export default function EnhancedCapabilityManagement({
 
   const CapabilityCard = ({ capability }: { capability: Capability }) => {
     const VitalIcon = VITAL_COMPONENTS[capability.vital_component]?.icon || Settings;
+    const vitalComponent = VITAL_COMPONENTS[capability.vital_component] || { label: 'Unknown', color: 'bg-neutral-100 text-neutral-800' };
+    const stage = LIFECYCLE_STAGES[capability.stage] || { label: 'Unknown', phase: 0 };
+    const priority = PRIORITY_LEVELS[capability.priority] || { label: 'Unknown', color: 'bg-neutral-100 text-neutral-800' };
+    const maturity = MATURITY_LEVELS[capability.maturity] || { label: 'Unknown', progress: 0 };
 
     return (
       <Card
@@ -413,9 +417,10 @@ export default function EnhancedCapabilityManagement({
   };
 
   const CapabilityDetailModal = ({ capability }: { capability: Capability }) => {
-    const vitalComponent = VITAL_COMPONENTS[capability.vital_component] || VITAL_COMPONENTS.value_demonstration;
-    const stage = LIFECYCLE_STAGES[capability.lifecycle_stage] || LIFECYCLE_STAGES.phase_1_discovery;
-    const priority = PRIORITY_LEVELS[capability.priority] || PRIORITY_LEVELS.strategic_180_days;
+    const vitalComponent = VITAL_COMPONENTS[capability.vital_component] || { label: 'Unknown', color: 'bg-neutral-100 text-neutral-800', description: '' };
+    const stage = LIFECYCLE_STAGES[capability.stage] || { label: 'Unknown', phase: 0, description: '' };
+    const priority = PRIORITY_LEVELS[capability.priority] || { label: 'Unknown', color: 'bg-neutral-100 text-neutral-800' };
+    const maturity = MATURITY_LEVELS[capability.maturity] || { label: 'Unknown', progress: 0 };
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

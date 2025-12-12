@@ -33,7 +33,7 @@ interface ThinkingBlockProps {
 }
 
 // 🎯 Step Type Icons
-
+const getStepIcon = (type: ThinkingStep['type']) => {
   switch (type) {
     case 'analysis':
       return <Search className="h-3 w-3" />;
@@ -53,7 +53,7 @@ interface ThinkingBlockProps {
 };
 
 // 🎨 Step Type Colors
-
+const getStepColor = (type: ThinkingStep['type']) => {
   switch (type) {
     case 'analysis':
       return 'bg-blue-50 text-blue-700 border-blue-200';
@@ -74,7 +74,7 @@ interface ThinkingBlockProps {
 
 // 🎭 Confidence Indicator
 const ConfidenceIndicator: React.FC<{ confidence: number }> = ({ confidence }) => {
-
+  const getConfidenceColor = (conf: number) => {
     if (conf >= 0.8) return 'bg-green-500';
     if (conf >= 0.6) return 'bg-yellow-500';
     return 'bg-red-500';
@@ -97,14 +97,13 @@ const ConfidenceIndicator: React.FC<{ confidence: number }> = ({ confidence }) =
 
 // 🕒 Timestamp Display
 const TimestampDisplay: React.FC<{ timestamp: Date }> = ({ timestamp }) => {
-
+  const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
       hour12: false,
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      fractionalSecondDigits: 1
-    } as unknown);
+    });
   };
 
   return (
@@ -124,6 +123,8 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(isExpanded);
 
+  const totalSteps = steps.length;
+  const avgConfidence = steps
     .filter(step => step.confidence !== undefined)
     .reduce((acc, step) => acc + (step.confidence || 0), 0) /
     steps.filter(step => step.confidence !== undefined).length;
@@ -156,7 +157,7 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
                 <ConfidenceIndicator confidence={avgConfidence} />
               )}
               <div className="flex space-x-1">
-                {steps.slice(0, 3).map((step, index) => (
+                {steps.slice(0, 3).map((step) => (
                   <div
                     key={step.id}
                     className={cn(
@@ -247,9 +248,10 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
 };
 
 // 🔄 Hook for building thinking steps
-export const __useThinkingSteps = () => {
+export const useThinkingSteps = () => {
   const [steps, setSteps] = useState<ThinkingStep[]>([]);
 
+  const addStep = (step: Omit<ThinkingStep, 'id' | 'timestamp'>) => {
     const newStep: ThinkingStep = {
       ...step,
       id: `step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -259,11 +261,13 @@ export const __useThinkingSteps = () => {
     return newStep.id;
   };
 
+  const updateStep = (id: string, updates: Partial<ThinkingStep>) => {
     setSteps(prev => prev.map(step =>
       step.id === id ? { ...step, ...updates } : step
     ));
   };
 
+  const clearSteps = () => {
     setSteps([]);
   };
 

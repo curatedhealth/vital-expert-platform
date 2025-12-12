@@ -1,4 +1,4 @@
-import { agentService } from '@/lib/agents/agent-service';
+import { agentService } from '@/features/agents/services/agent-service';
 import { supabase } from '@vital/sdk/client';
 import { getEmbeddingService } from '@/lib/services/embeddings/embedding-service-factory';
 
@@ -627,6 +627,59 @@ export class SupabaseRAGService {
     }
   }
 
+  // ===== ENHANCED SEARCH =====
+
+  /**
+   * Enhanced search with context building and source formatting
+   * Used by /api/llm/query route
+   */
+  async enhancedSearch(
+    query: string,
+    options: {
+      agentType?: string;
+      phase?: string;
+      maxResults?: number;
+      similarityThreshold?: number;
+      includeMetadata?: boolean;
+    } = {}
+  ): Promise<{
+    context: string;
+    sources: Array<{
+      content: string;
+      similarity: number;
+      metadata: Record<string, unknown>;
+    }>;
+  }> {
+    const { maxResults = 5, similarityThreshold = 0.7 } = options;
+
+    // Perform basic search
+    const results = await this.searchKnowledge({
+      text: query,
+      domain: options.agentType,
+      max_results: maxResults,
+      similarity_threshold: similarityThreshold,
+    });
+
+    // Build context from results
+    const context = results
+      .map((r) => r.content)
+      .join('\n\n');
+
+    // Format sources
+    const sources = results.map((r) => ({
+      content: r.content,
+      similarity: r.similarity,
+      metadata: {
+        source_id: r.source_id,
+        source_title: r.source_title,
+        domain: r.domain,
+        ...r.metadata,
+      },
+    }));
+
+    return { context, sources };
+  }
+
   // ===== HEALTH & MONITORING =====
 
   /**
@@ -673,4 +726,4 @@ export class SupabaseRAGService {
   }
 }
 
-export const _supabaseRAGService = new SupabaseRAGService();
+export const supabaseRAGService = new SupabaseRAGService();

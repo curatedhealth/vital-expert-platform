@@ -1,16 +1,16 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { ChevronLeft, ChevronRight, Menu } from 'lucide-react';
-import { Button } from '../../ui/button';
-import { ScrollArea } from '../../ui/scroll-area';
+import { Button } from '@vital/ui';
+import { ScrollArea } from '@vital/ui';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
   TooltipProvider
-} from '../../ui/tooltip';
+} from '@vital/ui';
 
 // ============================================================================
 // SIDEBAR CONTEXT

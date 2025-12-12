@@ -100,12 +100,13 @@ export async function GET(request: NextRequest) {
       // Generate agent coverage insight
       const totalAgents = agents.length;
       const activeAgents = agents.filter(a => a.status === 'active').length;
+      const totalTier3Count = agents.filter(a => a.tier === 3).length;
 
       insights.push({
         type: 'evidence',
         priority: activeAgents < 10 ? 'high' : 'medium',
         title: `${activeAgents} Active AI Agents in ${functionFilter}`,
-        description: `${activeAgents} AI agents are actively supporting ${functionFilter} across ${departmentMap.size} departments. ${tier3Count} ultra-specialist (Tier-3) agents provide strategic decision support.`,
+        description: `${activeAgents} AI agents are actively supporting ${functionFilter} across ${departmentMap.size} departments. ${totalTier3Count} ultra-specialist (Tier-3) agents provide strategic decision support.`,
         confidence: 0.95,
         data_points: totalAgents,
         action_required: activeAgents < 5,

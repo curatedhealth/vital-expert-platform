@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
     const results = await targetIndex.query(queryOptions);
 
     // Filter by minimum score and transform results
-    const matches = (results.matches || []).filter((match) => match.score >= minScore);
+    const matches = (results.matches || []).filter((match) => (match.score ?? 0) >= minScore);
 
     const nodes: GraphNode[] = matches.map((match) =>
       transformPineconeMatch({
@@ -270,7 +270,7 @@ export async function POST(request: NextRequest) {
     const results = await targetIndex.query(queryOptions);
 
     // Filter and transform
-    const matches = (results.matches || []).filter((match) => match.score >= minScore);
+    const matches = (results.matches || []).filter((match) => (match.score ?? 0) >= minScore);
 
     const nodes: GraphNode[] = matches.map((match) =>
       transformPineconeMatch({

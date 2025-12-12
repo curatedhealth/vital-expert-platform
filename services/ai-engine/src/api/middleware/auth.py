@@ -20,7 +20,12 @@ from core.context import set_request_context, clear_request_context, RequestCont
 logger = logging.getLogger(__name__)
 
 # Configuration (from environment)
-JWT_SECRET = os.getenv("JWT_SECRET", "your-jwt-secret")
+# SECURITY: Require JWT_SECRET - no insecure defaults
+_jwt_secret_env = os.getenv("JWT_SECRET")
+if not _jwt_secret_env and os.getenv("ENVIRONMENT", "development") == "production":
+    raise RuntimeError("JWT_SECRET environment variable is required in production")
+JWT_SECRET = _jwt_secret_env or f"dev-only-{os.urandom(16).hex()}"
+
 JWT_ALGORITHM = "HS256"
 SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 

@@ -3,11 +3,11 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: tenantId } = await params;
     const supabase = await createClient();
-    const tenantId = params.id;
 
     // Fetch tenant apps
     const { data, error } = await supabase

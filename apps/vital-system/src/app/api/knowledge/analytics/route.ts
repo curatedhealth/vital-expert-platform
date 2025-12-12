@@ -353,6 +353,11 @@ export async function GET(request: NextRequest) {
     let domainCoverage = null;
     
     try {
+      // Check if Pinecone is configured
+      if (!pineconeVectorService) {
+        throw new Error('Vector search is not configured (PINECONE_API_KEY not set)');
+      }
+
       // Get Pinecone index stats
       const indexStats = await pineconeVectorService.getIndexStats('');
       

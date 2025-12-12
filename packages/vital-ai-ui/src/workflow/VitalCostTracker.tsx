@@ -1,14 +1,14 @@
 'use client';
 
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { DollarSign, TrendingUp, AlertTriangle, Clock, Zap } from 'lucide-react';
-import { Progress } from '../../ui/progress';
+import { Progress } from '@vital/ui';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
   TooltipProvider
-} from '../../ui/tooltip';
+} from '@vital/ui';
 
 interface CostBreakdown {
   llmCalls: number;

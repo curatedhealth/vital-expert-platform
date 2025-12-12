@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { Database, Network, Clock, Zap, Brain, ChevronDown } from 'lucide-react';
 import {
   Card,
@@ -8,13 +8,13 @@ import {
   CardDescription,
   CardHeader,
   CardTitle
-} from '../../ui/card';
-import { Progress } from '../../ui/progress';
+} from '@vital/ui';
+import { Progress } from '@vital/ui';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger
-} from '../../ui/collapsible';
+} from '@vital/ui';
 import { useState } from 'react';
 
 interface VectorScore {

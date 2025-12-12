@@ -1,5 +1,15 @@
-import { type Agent } from '@/lib/stores/chat-store';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/utils';
+
+// Agent interface for avatar generation (minimal required fields)
+export interface AgentAvatarData {
+  id?: string;
+  name?: string;
+  avatar_url?: string;
+  tier?: number;
+  business_function?: string;
+  function_name?: string;
+  agent_levels?: { level_number: number };
+}
 
 // ============================================================================
 // VITAL AVATAR SYSTEM
@@ -15,17 +25,9 @@ const SUPER_AGENT_AVATARS = [
   '/assets/vital/super_agents/super_critic.svg',
 ];
 
-// Available avatar prefixes (tenant/style types)
-const AVATAR_PREFIXES = ['expert', 'foresight', 'medical', 'pharma', 'startup'] as const;
-
-// Available business function categories
-const BUSINESS_FUNCTION_CATEGORIES = [
-  'analytics_insights',
-  'commercial_marketing', 
-  'market_access',
-  'medical_affairs',
-  'product_innovation',
-] as const;
+// Avatar prefixes and business function categories are documented in BUSINESS_FUNCTION_AVATAR_MAP
+// Available prefixes: expert, foresight, medical, pharma, startup
+// Available categories: analytics_insights, commercial_marketing, market_access, medical_affairs, product_innovation
 
 // Business function keyword mapping to avatar categories
 const BUSINESS_FUNCTION_AVATAR_MAP: Record<string, string> = {
@@ -192,8 +194,8 @@ const getVitalAvatar = (
 // COMPONENT
 // ============================================================================
 
-interface AgentAvatarProps {
-  agent?: Agent;
+export interface AgentAvatarProps {
+  agent?: AgentAvatarData;
   avatar?: string;
   name?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'list' | 'card';

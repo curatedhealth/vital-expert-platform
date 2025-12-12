@@ -26,7 +26,7 @@ interface ConversationScrollButtonProps {
 }
 
 // 🎯 Conversation Context
-
+const ConversationContext = React.createContext<{
   scrollToBottom: () => void;
   isAtBottom: boolean;
   showScrollButton: boolean;
@@ -43,13 +43,15 @@ export const Conversation: React.FC<ConversationProps> = ({
   style,
   autoScroll = true,
 }) => {
-
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isScrollingProgrammatically = useRef(false);
+  const lastScrollTop = useRef(0);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [userIntentToScroll, setUserIntentToScroll] = useState(false);
 
   // Auto-scroll to bottom
-
+  const scrollToBottom = () => {
     if (containerRef.current) {
       isScrollingProgrammatically.current = true;
       const { scrollHeight, clientHeight } = containerRef.current;
@@ -66,10 +68,10 @@ export const Conversation: React.FC<ConversationProps> = ({
   };
 
   // Check if user is at bottom
-
+  const checkIfAtBottom = () => {
     if (containerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-
+      const atBottom = scrollHeight - scrollTop - clientHeight < 10; // 10px threshold
       setIsAtBottom(atBottom);
       setShowScrollButton(!atBottom && scrollHeight > clientHeight);
 
@@ -79,7 +81,7 @@ export const Conversation: React.FC<ConversationProps> = ({
   };
 
   // Handle scroll events - detect user intent
-
+  const handleScroll = () => {
     if (isScrollingProgrammatically.current) {
       // Ignore programmatic scrolls
       checkIfAtBottom();
@@ -87,7 +89,7 @@ export const Conversation: React.FC<ConversationProps> = ({
     }
 
     if (containerRef.current) {
-
+      const currentScrollTop = containerRef.current.scrollTop;
       // Only set user intent if they actively scrolled up
       if (currentScrollTop < lastScrollTop.current) {
         setUserIntentToScroll(true);
@@ -101,7 +103,7 @@ export const Conversation: React.FC<ConversationProps> = ({
   useEffect(() => {
     if (autoScroll && isAtBottom && !userIntentToScroll) {
       // Use a small delay to allow for content to render
-
+      const timeout = setTimeout(() => {
         scrollToBottom();
       }, 10);
       return () => clearTimeout(timeout);
@@ -147,6 +149,7 @@ export const ConversationScrollButton: React.FC<ConversationScrollButtonProps> =
 }) => {
   const { scrollToBottom, showScrollButton } = React.useContext(ConversationContext);
 
+  const handleClick = () => {
     scrollToBottom();
     onClick?.();
   };
@@ -199,7 +202,7 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
   className,
 }) => {
   // Get appropriate avatar based on role
-
+  const getAvatarSrc = (customSrc?: string) => {
     if (customSrc) return customSrc;
 
     switch (role) {
@@ -214,6 +217,8 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
         return 'avatar_0002'; // Default to AI avatar
     }
   };
+
+  const avatarSrc = getAvatarSrc(src);
 
   return (
     <div className={cn("flex-shrink-0", className)}>
@@ -232,6 +237,7 @@ export const Message: React.FC<MessageProps> = ({
   children,
   className,
 }) => {
+  const isUser = from === 'user';
 
   return (
     <div className={cn(
@@ -249,7 +255,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
   role,
   className,
 }) => {
-
+  const getContentStyles = (role: 'user' | 'ai' | 'assistant' | 'system') => {
     switch (role) {
       case 'user':
         return 'bg-blue-600 text-white rounded-br-md';

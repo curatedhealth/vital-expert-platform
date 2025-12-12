@@ -182,6 +182,12 @@ class RunnerExecutor:
                 result={"error": f"No runner found for stage: {stage}"},
                 confidence=0.0,
                 quality_scores={},
+                sources=[],
+                artifacts=[],
+                iterations_used=0,
+                tokens_used=0,
+                cost_usd=0.0,
+                duration_ms=0,
             )
 
         # Build persona if not provided

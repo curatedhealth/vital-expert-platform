@@ -16,6 +16,7 @@ import type {
   RecommendSubagentsRequest,
   RecommendSubagentsResponse,
   SubagentHierarchyConfig,
+  DomainExpertiseMetadata,
 } from '../types/agent.types';
 import { PERFORMANCE } from '../constants/design-tokens';
 
@@ -446,7 +447,7 @@ export class AgentApiService {
 
           // Domain expertise match
           if (domain_expertise && agent.metadata?.domain_expertise) {
-            const agentDomain = agent.metadata.domain_expertise;
+            const agentDomain = agent.metadata.domain_expertise as DomainExpertiseMetadata;
             if (
               agentDomain.primary_domain === domain_expertise.primary_domain ||
               agentDomain.sub_domains?.some((d: string) =>
@@ -476,7 +477,7 @@ export class AgentApiService {
             agent_id: agent.id,
             agent_name: agent.name || agent.display_name || 'Unknown Agent',
             agent_level: target_level,
-            domain_expertise: agent.metadata?.domain_expertise,
+            domain_expertise: agent.metadata?.domain_expertise as DomainExpertiseMetadata | undefined,
             match_score: Math.min(score, 1), // Cap at 1.0
             match_reasons: matchReasons,
           };

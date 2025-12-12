@@ -29,7 +29,7 @@ import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { AgentEditFormEnhanced } from './agent-edit-form-enhanced';
 import { agentService } from '../services/agent-service';
 import { useUserRole } from '@/hooks/useUserRole';
-import type { AgentWithCategories } from '@/lib/agents/agent-service';
+import type { AgentWithCategories } from '../services/agent-service';
 import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
 import { cn } from '@vital/ui/lib/utils';
 import type { HealthcareBusinessFunction } from '@/types/healthcare-compliance';
@@ -190,7 +190,8 @@ export function AgentsBoard({
     if (isInComparison(agent.id)) {
       removeFromComparison(agent.id);
     } else {
-      addToComparison(agent);
+      // Cast to the expected Agent type from features/agents/types
+      addToComparison(agent as unknown as Parameters<typeof addToComparison>[0]);
     }
   }, [addToComparison, removeFromComparison, isInComparison]);
 
@@ -204,6 +205,7 @@ export function AgentsBoard({
   const viewMode = externalViewMode ?? 'grid';
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showFileUpload, setShowFileUpload] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [savedAgents, setSavedAgents] = useState<Set<string>>(new Set());
   const [dbBusinessFunctions, setDbBusinessFunctions] = useState<HealthcareBusinessFunction[]>([]);
@@ -706,7 +708,7 @@ export function AgentsBoard({
                       const input = document.createElement('input');
                       input.type = 'file';
                       input.accept = '.json,.md,.markdown';
-                      input.onchange = handleFileUpload as unknown;
+                      input.onchange = (e) => handleFileUpload(e as unknown as React.ChangeEvent<HTMLInputElement>);
                       input.click();
                     }}
                   >
@@ -816,7 +818,7 @@ export function AgentsBoard({
                         )}
                       >
                         <EnhancedAgentCard
-                          agent={agent}
+                          agent={agent as any}
                           onClick={() => onAgentSelect?.(agent)}
                           onAddToChat={onAddToChat ? () => onAddToChat(agent) : undefined}
                           onDuplicate={() => handleDuplicateAgent(agent)}
@@ -1030,7 +1032,7 @@ export function AgentsBoard({
 
       {/* Enhanced Agent Edit Modal (for editing existing agents) */}
       <AgentEditFormEnhanced
-        agent={editingAgent}
+        agent={editingAgent as any}
         open={showEditModal}
         onOpenChange={(open) => {
           setShowEditModal(open);
@@ -1038,7 +1040,7 @@ export function AgentsBoard({
             setEditingAgent(null);
           }
         }}
-        onSave={handleSaveAgent}
+        onSave={handleSaveAgent as any}
       />
     </div>
   );

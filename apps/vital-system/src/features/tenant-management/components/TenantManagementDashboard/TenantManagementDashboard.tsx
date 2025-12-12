@@ -178,6 +178,7 @@ const TenantManagementDashboard: React.FC<Props> = ({ organizationId, userRole }
     );
   }
 
+  const tabs = [
     { key: 'overview', label: 'Overview', icon: '📊' },
     { key: 'members', label: 'Members', icon: '👥' },
     { key: 'billing', label: 'Billing', icon: '💳' },
@@ -186,6 +187,7 @@ const TenantManagementDashboard: React.FC<Props> = ({ organizationId, userRole }
     { key: 'usage', label: 'Usage', icon: '📈' }
   ];
 
+  const getStatusColor = (status: OrganizationStatus) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
       case 'trial': return 'bg-blue-100 text-blue-800';
@@ -195,6 +197,7 @@ const TenantManagementDashboard: React.FC<Props> = ({ organizationId, userRole }
     }
   };
 
+  const getTierColor = (tier: SubscriptionTier) => {
     switch (tier) {
       case 'starter': return 'bg-neutral-100 text-neutral-800';
       case 'professional': return 'bg-blue-100 text-blue-800';
@@ -204,12 +207,14 @@ const TenantManagementDashboard: React.FC<Props> = ({ organizationId, userRole }
     }
   };
 
+  const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency
     }).format(amount);
   };
 
+  const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -217,6 +222,7 @@ const TenantManagementDashboard: React.FC<Props> = ({ organizationId, userRole }
     });
   };
 
+  const calculateUsagePercentage = (used: number, limit: number) => {
     if (limit === -1) return 0; // Unlimited
     return Math.min((used / limit) * 100, 100);
   };

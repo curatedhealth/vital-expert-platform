@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -14,7 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
   TooltipProvider
-} from '../../ui/tooltip';
+} from '@vital/ui';
 
 type TrendDirection = 'up' | 'down' | 'neutral';
 type MetricStatus = 'success' | 'warning' | 'error' | 'neutral';

@@ -1,6 +1,48 @@
 // Agents Components Module
-export { AgentDetailsModal } from './agent-details-modal';
-export { AgentCard } from './AgentCard';
+// Note: Agent detail view is now at /agents/[slug]/page.tsx (full-page route)
+
+// ============================================================================
+// AGENT CARD COMPONENTS
+// ============================================================================
+//
+// LOCAL (Agent Views - Primary):
+// - agent-card.tsx → PRIMARY card for agent library/grid views
+//   Features: Size variants (compact/comfortable/detailed), level badges, metadata
+//
+// @vital/ui (Shared Library - For other contexts):
+// - AgentCardMinimal: Inline compact display
+// - AgentCardCompact: Simple grid cards
+// - AgentCardDetailed: Full details
+// - EnhancedAgentCard: Premium design with animations
+//
+// DEPRECATED:
+// - AgentCard.tsx → Old admin card, use agent-card.tsx or EnhancedAgentCard
+// - agent-card-enhanced.tsx → Use EnhancedAgentCard from @vital/ui
+
+// Primary agent card for agent views (uses cva variants)
+export { AgentCard, AgentCardSkeleton, agentCardVariants, type AgentCardProps } from './agent-card';
+
+// Re-exports from @vital/ui for other contexts
+export {
+  EnhancedAgentCard,
+  AgentCardGrid,
+  AgentCardMinimal,
+  AgentCardCompact,
+  AgentCardDetailed,
+  AgentCardSelectable,
+  type AgentCardData,
+  type AgentCardMinimalProps,
+  type AgentCardCompactProps,
+  type AgentCardDetailedProps,
+  type AgentCardSelectableProps,
+} from '@vital/ui';
+
+// Legacy admin card (deprecated - use AgentCard from agent-card.tsx)
+export { AgentCard as AgentCardAdmin } from './AgentCard';
+
+// ============================================================================
+// OTHER AGENT COMPONENTS
+// ============================================================================
 // export { AgentImport } from './AgentImport'; // Temporarily disabled
 export { AgentsBoard } from './agents-board';
 export { KnowledgeGraphVisualization } from './knowledge-graph-view';
@@ -39,5 +81,4 @@ export { ContextAssignmentTab } from './context-assignment-tab';
 // Agent instantiation modal (pre-chat context injection)
 export { AgentInstantiationModal } from './agent-instantiation-modal';
 
-// Agent Detail Modal V2 (with all tabs)
-export { AgentDetailModal } from './agent-detail-modal-v2';
+// Agent detail view: See /agents/[slug]/page.tsx for full-page detail route

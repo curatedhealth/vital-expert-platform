@@ -68,6 +68,8 @@ import type {
   SubagentHierarchyConfig,
   ContextEngineerConfig,
   DEFAULT_HIERARCHY_CONFIG,
+  DomainExpertiseMetadata,
+  DomainExpertise,
 } from '../types/agent.types';
 import { agentApi } from '../services/agent-api';
 
@@ -88,6 +90,25 @@ interface SubagentCardProps {
   onToggle: () => void;
   showMatchScore?: boolean;
   disabled?: boolean;
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Converts DomainExpertise enum to DomainExpertiseMetadata object
+ * Used when the API expects metadata format but agent has enum value
+ */
+function toDomainExpertiseMetadata(
+  domain: DomainExpertise | undefined
+): DomainExpertiseMetadata | undefined {
+  if (!domain) return undefined;
+  return {
+    primary_domain: domain,
+    sub_domains: [],
+    expertise_level: 'intermediate',
+  };
 }
 
 // ============================================================================
@@ -247,13 +268,21 @@ export const SubagentSelector: React.FC<SubagentSelectorProps> = ({
   // ============================================================================
 
   const fetchRecommendations = useCallback(async () => {
+    if (!agent.id) {
+      console.warn('Cannot fetch recommendations: agent.id is undefined');
+      return;
+    }
+
     setLoading(true);
     try {
+      // Convert enum to metadata format for API
+      const domainMetadata = toDomainExpertiseMetadata(agent.domain_expertise);
+
       // Fetch L4 Worker recommendations
       const l4Response = await agentApi.getRecommendedSubagents({
         parent_agent_id: agent.id,
         target_level: 4,
-        domain_expertise: agent.metadata?.domain_expertise,
+        domain_expertise: domainMetadata,
         department_name: agent.department_name,
         function_name: agent.function_name,
         limit: 10,
@@ -264,7 +293,7 @@ export const SubagentSelector: React.FC<SubagentSelectorProps> = ({
       const l5Response = await agentApi.getRecommendedSubagents({
         parent_agent_id: agent.id,
         target_level: 5,
-        domain_expertise: agent.metadata?.domain_expertise,
+        domain_expertise: domainMetadata,
         department_name: agent.department_name,
         function_name: agent.function_name,
         limit: 10,
@@ -423,7 +452,9 @@ export const SubagentSelector: React.FC<SubagentSelectorProps> = ({
         last_configured_at: new Date().toISOString(),
       };
 
-      await agentApi.updateAgentHierarchy(agent.id, finalConfig);
+      if (agent.id) {
+        await agentApi.updateAgentHierarchy(agent.id, finalConfig);
+      }
       onSave?.(finalConfig);
     } catch (error) {
       console.error('Failed to save hierarchy:', error);
@@ -639,7 +670,7 @@ export const SubagentSelector: React.FC<SubagentSelectorProps> = ({
               <div className="space-y-2">
                 <Label className="text-sm">Context Engineer Agent</Label>
                 <Select
-                  value={config.context_engineer.agent_id || ''}
+                  value={config.context_engineer.agent_id ?? ''}
                   onValueChange={handleContextEngineerChange}
                   disabled={readOnly}
                 >
@@ -647,11 +678,13 @@ export const SubagentSelector: React.FC<SubagentSelectorProps> = ({
                     <SelectValue placeholder="Select a context engineer..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {contextEngineers.map((eng) => (
-                      <SelectItem key={eng.id} value={eng.id}>
-                        {eng.name || eng.display_name}
-                      </SelectItem>
-                    ))}
+                    {contextEngineers
+                      .filter((eng): eng is typeof eng & { id: string } => !!eng.id)
+                      .map((eng) => (
+                        <SelectItem key={eng.id} value={eng.id}>
+                          {eng.name || eng.display_name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -744,7 +777,7 @@ export const SubagentSelector: React.FC<SubagentSelectorProps> = ({
                               size="sm"
                               className="h-7 w-7 p-0"
                               onClick={() =>
-                                handleToggleL4({
+                                result.id && handleToggleL4({
                                   agent_id: result.id,
                                   agent_name: result.name || '',
                                   agent_level: 4,
@@ -752,7 +785,7 @@ export const SubagentSelector: React.FC<SubagentSelectorProps> = ({
                                   match_reasons: ['Manually selected'],
                                 })
                               }
-                              disabled={readOnly || selectedL4Ids.has(result.id)}
+                              disabled={readOnly || !result.id || selectedL4Ids.has(result.id)}
                             >
                               <Plus className="h-3.5 w-3.5" />
                             </Button>

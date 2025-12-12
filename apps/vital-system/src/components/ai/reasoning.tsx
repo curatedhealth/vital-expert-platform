@@ -224,7 +224,7 @@ export function ReasoningContent({
   const { isOpen } = useReasoningContext('ReasoningContent')
   const containerRef = React.useRef<HTMLDivElement>(null)
   const contentRef = React.useRef<HTMLDivElement>(null)
-  const [height, setHeight] = React.useState<number>(isOpen ? undefined : 0)
+  const [height, setHeight] = React.useState<number | undefined>(isOpen ? undefined : 0)
 
   React.useEffect(() => {
     if (!isBrowser || !contentRef.current) {

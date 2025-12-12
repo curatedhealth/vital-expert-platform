@@ -143,6 +143,7 @@ const RemoteMonitoringBuilder: React.FC = () => {
     }
   ];
 
+  const createDataPipeline = () => {
     const pipeline: DataPipeline = {
       id: 'pipeline-1',
       name: 'Patient Remote Monitoring Pipeline',
@@ -216,6 +217,8 @@ const RemoteMonitoringBuilder: React.FC = () => {
     setDataPipeline(pipeline);
   };
 
+  const generateConfigCode = () => {
+    const config = {
       devices: selectedDevices.map(device => ({
         id: device.id,
         type: device.type,
@@ -232,6 +235,8 @@ const RemoteMonitoringBuilder: React.FC = () => {
     return JSON.stringify(config, null, 2);
   };
 
+  const exportDeploymentConfig = () => {
+    const deployment = {
       infrastructure: {
         provider: 'aws',
         services: {
@@ -248,7 +253,6 @@ const RemoteMonitoringBuilder: React.FC = () => {
         authorization: 'RBAC',
         audit_logging: true
       },
-    const deployment = {
       compliance: {
         hipaa: {
           encryption_at_rest: true,

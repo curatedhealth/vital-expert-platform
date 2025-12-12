@@ -18,6 +18,10 @@ interface PromptInputContextValue {
   showModelSelector?: boolean;
 }
 
+const PromptInputContext = React.createContext<PromptInputContextValue | null>(null);
+
+const usePromptInput = () => {
+  const context = React.useContext(PromptInputContext);
   if (!context) {
     throw new Error('usePromptInput must be used within a PromptInput');
   }
@@ -34,6 +38,7 @@ interface PromptInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
   showModelSelector?: boolean;
 }
 
+const PromptInput = React.forwardRef<HTMLDivElement, PromptInputProps>(
   ({ className, onSubmit, isSubmitting, models, selectedModel, onModelChange, showModelSelector = true, children, ...props }, ref) => {
     return (
       <PromptInputContext.Provider
@@ -67,16 +72,18 @@ interface PromptInputTextareaProps extends Omit<React.TextareaHTMLAttributes<HTM
   onSubmit?: (value: string) => void;
 }
 
+const PromptInputTextarea = React.forwardRef<HTMLTextAreaElement, PromptInputTextareaProps>(
   ({ className, onSubmit: propOnSubmit, onKeyDown, onChange, ...props }, ref) => {
     const { onSubmit: contextOnSubmit, isSubmitting } = usePromptInput();
-
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const [value, setValue] = React.useState(props.value || '');
 
     // Combine refs
     React.useImperativeHandle(ref, () => textareaRef.current!);
 
     // Auto-resize functionality
-
+    const adjustHeight = React.useCallback(() => {
+      const textarea = textareaRef.current;
       if (textarea) {
         textarea.style.height = 'auto';
         textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`; // Max height of 200px
@@ -84,7 +91,8 @@ interface PromptInputTextareaProps extends Omit<React.TextareaHTMLAttributes<HTM
     }, []);
 
     // Handle input change
-
+    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newValue = e.target.value;
       setValue(newValue);
       onChange?.(e);
 
@@ -93,14 +101,14 @@ interface PromptInputTextareaProps extends Omit<React.TextareaHTMLAttributes<HTM
     };
 
     // Handle keyboard shortcuts
-
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       onKeyDown?.(e);
 
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-
+        const submitHandler = propOnSubmit || contextOnSubmit;
         if (submitHandler && !isSubmitting) {
-
+          const currentValue = String(value);
           if (currentValue.trim()) {
             submitHandler(currentValue);
             setValue(''); // Clear input after submit
@@ -154,6 +162,7 @@ PromptInputTextarea.displayName = 'PromptInputTextarea';
 // Toolbar component
 interface PromptInputToolbarProps extends React.HTMLAttributes<HTMLDivElement> { /* TODO: implement */ }
 
+const PromptInputToolbar = React.forwardRef<HTMLDivElement, PromptInputToolbarProps>(
   ({ className, children, ...props }, ref) => {
     return (
       <div
@@ -177,6 +186,7 @@ interface PromptInputSubmitProps extends React.ButtonHTMLAttributes<HTMLButtonEl
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 }
 
+const PromptInputSubmit = React.forwardRef<HTMLButtonElement, PromptInputSubmitProps>(
   ({ className, children, size = 'sm', variant = 'default', ...props }, ref) => {
     const { isSubmitting } = usePromptInput();
 
@@ -207,6 +217,7 @@ interface PromptInputModelSelectorProps {
   className?: string;
 }
 
+const PromptInputModelSelector = React.forwardRef<HTMLButtonElement, PromptInputModelSelectorProps>(
   ({ className }, ref) => {
     const { models, selectedModel, onModelChange, showModelSelector } = usePromptInput();
 
@@ -245,8 +256,13 @@ interface PromptInputCharCounterProps {
   className?: string;
 }
 
+const PromptInputCharCounter = React.forwardRef<HTMLSpanElement, PromptInputCharCounterProps>(
   ({ value, maxLength, className }, ref) => {
     if (!maxLength) return null;
+
+    const count = value.length;
+    const isNearLimit = count >= maxLength * 0.9;
+    const isOverLimit = count > maxLength;
 
     return (
       <span

@@ -10,9 +10,10 @@
  * - Full 12-event SSE handling (token, reasoning, citation, tool_call, etc.)
  * - Proper streaming without 90s delays
  * - Web search fallback sources displayed
+ * - Expert selection from sidebar via custom events
  */
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 
 import { useInteractiveStore } from '../stores/interactive-store';
 import { ChatPane } from './panes/ChatPane';
@@ -25,9 +26,11 @@ type ChatDashboardProps = {
   tenantId?: string;
   conversationId?: string;
   expertId?: string;
+  /** When true, uses Mode 2 (auto expert selection via Fusion Intelligence) */
+  autoSelectExpert?: boolean;
 };
 
-export function ChatDashboard({ tenantId, conversationId, expertId }: ChatDashboardProps) {
+export function ChatDashboard({ tenantId, conversationId, expertId, autoSelectExpert = false }: ChatDashboardProps) {
   // Legacy store for ContextRail compatibility (will deprecate)
   const {
     mode,
@@ -38,6 +41,11 @@ export function ChatDashboard({ tenantId, conversationId, expertId }: ChatDashbo
     activeSource,
     focusCitation,
   } = useInteractiveStore();
+
+  // Sync external autoSelectExpert prop to internal mode store
+  useEffect(() => {
+    setMode(autoSelectExpert ? 'mode_2' : 'mode_1');
+  }, [autoSelectExpert, setMode]);
 
   // NEW: Use the proper streaming hook with full event support
   const {
@@ -63,6 +71,40 @@ export function ChatDashboard({ tenantId, conversationId, expertId }: ChatDashbo
       console.log('Message complete:', msg.id, 'citations:', msg.citations?.length || 0);
     },
   });
+
+  // Listen for expert selection events from sidebar (Mode 1)
+  // Immediately call selectExpert on the hook so it's ready when sending messages
+  useEffect(() => {
+    // Skip if autoSelectExpert is true (Mode 2 uses Fusion Intelligence)
+    if (autoSelectExpert) return;
+
+    interface ExpertSelectedEvent {
+      expertId: string;
+      expert: { id: string; name: string; level: string; specialty: string };
+    }
+
+    const handleExpertSelected = (event: CustomEvent<ExpertSelectedEvent>) => {
+      const { expert } = event.detail;
+
+      // Immediately register expert with the hook
+      selectExpert({
+        id: expert.id,
+        name: expert.name,
+        domain: expert.specialty || '',
+        level: (expert.level as 'L1' | 'L2' | 'L3') || 'L2',
+        specialty: expert.specialty,
+      });
+    };
+
+    window.addEventListener('ask-expert:expert-selected', handleExpertSelected as EventListener);
+
+    // On mount, request current selection from sidebar (in case it was set before we mounted)
+    window.dispatchEvent(new CustomEvent('ask-expert:request-selection'));
+
+    return () => {
+      window.removeEventListener('ask-expert:expert-selected', handleExpertSelected as EventListener);
+    };
+  }, [selectExpert, autoSelectExpert]);
 
   // Sync selectedExpert to legacy store for ContextRail
   useEffect(() => {
@@ -177,6 +219,27 @@ export function ChatDashboard({ tenantId, conversationId, expertId }: ChatDashbo
 
   const toggleMode = () => setMode(mode === 'mode_1' ? 'mode_2' : 'mode_1');
 
+  // Default suggestions for new conversations
+  const defaultSuggestions = useMemo(() => {
+    if (messages.length > 0) return [];
+    return [
+      'What are the latest treatment guidelines for Type 2 Diabetes?',
+      'Explain the mechanism of action of GLP-1 agonists',
+      'Compare SGLT2 inhibitors vs DPP-4 inhibitors',
+    ];
+  }, [messages.length]);
+
+  // Map current citations to the expected format
+  const mappedCitations = useMemo(() =>
+    currentCitations.map((c) => ({
+      id: c.id,
+      title: c.title,
+      url: c.url,
+      abstract: c.excerpt,
+    })),
+    [currentCitations]
+  );
+
   return (
     <div className="h-full w-full bg-background grid grid-cols-12 overflow-hidden">
       <main className="col-span-8 flex flex-col border-r relative">
@@ -187,6 +250,10 @@ export function ChatDashboard({ tenantId, conversationId, expertId }: ChatDashbo
           activeAgent={activeAgent}
           thinkingState={thinkingState}
           onToggleMode={toggleMode}
+          isStreaming={isStreaming}
+          currentContent={currentContent}
+          currentCitations={mappedCitations}
+          suggestions={defaultSuggestions}
         />
         {isStreaming && (
           <button

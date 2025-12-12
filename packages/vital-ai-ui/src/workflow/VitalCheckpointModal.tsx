@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -9,10 +9,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../../ui/dialog';
-import { Button } from '../../ui/button';
-import { Textarea } from '../../ui/textarea';
-import { Label } from '../../ui/label';
+} from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Textarea } from '@vital/ui';
+import { Label } from '@vital/ui';
 import { 
   AlertCircle, 
   CheckCircle, 
@@ -21,7 +21,7 @@ import {
   XCircle,
   Loader2
 } from 'lucide-react';
-import { Badge } from '../../ui/badge';
+import { Badge } from '@vital/ui';
 
 type CheckpointType = 'approval' | 'review' | 'safety' | 'quality' | 'compliance';
 type CheckpointUrgency = 'low' | 'medium' | 'high' | 'critical';

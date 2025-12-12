@@ -20,9 +20,11 @@ import type { NextRequest, NextResponse } from 'next/server';
 // ============================================================================
 
 const CSRF_TOKEN_LENGTH = 32;
-const CSRF_COOKIE_NAME = '__Host-csrf-token';
+// Use __Host- prefix only in production (requires secure: true)
+// In development, use simple name since we can't set secure: true on localhost HTTP
+const CSRF_COOKIE_NAME = process.env.NODE_ENV === 'production' ? '__Host-csrf-token' : 'csrf_token';
 const CSRF_HEADER_NAME = 'x-csrf-token';
-const CSRF_SECRET = process.env.CSRF_SECRET!;
+const CSRF_SECRET = process.env.CSRF_SECRET || 'development-csrf-secret';
 
 /**
  * Methods that require CSRF protection

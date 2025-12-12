@@ -78,7 +78,8 @@ interface FormState {
   temperature: number;
   max_tokens: number;
   context_window: number;
-  token_budget: number;
+  token_budget_min: number;
+  token_budget_max: number;
 
   // Capabilities
   capabilities: string[];
@@ -111,15 +112,19 @@ export const AgentEditForm: React.FC<AgentEditFormProps> = ({
     display_name: '',
     description: '',
     tagline: '',
+    version: '1.0.0',
     function_name: '',
     department_name: '',
     role_name: '',
     agent_levels: { level_number: 3 },
+    tier: 2,
     status: 'development',
     model: 'gpt-4',
     temperature: 0.7,
     max_tokens: 2000,
     context_window: 8000,
+    token_budget_min: 1000,
+    token_budget_max: 2000,
     capabilities: [],
     tools: [],
     skills: [],
@@ -137,15 +142,19 @@ export const AgentEditForm: React.FC<AgentEditFormProps> = ({
         display_name: agent.display_name || agent.name || '',
         description: agent.description || '',
         tagline: agent.tagline || '',
+        version: agent.version || '1.0.0',
         function_name: agent.function_name || '',
         department_name: agent.department_name || '',
         role_name: agent.role_name || '',
-        agent_levels: agent.agent_levels || { level_number: 3 },
-        status: agent.status || 'development',
+        agent_levels: agent.agent_levels || { level_number: 3 as AgentLevelNumber },
+        tier: (agent.tier as 1 | 2 | 3) || 2,
+        status: (agent.status as FormState['status']) || 'development',
         model: agent.model || 'gpt-4',
         temperature: agent.temperature ?? 0.7,
         max_tokens: agent.max_tokens || 2000,
         context_window: agent.context_window || 8000,
+        token_budget_min: agent.token_budget_min || 1000,
+        token_budget_max: agent.token_budget_max || 2000,
         capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
         tools: Array.isArray(agent.tools) ? agent.tools : [],
         skills: Array.isArray(agent.skills) ? agent.skills : [],
@@ -163,10 +172,13 @@ export const AgentEditForm: React.FC<AgentEditFormProps> = ({
 
     setSaving(true);
     try {
+      // Convert FormState to Partial<Agent> format
       await onSave({
         id: agent.id,
         ...formState,
-      });
+        // Ensure agent_levels is properly typed
+        agent_levels: formState.agent_levels as Agent['agent_levels'],
+      } as unknown as Partial<Agent>);
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to save agent:', error);

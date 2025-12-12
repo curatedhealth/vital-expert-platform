@@ -110,12 +110,12 @@ export function AgentsTable({ onAgentSelect, onAddToChat }: AgentsTableProps) {
       // Role filter
       const matchesRole = filters.selectedRole === 'all' || agent.role === filters.selectedRole;
 
-      // Tier filter
+      // Tier/Level filter - use tier from store Agent
+      const agentTier = String(agent.tier);
       const matchesTier =
         filters.selectedAgentLevel === 'all' ||
-        agent.agent_level === filters.selectedAgentLevel ||
-        agent.agent_level_name === filters.selectedAgentLevel ||
-        agent.level === filters.selectedAgentLevel;
+        agentTier === filters.selectedAgentLevel ||
+        `L${agentTier}` === filters.selectedAgentLevel;
 
       // Status filter
       const matchesStatus =
@@ -202,8 +202,7 @@ export function AgentsTable({ onAgentSelect, onAddToChat }: AgentsTableProps) {
                             'bg-blue-100 text-blue-700 border-blue-200',
                           agent.status === 'testing' &&
                             'bg-yellow-100 text-yellow-700 border-yellow-200',
-                          agent.status === 'deprecated' && 'bg-red-100 text-red-700 border-red-200',
-                          agent.status === 'inactive' && 'bg-neutral-100 text-neutral-600 border-neutral-200'
+                          agent.status === 'deprecated' && 'bg-red-100 text-red-700 border-red-200'
                         )}
                       >
                         {agent.status === 'active'

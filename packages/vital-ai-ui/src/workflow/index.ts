@@ -206,9 +206,9 @@ export type {
 
 export type {
   // VITAL-specific types
-  AgentLevel,
-  RiskLevel,
-  VitalMode,
+  AgentLevel as ConfirmationAgentLevel,
+  RiskLevel as ConfirmationRiskLevel,
+  VitalMode as ConfirmationVitalMode,
   ConfirmationAgent,
   ConfirmationCost,
   // AI SDK compatible types
@@ -237,7 +237,7 @@ export type {
   VitalMode as CheckpointVitalMode,
   CheckpointType,
   CheckpointAgent,
-  CheckpointBudget,
+  CheckpointBudget as CheckpointBudgetData,
   // Component props
   VitalCheckpointProps,
   VitalCheckpointIconProps,

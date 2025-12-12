@@ -3,7 +3,16 @@
  * Implements Guide Section 6.2: Voting Mechanisms
  */
 
-import type { AgentReply } from './langgraph-orchestrator';
+// Type defined locally (previously from langgraph-orchestrator)
+export interface AgentReply {
+  persona: string;
+  text: string;
+  confidence: number;
+  citations: string[];
+  timestamp: string;
+  round: number;
+  toolCalls?: Array<{ name: string; args: Record<string, unknown>; result?: string }>;
+}
 
 export interface VoteResult {
   decision: string;

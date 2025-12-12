@@ -57,7 +57,7 @@ type KanbanColumn = {
 // Constants
 // ============================================================================
 
-const STATUS_COLUMNS = {
+const STATUS_COLUMNS: Record<string, { title: string; color: string; icon: typeof CheckCircle2 }> = {
   active: {
     title: 'Active',
     color: 'border-green-200 bg-green-50/50',
@@ -73,37 +73,61 @@ const STATUS_COLUMNS = {
     color: 'border-neutral-200 bg-neutral-50/50',
     icon: Clock,
   },
-} as const;
+  development: {
+    title: 'Development',
+    color: 'border-blue-200 bg-blue-50/50',
+    icon: AlertCircle,
+  },
+  deprecated: {
+    title: 'Deprecated',
+    color: 'border-red-200 bg-red-50/50',
+    icon: Clock,
+  },
+};
 
-const TIER_COLUMNS = {
+const TIER_COLUMNS: Record<string, { title: string; color: string; icon: typeof Brain }> = {
   '1': {
-    title: 'Tier 1: Foundational',
+    title: 'L1: Master',
     color: 'border-blue-200 bg-blue-50/50',
     icon: Brain,
   },
   '2': {
-    title: 'Tier 2: Specialist',
+    title: 'L2: Expert',
     color: 'border-purple-200 bg-purple-50/50',
     icon: Sparkles,
   },
   '3': {
-    title: 'Tier 3: Ultra-Specialist',
+    title: 'L3: Specialist',
     color: 'border-amber-200 bg-amber-50/50',
     icon: Zap,
   },
-} as const;
+  '4': {
+    title: 'L4: Worker',
+    color: 'border-orange-200 bg-orange-50/50',
+    icon: Sparkles,
+  },
+  '5': {
+    title: 'L5: Tool',
+    color: 'border-neutral-200 bg-neutral-50/50',
+    icon: Zap,
+  },
+};
 
-const TIER_COLORS = {
+const TIER_COLORS: Record<string, string> = {
   '1': 'bg-blue-50 text-blue-700 border-blue-200',
   '2': 'bg-purple-50 text-purple-700 border-purple-200',
   '3': 'bg-amber-50 text-amber-700 border-amber-200',
-} as const;
+  '4': 'bg-orange-50 text-orange-700 border-orange-200',
+  '5': 'bg-neutral-50 text-neutral-700 border-neutral-200',
+};
 
-const STATUS_COLORS = {
+const STATUS_COLORS: Record<string, string> = {
   active: 'bg-green-50 text-green-700 border-green-200',
   testing: 'bg-yellow-50 text-yellow-700 border-yellow-200',
   inactive: 'bg-neutral-50 text-neutral-700 border-neutral-200',
-} as const;
+  development: 'bg-blue-50 text-blue-700 border-blue-200',
+  deprecated: 'bg-red-50 text-red-700 border-red-200',
+};
 
 // ============================================================================
 // Helper Functions
@@ -144,7 +168,8 @@ function SortableAgentCard({ agent, onSelect, isDragging }: SortableAgentCardPro
     opacity: isSortableDragging ? 0.5 : 1,
   };
 
-  const TierIcon = agent.tier ? (agent.tier === '1' ? Brain : agent.tier === '2' ? Sparkles : Zap) : Brain;
+  const tierStr = agent.tier?.toString();
+  const TierIcon = tierStr ? (tierStr === '1' ? Brain : tierStr === '2' ? Sparkles : tierStr === '3' ? Zap : tierStr === '4' ? Sparkles : Zap) : Brain;
 
   return (
     <div
@@ -191,10 +216,10 @@ function SortableAgentCard({ agent, onSelect, isDragging }: SortableAgentCardPro
 
           {/* Badges */}
           <div className="flex flex-wrap gap-2">
-            {agent.tier && (
-              <Badge variant="outline" className={cn('text-xs', TIER_COLORS[agent.tier])}>
+            {tierStr && (
+              <Badge variant="outline" className={cn('text-xs', TIER_COLORS[tierStr])}>
                 <TierIcon className="h-3 w-3 mr-1" />
-                T{agent.tier}
+                L{tierStr}
               </Badge>
             )}
 
@@ -315,7 +340,7 @@ export function AgentsKanban({
         title: config.title,
         color: config.color,
         icon: config.icon,
-        agents: agents.filter((a) => a.tier === tier),
+        agents: agents.filter((a) => a.tier?.toString() === tier),
       }));
     }
   }, [agents, groupBy]);

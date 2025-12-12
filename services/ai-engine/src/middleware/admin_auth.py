@@ -47,10 +47,17 @@ logger = structlog.get_logger()
 
 class AdminAuthConfig:
     """Admin authentication configuration."""
-    
+
     # Environment-based configuration
-    BYPASS_ADMIN_AUTH = os.getenv("BYPASS_ADMIN_AUTH", "true").lower() == "true"
-    JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-key-change-in-production")
+    # SECURITY: Default to FALSE - authentication should be opt-out, not opt-in
+    BYPASS_ADMIN_AUTH = os.getenv("BYPASS_ADMIN_AUTH", "false").lower() == "true"
+
+    # SECURITY: Require JWT_SECRET in production - no insecure defaults
+    _jwt_secret_env = os.getenv("JWT_SECRET")
+    if not _jwt_secret_env and os.getenv("ENVIRONMENT", "development") == "production":
+        raise RuntimeError("JWT_SECRET environment variable is required in production")
+    JWT_SECRET = _jwt_secret_env or f"dev-only-{os.urandom(16).hex()}"
+
     JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
     ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")  # Service-to-service key
     

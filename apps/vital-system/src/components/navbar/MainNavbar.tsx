@@ -137,28 +137,22 @@ const discoverItems = [
     icon: Brain
   },
   {
+    label: 'Skills',
+    href: '/discover/skills',
+    description: 'Agent skills and capabilities',
+    icon: Zap
+  },
+  {
+    label: 'Tools',
+    href: '/discover/tools',
+    description: 'Browse available tools and integrations',
+    icon: Wrench
+  },
+  {
     label: 'Knowledge',
     href: '/knowledge',
     description: 'Domain knowledge base',
     icon: BookOpen
-  },
-  {
-    label: 'Personas',
-    href: '/personas',
-    description: 'User personas and organizational archetypes',
-    icon: UserCircle
-  },
-  {
-    label: 'Ontology',
-    href: '/ontology-explorer',
-    description: 'Interactive graph visualization of the enterprise',
-    icon: Network
-  },
-  {
-    label: 'Jobs-to-be-Done',
-    href: '/jobs-to-be-done',
-    description: 'JTBD framework and outcome mapping',
-    icon: Target
   },
   {
     label: 'Prompts',
@@ -168,8 +162,26 @@ const discoverItems = [
   },
 ]
 
-// OPTIMIZE - Analytics and insights
+// OPTIMIZE - Analytics, insights and strategy
 const optimizeItems = [
+  {
+    label: 'Jobs-to-be-Done',
+    href: '/optimize/jobs-to-be-done',
+    description: 'JTBD framework and outcome mapping',
+    icon: Target
+  },
+  {
+    label: 'Personas',
+    href: '/optimize/personas',
+    description: 'User personas and organizational archetypes',
+    icon: UserCircle
+  },
+  {
+    label: 'Ontology',
+    href: '/optimize/ontology',
+    description: 'Interactive graph visualization of the enterprise',
+    icon: Network
+  },
   {
     label: 'Value View',
     href: '/value',
@@ -181,12 +193,6 @@ const optimizeItems = [
     href: '/medical-strategy',
     description: 'Evidence-based decision making and strategy',
     icon: FileText
-  },
-  {
-    label: 'Tools',
-    href: '/tools',
-    description: 'Explore available tools',
-    icon: Wrench
   },
 ]
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   ChevronRight, 
   Info, 
@@ -18,7 +18,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger
-} from '../../ui/accordion';
+} from '@vital/ui';
 import { formatDistanceToNow } from 'date-fns';
 
 type DecisionType = 'selection' | 'delegation' | 'tool_call' | 'checkpoint' | 'output';

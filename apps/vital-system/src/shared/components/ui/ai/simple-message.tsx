@@ -8,7 +8,10 @@ export interface SimpleMessageProps extends React.HTMLAttributes<HTMLDivElement>
   loading?: boolean;
 }
 
+const SimpleMessage = forwardRef<HTMLDivElement, SimpleMessageProps>(
   ({ className, role, content, loading, ...props }, ref) => {
+    const isUser = role === "user";
+    const isSystem = role === "system";
 
     return (
       <div

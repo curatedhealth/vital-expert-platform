@@ -51,7 +51,7 @@ export const HITLControls: React.FC<HITLControlsProps> = ({
         {hitlEnabled && (
           <div className="space-y-3 pt-4 border-t">
             <Label>Safety Level</Label>
-            <RadioGroup value={safetyLevel} onValueChange={onSafetyLevelChange}>
+            <RadioGroup value={safetyLevel} onValueChange={(value) => onSafetyLevelChange(value as 'conservative' | 'balanced' | 'minimal')}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="conservative" id="conservative" />
                 <Label htmlFor="conservative" className="cursor-pointer flex items-center gap-2">

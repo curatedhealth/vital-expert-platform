@@ -48,8 +48,9 @@ from streaming import (
     format_stream_end,
 )
 
-# Fusion Search imports (for Mode 2 expert selection)
-from services.graphrag_selector import get_graphrag_fusion_adapter
+# GraphRAG Fusion Search imports (for Mode 2 expert selection)
+# Uses the REAL 3-method GraphRAG fusion: PostgreSQL (30%) + Pinecone (50%) + Neo4j (20%)
+from services.graphrag_selector import get_graphrag_selector, GraphRAGSelector
 
 logger = structlog.get_logger()
 
@@ -109,41 +110,82 @@ def get_supabase_client():
 
 async def select_expert_via_fusion(supabase, query: str, tenant_id: str) -> Optional[Dict[str, Any]]:
     """
-    Use Fusion Search (GraphRAG) to select the best expert for a query.
+    Use GraphRAG Fusion Search to select the best expert for a query.
 
-    This is the Mode 2 expert selection using 3-method search:
-    - PostgreSQL (30%): Relational agent data
-    - Pinecone (50%): Semantic similarity
-    - Neo4j (20%): Graph relationships
+    MODE 2 AGENT SELECTION - ARD v2.0 Compliant
+    Uses GraphRAGSelector.select_agents() which implements:
+    - PostgreSQL fulltext search (30% weight)
+    - Pinecone vector search (50% weight)
+    - Neo4j graph traversal (20% weight)
+
+    Uses weighted Reciprocal Rank Fusion (RRF) to combine results.
+    Same search mechanism as Mode 4 for consistency.
     """
     try:
-        fusion_adapter = get_graphrag_fusion_adapter(supabase)
-        logger.info("fusion_search_started", query_preview=query[:100])
+        # Get GraphRAGSelector instance (pass supabase client for DB access)
+        selector = get_graphrag_selector(supabase_client=supabase)
 
-        # Search for best expert using fusion
-        results = await fusion_adapter.search_agents(
-            query=query,
+        logger.info(
+            "mode2_graphrag_fusion_started",
+            query_preview=query[:100],
             tenant_id=tenant_id,
-            top_k=5
+            weights=GraphRAGSelector.WEIGHTS,
         )
 
-        if not results:
-            logger.warning("fusion_search_no_results", query=query[:100])
+        # Call the REAL 3-method fusion search
+        # This is the same method Mode 4 uses via select_team_graphrag()
+        agents = await selector.select_agents(
+            query=query,
+            tenant_id=tenant_id,
+            mode="mode2",  # Tag for logging/analytics
+            max_agents=3,  # Get top 3, we'll use the best one
+            min_confidence=0.005,  # Match Mode 4's threshold
+        )
+
+        if not agents:
+            logger.warning("mode2_fusion_no_results", query=query[:100])
             return None
 
-        # Return top expert
-        top_expert = results[0]
+        # Return top expert (transform from GraphRAG format to Mode 1 expected format)
+        top_agent = agents[0]
+
+        # Build expert response matching Mode 1's expected format
+        top_expert = {
+            "id": top_agent.get("agent_id"),
+            "name": top_agent.get("agent_name", "Unknown Expert"),
+            "display_name": top_agent.get("agent_name", "Unknown Expert"),
+            "level": f"L{top_agent.get('tier', 2)}",
+            "tier": top_agent.get("tier", 2),
+            "description": top_agent.get("description", ""),
+            "capabilities": top_agent.get("capabilities", []),
+            "specialization": top_agent.get("specialization", ""),
+            # Scoring from GraphRAG 3-method fusion
+            "score": top_agent.get("fused_score", 0.0),
+            "fused_score": top_agent.get("fused_score", 0.0),
+            "confidence": top_agent.get("confidence", {}),
+            "scores": top_agent.get("scores", {}),
+            "ranks": top_agent.get("ranks", {}),
+            # Performance metrics
+            "performance": top_agent.get("performance", {}),
+            # Domain expertise
+            "domain_expertise": top_agent.get("domain_expertise", []),
+        }
+
         logger.info(
-            "fusion_search_selected_expert",
+            "mode2_fusion_selected_expert",
             expert_id=top_expert.get("id"),
             expert_name=top_expert.get("name"),
-            score=top_expert.get("score", 0)
+            fused_score=round(top_expert.get("fused_score", 0), 4),
+            level=top_expert.get("level"),
+            confidence=top_expert.get("confidence", {}).get("overall", 0),
+            sources_used=list(top_agent.get("scores", {}).keys()),
+            candidates_found=len(agents),
         )
 
         return top_expert
 
     except Exception as e:
-        logger.error("fusion_search_failed", error=str(e))
+        logger.error("mode2_fusion_failed", error=str(e), exc_info=True)
         return None
 
 
@@ -699,5 +741,16 @@ async def expert_stream(
         )
 
 
+# Alias route for clarity and consistency
+@router.post("/interactive")
+async def expert_interactive(
+    payload: ExpertStreamRequest,
+    x_tenant_id: Optional[str] = Header(None, alias="x-tenant-id"),
+    req: Request = None,
+) -> StreamingResponse:
+    """
+    Alias for /stream - Unified interactive endpoint for Modes 1/2.
 
-
+    Named /interactive for clarity alongside /autonomous (Mode 3/4).
+    """
+    return await expert_stream(payload, x_tenant_id, req)

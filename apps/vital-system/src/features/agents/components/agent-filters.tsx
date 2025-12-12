@@ -107,7 +107,7 @@ export const AgentFilters: React.FC<AgentFiltersProps> = ({ className }) => {
     if (filters.functions && filters.functions.length > 0) count++;
     if (filters.departments && filters.departments.length > 0) count++;
     if (filters.roles && filters.roles.length > 0) count++;
-    if (filters.status && filters.status !== 'all') count++;
+    if (filters.status && filters.status.length > 0) count++;
     return count;
   }, [filters]);
 

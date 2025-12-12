@@ -646,11 +646,24 @@ class GraphRAGSelector:
                     )
                     continue
 
+                # Map agent_level_id to level string (L1-L5)
+                level_id = details.get("agent_level_id")
+                level_map = {
+                    "5e27905e-6f58-462e-93a4-6fad5388ebaf": "L1",  # Master
+                    "a6e394b0-6ca1-4cb1-8097-719523ee6782": "L2",  # Expert
+                    "5a3647eb-a2bd-43f2-9c8b-6413d39ed0fb": "L3",  # Specialist
+                    "c6f7eec5-3fc5-4f10-b030-bce0d22480e8": "L4",  # Worker
+                    "45420d67-67bf-44cf-a842-44bbaf3145e7": "L5",  # Tool
+                }
+                agent_level = level_map.get(level_id, "L2")  # Default to L2 (Expert)
+
                 agent.update({
                     "description": details.get("description", ""),
                     "capabilities": details.get("capabilities", []),
                     "domain_expertise": details.get("domain_expertise", []),
                     "tier": details.get("tier", 2),
+                    "level": agent_level,  # Add proper level
+                    "agent_level_id": level_id,  # Include for reference
                     "specialization": details.get("specialization", ""),
                     "performance": {
                         "total_queries": details.get("total_queries", 0),
@@ -883,6 +896,89 @@ class GraphRAGFusionAdapter:
                 errors=[str(e)],
                 retrieval_time_ms=(time.time() - start_time) * 1000
             )
+
+    def search_agents(
+        self,
+        query: str,
+        tenant_id: str,
+        top_k: int = 5,
+        filters: Optional[Dict] = None
+    ) -> Dict:
+        """
+        Synchronous search_agents method for ask_expert_interactive routes.
+
+        This is a convenience wrapper that runs the async select_agents
+        in a new event loop for synchronous callers.
+
+        Args:
+            query: User query
+            tenant_id: Tenant identifier
+            top_k: Number of results to return
+            filters: Optional filters (level, department, etc.)
+
+        Returns:
+            Dict with 'agents' list containing matched agents
+        """
+        import asyncio
+
+        try:
+            # Run async method in event loop
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If already in async context, create new loop
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(
+                        asyncio.run,
+                        self.selector.select_agents(
+                            query=query,
+                            tenant_id=tenant_id or "00000000-0000-0000-0000-000000000001",
+                            mode="mode2",
+                            max_agents=top_k,
+                            min_confidence=0.001
+                        )
+                    )
+                    agents = future.result(timeout=30)
+            else:
+                agents = loop.run_until_complete(
+                    self.selector.select_agents(
+                        query=query,
+                        tenant_id=tenant_id or "00000000-0000-0000-0000-000000000001",
+                        mode="mode2",
+                        max_agents=top_k,
+                        min_confidence=0.001
+                    )
+                )
+
+            # Format response
+            formatted_agents = []
+            for agent in agents:
+                formatted_agents.append({
+                    "id": agent.get("agent_id", ""),
+                    "name": agent.get("agent_name", "Unknown"),
+                    "score": agent.get("fused_score", 0.0),
+                    "level": agent.get("level", "L2"),
+                    "description": agent.get("description", ""),
+                    "capabilities": agent.get("capabilities", []),
+                    "confidence": agent.get("confidence", {}),
+                })
+
+            logger.info(
+                "GraphRAGFusionAdapter.search_agents completed",
+                num_agents=len(formatted_agents),
+                query_preview=query[:50],
+                tenant_id=tenant_id
+            )
+
+            return {"agents": formatted_agents}
+
+        except Exception as e:
+            logger.error(
+                "GraphRAGFusionAdapter.search_agents failed",
+                error=str(e),
+                error_type=type(e).__name__
+            )
+            return {"agents": [], "error": str(e)}
 
 
 def get_graphrag_fusion_adapter(supabase_client=None) -> GraphRAGFusionAdapter:

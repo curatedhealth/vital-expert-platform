@@ -59,6 +59,14 @@ import {
   Clock,
 } from 'lucide-react';
 
+// Import dedicated artifact renderers
+import {
+  MarkdownRenderer,
+  CodeRenderer,
+  ChartRenderer,
+  TableRenderer,
+} from '@/features/ask-expert/components/artifacts/renderers';
+
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -788,67 +796,114 @@ interface ArtifactRendererProps {
   artifact: Artifact;
 }
 
+/**
+ * ArtifactRenderer - Delegates to dedicated renderer components
+ *
+ * Architecture:
+ * - MarkdownRenderer → wraps VitalStreamText (Streamdown)
+ * - CodeRenderer → extends VitalCodeBlock pattern
+ * - ChartRenderer → standalone Recharts integration
+ * - TableRenderer → wraps VitalDataTable
+ *
+ * Phase 4 Implementation - December 11, 2025
+ */
 function ArtifactRenderer({ artifact }: ArtifactRendererProps) {
   switch (artifact.type) {
     case 'document':
       return (
-        <div className="prose prose-stone prose-sm max-w-none">
-          {/* Simple markdown rendering - in production, use react-markdown */}
-          <div className="whitespace-pre-wrap">{artifact.content}</div>
-        </div>
+        <MarkdownRenderer
+          content={artifact.content}
+          title={artifact.title}
+          version={artifact.metadata?.version}
+          lastModified={artifact.metadata?.createdAt}
+          showToolbar={false} // Panel has its own toolbar
+          maxHeight="none"
+        />
       );
 
     case 'code':
       return (
-        <pre className={cn(
-          'p-4 rounded-lg bg-stone-900 text-stone-100',
-          'font-mono text-sm overflow-x-auto'
-        )}>
-          <code>{artifact.content}</code>
-        </pre>
+        <CodeRenderer
+          content={artifact.content}
+          language={artifact.language}
+          fileName={artifact.title}
+          showLineNumbers={true}
+          theme="dark"
+          maxHeight="600px"
+        />
       );
 
     case 'chart':
       return (
-        <div className="p-4 border rounded-lg bg-stone-50 text-center">
-          <BarChart3 className="h-16 w-16 mx-auto text-stone-300 mb-2" />
-          <p className="text-sm text-stone-500">
-            Chart rendering requires integration with Recharts
-          </p>
-          <pre className="mt-4 p-2 bg-white rounded text-xs text-left overflow-x-auto">
-            {artifact.content}
-          </pre>
-        </div>
+        <ChartRenderer
+          content={artifact.content}
+          title={artifact.title}
+          height={400}
+        />
       );
 
     case 'table':
       return (
-        <div className="overflow-x-auto">
-          {/* Simple table rendering - in production, use proper data grid */}
-          <pre className="p-4 rounded-lg bg-stone-50 font-mono text-sm">
-            {artifact.content}
-          </pre>
-        </div>
+        <TableRenderer
+          content={artifact.content}
+          title={artifact.title}
+          searchable={true}
+          exportable={true}
+          maxHeight={500}
+          showRowCount={true}
+        />
       );
 
     case 'diagram':
+      // Diagram rendering still needs Mermaid.js integration
+      // For now, fallback to code display with mermaid language hint
       return (
-        <div className="p-4 border rounded-lg bg-stone-50 text-center">
-          <GitBranch className="h-16 w-16 mx-auto text-stone-300 mb-2" />
-          <p className="text-sm text-stone-500">
-            Diagram rendering requires Mermaid.js integration
-          </p>
-          <pre className="mt-4 p-2 bg-white rounded text-xs text-left overflow-x-auto">
-            {artifact.content}
-          </pre>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-700">
+            <GitBranch className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+            <span>Diagram preview requires Mermaid.js integration (coming soon)</span>
+          </div>
+          <CodeRenderer
+            content={artifact.content}
+            language="mermaid"
+            fileName={artifact.title}
+            showLineNumbers={true}
+            theme="light"
+          />
         </div>
       );
 
-    default:
+    case 'image':
+      // Image artifacts - display as base64 if content is data URL
+      if (artifact.content.startsWith('data:image/')) {
+        return (
+          <div className="flex items-center justify-center p-4 bg-stone-50 rounded-lg">
+            <img
+              src={artifact.content}
+              alt={artifact.title}
+              className="max-w-full max-h-[600px] object-contain rounded"
+            />
+          </div>
+        );
+      }
+      // Fallback to markdown for image URLs
       return (
-        <div className="whitespace-pre-wrap font-mono text-sm">
-          {artifact.content}
-        </div>
+        <MarkdownRenderer
+          content={`![${artifact.title}](${artifact.content})`}
+          maxHeight="none"
+        />
+      );
+
+    case 'generic':
+    default:
+      // Generic/unknown types - use markdown for flexibility
+      return (
+        <MarkdownRenderer
+          content={artifact.content}
+          title={artifact.title}
+          showToolbar={false}
+          maxHeight="none"
+        />
       );
   }
 }

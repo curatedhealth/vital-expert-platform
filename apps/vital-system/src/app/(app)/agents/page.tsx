@@ -18,6 +18,7 @@ import { agentService } from '@/features/agents/services/agent-service';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
 import { type Agent } from '@/lib/stores/chat-store';
+import { type Agent as FeatureAgent } from '@/features/agents/types/agent.types';
 import { PageHeader } from '@/components/page-header';
 import { Users } from 'lucide-react';
 
@@ -58,7 +59,7 @@ function AgentsPageContent() {
   const [activeTab, setActiveTab] = useState<'overview' | 'grid' | 'list' | 'table' | 'graph' | 'compare'>('overview');
 
   // Get comparison context for the Compare tab
-  const { agents: comparisonAgentsRaw, removeFromComparison, clearComparison } = useAgentComparison();
+  const { comparisonAgents: comparisonAgentsRaw, removeFromComparison, clearComparison } = useAgentComparison();
   const comparisonAgents = comparisonAgentsRaw || [];
 
   const handleTabChange = (value: string) => {
@@ -66,10 +67,11 @@ function AgentsPageContent() {
     setActiveTab(value as typeof activeTab);
   };
 
-  // Handle query parameters for opening create modal
+  // Handle query parameters for opening create/edit modals
   useEffect(() => {
     const createParam = searchParams.get('create');
     const uploadParam = searchParams.get('upload');
+    const editParam = searchParams.get('edit');
 
     if (createParam === 'true') {
       setShowCreateModal(true);
@@ -82,7 +84,23 @@ function AgentsPageContent() {
       // Clear the URL parameter
       router.replace('/agents', { scroll: false });
     }
-  }, [searchParams, router]);
+
+    // Handle edit parameter - open enhanced edit modal for specified agent
+    if (editParam && agents.length > 0) {
+      const agentToEdit = agents.find((a: any) => a.id === editParam || a.slug === editParam);
+      if (agentToEdit) {
+        console.log('🔧 [Edit] Opening edit modal for agent from URL param:', agentToEdit.id);
+        setEditingAgent(agentToEdit as AgentsStoreAgent);
+        setShowEnhancedEditModal(true);
+        // Clear the URL parameter to prevent re-opening on refresh
+        router.replace('/agents', { scroll: false });
+      } else {
+        console.warn('⚠️ [Edit] Agent not found for edit param:', editParam);
+        // Clear invalid edit param
+        router.replace('/agents', { scroll: false });
+      }
+    }
+  }, [searchParams, router, agents]);
 
   // Filter agents based on multi-select filters
   // Uses debouncedSearchQuery (300ms delay) to prevent excessive re-filtering while typing
@@ -161,12 +179,11 @@ function AgentsPageContent() {
         console.log('📝 [Edit] Setting editingAgent with full data:', {
           id: fullAgent.id,
           name: fullAgent.name,
-          hasTagline: !!fullAgent.tagline,
-          hasAvatarUrl: !!fullAgent.avatar_url,
-          hasFunctionId: !!fullAgent.function_id,
-          hasDepartmentId: !!fullAgent.department_id,
-          hasRoleId: !!fullAgent.role_id,
-          hasSystemPrompt: !!fullAgent.system_prompt,
+          hasAvatarUrl: !!(fullAgent as any).avatar_url,
+          hasFunctionId: !!(fullAgent as any).function_id,
+          hasDepartmentId: !!(fullAgent as any).department_id,
+          hasRoleId: !!(fullAgent as any).role_id,
+          hasSystemPrompt: !!(fullAgent as any).system_prompt,
         });
       } else {
         // Fallback to minimal conversion if all else fails
@@ -206,7 +223,7 @@ function AgentsPageContent() {
   };
 
   // Handle saving agent updates from the enhanced edit form
-  const handleSaveAgentFromEnhanced = async (updates: Partial<AgentsStoreAgent>) => {
+  const handleSaveAgentFromEnhanced = async (updates: Partial<FeatureAgent>) => {
     if (!editingAgent) {
       console.error('[AgentsPage] No editing agent set');
       throw new Error('No agent selected for editing');
@@ -217,7 +234,8 @@ function AgentsPageContent() {
         agentName: editingAgent.name,
         updateFields: Object.keys(updates),
       });
-      await agentService.updateAgent(editingAgent.id, updates);
+      // Type cast needed: FeatureAgent.metadata is Record<string,unknown>, but service expects Supabase Json type
+      await agentService.updateAgent(editingAgent.id, updates as Parameters<typeof agentService.updateAgent>[1]);
       console.log('[AgentsPage] Agent saved successfully');
       setShowEnhancedEditModal(false);
       setEditingAgent(null);
@@ -672,7 +690,7 @@ function AgentsPageContent() {
                   setEditingAgent(null);
                 }
               }}
-              onSave={handleSaveAgentFromEnhanced}
+              onSave={handleSaveAgentFromEnhanced as any}
             />
           </div>
         </div>

@@ -21,18 +21,9 @@
 // UNIFIED AGENT CARD SYSTEM
 // ============================================================================
 
-// Main card component and variants
+// Export all card variants and components from the VitalAgentCard directory
 export {
   VitalAgentCard,
-  VitalAgentCardMinimal,
-  VitalAgentCardCompact,
-  VitalAgentCardRich,
-  VitalAgentCardSkeleton,
-  VitalAgentCardGridSkeleton,
-  VitalAgentCardListSkeleton,
-  VitalAgentCardMinimalSkeleton,
-  VitalAgentCardCompactSkeleton,
-  VitalAgentCardRichSkeleton,
 } from './VitalAgentCard';
 
 // ============================================================================
@@ -60,9 +51,10 @@ export {
 } from './VitalAgentStatus';
 
 // Actions
+// Note: VitalQuickActions renamed to VitalAgentQuickActions to avoid conflict with conversation/VitalQuickActions
 export {
   VitalAgentActions,
-  VitalQuickActions,
+  VitalQuickActions as VitalAgentQuickActions,
   ActionButton,
 } from './VitalAgentActions';
 

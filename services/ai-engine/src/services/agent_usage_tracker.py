@@ -9,12 +9,30 @@ from typing import Optional, List, Dict, Any
 from uuid import UUID
 from datetime import datetime, timezone, timedelta
 import structlog
+import uuid as uuid_module
 
 from vital_shared_kernel.multi_tenant import TenantId, TenantContext
 
 from services.tenant_aware_supabase import TenantAwareSupabaseClient
 
 logger = structlog.get_logger()
+
+
+# UUID validation helpers
+def _is_valid_uuid(value) -> bool:
+    """Check if a value is a valid UUID format."""
+    if value is None or value == "anonymous" or value == "None":
+        return False
+    try:
+        uuid_module.UUID(str(value))
+        return True
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+
+def _get_valid_uuid_str_or_none(value) -> Optional[str]:
+    """Return the string value if it's a valid UUID, otherwise return None."""
+    return str(value) if _is_valid_uuid(value) else None
 
 
 class AgentUsageTracker:
@@ -89,11 +107,23 @@ class AgentUsageTracker:
             input_tokens,
             output_tokens
         )
-        
+
+        # Validate user_id to prevent "None" string errors in PostgreSQL
+        validated_user_id = _get_valid_uuid_str_or_none(user_id)
+        if not validated_user_id:
+            logger.warning(
+                "track_usage skipped - invalid user_id",
+                user_id=user_id,
+                agent_id=agent_id
+            )
+            # Return a dummy UUID - don't fail silently but don't crash either
+            # Usage tracking is non-critical, we log and continue
+            return UUID('00000000-0000-0000-0000-000000000000')
+
         # Prepare record
         usage_data = {
             "agent_id": agent_id,
-            "user_id": str(user_id),
+            "user_id": validated_user_id,
             "tokens_used": tokens_used,
             "execution_time_ms": execution_time_ms,
             "cost_usd": cost_usd,

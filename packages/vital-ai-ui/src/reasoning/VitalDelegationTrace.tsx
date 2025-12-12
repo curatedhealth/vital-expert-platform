@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import {
   ArrowRight,
   CheckCircle2,
@@ -14,18 +14,18 @@ import {
   GitBranch,
   Loader2,
 } from 'lucide-react';
-import { Badge } from '../../ui/badge';
+import { Badge } from '@vital/ui';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '../../ui/collapsible';
+} from '@vital/ui';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '../../ui/tooltip';
-import { Progress } from '../../ui/progress';
+} from '@vital/ui';
+import { Progress } from '@vital/ui';
 
 type DelegationStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'skipped';
 type AgentLevel = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';

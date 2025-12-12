@@ -429,8 +429,8 @@ function KnowledgePageContent() {
                                   Copy ID
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/designer/knowledge?tab=domains&doc=${doc.id}`}>
+                                <DropdownMenuItem>
+                                  <Link href={`/designer/knowledge?tab=domains&doc=${doc.id}`} className="flex items-center w-full">
                                     <ExternalLink className="mr-2 h-4 w-4" />
                                     Open in Builder
                                   </Link>
@@ -518,8 +518,8 @@ function KnowledgePageContent() {
                               Copy ID
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                              <Link href={`/designer/knowledge?tab=domains&doc=${doc.id}`}>
+                            <DropdownMenuItem>
+                              <Link href={`/designer/knowledge?tab=domains&doc=${doc.id}`} className="flex items-center w-full">
                                 <ExternalLink className="mr-2 h-4 w-4" />
                                 Open in Builder
                               </Link>

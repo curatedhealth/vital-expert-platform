@@ -112,6 +112,22 @@ def _register_expert_routes(app: FastAPI) -> None:
     except ImportError as e:
         logger.warning("expert_routes_import_failed", error=str(e))
 
+    # Register Interactive routes (Mode 1 & 2 - conversations/streaming)
+    try:
+        from api.routes import ask_expert_interactive
+        app.include_router(ask_expert_interactive.router, prefix="", tags=["ask-expert-interactive"])
+        logger.info("✅ Ask Expert Interactive routes registered")
+    except ImportError as e:
+        logger.warning("ask_expert_interactive_routes_import_failed", error=str(e))
+
+    # Register Autonomous routes (Mode 3 & 4 - missions/autonomous)
+    try:
+        from api.routes import ask_expert_autonomous
+        app.include_router(ask_expert_autonomous.router, prefix="", tags=["ask-expert-autonomous"])
+        logger.info("✅ Ask Expert Autonomous routes registered")
+    except ImportError as e:
+        logger.warning("ask_expert_autonomous_routes_import_failed", error=str(e))
+
 
 def _register_graphrag_routes(app: FastAPI) -> None:
     """Register GraphRAG routes (Vector + Keyword + Graph Search)."""

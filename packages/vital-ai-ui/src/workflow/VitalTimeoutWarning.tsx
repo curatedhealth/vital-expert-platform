@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import {
   AlertTriangle,
   Clock,
@@ -10,18 +10,18 @@ import {
   Zap,
   Settings,
 } from 'lucide-react';
-import { Button } from '../../ui/button';
+import { Button } from '@vital/ui';
 import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from '../../ui/alert';
-import { Progress } from '../../ui/progress';
+} from '@vital/ui';
+import { Progress } from '@vital/ui';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '../../ui/tooltip';
+} from '@vital/ui';
 
 type TimeoutSeverity = 'warning' | 'critical' | 'expired';
 type TimeoutAction = 'wait' | 'retry' | 'cancel' | 'extend';

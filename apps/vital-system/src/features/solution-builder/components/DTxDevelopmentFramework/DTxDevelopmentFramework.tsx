@@ -127,6 +127,8 @@ const DTxDevelopmentFramework: React.FC<DTxDevelopmentFrameworkProps> = ({ proje
     setValidationResults(mockValidationResults);
   }, [projectId]);
 
+  const generateDTxCode = (component: string) => {
+    const templates: Record<string, string> = {
       'patient_onboarding': `
 // DTx Patient Onboarding Component
 import React, { useState } from 'react';
@@ -230,6 +232,7 @@ export class OutcomeTracker {
     setGeneratedCode(templates[component as keyof typeof templates] || '// Select a component to generate code');
   };
 
+  const runComplianceValidation = () => {
     // Simulate running compliance validation
     const newResults: ValidationResult[] = [
       {
@@ -257,6 +260,7 @@ export class OutcomeTracker {
     setValidationResults([...validationResults, ...newResults]);
   };
 
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'passed': return 'text-green-600 bg-green-100';
       case 'failed': return 'text-red-600 bg-red-100';
@@ -266,6 +270,7 @@ export class OutcomeTracker {
     }
   };
 
+  const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return 'text-red-600';
       case 'high': return 'text-orange-600';

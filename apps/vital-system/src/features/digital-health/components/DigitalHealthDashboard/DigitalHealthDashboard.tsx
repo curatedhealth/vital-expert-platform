@@ -114,14 +114,17 @@ const DigitalHealthDashboard: React.FC<DigitalHealthDashboardProps> = ({ provide
     setDashboard(mockDashboard);
   }, [providerId]);
 
+  const handleAlertAcknowledge = (alertId: string) => {
     if (!dashboard) return;
 
+    const updatedAlerts = dashboard.pendingAlerts.map(alert =>
       alert.id === alertId ? { ...alert, acknowledged: true } : alert
     );
 
     setDashboard({ ...dashboard, pendingAlerts: updatedAlerts });
   };
 
+  const filteredAlerts = dashboard?.pendingAlerts.filter(alert => {
     if (alertFilter === 'all') return true;
     return alert.type === alertFilter;
   }) || [];

@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       );
 
       llmResponse = consensusResult.primaryResponse;
-      modelsUsed = consensusResult.allResponses.map((r: any) => r.model);
+      modelsUsed = consensusResult.allResponses.map((r: { model: string }) => r.model);
 
       // Include consensus metadata
       llmResponse.consensus = {
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 4: Merge citations from RAG and LLM
-    const ragCitations = searchResults.sources.map((source: any) => ({
+    const ragCitations = searchResults.sources.map((source: { metadata: Record<string, unknown>; content: string; similarity: number }) => ({
       source: source.metadata.title || source.metadata.source || 'Unknown',
       url: source.metadata.source || '',
       pageNumber: source.metadata.page_number,
@@ -234,8 +234,9 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper function to update usage metrics
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function updateUsageMetrics(
-  supabase: any,
+  supabase: ReturnType<typeof createClient<any>>,
   organizationId: string,
   metrics: { queries?: number; tokens?: number }
 ) {

@@ -179,7 +179,7 @@ function MetadataDisplay({ metadata }: { metadata: Record<string, any> }) {
           if (visited.has(nodeId)) return;
           visited.add(nodeId);
           
-          const node = nodeMap.get(nodeId);
+          const node = nodeMap.get(nodeId) as { id: string; type: string; config?: { taskId?: string } } | undefined;
           if (node) {
             const typeName = node.type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
             flow.push({
@@ -202,7 +202,7 @@ function MetadataDisplay({ metadata }: { metadata: Record<string, any> }) {
     }
     
     // Fallback: build from nodes and edges
-    const flow: Array<{ id: string; name: string; description: string; type: string }> = [];
+    const flow: Array<{ id: string; name: string; description: string; type: string; config?: any }> = [];
     const nodeMap = new Map(nodes.map((n: any) => [n.id, n]));
     const edgeMap = new Map<string, string[]>();
     
@@ -214,13 +214,13 @@ function MetadataDisplay({ metadata }: { metadata: Record<string, any> }) {
     const allTargets = new Set(edges.map((e: any) => e.target));
     const startNodes = nodes.filter((n: any) => !allTargets.has(n.id) && (n.type === 'start' || n.type === 'input'));
     
-    startNodes.forEach(startNode => {
+    startNodes.forEach((startNode: any) => {
       const visited = new Set<string>();
       const traverse = (nodeId: string) => {
         if (visited.has(nodeId)) return;
         visited.add(nodeId);
-        
-        const node = nodeMap.get(nodeId);
+
+        const node = nodeMap.get(nodeId) as any;
         if (node) {
           const taskId = node.config?.task?.id || node.data?.task?.id;
           flow.push({

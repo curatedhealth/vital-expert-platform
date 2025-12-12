@@ -11,10 +11,10 @@ const AI_ENGINE_URL = process.env.AI_ENGINE_URL || 'http://localhost:8000';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const checkpointId = params.id;
+    const { id: checkpointId } = await params;
     const body = await request.json();
     const { action, option, reason, mission_id, mode } = body;
 

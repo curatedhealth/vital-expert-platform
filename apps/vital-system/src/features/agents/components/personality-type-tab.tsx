@@ -350,8 +350,8 @@ export const PersonalityTypeTab: React.FC<PersonalityTypeTabProps> = ({
             <CardContent>
               <div className="grid gap-3">
                 {personalityTypes
-                  .filter((p) => p.is_active)
-                  .sort((a, b) => a.sort_order - b.sort_order)
+                  .filter((p) => p.is_active !== false)
+                  .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
                   .map((personality) => (
                     <PersonalityPreview
                       key={personality.id}
@@ -374,7 +374,7 @@ export const PersonalityTypeTab: React.FC<PersonalityTypeTabProps> = ({
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {personalityTypes
-                  .filter((p) => p.is_active)
+                  .filter((p) => p.is_active !== false)
                   .map((p) => (
                     <VitalPersonalityBadge
                       key={p.id}

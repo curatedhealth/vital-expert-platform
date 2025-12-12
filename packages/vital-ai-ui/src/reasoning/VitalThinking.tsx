@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { ChevronDown, Brain, CheckCircle2, Loader2, Clock } from 'lucide-react';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger
-} from '../../ui/collapsible';
+} from '@vital/ui';
 
 interface ReasoningStep {
   id: string;

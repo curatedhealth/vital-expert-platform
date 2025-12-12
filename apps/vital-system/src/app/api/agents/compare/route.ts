@@ -189,7 +189,7 @@ async function compareAgents(
   }
 
   // Calculate metrics for each agent
-  return (agents || []).map(agent => ({
+  return (agents || []).map((agent: Record<string, unknown>) => ({
     ...agent,
     metrics: calculateAgentMetrics(agent),
   }));

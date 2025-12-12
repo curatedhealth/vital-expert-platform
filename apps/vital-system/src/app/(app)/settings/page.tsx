@@ -20,10 +20,10 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 export default function SettingsPage() {
-  const { user, userProfile, isLoading } = useAuth()
+  const { user, userProfile, loading } = useAuth()
   const [saving, setSaving] = useState(false)
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

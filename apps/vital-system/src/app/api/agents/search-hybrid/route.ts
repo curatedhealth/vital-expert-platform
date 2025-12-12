@@ -28,6 +28,14 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔍 Hybrid agent search - Query: ${query || 'embedding provided'}, Filters:`, filters);
 
+    // Check if Pinecone is configured
+    if (!pineconeVectorService) {
+      return NextResponse.json(
+        { error: 'Vector search is not configured (PINECONE_API_KEY not set)' },
+        { status: 503 }
+      );
+    }
+
     // Perform hybrid search
     const results = await pineconeVectorService.hybridAgentSearch({
       text: query,

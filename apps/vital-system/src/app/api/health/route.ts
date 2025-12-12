@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const services = searchParams.get('services')?.split(',')
     const servicesToCheck = services
-      ? SERVICE_ENDPOINTS.filter((s: any) => services.includes(s.name))
+      ? SERVICE_ENDPOINTS.filter((s) => services.includes(s.name))
       : SERVICE_ENDPOINTS
 
     const serviceHealthResults = await Promise.all(servicesToCheck.map(service =>
@@ -220,7 +220,7 @@ async function checkServiceHealth(serviceName: string, healthUrl: string): Promi
     const responseTime = Date.now() - startTime
 
     if (response.ok) {
-      let healthData: any = {}
+      let healthData: Record<string, unknown> = {}
       try {
         healthData = await response.json()
       } catch {
@@ -234,7 +234,7 @@ async function checkServiceHealth(serviceName: string, healthUrl: string): Promi
         status,
         response_time_ms: responseTime,
         last_check: new Date().toISOString(),
-        version: healthData.version || 'unknown',
+        version: typeof healthData.version === 'string' ? healthData.version : 'unknown',
         details: {
           http_status: response.status,
           ...healthData
@@ -326,11 +326,11 @@ async function getActiveConnectionsCount(): Promise<number> {
 
 function determineOverallStatus(healthChecks: ServiceHealthCheck[]): 'healthy' | 'degraded' | 'unhealthy' {
   const criticalServices = ['database', 'orchestrator', 'agent_registry']
-  const unhealthyCount = healthChecks.filter((h: any) => h.status === 'unhealthy').length
-  const degradedCount = healthChecks.filter((h: any) => h.status === 'degraded').length
+  const unhealthyCount = healthChecks.filter((h) => h.status === 'unhealthy').length
+  const degradedCount = healthChecks.filter((h) => h.status === 'degraded').length
 
   // Check if any critical service is unhealthy
-  const criticalUnhealthy = healthChecks.some((h: any) =>
+  const criticalUnhealthy = healthChecks.some((h) =>
     criticalServices.includes(h.service_name) && h.status === 'unhealthy'
   )
 

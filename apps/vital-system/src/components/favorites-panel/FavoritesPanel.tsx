@@ -25,15 +25,17 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  Dialog as AlertDialog,
+  DialogContent as AlertDialogContent,
+  DialogDescription as AlertDialogDescription,
+  DialogFooter as AlertDialogFooter,
+  DialogHeader as AlertDialogHeader,
+  DialogTitle as AlertDialogTitle,
+} from '@/components/ui/dialog';
+
+// AlertDialogAction and AlertDialogCancel don't exist in Dialog, use Button instead
+const AlertDialogAction = Button;
+const AlertDialogCancel = Button;
 
 interface Favorite {
   id: string;

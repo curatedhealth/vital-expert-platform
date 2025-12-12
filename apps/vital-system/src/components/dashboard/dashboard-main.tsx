@@ -142,10 +142,11 @@ const MOCK_SYSTEM_HEALTH: SystemHealth = {
 };
 
 const KPICard: React.FC<{ metric: KPIMetric }> = ({ metric }) => {
-
-                     metric.changeType === 'decrease' ? 'text-red-600' : 'text-neutral-600';
-
-                    metric.changeType === 'decrease' ? '↘' : '→';
+  const Icon = metric.icon;
+  const changeColor = metric.changeType === 'increase' ? 'text-green-600' :
+                      metric.changeType === 'decrease' ? 'text-red-600' : 'text-neutral-600';
+  const changeIcon = metric.changeType === 'increase' ? '↗' :
+                     metric.changeType === 'decrease' ? '↘' : '→';
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -178,7 +179,7 @@ const AlertItem: React.FC<{ alert: Alert; onAcknowledge: (id: string) => void }>
     critical: { color: 'bg-red-200 text-red-900 border-red-300', icon: '🚨' }
   };
 
-  const config = alertConfig[alert.type] || alertConfig.info;
+  const config = alertConfig[alert.severity] || alertConfig.info;
 
   return (
     <div className={`p-3 rounded-lg border ${config.color} ${alert.acknowledged ? 'opacity-60' : ''}`}>
@@ -356,6 +357,10 @@ const DashboardMain: React.FC = () => {
       alert.id === alertId ? { ...alert, acknowledged: true } : alert
     ));
   };
+
+  // Computed values for alerts
+  const criticalAlerts = alerts.filter(alert => alert.severity === 'critical' || alert.severity === 'error');
+  const unacknowledgedAlerts = alerts.filter(alert => !alert.acknowledged);
 
   const mockChartData: ChartData[] = [
     {

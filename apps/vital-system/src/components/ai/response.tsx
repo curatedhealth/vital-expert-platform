@@ -8,7 +8,6 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism"
 import rehypeKatex from "rehype-katex"
 import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
-import type { PluggableList } from "unified"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -18,20 +17,20 @@ import "katex/dist/katex.min.css"
 interface ResponseProps {
   children: string
   className?: string
-  remarkPlugins?: PluggableList
-  rehypePlugins?: PluggableList
+  remarkPlugins?: any[]
+  rehypePlugins?: any[]
   components?: Partial<Components>
 }
 
 export function Response({ children, className, remarkPlugins, rehypePlugins, components }: ResponseProps) {
-  const extraRemarkPlugins = React.useMemo<PluggableList>(() => {
+  const extraRemarkPlugins = React.useMemo<any[]>(() => {
     if (!remarkPlugins) {
       return [];
     }
     return ([] as any[]).concat(remarkPlugins as any);
   }, [remarkPlugins]);
 
-  const extraRehypePlugins = React.useMemo<PluggableList>(() => {
+  const extraRehypePlugins = React.useMemo<any[]>(() => {
     if (!rehypePlugins) {
       return [];
     }

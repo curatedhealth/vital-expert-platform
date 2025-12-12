@@ -188,7 +188,7 @@ interface ModelSelectorProps {
 }
 
 // 🔧 Helper Functions
-
+const getProviderIcon = (provider: string) => {
   switch (provider) {
     case 'openai': return '🤖';
     case 'anthropic': return '🧠';
@@ -199,6 +199,7 @@ interface ModelSelectorProps {
   }
 };
 
+const getProviderColor = (provider: string) => {
   switch (provider) {
     case 'openai': return 'bg-green-100 text-green-800';
     case 'anthropic': return 'bg-orange-100 text-orange-800';
@@ -209,6 +210,7 @@ interface ModelSelectorProps {
   }
 };
 
+const getCapabilityIcon = (type: string) => {
   switch (type) {
     case 'reasoning': return <Brain className="h-3 w-3" />;
     case 'speed': return <Zap className="h-3 w-3" />;
@@ -217,6 +219,7 @@ interface ModelSelectorProps {
   }
 };
 
+const formatPrice = (price: number) => {
   if (price < 1) return `$${price.toFixed(2)}`;
   return `$${price.toFixed(0)}`;
 };
@@ -228,6 +231,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   className,
   showDetails = true,
 }) => {
+  const currentModel = AVAILABLE_MODELS.find((m) => m.id === selectedModel) || AVAILABLE_MODELS[0];
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -342,6 +346,7 @@ export const CompactModelSelector: React.FC<ModelSelectorProps> = ({
   onModelChange,
   className,
 }) => {
+  const currentModel = AVAILABLE_MODELS.find((m) => m.id === selectedModel) || AVAILABLE_MODELS[0];
 
   return (
     <Select value={selectedModel} onValueChange={onModelChange}>
@@ -376,14 +381,16 @@ export const __useModelSelection = (defaultModel = 'gpt-4o-mini') => {
 
   // Load from localStorage on mount
   useEffect(() => {
-
+    const saved = localStorage.getItem('vital-ai-selected-model');
     if (saved && AVAILABLE_MODELS.find((m: any) => m.id === saved)) {
       setSelectedModel(saved);
     }
   }, []);
 
-  // Save to localStorage when changed
+  const currentModel = AVAILABLE_MODELS.find((m) => m.id === selectedModel) || AVAILABLE_MODELS[0];
 
+  // Save to localStorage when changed
+  const handleModelChange = (modelId: string) => {
     setSelectedModel(modelId);
     localStorage.setItem('vital-ai-selected-model', modelId);
   };

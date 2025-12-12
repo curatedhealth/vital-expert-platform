@@ -46,6 +46,13 @@ export interface AgentAnalyticsResponse {
     averageLatency: number;
   };
   modeMetrics: {
+    mode1: {
+      total: number;
+      success: number;
+      error: number;
+      averageLatency: number;
+      p95Latency: number;
+    };
     mode2: {
       total: number;
       success: number;
@@ -349,13 +356,11 @@ export async function GET(request: NextRequest) {
 
     // Build recent operations list from detailed metrics
     const recentOperations = detailedMetrics.slice(0, 20).map((m) => ({
-      timestamp: m.created_at,
-      operation: m.operation_type,
-      duration: m.response_time_ms,
-      method: m.search_method || undefined,
-      status: m.success ? 'success' : 'error',
-      agentId: m.agent_id,
-      errorMessage: m.error_message || undefined,
+      timestamp: m.created_at as string,
+      operation: m.operation_type as string,
+      duration: m.response_time_ms as number | undefined,
+      method: (m.search_method || undefined) as string | undefined,
+      status: (m.success ? 'success' : 'error') as 'success' | 'error',
     }));
 
     const response: AgentAnalyticsResponse = {

@@ -111,8 +111,9 @@ export async function POST(request: NextRequest) {
     );
 
     // Only keep starters that have a linked detailed prompt
+    // Type assertion needed because Supabase types don't properly infer joined relations
     const startersWithPrompt = cleanedStarters.filter(
-      (starter) => starter.prompt?.detailed_prompt || starter.prompt_id
+      (starter) => (starter as any).prompt?.detailed_prompt || starter.prompt_id
     );
 
     // If some starters have prompt_id but the joined prompt is missing detailed_prompt, fetch it explicitly

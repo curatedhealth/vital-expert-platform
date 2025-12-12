@@ -22,6 +22,7 @@ export { default as VitalUserPromptModal } from './VitalUserPromptModal';
 export { default as VitalFinalReviewPanel } from './VitalFinalReviewPanel';
 
 // AI SDK Tool Approval Workflow (Confirmation component)
+// Note: Confirmation* aliases are exported from workflow/VitalConfirmation to avoid conflicts
 export {
   VitalToolApproval,
   VitalToolApprovalTitle,
@@ -30,14 +31,6 @@ export {
   VitalToolApprovalRejected,
   VitalToolApprovalActions,
   VitalToolApprovalAction,
-  // Aliases matching ai-elements naming convention
-  Confirmation,
-  ConfirmationTitle,
-  ConfirmationRequest,
-  ConfirmationAccepted,
-  ConfirmationRejected,
-  ConfirmationActions,
-  ConfirmationAction,
   // Hook
   useToolApproval,
 } from './VitalToolApproval';

@@ -33,7 +33,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import Streamdown from 'streamdown';
+import { Streamdown } from 'streamdown';
 
 export interface DocumentSection {
   id: string;

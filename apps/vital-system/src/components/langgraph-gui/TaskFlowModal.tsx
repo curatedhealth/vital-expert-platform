@@ -16,7 +16,8 @@ import 'reactflow/dist/style.css';
 import { X, Save } from 'lucide-react';
 import { TaskLibrary, TaskDefinition } from './TaskLibrary';
 import { TaskNode } from './TaskNode';
-import { WorkflowDefinition } from '../types/workflow';
+// Stub type - workflow types need to be implemented
+type WorkflowDefinition = any;
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 

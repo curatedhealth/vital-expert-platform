@@ -278,6 +278,8 @@ const ComplianceTestingSuite: React.FC = () => {
     setComplianceStandards(standards);
   }, []);
 
+  const runComplianceTests = async (standardId: string) => {
+    const standard = complianceStandards.find(s => s.id === standardId);
     setIsRunningTests(true);
 
     if (!standard) return;
@@ -289,15 +291,16 @@ const ComplianceTestingSuite: React.FC = () => {
     });
 
     // Update test status to running
-
+    const updatedTestCases = allTestCases.map(tc => ({ ...tc, status: 'running' as const }));
     setTestResults({ [standardId]: updatedTestCases });
 
     // Simulate test execution
-    for (let __i = 0; i < updatedTestCases.length; i++) {
+    for (let i = 0; i < updatedTestCases.length; i++) {
       await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
 
       // eslint-disable-next-line security/detect-object-injection
-
+      const testCase = updatedTestCases[i];
+      const passed = Math.random() > 0.2; // 80% pass rate simulation
       testCase.status = passed ? 'passed' : 'failed';
       testCase.lastRun = new Date();
       testCase.actualResult = passed ? testCase.expectedResult : 'Test failed - see artifacts for details';
@@ -314,7 +317,7 @@ const ComplianceTestingSuite: React.FC = () => {
     }
 
     // Update standard status
-
+    const standardPassed = updatedTestCases.every(tc => tc.status === 'passed');
     setComplianceStandards(prev => prev.map((s: any) =>
       s.id === standardId
         ? { ...s, status: standardPassed ? 'passed' : 'failed' }
@@ -324,7 +327,15 @@ const ComplianceTestingSuite: React.FC = () => {
     setIsRunningTests(false);
   };
 
+  const exportComplianceReport = (standardId: string) => {
+    const standard = complianceStandards.find(s => s.id === standardId);
     // eslint-disable-next-line security/detect-object-injection
+    const tests = testResults[standardId] || [];
+    const totalTests = tests.length;
+    const passedTests = tests.filter((t: any) => t.status === 'passed').length;
+    const failedTests = tests.filter((t: any) => t.status === 'failed').length;
+    const pendingTests = tests.filter((t: any) => t.status === 'pending').length;
+    const score = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
 
     const criticalFindings: Finding[] = tests
       .filter((t: any) => t.status === 'failed')
@@ -376,6 +387,7 @@ const ComplianceTestingSuite: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'passed': return 'bg-green-100 text-green-800';
       case 'failed': return 'bg-red-100 text-red-800';
@@ -385,6 +397,7 @@ const ComplianceTestingSuite: React.FC = () => {
     }
   };
 
+  const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return 'bg-red-100 text-red-800';
       case 'high': return 'bg-orange-100 text-orange-800';
@@ -623,6 +636,37 @@ const ComplianceTestingSuite: React.FC = () => {
             {testResults[selectedStandard] && testResults[selectedStandard].length > 0 ? (
               <div>
                 {(() => {
+                  // eslint-disable-next-line security/detect-object-injection
+                  const tests = testResults[selectedStandard] || [];
+                  const totalTests = tests.length;
+                  const passedTests = tests.filter((t: any) => t.status === 'passed').length;
+                  const failedTests = tests.filter((t: any) => t.status === 'failed').length;
+                  const pendingTests = tests.filter((t: any) => t.status === 'pending').length;
+                  const score = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
+
+                  const criticalFindings: Finding[] = tests
+                    .filter((t: any) => t.status === 'failed')
+                    .map((t: any) => ({
+                      id: `finding-${t.id}`,
+                      severity: 'high' as const,
+                      requirement: t.name,
+                      description: t.actualResult || 'Test failed',
+                      remediation: 'Review implementation and address identified issues',
+                      status: 'open' as const
+                    }));
+
+                  const report = {
+                    score,
+                    overallStatus: score === 100 ? 'compliant' : score >= 80 ? 'partial' : 'non_compliant',
+                    requirementsSummary: { total: totalTests, passed: passedTests, failed: failedTests, pending: pendingTests },
+                    criticalFindings,
+                    recommendations: [
+                      'Address all critical and high severity findings',
+                      'Implement automated testing for continuous compliance monitoring',
+                      'Schedule regular compliance reviews and updates',
+                      'Maintain comprehensive documentation for audit purposes'
+                    ]
+                  };
 
                   return (
                     <div className="space-y-6">

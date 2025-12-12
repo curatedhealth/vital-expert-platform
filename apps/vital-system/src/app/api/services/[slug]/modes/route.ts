@@ -17,9 +17,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 type Params = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 /**
@@ -31,8 +31,8 @@ export async function GET(
   { params }: Params
 ) {
   try {
+    const { slug } = await params;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { slug } = params;
 
     // Get service
     const { data: service, error: serviceError } = await supabase

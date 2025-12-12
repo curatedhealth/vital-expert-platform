@@ -1,6 +1,6 @@
 "use client"
 
-import { Agent } from "@/types"
+import { Agent } from "@/types/agent.types"
 import { AgentAvatar } from "@vital/ui"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -54,7 +54,7 @@ export function AgentPreviewCard({
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-base truncate">{agent.displayName}</h4>
+                <h4 className="font-semibold text-base truncate">{agent.display_name}</h4>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="secondary" className="text-xs bg-white/20 text-white border-none">
                     Tier {agent.tier}
@@ -86,7 +86,7 @@ export function AgentPreviewCard({
                   Expertise
                 </h5>
                 <div className="flex flex-wrap gap-1.5">
-                  {agent.capabilities.slice(0, 6).map((capability, idx) => (
+                  {agent.capabilities.slice(0, 6).map((capability: string, idx: number) => (
                     <Badge key={idx} variant="outline" className="text-xs">
                       {capability}
                     </Badge>

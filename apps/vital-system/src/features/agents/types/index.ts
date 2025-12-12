@@ -7,7 +7,7 @@ export type {
   AgentWithRelationships,
   AgentFilters,
   AgentLevelNumber,
-  AgentLevels,
+  AgentLevel,
   DomainExpertise,
 } from './agent.types';
 
@@ -22,6 +22,7 @@ export type {
   SpawningRelationship,
   RecommendSubagentsRequest,
   RecommendSubagentsResponse,
+  DomainExpertiseMetadata,
 } from './agent.types';
 
 // Constants

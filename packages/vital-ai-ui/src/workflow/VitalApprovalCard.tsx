@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import {
   CheckCircle2,
   XCircle,
@@ -13,7 +13,7 @@ import {
   ChevronDown,
   Loader2,
 } from 'lucide-react';
-import { Button } from '../../ui/button';
+import { Button } from '@vital/ui';
 import {
   Card,
   CardContent,
@@ -21,19 +21,19 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '../../ui/card';
-import { Badge } from '../../ui/badge';
-import { Textarea } from '../../ui/textarea';
+} from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Textarea } from '@vital/ui';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '../../ui/collapsible';
+} from '@vital/ui';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '../../ui/tooltip';
+} from '@vital/ui';
 
 type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired';
 type ApprovalType = 'checkpoint' | 'safety' | 'cost' | 'delegation' | 'output';

@@ -164,11 +164,19 @@ export async function DELETE(
       const { id: domainId } = await params;
 
       // Check if domain exists (try new architecture first)
-      let { data: existingDomain, error: fetchError } = await supabase
+      let existingDomain: { domain_id: string; domain_name: string; slug?: string } | null = null;
+      let fetchError: { code?: string } | null = null;
+
+      const { data: newDomain, error: newError } = await supabase
         .from('knowledge_domains_new')
         .select('domain_id, domain_name')
         .eq('domain_id', domainId)
         .single();
+
+      if (newDomain) {
+        existingDomain = newDomain;
+      }
+      fetchError = newError;
 
       // If not found in new table, try old table
       if (fetchError && fetchError.code === 'PGRST116') {

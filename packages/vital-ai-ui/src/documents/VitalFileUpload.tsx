@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   Upload, 
   X, 
@@ -12,8 +12,8 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react';
-import { Button } from '../../ui/button';
-import { Progress } from '../../ui/progress';
+import { Button } from '@vital/ui';
+import { Progress } from '@vital/ui';
 
 interface FileWithProgress {
   id: string;

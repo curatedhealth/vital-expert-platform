@@ -70,13 +70,6 @@ interface EnhancedChatInterfaceProps {
   maxMessages?: number;
 }
 
-// Type declarations for Web APIs
-declare global {
-  interface Window {
-    webkitSpeechRecognition: unknown;
-  }
-}
-
 // Custom hooks
 const useSpeechRecognition = () => {
   const recognitionRef = useRef<any>(null);
@@ -161,6 +154,9 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('disconnected');
 
   // Refs
+  const wsRef = useRef<WebSocket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Hooks
   const { isListening, transcript, startListening, stopListening } = useSpeechRecognition();
@@ -168,42 +164,45 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
 
   // WebSocket connection
   useEffect(() => {
+    // WebSocket functionality disabled - needs proper implementation
+    // if (!websocketUrl) return;
 
-      setConnectionStatus('connecting');
+    // const connect = () => {
+    //   const ws = new WebSocket(websocketUrl);
+    //   setConnectionStatus('connecting');
+    //
+    //   ws.onopen = () => {
+    //     setConnectionStatus('connected');
+    //   };
+    //
+    //   ws.onclose = () => {
+    //     setConnectionStatus('disconnected');
+    //   };
+    //
+    //   ws.onmessage = (event) => {
+    //     try {
+    //       const data = JSON.parse(event.data);
+    //       handleWebSocketMessage(data);
+    //     } catch (error) {
+    //       console.error('Failed to parse WebSocket message:', error);
+    //     }
+    //   };
+    //
+    //   ws.onerror = (error) => {
+    //     console.error('WebSocket error:', error);
+    //     setError('Connection error. Attempting to reconnect...');
+    //   };
+    //
+    //   wsRef.current = ws;
+    // };
 
-      ws.onopen = () => {
-        setConnectionStatus('connected');
-        // };
+    // connect();
 
-      ws.onclose = () => {
-        setConnectionStatus('disconnected');
-        // setTimeout(connect, 3000);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-
-          handleWebSocketMessage(data);
-        } catch (error) {
-          // console.error('Failed to parse WebSocket message:', error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        // console.error('WebSocket error:', error);
-        setError('Connection error. Attempting to reconnect...');
-      };
-
-      wsRef.current = ws;
-    };
-
-    connect();
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
+    // return () => {
+    //   if (wsRef.current) {
+    //     wsRef.current.close();
+    //   }
+    // };
   }, [websocketUrl]);
 
   // Handle WebSocket messages
@@ -265,6 +264,28 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
       setInput(prev => prev + (prev ? ' ' : '') + transcript);
     }
   }, [transcript, isListening]);
+
+  // Message handlers
+  const handleCopyMessage = useCallback((message: Message) => {
+    navigator.clipboard.writeText(message.content);
+  }, []);
+
+  const handleStarMessage = useCallback((messageId: string) => {
+    // TODO: Implement star/favorite message functionality
+    console.log('Star message:', messageId);
+  }, []);
+
+  const handleExportConversation = useCallback(() => {
+    // TODO: Implement export conversation functionality
+    const exportData = JSON.stringify(messages, null, 2);
+    const blob = new Blob([exportData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `conversation-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [messages]);
 
   // Message submission
   const sendMessage = useCallback((e?: React.FormEvent) => {
@@ -609,7 +630,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
 
         {/* Input area */}
         <div className="border-t bg-card/50 p-4">
-          <form onSubmit={handleSubmit} className="flex gap-2">
+          <form onSubmit={sendMessage} className="flex gap-2">
             <Input
               ref={inputRef}
               value={input}
@@ -620,7 +641,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  handleSubmit();
+                  sendMessage();
                 }
               }}
             />

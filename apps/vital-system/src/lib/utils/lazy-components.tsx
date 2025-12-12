@@ -207,16 +207,7 @@ export const LazyLLMProviderDashboard = dynamic(
 // MODAL COMPONENTS
 // ===========================
 
-/**
- * Agent Details Modal - Heavy modal with tabs
- */
-export const LazyAgentDetailsModal = dynamic(
-  () => import('@/features/agents/components/agent-details-modal').then((mod) => ({ default: mod.AgentDetailsModal })),
-  {
-    loading: () => <AgentDetailsSkeleton />,
-    ssr: false,
-  }
-);
+// Note: AgentDetailsModal removed - using full-page route /agents/[slug] instead
 
 /**
  * Avatar Picker Modal - Heavy icon grid

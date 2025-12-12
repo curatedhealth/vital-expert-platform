@@ -9,7 +9,8 @@ import { Settings, Zap, MessageSquare } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle, Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui';
-import { DatabaseLibraryLoader } from '@/shared/services/utils/database-library-loader';
+// TODO: DatabaseLibraryLoader has been removed - needs migration to new service
+// import { DatabaseLibraryLoader } from '@/shared/services/utils/database-library-loader';
 
 import { AgentCapabilitiesDisplay } from './AgentCapabilitiesDisplay';
 import { CapabilitySelector } from './CapabilitySelector';
@@ -39,8 +40,10 @@ export const AgentConfigurationExample: React.FC<AgentConfigurationExampleProps>
   const loadAgentCapabilities = async () => {
     setIsLoadingCapabilities(true);
     try {
-      const loader = new DatabaseLibraryLoader();
-      const caps = agentId ? await loader.getAgentCapabilitiesDetailed(agentName) : [];
+      // TODO: Re-implement with new service architecture
+      // const loader = new DatabaseLibraryLoader();
+      // const caps = agentId ? await loader.getAgentCapabilitiesDetailed(agentName) : [];
+      const caps: any[] = [];
       setCapabilities(caps);
     } catch (error) {
       console.error('Failed to load agent capabilities:', error);
@@ -74,13 +77,15 @@ export const AgentConfigurationExample: React.FC<AgentConfigurationExampleProps>
     proficiencyLevel: string;
     isPrimary: boolean;
   }>) => {
-    const loader = new DatabaseLibraryLoader();
+    // TODO: Re-implement with new service architecture
+    // const loader = new DatabaseLibraryLoader();
     // In a real implementation, you would save these to the database
     // For now, just simulate the addition
     for (const selected of selectedCapabilities) {
       if (agentId) {
         try {
-          await loader.addCapabilityToAgent(agentId, selected.capabilityId, selected.proficiencyLevel, selected.isPrimary);
+          // await loader.addCapabilityToAgent(agentId, selected.capabilityId, selected.proficiencyLevel, selected.isPrimary);
+          console.log('Would add capability:', selected);
         } catch (error) {
           console.error('Failed to add capability:', error);
         }
@@ -93,10 +98,12 @@ export const AgentConfigurationExample: React.FC<AgentConfigurationExampleProps>
   };
 
   const handleRemoveCapability = async (capabilityId: string) => {
-    const loader = new DatabaseLibraryLoader();
+    // TODO: Re-implement with new service architecture
+    // const loader = new DatabaseLibraryLoader();
     if (agentId) {
       try {
-        await loader.removeCapabilityFromAgent(agentId, capabilityId);
+        // await loader.removeCapabilityFromAgent(agentId, capabilityId);
+        console.log('Would remove capability:', capabilityId);
         await loadAgentCapabilities();
       } catch (error) {
         console.error('Failed to remove capability:', error);

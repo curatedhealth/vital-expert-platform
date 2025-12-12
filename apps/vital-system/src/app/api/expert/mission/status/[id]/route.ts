@@ -11,10 +11,10 @@ const AI_ENGINE_URL = process.env.AI_ENGINE_URL || 'http://localhost:8000';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const missionId = params.id;
+    const { id: missionId } = await params;
     const mode = request.nextUrl.searchParams.get('mode') || 'mode3_manual_autonomous';
 
     if (!missionId) {

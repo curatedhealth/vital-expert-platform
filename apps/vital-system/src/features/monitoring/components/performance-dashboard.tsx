@@ -27,8 +27,12 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [timeWindow, setTimeWindow] = useState<number>(3600000); // 1 hour default
 
+  const refreshData = useCallback(async () => {
     try {
       setIsLoading(true);
+
+      const newSnapshot = await performanceMetricsService.getPerformanceSnapshot(timeWindow);
+      const health = await performanceMetricsService.getHealthStatus();
 
       setSnapshot(newSnapshot);
       setHealthStatus(health);
@@ -39,25 +43,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
     }
   }, [timeWindow]);
 
-  useEffect(() => {
-    refreshData();
-
-    // Subscribe to alerts
-
-      setAlerts(prev => [alert, ...prev].slice(0, 10)); // Keep last 10 alerts
-    });
-
-    let interval: NodeJS.Timeout;
-    if (autoRefresh) {
-      interval = setInterval(refreshData, refreshInterval);
-    }
-
-    return () => {
-      unsubscribe();
-      if (interval) clearInterval(interval);
-    };
-  }, [refreshData, refreshInterval, autoRefresh]);
-
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy': return 'text-green-600 bg-green-50';
       case 'degraded': return 'text-yellow-600 bg-yellow-50';
@@ -66,6 +52,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
     }
   };
 
+  const getMetricStatus = (value: number, thresholds: { warning: number; error: number }, invert = false): 'good' | 'warning' | 'error' => {
     if (invert) {
       if (value < thresholds.error) return 'error';
       if (value < thresholds.warning) return 'warning';
@@ -77,13 +64,16 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
     }
   };
 
+  const formatDuration = (ms: number) => {
     if (ms < 1000) return `${ms.toFixed(0)}ms`;
     return `${(ms / 1000).toFixed(2)}s`;
   };
 
+  const formatPercentage = (value: number) => {
     return `${(value * 100).toFixed(1)}%`;
   };
 
+  const metricCards: MetricCard[] = (() => {
     if (!snapshot) return [];
 
     return [
@@ -133,7 +123,26 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
         status: 'good'
       }
     ];
-  };
+  })();
+
+  useEffect(() => {
+    refreshData();
+
+    // Subscribe to alerts
+    const unsubscribe = performanceMetricsService.subscribeToAlerts((alert: any) => {
+      setAlerts(prev => [alert, ...prev].slice(0, 10)); // Keep last 10 alerts
+    });
+
+    let interval: NodeJS.Timeout;
+    if (autoRefresh) {
+      interval = setInterval(refreshData, refreshInterval);
+    }
+
+    return () => {
+      unsubscribe();
+      if (interval) clearInterval(interval);
+    };
+  }, [refreshData, refreshInterval, autoRefresh]);
 
   if (isLoading && !snapshot) {
     return (
@@ -278,8 +287,17 @@ const ErrorSummary: React.FC<{ timeWindow: number }> = ({ timeWindow }) => {
   const [errorMetrics, setErrorMetrics] = useState<Array<{ operation: string; count: number; lastError: string }>>([]);
 
   useEffect(() => {
-
-    setErrorMetrics(errors);
+    // Fetch error metrics from the performance metrics service
+    const fetchErrors = async () => {
+      try {
+        const errors = await performanceMetricsService.getErrorMetrics(timeWindow);
+        setErrorMetrics(errors);
+      } catch (error) {
+        // Handle error silently, keep empty array
+        setErrorMetrics([]);
+      }
+    };
+    fetchErrors();
   }, [timeWindow]);
 
   if (errorMetrics.length === 0) {

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, ReactNode } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { X, ChevronRight, ChevronLeft, Pin, PinOff } from 'lucide-react';
-import { Button } from '../../ui/button';
-import { ScrollArea } from '../../ui/scroll-area';
+import { Button } from '@vital/ui';
+import { ScrollArea } from '@vital/ui';
 
 interface Tab {
   id: string;

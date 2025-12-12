@@ -4,8 +4,20 @@
  */
 
 import { createServerClient } from '@supabase/ssr';
-import { jwtVerify, SignJWT } from 'jose';
+import { jwtVerify, SignJWT, JWTPayload } from 'jose';
 import { NextRequest } from 'next/server';
+
+// Extended JWT payload type for healthcare tokens
+interface HealthcareJWTPayload extends JWTPayload {
+  sub: string;
+  email: string;
+  role: string;
+  sessionId: string;
+  licenseNumber?: string;
+  specialty?: string;
+  institution?: string;
+  mfaVerified?: boolean;
+}
 
 // Healthcare user roles with increasing privileges
 export enum HealthcareRole {
@@ -100,7 +112,8 @@ interface AuthenticationResult {
 export async function authenticateRequest(request: NextRequest): Promise<AuthenticationResult> {
   try {
     // Check for authentication token
-
+    const authHeader = request.headers.get('authorization');
+    const sessionCookie = request.cookies.get('session')?.value;
     if (!authHeader && !sessionCookie) {
       return {
         success: false,
@@ -122,14 +135,14 @@ export async function authenticateRequest(request: NextRequest): Promise<Authent
     }
 
     // Verify JWT token
-
+    const jwtSecret = new TextEncoder().encode(
       process.env.JWT_SECRET || 'healthcare-secret-key'
     );
 
-    let payload: unknown;
+    let payload: HealthcareJWTPayload;
     try {
       const { payload: jwtPayload } = await jwtVerify(token, jwtSecret);
-      payload = jwtPayload;
+      payload = jwtPayload as HealthcareJWTPayload;
     } catch (error) {
       return {
         success: false,
@@ -147,7 +160,7 @@ export async function authenticateRequest(request: NextRequest): Promise<Authent
     }
 
     // Check if session is still valid in database
-
+    const sessionValid = await validateSession(payload.sessionId, payload.sub);
     if (!sessionValid) {
       return {
         success: false,
@@ -170,7 +183,7 @@ export async function authenticateRequest(request: NextRequest): Promise<Authent
     };
 
     // Check if MFA is required for this user/endpoint
-
+    const requiresMFA = await checkMFARequirement(user, request.url);
     if (requiresMFA && !payload.mfaVerified) {
       return {
         success: false,
@@ -217,7 +230,7 @@ export async function checkPermissions(
   }
 
   // Check if user has required permissions
-
+  const missingPermissions = requiredPermissions.filter(
     permission => !user.permissions.includes(permission)
   );
 
@@ -242,15 +255,17 @@ export async function createHealthcareSession(
     mfaVerified?: boolean;
   }
 ): Promise<string> {
-
+  const sessionId = generateSessionId();
+  const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000); // 8 hours
   // Store session in database
   await storeSession(sessionId, userId, expiresAt);
 
   // Create JWT token
-
+  const jwtSecret = new TextEncoder().encode(
     process.env.JWT_SECRET || 'healthcare-secret-key'
   );
 
+  const token = await new SignJWT({
     sub: userId,
     email,
     role,
@@ -275,7 +290,7 @@ export async function requireHealthcareRole(
   user: AuthenticatedUser,
   requiredRole: HealthcareRole
 ): Promise<boolean> {
-
+  const roleHierarchy: Record<HealthcareRole, number> = {
     [HealthcareRole.PATIENT]: 1,
     [HealthcareRole.HEALTHCARE_PROVIDER]: 2,
     [HealthcareRole.SPECIALIST]: 3,
@@ -285,9 +300,9 @@ export async function requireHealthcareRole(
   };
 
   // eslint-disable-next-line security/detect-object-injection
-
+  const userLevel = roleHierarchy[user.role] || 0;
   // eslint-disable-next-line security/detect-object-injection
-
+  const requiredLevel = roleHierarchy[requiredRole] || 0;
   return userLevel >= requiredLevel;
 }
 
@@ -301,20 +316,22 @@ async function validateSession(sessionId: string, userId: string): Promise<boole
 
 async function checkMFARequirement(user: AuthenticatedUser, endpoint: string): Promise<boolean> {
   // MFA required for high-risk endpoints and certain roles
-
+  const highRiskEndpoints = [
     '/api/agents/safety-',
     '/api/knowledge/upload',
     '/api/llm/usage'
   ];
 
+  const mfaRequiredRoles = [
     HealthcareRole.SPECIALIST,
     HealthcareRole.ADMINISTRATOR,
     HealthcareRole.SYSTEM_ADMIN
   ];
 
+  const endpointRequiresMFA = highRiskEndpoints.some(pattern =>
     endpoint.includes(pattern)
   );
-
+  const roleRequiresMFA = mfaRequiredRoles.includes(user.role);
   return endpointRequiresMFA || roleRequiresMFA;
 }
 
@@ -335,9 +352,9 @@ async function invalidateSession(sessionId: string): Promise<void> {
 
 function matchesEndpointPattern(endpoint: string, pattern: string): boolean {
   // Convert pattern to regex
-
+  const regex = new RegExp('^' + pattern
     .replace(/\*/g, '.*')
-    .replace(/\?/g, '.');
+    .replace(/\?/g, '.') + '$');
 
   return regex.test(endpoint);
 }
@@ -349,7 +366,7 @@ function generateSessionId(): string {
 // Supabase integration for production authentication
 export async function authenticateWithSupabase(request: NextRequest): Promise<AuthenticationResult> {
   try {
-
+    const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       {
@@ -377,13 +394,14 @@ export async function authenticateWithSupabase(request: NextRequest): Promise<Au
     }
 
     // Get user role from user metadata or database
+    const role = (user.user_metadata?.role as HealthcareRole) || HealthcareRole.PATIENT;
 
     const authenticatedUser: AuthenticatedUser = {
       id: user.id,
       email: user.email!,
       role,
       // eslint-disable-next-line security/detect-object-injection
-    permissions: ROLE_PERMISSIONS[role],
+      permissions: ROLE_PERMISSIONS[role],
       licenseNumber: user.user_metadata?.licenseNumber,
       specialty: user.user_metadata?.specialty,
       institution: user.user_metadata?.institution,

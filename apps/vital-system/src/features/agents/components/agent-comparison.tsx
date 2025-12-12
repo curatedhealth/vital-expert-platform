@@ -151,7 +151,8 @@ const getAgentLevel = (agent: Agent): AgentLevel => {
 const getLevelConfig = (level: AgentLevel) => AGENT_LEVEL_COLORS[level];
 
 const getSpawningCapabilities = (level: AgentLevel): AgentLevel[] => {
-  return SPAWNING_RULES[level].canSpawn as AgentLevel[];
+  // Spread to convert readonly tuple to mutable array
+  return [...SPAWNING_RULES[level].canSpawn] as AgentLevel[];
 };
 
 const calculateOverallScore = (metrics: ComparisonMetrics): number => {

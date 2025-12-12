@@ -122,8 +122,20 @@ export class DatabaseOptimizer {
   }
 
   async runDatabaseOptimizationSuite(): Promise<DatabaseOptimizationSuite> {
-    // // Run different optimization strategies
+    // Run different optimization strategies
+    const [
+      connectionPoolOptimization,
+      queryOptimization,
+      indexOptimization,
+      healthcareSpecificOptimization
+    ] = await Promise.all([
+      this.optimizeConnectionPool(),
+      this.optimizeQueries(),
+      this.optimizeIndexes(),
+      this.optimizeHealthcareQueries()
+    ]);
 
+    const summary = this.generateOptimizationSummary([
       connectionPoolOptimization,
       queryOptimization,
       indexOptimization,
@@ -140,13 +152,14 @@ export class DatabaseOptimizer {
   }
 
   private async optimizeConnectionPool(): Promise<DatabaseOptimizationResult> {
-    // const _beforeMetrics = await this.measureConnectionPoolMetrics();
-
-    // Simulate connection pool optimization
+    const beforeMetrics = await this.measureConnectionPoolMetrics();
 
     // Apply connection pool optimizations
     await this.applyConnectionPoolOptimizations();
 
+    const afterMetrics = await this.measureConnectionPoolMetrics();
+    const recommendedActions = this.getConnectionPoolRecommendations(beforeMetrics, afterMetrics);
+    const improvementPercentage = this.calculateImprovement(
       beforeMetrics.averageQueryTime,
       afterMetrics.averageQueryTime
     );
@@ -167,11 +180,14 @@ export class DatabaseOptimizer {
   }
 
   private async optimizeQueries(): Promise<DatabaseOptimizationResult> {
-    // const _beforeMetrics = await this.measureQueryMetrics();
+    const beforeMetrics = await this.measureQueryMetrics();
 
     // Apply query optimizations
     await this.applyQueryOptimizations();
 
+    const afterMetrics = await this.measureQueryMetrics();
+    const recommendedActions = this.getQueryRecommendations(beforeMetrics, afterMetrics);
+    const improvementPercentage = this.calculateImprovement(
       beforeMetrics.averageQueryTime,
       afterMetrics.averageQueryTime
     );
@@ -192,11 +208,14 @@ export class DatabaseOptimizer {
   }
 
   private async optimizeIndexes(): Promise<DatabaseOptimizationResult> {
-    // const _beforeMetrics = await this.measureIndexMetrics();
+    const beforeMetrics = await this.measureIndexMetrics();
 
     // Apply index optimizations
     await this.applyIndexOptimizations();
 
+    const afterMetrics = await this.measureIndexMetrics();
+    const recommendedActions = this.getIndexRecommendations(beforeMetrics, afterMetrics);
+    const improvementPercentage = this.calculateImprovement(
       100 - beforeMetrics.indexEfficiency,
       100 - afterMetrics.indexEfficiency
     );
@@ -217,11 +236,14 @@ export class DatabaseOptimizer {
   }
 
   private async optimizeHealthcareSpecificQueries(): Promise<DatabaseOptimizationResult> {
-    // const _beforeMetrics = await this.measureHealthcareQueryMetrics();
+    const beforeMetrics = await this.measureHealthcareQueryMetrics();
 
     // Apply healthcare-specific optimizations
     await this.applyHealthcareOptimizations();
 
+    const afterMetrics = await this.measureHealthcareQueryMetrics();
+    const recommendedActions = this.getHealthcareRecommendations(beforeMetrics, afterMetrics);
+    const improvementPercentage = this.calculateImprovement(
       beforeMetrics.averageQueryTime,
       afterMetrics.averageQueryTime
     );
@@ -437,19 +459,24 @@ export class DatabaseOptimizer {
     const nextSteps: string[] = [];
 
     // Prioritize recommendations
+    const urgentRecommendations = results.flatMap(r => r.recommendedActions.filter(a => a.includes('urgent') || a.includes('critical')));
+    const performanceRecommendations = results.flatMap(r => r.recommendedActions.filter(a => a.includes('performance') || a.includes('slow')));
+    const complianceRecommendations = results.flatMap(r => r.recommendedActions.filter(a => a.includes('compliance') || a.includes('HIPAA')));
 
     nextSteps.push(...urgentRecommendations.slice(0, 2));
     nextSteps.push(...performanceRecommendations.slice(0, 2));
     nextSteps.push(...complianceRecommendations.slice(0, 2));
 
     // Determine compliance status
-
+    const allHealthcareCompliant = results.every(r =>
       Object.values(r.healthcareCompliance).every(compliant => compliant)
     );
 
+    const someHealthcareCompliant = results.some(r =>
       Object.values(r.healthcareCompliance).some(compliant => compliant)
     );
 
+    const complianceStatus: 'compliant' | 'needs_improvement' | 'non_compliant' = allHealthcareCompliant ? 'compliant' :
       someHealthcareCompliant ? 'needs_improvement' : 'non_compliant';
 
     return {
@@ -534,12 +561,17 @@ ${result.recommendedActions.map(action => `- ${action}`).join('\n')}
   }
 
   private generateHealthcareComplianceReport(results: DatabaseOptimizationSuite): string {
-
+    const allResults = [
       results.connectionPoolOptimization,
       results.queryOptimization,
       results.indexOptimization,
       results.healthcareSpecificOptimization
     ];
+
+    const phiOptimized = allResults.filter(r => r.healthcareCompliance.phiAccessOptimized).length;
+    const auditImproved = allResults.filter(r => r.healthcareCompliance.auditPerformanceImproved).length;
+    const emergencySpeed = allResults.filter(r => r.healthcareCompliance.emergencyQuerySpeed).length;
+    const complianceOptimized = allResults.filter(r => r.healthcareCompliance.complianceReportingOptimized).length;
 
     return `
 - **PHI Access Performance**: ${phiOptimized}/4 optimizations meet healthcare standards

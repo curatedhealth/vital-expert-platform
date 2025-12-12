@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { Agent } from '@/shared/services/agents/agents-store';
+import { Agent } from '@/lib/stores/agents-store';
 
 export interface PanelMember {
   agent: Agent;

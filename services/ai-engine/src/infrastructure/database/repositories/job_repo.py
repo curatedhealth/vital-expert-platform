@@ -4,14 +4,18 @@ VITAL Path - Job Repository
 Data access for async job tracking.
 Jobs are used for long-running operations (Mode 3/4, Panels, etc.)
 
+PRODUCTION VERSION: Uses PostgreSQL via Supabase for persistence.
+
 IMPORTANT: Uses organization_id to match production RLS policies.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Tuple, Dict, Any
 from dataclasses import dataclass, field
 from uuid import uuid4
+
+from services.tenant_aware_supabase import TenantAwareSupabaseClient
 
 logger = logging.getLogger(__name__)
 
@@ -33,23 +37,53 @@ class Job:
     error_message: Optional[str] = None
     is_retryable: bool = False
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     @property
     def tenant_id(self) -> str:
         """DEPRECATED: Use organization_id instead."""
         return self.organization_id
 
+    @classmethod
+    def from_db_row(cls, row: Dict[str, Any]) -> "Job":
+        """Create Job from database row."""
+        return cls(
+            id=row["id"],
+            organization_id=row.get("organization_id") or row.get("tenant_id", ""),
+            user_id=row["user_id"],
+            job_type=row["job_type"],
+            status=row["status"],
+            created_at=datetime.fromisoformat(row["created_at"].replace("Z", "+00:00")) if isinstance(row["created_at"], str) else row["created_at"],
+            updated_at=datetime.fromisoformat(row["updated_at"].replace("Z", "+00:00")) if row.get("updated_at") and isinstance(row["updated_at"], str) else row.get("updated_at"),
+            started_at=datetime.fromisoformat(row["started_at"].replace("Z", "+00:00")) if row.get("started_at") and isinstance(row["started_at"], str) else row.get("started_at"),
+            completed_at=datetime.fromisoformat(row["completed_at"].replace("Z", "+00:00")) if row.get("completed_at") and isinstance(row["completed_at"], str) else row.get("completed_at"),
+            progress=row.get("progress"),
+            result=row.get("result"),
+            error_message=row.get("error_message"),
+            is_retryable=row.get("is_retryable", False),
+            metadata=row.get("metadata") or {},
+        )
+
 
 class JobRepository:
     """
     Repository for async job management.
-    
+
     Provides CRUD operations and queries for jobs.
+    Uses PostgreSQL via Supabase for persistence.
     """
-    
-    # In-memory store for development (replace with actual DB)
-    _jobs: Dict[str, Job] = {}
-    
+
+    # Table name - uses organization_id to match RLS policies
+    JOBS_TABLE = "jobs"
+
+    def __init__(self, db_client: TenantAwareSupabaseClient):
+        """
+        Initialize repository with database client.
+
+        Args:
+            db_client: Tenant-aware Supabase client for database operations
+        """
+        self._db = db_client
+
     async def create(
         self,
         organization_id: str,
@@ -63,7 +97,7 @@ class JobRepository:
     ) -> Job:
         """
         Create a new job in pending status.
-        
+
         Args:
             organization_id: Organization for the job (matches RLS)
             user_id: User who initiated the job
@@ -72,66 +106,59 @@ class JobRepository:
             job_id: Optional job ID (auto-generated if not provided)
             input_data: Optional input data for the job
             tenant_id: DEPRECATED - use organization_id instead
-        
+
         Returns:
             Created job with generated ID
         """
         # Support legacy tenant_id parameter
         org_id = organization_id or tenant_id
-        
+
         job_id = job_id or str(uuid4())
-        now = datetime.utcnow()
-        
+        now = datetime.now(timezone.utc)
+
         # Merge input_data into metadata if provided
         job_metadata = metadata or {}
         if input_data:
             job_metadata["input"] = input_data
-        
-        job = Job(
-            id=job_id,
-            organization_id=org_id,
-            user_id=user_id,
-            job_type=job_type,
-            status="pending",
-            created_at=now,
-            metadata=job_metadata,
-        )
-        
-        # TODO: Replace with actual database insert
-        # await self._db.execute(
-        #     """
-        #     INSERT INTO jobs (id, organization_id, user_id, job_type, status, created_at, metadata)
-        #     VALUES ($1, $2, $3, $4, $5, $6, $7)
-        #     """,
-        #     job_id, org_id, user_id, job_type, "pending", now, job_metadata
-        # )
-        
-        self._jobs[job_id] = job
+
+        data = {
+            "id": job_id,
+            "organization_id": org_id,
+            "user_id": user_id,
+            "job_type": job_type,
+            "status": "pending",
+            "created_at": now.isoformat(),
+            "metadata": job_metadata,
+        }
+
+        # Insert via tenant-aware client
+        # Note: We use organization_id directly since this table may not use tenant_id
+        result = self._db._client.client.table(self.JOBS_TABLE).insert(data).execute()
+
         logger.info(f"Created job {job_id} for organization {org_id}")
-        
-        return job
-    
+
+        return Job.from_db_row(result.data[0]) if result.data else Job.from_db_row(data)
+
     async def get(self, job_id: str) -> Optional[Job]:
         """
         Get a job by ID.
-        
+
         Args:
             job_id: The job ID
-        
+
         Returns:
             Job if found, None otherwise
         """
-        # TODO: Replace with actual database query
-        # row = await self._db.fetchone(
-        #     "SELECT * FROM jobs WHERE id = $1",
-        #     job_id
-        # )
-        # if row:
-        #     return Job(**row)
-        # return None
-        
-        return self._jobs.get(job_id)
-    
+        result = self._db._client.client.table(self.JOBS_TABLE)\
+            .select("*")\
+            .eq("id", job_id)\
+            .execute()
+
+        if not result.data:
+            return None
+
+        return Job.from_db_row(result.data[0])
+
     async def update_status(
         self,
         job_id: str,
@@ -140,37 +167,34 @@ class JobRepository:
     ) -> None:
         """
         Update job status and progress.
-        
+
         Args:
             job_id: The job ID
             status: New status
             progress: Optional progress information
         """
-        now = datetime.utcnow()
-        
-        # TODO: Replace with actual database update
-        # await self._db.execute(
-        #     """
-        #     UPDATE jobs
-        #     SET status = $2, progress = $3, updated_at = $4,
-        #         started_at = CASE WHEN status = 'pending' AND $2 = 'running'
-        #                      THEN $4 ELSE started_at END
-        #     WHERE id = $1
-        #     """,
-        #     job_id, status, progress, now
-        # )
-        
-        job = self._jobs.get(job_id)
-        if job:
-            if job.status == "pending" and status == "running":
-                job.started_at = now
-            job.status = status
-            job.updated_at = now
-            if progress:
-                job.progress = progress
-        
+        now = datetime.now(timezone.utc)
+
+        update_data = {
+            "status": status,
+            "updated_at": now.isoformat(),
+        }
+
+        if progress:
+            update_data["progress"] = progress
+
+        # Check if transitioning from pending to running
+        job = await self.get(job_id)
+        if job and job.status == "pending" and status == "running":
+            update_data["started_at"] = now.isoformat()
+
+        self._db._client.client.table(self.JOBS_TABLE)\
+            .update(update_data)\
+            .eq("id", job_id)\
+            .execute()
+
         logger.info(f"Updated job {job_id} status to {status}")
-    
+
     async def complete(
         self,
         job_id: str,
@@ -178,32 +202,27 @@ class JobRepository:
     ) -> None:
         """
         Mark job as completed with result.
-        
+
         Args:
             job_id: The job ID
             result: Job result data
         """
-        now = datetime.utcnow()
-        
-        # TODO: Replace with actual database update
-        # await self._db.execute(
-        #     """
-        #     UPDATE jobs
-        #     SET status = 'completed', result = $2, completed_at = $3, updated_at = $3
-        #     WHERE id = $1
-        #     """,
-        #     job_id, result, now
-        # )
-        
-        job = self._jobs.get(job_id)
-        if job:
-            job.status = "completed"
-            job.result = result
-            job.completed_at = now
-            job.updated_at = now
-        
+        now = datetime.now(timezone.utc)
+
+        update_data = {
+            "status": "completed",
+            "result": result,
+            "completed_at": now.isoformat(),
+            "updated_at": now.isoformat(),
+        }
+
+        self._db._client.client.table(self.JOBS_TABLE)\
+            .update(update_data)\
+            .eq("id", job_id)\
+            .execute()
+
         logger.info(f"Completed job {job_id}")
-    
+
     async def fail(
         self,
         job_id: str,
@@ -212,45 +231,51 @@ class JobRepository:
     ) -> None:
         """
         Mark job as failed with error.
-        
+
         Args:
             job_id: The job ID
             error_message: Error description
             is_retryable: Whether the job can be retried
         """
-        now = datetime.utcnow()
-        
-        # TODO: Replace with actual database update
-        
-        job = self._jobs.get(job_id)
-        if job:
-            job.status = "failed"
-            job.error_message = error_message
-            job.is_retryable = is_retryable
-            job.completed_at = now
-            job.updated_at = now
-        
+        now = datetime.now(timezone.utc)
+
+        update_data = {
+            "status": "failed",
+            "error_message": error_message,
+            "is_retryable": is_retryable,
+            "completed_at": now.isoformat(),
+            "updated_at": now.isoformat(),
+        }
+
+        self._db._client.client.table(self.JOBS_TABLE)\
+            .update(update_data)\
+            .eq("id", job_id)\
+            .execute()
+
         logger.error(f"Job {job_id} failed: {error_message}")
-    
+
     async def cancel(self, job_id: str) -> None:
         """
         Cancel a job.
-        
+
         Args:
             job_id: The job ID
         """
-        now = datetime.utcnow()
-        
-        # TODO: Replace with actual database update
-        
-        job = self._jobs.get(job_id)
-        if job:
-            job.status = "cancelled"
-            job.completed_at = now
-            job.updated_at = now
-        
+        now = datetime.now(timezone.utc)
+
+        update_data = {
+            "status": "cancelled",
+            "completed_at": now.isoformat(),
+            "updated_at": now.isoformat(),
+        }
+
+        self._db._client.client.table(self.JOBS_TABLE)\
+            .update(update_data)\
+            .eq("id", job_id)\
+            .execute()
+
         logger.info(f"Cancelled job {job_id}")
-    
+
     async def list_for_user(
         self,
         user_id: str,
@@ -264,7 +289,7 @@ class JobRepository:
     ) -> Tuple[List[Job], int]:
         """
         List jobs for a user with optional filters.
-        
+
         Args:
             user_id: User ID
             organization_id: Organization ID (matches RLS)
@@ -273,51 +298,49 @@ class JobRepository:
             limit: Number of jobs to return
             offset: Number of jobs to skip
             tenant_id: DEPRECATED - use organization_id instead
-        
+
         Returns:
             Tuple of (jobs list, total count)
         """
         # Support legacy tenant_id parameter
         org_id = organization_id or tenant_id
-        
-        # TODO: Replace with actual database query
-        # query = """
-        #     SELECT * FROM jobs
-        #     WHERE user_id = $1 AND organization_id = $2
-        # """
-        # params = [user_id, org_id]
-        #
-        # if status:
-        #     query += " AND status = $3"
-        #     params.append(status)
-        #
-        # query += " ORDER BY created_at DESC LIMIT $4 OFFSET $5"
-        # params.extend([limit, offset])
-        #
-        # rows = await self._db.fetch(query, *params)
-        # total = await self._db.fetchval(count_query, *count_params)
-        # return [Job(**row) for row in rows], total
-        
-        # In-memory implementation
-        jobs = [
-            j for j in self._jobs.values()
-            if j.user_id == user_id and j.organization_id == org_id
-        ]
-        
+
+        # Build base query for count
+        count_query = self._db._client.client.table(self.JOBS_TABLE)\
+            .select("id", count="exact")\
+            .eq("user_id", user_id)\
+            .eq("organization_id", org_id)
+
         if status:
-            jobs = [j for j in jobs if j.status == status]
-        
+            count_query = count_query.eq("status", status)
+
         if job_type:
-            jobs = [j for j in jobs if j.job_type == job_type]
-        
-        # Sort by created_at descending
-        jobs.sort(key=lambda j: j.created_at, reverse=True)
-        
-        total = len(jobs)
-        jobs = jobs[offset:offset + limit]
-        
+            count_query = count_query.eq("job_type", job_type)
+
+        count_result = count_query.execute()
+        total = count_result.count if hasattr(count_result, 'count') else len(count_result.data or [])
+
+        # Build query for data
+        data_query = self._db._client.client.table(self.JOBS_TABLE)\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .eq("organization_id", org_id)
+
+        if status:
+            data_query = data_query.eq("status", status)
+
+        if job_type:
+            data_query = data_query.eq("job_type", job_type)
+
+        data_query = data_query.order("created_at", desc=True)
+        data_query = data_query.range(offset, offset + limit - 1)
+
+        result = data_query.execute()
+
+        jobs = [Job.from_db_row(row) for row in (result.data or [])]
+
         return jobs, total
-    
+
     async def get_pending_for_organization(
         self,
         organization_id: str,
@@ -327,30 +350,32 @@ class JobRepository:
     ) -> List[Job]:
         """
         Get pending jobs for an organization (for workers to pick up).
-        
+
         Args:
             organization_id: Organization ID (matches RLS)
             job_type: Optional job type filter
             tenant_id: DEPRECATED - use organization_id instead
-        
+
         Returns:
             List of pending jobs
         """
         # Support legacy tenant_id parameter
         org_id = organization_id or tenant_id
-        
-        # TODO: Replace with actual database query
-        
-        jobs = [
-            j for j in self._jobs.values()
-            if j.organization_id == org_id and j.status == "pending"
-        ]
-        
+
+        query = self._db._client.client.table(self.JOBS_TABLE)\
+            .select("*")\
+            .eq("organization_id", org_id)\
+            .eq("status", "pending")
+
         if job_type:
-            jobs = [j for j in jobs if j.job_type == job_type]
-        
-        return jobs
-    
+            query = query.eq("job_type", job_type)
+
+        query = query.order("created_at", desc=False)  # FIFO for pending jobs
+
+        result = query.execute()
+
+        return [Job.from_db_row(row) for row in (result.data or [])]
+
     # Legacy alias
     async def get_pending_for_tenant(
         self,
@@ -361,7 +386,15 @@ class JobRepository:
         return await self.get_pending_for_organization(tenant_id, job_type)
 
 
+# Factory function for dependency injection
+def create_job_repository(db_client: TenantAwareSupabaseClient) -> JobRepository:
+    """
+    Create a JobRepository instance.
 
+    Args:
+        db_client: Tenant-aware Supabase client
 
-
-
+    Returns:
+        JobRepository instance
+    """
+    return JobRepository(db_client)

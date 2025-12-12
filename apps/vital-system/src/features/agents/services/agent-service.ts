@@ -1,13 +1,75 @@
 import { supabase } from '@vital/sdk/client';
 import type { Database } from '@/lib/db/supabase/database.types';
 
+// Base Agent type from database
 export type Agent = Database['public']['Tables']['agents']['Row'];
-export type AgentCategory = Database['public']['Tables']['agent_categories']['Row'];
-export type AgentCollaboration = Database['public']['Tables']['agent_collaborations']['Row'];
-export type AgentPerformanceMetrics = Database['public']['Tables']['agent_performance_metrics']['Row'];
-export type Capability = Database['public']['Tables']['capabilities']['Row'];
-export type AgentCapability = Database['public']['Tables']['agent_capabilities']['Row'];
-export type CapabilityCategory = Database['public']['Tables']['capability_categories']['Row'];
+
+// Local type definitions for tables not yet in database schema
+// These will be updated when tables are created in Supabase
+export interface AgentCategory {
+  id: string;
+  agent_id: string;
+  category_id: string;
+  category_name: string;
+  is_primary: boolean;
+  created_at: string;
+}
+
+export interface AgentCollaboration {
+  id: string;
+  source_agent_id: string;
+  target_agent_id: string;
+  collaboration_type: 'delegation' | 'consultation' | 'escalation';
+  priority: number;
+  created_at: string;
+}
+
+export interface AgentPerformanceMetrics {
+  id: string;
+  agent_id: string;
+  total_conversations: number;
+  successful_conversations: number;
+  avg_response_time_ms: number;
+  avg_user_satisfaction: number;
+  total_tokens_used: number;
+  last_active_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Capability {
+  id: string;
+  name: string;
+  display_name?: string;
+  slug: string;
+  description: string;
+  category_id: string;
+  category_name?: string;
+  category?: string;
+  domain?: string;
+  function_name?: string;
+  maturity_level?: 'basic' | 'intermediate' | 'advanced' | 'expert';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentCapability {
+  id: string;
+  agent_id: string;
+  capability_id: string;
+  proficiency_level: 'basic' | 'intermediate' | 'advanced' | 'expert';
+  is_primary: boolean;
+  created_at: string;
+}
+
+export interface CapabilityCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  parent_category_id?: string;
+  created_at: string;
+}
 
 export interface AgentWithCategories extends Agent {
   categories: AgentCategory[];
@@ -114,10 +176,10 @@ export class AgentService {
       }
 
       // Transform the data to include empty categories array since categories tables don't exist yet
-      const transformedAgents = data.map((agent: unknown) => ({
+      const transformedAgents = data.map((agent: Record<string, unknown>) => ({
         ...agent,
         categories: []
-      }));
+      })) as AgentWithCategories[];
 
       console.log(`🔄 AgentService: Returning ${transformedAgents.length} transformed agents to store`);
       return transformedAgents;
@@ -228,7 +290,7 @@ export class AgentService {
 
     return data?.map((agent: any) => ({
       ...agent,
-      categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
+      categories: agent.agent_category_mapping?.map((mapping: { agent_categories: AgentCategory }) => mapping.agent_categories) || []
     })) || [];
   }
 
@@ -253,7 +315,7 @@ export class AgentService {
 
     return data?.map((agent: any) => ({
       ...agent,
-      categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
+      categories: agent.agent_category_mapping?.map((mapping: { agent_categories: AgentCategory }) => mapping.agent_categories) || []
     })) || [];
   }
 
@@ -278,7 +340,7 @@ export class AgentService {
 
     return data?.map((agent: any) => ({
       ...agent,
-      categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
+      categories: agent.agent_category_mapping?.map((mapping: { agent_categories: AgentCategory }) => mapping.agent_categories) || []
     })) || [];
   }
 
@@ -309,7 +371,7 @@ export class AgentService {
 
     return data ? {
       ...data,
-      categories: data.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
+      categories: data.agent_category_mapping?.map((mapping: { agent_categories: AgentCategory }) => mapping.agent_categories) || []
     } : null;
   }
 
@@ -333,7 +395,7 @@ export class AgentService {
 
     return data ? {
       ...data,
-      categories: data.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
+      categories: data.agent_category_mapping?.map((mapping: { agent_categories: AgentCategory }) => mapping.agent_categories) || []
     } : null;
   }
 
@@ -533,20 +595,19 @@ export class AgentService {
   }
 
   // Record agent performance metrics
+  // Note: Uses agent_metrics table until agent_performance_metrics is created
   async recordMetrics(
     agentId: string,
     userId: string,
-    metrics: Partial<Database['public']['Tables']['agent_performance_metrics']['Insert']>
+    metrics: Partial<AgentPerformanceMetrics>
   ): Promise<void> {
     const { error } = await this.getSupabaseClient()
-      .from('agent_performance_metrics')
+      .from('agent_metrics')
       .upsert({
         agent_id: agentId,
-        user_id: userId,
-        metric_date: new Date().toISOString().split('T')[0],
         ...metrics
       }, {
-        onConflict: 'agent_id,user_id,metric_date'
+        onConflict: 'agent_id'
       });
 
     if (error) {
@@ -577,7 +638,7 @@ export class AgentService {
 
     return data?.map((agent: any) => ({
       ...agent,
-      categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
+      categories: agent.agent_category_mapping?.map((mapping: { agent_categories: AgentCategory }) => mapping.agent_categories) || []
     })) || [];
   }
 
@@ -654,7 +715,9 @@ export class AgentService {
 
     if (!data) return null;
 
-    const capabilitiesDetail = data.agent_capabilities?.map((ac: unknown) => ({
+    type AgentCapabilityWithNested = AgentCapability & { capability: Capability };
+
+    const capabilitiesDetail = (data.agent_capabilities as AgentCapabilityWithNested[] | undefined)?.map((ac) => ({
       ...ac,
       capability: ac.capability
     })) || [];
@@ -662,8 +725,8 @@ export class AgentService {
     return {
       ...data,
       capabilities_detail: capabilitiesDetail,
-      primary_capabilities: capabilitiesDetail.filter((cap: unknown) => cap.is_primary)
-    };
+      primary_capabilities: capabilitiesDetail.filter((cap) => cap.is_primary)
+    } as AgentWithCapabilities;
   }
 
   // Get agents by capability
@@ -691,7 +754,7 @@ export class AgentService {
 
     return data?.map((agent: any) => ({
       ...agent,
-      categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
+      categories: agent.agent_category_mapping?.map((mapping: { agent_categories: AgentCategory }) => mapping.agent_categories) || []
     })) || [];
   }
 
@@ -783,18 +846,33 @@ export class AgentService {
       throw new Error('Failed to fetch capability stats');
     }
 
-    const stats = data?.reduce((acc, item) => {
+    interface CapabilityStats {
+      total_agents: number;
+      proficiency_distribution: Record<string, number>;
+      usage_count: number;
+      success_rate: number;
+    }
+
+    interface CapabilityItem {
+      proficiency_level: string;
+      usage_count: number;
+      success_rate: number;
+    }
+
+    const initialStats: CapabilityStats = {
+      total_agents: 0,
+      proficiency_distribution: {},
+      usage_count: 0,
+      success_rate: 0
+    };
+
+    const stats = (data as CapabilityItem[] | null)?.reduce((acc: CapabilityStats, item: CapabilityItem) => {
       acc.total_agents += 1;
       acc.proficiency_distribution[item.proficiency_level] = (acc.proficiency_distribution[item.proficiency_level] || 0) + 1;
       acc.usage_count += item.usage_count;
       acc.success_rate += item.success_rate;
       return acc;
-    }, {
-      total_agents: 0,
-      proficiency_distribution: { /* TODO: implement */ } as Record<string, number>,
-      usage_count: 0,
-      success_rate: 0
-    }) || { total_agents: 0, proficiency_distribution: { /* TODO: implement */ }, usage_count: 0, success_rate: 0 };
+    }, initialStats) || initialStats;
 
     if (stats.total_agents > 0) {
       stats.success_rate = stats.success_rate / stats.total_agents;
@@ -808,8 +886,12 @@ export class AgentService {
     const agentWithCapabilities = await this.getAgentWithCapabilities(agent.id);
 
     const capabilityNames = agentWithCapabilities?.capabilities_detail?.map(
-      (ac) => ac.capability.display_name
+      (ac) => ac.capability.display_name ?? ac.capability.name
     ) || [];
+
+    // Get rag_enabled from metadata since it's not a direct column
+    const metadata = agent.metadata as Record<string, unknown> | null;
+    const ragEnabled = metadata?.rag_enabled ?? false;
 
     return {
       id: agent.name,
@@ -820,7 +902,7 @@ export class AgentService {
       avatar: agent.avatar,
       color: agent.color,
       capabilities: capabilityNames,
-      ragEnabled: agent.rag_enabled,
+      ragEnabled,
       temperature: agent.temperature,
       maxTokens: agent.max_tokens,
       isCustom: agent.is_custom,
@@ -829,6 +911,10 @@ export class AgentService {
 
   // Convert database agent to chat store format
   convertToLegacyFormat(agent: Agent): unknown {
+    // Get rag_enabled from metadata since it's not a direct column
+    const metadata = agent.metadata as Record<string, unknown> | null;
+    const ragEnabled = metadata?.rag_enabled ?? false;
+
     return {
       id: agent.name,
       name: agent.display_name,
@@ -838,7 +924,7 @@ export class AgentService {
       avatar: agent.avatar,
       color: agent.color,
       capabilities: Array.isArray(agent.capabilities) ? agent.capabilities as string[] : [],
-      ragEnabled: agent.rag_enabled,
+      ragEnabled,
       temperature: agent.temperature,
       maxTokens: agent.max_tokens,
       isCustom: agent.is_custom,

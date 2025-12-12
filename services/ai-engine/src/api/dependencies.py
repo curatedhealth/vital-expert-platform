@@ -12,10 +12,24 @@ import structlog
 
 from services.supabase_client import SupabaseClient
 from services.tenant_aware_supabase import TenantAwareSupabaseClient
-from repositories.panel_repository import PanelRepository
+
+# Panel repository (conditionally imported)
+try:
+    from repositories.panel_repository import PanelRepository
+except ImportError:
+    # Fallback: panel repository not available
+    PanelRepository = None
+
 from services.consensus_calculator import SimpleConsensusCalculator
 from services.agent_usage_tracker import AgentUsageTracker
-from workflows.simple_panel_workflow import SimplePanelWorkflow
+
+# Panel workflow (conditionally imported)
+try:
+    from workflows.simple_panel_workflow import SimplePanelWorkflow
+except ImportError:
+    # Fallback: panel workflow not available
+    SimplePanelWorkflow = None
+
 from vital_shared_kernel.multi_tenant import TenantId, TenantContext, TenantContextNotSetError
 
 logger = structlog.get_logger()
@@ -96,13 +110,22 @@ def get_panel_repository(
 ) -> PanelRepository:
     """
     Get panel repository.
-    
+
     Args:
         tenant_client: Tenant-aware Supabase client
-        
+
     Returns:
         PanelRepository instance
+
+    Raises:
+        HTTPException: If panel repository not available
     """
+    if PanelRepository is None:
+        logger.error("panel_repository_not_available")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Panel repository feature not available"
+        )
     return PanelRepository(tenant_client)
 
 
@@ -138,15 +161,24 @@ def get_panel_workflow(
 ) -> SimplePanelWorkflow:
     """
     Get panel workflow.
-    
+
     Args:
         panel_repo: Panel repository
         consensus_calc: Consensus calculator
         usage_tracker: Usage tracker
-        
+
     Returns:
         SimplePanelWorkflow instance
+
+    Raises:
+        HTTPException: If panel workflow not available
     """
+    if SimplePanelWorkflow is None:
+        logger.error("panel_workflow_not_available")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Panel workflow feature not available"
+        )
     return SimplePanelWorkflow(
         panel_repo,
         consensus_calc,

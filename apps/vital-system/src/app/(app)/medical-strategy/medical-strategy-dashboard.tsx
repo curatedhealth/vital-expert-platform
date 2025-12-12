@@ -670,18 +670,19 @@ export default function MedicalStrategyDashboard() {
         icon={Target}
         title="Global Medical Strategy"
         description="Evidence-based decision making hub for strategic planning"
-      >
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="gap-1">
-            <Sparkles className="h-3 w-3" />
-            AI-Enhanced
-          </Badge>
-          <Button variant="outline" size="sm" className="gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Export Report
-          </Button>
-        </div>
-      </PageHeader>
+        actions={
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="gap-1">
+              <Sparkles className="h-3 w-3" />
+              AI-Enhanced
+            </Badge>
+            <Button variant="outline" size="sm" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Export Report
+            </Button>
+          </div>
+        }
+      />
 
       {/* Strategic Metrics Overview */}
       <div className="px-6 py-4 border-b bg-muted/30">

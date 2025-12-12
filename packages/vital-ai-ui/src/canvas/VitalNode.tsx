@@ -63,7 +63,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '../ui/card';
+} from '@vital/ui';
 
 // ============================================================================
 // Types

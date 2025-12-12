@@ -1,7 +1,7 @@
 /**
  * Workflow Publications API
  * Publish workflows to services and modes
- * 
+ *
  * Routes:
  *   POST   /api/workflows/[id]/publish - Publish workflow
  *   GET    /api/workflows/[id]/publications - List publications
@@ -15,9 +15,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 type Params = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 /**
@@ -29,10 +29,10 @@ export async function POST(
   { params }: Params
 ) {
   try {
+    const { id: workflowId } = await params;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { id: workflowId } = params;
     const body = await request.json();
-    
+
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
     if (!token) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
@@ -130,8 +130,8 @@ export async function GET(
   { params }: Params
 ) {
   try {
+    const { id: workflowId } = await params;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { id: workflowId } = params;
 
     const { data, error } = await supabase
       .from('workflow_publications')
@@ -160,4 +160,3 @@ export async function GET(
     );
   }
 }
-

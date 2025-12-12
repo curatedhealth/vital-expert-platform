@@ -22,8 +22,23 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@vital/ui';
-import { cn } from '@vital/ui/lib/utils';
-import type { AgentFeedback, AgentFeedbackFact } from '@/lib/stores/agents-store';
+import { cn } from '../lib/utils';
+
+// Local type definitions (avoiding app-specific imports)
+interface AgentFeedbackFact {
+  id?: string;
+  content: string;
+  category?: string;
+  timestamp?: string;
+}
+
+interface AgentFeedback {
+  id?: string;
+  rating?: number;
+  comment?: string;
+  timestamp?: string;
+  facts?: AgentFeedbackFact[];
+}
 
 interface ExpertAgent {
   id: string;
@@ -586,3 +601,5 @@ export function ExpertAgentCard({
     </motion.div>
   );
 }
+
+export default ExpertAgentCard;

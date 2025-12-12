@@ -5,7 +5,7 @@
 
 import { Document } from '@langchain/core/documents';
 import { OpenAIEmbeddings } from '@langchain/openai';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 
 export interface ChunkingConfig {
   strategy: 'recursive' | 'semantic' | 'adaptive' | 'medical';

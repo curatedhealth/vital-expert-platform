@@ -299,7 +299,12 @@ export default function VirtualAdvisoryBoards({
     }
   };
 
-  const BoardCard = ({ board }: { board: AdvisoryBoard }) => {
+  const BoardCard = ({ board }: { board: VirtualBoard }) => {
+    // Compute derived values for the board
+    const chairMember = board.members.find(m => m.role === 'chair');
+    const totalMembers = board.members.length;
+    const activeDecisions = board.recent_decisions.filter(d => d.status === 'pending' || d.status === 'in_review').length;
+
     return (
       <Card
         className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-indigo-500"
@@ -330,7 +335,7 @@ export default function VirtualAdvisoryBoards({
                 {board.board_type}
               </Badge>
               <div className="flex flex-wrap gap-1">
-                {board.focus_areas.slice(0, 3).map((area, index) => (
+                {board.focus_areas.slice(0, 3).map((area: string, index: number) => (
                   <Badge key={index} variant="secondary" className="text-xs">
                     {area}
                   </Badge>
@@ -386,7 +391,7 @@ export default function VirtualAdvisoryBoards({
     );
   };
 
-  const BoardDetailModal = ({ board }: { board: Board }) => {
+  const BoardDetailModal = ({ board }: { board: VirtualBoard }) => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-canvas-surface rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
@@ -452,7 +457,7 @@ export default function VirtualAdvisoryBoards({
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
-                        {board.focus_areas.map((area, index) => (
+                        {board.focus_areas.map((area: string, index: number) => (
                           <Badge key={index} variant="secondary">
                             {area}
                           </Badge>
@@ -467,7 +472,7 @@ export default function VirtualAdvisoryBoards({
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {board.recent_decisions.slice(0, 3).map((decision) => (
+                        {board.recent_decisions.slice(0, 3).map((decision: BoardDecision) => (
                           <div key={decision.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                             <div className="flex items-center space-x-3">
                               {getStatusIcon(decision.status)}
@@ -494,7 +499,7 @@ export default function VirtualAdvisoryBoards({
 
               <TabsContent value="members" className="mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {board.members.map((member) => (
+                  {board.members.map((member: BoardMember) => (
                     <Card key={member.id}>
                       <CardContent className="p-4">
                         <div className="flex items-start space-x-3">
@@ -525,7 +530,7 @@ export default function VirtualAdvisoryBoards({
                             <div className="mt-3">
                               <p className="text-xs font-medium text-neutral-700 mb-1">Expertise:</p>
                               <div className="flex flex-wrap gap-1">
-                                {member.expertise_areas.slice(0, 2).map((area, index) => (
+                                {member.expertise_areas.slice(0, 2).map((area: string, index: number) => (
                                   <Badge key={index} variant="outline" className="text-xs">
                                     {area}
                                   </Badge>
@@ -547,7 +552,7 @@ export default function VirtualAdvisoryBoards({
 
               <TabsContent value="decisions" className="mt-6">
                 <div className="space-y-4">
-                  {board.recent_decisions.map((decision) => (
+                  {board.recent_decisions.map((decision: BoardDecision) => (
                     <Card key={decision.id}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
@@ -589,7 +594,7 @@ export default function VirtualAdvisoryBoards({
 
               <TabsContent value="meetings" className="mt-6">
                 <div className="space-y-4">
-                  {board.upcoming_meetings.map((meeting) => (
+                  {board.upcoming_meetings.map((meeting: BoardMeeting) => (
                     <Card key={meeting.id}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
@@ -612,7 +617,7 @@ export default function VirtualAdvisoryBoards({
                             <div className="mt-3">
                               <p className="text-sm font-medium text-neutral-700 mb-1">Agenda:</p>
                               <ul className="text-sm text-neutral-600 space-y-1">
-                                {meeting.agenda.map((item, index) => (
+                                {meeting.agenda.map((item: string, index: number) => (
                                   <li key={index} className="flex items-center space-x-2">
                                     <Target className="h-3 w-3" />
                                     <span>{item}</span>

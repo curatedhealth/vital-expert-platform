@@ -21,7 +21,10 @@ export default function MissionsPage() {
   const [mode, setMode] = useState<'3' | '4'>('3');
   const [missionId, setMissionId] = useState<string | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | undefined>();
-  const { events } = useMissionStream(streamUrl);
+  const missionState = useMissionStream({
+    missionId: missionId ?? undefined,
+    buildStreamUrl: streamUrl ? () => streamUrl : undefined
+  });
 
   useEffect(() => {
     fetch('/api/v1/templates')
@@ -105,9 +108,9 @@ export default function MissionsPage() {
             <CardDescription>Mission ID: {missionId}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-sm text-muted-foreground mb-2">Events</div>
-            <pre className="bg-muted rounded p-3 text-xs overflow-x-auto">
-              {JSON.stringify(events, null, 2)}
+            <div className="text-sm text-muted-foreground mb-2">Events ({missionState.rawEvents.length})</div>
+            <pre className="bg-muted rounded p-3 text-xs overflow-x-auto max-h-96 overflow-y-auto">
+              {JSON.stringify(missionState, null, 2)}
             </pre>
           </CardContent>
         </Card>

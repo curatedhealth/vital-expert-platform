@@ -390,7 +390,7 @@ export class AdvancedThreatDetector {
       }
 
       // PHI extraction attempts
-
+      const phiPatterns = [
         /download.*patient.*data/g,
         /export.*medical.*record/g,
         /bulk.*phi.*access/g,
@@ -510,7 +510,7 @@ export class AdvancedThreatDetector {
 
   private determineAction(riskScore: number, threats: DetectedThreat[]): 'allow' | 'monitor' | 'block' | 'quarantine' {
     // Critical threats always block
-    if (threats.some((t: any) => t.severity === 'critical' && t.confidence > 0.7)) {
+    if (threats.some((t) => t.severity === 'critical' && t.confidence > 0.7)) {
       return 'quarantine';
     }
 
@@ -550,7 +550,7 @@ export class AdvancedThreatDetector {
   }
 
   private isPrivateIP(ip: string): boolean {
-
+    const privateRanges = [
       /^10\./,
       /^192\.168\./,
       /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
@@ -575,7 +575,7 @@ export class AdvancedThreatDetector {
     features.push(Array.from(request.headers.entries()).length);
 
     // Method type (encoded)
-
+    const methodMap = { GET: 1, POST: 2, PUT: 3, DELETE: 4, PATCH: 5 };
     features.push(methodMap[request.method as keyof typeof methodMap] || 0);
 
     // Time of day (0-23)
@@ -586,7 +586,8 @@ export class AdvancedThreatDetector {
 
   private async calculateMLAnomalyScore(features: number[]): Promise<number> {
     // Simplified anomaly detection (would use trained models in production)
-
+    let anomalyScore = 0;
+    const normalRanges = [
       [0, 100],   // URL length
       [0, 10],    // Query params
       [5, 20],    // Headers
@@ -594,7 +595,7 @@ export class AdvancedThreatDetector {
       [6, 22]     // Time of day
     ];
 
-    for (let __i = 0; i < features.length && i < normalRanges.length; i++) {
+    for (let i = 0; i < features.length && i < normalRanges.length; i++) {
       // eslint-disable-next-line security/detect-object-injection
       const [min, max] = normalRanges[i];
       // eslint-disable-next-line security/detect-object-injection

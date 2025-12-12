@@ -4,6 +4,10 @@ import * as React from "react"
 
 interface PopoverProps {
   children: React.ReactNode
+  /** Controlled open state */
+  open?: boolean
+  /** Callback when open state changes (for controlled mode) */
+  onOpenChange?: (open: boolean) => void
 }
 
 interface PopoverTriggerProps {
@@ -23,8 +27,20 @@ const PopoverContext = React.createContext<{
   setIsOpen: (open: boolean) => void
 } | null>(null)
 
-export const __Popover = ({ children }: PopoverProps) => {
-  const [isOpen, setIsOpen] = React.useState(false)
+export const __Popover = ({ children, open, onOpenChange }: PopoverProps) => {
+  // Internal state for uncontrolled mode
+  const [internalOpen, setInternalOpen] = React.useState(false)
+
+  // Use controlled or uncontrolled mode
+  const isOpen = open !== undefined ? open : internalOpen
+  const setIsOpen = React.useCallback((newOpen: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(newOpen)
+    }
+    if (open === undefined) {
+      setInternalOpen(newOpen)
+    }
+  }, [open, onOpenChange])
 
   return (
     <PopoverContext.Provider value={{ isOpen, setIsOpen }}>

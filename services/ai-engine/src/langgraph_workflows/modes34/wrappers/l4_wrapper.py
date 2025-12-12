@@ -58,13 +58,27 @@ async def delegate_to_l4(
     plan_tools = context.get("plan_tools") or []
 
     # Execute L5 tools first
+    # Phase 2: Use database-driven agent tools when agent_id is available
     l5_exec = get_l5_executor()
     l5_summary = L5ExecutionSummary()
-    if runner_codes:
-        l5_summary = await l5_exec.execute_for_runner(runner_code=runner_codes[0], query=task, params=context)
-    if plan_tools:
-        l5_plan_summary = await l5_exec.execute_for_plan_tools(plan_tools=plan_tools, query=task, params=context)
-        _merge_summaries(l5_summary, l5_plan_summary)
+    agent_id = context.get("agent_id")
+
+    if agent_id:
+        # Database-driven: use agent_tool_assignments table
+        logger.info("l4_using_agent_tools agent_id=%s worker=%s", agent_id[:8], worker_code)
+        l5_summary = await l5_exec.execute_for_agent(
+            agent_id=agent_id,
+            query=task,
+            params=context,
+            tool_filter=plan_tools,  # Apply plan_tools as filter
+        )
+    else:
+        # Legacy: use runner code mapping
+        if runner_codes:
+            l5_summary = await l5_exec.execute_for_runner(runner_code=runner_codes[0], query=task, params=context)
+        if plan_tools:
+            l5_plan_summary = await l5_exec.execute_for_plan_tools(plan_tools=plan_tools, query=task, params=context)
+            _merge_summaries(l5_summary, l5_plan_summary)
 
     # Resolve worker
     worker_cls = get_l4_class(worker_code)

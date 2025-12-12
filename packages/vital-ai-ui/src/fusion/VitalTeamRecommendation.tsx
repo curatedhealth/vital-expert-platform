@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   Users, 
   CheckCircle, 
@@ -9,10 +9,10 @@ import {
   TrendingUp,
   Clock
 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
-import { Badge } from '../../ui/badge';
-import { Button } from '../../ui/button';
-import { Progress } from '../../ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Progress } from '@vital/ui';
 
 type AgentLevel = 'L1' | 'L2' | 'L3' | 'L4';
 

@@ -28,8 +28,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       query,
-      results: results.chunks || [],
-      totalResults: results.chunks?.length || 0,
+      results: results || [],
+      totalResults: results?.length || 0,
       searchTime,
       metadata: {
         domain,

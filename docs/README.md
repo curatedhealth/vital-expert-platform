@@ -59,6 +59,38 @@ docs/
 | **Development** | [guides/development.md](guides/development.md) | Local dev environment |
 | **Deployment** | [guides/deployment.md](guides/deployment.md) | Production deployment guide |
 
+---
+
+## 🚀 Deployment Cleanup Progress (December 2025)
+
+Progressive asset-by-asset cleanup for Vercel (frontend) + Railway (backend) deployment.
+
+**Master Plan**: [architecture/DEPLOYMENT_READY_STRUCTURE.md](architecture/DEPLOYMENT_READY_STRUCTURE.md)
+
+### Asset Cleanup Status
+
+| # | Asset/Service | Status | Date | Notes |
+|---|--------------|--------|------|-------|
+| 1 | Skills & Tools | 🔄 In Progress | Dec 12 | Foundation layer |
+| 2 | Evidence Sources | ⬜ Pending | - | Traceability infrastructure |
+| 3 | Prompts | ⬜ Pending | - | 6-section framework |
+| 4 | Knowledge Bases | ⬜ Pending | - | RAG configuration |
+| 5 | Roles | ⬜ Pending | - | Foundation for personas |
+| 6 | Personas | ⬜ Pending | - | MECE framework |
+| 7 | Agents | ⬜ Pending | - | Core asset |
+| 8 | Workflows | ⬜ Pending | - | React Flow → LangGraph |
+| 9 | Ask Expert | ⬜ Pending | - | Modes 1-4 |
+| 10 | Mission Service | ⬜ Pending | - | Most complex |
+
+**Overall Progress**: 0/10 assets complete (0%)
+
+### Per-Asset Cleanup Cycle
+
+Each asset goes through 8 steps:
+1. Audit → 2. Identify Issues → 3. Archive → 4. Fix Backend → 5. Fix Frontend → 6. Verify Build → 7. Update Docs → 8. Commit
+
+---
+
 ## Internal Documentation
 
 Comprehensive internal platform documentation is maintained in:

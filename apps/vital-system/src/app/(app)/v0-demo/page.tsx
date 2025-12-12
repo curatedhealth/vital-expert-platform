@@ -42,13 +42,13 @@ import { Separator } from '@/components/ui/separator';
 import { PageHeader } from '@/components/page-header';
 
 // Import v0 components from shared package
-// Using relative import for now - in production would be from '@vital/ai-ui/v0'
+// TODO: Configure @vital/ai-ui path alias for production
 import {
   VitalV0GeneratorPanel,
   VitalV0PreviewFrame,
   type V0GenerationResponse,
   type V0GenerationType,
-} from '@/../../packages/vital-ai-ui/src/v0';
+} from '../../../../../../packages/vital-ai-ui/src/v0';
 
 /**
  * KOL Engagement Workflow - Pre-defined prompts for POC demonstration

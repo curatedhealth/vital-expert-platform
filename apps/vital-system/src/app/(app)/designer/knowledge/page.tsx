@@ -1338,7 +1338,6 @@ function QueryManager({ domains }: { domains: KnowledgeDomain[] }) {
           {/* Citation Display */}
           <CitationDisplay
             citations={resultsToCitations(results)}
-            format="apa"
           />
         </>
       )}

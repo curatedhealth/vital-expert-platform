@@ -4,6 +4,15 @@
  *
  * Based on shadcn/ui Card component
  * @see /apps/vital-system/src/components/ui/card.tsx
+ *
+ * This is the PRIMARY AgentCard for the Agent views (agent library, agent grid).
+ * Features: Size variants (compact/comfortable/detailed), level badges, metadata display.
+ *
+ * Note: @vital/ui has simpler card variants for other use cases:
+ * - AgentCardMinimal: Inline compact display
+ * - AgentCardCompact: Simple grid cards
+ * - AgentCardDetailed: Full details
+ * - EnhancedAgentCard: Premium design with animations
  */
 
 import * as React from 'react';
@@ -52,7 +61,7 @@ const agentCardVariants = cva(
 // ============================================================================
 
 export interface AgentCardProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'size' | 'onSelect'>,
     VariantProps<typeof agentCardVariants> {
   agent: Agent;
   onSelect?: (agent: Agent) => void;
@@ -127,11 +136,13 @@ export const AgentCard = React.forwardRef<HTMLDivElement, AgentCardProps>(
     };
 
     // Get status color
-    const statusColors = {
+    const statusColors: Record<string, string> = {
       active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100',
       testing: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100',
       development: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-100',
       inactive: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100',
+      deprecated: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100',
+      archived: 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100',
     };
 
     return (
@@ -142,7 +153,7 @@ export const AgentCard = React.forwardRef<HTMLDivElement, AgentCardProps>(
         onKeyDown={handleKeyDown}
         role={interactive ? 'button' : undefined}
         tabIndex={interactive ? 0 : undefined}
-        aria-label={`${agent.name} - ${agent.agent_levels?.name} level agent`}
+        aria-label={`${agent.name} - ${agent.agent_levels?.level_name || 'Unknown'} level agent`}
         {...props}
       >
         <Card className="h-full flex flex-row relative overflow-hidden">
@@ -220,15 +231,17 @@ export const AgentCard = React.forwardRef<HTMLDivElement, AgentCardProps>(
               </div>
 
               {/* Status Badge */}
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium flex-shrink-0',
-                  statusColors[agent.status]
-                )}
-              >
-                <CheckCircle2 className="w-3 h-3" />
-                {agent.status.charAt(0).toUpperCase() + agent.status.slice(1)}
-              </span>
+              {agent.status && (
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium flex-shrink-0',
+                    statusColors[agent.status]
+                  )}
+                >
+                  <CheckCircle2 className="w-3 h-3" />
+                  {agent.status.charAt(0).toUpperCase() + agent.status.slice(1)}
+                </span>
+              )}
             </div>
 
             {/* Description */}

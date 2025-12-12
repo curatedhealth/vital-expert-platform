@@ -141,7 +141,7 @@ Generate questions that would lead to meaningful expert discussions and diverse 
       } else if (typeof parsed === 'object') {
         // Try to find questions in object values
         const values = Object.values(parsed).flat();
-        questions = values.filter((v: any) => typeof v === 'string' && v.includes('?'));
+        questions = values.filter((v): v is string => typeof v === 'string' && v.includes('?'));
       }
     } catch (parseError) {
       // Not JSON - parse as plain text

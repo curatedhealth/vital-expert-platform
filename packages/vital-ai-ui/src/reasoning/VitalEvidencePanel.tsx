@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 import { 
   FileText, 
   Book, 
@@ -12,21 +12,21 @@ import {
   ExternalLink,
   Search
 } from 'lucide-react';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
-import { Badge } from '../../ui/badge';
-import { ScrollArea } from '../../ui/scroll-area';
+import { Button } from '@vital/ui';
+import { Input } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { ScrollArea } from '@vital/ui';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger
-} from '../../ui/collapsible';
+} from '@vital/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
-} from '../../ui/dropdown-menu';
+} from '@vital/ui';
 
 type SourceType = 'pubmed' | 'clinical_trial' | 'fda' | 'web' | 'rag' | 'document';
 

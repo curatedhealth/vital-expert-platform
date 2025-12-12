@@ -1,5 +1,8 @@
 // VITALpath Platform Types
 
+// Re-export Agent types
+export * from './agent.types';
+
 export type Phase = 'vision' | 'integrate' | 'test' | 'activate' | 'learn';
 
 export type ProjectType =

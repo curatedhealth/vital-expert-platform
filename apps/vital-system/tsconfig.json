@@ -37,6 +37,12 @@
       ],
       "@vital/ui/*": [
         "../../packages/ui/src/*"
+      ],
+      "@vital/ai-ui": [
+        "../../packages/vital-ai-ui/src/index.ts"
+      ],
+      "@vital/ai-ui/*": [
+        "../../packages/vital-ai-ui/src/*"
       ]
     }
   },
@@ -49,6 +55,8 @@
   ],
   "exclude": [
     "node_modules",
-    "cypress"
+    "cypress",
+    "scripts",
+    "_archive"
   ]
 }

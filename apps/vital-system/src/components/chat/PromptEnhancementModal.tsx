@@ -46,6 +46,7 @@ interface PromptEnhancementModalProps {
   onClose: () => void;
   onApplyPrompt: (enhancedPrompt: string) => void;
   currentInput?: string;
+  mode?: 'light' | 'advanced';
 }
 
 const DOMAINS = [
@@ -78,8 +79,10 @@ export function PromptEnhancementModal({
   isOpen, 
   onClose, 
   onApplyPrompt, 
-  currentInput = '' 
+  currentInput = '',
+  mode = 'light' 
 }: PromptEnhancementModalProps) {
+  const isAdvanced = mode === 'advanced';
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -215,7 +218,7 @@ Context: Healthcare professional seeking expert guidance.`;
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className={`grid w-full ${isAdvanced ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="browse" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Browse Library
@@ -224,10 +227,12 @@ Context: Healthcare professional seeking expert guidance.`;
               <Wand2 className="h-4 w-4" />
               Enhance Prompt
             </TabsTrigger>
-            <TabsTrigger value="auto" className="flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              Auto-Enhance
-            </TabsTrigger>
+            {isAdvanced && (
+              <TabsTrigger value="auto" className="flex items-center gap-2">
+                <Zap className="h-4 w-4" />
+                Auto-Enhance
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="browse" className="space-y-4">
@@ -381,54 +386,56 @@ Context: Healthcare professional seeking expert guidance.`;
             </div>
           </TabsContent>
 
-          <TabsContent value="auto" className="space-y-4">
-            <div className="text-center py-8">
-              <Brain className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">AI-Powered Prompt Enhancement</h3>
-              <p className="text-muted-foreground mb-6">
-                Let our AI analyze your prompt and suggest improvements based on best practices
-              </p>
-              
-              <div className="space-y-4 max-w-md mx-auto">
-                <div className="p-4 bg-muted rounded-lg text-left">
-                  <h4 className="font-medium mb-2">Current Input:</h4>
-                  <p className="text-sm text-muted-foreground">{currentInput || 'No input provided'}</p>
-                </div>
-
-                <Button 
-                  onClick={autoEnhancePrompt} 
-                  disabled={isGenerating || !currentInput.trim()}
-                  className="w-full"
-                >
-                  {isGenerating ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Enhancing...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="h-4 w-4 mr-2" />
-                      Auto-Enhance Prompt
-                    </>
-                  )}
-                </Button>
-
-                {enhancedPrompt && (
-                  <div className="p-4 bg-green-50 rounded-lg text-left">
-                    <h4 className="font-medium text-green-900 mb-2">Enhanced Version:</h4>
-                    <p className="text-sm text-green-700">{enhancedPrompt}</p>
-                    <Button 
-                      size="sm" 
-                      onClick={handleApplyPrompt}
-                      className="mt-2"
-                    >
-                      Apply This Enhancement
-                    </Button>
+          {isAdvanced && (
+            <TabsContent value="auto" className="space-y-4">
+              <div className="text-center py-8">
+                <Brain className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">AI-Powered Prompt Enhancement</h3>
+                <p className="text-muted-foreground mb-6">
+                  Let our AI analyze your prompt and suggest improvements based on best practices
+                </p>
+                
+                <div className="space-y-4 max-w-md mx-auto">
+                  <div className="p-4 bg-muted rounded-lg text-left">
+                    <h4 className="font-medium mb-2">Current Input:</h4>
+                    <p className="text-sm text-muted-foreground">{currentInput || 'No input provided'}</p>
                   </div>
-                )}
+
+                  <Button 
+                    onClick={autoEnhancePrompt} 
+                    disabled={isGenerating || !currentInput.trim()}
+                    className="w-full"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Enhancing...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="h-4 w-4 mr-2" />
+                        Auto-Enhance Prompt
+                      </>
+                    )}
+                  </Button>
+
+                  {enhancedPrompt && (
+                    <div className="p-4 bg-green-50 rounded-lg text-left">
+                      <h4 className="font-medium text-green-900 mb-2">Enhanced Version:</h4>
+                      <p className="text-sm text-green-700">{enhancedPrompt}</p>
+                      <Button 
+                        size="sm" 
+                        onClick={handleApplyPrompt}
+                        className="mt-2"
+                      >
+                        Apply This Enhancement
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
+          )}
         </Tabs>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
@@ -448,3 +455,12 @@ Context: Healthcare professional seeking expert guidance.`;
 }
 
 export default PromptEnhancementModal;
+
+// Convenience wrappers
+export function PromptEnhancementModalLight(props: Omit<PromptEnhancementModalProps, 'mode'>) {
+  return <PromptEnhancementModal {...props} mode="light" />;
+}
+
+export function PromptEnhancementModalAdvanced(props: Omit<PromptEnhancementModalProps, 'mode'>) {
+  return <PromptEnhancementModal {...props} mode="advanced" />;
+}

@@ -42,10 +42,60 @@ export class LongTermMemory {
     console.warn('LongTermMemory.summarize is not implemented');
     return '';
   }
+
+  // Methods for memory key-based access (used by API routes)
+  async retrieveLongTermMemory(memoryKey: string): Promise<Record<string, unknown> | null> {
+    // TODO: Implement retrieval from database
+    console.warn('LongTermMemory.retrieveLongTermMemory is not implemented');
+    void memoryKey;
+    return null;
+  }
+
+  async storeLongTermMemory(memoryKey: string, data: Record<string, unknown>): Promise<void> {
+    // TODO: Implement storage to database
+    console.warn('LongTermMemory.storeLongTermMemory is not implemented');
+    void memoryKey;
+    void data;
+  }
 }
 
 export const createLongTermMemory = (config?: LongTermMemoryConfig): LongTermMemory => {
   return new LongTermMemory(config);
 };
+
+// Auto-learning memory stub
+export interface AutoLearningMemory {
+  extractFacts(userId: string, userMessage: string, assistantMessage: string): Promise<unknown[]>;
+  load(userId: string): Promise<Record<string, unknown> | null>;
+  save(sessionId: string, data: Record<string, unknown>): Promise<void>;
+}
+
+// Factory for auto-learning memory - matches expected signature from API routes
+export const createAutoLearningMemory = (
+  userId?: string,
+  enableLearning?: boolean
+): AutoLearningMemory => {
+  void userId;
+  void enableLearning;
+  return {
+    async extractFacts(_userId: string, _userMessage: string, _assistantMessage: string): Promise<unknown[]> {
+      // TODO: Implement fact extraction
+      console.warn('AutoLearningMemory.extractFacts is not implemented');
+      return [];
+    },
+    async load(_userId: string): Promise<Record<string, unknown> | null> {
+      // TODO: Implement loading user context
+      console.warn('AutoLearningMemory.load is not implemented');
+      return null;
+    },
+    async save(_sessionId: string, _data: Record<string, unknown>): Promise<void> {
+      // TODO: Implement saving conversation data
+      console.warn('AutoLearningMemory.save is not implemented');
+    },
+  };
+};
+
+// Singleton instance for service usage
+export const longTermMemoryService = new LongTermMemory();
 
 export default LongTermMemory;

@@ -77,7 +77,7 @@ export async function PUT(
 ) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Get user from auth header
@@ -148,7 +148,7 @@ export async function DELETE(
 ) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { id } = params;
+    const { id } = await params;
 
     // Get user from auth header
     const token = request.headers.get('authorization')?.replace('Bearer ', '');

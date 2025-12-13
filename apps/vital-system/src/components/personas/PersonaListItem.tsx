@@ -20,9 +20,9 @@ interface PersonaListItemProps {
 }
 
 export function PersonaListItem({ persona, onClick }: PersonaListItemProps) {
-  // Calculate data points
-  const responsibilitiesCount = persona.key_responsibilities?.length || 0;
-  const painPointsCount = persona.pain_points_count || 0;
+  // Calculate data points - use available counts from the type
+  const responsibilitiesCount = persona.daily_activities?.length || 0;
+  const frustrationsCount = persona.frustrations_count || 0;
   const jtbdsCount = persona.jtbds_count || 0;
   const goalsCount = persona.goals_count || 0;
   const challengesCount = persona.challenges_count || 0;
@@ -75,11 +75,11 @@ export function PersonaListItem({ persona, onClick }: PersonaListItemProps) {
 
               {/* Data Points Row */}
               <div className="flex items-center gap-4 mt-2">
-                {painPointsCount > 0 && (
+                {frustrationsCount > 0 && (
                   <div className="flex items-center gap-1 text-xs">
                     <AlertCircle className="h-3.5 w-3.5 text-red-500" />
-                    <span className="font-semibold text-neutral-700">{painPointsCount}</span>
-                    <span className="text-neutral-500">Pain Points</span>
+                    <span className="font-semibold text-neutral-700">{frustrationsCount}</span>
+                    <span className="text-neutral-500">Frustrations</span>
                   </div>
                 )}
                 {jtbdsCount > 0 && (

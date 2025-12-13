@@ -2,6 +2,31 @@ import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { withAgentAuth, type AgentPermissionContext } from '@/middleware/agent-auth';
 import { createLogger } from '@/lib/services/observability/structured-logger';
+import { z } from 'zod';
+
+// Validation schema for creating a JTBD
+const createJtbdSchema = z.object({
+  name: z.string().min(1).max(255),
+  code: z.string().max(50).optional(),
+  job_statement: z.string().optional(),
+  when_situation: z.string().optional(),
+  circumstance: z.string().optional(),
+  desired_outcome: z.string().optional(),
+  job_type: z.enum(['functional', 'emotional', 'social', 'consumption']).optional(),
+  job_category: z.string().optional(),
+  complexity: z.enum(['low', 'medium', 'high', 'very_high']).optional(),
+  frequency: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'annually', 'ad_hoc']).optional(),
+  status: z.enum(['active', 'planned', 'completed', 'draft']).optional(),
+  strategic_priority: z.enum(['critical', 'high', 'medium', 'low']).optional(),
+  impact_level: z.enum(['high', 'medium', 'low']).optional(),
+  compliance_sensitivity: z.enum(['high', 'medium', 'low']).optional(),
+  recommended_service_layer: z.string().optional(),
+  importance_score: z.number().min(0).max(10).optional(),
+  satisfaction_score: z.number().min(0).max(10).optional(),
+  validation_score: z.number().min(0).max(100).optional(),
+  work_pattern: z.string().optional(),
+  jtbd_type: z.string().optional(),
+});
 
 export const GET = withAgentAuth(async (
   request: NextRequest,
@@ -261,3 +286,146 @@ function calculateJtbdStats(jtbds: any[]) {
     avgOpportunityScore: opportunityCount > 0 ? Math.round((totalOpportunityScore / opportunityCount) * 100) / 100 : 0,
   };
 }
+
+// POST - Create new JTBD
+export const POST = withAgentAuth(async (
+  request: NextRequest,
+  context: AgentPermissionContext
+) => {
+  const logger = createLogger();
+  const operationId = `jtbd_create_${Date.now()}`;
+  const startTime = Date.now();
+
+  try {
+    const supabase = await createClient();
+    const { profile } = context;
+    const body = await request.json();
+
+    logger.info('jtbd_create_started', {
+      operation: 'POST /api/jtbd',
+      operationId,
+      userId: context.user.id,
+      tenantId: profile.tenant_id,
+    });
+
+    // Validate input
+    const validationResult = createJtbdSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validationResult.error.errors },
+        { status: 400 }
+      );
+    }
+
+    const data = validationResult.data;
+
+    // Generate code if not provided
+    const code = data.code || `JTBD-${Date.now().toString(36).toUpperCase()}`;
+
+    // Calculate opportunity score if importance and satisfaction are provided
+    let opportunityScore: number | undefined;
+    if (data.importance_score !== undefined && data.satisfaction_score !== undefined) {
+      // ODI formula: Opportunity = Importance + (Importance - Satisfaction)
+      const imp = data.importance_score;
+      const sat = data.satisfaction_score;
+      opportunityScore = imp + Math.max(0, imp - sat);
+    }
+
+    // Create JTBD
+    const jtbdData = {
+      name: data.name,
+      code,
+      job_statement: data.job_statement || data.name,
+      when_situation: data.when_situation,
+      circumstance: data.circumstance,
+      desired_outcome: data.desired_outcome,
+      job_type: data.job_type || 'functional',
+      job_category: data.job_category,
+      complexity: data.complexity || 'medium',
+      frequency: data.frequency || 'weekly',
+      status: data.status || 'active',
+      strategic_priority: data.strategic_priority || 'medium',
+      impact_level: data.impact_level || 'medium',
+      compliance_sensitivity: data.compliance_sensitivity || 'low',
+      recommended_service_layer: data.recommended_service_layer,
+      importance_score: data.importance_score,
+      satisfaction_score: data.satisfaction_score,
+      opportunity_score: opportunityScore,
+      validation_score: data.validation_score,
+      work_pattern: data.work_pattern,
+      jtbd_type: data.jtbd_type,
+      tenant_id: profile.tenant_id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: newJtbd, error: createError } = await supabase
+      .from('jtbd')
+      .insert(jtbdData)
+      .select()
+      .single();
+
+    if (createError) {
+      logger.error('jtbd_create_failed', new Error(createError.message), {
+        operationId,
+        errorCode: createError.code,
+      });
+      return NextResponse.json(
+        { error: 'Failed to create JTBD', details: createError.message },
+        { status: 500 }
+      );
+    }
+
+    const duration = Date.now() - startTime;
+    logger.infoWithMetrics('jtbd_create_completed', duration, {
+      operation: 'POST /api/jtbd',
+      operationId,
+      jtbdId: newJtbd.id,
+    });
+
+    // Calculate ODI tier
+    const oppScore = parseFloat(newJtbd.opportunity_score) || 0;
+    let odiTier = 'low';
+    if (oppScore >= 15) odiTier = 'extreme';
+    else if (oppScore >= 12) odiTier = 'high';
+    else if (oppScore >= 10) odiTier = 'medium';
+
+    // Transform to frontend format
+    return NextResponse.json({
+      success: true,
+      jtbd: {
+        id: newJtbd.id,
+        code: newJtbd.code,
+        name: newJtbd.name,
+        job_statement: newJtbd.job_statement,
+        description: newJtbd.job_statement,
+        category: newJtbd.job_category,
+        job_type: newJtbd.job_type,
+        job_category: newJtbd.job_category,
+        complexity: newJtbd.complexity,
+        frequency: newJtbd.frequency,
+        status: newJtbd.status,
+        priority: mapStrategicPriorityToPriority(newJtbd.strategic_priority),
+        strategic_priority: newJtbd.strategic_priority,
+        importance_score: newJtbd.importance_score,
+        satisfaction_score: newJtbd.satisfaction_score,
+        opportunity_score: newJtbd.opportunity_score,
+        odi_tier: odiTier,
+        tenant_id: newJtbd.tenant_id,
+        created_at: newJtbd.created_at,
+      },
+    }, { status: 201 });
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    logger.error('jtbd_create_error', error instanceof Error ? error : new Error(String(error)), {
+      operation: 'POST /api/jtbd',
+      operationId,
+      duration,
+    });
+
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+});

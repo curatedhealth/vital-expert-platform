@@ -20,7 +20,8 @@ export interface ActiveFiltersBarProps {
   filters: ActiveFilter[];
   filteredCount: number;
   totalCount: number;
-  onRemoveFilter: (key: string) => void;
+  /** Callback when removing a filter. Value is optional for backward compatibility. */
+  onRemoveFilter: (key: string, value?: string) => void;
   onClearAll: () => void;
   colorScheme?: 'blue' | 'purple' | 'green' | 'orange';
 }
@@ -78,7 +79,7 @@ export function ActiveFiltersBar({
           >
             {filter.label}
             <button
-              onClick={() => onRemoveFilter(filter.key)}
+              onClick={() => onRemoveFilter(filter.key, filter.value)}
               className={`ml-1 hover:opacity-80`}
             >
               <X className="h-3 w-3" />

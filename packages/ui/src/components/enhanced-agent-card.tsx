@@ -413,7 +413,7 @@ export function EnhancedAgentCard({
 
             {/* Description - 2 lines max */}
             <p className={cn(
-              'text-[#555555] mt-1.5 line-clamp-2 leading-relaxed',
+              'text-[#555555] mt-1 line-clamp-2 leading-snug',
               config.description
             )}>
               {agent.description}
@@ -449,7 +449,7 @@ export function EnhancedAgentCard({
             )}
 
             {/* Action Row - Stats + Action Buttons */}
-            <div className="mt-3 pt-3 border-t border-gray-200">
+            <div className="mt-2.5 pt-2.5 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 {/* Stats Badges */}
                 {(() => {

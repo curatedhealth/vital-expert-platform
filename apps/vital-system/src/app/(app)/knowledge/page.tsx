@@ -1,600 +1,1020 @@
+/**
+ * Knowledge Page
+ *
+ * Unified view for RAG Knowledge Bases.
+ * Supports CRUD operations, batch selection, and multiple view modes.
+ * Follows the same pattern as Skills/Tools/Prompts pages.
+ */
 'use client';
 
+import { useState, useCallback, useEffect, useMemo, Suspense } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  Upload,
+  Database,
   FileText,
   Search,
+  Plus,
+  Trash2,
+  X,
+  Wrench,
+  BarChart3,
+  BookOpen,
+  Loader2,
   AlertCircle,
   MoreHorizontal,
+  Edit,
+  Eye,
   Grid3X3,
   List,
-  Eye,
-  Copy,
-  BookOpen,
-  ExternalLink,
-  Settings,
-  Wrench,
+  CheckSquare,
+  Table,
+  Kanban,
+  RefreshCw,
+  CheckCircle2,
+  Clock,
+  Archive,
+  AlertTriangle,
+  Shield,
+  Stethoscope,
+  FlaskConical,
+  TrendingUp,
 } from 'lucide-react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { useState, useCallback, useEffect, Suspense } from 'react';
 
 import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
-import { PageHeader } from '@/components/page-header';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
+import { Input } from '@vital/ui';
+import { Checkbox } from '@vital/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from '@vital/ui';
-import { Input } from '@vital/ui';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@vital/ui';
+
+import { AssetOverviewStats, type StatCardConfig } from '@/components/shared/AssetOverviewStats';
+import { ActiveFiltersBar } from '@/components/shared/ActiveFiltersBar';
+import { useAssetFilters, type ViewMode } from '@/hooks/useAssetFilters';
 import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
 import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
-import { DocumentsLibraryView } from '@/features/knowledge/components/documents-library-view';
-import type { KnowledgeDomain } from '@/lib/services/model-selector';
 
-interface Document {
+// Import RAG V2 modals
+import {
+  RagEditModalV2,
+  RagDeleteModal,
+  RagBatchDeleteModal,
+  DEFAULT_RAG_VALUES,
+  type Rag,
+  THERAPEUTIC_AREAS,
+  KNOWLEDGE_DOMAINS,
+  LIFECYCLE_STATUS,
+  ACCESS_LEVELS,
+} from '@/features/rag/components';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+interface RagKnowledgeBase {
   id: string;
   name: string;
-  type: string;
-  size: number;
-  uploadedAt: string;
-  status: 'processing' | 'completed' | 'failed';
-  domain: string;
-  isGlobal: boolean;
-  agentId?: string;
-  chunks: number;
-  summary?: string;
+  display_name: string;
+  description?: string;
+  purpose_description?: string;
+  rag_type: 'global' | 'agent-specific' | 'tenant';
+  access_level: 'public' | 'organization' | 'private' | 'confidential';
+  status: 'draft' | 'active' | 'review' | 'deprecated' | 'archived';
+  knowledge_domains: string[];
+  therapeutic_areas?: string[];
+  document_count: number;
+  total_chunks?: number;
+  quality_score?: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+function formatNumber(num: number): string {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+  return num.toString();
+}
+
+function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+  switch (status) {
+    case 'active': return 'default';
+    case 'draft': return 'secondary';
+    case 'deprecated':
+    case 'archived': return 'destructive';
+    default: return 'outline';
+  }
+}
+
+function getRagTypeVariant(type: string): 'default' | 'secondary' | 'outline' {
+  switch (type) {
+    case 'global': return 'default';
+    case 'agent-specific': return 'secondary';
+    default: return 'outline';
+  }
+}
+
+// =============================================================================
+// RAG Card Component
+// =============================================================================
+
+interface RagCardProps {
+  rag: RagKnowledgeBase;
+  isSelected: boolean;
+  isSelectionMode: boolean;
+  onToggleSelect: () => void;
+  onClick: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  viewMode: 'grid' | 'list';
+}
+
+function RagCard({ rag, isSelected, isSelectionMode, onToggleSelect, onClick, onEdit, onDelete, viewMode }: RagCardProps) {
+  if (viewMode === 'list') {
+    return (
+      <Card className={`hover:shadow-md transition-shadow cursor-pointer ${isSelected ? 'ring-2 ring-primary' : ''}`}>
+        <CardContent className="p-3">
+          <div className="flex items-center gap-4">
+            {isSelectionMode && (
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={onToggleSelect}
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+            <Database className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            <div className="flex-1 min-w-0" onClick={onClick}>
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium truncate">{rag.display_name}</h3>
+                <Badge variant={getStatusVariant(rag.status)} className="text-xs">
+                  {rag.status}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground truncate">{rag.description || 'No description'}</p>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span>{formatNumber(rag.document_count)} docs</span>
+              <span>{formatNumber(rag.total_chunks || 0)} chunks</span>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onClick}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  View
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onEdit}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onDelete} className="text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Grid view (default)
+  return (
+    <Card className={`hover:shadow-md transition-shadow cursor-pointer ${isSelected ? 'ring-2 ring-primary' : ''}`}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2 flex-1 min-w-0" onClick={onClick}>
+            {isSelectionMode && (
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={onToggleSelect}
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+            <Database className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            <h3 className="font-medium truncate">{rag.display_name}</h3>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onClick}>
+                <Eye className="h-4 w-4 mr-2" />
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onEdit}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onDelete} className="text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3" onClick={onClick}>
+          {rag.description || 'No description'}
+        </p>
+
+        <div className="flex items-center gap-2 flex-wrap mb-3">
+          <Badge variant={getStatusVariant(rag.status)}>
+            {rag.status}
+          </Badge>
+          <Badge variant={getRagTypeVariant(rag.rag_type)}>
+            {rag.rag_type.replace('-', ' ')}
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <FileText className="h-3 w-3" />
+            <span>{formatNumber(rag.document_count)} docs</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <BookOpen className="h-3 w-3" />
+            <span>{formatNumber(rag.total_chunks || 0)} chunks</span>
+          </div>
+        </div>
+
+        {rag.knowledge_domains.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-3">
+            {rag.knowledge_domains.slice(0, 3).map((domain) => (
+              <Badge key={domain} variant="outline" className="text-xs">
+                {domain.replace(/-/g, ' ')}
+              </Badge>
+            ))}
+            {rag.knowledge_domains.length > 3 && (
+              <Badge variant="outline" className="text-xs">
+                +{rag.knowledge_domains.length - 3}
+              </Badge>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// =============================================================================
+// Knowledge Page Content
+// =============================================================================
+
 function KnowledgePageContent() {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [domains, setDomains] = useState<KnowledgeDomain[]>([]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Use shared asset filters hook
+  const {
+    viewParam,
+    isOverviewMode,
+    handleViewModeChange,
+    searchParam,
+    handleSearchChange,
+    getFilterParam,
+    activeFilters,
+    removeFilter,
+    clearAllFilters,
+  } = useAssetFilters({
+    basePath: '/knowledge',
+    filterKeys: ['domain', 'category', 'status', 'access', 'therapeutic'],
+  });
+
+  // RAG state
+  const [rags, setRags] = useState<RagKnowledgeBase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDomain, setSelectedDomain] = useState('all');
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  // CRUD state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRag, setEditingRag] = useState<Partial<Rag> | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [ragToDelete, setRagToDelete] = useState<Partial<Rag> | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  // Handle URL parameters for tab navigation and filtering
-  const searchParams = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'analytics';
-  const categoryFilter = searchParams.get('category');
-  const agentFilter = searchParams.get('agent');
-  const domainFilter = searchParams.get('domain');
-  
-  // Update selectedDomain if domain param is present
-  useEffect(() => {
-    if (domainFilter && domainFilter !== selectedDomain) {
-      setSelectedDomain(domainFilter);
-    }
-  }, [domainFilter, selectedDomain]);
+  // Batch selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [batchDeleteConfirmOpen, setBatchDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch documents from the database
-  const fetchDocuments = useCallback(async () => {
+  // Get current filters from URL
+  const currentDomain = getFilterParam('domain');
+  const currentCategory = getFilterParam('category');
+  const currentStatus = getFilterParam('status');
+  const currentAccess = getFilterParam('access');
+  const currentTherapeutic = getFilterParam('therapeutic');
+
+  // =============================================================================
+  // Data Loading
+  // =============================================================================
+
+  const loadRags = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const params = new URLSearchParams();
-      if (selectedDomain && selectedDomain !== 'all') {
-        params.append('domain', selectedDomain);
-      }
+      // TODO: Replace with actual API call when endpoint is available
+      const mockRags: RagKnowledgeBase[] = [
+        {
+          id: '1',
+          name: 'fda-guidance-library',
+          display_name: 'FDA Guidance Library',
+          description: 'Comprehensive collection of FDA guidance documents, regulations, and compliance materials',
+          purpose_description: 'Use for regulatory compliance questions, FDA guidance interpretation, and submission requirements',
+          rag_type: 'global',
+          access_level: 'organization',
+          status: 'active',
+          knowledge_domains: ['regulatory', 'fda-guidance', 'compliance'],
+          therapeutic_areas: ['oncology', 'cardiology'],
+          document_count: 1247,
+          total_chunks: 45231,
+          quality_score: 0.94,
+          is_active: true,
+          created_at: '2024-01-15T10:00:00Z',
+          updated_at: '2024-12-01T15:30:00Z',
+        },
+        {
+          id: '2',
+          name: 'clinical-trial-protocols',
+          display_name: 'Clinical Trial Protocols Database',
+          description: 'Curated database of successful clinical trial protocols and methodologies',
+          purpose_description: 'Use for clinical trial design, protocol development, and methodology guidance',
+          rag_type: 'global',
+          access_level: 'organization',
+          status: 'active',
+          knowledge_domains: ['clinical-trials', 'protocols', 'biostatistics'],
+          therapeutic_areas: ['oncology'],
+          document_count: 892,
+          total_chunks: 34567,
+          quality_score: 0.91,
+          is_active: true,
+          created_at: '2024-02-20T08:00:00Z',
+          updated_at: '2024-11-15T12:00:00Z',
+        },
+        {
+          id: '3',
+          name: 'pharmacovigilance-guidelines',
+          display_name: 'Pharmacovigilance Guidelines',
+          description: 'Global pharmacovigilance guidelines, safety protocols, and adverse event reporting standards',
+          purpose_description: 'Use for safety assessments, adverse event analysis, and pharmacovigilance compliance',
+          rag_type: 'global',
+          access_level: 'organization',
+          status: 'active',
+          knowledge_domains: ['pharmacovigilance', 'safety-reporting', 'adverse-events'],
+          document_count: 634,
+          total_chunks: 22145,
+          quality_score: 0.89,
+          is_active: true,
+          created_at: '2024-03-10T14:00:00Z',
+          updated_at: '2024-10-25T09:00:00Z',
+        },
+        {
+          id: '4',
+          name: 'oncology-specialist-kb',
+          display_name: 'Oncology Specialist Knowledge Base',
+          description: 'Specialized knowledge for oncology agents including treatment protocols and clinical guidelines',
+          purpose_description: 'Agent-specific knowledge for oncology-related queries and recommendations',
+          rag_type: 'agent-specific',
+          access_level: 'private',
+          status: 'active',
+          knowledge_domains: ['clinical-trials', 'drug-development', 'biomarkers'],
+          therapeutic_areas: ['oncology'],
+          document_count: 456,
+          total_chunks: 18234,
+          quality_score: 0.96,
+          is_active: true,
+          created_at: '2024-04-01T10:00:00Z',
+          updated_at: '2024-12-05T11:00:00Z',
+        },
+        {
+          id: '5',
+          name: 'market-access-intelligence',
+          display_name: 'Market Access Intelligence',
+          description: 'HTA reports, pricing data, and market access strategies across major markets',
+          purpose_description: 'Use for market access planning, pricing decisions, and reimbursement strategies',
+          rag_type: 'global',
+          access_level: 'confidential',
+          status: 'draft',
+          knowledge_domains: ['market-access', 'health-economics', 'pricing-reimbursement'],
+          document_count: 234,
+          total_chunks: 9876,
+          quality_score: 0.85,
+          is_active: false,
+          created_at: '2024-11-01T10:00:00Z',
+          updated_at: '2024-12-10T14:00:00Z',
+        },
+        {
+          id: '6',
+          name: 'digital-health-rwe',
+          display_name: 'Digital Health & RWE Repository',
+          description: 'Real-world evidence studies, digital biomarkers, and DTx development resources',
+          purpose_description: 'Use for digital therapeutics development and real-world evidence analysis',
+          rag_type: 'global',
+          access_level: 'organization',
+          status: 'review',
+          knowledge_domains: ['digital-therapeutics', 'real-world-evidence', 'ai-ml'],
+          therapeutic_areas: ['psychiatry', 'endocrinology'],
+          document_count: 312,
+          total_chunks: 12456,
+          quality_score: 0.88,
+          is_active: true,
+          created_at: '2024-06-01T10:00:00Z',
+          updated_at: '2024-12-08T09:00:00Z',
+        },
+      ];
 
-      const response = await fetch(`/api/knowledge/documents?${params.toString()}`);
-
-      if (!response.ok) {
-        let errorMessage = response.statusText;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.details || errorData.message || response.statusText;
-          console.error('[Knowledge Page] API error response:', errorData);
-        } catch (parseError) {
-          // Response is not JSON, get text instead
-          const textError = await response.text().catch(() => response.statusText);
-          errorMessage = textError || response.statusText;
-          console.error('[Knowledge Page] Failed to parse error response:', parseError);
-        }
-        throw new Error(`Failed to fetch documents: ${errorMessage}`);
-      }
-
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        console.error('[Knowledge Page] Failed to parse response JSON:', parseError);
-        throw new Error('Invalid response from server');
-      }
-
-      if (data.success) {
-        setDocuments(data.documents || []);
-      } else {
-        throw new Error(data.error || data.details || 'Failed to fetch documents');
-      }
+      setRags(mockRags);
     } catch (err) {
-      console.error('Error fetching documents:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch documents');
+      console.error('Error loading RAGs:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load knowledge bases');
     } finally {
       setLoading(false);
     }
-  }, [selectedDomain]);
-
-  // Fetch knowledge domains from API
-  const fetchDomains = useCallback(async () => {
-    try {
-      const response = await fetch('/api/knowledge-domains');
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Knowledge domains API error:', errorData);
-        throw new Error(errorData.error || 'Failed to fetch domains');
-      }
-      const data = await response.json();
-      setDomains(data.domains || []);
-    } catch (err) {
-      console.error('Error fetching knowledge domains:', err);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch documents on component mount and when domain changes
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+    loadRags();
+  }, [loadRags]);
 
-  // Fetch domains only once on mount
-  useEffect(() => {
-    fetchDomains();
-  }, [fetchDomains]);
+  // =============================================================================
+  // Filtering
+  // =============================================================================
 
-  const handleUploadComplete = useCallback((newDocs: unknown[]) => {
-    // Refresh the documents list to show newly uploaded documents
-    fetchDocuments();
-  }, [fetchDocuments]);
+  const filteredRags = useMemo(() => {
+    return rags.filter(rag => {
+      // Search filter
+      const matchesSearch = !searchParam ||
+        rag.name.toLowerCase().includes(searchParam.toLowerCase()) ||
+        rag.display_name.toLowerCase().includes(searchParam.toLowerCase()) ||
+        rag.description?.toLowerCase().includes(searchParam.toLowerCase());
 
-  const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         doc.summary?.toLowerCase().includes(searchQuery.toLowerCase());
-    // Support both domain_id and domain for filtering (backward compatibility)
-    const matchesDomain = selectedDomain === 'all' || 
-                         doc.domain === selectedDomain || 
-                         (doc as any).domain_id === selectedDomain;
-    return matchesSearch && matchesDomain;
-  });
+      // Domain filter
+      const matchesDomain = !currentDomain ||
+        rag.knowledge_domains.includes(currentDomain);
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    // eslint-disable-next-line security/detect-object-injection
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+      // Category filter (maps to domain category)
+      const matchesCategory = !currentCategory ||
+        rag.knowledge_domains.some(d => {
+          const domain = KNOWLEDGE_DOMAINS.find(kd => kd.value === d);
+          return domain?.category === currentCategory;
+        });
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      // Status filter
+      const matchesStatus = !currentStatus || rag.status === currentStatus;
+
+      // Access filter
+      const matchesAccess = !currentAccess || rag.access_level === currentAccess;
+
+      // Therapeutic area filter
+      const matchesTherapeutic = !currentTherapeutic ||
+        rag.therapeutic_areas?.includes(currentTherapeutic);
+
+      return matchesSearch && matchesDomain && matchesCategory && matchesStatus && matchesAccess && matchesTherapeutic;
     });
+  }, [rags, searchParam, currentDomain, currentCategory, currentStatus, currentAccess, currentTherapeutic]);
+
+  // =============================================================================
+  // Stats
+  // =============================================================================
+
+  const totalDocuments = rags.reduce((acc, r) => acc + r.document_count, 0);
+  const totalChunks = rags.reduce((acc, r) => acc + (r.total_chunks || 0), 0);
+  const activeRags = rags.filter(r => r.status === 'active').length;
+  const draftRags = rags.filter(r => r.status === 'draft').length;
+  const reviewRags = rags.filter(r => r.status === 'review').length;
+  const avgQuality = rags.length > 0
+    ? rags.reduce((acc, r) => acc + (r.quality_score || 0), 0) / rags.length
+    : 0;
+
+  const statsCards: StatCardConfig[] = [
+    { label: 'Knowledge Bases', value: rags.length, icon: Database },
+    { label: 'Active', value: activeRags, icon: CheckCircle2, variant: 'success' as const },
+    { label: 'Draft', value: draftRags, icon: Clock, variant: 'warning' as const },
+    { label: 'Under Review', value: reviewRags, icon: AlertTriangle, variant: 'info' as const },
+  ];
+
+  // =============================================================================
+  // CRUD Handlers
+  // =============================================================================
+
+  const handleCreateRag = () => {
+    setEditingRag({ ...DEFAULT_RAG_VALUES });
+    setFormError(null);
+    setIsModalOpen(true);
   };
+
+  const handleEditRag = (rag: RagKnowledgeBase) => {
+    setEditingRag(rag as unknown as Partial<Rag>);
+    setFormError(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveRag = async (data: Rag) => {
+    setIsSaving(true);
+    setFormError(null);
+
+    try {
+      // TODO: Replace with actual API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      await loadRags();
+      setIsModalOpen(false);
+      setEditingRag(null);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to save knowledge base');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteConfirm = (rag: RagKnowledgeBase) => {
+    setRagToDelete(rag as unknown as Partial<Rag>);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteRag = async () => {
+    if (!ragToDelete?.id) return;
+
+    setIsDeleting(true);
+    try {
+      // TODO: Replace with actual API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      await loadRags();
+      setDeleteConfirmOpen(false);
+      setRagToDelete(null);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to delete knowledge base');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // =============================================================================
+  // Batch Selection Handlers
+  // =============================================================================
+
+  const handleToggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredRags.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredRags.map(r => r.id)));
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    setIsDeleting(true);
+    try {
+      // TODO: Replace with actual API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      await loadRags();
+      setBatchDeleteConfirmOpen(false);
+      setSelectedIds(new Set());
+      setIsSelectionMode(false);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to delete knowledge bases');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setIsSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  // =============================================================================
+  // Navigation
+  // =============================================================================
+
+  const handleRagClick = (rag: RagKnowledgeBase) => {
+    router.push(`/designer/knowledge?rag=${rag.id}`);
+  };
+
+  // Determine effective view mode for display
+  const effectiveViewMode = viewParam === 'overview' || !viewParam ? 'grid' : viewParam;
+
+  // =============================================================================
+  // Render
+  // =============================================================================
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Page Header */}
-      <PageHeader
-        icon={BookOpen}
-        title="Knowledge Library"
-        description="Browse and search your organization's knowledge bases"
-        actions={
+      {/* Header */}
+      <div className="flex items-center gap-4 px-6 py-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center gap-2">
+          <Database className="h-5 w-5" />
+          <h1 className="text-lg font-semibold">Knowledge Bases</h1>
+        </div>
+        <div className="flex-1" />
+
+        {/* Batch Selection Controls */}
+        {isSelectionMode ? (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {selectedIds.size} selected
+            </span>
+            <Button variant="outline" size="sm" onClick={handleSelectAll}>
+              {selectedIds.size === filteredRags.length ? 'Deselect All' : 'Select All'}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setBatchDeleteConfirmOpen(true)}
+              disabled={selectedIds.size === 0}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete ({selectedIds.size})
+            </Button>
+            <Button variant="ghost" size="sm" onClick={exitSelectionMode}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
               <Link href="/designer/knowledge">
                 <Wrench className="h-4 w-4 mr-2" />
-                Knowledge Builder
+                Builder
               </Link>
             </Button>
-            <Button size="sm" asChild>
-              <Link href="/designer/knowledge?tab=upload">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Documents
-              </Link>
+            <Button variant="outline" size="sm" onClick={() => setIsSelectionMode(true)}>
+              <CheckSquare className="h-4 w-4 mr-2" />
+              Select
+            </Button>
+            <Button size="sm" onClick={handleCreateRag}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create RAG
             </Button>
           </div>
-        }
-      />
+        )}
+      </div>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
-          {/* Main Content */}
-          {activeTab === 'upload' ? (
-        <Card className="border-dashed">
-          <CardContent className="py-12 text-center">
-            <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">Upload Documents</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Document uploads have moved to the Knowledge Builder for a better experience with domain configuration and embedding options.
-            </p>
-            <Button asChild>
-              <Link href="/designer/knowledge?tab=upload">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Open Knowledge Builder
-              </Link>
+          {/* Active Filters Bar */}
+          <ActiveFiltersBar
+            filters={activeFilters}
+            filteredCount={filteredRags.length}
+            totalCount={rags.length}
+            onRemoveFilter={removeFilter}
+            onClearAll={clearAllFilters}
+            colorScheme="purple"
+          />
+
+          {/* Overview Mode - Stats & Quick Info */}
+          {isOverviewMode && (
+            <>
+              <AssetOverviewStats stats={statsCards} />
+
+              {/* Additional Overview Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Total Documents</span>
+                    </div>
+                    <p className="text-2xl font-bold mt-1">{formatNumber(totalDocuments)}</p>
+                    <p className="text-xs text-muted-foreground">across all RAGs</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Total Chunks</span>
+                    </div>
+                    <p className="text-2xl font-bold mt-1">{formatNumber(totalChunks)}</p>
+                    <p className="text-xs text-muted-foreground">indexed for retrieval</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Avg Quality</span>
+                    </div>
+                    <p className="text-2xl font-bold mt-1">{(avgQuality * 100).toFixed(0)}%</p>
+                    <p className="text-xs text-muted-foreground">embedding quality</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Domains Covered</span>
+                    </div>
+                    <p className="text-2xl font-bold mt-1">{new Set(rags.flatMap(r => r.knowledge_domains)).size}</p>
+                    <p className="text-xs text-muted-foreground">unique knowledge domains</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
+
+          {/* Search and View Toggle */}
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search knowledge bases..."
+                value={searchParam || ''}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button variant="outline" size="sm" onClick={loadRags}>
+              <RefreshCw className="h-4 w-4" />
             </Button>
-          </CardContent>
-        </Card>
-      ) : activeTab === 'manage' ? (
-        <div className="space-y-6">
-          {/* Header with Actions */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h3 className="text-lg font-semibold">Documents</h3>
-              <p className="text-sm text-muted-foreground">
-                Browse your knowledge documents. Use Knowledge Builder to add or edit.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/designer/knowledge?tab=domains">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Manage Domains
-                </Link>
-              </Button>
-              <div className="flex items-center rounded-md border">
-                <Button
-                  variant={viewMode === 'table' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('table')}
-                  className="rounded-r-none"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className="rounded-l-none"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Search and Filters */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex-1 max-w-sm">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search documents..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={selectedDomain}
-                onChange={(e) => setSelectedDomain(e.target.value)}
-                className="flex h-9 w-[280px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            <div className="flex items-center border rounded-md">
+              <Button
+                variant={effectiveViewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handleViewModeChange('grid')}
+                className="rounded-r-none"
               >
-                <option value="all">All Domains ({domains.length})</option>
-
-                {/* Tier 1: Core Domains */}
-                <option disabled>━━━ TIER 1: CORE ({domains.filter((d: any) => d.tier === 1).length}) ━━━</option>
-                {domains.filter((d: any) => d.tier === 1).map((domain: any) => (
-                  <option key={domain.domain_id || domain.id} value={domain.domain_id || domain.slug}>
-                    {domain.domain_name || domain.name || domain.domain_id || domain.slug}
-                  </option>
-                ))}
-
-                {/* Tier 2: Specialized Domains */}
-                <option disabled>━━━ TIER 2: SPECIALIZED ({domains.filter((d: any) => d.tier === 2).length}) ━━━</option>
-                {domains.filter((d: any) => d.tier === 2).map((domain: any) => (
-                  <option key={domain.domain_id || domain.id} value={domain.domain_id || domain.slug}>
-                    {domain.domain_name || domain.name || domain.domain_id || domain.slug}
-                  </option>
-                ))}
-
-                {/* Tier 3: Emerging Domains */}
-                <option disabled>━━━ TIER 3: EMERGING ({domains.filter((d: any) => d.tier === 3).length}) ━━━</option>
-                {domains.filter((d: any) => d.tier === 3).map((domain: any) => (
-                  <option key={domain.domain_id || domain.id} value={domain.domain_id || domain.slug}>
-                    {domain.domain_name || domain.name || domain.domain_id || domain.slug}
-                  </option>
-                ))}
-              </select>
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={effectiveViewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handleViewModeChange('list')}
+                className="rounded-none border-x"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={effectiveViewMode === 'table' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handleViewModeChange('table')}
+                className="rounded-none border-r"
+              >
+                <Table className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={effectiveViewMode === 'kanban' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handleViewModeChange('kanban')}
+                className="rounded-l-none"
+              >
+                <Kanban className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
-          {/* Table View */}
-          {viewMode === 'table' ? (
+          {/* Content */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : error ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-3" />
+                <h3 className="text-lg font-medium mb-2">Failed to Load</h3>
+                <p className="text-muted-foreground mb-4">{error}</p>
+                <Button variant="outline" onClick={loadRags}>
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
+          ) : filteredRags.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Database className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <h3 className="text-lg font-medium mb-2">No Knowledge Bases Found</h3>
+                <p className="text-muted-foreground mb-4">
+                  {searchParam || activeFilters.length > 0
+                    ? 'No knowledge bases match your filters.'
+                    : 'Create your first RAG knowledge base to get started.'}
+                </p>
+                {searchParam || activeFilters.length > 0 ? (
+                  <Button variant="outline" onClick={clearAllFilters}>
+                    Clear Filters
+                  </Button>
+                ) : (
+                  <Button onClick={handleCreateRag}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create RAG
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ) : effectiveViewMode === 'kanban' ? (
+            // Kanban View - Group by status
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {['draft', 'active', 'review', 'deprecated'].map(status => {
+                const statusRags = filteredRags.filter(r => r.status === status);
+                const statusConfig = LIFECYCLE_STATUS.find(s => s.value === status);
+                return (
+                  <div key={status} className="bg-muted/30 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className={`h-2 w-2 rounded-full bg-${statusConfig?.color || 'gray'}-500`} />
+                      <span className="font-medium capitalize">{status}</span>
+                      <Badge variant="secondary" className="ml-auto">{statusRags.length}</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      {statusRags.map(rag => (
+                        <RagCard
+                          key={rag.id}
+                          rag={rag}
+                          viewMode="grid"
+                          isSelected={selectedIds.has(rag.id)}
+                          isSelectionMode={isSelectionMode}
+                          onToggleSelect={() => handleToggleSelect(rag.id)}
+                          onClick={() => handleRagClick(rag)}
+                          onEdit={() => handleEditRag(rag)}
+                          onDelete={() => handleDeleteConfirm(rag)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : effectiveViewMode === 'table' ? (
+            // Table View
             <Card>
               <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Domain</TableHead>
-                      <TableHead>Size</TableHead>
-                      <TableHead>Chunks</TableHead>
-                      <TableHead>Uploaded</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
-                          <div className="flex items-center justify-center gap-3">
-                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                            <span>Loading documents...</span>
+                <table className="w-full">
+                  <thead className="border-b">
+                    <tr>
+                      {isSelectionMode && <th className="p-3 w-10" />}
+                      <th className="p-3 text-left font-medium">Name</th>
+                      <th className="p-3 text-left font-medium">Status</th>
+                      <th className="p-3 text-left font-medium">Type</th>
+                      <th className="p-3 text-left font-medium">Documents</th>
+                      <th className="p-3 text-left font-medium">Chunks</th>
+                      <th className="p-3 text-left font-medium">Quality</th>
+                      <th className="p-3 w-10" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRags.map(rag => (
+                      <tr key={rag.id} className="border-b hover:bg-muted/50 cursor-pointer" onClick={() => handleRagClick(rag)}>
+                        {isSelectionMode && (
+                          <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedIds.has(rag.id)}
+                              onCheckedChange={() => handleToggleSelect(rag.id)}
+                            />
+                          </td>
+                        )}
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            <Database className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{rag.display_name}</span>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : error ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
-                          <div className="flex flex-col items-center gap-3">
-                            <AlertCircle className="h-8 w-8 text-destructive" />
-                            <span>Failed to load documents: {error}</span>
-                            <Button variant="outline" size="sm" onClick={fetchDocuments}>
-                              Try Again
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredDocuments.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
-                          <div className="flex flex-col items-center gap-3">
-                            <FileText className="h-8 w-8 text-muted-foreground" />
-                            <span>No documents found</span>
-                            {(searchQuery || selectedDomain !== 'all') && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setSearchQuery('');
-                                  setSelectedDomain('all');
-                                }}
-                              >
-                                Clear Filters
+                        </td>
+                        <td className="p-3">
+                          <Badge variant={getStatusVariant(rag.status)}>{rag.status}</Badge>
+                        </td>
+                        <td className="p-3">
+                          <Badge variant={getRagTypeVariant(rag.rag_type)}>{rag.rag_type}</Badge>
+                        </td>
+                        <td className="p-3 text-muted-foreground">{formatNumber(rag.document_count)}</td>
+                        <td className="p-3 text-muted-foreground">{formatNumber(rag.total_chunks || 0)}</td>
+                        <td className="p-3 text-muted-foreground">{((rag.quality_score || 0) * 100).toFixed(0)}%</td>
+                        <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
                               </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredDocuments.map((doc) => (
-                        <TableRow key={doc.id}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4" />
-                              {doc.name}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                doc.status === 'completed' ? 'default' :
-                                doc.status === 'processing' ? 'secondary' : 'destructive'
-                              }
-                            >
-                              {doc.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="capitalize">
-                            {doc.domain.replace(/_/g, ' ')}
-                          </TableCell>
-                          <TableCell>{formatFileSize(doc.size)}</TableCell>
-                          <TableCell>{doc.chunks}</TableCell>
-                          <TableCell>{formatDate(doc.uploadedAt)}</TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <span className="sr-only">Open menu</span>
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Copy className="mr-2 h-4 w-4" />
-                                  Copy ID
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                  <Link href={`/designer/knowledge?tab=domains&doc=${doc.id}`} className="flex items-center w-full">
-                                    <ExternalLink className="mr-2 h-4 w-4" />
-                                    Open in Builder
-                                  </Link>
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleRagClick(rag)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEditRag(rag)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleDeleteConfirm(rag)} className="text-destructive">
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </CardContent>
             </Card>
           ) : (
-            /* Grid View */
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {loading ? (
-                <div className="col-span-full flex items-center justify-center py-8">
-                  <div className="flex items-center gap-3">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                    <span>Loading documents...</span>
-                  </div>
-                </div>
-              ) : error ? (
-                <div className="col-span-full">
-                  <Card>
-                    <CardContent className="p-6 text-center">
-                      <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-3" />
-                      <h3 className="text-lg font-medium mb-2">Failed to Load Documents</h3>
-                      <p className="text-muted-foreground mb-4">{error}</p>
-                      <Button variant="outline" onClick={fetchDocuments}>
-                        Try Again
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : filteredDocuments.length === 0 ? (
-                <div className="col-span-full">
-                  <Card>
-                    <CardContent className="p-6 text-center">
-                      <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                      <h3 className="text-lg font-medium mb-2">No Documents Found</h3>
-                      <p className="text-muted-foreground mb-4">
-                        {searchQuery || selectedDomain !== 'all'
-                          ? 'No documents match your current filters.'
-                          : 'Upload your first document to get started.'}
-                      </p>
-                      {(searchQuery || selectedDomain !== 'all') && (
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setSearchQuery('');
-                            setSelectedDomain('all');
-                          }}
-                        >
-                          Clear Filters
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : (
-                filteredDocuments.map((doc) => (
-                  <Card key={doc.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4" />
-                          <h3 className="font-medium truncate">{doc.name}</h3>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Copy className="mr-2 h-4 w-4" />
-                              Copy ID
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                              <Link href={`/designer/knowledge?tab=domains&doc=${doc.id}`} className="flex items-center w-full">
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                Open in Builder
-                              </Link>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant={
-                              doc.status === 'completed' ? 'default' :
-                              doc.status === 'processing' ? 'secondary' : 'destructive'
-                            }
-                          >
-                            {doc.status}
-                          </Badge>
-                          <Badge variant={doc.isGlobal ? 'default' : 'secondary'}>
-                            {doc.isGlobal ? 'Global' : 'Agent'}
-                          </Badge>
-                        </div>
-
-                        {doc.summary && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {doc.summary}
-                          </p>
-                        )}
-
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>{formatFileSize(doc.size)}</span>
-                          <span>{doc.chunks} chunks</span>
-                        </div>
-
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span className="capitalize">{doc.domain.replace(/_/g, ' ')}</span>
-                          <span>{formatDate(doc.uploadedAt)}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
+            // Grid or List View
+            <div className={effectiveViewMode === 'grid'
+              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
+              : 'space-y-3'
+            }>
+              {filteredRags.map((rag) => (
+                <RagCard
+                  key={rag.id}
+                  rag={rag}
+                  viewMode={effectiveViewMode === 'list' ? 'list' : 'grid'}
+                  isSelected={selectedIds.has(rag.id)}
+                  isSelectionMode={isSelectionMode}
+                  onToggleSelect={() => handleToggleSelect(rag.id)}
+                  onClick={() => handleRagClick(rag)}
+                  onEdit={() => handleEditRag(rag)}
+                  onDelete={() => handleDeleteConfirm(rag)}
+                />
+              ))}
             </div>
           )}
         </div>
-      ) : activeTab === 'search' ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="h-5 w-5" />
-              Search Knowledge Base
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <KnowledgeViewer />
-          </CardContent>
-        </Card>
-      ) : activeTab === 'library' ? (
-        <DocumentsLibraryView />
-      ) : (
-        <KnowledgeAnalyticsDashboard
-          categoryFilter={categoryFilter || undefined}
-          agentFilter={agentFilter || undefined}
-        />
-      )}
-        </div>
       </div>
+
+      {/* Modals */}
+      <RagEditModalV2
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingRag(null);
+          setFormError(null);
+        }}
+        rag={editingRag}
+        onSave={handleSaveRag}
+        isSaving={isSaving}
+        error={formError}
+      />
+
+      <RagDeleteModal
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setRagToDelete(null);
+        }}
+        rag={ragToDelete}
+        onConfirm={handleDeleteRag}
+        isDeleting={isDeleting}
+      />
+
+      <RagBatchDeleteModal
+        isOpen={batchDeleteConfirmOpen}
+        onClose={() => setBatchDeleteConfirmOpen(false)}
+        count={selectedIds.size}
+        onConfirm={handleBatchDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
 
+// =============================================================================
+// Export
+// =============================================================================
+
 export default function KnowledgePage() {
   return (
-    <Suspense fallback={<div className="p-6 animate-pulse">Loading knowledge management...</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
       <KnowledgePageContent />
     </Suspense>
   );

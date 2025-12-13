@@ -4,23 +4,25 @@
  * VITAL Platform - AutonomousView Component
  *
  * Master view for Modes 3 & 4 (Autonomous/Background modes):
- * - Mode 3 (Deep Research): Manual expert selection → Autonomous execution
+ * - Mode 3 (Deep Research): Agent selected from SIDEBAR → Configure mission → Autonomous execution
  * - Mode 4 (Background): AI selects expert (FusionSelector) → Autonomous execution
  *
  * Mission Phases:
- * 1. Selection - Expert selection (Mode 3: manual, Mode 4: AI)
- * 2. Template - Mission template gallery
- * 3. Briefing - Pre-flight configuration modal
- * 4. Execution - Autonomous execution with progressive disclosure
- * 5. Complete - Results and artifacts
+ * Mode 3: goal → template → briefing → execution → complete (agent from sidebar)
+ * Mode 4: mission_family → goal → template → briefing → execution → complete
+ *
+ * Key Differences:
+ * - Mode 3: User selects agent from SIDEBAR, then main view shows mission configuration
+ * - Mode 4: User selects mission FAMILY first, AI auto-selects agents
  *
  * Architecture:
  * - Uses streamReducer for centralized SSE state management
  * - HITL checkpoints for human approval at critical points
- * - Purple theme for autonomous modes (vs blue for interactive)
+ * - Purple theme for Mode 3, Amber for Mode 4
  *
  * Design System: VITAL Brand v6.0 (#9055E0)
- * Phase 3 Implementation - December 11, 2025
+ * Phase 3 Implementation - December 13, 2025
+ * REFACTORED to use @vital/ai-ui shared components
  */
 
 import { useState, useReducer, useCallback, useMemo, useEffect } from 'react';
@@ -29,9 +31,37 @@ import { cn } from '@/lib/utils';
 import {
   BookOpen,
   BarChart3,
+  Sparkles,
+  Library,
+  Loader2,
+  ArrowLeft,
   type LucideIcon,
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+
+// ============================================================================
+// SHARED COMPONENTS FROM @vital/ai-ui
+// Mission flow components for Mode 3/4 autonomous research
+// ============================================================================
+import {
+  VitalMissionGoalInput,
+  VitalMissionBriefing,
+  VitalMissionExecution,
+  VitalMissionComplete,
+  VitalTemplateRecommendation,
+  type MissionEvent,
+  type HITLCheckpoint,
+  type MissionArtifact as ExecutionArtifact,
+  type MissionMetrics,
+  type MissionStatus,
+  type MissionResult,
+  type MissionArtifact,
+  type BriefingTemplate,
+  type BriefingExpert,
+  type MissionBriefingConfig,
+  type CompleteExecutionMetrics,
+  type TemplateRecommendationType,
+} from '@vital/ai-ui';
 
 // Streaming infrastructure
 import {
@@ -53,9 +83,10 @@ import {
   type ErrorEvent,
 } from '../hooks/useSSEStream';
 
-// Phase 2 Interactive components (reused for expert selection)
-// Expert type is defined in ExpertPicker
-import { ExpertPicker, type Expert } from '../components/interactive/ExpertPicker';
+// Phase 2 Interactive components - Expert type for state management
+// Note: Agent selection happens via SIDEBAR for Mode 3, not in this view
+import { type Expert } from '../components/interactive/ExpertPicker';
+// FusionSelector for Mode 4 AI-assisted selection (if needed in future)
 import { FusionSelector } from '../components/interactive/FusionSelector';
 
 // Mission Input Component for research goal entry
@@ -77,7 +108,11 @@ import type {
   MissionTemplate as CanonicalMissionTemplate,
   MissionConfig as CanonicalMissionConfig,
   InputField as CanonicalInputField,
+  MissionFamily,
 } from '../types/mission-runners';
+
+// Mission Family Selector for Mode 3 (mission-first flow)
+import { MissionFamilySelector } from '../components/autonomous/MissionFamilySelector';
 
 // =============================================================================
 // TYPES (Local view-specific types that extend canonical types)
@@ -85,7 +120,10 @@ import type {
 
 export type AutonomousMode = 'mode3' | 'mode4';
 
-export type MissionPhase = 'selection' | 'goal' | 'template' | 'briefing' | 'execution' | 'complete';
+// Mode 3 Flow: goal → recommendation → briefing → execution → complete (agent from sidebar)
+// Mode 4 Flow: mission_family → goal → recommendation → briefing → execution → complete
+// Note: 'template' phase is the full library, accessible via "Browse all templates" toggle
+export type MissionPhase = 'mission_family' | 'selection' | 'goal' | 'recommendation' | 'template' | 'briefing' | 'execution' | 'complete';
 
 // Local simplified template for the view's internal state
 // Uses legacy format for backward compatibility with existing UI
@@ -258,17 +296,18 @@ export function AutonomousView({
 
   // Phase management
   const [phase, setPhase] = useState<MissionPhase>(() => {
-    // Skip selection if we have an initial expert ID
+    // Skip to template/briefing if we have an initial expert ID
     if (initialExpertId) {
       return initialTemplateId ? 'briefing' : 'template';
     }
-    // Mode 3 always starts with manual selection
-    // Mode 4 also starts with selection (FusionSelector needs query first)
-    return 'selection';
+    // Mode 3: Start with GOAL phase (agent already selected from sidebar)
+    // Mode 4: Start with MISSION FAMILY selection (mission-first, AI auto-selects agents)
+    return mode === 'mode4' ? 'mission_family' : 'goal';
   });
 
   // Mission state
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
+  const [selectedFamily, setSelectedFamily] = useState<MissionFamily | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<LocalMissionTemplate | null>(
     initialTemplateId ? MOCK_TEMPLATES.find(t => t.id === initialTemplateId) || null : null
   );
@@ -281,6 +320,11 @@ export function AutonomousView({
   const [customizerTemplate, setCustomizerTemplate] = useState<TemplateCardData | null>(null);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
 
+  // AI Recommendation state
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [recommendations, setRecommendations] = useState<TemplateRecommendationType[]>([]);
+  const [showAllTemplates, setShowAllTemplates] = useState(false);
+
   // Stream state (centralized via reducer)
   const [streamState, dispatch] = useReducer(streamReducer, initialStreamState);
 
@@ -288,6 +332,36 @@ export function AutonomousView({
   useEffect(() => {
     console.log('[AutonomousView] Phase changed to:', phase, '| mode:', mode, '| selectedExpert:', selectedExpert?.name || 'none');
   }, [phase, mode, selectedExpert]);
+
+  // Mode 3: Listen for expert selection from sidebar
+  // The sidebar emits 'ask-expert:expert-selected' when user picks an agent
+  useEffect(() => {
+    if (mode !== 'mode3') return;
+
+    const handleExpertSelected = (event: CustomEvent) => {
+      const { expert } = event.detail || {};
+      if (expert) {
+        console.log('[AutonomousView] Expert selected from sidebar:', expert.name);
+        setSelectedExpert({
+          id: expert.id,
+          name: expert.name,
+          level: expert.level || 'L2',
+          domain: expert.specialty || '',
+        } as Expert);
+      }
+    };
+
+    // Listen for expert selection events from sidebar
+    window.addEventListener('ask-expert:expert-selected', handleExpertSelected as EventListener);
+
+    // On mount, request current selection in case user already selected an agent
+    window.dispatchEvent(new CustomEvent('ask-expert:request-selection'));
+    console.log('[AutonomousView] Mode 3 mounted - requesting current expert selection');
+
+    return () => {
+      window.removeEventListener('ask-expert:expert-selected', handleExpertSelected as EventListener);
+    };
+  }, [mode]);
 
   // =========================================================================
   // DERIVED STATE
@@ -322,6 +396,190 @@ export function AutonomousView({
       exampleQueries: template.exampleQueries,
     }));
   }, []);
+
+  // Briefing template data for VitalMissionBriefing
+  const briefingTemplate: BriefingTemplate | null = useMemo(() => {
+    if (!selectedTemplate) return null;
+    return {
+      id: selectedTemplate.id,
+      name: selectedTemplate.name,
+      description: selectedTemplate.description,
+      category: selectedTemplate.category,
+      complexity: selectedTemplate.complexity,
+      estimatedDuration: selectedTemplate.estimatedDuration,
+      requiredInputs: selectedTemplate.requiredInputs.map((input) => ({
+        id: input.id,
+        name: input.name,
+        type: input.type as 'text' | 'textarea' | 'select' | 'file',
+        required: input.required,
+        placeholder: input.placeholder,
+        options: input.options,
+        description: input.description,
+      })),
+      defaultCheckpoints: selectedTemplate.defaultCheckpoints.map((cp) => ({
+        type: cp.type as 'plan' | 'tool' | 'subagent' | 'critical' | 'final',
+        description: cp.description,
+      })),
+    };
+  }, [selectedTemplate]);
+
+  // Briefing experts for VitalMissionBriefing
+  const briefingExperts: BriefingExpert[] = useMemo(() => {
+    if (!selectedExpert) return [];
+    return [{
+      id: selectedExpert.id,
+      name: selectedExpert.name,
+      role: selectedExpert.domain || 'Expert',
+      avatar: selectedExpert.avatar,
+      isPrimary: true,
+    }];
+  }, [selectedExpert]);
+
+  // Map stream state to execution events for VitalMissionExecution
+  const executionEvents: MissionEvent[] = useMemo(() => {
+    const events: MissionEvent[] = [];
+
+    // Add reasoning steps as events
+    streamState.reasoning.forEach((step) => {
+      events.push({
+        id: step.id,
+        type: 'thinking',
+        timestamp: new Date(),
+        message: `${step.step}: ${step.content}`,
+        details: { status: step.status },
+      });
+    });
+
+    // Add tool calls as events
+    streamState.toolCalls.forEach((tool) => {
+      events.push({
+        id: tool.id,
+        type: 'tool_call',
+        timestamp: new Date(),
+        message: `Tool: ${tool.toolName} - ${tool.status === 'success' ? 'Completed successfully' : tool.status === 'error' ? 'Failed' : 'Running...'}`,
+        details: { toolName: tool.toolName, status: tool.status },
+      });
+    });
+
+    return events;
+  }, [streamState.reasoning, streamState.toolCalls]);
+
+  // Map stream artifacts to execution artifacts
+  const executionArtifacts: ExecutionArtifact[] = useMemo(() => {
+    return streamState.artifacts.map((artifact) => ({
+      id: artifact.id,
+      type: (artifact.artifactType === 'report' ? 'document' :
+             artifact.artifactType === 'data' ? 'raw_data' :
+             artifact.artifactType === 'visualization' ? 'chart' :
+             artifact.artifactType) as 'document' | 'chart' | 'table' | 'summary' | 'citation' | 'raw_data',
+      title: artifact.title || 'Untitled Artifact',
+      description: artifact.artifactType,
+      preview: artifact.content?.substring(0, 200),
+      sizeBytes: artifact.content?.length || 0,
+      createdAt: new Date(),
+    }));
+  }, [streamState.artifacts]);
+
+  // Map checkpoint to HITL checkpoint
+  const executionCheckpoints: HITLCheckpoint[] = useMemo(() => {
+    if (!streamState.checkpoint) return [];
+    return [{
+      id: streamState.checkpoint.id,
+      name: `${streamState.checkpoint.type} Checkpoint`,
+      description: streamState.checkpoint.description,
+      status: 'pending',
+      reachedAt: new Date(),
+    }];
+  }, [streamState.checkpoint]);
+
+  // Execution metrics (aligned with VitalMissionExecution MissionMetrics type)
+  const executionMetrics: MissionMetrics | undefined = useMemo(() => {
+    if (!streamState.progress) return undefined;
+    const elapsedSeconds = streamState.startedAt
+      ? Math.floor((Date.now() - streamState.startedAt) / 1000)
+      : 0;
+    return {
+      elapsedSeconds,
+      estimatedRemainingSeconds: undefined,
+      tokensUsed: streamState.contentTokens || 0,
+      estimatedCostUsd: streamState.accumulatedCost || 0,
+      toolCalls: streamState.toolCalls?.length || 0,
+      agentHandoffs: streamState.delegations?.length || 0,
+      sourcesConsulted: streamState.citations?.length || 0,
+    };
+  }, [streamState.progress, streamState.startedAt, streamState.contentTokens, streamState.accumulatedCost, streamState.toolCalls, streamState.delegations, streamState.citations]);
+
+  // Mission status mapping (aligned with VitalMissionExecution MissionStatus type)
+  // Valid MissionStatus: 'initializing' | 'executing' | 'paused' | 'awaiting_approval' | 'completed' | 'failed' | 'cancelled'
+  const executionStatus: MissionStatus = useMemo(() => {
+    switch (streamState.status) {
+      case 'connecting':
+        return 'initializing';
+      case 'streaming':
+      case 'thinking':
+        return 'executing';
+      case 'checkpoint_pending':
+        return 'awaiting_approval';
+      case 'paused':
+        return 'paused';
+      case 'complete':
+        return 'completed';
+      case 'error':
+        return 'failed';
+      case 'idle':
+      default:
+        return 'initializing';
+    }
+  }, [streamState.status]);
+
+  // Mission result for complete phase (aligned with VitalMissionComplete types)
+  const missionResult: MissionResult | null = useMemo(() => {
+    if (phase !== 'complete') return null;
+    return {
+      outcome: streamState.status === 'error' ? 'failed' : 'success',
+      executiveSummary: streamState.content?.substring(0, 1000) || 'Mission completed successfully.',
+      keyFindings: [], // Would be populated from mission response
+      recommendations: [],
+      caveats: [],
+      confidenceLevel: 85, // Default confidence
+      sourcesConsulted: streamState.citations?.length || 0,
+    };
+  }, [phase, streamState.content, streamState.status, streamState.citations]);
+
+  // Complete phase artifacts (aligned with VitalMissionComplete types)
+  const completeArtifacts: MissionArtifact[] = useMemo(() => {
+    return streamState.artifacts.map((artifact) => ({
+      id: artifact.id,
+      type: (artifact.artifactType === 'report' ? 'document' :
+             artifact.artifactType === 'data' ? 'raw_data' :
+             artifact.artifactType === 'visualization' ? 'chart' :
+             artifact.artifactType) as 'document' | 'chart' | 'table' | 'summary' | 'citation' | 'raw_data',
+      title: artifact.title || 'Untitled Artifact',
+      description: artifact.artifactType,
+      sizeBytes: artifact.content?.length || 0,
+      mimeType: 'application/pdf',
+      preview: artifact.content?.substring(0, 200),
+      downloadUrl: '#',
+      createdAt: new Date(),
+    }));
+  }, [streamState.artifacts]);
+
+  // Execution metrics for complete phase (aligned with VitalMissionComplete ExecutionMetrics type)
+  const completeMetrics: CompleteExecutionMetrics | undefined = useMemo(() => {
+    if (!streamState.progress) return undefined;
+    const totalDurationSeconds = streamState.startedAt
+      ? Math.floor((Date.now() - streamState.startedAt) / 1000)
+      : 0;
+    return {
+      totalDurationSeconds,
+      tokensUsed: streamState.contentTokens || 0,
+      estimatedCostUsd: streamState.accumulatedCost || 0,
+      agentHandoffs: streamState.delegations?.length || 0,
+      toolCalls: streamState.toolCalls?.length || 0,
+      checkpointsPassed: streamState.checkpointHistory?.length || 0,
+      sourcesConsulted: streamState.citations?.length || 0,
+    };
+  }, [streamState.progress, streamState.startedAt, streamState.contentTokens, streamState.accumulatedCost, streamState.delegations, streamState.toolCalls, streamState.checkpointHistory, streamState.citations]);
 
   // =========================================================================
   // SSE STREAM HOOK
@@ -390,7 +648,14 @@ export function AutonomousView({
     setPhase('goal');  // Go to mission goal input phase
   }, []);
 
-  // Handle mission start from MissionInput component
+  // Mode 3: Handle mission family selection (mission-first flow)
+  const handleFamilySelect = useCallback((family: MissionFamily) => {
+    console.log('[AutonomousView] Mission family selected:', family, '- transitioning to goal phase');
+    setSelectedFamily(family);
+    setPhase('goal');  // Go to goal input, then filtered template selection
+  }, []);
+
+  // Handle mission start from MissionInput component (legacy)
   const handleMissionStart = useCallback((goal: string, config: MissionInputConfig) => {
     setMissionGoal(goal);
     // Store the config from MissionInput for later use
@@ -399,6 +664,101 @@ export function AutonomousView({
       autonomyBand: config.hitlEnabled ? 'guided' : 'autonomous',
     });
     setPhase('template');  // Proceed to template selection
+  }, []);
+
+  // Handle goal submission from VitalMissionGoalInput (new shared component)
+  // Now goes to recommendation phase for AI-powered template suggestions
+  const handleGoalSubmit = useCallback(async (goal: string) => {
+    console.log('[AutonomousView] Goal submitted:', goal.substring(0, 50) + '...');
+    setMissionGoal(goal);
+    setIsAnalyzing(true);
+    setPhase('recommendation');  // Go to AI recommendation phase instead of full template library
+
+    // Simulate AI analysis with intelligent template matching
+    // In production, this would call the backend API for semantic matching
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate analysis time
+
+      // Simple keyword-based matching for now (would be AI-powered in production)
+      const goalLower = goal.toLowerCase();
+      const matchedTemplates: TemplateRecommendationType[] = [];
+
+      // Analyze goal and score templates
+      DEFAULT_MISSION_TEMPLATES.forEach((template) => {
+        if (!template.id || !template.name || !template.description) return;
+
+        let score = 50; // Base score
+        const reasons: { factor: string; weight: number; explanation: string }[] = [];
+
+        // Check keyword matches in template name, description, tags
+        const templateText = `${template.name} ${template.description} ${(template.tags || []).join(' ')} ${(template.exampleQueries || []).join(' ')}`.toLowerCase();
+
+        // Keyword matching logic
+        const keywords = goalLower.split(/\s+/).filter(w => w.length > 3);
+        const matchedKeywords = keywords.filter(k => templateText.includes(k));
+        if (matchedKeywords.length > 0) {
+          const keywordBonus = Math.min(matchedKeywords.length * 10, 30);
+          score += keywordBonus;
+          reasons.push({
+            factor: 'Keyword Match',
+            weight: keywordBonus,
+            explanation: `Matches: ${matchedKeywords.slice(0, 3).join(', ')}`,
+          });
+        }
+
+        // Example query similarity
+        const exampleQueries = template.exampleQueries || [];
+        const hasExampleMatch = exampleQueries.some(eq => {
+          const eqWords = eq.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+          return eqWords.some(w => goalLower.includes(w));
+        });
+        if (hasExampleMatch) {
+          score += 15;
+          reasons.push({
+            factor: 'Query Pattern',
+            weight: 15,
+            explanation: 'Similar to recommended use cases',
+          });
+        }
+
+        // Category relevance
+        if (template.category && goalLower.includes(template.category.toLowerCase())) {
+          score += 10;
+          reasons.push({
+            factor: 'Category Match',
+            weight: 10,
+            explanation: `Category: ${template.category}`,
+          });
+        }
+
+        // Add to matches if score is reasonable
+        if (score >= 55) {
+          matchedTemplates.push({
+            templateId: template.id,
+            templateName: template.name,
+            matchScore: Math.min(score, 95), // Cap at 95%
+            reasoning: template.description || 'Matches your research query',
+            reasons,
+            estimatedTime: `${template.estimatedDurationMin || 30}-${template.estimatedDurationMax || 60} min`,
+            estimatedCost: (template.estimatedCostMin || 1.0 + (template.estimatedCostMax || 5.0)) / 2,
+            agentCount: template.maxAgents || 3,
+            highlights: (template.tags || []).slice(0, 3),
+          });
+        }
+      });
+
+      // Sort by score and take top 3
+      matchedTemplates.sort((a, b) => b.matchScore - a.matchScore);
+      setRecommendations(matchedTemplates.slice(0, 3));
+
+      console.log('[AutonomousView] AI recommendations:', matchedTemplates.slice(0, 3).map(r => r.templateName));
+    } catch (error) {
+      console.error('[AutonomousView] Error analyzing goal:', error);
+      // Fallback to showing all templates if analysis fails
+      setPhase('template');
+    } finally {
+      setIsAnalyzing(false);
+    }
   }, []);
 
   const handleTemplateSelect = useCallback((template: LocalMissionTemplate) => {
@@ -423,8 +783,21 @@ export function AutonomousView({
       tenant_id: tenantId,
       mode,
       checkpoint_config: selectedTemplate.defaultCheckpoints,
+      goal: missionGoal,
     });
-  }, [selectedTemplate, selectedExpert, missionId, tenantId, mode, connect]);
+  }, [selectedTemplate, selectedExpert, missionId, tenantId, mode, connect, missionGoal]);
+
+  // Handle launch from VitalMissionBriefing component
+  // MissionBriefingConfig uses: inputs, autonomyBand, checkpointOverrides, maxBudget, deadline
+  const handleBriefingLaunch = useCallback((config: MissionBriefingConfig) => {
+    console.log('[AutonomousView] Briefing launch with config:', config);
+    handleLaunch({
+      inputs: config.inputs,
+      autonomyBand: config.autonomyBand,
+      checkpointOverrides: config.checkpointOverrides || {},
+      maxBudget: config.maxBudget,
+    });
+  }, [handleLaunch]);
 
   const handleCheckpointResponse = useCallback(async (
     checkpointId: string,
@@ -452,9 +825,11 @@ export function AutonomousView({
     setPhase('template');
   }, []);
 
-  const handleBackToSelection = useCallback(() => {
-    setPhase('selection');
-    setSelectedExpert(null);
+  const handleBackToMissionFamily = useCallback(() => {
+    // Mode 4 only: Go back to mission family selection
+    // Mode 3 doesn't use this - agent is selected via sidebar, no back navigation needed
+    setPhase('mission_family');
+    setSelectedFamily(null);
     setMissionGoal('');
   }, []);
 
@@ -541,12 +916,70 @@ export function AutonomousView({
     handleLaunch(config);
   }, [handleLaunch]);
 
+  // Handle selecting a recommended template - goes directly to briefing
+  const handleRecommendationSelect = useCallback((templateId: string) => {
+    const template = MOCK_TEMPLATES.find((t) => t.id === templateId) ||
+      // Also check DEFAULT_MISSION_TEMPLATES and convert if needed
+      (() => {
+        const canonical = DEFAULT_MISSION_TEMPLATES.find((t) => t.id === templateId);
+        if (canonical && canonical.name && canonical.description) {
+          return {
+            id: canonical.id!,
+            name: canonical.name!,
+            description: canonical.description!,
+            icon: BookOpen, // Default icon
+            category: canonical.category as LocalMissionTemplate['category'] || 'research',
+            estimatedDuration: `${canonical.estimatedDurationMin || 30}-${canonical.estimatedDurationMax || 60} min`,
+            complexity: canonical.complexity as LocalMissionTemplate['complexity'] || 'moderate',
+            requiredInputs: (canonical.requiredInputs || []).map(input => ({
+              id: input.name,
+              name: input.name,
+              type: input.type as 'text' | 'textarea' | 'file' | 'select' | 'multiselect',
+              required: input.required ?? false,
+              placeholder: input.placeholder,
+              description: input.description,
+            })),
+            defaultCheckpoints: [],
+            steps: [],
+            tags: canonical.tags || [],
+          } as LocalMissionTemplate;
+        }
+        return MOCK_TEMPLATES[0]; // Fallback
+      })();
+
+    console.log('[AutonomousView] Selected recommended template:', template.name);
+    setSelectedTemplate(template);
+    setShowAllTemplates(false);
+    setPhase('briefing');  // Skip full library, go directly to briefing
+  }, []);
+
+  // Handle dismissing a recommendation (user wants something else)
+  const handleRecommendationDismiss = useCallback(() => {
+    console.log('[AutonomousView] Recommendation dismissed, showing all templates');
+    setShowAllTemplates(true);
+  }, []);
+
+  // Handle browsing the full template library
+  const handleBrowseAllTemplates = useCallback(() => {
+    console.log('[AutonomousView] User wants to browse all templates');
+    setShowAllTemplates(true);
+    setPhase('template');  // Go to full template library
+  }, []);
+
+  // Handle going back from template library to recommendations
+  const handleBackToRecommendations = useCallback(() => {
+    setShowAllTemplates(false);
+    setPhase('recommendation');
+  }, []);
+
   const handleNewMission = useCallback(() => {
     // Reset everything for a new mission
     dispatch(streamActions.reset());
     setSelectedTemplate(null);
     setMissionConfig(null);
-    setPhase('template');
+    setRecommendations([]);
+    setShowAllTemplates(false);
+    setPhase('goal');  // Back to goal input, not template library
   }, []);
 
   const handleAbortMission = useCallback(() => {
@@ -568,44 +1001,33 @@ export function AutonomousView({
     )}>
       <AnimatePresence mode="wait">
         {/* ═══════════════════════════════════════════════════════════════
-            EXPERT SELECTION PHASE
-            Mode 3: ExpertPicker (manual grid selection)
-            Mode 4: FusionSelector (AI selects based on query)
+            MISSION FAMILY SELECTION PHASE (Mode 4 Only)
+            Entry point for Mode 4 Background Missions - users select a mission
+            family (e.g., Deep Research, Evaluation, Investigation) before
+            defining their research goal. AI will auto-select appropriate agents.
+            Mode 3 uses agent selection phase instead (agent-first flow).
             ═══════════════════════════════════════════════════════════════ */}
-        {phase === 'selection' && (
+        {phase === 'mission_family' && (
           <motion.div
-            key="selection"
+            key="mission_family"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
             className="flex-1 overflow-auto"
           >
-            {mode === 'mode3' ? (
-              <ExpertPicker
-                tenantId={tenantId}
-                onSelect={handleExpertSelect}
-                initialCategory="deep-research"
-              />
-            ) : (
-              <FusionSelector
-                tenantId={tenantId}
-                mode="mode4"
-                onQuerySubmit={(query) => {
-                  // In Mode 4, submitting query starts mission configuration
-                  setMissionGoal(query);
-                  setPhase('goal');  // Go to goal phase for additional config
-                }}
-                onExpertSelected={handleExpertSelect}
-              />
-            )}
+            <MissionFamilySelector
+              onSelectFamily={handleFamilySelect}
+              researchGoal={missionGoal}
+              className="h-full"
+            />
           </motion.div>
         )}
 
         {/* ═══════════════════════════════════════════════════════════════
             MISSION GOAL INPUT PHASE
-            User enters their research question/goal and configures options
-            Uses MissionInput component for rich input experience
+            User enters their research question/goal
+            Uses VitalMissionGoalInput from @vital/ai-ui for rich input
             ═══════════════════════════════════════════════════════════════ */}
         {phase === 'goal' && (
           <motion.div
@@ -617,41 +1039,181 @@ export function AutonomousView({
             className="flex-1 overflow-auto"
           >
             <div className="max-w-3xl mx-auto p-6">
-              {/* Back navigation */}
-              <div className="mb-6">
-                <button
-                  onClick={handleBackToSelection}
-                  className={cn(
-                    'text-sm flex items-center gap-1 transition-colors',
-                    mode === 'mode3'
-                      ? 'text-emerald-600 hover:text-emerald-800'
-                      : 'text-amber-600 hover:text-amber-800'
-                  )}
-                >
-                  ← Back to expert selection
-                </button>
-              </div>
+              {/* Back navigation - Only show for Mode 4 (mission-first flow) */}
+              {/* Mode 3 has no back - agent is selected via sidebar */}
+              {mode === 'mode4' && (
+                <div className="mb-6">
+                  <button
+                    onClick={handleBackToMissionFamily}
+                    className="text-sm flex items-center gap-1 transition-colors text-amber-600 hover:text-amber-800"
+                  >
+                    ← Back to mission selection
+                  </button>
+                </div>
+              )}
 
-              {/* Mission Input Component */}
-              <MissionInput
-                autoSelect={mode === 'mode4'}
-                selectedExpert={selectedExpert ? {
-                  id: selectedExpert.id,
-                  name: selectedExpert.name,
-                  level: selectedExpert.level || 'L2',
-                  specialty: selectedExpert.domain || selectedExpert.tagline || '',
-                } : null}
-                onStartMission={handleMissionStart}
-                isRunning={isExecuting}
+              {/* SHARED COMPONENT: VitalMissionGoalInput from @vital/ai-ui */}
+              <VitalMissionGoalInput
+                mode={mode}
+                industry="pharmaceutical"
+                onSubmit={handleGoalSubmit}
+                isAnalyzing={isExecuting}
+                initialValue={missionGoal}
+                showExamples={true}
+                title={mode === 'mode3'
+                  ? `Research with ${selectedExpert?.name || 'Expert'}`
+                  : undefined
+                }
+                description={mode === 'mode3' && selectedExpert
+                  ? `Define your research goal for ${selectedExpert.name} to investigate autonomously.`
+                  : undefined
+                }
               />
             </div>
           </motion.div>
         )}
 
         {/* ═══════════════════════════════════════════════════════════════
-            TEMPLATE SELECTION PHASE
+            AI RECOMMENDATION PHASE (NEW - December 13, 2025)
+            AI analyzes user's goal and suggests best-matching templates
+            Users can select a recommendation OR browse all templates
+            ═══════════════════════════════════════════════════════════════ */}
+        {phase === 'recommendation' && (
+          <motion.div
+            key="recommendation"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="flex-1 overflow-auto"
+          >
+            <div className="max-w-4xl mx-auto p-6">
+              {/* Header with back navigation */}
+              <div className="mb-6">
+                <button
+                  onClick={handleBackToGoal}
+                  className="text-sm flex items-center gap-1 transition-colors text-purple-600 hover:text-purple-800 mb-4"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Edit research goal
+                </button>
+
+                {/* User's goal display */}
+                <div className="p-4 rounded-lg bg-gradient-to-r from-purple-50 to-slate-50 border border-purple-100 mb-6">
+                  <p className="text-xs text-purple-600 mb-1 font-medium">Your Research Goal</p>
+                  <p className="text-slate-700">{missionGoal}</p>
+                </div>
+              </div>
+
+              {/* Analyzing state */}
+              {isAnalyzing && (
+                <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 animate-ping rounded-full bg-purple-200 opacity-50" />
+                    <div className="relative p-4 rounded-full bg-purple-100">
+                      <Sparkles className="h-8 w-8 text-purple-600 animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-slate-800 mb-2">Analyzing your research goal...</h3>
+                    <p className="text-sm text-slate-500">Finding the best mission template for your needs</p>
+                  </div>
+                  <Loader2 className="h-5 w-5 animate-spin text-purple-500" />
+                </div>
+              )}
+
+              {/* Recommendations display */}
+              {!isAnalyzing && recommendations.length > 0 && (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-purple-600" />
+                    <h2 className="text-xl font-semibold text-slate-800">
+                      Recommended Missions
+                    </h2>
+                    <span className="text-sm text-slate-500">
+                      ({recommendations.length} suggestions)
+                    </span>
+                  </div>
+
+                  {/* Top recommendation - featured */}
+                  {recommendations[0] && (
+                    <div className="mb-4">
+                      <VitalTemplateRecommendation
+                        recommendation={recommendations[0]}
+                        userQuery={missionGoal}
+                        showReasoning={true}
+                        showFactors={true}
+                        onSelect={handleRecommendationSelect}
+                        onDismiss={handleRecommendationDismiss}
+                        className="shadow-lg border-2 border-purple-200"
+                      />
+                    </div>
+                  )}
+
+                  {/* Additional recommendations */}
+                  {recommendations.length > 1 && (
+                    <div className="space-y-3">
+                      <p className="text-sm text-slate-600 font-medium">Other good options:</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {recommendations.slice(1).map((rec) => (
+                          <VitalTemplateRecommendation
+                            key={rec.templateId}
+                            recommendation={rec}
+                            showReasoning={false}
+                            showFactors={false}
+                            onSelect={handleRecommendationSelect}
+                            className="bg-slate-50/50"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Browse all templates toggle */}
+                  <div className="pt-6 border-t">
+                    <button
+                      onClick={handleBrowseAllTemplates}
+                      className="flex items-center gap-2 text-sm text-slate-600 hover:text-purple-600 transition-colors group"
+                    >
+                      <Library className="h-4 w-4 group-hover:text-purple-600" />
+                      <span>Browse all {DEFAULT_MISSION_TEMPLATES.length} templates in library</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* No recommendations - show browse option */}
+              {!isAnalyzing && recommendations.length === 0 && (
+                <div className="text-center py-12 space-y-4">
+                  <div className="p-4 rounded-full bg-amber-100 inline-block">
+                    <Library className="h-8 w-8 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                      No strong matches found
+                    </h3>
+                    <p className="text-sm text-slate-500 mb-4">
+                      Your query is unique! Browse our template library to find the right mission.
+                    </p>
+                    <button
+                      onClick={handleBrowseAllTemplates}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      <Library className="h-4 w-4" />
+                      Browse All Templates
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════
+            TEMPLATE SELECTION PHASE (Full Library)
             Gallery of mission templates filtered by expert capabilities
             ENHANCED December 11, 2025 - Using new Mission Template System
+            Now accessible via "Browse all templates" from recommendation phase
             ═══════════════════════════════════════════════════════════════ */}
         {phase === 'template' && (
           <motion.div
@@ -666,10 +1228,11 @@ export function AutonomousView({
             <div className="flex-shrink-0 p-4 border-b bg-gradient-to-r from-purple-50 to-white">
               <div className="flex items-center justify-between">
                 <button
-                  onClick={handleBackToGoal}
+                  onClick={recommendations.length > 0 ? handleBackToRecommendations : handleBackToGoal}
                   className="text-sm text-purple-600 hover:text-purple-800 flex items-center gap-1"
                 >
-                  ← Back to mission goal
+                  <ArrowLeft className="h-4 w-4" />
+                  {recommendations.length > 0 ? 'Back to recommendations' : 'Back to mission goal'}
                 </button>
                 {selectedExpert && (
                   <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -721,6 +1284,7 @@ export function AutonomousView({
         {/* ═══════════════════════════════════════════════════════════════
             MISSION BRIEFING PHASE (Pre-flight)
             Configure inputs, autonomy level, and checkpoints
+            Uses VitalMissionBriefing from @vital/ai-ui
             ═══════════════════════════════════════════════════════════════ */}
         {phase === 'briefing' && (
           <motion.div
@@ -731,115 +1295,25 @@ export function AutonomousView({
             transition={{ duration: 0.3, ease: 'easeOut' }}
             className="flex-1 overflow-auto"
           >
-            {/* Placeholder for MissionBriefing */}
-            <div className="max-w-2xl mx-auto p-6">
-              <div className="mb-6">
-                <button
-                  onClick={handleBackToTemplate}
-                  className="text-sm text-purple-600 hover:text-purple-800 flex items-center gap-1"
-                >
-                  ← Back to templates
-                </button>
-              </div>
-
-              <div className="bg-gradient-to-r from-purple-50 to-white p-6 rounded-xl border border-purple-100 mb-6">
-                <div className="flex items-center gap-3 mb-4">
-                  {selectedTemplate?.icon && (() => {
-                    const TemplateIcon = selectedTemplate.icon;
-                    return <TemplateIcon className="w-8 h-8 text-purple-600" />;
-                  })()}
-                  <div>
-                    <h2 className="text-xl font-semibold text-slate-900">
-                      {selectedTemplate?.name}
-                    </h2>
-                    <p className="text-sm text-slate-600">
-                      with {selectedExpert?.name}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-slate-600">{selectedTemplate?.description}</p>
-              </div>
-
-              {/* Mission Inputs (placeholder) */}
-              <div className="space-y-4 mb-6">
-                <h3 className="font-medium text-slate-900">Mission Inputs</h3>
-                {selectedTemplate?.requiredInputs.map((input) => (
-                  <div key={input.id}>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      {input.name}
-                      {input.required && <span className="text-red-500">*</span>}
-                    </label>
-                    {input.type === 'textarea' ? (
-                      <textarea
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                        placeholder={input.placeholder}
-                        rows={3}
-                      />
-                    ) : input.type === 'select' ? (
-                      <select className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                        <option value="">Select...</option>
-                        {input.options?.map((opt) => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                        placeholder={input.placeholder}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Autonomy Band */}
-              <div className="mb-6">
-                <h3 className="font-medium text-slate-900 mb-3">Autonomy Level</h3>
-                <div className="grid grid-cols-3 gap-3">
-                  {(['supervised', 'guided', 'autonomous'] as const).map((band) => (
-                    <button
-                      key={band}
-                      className={cn(
-                        'p-3 rounded-lg border-2 text-center transition-all',
-                        band === 'guided'
-                          ? 'border-purple-500 bg-purple-50 text-purple-700'
-                          : 'border-slate-200 hover:border-purple-300'
-                      )}
-                    >
-                      <div className="font-medium capitalize">{band}</div>
-                      <div className="text-xs text-slate-500 mt-1">
-                        {band === 'supervised' && 'Approve every step'}
-                        {band === 'guided' && 'Key checkpoints only'}
-                        {band === 'autonomous' && 'Minimal interruption'}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Launch Button */}
-              <button
-                onClick={() => handleLaunch({
-                  inputs: {},
-                  autonomyBand: 'guided',
-                })}
-                className={cn(
-                  'w-full py-4 rounded-xl font-semibold text-white transition-all',
-                  'bg-gradient-to-r from-purple-600 to-purple-700',
-                  'hover:from-purple-700 hover:to-purple-800',
-                  'shadow-lg shadow-purple-500/25'
-                )}
-              >
-                Launch Mission
-              </button>
-            </div>
+            {/* SHARED COMPONENT: VitalMissionBriefing from @vital/ai-ui */}
+            {briefingTemplate && (
+              <VitalMissionBriefing
+                mode={mode}
+                researchGoal={missionGoal}
+                template={briefingTemplate}
+                expert={briefingExperts[0]}
+                isLaunching={isExecuting}
+                onLaunch={handleBriefingLaunch}
+                onBack={handleBackToTemplate}
+              />
+            )}
           </motion.div>
         )}
 
         {/* ═══════════════════════════════════════════════════════════════
             MISSION EXECUTION PHASE
             Progressive disclosure of mission progress
+            Uses VitalMissionExecution from @vital/ai-ui
             ═══════════════════════════════════════════════════════════════ */}
         {phase === 'execution' && (
           <motion.div
@@ -849,229 +1323,80 @@ export function AutonomousView({
             transition={{ duration: 0.3 }}
             className="flex-1 overflow-hidden"
           >
-            {/* Placeholder for MissionExecutionView */}
-            <div className="flex flex-col h-full">
-              {/* Header */}
-              <div className="border-b bg-gradient-to-r from-purple-50 to-white p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {selectedTemplate?.icon && (() => {
-                      const TemplateIcon = selectedTemplate.icon;
-                      return <TemplateIcon className="w-6 h-6 text-purple-600" />;
-                    })()}
-                    <div>
-                      <h2 className="font-semibold text-slate-900">
-                        {selectedTemplate?.name}
-                      </h2>
-                      <p className="text-sm text-slate-600">
-                        {selectedExpert?.name} • {streamState.status}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleAbortMission}
-                    className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    Abort Mission
-                  </button>
-                </div>
-              </div>
-
-              {/* Progress */}
-              <div className="p-4 border-b">
-                <div className="flex items-center gap-2 mb-2">
-                  {isExecuting && (
-                    <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-                  )}
-                  <span className="text-sm font-medium text-slate-700">
-                    {streamState.progress?.stage || 'Initializing mission...'}
-                  </span>
-                </div>
-                <div className="h-2 bg-purple-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500"
-                    style={{ width: `${streamState.progress?.progress || 0}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-slate-500 mt-1">
-                  <span>Step {(streamState.progress?.subSteps?.filter(s => s.status === 'complete').length ?? 0) + 1} of {streamState.progress?.subSteps?.length ?? '?'}</span>
-                  <span>{streamState.progress?.progress || 0}%</span>
-                </div>
-              </div>
-
-              {/* Checkpoint (if pending) */}
-              {hasActiveCheckpoint && streamState.checkpoint && (
-                <div className="p-4 bg-amber-50 border-b border-amber-200">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                      !
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium text-amber-900">
-                        Checkpoint: {streamState.checkpoint.type}
-                      </h3>
-                      <p className="text-sm text-amber-700 mt-1">
-                        {streamState.checkpoint.description}
-                      </p>
-                      <div className="flex gap-2 mt-3">
-                        <button
-                          onClick={() => handleCheckpointResponse(streamState.checkpoint!.id, 'approve')}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleCheckpointResponse(streamState.checkpoint!.id, 'modify')}
-                          className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
-                        >
-                          Modify
-                        </button>
-                        <button
-                          onClick={() => handleCheckpointResponse(streamState.checkpoint!.id, 'reject')}
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Stream Content */}
-              <div className="flex-1 overflow-auto p-4">
-                {/* Reasoning Steps */}
-                {streamState.reasoning.length > 0 && (
-                  <div className="mb-4 space-y-2">
-                    {streamState.reasoning.map((step) => (
-                      <div key={step.id} className="p-3 bg-purple-50 rounded-lg">
-                        <div className="flex items-center gap-2 text-sm text-purple-700">
-                          <span className={cn(
-                            'w-4 h-4 rounded-full border-2',
-                            step.status === 'thinking' && 'border-purple-500 animate-spin border-t-transparent',
-                            step.status === 'complete' && 'bg-purple-500 border-purple-500'
-                          )} />
-                          <span className="font-medium">{step.step}</span>
-                        </div>
-                        <p className="text-sm text-purple-600 mt-1 ml-6">{step.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Main Content - Safe text rendering */}
-                {streamState.content && (
-                  <div className="prose prose-purple max-w-none">
-                    <p className="whitespace-pre-wrap">{streamState.content}</p>
-                  </div>
-                )}
-
-                {/* Tools Used */}
-                {streamState.toolCalls.length > 0 && (
-                  <div className="mt-4 p-3 bg-slate-50 rounded-lg">
-                    <h4 className="text-sm font-medium text-slate-700 mb-2">Tools Used</h4>
-                    <div className="space-y-1">
-                      {streamState.toolCalls.map((tool) => (
-                        <div key={tool.id} className="flex items-center gap-2 text-sm">
-                          <span className={cn(
-                            'w-2 h-2 rounded-full',
-                            tool.status === 'calling' && 'bg-amber-500 animate-pulse',
-                            tool.status === 'success' && 'bg-green-500',
-                            tool.status === 'error' && 'bg-red-500'
-                          )} />
-                          <span className="text-slate-600">{tool.toolName}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* SHARED COMPONENT: VitalMissionExecution from @vital/ai-ui */}
+            <VitalMissionExecution
+              missionId={missionId}
+              missionTitle={selectedTemplate?.name || 'Research Mission'}
+              status={executionStatus}
+              progress={streamState.progress?.progress || 0}
+              currentPhase={streamState.progress?.stage}
+              events={executionEvents}
+              checkpoints={executionCheckpoints}
+              artifacts={executionArtifacts}
+              metrics={executionMetrics}
+              onApproveCheckpoint={(id, feedback) => handleCheckpointResponse(id, 'approve', { feedback })}
+              onRejectCheckpoint={(id, reason) => handleCheckpointResponse(id, 'reject', { reason })}
+              onPause={() => console.log('[AutonomousView] Pause requested')}
+              onResume={() => console.log('[AutonomousView] Resume requested')}
+              onCancel={handleAbortMission}
+              onDownloadArtifact={(id) => console.log('[AutonomousView] Download artifact:', id)}
+              mode={mode}
+            />
           </motion.div>
         )}
 
         {/* ═══════════════════════════════════════════════════════════════
             MISSION COMPLETE PHASE
             Results, artifacts, and next actions
+            Uses VitalMissionComplete from @vital/ai-ui
             ═══════════════════════════════════════════════════════════════ */}
-        {phase === 'complete' && (
+        {phase === 'complete' && missionResult && (
           <motion.div
             key="complete"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex-1 overflow-auto"
+            className="flex-1 overflow-hidden"
           >
-            {/* Placeholder for MissionCompleteView */}
-            <div className="max-w-3xl mx-auto p-6">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
-                  <span className="text-2xl text-green-600">✓</span>
-                </div>
-                <h2 className="text-2xl font-semibold text-slate-900">
-                  Mission Complete!
-                </h2>
-                <p className="text-slate-600 mt-2">
-                  {selectedTemplate?.name} completed successfully
-                </p>
-              </div>
-
-              {/* Artifacts */}
-              {streamState.artifacts.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="font-medium text-slate-900 mb-3">Generated Artifacts</h3>
-                  <div className="space-y-2">
-                    {streamState.artifacts.map((artifact) => (
-                      <div key={artifact.id} className="p-4 bg-slate-50 rounded-lg flex items-center justify-between">
-                        <div>
-                          <div className="font-medium text-slate-900">{artifact.title}</div>
-                          <div className="text-sm text-slate-500">{artifact.artifactType}</div>
-                        </div>
-                        <button className="px-3 py-1 text-sm text-purple-600 hover:bg-purple-50 rounded">
-                          Download
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Final Content - Safe text rendering */}
-              {streamState.content && (
-                <div className="mb-6 p-4 bg-white border rounded-lg">
-                  <h3 className="font-medium text-slate-900 mb-3">Summary</h3>
-                  <div className="prose prose-sm max-w-none">
-                    <p className="whitespace-pre-wrap text-slate-700">
-                      {streamState.content.length > 500
-                        ? streamState.content.slice(0, 500) + '...'
-                        : streamState.content}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-3">
-                <button
-                  onClick={handleNewMission}
-                  className={cn(
-                    'flex-1 py-3 rounded-xl font-medium transition-all',
-                    'bg-purple-600 text-white hover:bg-purple-700'
-                  )}
-                >
-                  Start New Mission
-                </button>
-                <button
-                  onClick={() => window.location.reload()}
-                  className={cn(
-                    'flex-1 py-3 rounded-xl font-medium transition-all',
-                    'border-2 border-slate-200 text-slate-700 hover:bg-slate-50'
-                  )}
-                >
-                  Return to Dashboard
-                </button>
-              </div>
-            </div>
+            {/* SHARED COMPONENT: VitalMissionComplete from @vital/ai-ui */}
+            <VitalMissionComplete
+              missionId={missionId}
+              missionTitle={selectedTemplate?.name || missionGoal.substring(0, 50) || 'Research Mission'}
+              result={missionResult}
+              artifacts={completeArtifacts}
+              metrics={completeMetrics}
+              teamAgents={selectedExpert ? [{
+                name: selectedExpert.name,
+                avatar: selectedExpert.avatar,
+                role: selectedExpert.domain || 'Expert',
+              }] : []}
+              onDownloadArtifact={(artifactId) => {
+                console.log('[AutonomousView] Download artifact:', artifactId);
+                // TODO: Implement artifact download
+              }}
+              onDownloadAll={() => {
+                console.log('[AutonomousView] Download all artifacts');
+                // TODO: Implement bulk download
+              }}
+              onShare={() => {
+                console.log('[AutonomousView] Share mission results');
+                // TODO: Implement share functionality
+              }}
+              onCopy={() => {
+                navigator.clipboard.writeText(missionResult.executiveSummary);
+                console.log('[AutonomousView] Copied to clipboard');
+              }}
+              onFeedback={(rating, comment) => {
+                console.log('[AutonomousView] Feedback:', rating, comment);
+                // TODO: Send feedback to backend
+              }}
+              onNewMission={handleNewMission}
+              onViewTranscript={() => {
+                console.log('[AutonomousView] View transcript');
+                // TODO: Implement transcript viewer
+              }}
+              mode={mode}
+            />
           </motion.div>
         )}
       </AnimatePresence>

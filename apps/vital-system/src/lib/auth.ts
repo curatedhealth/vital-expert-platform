@@ -1,12 +1,17 @@
 /**
  * VITAL Platform - Server-Side Auth Module
- * 
+ *
  * Provides authentication utilities for API routes.
  * For development/testing, returns mock session data.
  * In production, integrate with Supabase Auth or NextAuth.
  */
 
 import { cookies } from 'next/headers';
+
+// Canonical tenant UUID for development/testing
+// This MUST be a valid UUID format for PostgreSQL compatibility
+const DEV_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+const DEV_USER_ID = '00000000-0000-0000-0000-000000000002';
 
 export interface User {
   id: string;
@@ -24,7 +29,7 @@ export interface Session {
 
 /**
  * Get the current auth session.
- * 
+ *
  * In development mode, returns a mock session for testing.
  * In production, this should integrate with your auth provider.
  */
@@ -33,11 +38,11 @@ export async function auth(): Promise<Session | null> {
   if (process.env.NODE_ENV === 'development' || process.env.MOCK_AUTH === 'true') {
     return {
       user: {
-        id: 'dev-user-001',
+        id: DEV_USER_ID,
         email: 'dev@vital-platform.com',
         name: 'Development User',
         role: 'admin',
-        tenantId: 'tenant-dev-001',
+        tenantId: DEV_TENANT_ID,
       },
       accessToken: 'dev-access-token',
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours

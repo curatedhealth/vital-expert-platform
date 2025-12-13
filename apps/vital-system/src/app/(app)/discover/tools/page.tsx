@@ -1,11 +1,10 @@
-// Healthcare Tools Registry - Using VitalAssetView
+// Healthcare Tools Registry - Using VitalAssetView with Full CRUD
 'use client';
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
 import { AssetOverviewStats, StatCardConfig } from '@/components/shared/AssetOverviewStats';
 import { RecentAssetsCard, RecentAssetItem } from '@/components/shared/RecentAssetsCard';
 import { ActiveFiltersBar } from '@/components/shared/ActiveFiltersBar';
@@ -23,12 +22,25 @@ import {
   Zap,
   Plus,
   Loader2,
+  Trash2,
+  X,
 } from 'lucide-react';
 
 // Import shared asset view from @vital/ai-ui
 import { VitalAssetView, type VitalAsset } from '@vital/ai-ui';
 
-// Import the Tool type
+// Import tool modals from features
+import {
+  ToolEditModalV2,
+  ToolDeleteModal,
+  ToolBatchDeleteModal,
+  DEFAULT_TOOL_VALUES,
+} from '@/features/tools/components';
+
+// Import Tool type from schema for consistency
+import type { Tool as ToolSchema } from '@/lib/forms/schemas';
+
+// Import the Tool type from service (for API response)
 import type { Tool } from '@/lib/services/tool-registry-service';
 
 // Convert tool to VitalAsset format
@@ -139,6 +151,20 @@ function ToolsPageContent() {
   });
   const [loading, setLoading] = useState(true);
 
+  // CRUD state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTool, setEditingTool] = useState<Partial<ToolSchema> | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [toolToDelete, setToolToDelete] = useState<Partial<ToolSchema> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Batch selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [batchDeleteConfirmOpen, setBatchDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     loadTools();
   }, []);
@@ -212,16 +238,120 @@ function ToolsPageContent() {
     router.push(`/discover/tools/${asset.slug}`);
   };
 
+  // CRUD handlers
+  const handleCreateTool = () => {
+    setEditingTool({ ...DEFAULT_TOOL_VALUES });
+    setError(null);
+    setIsModalOpen(true);
+  };
+
   const handleEditTool = (asset: VitalAsset) => {
-    router.push(`/discover/tools/${asset.slug}?edit=true`);
+    const tool = tools.find(t => t.id === asset.id);
+    if (tool) {
+      setEditingTool(tool as unknown as Partial<ToolSchema>);
+      setError(null);
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleSaveTool = async (data: ToolSchema) => {
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      const isUpdate = !!data.id;
+      const method = isUpdate ? 'PUT' : 'POST';
+
+      const response = await fetch('/api/tools-crud', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to save tool');
+
+      await loadTools();
+      setIsModalOpen(false);
+      setEditingTool(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save tool');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteConfirm = (asset: VitalAsset) => {
+    const tool = tools.find(t => t.id === asset.id);
+    if (tool) {
+      setToolToDelete(tool as unknown as Partial<ToolSchema>);
+      setDeleteConfirmOpen(true);
+    }
+  };
+
+  const handleDeleteTool = async () => {
+    if (!toolToDelete?.id) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/tools-crud?id=${toolToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete tool');
+      }
+
+      await loadTools();
+      setDeleteConfirmOpen(false);
+      setToolToDelete(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete tool');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Batch selection handlers
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredTools.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredTools.map(t => t.id)));
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    setIsDeleting(true);
+    try {
+      const deletePromises = Array.from(selectedIds).map(id =>
+        fetch(`/api/tools-crud?id=${id}`, { method: 'DELETE' })
+      );
+
+      await Promise.all(deletePromises);
+      await loadTools();
+
+      setBatchDeleteConfirmOpen(false);
+      setSelectedIds(new Set());
+      setIsSelectionMode(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete tools');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setIsSelectionMode(false);
+    setSelectedIds(new Set());
   };
 
   if (loading) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex items-center gap-4 px-6 py-2 border-b bg-background/95 backdrop-blur">
-          <VitalBreadcrumb showHome items={[{ label: 'Discover', href: '/discover' }, { label: 'Tools' }]} />
-        </div>
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
         </div>
@@ -231,18 +361,54 @@ function ToolsPageContent() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Compact Header */}
+      {/* Action Bar */}
       <div className="flex items-center gap-4 px-6 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <VitalBreadcrumb
-          showHome
-          items={[{ label: 'Discover', href: '/discover' }, { label: 'Tools' }]}
-        />
         <div className="flex-1" />
-        {isAdmin && (
-          <Button onClick={() => router.push('/discover/tools/new')} size="sm" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Create Tool
-          </Button>
+
+        {/* Batch Selection Controls */}
+        {isSelectionMode ? (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {selectedIds.size} selected
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSelectAll}
+            >
+              {selectedIds.size === filteredTools.length ? 'Deselect All' : 'Select All'}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setBatchDeleteConfirmOpen(true)}
+              disabled={selectedIds.size === 0}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete ({selectedIds.size})
+            </Button>
+            <Button variant="ghost" size="sm" onClick={exitSelectionMode}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            {isAdmin && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsSelectionMode(true)}
+                >
+                  Select
+                </Button>
+                <Button onClick={handleCreateTool} size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create Tool
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -386,10 +552,47 @@ function ToolsPageContent() {
               kanbanDraggable={isAdmin}
               onAssetClick={handleToolClick}
               onEdit={handleEditTool}
+              onDelete={handleDeleteConfirm}
+              tableSelectable={isSelectionMode}
+              selectedIds={Array.from(selectedIds)}
+              onSelectionChange={(ids) => setSelectedIds(new Set(ids))}
             />
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      <ToolEditModalV2
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingTool(null);
+          setError(null);
+        }}
+        tool={editingTool}
+        onSave={handleSaveTool}
+        isSaving={isSaving}
+        error={error}
+      />
+
+      <ToolDeleteModal
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setToolToDelete(null);
+        }}
+        tool={toolToDelete}
+        onConfirm={handleDeleteTool}
+        isDeleting={isDeleting}
+      />
+
+      <ToolBatchDeleteModal
+        isOpen={batchDeleteConfirmOpen}
+        onClose={() => setBatchDeleteConfirmOpen(false)}
+        count={selectedIds.size}
+        onConfirm={handleBatchDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

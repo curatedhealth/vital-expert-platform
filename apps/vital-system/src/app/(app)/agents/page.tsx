@@ -1,13 +1,12 @@
 'use client';
 
-import { LayoutGrid, List, Table as TableIcon, BarChart3, Network, ArrowRightLeft } from 'lucide-react';
+import { Network, ArrowRightLeft, Plus, Trash2, X, Shield } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
+import { Button } from '@/components/ui/button';
 import { useAgentsFilter } from '@/contexts/agents-filter-context';
-// AgentDetailsModal removed - now using full page navigation at /agents/[slug]
 import { AgentsBoard } from '@/features/agents/components/agents-board';
 import { AgentsOverview } from '@/features/agents/components/agents-overview';
 import { AgentsTable } from '@/features/agents/components/agents-table';
@@ -19,8 +18,7 @@ import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
 import { type Agent } from '@/lib/stores/chat-store';
 import { type Agent as FeatureAgent } from '@/features/agents/types/agent.types';
-import { PageHeader } from '@/components/page-header';
-import { Users } from 'lucide-react';
+import { ActiveFiltersBar } from '@/components/shared/ActiveFiltersBar';
 
 // Import comparison components
 import {
@@ -33,7 +31,7 @@ import { AgentComparison } from '@/features/agents/components/agent-comparison';
 function AgentsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const queryClient = useQueryClient();
   const { createUserCopy, agents } = useAgentsStore();
   const {
@@ -56,15 +54,28 @@ function AgentsPageContent() {
   const [editingAgent, setEditingAgent] = useState<AgentsStoreAgent | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEnhancedEditModal, setShowEnhancedEditModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'grid' | 'list' | 'table' | 'graph' | 'compare'>('overview');
+
+  // Read view from URL params (sync with sidebar)
+  const viewParam = searchParams.get('view') || 'overview';
+  const validViews = ['overview', 'grid', 'list', 'table', 'graph', 'compare'] as const;
+  type ViewType = typeof validViews[number];
+  const activeTab = validViews.includes(viewParam as ViewType) ? (viewParam as ViewType) : 'overview';
 
   // Get comparison context for the Compare tab
   const { comparisonAgents: comparisonAgentsRaw, removeFromComparison, clearComparison } = useAgentComparison();
   const comparisonAgents = comparisonAgentsRaw || [];
 
+  // Handle tab change via URL navigation (syncs with sidebar)
   const handleTabChange = (value: string) => {
     console.log('Tab changed to:', value);
-    setActiveTab(value as typeof activeTab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (value && value !== 'overview') {
+      params.set('view', value);
+    } else {
+      params.delete('view');
+    }
+    const queryString = params.toString();
+    router.push(`/agents${queryString ? `?${queryString}` : ''}`, { scroll: false });
   };
 
   // Handle query parameters for opening create/edit modals
@@ -409,291 +420,273 @@ function AgentsPageContent() {
     }
   };
 
-  return (
-    <div className="flex-1 flex flex-col overflow-hidden h-full">
-      {/* Page Header */}
-      <PageHeader
-        icon={Users}
-        title="Agents"
-        description="Discover and manage AI expert agents"
-      />
+  // Check if user is admin
+  const isAdmin = userProfile?.role === 'super_admin' || userProfile?.role === 'admin';
 
-      {/* L1/L2/L3 Level Filter Tabs */}
-      <div className="px-6 py-3 border-b bg-muted/30">
-        <div className="max-w-7xl mx-auto flex items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground mr-2">Filter by Level:</span>
-          <div className="flex gap-1">
-            {[
-              { value: '', label: 'All Agents', count: agents.length },
-              { value: '1', label: 'L1 Master', description: 'Strategic orchestrators' },
-              { value: '2', label: 'L2 Expert', description: 'Domain experts' },
-              { value: '3', label: 'L3 Specialist', description: 'Focused specialists' },
-            ].map((level) => {
-              const isActive = level.value === ''
-                ? multiFilters.levels.size === 0
-                : multiFilters.levels.has(level.value);
-              return (
-                <button
-                  key={level.value}
-                  onClick={() => {
-                    if (level.value === '') {
-                      setLevels(new Set());
-                    } else {
-                      setLevels(new Set([level.value]));
-                    }
-                  }}
-                  className={`
-                    px-3 py-1.5 rounded-md text-sm font-medium transition-all
-                    ${isActive
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-background hover:bg-muted border border-input'
-                    }
-                  `}
-                  title={level.description}
-                >
-                  {level.label}
-                </button>
-              );
-            })}
-          </div>
-          {multiFilters.levels.size > 0 && (
-            <button
-              onClick={() => setLevels(new Set())}
-              className="ml-2 text-xs text-muted-foreground hover:text-foreground underline"
+  // Build active filters for display
+  const activeFiltersForBar = useMemo(() => {
+    const filters: { key: string; value: string; label: string }[] = [];
+    if (multiFilters.functions.size > 0) {
+      multiFilters.functions.forEach(f => filters.push({ key: 'function', value: f, label: `Function: ${f}` }));
+    }
+    if (multiFilters.departments.size > 0) {
+      multiFilters.departments.forEach(d => filters.push({ key: 'department', value: d, label: `Dept: ${d}` }));
+    }
+    if (multiFilters.roles.size > 0) {
+      multiFilters.roles.forEach(r => filters.push({ key: 'role', value: r, label: `Role: ${r}` }));
+    }
+    if (multiFilters.levels.size > 0) {
+      multiFilters.levels.forEach(l => filters.push({ key: 'level', value: l, label: `Level: L${l}` }));
+    }
+    if (multiFilters.statuses.size > 0) {
+      multiFilters.statuses.forEach(s => filters.push({ key: 'status', value: s, label: `Status: ${s}` }));
+    }
+    return filters;
+  }, [multiFilters]);
+
+  const handleRemoveFilter = (key: string, value?: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      // Multi-select filter: remove specific value from comma-separated list
+      const currentValues = params.get(key)?.split(',').filter(Boolean) || [];
+      const newValues = currentValues.filter(v => v !== value);
+      if (newValues.length > 0) {
+        params.set(key, newValues.join(','));
+      } else {
+        params.delete(key);
+      }
+    } else {
+      // Single-select filter: just remove the key
+      params.delete(key);
+    }
+    router.push(`/agents?${params.toString()}`, { scroll: false });
+  };
+
+  const handleClearAllFilters = () => {
+    clearFilters();
+    router.push('/agents', { scroll: false });
+  };
+
+  // Determine if we're in overview mode
+  const isOverviewMode = activeTab === 'overview';
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Action Bar */}
+      <div className="flex items-center gap-4 px-6 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex-1" />
+
+        {/* Admin Actions */}
+        {isAdmin && (
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              size="sm"
+              className="gap-2"
             >
-              Clear filter
-            </button>
+              <Plus className="h-4 w-4" />
+              Create Agent
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
+          {/* Admin badge */}
+          {isAdmin && (
+            <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <Shield className="h-4 w-4 text-blue-600" />
+              <span className="text-sm text-blue-700 dark:text-blue-300">
+                Admin mode: You can create, edit, and delete agents
+              </span>
+            </div>
+          )}
+
+          {/* Active Filters Bar */}
+          <ActiveFiltersBar
+            filters={activeFiltersForBar}
+            filteredCount={filteredAgents.length}
+            totalCount={agents.length}
+            onRemoveFilter={handleRemoveFilter}
+            onClearAll={handleClearAllFilters}
+            colorScheme="blue"
+          />
+
+          {/* Overview Mode */}
+          {isOverviewMode && (
+            <AgentsOverview />
+          )}
+
+          {/* Grid View */}
+          {activeTab === 'grid' && (
+            <AgentsBoard
+              onAgentSelect={handleAgentSelect}
+              onAddToChat={handleAddAgentToChat}
+              showCreateButton={false}
+              hiddenControls={true}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              filters={filters}
+              onFilterChange={setFilters}
+              viewMode="grid"
+              onViewModeChange={setViewMode}
+            />
+          )}
+
+          {/* List View */}
+          {activeTab === 'list' && (
+            <AgentsBoard
+              onAgentSelect={handleAgentSelect}
+              onAddToChat={handleAddAgentToChat}
+              showCreateButton={false}
+              hiddenControls={true}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              filters={filters}
+              onFilterChange={setFilters}
+              viewMode="list"
+              onViewModeChange={setViewMode}
+            />
+          )}
+
+          {/* Table View */}
+          {activeTab === 'table' && (
+            <AgentsTable
+              onAgentSelect={handleAgentSelect}
+              onAddToChat={handleAddAgentToChat}
+            />
+          )}
+
+          {/* Knowledge Graph View */}
+          {activeTab === 'graph' && (
+            <div className="space-y-6">
+              <div className="bg-card rounded-lg p-6 shadow-sm border">
+                <div className="mb-4">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <Network className="w-6 h-6 text-blue-600" />
+                    Agent Knowledge Graph
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Interactive visualization of agent relationships, skills, tools, and knowledge domains.
+                    {selectedAgent ? ` Showing graph for: ${selectedAgent.name}` : ' Select an agent to view their knowledge graph.'}
+                  </p>
+                </div>
+
+                {selectedAgent ? (
+                  <KnowledgeGraphVisualization
+                    agentId={selectedAgent.id}
+                    height="700px"
+                  />
+                ) : (
+                  <div className="border-2 border-dashed border-muted rounded-lg p-12 text-center">
+                    <Network className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Agent Selected</h3>
+                    <p className="text-muted-foreground mb-6">
+                      Select an agent from the Grid, List, or Table view to visualize their knowledge graph
+                    </p>
+                    <div className="flex gap-2 justify-center">
+                      <Button onClick={() => handleTabChange('grid')}>
+                        Go to Grid View
+                      </Button>
+                      <Button variant="outline" onClick={() => handleTabChange('table')}>
+                        Go to Table View
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Compare View */}
+          {activeTab === 'compare' && (
+            <div className="space-y-6">
+              <div className="bg-card rounded-lg p-6 shadow-sm border">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                      <ArrowRightLeft className="w-6 h-6 text-primary" />
+                      Agent Comparison
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Compare agents side-by-side across all attributes including capabilities, knowledge domains, models, and performance metrics.
+                      {comparisonAgents.length === 0
+                        ? ' Add agents to compare using the compare button on agent cards.'
+                        : ` Comparing ${comparisonAgents.length} agent${comparisonAgents.length === 1 ? '' : 's'}.`}
+                    </p>
+                  </div>
+                  {comparisonAgents.length > 0 && (
+                    <Button variant="ghost" size="sm" onClick={clearComparison} className="text-destructive">
+                      Clear All
+                    </Button>
+                  )}
+                </div>
+
+                {comparisonAgents.length > 0 ? (
+                  <AgentComparison
+                    agents={comparisonAgents}
+                    onRemoveAgent={(agentId) => removeFromComparison(agentId)}
+                    onAddAgent={() => handleTabChange('grid')}
+                    maxAgents={3}
+                    showHierarchy={true}
+                    showSimilarity={true}
+                    className="min-h-[600px]"
+                  />
+                ) : (
+                  <div className="border-2 border-dashed border-muted rounded-lg p-12 text-center">
+                    <ArrowRightLeft className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Agents Selected for Comparison</h3>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                      Select agents to compare by clicking the compare button on agent cards in the Grid or List view. You can compare up to 3 agents at once.
+                    </p>
+                    <div className="flex gap-2 justify-center">
+                      <Button onClick={() => handleTabChange('grid')}>
+                        Go to Grid View
+                      </Button>
+                      <Button variant="outline" onClick={() => handleTabChange('list')}>
+                        Go to List View
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto p-6 space-y-6">
-            <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid w-full max-w-3xl grid-cols-6 relative z-10 pointer-events-auto">
-                <TabsTrigger value="overview" className="flex items-center gap-2 cursor-pointer">
-                  <BarChart3 className="h-4 w-4" />
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger value="grid" className="flex items-center gap-2 cursor-pointer">
-                  <LayoutGrid className="h-4 w-4" />
-                  Grid
-                </TabsTrigger>
-                <TabsTrigger value="list" className="flex items-center gap-2 cursor-pointer">
-                  <List className="h-4 w-4" />
-                  List
-                </TabsTrigger>
-                <TabsTrigger value="table" className="flex items-center gap-2 cursor-pointer">
-                  <TableIcon className="h-4 w-4" />
-                  Table
-                </TabsTrigger>
-                <TabsTrigger value="graph" className="flex items-center gap-2 cursor-pointer">
-                  <Network className="h-4 w-4" />
-                  Knowledge Graph
-                </TabsTrigger>
-                <TabsTrigger value="compare" className="flex items-center gap-2 cursor-pointer">
-                  <ArrowRightLeft className="h-4 w-4" />
-                  Compare
-                  {comparisonAgents.length > 0 && (
-                    <span className="ml-1 bg-[#0046FF] text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
-                      {comparisonAgents.length}
-                    </span>
-                  )}
-                </TabsTrigger>
-              </TabsList>
+      {/* Create Agent Modal */}
+      {showCreateModal && (
+        <AgentCreator
+          isOpen={showCreateModal}
+          onClose={() => {
+            setShowCreateModal(false);
+            setEditingAgent(null);
+          }}
+          onSave={async () => {
+            setShowCreateModal(false);
+            setEditingAgent(null);
+            queryClient.invalidateQueries({ queryKey: ['agents'] });
+            await useAgentsStore.getState().loadAgents(false);
+          }}
+          editingAgent={editingAgent as any}
+        />
+      )}
 
-              <TabsContent value="overview" className="mt-6">
-                <AgentsOverview />
-              </TabsContent>
-
-              <TabsContent value="grid" className="mt-6">
-                <AgentsBoard
-                  onAgentSelect={handleAgentSelect}
-                  onAddToChat={handleAddAgentToChat}
-                  showCreateButton={true}
-                  hiddenControls={false}
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  filters={filters}
-                  onFilterChange={setFilters}
-                  viewMode="grid"
-                  onViewModeChange={setViewMode}
-                />
-              </TabsContent>
-
-              <TabsContent value="list" className="mt-6">
-                <AgentsBoard
-                  onAgentSelect={handleAgentSelect}
-                  onAddToChat={handleAddAgentToChat}
-                  showCreateButton={true}
-                  hiddenControls={false}
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  filters={filters}
-                  onFilterChange={setFilters}
-                  viewMode="list"
-                  onViewModeChange={setViewMode}
-                />
-              </TabsContent>
-
-              <TabsContent value="table" className="mt-6">
-                <AgentsTable
-                  onAgentSelect={handleAgentSelect}
-                  onAddToChat={handleAddAgentToChat}
-                />
-              </TabsContent>
-
-              <TabsContent value="graph" className="mt-6">
-                <div className="space-y-6">
-                  <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                    <div className="mb-4">
-                      <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                        <Network className="w-6 h-6 text-blue-600" />
-                        Agent Knowledge Graph
-                      </h2>
-                      <p className="text-sm text-gray-600 mt-2">
-                        Interactive visualization of agent relationships, skills, tools, and knowledge domains using Neo4j, Pinecone, and Supabase.
-                        {selectedAgent ? ` Showing graph for: ${selectedAgent.name}` : ' Select an agent to view their knowledge graph.'}
-                      </p>
-                    </div>
-
-                    {selectedAgent ? (
-                      <KnowledgeGraphVisualization
-                        agentId={selectedAgent.id}
-                        height="700px"
-                      />
-                    ) : (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-                        <Network className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          No Agent Selected
-                        </h3>
-                        <p className="text-gray-600 mb-6">
-                          Select an agent from the Grid, List, or Table view to visualize their knowledge graph
-                        </p>
-                        <div className="flex gap-2 justify-center">
-                          <button
-                            onClick={() => setActiveTab('grid')}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                          >
-                            Go to Grid View
-                          </button>
-                          <button
-                            onClick={() => setActiveTab('table')}
-                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                          >
-                            Go to Table View
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="compare" className="mt-6">
-                <div className="space-y-6">
-                  <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                    <div className="mb-4 flex items-center justify-between">
-                      <div>
-                        <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                          <ArrowRightLeft className="w-6 h-6 text-[#0046FF]" />
-                          Agent Comparison
-                        </h2>
-                        <p className="text-sm text-gray-600 mt-2">
-                          Compare agents side-by-side across all attributes including capabilities, knowledge domains, models, and performance metrics.
-                          {comparisonAgents.length === 0
-                            ? ' Add agents to compare using the compare button on agent cards.'
-                            : ` Comparing ${comparisonAgents.length} agent${comparisonAgents.length === 1 ? '' : 's'}.`}
-                        </p>
-                      </div>
-                      {comparisonAgents.length > 0 && (
-                        <button
-                          onClick={clearComparison}
-                          className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          Clear All
-                        </button>
-                      )}
-                    </div>
-
-                    {comparisonAgents.length > 0 ? (
-                      <AgentComparison
-                        agents={comparisonAgents}
-                        onRemoveAgent={(agentId) => removeFromComparison(agentId)}
-                        onAddAgent={() => setActiveTab('grid')}
-                        maxAgents={3}
-                        showHierarchy={true}
-                        showSimilarity={true}
-                        className="min-h-[600px]"
-                      />
-                    ) : (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-                        <ArrowRightLeft className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          No Agents Selected for Comparison
-                        </h3>
-                        <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                          Select agents to compare by clicking the compare button (
-                          <ArrowRightLeft className="w-4 h-4 inline-block mx-1" />
-                          ) on agent cards in the Grid or List view. You can compare up to 3 agents at once.
-                        </p>
-                        <div className="flex gap-2 justify-center">
-                          <button
-                            onClick={() => setActiveTab('grid')}
-                            className="px-4 py-2 bg-[#0046FF] text-white rounded-lg hover:bg-[#0035CC] transition-colors"
-                          >
-                            Go to Grid View
-                          </button>
-                          <button
-                            onClick={() => setActiveTab('list')}
-                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                          >
-                            Go to List View
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-
-            {/* AgentDetailsModal removed - now using full page at /agents/[slug] */}
-
-            {showCreateModal && (
-              <AgentCreator
-                isOpen={showCreateModal}
-                onClose={() => {
-                  setShowCreateModal(false);
-                  setEditingAgent(null);
-                }}
-                onSave={async () => {
-                  setShowCreateModal(false);
-                  setEditingAgent(null);
-                  // Invalidate queries and reload agents store instead of hard refresh
-                  queryClient.invalidateQueries({ queryKey: ['agents'] });
-                  await useAgentsStore.getState().loadAgents(false);
-                }}
-                editingAgent={editingAgent as any}
-              />
-            )}
-
-            {/* Enhanced Agent Edit Modal - 9 tabs with comprehensive configuration */}
-            <AgentEditFormEnhanced
-              agent={editingAgent as any}
-              open={showEnhancedEditModal}
-              onOpenChange={(open) => {
-                setShowEnhancedEditModal(open);
-                if (!open) {
-                  setEditingAgent(null);
-                }
-              }}
-              onSave={handleSaveAgentFromEnhanced as any}
-            />
-          </div>
-        </div>
+      {/* Enhanced Agent Edit Modal */}
+      <AgentEditFormEnhanced
+        agent={editingAgent as any}
+        open={showEnhancedEditModal}
+        onOpenChange={(open) => {
+          setShowEnhancedEditModal(open);
+          if (!open) {
+            setEditingAgent(null);
+          }
+        }}
+        onSave={handleSaveAgentFromEnhanced as any}
+      />
     </div>
   );
 }

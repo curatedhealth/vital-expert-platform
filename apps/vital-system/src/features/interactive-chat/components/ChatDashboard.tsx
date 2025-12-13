@@ -25,12 +25,17 @@ import { useMode1Chat } from '@/features/ask-expert/hooks/useMode1Chat';
 type ChatDashboardProps = {
   tenantId?: string;
   conversationId?: string;
+  /** Agent ID for the selected expert */
+  agentId?: string;
+  /** @deprecated Use agentId instead */
   expertId?: string;
   /** When true, uses Mode 2 (auto expert selection via Fusion Intelligence) */
   autoSelectExpert?: boolean;
 };
 
-export function ChatDashboard({ tenantId, conversationId, expertId, autoSelectExpert = false }: ChatDashboardProps) {
+export function ChatDashboard({ tenantId, conversationId, agentId, expertId, autoSelectExpert = false }: ChatDashboardProps) {
+  // Resolve effective agent ID (agentId takes precedence over deprecated expertId)
+  const effectiveAgentId = agentId || expertId;
   // Legacy store for ContextRail compatibility (will deprecate)
   const {
     mode,
@@ -63,7 +68,7 @@ export function ChatDashboard({ tenantId, conversationId, expertId, autoSelectEx
     error,
   } = useMode1Chat({
     conversationId,
-    expertId,
+    agentId: effectiveAgentId, // Primary standardized field
     tenantId,
     baseUrl: '/api/expert',
     onError: (err) => console.error('Mode 1 Chat Error:', err),
@@ -79,12 +84,15 @@ export function ChatDashboard({ tenantId, conversationId, expertId, autoSelectEx
     if (autoSelectExpert) return;
 
     interface ExpertSelectedEvent {
-      expertId: string;
+      agentId: string;          // Primary field name (standardized)
+      expertId?: string;        // Backwards compatibility
       expert: { id: string; name: string; level: string; specialty: string };
     }
 
     const handleExpertSelected = (event: CustomEvent<ExpertSelectedEvent>) => {
-      const { expert } = event.detail;
+      const { agentId, expertId: legacyExpertId, expert } = event.detail;
+      // Use agentId if available, fall back to expertId for backwards compat
+      const resolvedAgentId = agentId || legacyExpertId || expert.id;
 
       // Immediately register expert with the hook
       selectExpert({
@@ -207,7 +215,7 @@ export function ChatDashboard({ tenantId, conversationId, expertId, autoSelectEx
   );
 
   const handleSend = (content: string) => {
-    if (!isExpertSelected && !expertId) {
+    if (!isExpertSelected && !effectiveAgentId) {
       console.warn('No expert selected - message will fail');
     }
     sendMessage(content, {

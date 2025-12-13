@@ -171,120 +171,189 @@ async def stream_sse_events_realtime(compiled_graph, initial_state: Dict[str, An
     sources_emitted = False
     agent_name = "AI Assistant"
 
-    # Node name to thinking step mapping with detailed descriptions
-    # Each node has: title (displayed message), detail_fn (function to generate detail from state)
+    # Node name to thinking step mapping with detailed descriptions and reasoning content
+    # Each node has:
+    #   - title: Short displayed message (e.g., "Analyzing your query")
+    #   - detail: Contextual info (e.g., session ID, doc count)
+    #   - content: Meaningful reasoning text that explains what the AI is thinking/doing
+    #              This is displayed in the frontend's VitalThinking component
     node_descriptions = {
         # Session management
         "load_or_create_session_node": {
             "title": "Loading session context",
-            "detail": lambda s: f"Session: {s.get('session_id', 'new')[:8]}..." if s.get('session_id') else "Creating new session"
+            "detail": lambda s: f"Session: {s.get('session_id', 'new')[:8]}..." if s.get('session_id') else "Creating new session",
+            "content": lambda s: f"Retrieving conversation context to maintain continuity. {'Continuing from previous session with ' + str(len(s.get('conversation_history', []))) + ' prior messages.' if s.get('conversation_history') else 'Starting fresh conversation session.'}"
         },
         "load_session": {
             "title": "Loading conversation session",
-            "detail": lambda s: f"Session ID: {s.get('session_id', 'new session')}"
+            "detail": lambda s: f"Session ID: {s.get('session_id', 'new session')}",
+            "content": lambda s: f"Loading session context to understand conversation history and maintain continuity across interactions."
         },
         # Agent loading
         "load_agent_profile_node": {
             "title": "Activating expert agent",
-            "detail": lambda s: f"Expert: {s.get('agent_profile', {}).get('name', s.get('current_agent_type', 'Loading...'))}"
+            "detail": lambda s: f"Expert: {s.get('agent_profile', {}).get('name', s.get('current_agent_type', 'Loading...'))}",
+            "content": lambda s: f"Activating {s.get('agent_profile', {}).get('name', 'specialized expert')} with expertise in {', '.join(s.get('agent_profile', {}).get('knowledge_domains', ['general knowledge'])[:3]) if s.get('agent_profile', {}).get('knowledge_domains') else 'the relevant domain'}. This agent has been selected based on your query requirements."
         },
         "load_agent": {
             "title": "Activating expert agent",
-            "detail": lambda s: f"Expert: {s.get('current_agent_type', 'Loading...')}"
+            "detail": lambda s: f"Expert: {s.get('current_agent_type', 'Loading...')}",
+            "content": lambda s: f"Preparing the {s.get('current_agent_type', 'expert')} agent with specialized knowledge and capabilities for your query."
         },
         # Conversation context
         "load_conversation_history_node": {
             "title": "Loading conversation history",
-            "detail": lambda s: f"Messages: {len(s.get('conversation_history', []))}"
+            "detail": lambda s: f"Messages: {len(s.get('conversation_history', []))}",
+            "content": lambda s: f"Reviewing {len(s.get('conversation_history', []))} previous messages to understand context and provide relevant follow-up responses." if s.get('conversation_history') else "No prior conversation history - starting with fresh context."
         },
         # Input processing
         "process_input": {
             "title": "Analyzing your query",
-            "detail": lambda s: f"Understanding: \"{s.get('query', '')[:80]}...\""
+            "detail": lambda s: f"Understanding: \"{s.get('query', '')[:80]}...\"",
+            "content": lambda s: f"Analyzing your question: \"{s.get('query', '')[:150]}{'...' if len(s.get('query', '')) > 150 else ''}\"\n\nIdentifying key concepts, required expertise areas, and determining the best approach to provide a comprehensive response."
         },
         "intent_classification_node": {
             "title": "Classifying query intent",
-            "detail": lambda s: f"Intent: {s.get('classified_intent', s.get('l3_intent', 'analyzing...'))}"
+            "detail": lambda s: f"Intent: {s.get('classified_intent', s.get('l3_intent', 'analyzing...'))}",
+            "content": lambda s: f"Determined query intent: {s.get('classified_intent', s.get('l3_intent', 'informational'))}. This classification helps select the appropriate response strategy and knowledge sources."
         },
         # Tenant validation
         "validate_tenant": {
             "title": "Validating access permissions",
-            "detail": lambda s: f"Tenant: {s.get('tenant_id', 'unknown')[:8]}..."
+            "detail": lambda s: f"Tenant: {s.get('tenant_id', 'unknown')[:8]}...",
+            "content": lambda s: "Verifying access permissions and organizational context to ensure appropriate knowledge base access and compliance requirements."
         },
         # L3 orchestration
         "l3_orchestrate": {
             "title": "Orchestrating knowledge tools",
-            "detail": lambda s: f"Running L3 Context Engineer - {len(s.get('l3_enriched_context', {}).get('sources', []))} sources found"
+            "detail": lambda s: f"Running L3 Context Engineer - {len(s.get('l3_enriched_context', {}).get('sources', []))} sources found",
+            "content": lambda s: f"The L3 Context Engineer is orchestrating specialized knowledge retrieval. Found {len(s.get('l3_enriched_context', {}).get('sources', []))} relevant sources across {'multiple knowledge domains' if len(s.get('l3_enriched_context', {}).get('sources', [])) > 3 else 'focused knowledge areas'}."
         },
         # RAG retrieval
         "rag_retrieval_node": {
             "title": "Searching knowledge base",
-            "detail": lambda s: f"Found {len(s.get('retrieved_documents', s.get('citations', [])))} relevant documents"
+            "detail": lambda s: f"Found {len(s.get('retrieved_documents', s.get('citations', [])))} relevant documents",
+            "content": lambda s: _generate_rag_reasoning(s)
         },
         "rag_retrieval": {
             "title": "Searching knowledge base",
-            "detail": lambda s: f"Found {len(s.get('retrieved_documents', []))} relevant documents"
+            "detail": lambda s: f"Found {len(s.get('retrieved_documents', []))} relevant documents",
+            "content": lambda s: _generate_rag_reasoning(s)
         },
         # Analysis
         "analysis_node": {
             "title": "Analyzing context",
-            "detail": lambda s: f"Processing {len(s.get('retrieved_documents', []))} sources with {s.get('current_agent_type', 'expert')} expertise"
+            "detail": lambda s: f"Processing {len(s.get('retrieved_documents', []))} sources with {s.get('current_agent_type', 'expert')} expertise",
+            "content": lambda s: f"Synthesizing information from {len(s.get('retrieved_documents', []))} retrieved sources. Applying {s.get('current_agent_type', 'expert')} domain expertise to extract relevant insights and ensure accuracy."
         },
         # Tool execution
         "check_tool_requirements_node": {
             "title": "Evaluating tool requirements",
-            "detail": lambda s: f"Tools needed: {len(s.get('requested_tools', []))}"
+            "detail": lambda s: f"Tools needed: {len(s.get('requested_tools', []))}",
+            "content": lambda s: f"Assessing whether specialized tools are needed for this query. {'Will use: ' + ', '.join(s.get('requested_tools', [])) + ' to enhance the response.' if s.get('requested_tools') else 'Standard knowledge retrieval is sufficient for this query.'}"
         },
         "execute_l5_tools_node": {
             "title": "Executing specialized tools",
-            "detail": lambda s: f"Tools: {', '.join(s.get('l5_tools_used', [])) or 'none required'}"
+            "detail": lambda s: f"Tools: {', '.join(s.get('l5_tools_used', [])) or 'none required'}",
+            "content": lambda s: f"Executing specialized L5 tools: {', '.join(s.get('l5_tools_used', []))}. These tools provide enhanced capabilities for {_describe_tool_purpose(s.get('l5_tools_used', []))}." if s.get('l5_tools_used') else "No specialized tools required for this query."
         },
         # Expert execution
         "execute_expert_agent_node": {
             "title": "Generating expert response",
-            "detail": lambda s: f"Model: {s.get('llm_streaming_config', {}).get('model', 'gpt-4')}"
+            "detail": lambda s: f"Model: {s.get('llm_streaming_config', {}).get('model', 'gpt-4')}",
+            "content": lambda s: f"Generating response using {s.get('llm_streaming_config', {}).get('model', 'GPT-4')} with temperature {s.get('temperature_used', 0.7)}. Synthesizing retrieved knowledge with expert reasoning to provide a comprehensive answer."
         },
         "execute_expert": {
             "title": "Preparing expert response",
-            "detail": lambda s: f"Model: {s.get('llm_streaming_config', {}).get('model', 'gpt-4')}, Temp: {s.get('temperature_used', 0.7)}"
+            "detail": lambda s: f"Model: {s.get('llm_streaming_config', {}).get('model', 'gpt-4')}, Temp: {s.get('temperature_used', 0.7)}",
+            "content": lambda s: f"Formulating expert response by integrating retrieved knowledge ({len(s.get('retrieved_documents', []))} sources) with domain expertise. Using {s.get('llm_streaming_config', {}).get('model', 'GPT-4')} for nuanced reasoning."
         },
         # Compliance
         "compliance_check_node": {
             "title": "Running compliance verification",
-            "detail": lambda s: f"Checking medical/regulatory compliance"
+            "detail": lambda s: f"Checking medical/regulatory compliance",
+            "content": lambda s: "Verifying response against compliance requirements: checking for appropriate medical disclaimers, regulatory accuracy, and ensuring information aligns with approved guidelines."
         },
         "confidence_calculation_node": {
             "title": "Calculating confidence score",
-            "detail": lambda s: f"Confidence: {s.get('confidence', s.get('response_confidence', 0.85)):.0%}"
+            "detail": lambda s: f"Confidence: {s.get('confidence', s.get('response_confidence', 0.85)):.0%}",
+            "content": lambda s: f"Assessed response confidence at {s.get('confidence', s.get('response_confidence', 0.85)):.0%} based on source quality, relevance match, and reasoning coherence. {'High confidence indicates strong evidence support.' if s.get('confidence', 0.85) >= 0.8 else 'Moderate confidence - please verify critical information with authoritative sources.'}"
         },
         "human_review_check_node": {
             "title": "Checking review requirements",
-            "detail": lambda s: "Review required" if s.get('requires_human_review') else "No review needed"
+            "detail": lambda s: "Review required" if s.get('requires_human_review') else "No review needed",
+            "content": lambda s: "This response requires human expert review before being finalized due to compliance or accuracy concerns." if s.get('requires_human_review') else "Response meets automated quality checks and does not require additional human review."
         },
         # Response generation
         "generate_streaming_response_node": {
             "title": "Streaming response",
-            "detail": lambda s: "Real-time token streaming"
+            "detail": lambda s: "Real-time token streaming",
+            "content": lambda s: "Beginning real-time response generation. Content will stream as it's generated for immediate visibility."
         },
         # Save
         "save_to_database_node": {
             "title": "Saving to conversation history",
-            "detail": lambda s: "Persisting message for context continuity"
+            "detail": lambda s: "Persisting message for context continuity",
+            "content": lambda s: "Saving this interaction to conversation history for future context awareness and continuity."
         },
         "save_message": {
             "title": "Saving to conversation history",
-            "detail": lambda s: "Persisting message for context continuity"
+            "detail": lambda s: "Persisting message for context continuity",
+            "content": lambda s: "Persisting this exchange to maintain conversation context for follow-up questions."
         },
         # Final
         "final_response_node": {
             "title": "Finalizing response",
-            "detail": lambda s: f"Generated {s.get('tokens_count', 0)} tokens"
+            "detail": lambda s: f"Generated {s.get('tokens_count', 0)} tokens",
+            "content": lambda s: f"Finalizing response with {s.get('tokens_count', 0)} tokens. Applied formatting, citations, and quality checks."
         },
         "format_output": {
             "title": "Formatting response",
-            "detail": lambda s: "Applying formatting and citations"
+            "detail": lambda s: "Applying formatting and citations",
+            "content": lambda s: "Applying final formatting: structuring content, adding citation references, and ensuring readability."
         },
     }
+
+    # Helper function for RAG reasoning content
+    def _generate_rag_reasoning(s: Dict) -> str:
+        docs = s.get('retrieved_documents', s.get('citations', []))
+        doc_count = len(docs)
+        if doc_count == 0:
+            return "Searching knowledge base for relevant information..."
+
+        # Extract source types/titles if available
+        source_summary = []
+        for doc in docs[:3]:  # Summarize first 3
+            if isinstance(doc, dict):
+                title = doc.get('title', doc.get('metadata', {}).get('title', ''))
+                source = doc.get('source', doc.get('metadata', {}).get('source', ''))
+                if title:
+                    source_summary.append(f"'{title[:50]}{'...' if len(title) > 50 else ''}'")
+                elif source:
+                    source_summary.append(source)
+
+        reasoning = f"Retrieved {doc_count} relevant documents from the knowledge base."
+        if source_summary:
+            reasoning += f"\n\nKey sources include: {', '.join(source_summary)}"
+            if doc_count > 3:
+                reasoning += f" and {doc_count - 3} additional sources."
+        reasoning += "\n\nAnalyzing relevance and synthesizing information..."
+        return reasoning
+
+    # Helper function for tool purpose description
+    def _describe_tool_purpose(tools: list) -> str:
+        if not tools:
+            return "general analysis"
+        tool_purposes = {
+            "pubmed_search": "medical literature research",
+            "web_search": "current information gathering",
+            "calculator": "numerical analysis",
+            "citation_formatter": "reference formatting",
+            "data_analyzer": "data processing and insights",
+            "document_parser": "document extraction",
+        }
+        purposes = [tool_purposes.get(t.lower(), t) for t in tools]
+        return ", ".join(purposes)
 
     try:
         # Use LangGraph's streaming with "updates" mode for per-node progressive events
@@ -314,25 +383,31 @@ async def stream_sse_events_realtime(compiled_graph, initial_state: Dict[str, An
                     node_info = node_descriptions.get(node_name)
 
                     if isinstance(node_info, dict):
-                        # New format: {title, detail}
+                        # New format: {title, detail, content}
                         title = node_info.get("title", f"Processing {node_name}")
                         detail_fn = node_info.get("detail")
                         detail = detail_fn(final_state) if callable(detail_fn) else str(detail_fn) if detail_fn else ""
+                        # NEW: Extract reasoning content for frontend VitalThinking display
+                        content_fn = node_info.get("content")
+                        content = content_fn(final_state) if callable(content_fn) else str(content_fn) if content_fn else ""
                     elif isinstance(node_info, str):
                         # Old format: just a string
                         title = node_info
                         detail = ""
+                        content = ""
                     else:
                         # Fallback
                         title = f"Processing {node_name}"
                         detail = ""
+                        content = ""
 
                     event_data = {
                         "event": "thinking",
                         "step": node_name,
                         "status": "completed",
                         "message": title,
-                        "detail": detail,  # NEW: Include detail for transparency
+                        "detail": detail,
+                        "content": content,  # NEW: Meaningful reasoning content for VitalThinking display
                         "timestamp": time.time()
                     }
                     yield f"data: {json.dumps(event_data)}\n\n"

@@ -35,6 +35,9 @@ export type { Message, Expert, SendMessageOptions };
 
 export interface UseMode1ChatOptions {
   conversationId?: string;
+  /** Agent ID for the selected expert */
+  agentId?: string;
+  /** @deprecated Use agentId instead */
   expertId?: string;
   tenantId?: string;
   onError?: (error: Error) => void;
@@ -54,17 +57,21 @@ export interface UseMode1ChatReturn extends BaseInteractiveState, BaseInteractiv
 export function useMode1Chat(options: UseMode1ChatOptions = {}): UseMode1ChatReturn {
   const {
     conversationId,
-    expertId,
+    agentId,
+    expertId, // Deprecated - use agentId
     tenantId,
     onError,
     onMessageComplete,
     baseUrl = '/api/expert',
   } = options;
 
+  // Resolve effective agent ID (agentId takes precedence over deprecated expertId)
+  const effectiveAgentId = agentId || expertId;
+
   // Use base interactive hook with Mode 1 configuration
   const baseHook = useBaseInteractive({
     conversationId,
-    expertId,
+    agentId: effectiveAgentId,
     tenantId,
     onError,
     onMessageComplete,
@@ -73,7 +80,7 @@ export function useMode1Chat(options: UseMode1ChatOptions = {}): UseMode1ChatRet
   });
 
   // Mode 1 specific: Check if expert is selected
-  const isExpertSelected = Boolean(baseHook.selectedExpert || expertId);
+  const isExpertSelected = Boolean(baseHook.selectedExpert || effectiveAgentId);
 
   // Override sendMessage to enforce expert selection
   const sendMessageWithValidation = useCallback(

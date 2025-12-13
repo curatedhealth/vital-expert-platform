@@ -24,8 +24,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Brain, Loader2 } from 'lucide-react';
 
-// Use CitedResponse for inline citations with ai-elements components
-import { CitedResponse } from '@/components/ui/shadcn-io/ai/cited-response';
+// Use VitalStreamText for jitter-free markdown streaming with Streamdown
+import { VitalStreamText } from '@/components/vital-ai-ui/conversation/VitalStreamText';
 
 // Sources section at end of response
 import {
@@ -40,7 +40,7 @@ import type { StreamState } from '../../hooks/streamReducer';
 import type { InteractiveMode } from '../../views/InteractiveView';
 import { AgentSelectionCard } from './AgentSelectionCard';
 import { VitalThinking } from './VitalThinking';
-import { ToolCallList } from './ToolCallList';
+import { ToolCallList, ToolCall } from './ToolCallList';
 import { VitalLevelBadge } from './AgentSelectionCard';
 
 // =============================================================================
@@ -80,15 +80,19 @@ export function StreamingMessage({
   const isComplete = state.status === 'complete';
   const hasContent = state.content.length > 0;
 
-  // Transform CitationEvent[] to the format expected by CitedResponse
-  const citationSources = useMemo(() => {
-    return state.citations.map((citation) => ({
-      id: `src-${citation.index}`,
-      url: citation.url || `https://${citation.source}.gov/citation/${citation.id}`,
-      title: citation.title,
-      description: citation.excerpt,
-      excerpt: citation.excerpt,
-      similarity: citation.confidence,
+  // Convert CitationEvents to CitationData for VitalStreamText inline pills
+  const inlineCitations = useMemo(() => {
+    return state.citations.map((c) => ({
+      id: c.id,
+      index: c.index,
+      source: c.source,
+      title: c.title,
+      excerpt: c.excerpt,
+      url: c.url || `https://${c.source}.gov/citation/${c.id}`,
+      confidence: c.confidence,
+      authors: c.metadata?.authors as string[] | undefined,
+      date: c.metadata?.date as string | undefined,
+      metadata: c.metadata,
     }));
   }, [state.citations]);
 
@@ -169,8 +173,6 @@ export function StreamingMessage({
               steps={state.reasoning}
               isExpanded={isStreaming || isThinking}
               isActive={isThinking}
-              showTimings={true}
-              showAgentLevels={true}
             />
           )}
         </AnimatePresence>
@@ -191,31 +193,27 @@ export function StreamingMessage({
           )}
         </AnimatePresence>
 
-        {/* Streaming Content - Uses CitedResponse for inline citations */}
+        {/* Streaming Content - Uses VitalStreamText for proper markdown rendering */}
+        {/* Clean flat design: no bubble styling for a modern chat experience */}
         {(hasContent || isStreaming) && (
           <div
             ref={contentRef}
-            className="rounded-2xl rounded-bl-md bg-slate-100 px-4 py-3 max-w-[85%]"
+            className="py-2"
           >
-            <div className="prose prose-slate dark:prose-invert max-w-none text-slate-800">
-              <CitedResponse
-                content={state.content || '\u00A0'}
-                sources={citationSources}
-              />
-              {/* Streaming cursor indicator */}
-              {isStreaming && (
-                <span
-                  className="inline-block w-0.5 h-4 bg-primary animate-pulse ml-0.5 align-baseline"
-                  aria-hidden="true"
-                />
-              )}
-            </div>
+            <VitalStreamText
+              content={state.content || '\u00A0'}
+              isStreaming={isStreaming}
+              highlightCode={true}
+              enableMermaid={true}
+              showControls={true}
+              citations={inlineCitations}
+            />
           </div>
         )}
 
         {/* Loading state when no content yet */}
         {!hasContent && isStreaming && (
-          <div className="rounded-2xl rounded-bl-md bg-slate-100 px-4 py-3 max-w-[85%]">
+          <div className="py-2">
             <div className="flex items-center gap-2 text-slate-500">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span className="text-sm">Generating response...</span>
@@ -230,9 +228,9 @@ export function StreamingMessage({
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
-              className="max-w-[85%] mt-3"
+              className="mt-3"
             >
-              <Sources defaultOpen={false}>
+              <Sources>
                 <SourcesTrigger count={allSources.length} />
                 <SourcesContent>
                   {allSources.map((source) => (
@@ -254,11 +252,10 @@ export function StreamingMessage({
             <motion.div
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="max-w-[85%]"
             >
               <ToolCallList
-                calls={state.toolCalls}
-                activeToolId={state.activeToolId}
+                calls={state.toolCalls as unknown as ToolCall[]}
+                activeToolId={state.activeToolId ?? undefined}
                 isStreaming={isStreaming}
               />
             </motion.div>

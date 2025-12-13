@@ -49,6 +49,9 @@ export interface ChatMessage {
   sources?: Array<{ title: string; url: string }>;
   isStreaming?: boolean;
   isPhaseStatus?: boolean;
+  /** Agent ID for the expert */
+  agentId?: string;
+  /** @deprecated Use agentId instead */
   expertId?: string;
   expertType?: string;
   taskItems?: Array<{ text: string; completed?: boolean; file?: string }>;
@@ -198,9 +201,11 @@ export function AIChatbot({
                 const messageSources = message.sources || extractSources(message.content);
 
                 // Get expert identity if this is an expert message
+                // Support both agentId (primary) and expertId (deprecated) for backwards compat
                 let expertIdentity = null;
-                if (message.role === 'expert' && message.expertId) {
-                  expertIdentity = expertIdentityManager.getExpert(message.expertId);
+                const messageAgentId = message.agentId || message.expertId;
+                if (message.role === 'expert' && messageAgentId) {
+                  expertIdentity = expertIdentityManager.getExpert(messageAgentId);
                 } else if (message.role === 'expert' && message.name) {
                   // Try to find by name
                   expertIdentity = expertIdentityManager.getAllExperts().find(e => e.name === message.name);

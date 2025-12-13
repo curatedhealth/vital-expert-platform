@@ -5,8 +5,6 @@ import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
 import { AssetOverviewStats, StatCardConfig } from '@/components/shared/AssetOverviewStats';
 import { RecentAssetsCard, RecentAssetItem } from '@/components/shared/RecentAssetsCard';
 import { ActiveFiltersBar } from '@/components/shared/ActiveFiltersBar';
@@ -21,6 +19,8 @@ import {
   Cog,
   Plus,
   Loader2,
+  Trash2,
+  X,
 } from 'lucide-react';
 
 // Import shared asset view and skill constants from @vital/ai-ui
@@ -32,14 +32,32 @@ import {
   getComplexityLevel,
 } from '@vital/ai-ui';
 
-// Import modals
+// Import V2 modals with Vital Forms Library
 import {
-  SkillEditModal,
-  SkillDeleteModal,
-  type Skill,
-  DEFAULT_SKILL,
-  generateSlug,
-} from '@/features/skills/components/SkillModals';
+  SkillEditModalV2,
+  SkillDeleteModalV2,
+  SkillBatchDeleteModal,
+  DEFAULT_SKILL_VALUES,
+} from '@/features/skills/components';
+
+// Import Skill type from schema for consistency
+import type { Skill as SkillSchema } from '@/lib/forms/schemas';
+
+// Legacy skill type for API response
+interface Skill {
+  id?: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  category?: string;
+  implementation_type?: string;
+  implementation_ref?: string;
+  complexity_score?: number;
+  is_active?: boolean;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
+}
 
 // Convert skill to VitalAsset format
 function skillToAsset(skill: Skill): VitalAsset {
@@ -130,11 +148,17 @@ function SkillsPageContent() {
 
   // CRUD state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingSkill, setEditingSkill] = useState<Partial<Skill> | null>(null);
+  const [editingSkill, setEditingSkill] = useState<Partial<SkillSchema> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [skillToDelete, setSkillToDelete] = useState<Skill | null>(null);
+  const [skillToDelete, setSkillToDelete] = useState<Partial<SkillSchema> | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Batch selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [batchDeleteConfirmOpen, setBatchDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadSkills();
@@ -216,61 +240,37 @@ function SkillsPageContent() {
   };
 
   const handleCreateSkill = () => {
-    setEditingSkill({ ...DEFAULT_SKILL });
+    setEditingSkill({ ...DEFAULT_SKILL_VALUES });
     setError(null);
     setIsModalOpen(true);
   };
 
   const handleEditSkill = (asset: VitalAsset) => {
     const skill = skills.find(s => s.id === asset.id);
-    if (skill?.slug) {
-      router.push(`/discover/skills/${skill.slug}?edit=true`);
+    if (skill) {
+      setEditingSkill(skill as unknown as Partial<SkillSchema>);
+      setError(null);
+      setIsModalOpen(true);
     }
   };
 
-  const handleSaveSkill = async () => {
-    if (!editingSkill) return;
-
-    // Validation
-    if (!editingSkill.name?.trim()) {
-      setError('Name is required');
-      return;
-    }
-
-    const slug = editingSkill.slug || generateSlug(editingSkill.name);
-    if (!/^[a-z0-9-]+$/.test(slug)) {
-      setError('Slug must be lowercase alphanumeric with hyphens only');
-      return;
-    }
-
+  const handleSaveSkill = async (data: SkillSchema) => {
     setIsSaving(true);
     setError(null);
 
     try {
-      const payload = {
-        name: editingSkill.name.trim(),
-        slug: slug,
-        description: editingSkill.description?.trim() || null,
-        category: editingSkill.category || null,
-        implementation_type: editingSkill.implementation_type || 'prompt',
-        implementation_ref: editingSkill.implementation_ref || null,
-        complexity_score: editingSkill.complexity_score || 5,
-        is_active: editingSkill.is_active ?? true,
-        metadata: editingSkill.metadata || {},
-      };
-
-      const isUpdate = !!editingSkill.id;
-      const url = isUpdate ? `/api/skills/${editingSkill.id}` : '/api/skills';
+      const isUpdate = !!data.id;
+      const url = isUpdate ? `/api/skills/${data.id}` : '/api/skills';
       const method = isUpdate ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(data),
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to save skill');
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to save skill');
 
       await loadSkills();
       setIsModalOpen(false);
@@ -285,15 +285,15 @@ function SkillsPageContent() {
   const handleDeleteConfirm = (asset: VitalAsset) => {
     const skill = skills.find(s => s.id === asset.id);
     if (skill) {
-      setSkillToDelete(skill as Skill);
+      setSkillToDelete(skill as unknown as Partial<SkillSchema>);
       setDeleteConfirmOpen(true);
     }
   };
 
   const handleDeleteSkill = async () => {
-    if (!skillToDelete) return;
+    if (!skillToDelete?.id) return;
 
-    setIsSaving(true);
+    setIsDeleting(true);
     try {
       const response = await fetch(`/api/skills/${skillToDelete.id}`, { method: 'DELETE' });
       if (!response.ok) {
@@ -307,16 +307,49 @@ function SkillsPageContent() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete skill');
     } finally {
-      setIsSaving(false);
+      setIsDeleting(false);
     }
+  };
+
+  // Batch selection handlers
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredSkills.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredSkills.map(s => s.id).filter(Boolean) as string[]));
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    setIsDeleting(true);
+    try {
+      const deletePromises = Array.from(selectedIds).map(id =>
+        fetch(`/api/skills/${id}`, { method: 'DELETE' })
+      );
+
+      await Promise.all(deletePromises);
+      await loadSkills();
+
+      setBatchDeleteConfirmOpen(false);
+      setSelectedIds(new Set());
+      setIsSelectionMode(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete skills');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setIsSelectionMode(false);
+    setSelectedIds(new Set());
   };
 
   if (loading) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex items-center gap-4 px-6 py-2 border-b bg-background/95 backdrop-blur">
-          <VitalBreadcrumb showHome items={[{ label: 'Discover', href: '/discover' }, { label: 'Skills' }]} />
-        </div>
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
         </div>
@@ -326,18 +359,54 @@ function SkillsPageContent() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Compact Header */}
+      {/* Action Bar */}
       <div className="flex items-center gap-4 px-6 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <VitalBreadcrumb
-          showHome
-          items={[{ label: 'Discover', href: '/discover' }, { label: 'Skills' }]}
-        />
         <div className="flex-1" />
-        {isAdmin && (
-          <Button onClick={handleCreateSkill} size="sm" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Create Skill
-          </Button>
+
+        {/* Batch Selection Controls */}
+        {isSelectionMode ? (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {selectedIds.size} selected
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSelectAll}
+            >
+              {selectedIds.size === filteredSkills.length ? 'Deselect All' : 'Select All'}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setBatchDeleteConfirmOpen(true)}
+              disabled={selectedIds.size === 0}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete ({selectedIds.size})
+            </Button>
+            <Button variant="ghost" size="sm" onClick={exitSelectionMode}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            {isAdmin && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsSelectionMode(true)}
+                >
+                  Select
+                </Button>
+                <Button onClick={handleCreateSkill} size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create Skill
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -428,28 +497,45 @@ function SkillsPageContent() {
               onAssetClick={handleSkillClick}
               onEdit={handleEditSkill}
               onDelete={handleDeleteConfirm}
+              tableSelectable={isSelectionMode}
+              selectedIds={Array.from(selectedIds)}
+              onSelectionChange={(ids) => setSelectedIds(new Set(ids))}
             />
           )}
         </div>
       </div>
 
       {/* Modals */}
-      <SkillEditModal
+      <SkillEditModalV2
         isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setEditingSkill(null); setError(null); }}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingSkill(null);
+          setError(null);
+        }}
         skill={editingSkill}
-        onSkillChange={setEditingSkill}
         onSave={handleSaveSkill}
         isSaving={isSaving}
         error={error}
       />
 
-      <SkillDeleteModal
+      <SkillDeleteModalV2
         isOpen={deleteConfirmOpen}
-        onClose={() => { setDeleteConfirmOpen(false); setSkillToDelete(null); }}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setSkillToDelete(null);
+        }}
         skill={skillToDelete}
         onConfirm={handleDeleteSkill}
-        isDeleting={isSaving}
+        isDeleting={isDeleting}
+      />
+
+      <SkillBatchDeleteModal
+        isOpen={batchDeleteConfirmOpen}
+        onClose={() => setBatchDeleteConfirmOpen(false)}
+        count={selectedIds.size}
+        onConfirm={handleBatchDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );

@@ -6,8 +6,11 @@
  * Rich preview modal for mission artifacts with syntax highlighting,
  * zoom controls, and interactive viewing options.
  *
+ * Uses VitalStreamText (Streamdown) for consistent markdown rendering
+ * with syntax highlighting and Mermaid diagram support.
+ *
  * Design System: VITAL Brand v6.0
- * December 11, 2025
+ * December 11, 2025 (Updated: December 12, 2025 - VitalStreamText integration)
  */
 
 import { useState, useCallback, useMemo } from 'react';
@@ -35,6 +38,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { VitalStreamText } from '@/components/vital-ai-ui/conversation/VitalStreamText';
 
 // =============================================================================
 // TYPES
@@ -148,31 +152,34 @@ interface ContentRendererProps {
 }
 
 function MarkdownRenderer({ artifact, zoom }: ContentRendererProps) {
-  // Simple markdown rendering - in production use react-markdown
+  // Use VitalStreamText for consistent markdown rendering with Streamdown
   return (
-    <div
-      className="prose prose-sm max-w-none dark:prose-invert"
-      style={{ fontSize: `${zoom}%` }}
-    >
-      <pre className="whitespace-pre-wrap font-sans">{artifact.content}</pre>
+    <div style={{ fontSize: `${zoom}%` }}>
+      <VitalStreamText
+        content={artifact.content}
+        isStreaming={false}
+        highlightCode={true}
+        enableMermaid={true}
+        showControls={false}
+        className="prose prose-sm max-w-none dark:prose-invert"
+      />
     </div>
   );
 }
 
 function CodeRenderer({ artifact, zoom }: ContentRendererProps) {
+  // Wrap code in markdown code fence for VitalStreamText to handle syntax highlighting
+  const codeContent = `\`\`\`${artifact.language || ''}\n${artifact.content}\n\`\`\``;
+
   return (
-    <div className="relative">
-      {artifact.language && (
-        <div className="absolute top-2 right-2 px-2 py-1 bg-slate-700 text-slate-300 text-xs rounded">
-          {artifact.language}
-        </div>
-      )}
-      <pre
-        className="p-4 bg-slate-900 text-slate-100 rounded-lg overflow-auto"
-        style={{ fontSize: `${zoom * 0.9}%` }}
-      >
-        <code>{artifact.content}</code>
-      </pre>
+    <div className="relative" style={{ fontSize: `${zoom * 0.9}%` }}>
+      <VitalStreamText
+        content={codeContent}
+        isStreaming={false}
+        highlightCode={true}
+        enableMermaid={false}
+        showControls={false}
+      />
     </div>
   );
 }
@@ -186,13 +193,19 @@ function JsonRenderer({ artifact, zoom }: ContentRendererProps) {
     }
   }, [artifact.content]);
 
+  // Wrap JSON in markdown code fence for VitalStreamText to handle syntax highlighting
+  const jsonContent = `\`\`\`json\n${formattedJson}\n\`\`\``;
+
   return (
-    <pre
-      className="p-4 bg-slate-900 text-slate-100 rounded-lg overflow-auto"
-      style={{ fontSize: `${zoom * 0.9}%` }}
-    >
-      <code>{formattedJson}</code>
-    </pre>
+    <div style={{ fontSize: `${zoom * 0.9}%` }}>
+      <VitalStreamText
+        content={jsonContent}
+        isStreaming={false}
+        highlightCode={true}
+        enableMermaid={false}
+        showControls={false}
+      />
+    </div>
   );
 }
 

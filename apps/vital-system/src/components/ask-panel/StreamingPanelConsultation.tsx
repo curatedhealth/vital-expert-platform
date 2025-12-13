@@ -27,7 +27,10 @@ interface Message {
 interface StreamingPanelConsultationProps {
   question: string;
   panelId: string;
-  expertIds: string[];
+  /** Agent IDs for the panel consultation */
+  agentIds?: string[];
+  /** @deprecated Use agentIds instead */
+  expertIds?: string[];
   tenantId: string;
   enableDebate?: boolean;
   maxRounds?: number;
@@ -38,13 +41,16 @@ interface StreamingPanelConsultationProps {
 export function StreamingPanelConsultation({
   question,
   panelId,
-  expertIds,
+  agentIds,
+  expertIds, // Deprecated - use agentIds
   tenantId,
   enableDebate = true,
   maxRounds = 3,
   onComplete,
   onError,
 }: StreamingPanelConsultationProps) {
+  // Resolve effective agent IDs (agentIds takes precedence over deprecated expertIds)
+  const effectiveAgentIds = agentIds || expertIds || [];
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +82,7 @@ export function StreamingPanelConsultation({
     setMessages([]);
 
     // Filter out any fallback IDs before sending to backend (safety check)
-    const validAgentIds = expertIds.filter(id => {
+    const validAgentIds = effectiveAgentIds.filter(id => {
       return id && !id.startsWith('fallback-') && !id.startsWith('agent-');
     });
 
@@ -88,9 +94,9 @@ export function StreamingPanelConsultation({
       return;
     }
 
-    if (validAgentIds.length !== expertIds.length) {
+    if (validAgentIds.length !== effectiveAgentIds.length) {
       console.warn(
-        `[StreamingPanelConsultation] Filtered out ${expertIds.length - validAgentIds.length} fallback agent IDs. ` +
+        `[StreamingPanelConsultation] Filtered out ${effectiveAgentIds.length - validAgentIds.length} fallback agent IDs. ` +
         `Sending ${validAgentIds.length} valid agent IDs to backend.`
       );
     }
@@ -309,7 +315,7 @@ export function StreamingPanelConsultation({
           <strong>Question:</strong> {question}
         </p>
         <div className="flex gap-2 mt-2">
-          <Badge variant="secondary">{expertIds.length} Experts</Badge>
+          <Badge variant="secondary">{effectiveAgentIds.length} Agents</Badge>
           {enableDebate && <Badge variant="secondary">Multi-Round Debate</Badge>}
           <Badge variant="secondary">Max {maxRounds} Rounds</Badge>
         </div>

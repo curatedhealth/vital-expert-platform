@@ -2,6 +2,42 @@ import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { withAgentAuth, type AgentPermissionContext } from '@/middleware/agent-auth';
 import { createLogger } from '@/lib/services/observability/structured-logger';
+import { z } from 'zod';
+import { v4 as uuidv4 } from 'uuid';
+
+// Validation schema for creating a persona
+const createPersonaSchema = z.object({
+  persona_name: z.string().min(1).max(255),
+  title: z.string().max(255).optional(),
+  description: z.string().optional(),
+  persona_type: z.enum(['AUTOMATOR', 'ORCHESTRATOR', 'LEARNER', 'SKEPTIC']).optional(),
+  source_role_id: z.string().uuid().optional().nullable(),
+  age_range: z.string().optional(),
+  experience_level: z.string().optional(),
+  education_level: z.string().optional(),
+  department: z.string().optional(),
+  function_area: z.string().optional(),
+  geographic_scope: z.string().optional(),
+  goals: z.array(z.string()).optional(),
+  challenges: z.array(z.string()).optional(),
+  motivations: z.array(z.string()).optional(),
+  frustrations: z.array(z.string()).optional(),
+  daily_activities: z.array(z.string()).optional(),
+  tools_used: z.array(z.string()).optional(),
+  communication_preferences: z.array(z.string()).optional(),
+  skills: z.array(z.string()).optional(),
+  competencies: z.array(z.string()).optional(),
+  success_metrics: z.array(z.string()).optional(),
+  gxp_requirements: z.array(z.string()).optional(),
+  regulatory_context: z.string().optional(),
+  therapeutic_areas: z.array(z.string()).optional(),
+  ai_readiness_score: z.number().min(0).max(1).optional(),
+  work_complexity_score: z.number().min(0).max(1).optional(),
+  derived_archetype: z.enum(['AUTOMATOR', 'ORCHESTRATOR', 'LEARNER', 'SKEPTIC']).optional(),
+  preferred_service_layer: z.string().optional(),
+  project_work_ratio: z.number().min(0).max(100).optional(),
+  bau_work_ratio: z.number().min(0).max(100).optional(),
+});
 
 export const GET = withAgentAuth(async (
   request: NextRequest,
@@ -342,6 +378,161 @@ export const GET = withAgentAuth(async (
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
+      { status: 500 }
+    );
+  }
+});
+
+// POST - Create new persona
+export const POST = withAgentAuth(async (
+  request: NextRequest,
+  context: AgentPermissionContext
+) => {
+  const logger = createLogger();
+  const operationId = `persona_create_${Date.now()}`;
+  const startTime = Date.now();
+
+  try {
+    const supabase = await createClient();
+    const { profile } = context;
+    const body = await request.json();
+
+    logger.info('persona_create_started', {
+      operation: 'POST /api/personas',
+      operationId,
+      userId: context.user.id,
+      tenantId: profile.tenant_id,
+    });
+
+    // Validate input
+    const validationResult = createPersonaSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validationResult.error.errors },
+        { status: 400 }
+      );
+    }
+
+    const data = validationResult.data;
+
+    // Generate unique_id (slug) from persona_name
+    const slug = data.persona_name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 50);
+
+    // Auto-calculate derived_archetype if not provided
+    let derivedArchetype = data.derived_archetype;
+    if (!derivedArchetype && data.ai_readiness_score !== undefined && data.work_complexity_score !== undefined) {
+      const highAi = data.ai_readiness_score >= 0.5;
+      const highWork = data.work_complexity_score >= 0.5;
+      if (highAi && highWork) derivedArchetype = 'ORCHESTRATOR';
+      else if (highAi && !highWork) derivedArchetype = 'AUTOMATOR';
+      else if (!highAi && highWork) derivedArchetype = 'SKEPTIC';
+      else derivedArchetype = 'LEARNER';
+    }
+
+    // Create persona
+    const personaData = {
+      unique_id: `${slug}-${uuidv4().substring(0, 8)}`,
+      persona_name: data.persona_name,
+      title: data.title,
+      description: data.description,
+      persona_type: data.persona_type || derivedArchetype,
+      source_role_id: data.source_role_id,
+      age_range: data.age_range,
+      experience_level: data.experience_level,
+      education_level: data.education_level,
+      department: data.department,
+      function_area: data.function_area,
+      geographic_scope: data.geographic_scope,
+      goals: data.goals || [],
+      challenges: data.challenges || [],
+      motivations: data.motivations || [],
+      frustrations: data.frustrations || [],
+      daily_activities: data.daily_activities || [],
+      tools_used: data.tools_used || [],
+      communication_preferences: data.communication_preferences || [],
+      skills: data.skills || [],
+      competencies: data.competencies || [],
+      success_metrics: data.success_metrics || [],
+      gxp_requirements: data.gxp_requirements || [],
+      regulatory_context: data.regulatory_context,
+      therapeutic_areas: data.therapeutic_areas || [],
+      ai_readiness_score: data.ai_readiness_score,
+      work_complexity_score: data.work_complexity_score,
+      derived_archetype: derivedArchetype,
+      preferred_service_layer: data.preferred_service_layer,
+      project_work_ratio: data.project_work_ratio,
+      bau_work_ratio: data.bau_work_ratio,
+      is_active: true,
+      tenant_id: profile.tenant_id,
+      created_by: context.user.id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: newPersona, error: createError } = await supabase
+      .from('personas')
+      .insert(personaData)
+      .select()
+      .single();
+
+    if (createError) {
+      logger.error('persona_create_failed', new Error(createError.message), {
+        operationId,
+        errorCode: createError.code,
+      });
+      return NextResponse.json(
+        { error: 'Failed to create persona', details: createError.message },
+        { status: 500 }
+      );
+    }
+
+    const duration = Date.now() - startTime;
+    logger.infoWithMetrics('persona_create_completed', duration, {
+      operation: 'POST /api/personas',
+      operationId,
+      personaId: newPersona.id,
+    });
+
+    // Transform to frontend format
+    return NextResponse.json({
+      success: true,
+      persona: {
+        id: newPersona.id,
+        slug: newPersona.unique_id,
+        name: newPersona.persona_name,
+        title: newPersona.title,
+        tagline: newPersona.description,
+        archetype: newPersona.derived_archetype,
+        persona_type: newPersona.persona_type,
+        seniority_level: newPersona.experience_level,
+        role_id: newPersona.source_role_id,
+        department_name: newPersona.department,
+        function_name: newPersona.function_area,
+        ai_readiness_score: newPersona.ai_readiness_score,
+        work_complexity_score: newPersona.work_complexity_score,
+        derived_archetype: newPersona.derived_archetype,
+        preferred_service_layer: newPersona.preferred_service_layer,
+        goals: newPersona.goals,
+        challenges: newPersona.challenges,
+        is_active: newPersona.is_active,
+        tenant_id: newPersona.tenant_id,
+        created_at: newPersona.created_at,
+      },
+    }, { status: 201 });
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    logger.error('persona_create_error', error instanceof Error ? error : new Error(String(error)), {
+      operation: 'POST /api/personas',
+      operationId,
+      duration,
+    });
+
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

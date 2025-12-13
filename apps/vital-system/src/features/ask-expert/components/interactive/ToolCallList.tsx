@@ -41,13 +41,20 @@ import {
   Workflow,
 } from 'lucide-react';
 
-import type { ToolCallEvent } from '../../hooks/useSSEStream';
+// Note: ToolCallEvent type from useSSEStream has different status values
+// (calling/success/error) than our UI ToolCall interface (pending/running/completed/failed)
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
-export interface ToolCall extends Partial<ToolCallEvent> {
+/**
+ * ToolCall interface for UI display.
+ * Note: This is intentionally NOT extending ToolCallEvent because
+ * the status values differ (UI: pending/running/completed/failed vs SSE: calling/success/error)
+ * and we need different optional/required field semantics.
+ */
+export interface ToolCall {
   id: string;
   name: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
@@ -57,6 +64,11 @@ export interface ToolCall extends Partial<ToolCallEvent> {
   startTime?: Date;
   endTime?: Date;
   duration?: number; // milliseconds
+  // Optional fields from ToolCallEvent for compatibility
+  toolId?: string;
+  toolName?: string;
+  toolType?: string;
+  durationMs?: number;
 }
 
 export interface ToolCallListProps {

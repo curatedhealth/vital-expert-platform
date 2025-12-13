@@ -48,6 +48,9 @@ export type {
 
 export interface UseMode3MissionOptions {
   missionId?: string;
+  /** Agent ID for the selected expert */
+  agentId?: string;
+  /** @deprecated Use agentId instead */
   expertId?: string;
   tenantId?: string;
   onError?: (error: Error) => void;
@@ -71,7 +74,8 @@ export interface UseMode3MissionReturn extends BaseAutonomousState, BaseAutonomo
 export function useMode3Mission(options: UseMode3MissionOptions = {}): UseMode3MissionReturn {
   const {
     missionId,
-    expertId,
+    agentId,
+    expertId, // Deprecated - use agentId
     tenantId,
     onError,
     onCheckpoint,
@@ -82,10 +86,13 @@ export function useMode3Mission(options: UseMode3MissionOptions = {}): UseMode3M
     baseUrl = '/api/expert',
   } = options;
 
+  // Resolve effective agent ID (agentId takes precedence over deprecated expertId)
+  const effectiveAgentId = agentId || expertId;
+
   // Use base autonomous hook with Mode 3 configuration
   const baseHook = useBaseAutonomous({
     missionId,
-    expertId,
+    agentId: effectiveAgentId,
     tenantId,
     onError,
     onCheckpoint,
@@ -98,7 +105,7 @@ export function useMode3Mission(options: UseMode3MissionOptions = {}): UseMode3M
   });
 
   // Mode 3 specific: Check if expert is selected
-  const isExpertSelected = Boolean(baseHook.selectedExpert || expertId);
+  const isExpertSelected = Boolean(baseHook.selectedExpert || effectiveAgentId);
 
   // Override startMission to enforce expert selection
   const startMissionWithValidation = useCallback(

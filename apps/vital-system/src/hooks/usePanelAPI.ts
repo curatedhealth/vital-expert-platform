@@ -291,7 +291,9 @@ export function useUsageAnalytics(
 // ============================================================================
 
 export interface StreamingPanelOptions {
-  onExpertStart?: (data: { expert_id: string; expert_name: string }) => void;
+  /** @deprecated Use onAgentStart instead */
+  onExpertStart?: (data: { agent_id: string; agent_name: string; /** @deprecated */ expert_id?: string; /** @deprecated */ expert_name?: string }) => void;
+  onAgentStart?: (data: { agent_id: string; agent_name: string }) => void;
   onExpertResponse?: (response: PanelResponse) => void;
   onConsensusUpdate?: (data: { consensus_level: number }) => void;
   onComplete?: (data: ExecutePanelResponse) => void;

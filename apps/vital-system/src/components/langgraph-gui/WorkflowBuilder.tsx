@@ -117,7 +117,10 @@ interface Message {
   isPhaseStatus?: boolean; // Mark phase/status messages
   reasoning?: string; // Reasoning/thinking process
   isStreaming?: boolean; // Whether content is currently streaming
-  expertId?: string; // Unique expert identifier
+  /** Agent ID for the expert */
+  agentId?: string; // Unique agent identifier
+  /** @deprecated Use agentId instead */
+  expertId?: string; // Unique expert identifier (deprecated)
   expertType?: string; // Expert type (regulatory_expert, clinical_expert, etc.)
   taskTitle?: string; // Task title for Task component
   taskItems?: Array<{ text: string; completed?: boolean; file?: string }>; // Task items
@@ -144,7 +147,8 @@ const messageToChatMessage = (msg: Message): ChatMessage => ({
   isPhaseStatus: msg.isPhaseStatus,
   reasoning: msg.reasoning,
   isStreaming: msg.isStreaming,
-  expertId: (msg as any).expertId,
+  agentId: (msg as any).agentId || (msg as any).expertId,
+  expertId: (msg as any).expertId, // Deprecated - for backwards compat
   expertType: (msg as any).expertType,
   taskTitle: (msg as any).taskTitle,
   taskItems: (msg as any).taskItems,

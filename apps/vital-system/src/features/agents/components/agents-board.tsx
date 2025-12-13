@@ -1,146 +1,34 @@
 'use client';
 
-import {
-  Plus,
-  Heart,
-  Edit,
-  Copy,
-  MoreVertical,
-  Brain,
-  Eye,
-  Trash2,
-  Upload,
-  ChevronDown,
-  MessageSquare
-} from 'lucide-react';
-import { useState, useMemo, useEffect, useRef, useCallback, KeyboardEvent } from 'react';
+import { Plus, Brain, Upload, ChevronDown } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useHotkeys } from 'react-hotkeys-hook';
 
-import { AgentAvatar } from '@vital/ui';
-import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
-import { Card, CardContent } from '@vital/ui';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@vital/ui';
-import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui';
-import { Skeleton } from '@vital/ui';
+import { EnhancedAgentCard } from '@vital/ui';
+import { cn } from '@vital/ui/lib/utils';
+
 import { DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { AgentEditFormEnhanced } from './agent-edit-form-enhanced';
+import { AgentListItem } from './AgentListItem';
 import { agentService } from '../services/agent-service';
 import { useUserRole } from '@/hooks/useUserRole';
 import type { AgentWithCategories } from '../services/agent-service';
 import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
-import { cn } from '@vital/ui/lib/utils';
 import type { HealthcareBusinessFunction } from '@/types/healthcare-compliance';
 import { useAgentComparison } from './agent-comparison-sidebar';
+
+// Shared components
+import { AssetLoadingSkeleton } from '@/components/shared/AssetLoadingSkeleton';
+import { AssetEmptyState } from '@/components/shared/AssetEmptyState';
+import { AssetResultsCount } from '@/components/shared/AssetResultsCount';
 
 // Use shared organizational structure configuration
 const staticDepartmentsByFunction = DEPARTMENTS_BY_FUNCTION;
 const staticRolesByDepartment = ROLES_BY_DEPARTMENT;
-
-// OLD definitions (replaced by shared config - keeping for reference only)
-/*
-const staticDepartmentsByFunction_OLD: Record<string, string[]> = {
-  'Regulatory Affairs': ['Regulatory Strategy', 'Submissions & Filings', 'Compliance & Quality'],
-  'regulatory-affairs': ['Regulatory Strategy', 'Submissions & Filings', 'Compliance & Quality'],
-  'Regulatory': ['Regulatory Strategy', 'Submissions & Filings', 'Compliance & Quality'],
-
-  'Clinical Development': ['Clinical Operations', 'Clinical Strategy', 'Medical Monitoring'],
-  'clinical-development': ['Clinical Operations', 'Clinical Strategy', 'Medical Monitoring'],
-  'Clinical': ['Clinical Operations', 'Clinical Strategy', 'Medical Monitoring'],
-
-  'Market Access': ['Health Economics', 'Payer Relations', 'Market Strategy'],
-  'market-access': ['Health Economics', 'Payer Relations', 'Market Strategy'],
-  'Market': ['Health Economics', 'Payer Relations', 'Market Strategy'],
-
-  'Information Technology': ['IT Operations', 'Software Development', 'Data Management'],
-  'information-technology': ['IT Operations', 'Software Development', 'Data Management'],
-  'IT': ['IT Operations', 'Software Development', 'Data Management'],
-
-  'Business Development': ['Corporate Strategy', 'Partnerships', 'M&A'],
-  'business-development': ['Corporate Strategy', 'Partnerships', 'M&A'],
-  'Business': ['Corporate Strategy', 'Partnerships', 'M&A'],
-
-  'Medical Affairs': ['Medical Information', 'Medical Communications', 'Medical Science Liaison'],
-  'medical-affairs': ['Medical Information', 'Medical Communications', 'Medical Science Liaison'],
-  'Medical': ['Medical Information', 'Medical Communications', 'Medical Science Liaison'],
-
-  'Human Resources': ['Talent Acquisition', 'Learning & Development', 'Compensation & Benefits'],
-  'human-resources': ['Talent Acquisition', 'Learning & Development', 'Compensation & Benefits'],
-  'HR': ['Talent Acquisition', 'Learning & Development', 'Compensation & Benefits'],
-
-  'Quality Assurance': ['Quality Management Systems', 'Quality Control', 'Compliance & Auditing'],
-  'quality-assurance': ['Quality Management Systems', 'Quality Control', 'Compliance & Auditing'],
-  'Quality': ['Quality Management Systems', 'Quality Control', 'Compliance & Auditing'],
-
-  'Manufacturing': ['Production', 'Quality Control', 'Supply Chain'],
-  'manufacturing': ['Production', 'Quality Control', 'Supply Chain'],
-
-  'Finance': ['Financial Planning', 'Accounting', 'Treasury'],
-  'finance': ['Financial Planning', 'Accounting', 'Treasury'],
-
-  'Legal': ['Corporate Law', 'Compliance', 'Intellectual Property'],
-  'legal': ['Corporate Law', 'Compliance', 'Intellectual Property'],
-
-  'Marketing': ['Brand Management', 'Market Research', 'Communications'],
-  'marketing': ['Brand Management', 'Market Research', 'Communications'],
-};
-
-// Static role mapping by function and department
-// Support multiple function key variations for fuzzy matching
-const qaDepartmentRoles = {
-  'Quality Management Systems': ['QMS Architect', 'ISO 13485 Specialist', 'Design Controls Lead', 'Quality Systems Manager'],
-  'Quality Control': ['Quality Analyst', 'Testing Specialist', 'Validation Engineer', 'QC Manager'],
-  'Compliance & Auditing': ['Compliance Officer', 'Internal Auditor', 'Regulatory Compliance Specialist', 'Audit Manager'],
-};
-
-const regAffairsDepartmentRoles = {
-  'Regulatory Strategy': ['Regulatory Strategist', 'Global Strategy Lead', 'Regulatory Project Manager'],
-  'Submissions & Filings': ['Submission Specialist', '510(k) Expert', 'PMA Specialist', 'Filing Manager'],
-  'Compliance & Quality': ['Compliance Specialist', 'Quality Compliance Lead', 'GCP Specialist'],
-};
-
-const clinicalDevDepartmentRoles = {
-  'Clinical Operations': ['Clinical Operations Manager', 'CRA', 'Site Manager', 'Clinical Coordinator'],
-  'Clinical Strategy': ['Clinical Strategist', 'Protocol Designer', 'Endpoint Specialist'],
-  'Medical Monitoring': ['Medical Monitor', 'Safety Physician', 'Data Safety Manager'],
-};
-
-const marketAccessDepartmentRoles = {
-  'Health Economics': ['Health Economist', 'HEOR Specialist', 'Outcomes Researcher'],
-  'Payer Relations': ['Payer Strategy Lead', 'Contracting Specialist', 'Market Access Manager'],
-  'Market Strategy': ['Market Strategist', 'Pricing Specialist', 'Launch Planning Lead'],
-};
-
-const medicalAffairsDepartmentRoles = {
-  'Medical Information': ['Medical Information Specialist', 'Medical Writer', 'Scientific Communications'],
-  'Medical Communications': ['Medical Communications Manager', 'Publication Specialist', 'Content Strategist'],
-  'Medical Science Liaison': ['MSL', 'Field Medical Director', 'KOL Manager'],
-};
-
-const staticRolesByDepartment: Record<string, Record<string, string[]>> = {
-  'Quality Assurance': qaDepartmentRoles,
-  'quality-assurance': qaDepartmentRoles,
-  'Quality': qaDepartmentRoles,
-
-  'Regulatory Affairs': regAffairsDepartmentRoles,
-  'regulatory-affairs': regAffairsDepartmentRoles,
-  'Regulatory': regAffairsDepartmentRoles,
-
-  'Clinical Development': clinicalDevDepartmentRoles,
-  'clinical-development': clinicalDevDepartmentRoles,
-  'Clinical': clinicalDevDepartmentRoles,
-
-  'Market Access': marketAccessDepartmentRoles,
-  'market-access': marketAccessDepartmentRoles,
-  'Market': marketAccessDepartmentRoles,
-
-  'Medical Affairs': medicalAffairsDepartmentRoles,
-  'medical-affairs': medicalAffairsDepartmentRoles,
-  'Medical': medicalAffairsDepartmentRoles,
-};
-*/
 
 interface AgentFilters {
   selectedAgentLevel: string;
@@ -213,9 +101,9 @@ export function AgentsBoard({
   // Virtual scrolling refs and constants
   const parentRef = useRef<HTMLDivElement>(null);
   const COLUMNS = 3; // 3-column grid
-  const CARD_HEIGHT = 280; // Approximate height of agent card in pixels
+  const CARD_HEIGHT = 300; // Height of agent card in pixels
   const LIST_ITEM_HEIGHT = 80; // Approximate height of list item in pixels
-  const GAP = 16; // Gap between items
+  const GAP = 16; // Gap between items (same horizontal and vertical)
 
   // Keyboard navigation state
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
@@ -724,56 +612,11 @@ export function AgentsBoard({
       )}
 
       {/* Results Count */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-medical-gray">
-          {filteredAgents.length} agent{filteredAgents.length !== 1 ? 's' : ''} found
-        </p>
-      </div>
+      <AssetResultsCount count={filteredAgents.length} singular="agent" />
 
-      {/* Skeleton Loading State */}
+      {/* Loading State */}
       {isLoading && (
-        <div className="space-y-4">
-          {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 9 }).map((_, i) => (
-                <div key={i} className="rounded-xl border bg-card p-4 space-y-4">
-                  <div className="flex items-start gap-4">
-                    <Skeleton className="h-12 w-12 rounded-xl" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-5 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </div>
-                    <Skeleton className="h-6 w-16 rounded-full" />
-                  </div>
-                  <Skeleton className="h-12 w-full" />
-                  <div className="flex gap-2">
-                    <Skeleton className="h-5 w-16 rounded-full" />
-                    <Skeleton className="h-5 w-20 rounded-full" />
-                    <Skeleton className="h-5 w-14 rounded-full" />
-                  </div>
-                  <div className="flex items-center gap-3 pt-2">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-4 w-20" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="rounded-lg border bg-card p-4 flex items-center gap-4">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-3 w-96" />
-                  </div>
-                  <Skeleton className="h-5 w-24 rounded-full" />
-                  <Skeleton className="h-8 w-8 rounded" />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <AssetLoadingSkeleton variant={viewMode} />
       )}
 
       {/* Agents Grid/List with Virtual Scrolling */}
@@ -860,127 +703,29 @@ export function AgentsBoard({
           {listVirtualizer.getVirtualItems().map((virtualItem) => {
               const agent = filteredAgents[virtualItem.index];
               const isFocused = isKeyboardNavigating && focusedIndex === virtualItem.index;
+              const functionName = getFunctionName(agent.function_id) ||
+                agent.business_function?.replace(/_/g, ' ') || null;
+
               return (
-                <Card
+                <AgentListItem
                   key={virtualItem.key}
-                  className={cn(
-                    "hover:shadow-lg transition-all cursor-pointer group hover:bg-neutral-50 absolute left-0 right-0",
-                    isFocused && "ring-2 ring-vital-primary-500 ring-offset-2 bg-vital-primary-50/50"
-                  )}
+                  agent={agent}
+                  isFocused={isFocused}
+                  isBookmarked={savedAgents.has(agent.id)}
+                  functionName={functionName}
+                  onSelect={() => onAgentSelect?.(agent)}
+                  onAddToChat={onAddToChat ? () => onAddToChat(agent) : undefined}
+                  onEdit={() => handleEditAgent(agent)}
+                  onDuplicate={() => handleDuplicateAgent(agent)}
+                  onBookmark={() => handleSaveToLibrary(agent.id)}
+                  onDelete={agent.is_custom ? () => handleDeleteAgent(agent) : undefined}
+                  canEdit={canEditAgent(agent)}
+                  canDelete={agent.is_custom && canDeleteAgent(agent)}
                   style={{
                     height: `${virtualItem.size - GAP / 2}px`,
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
-                  onClick={() => onAgentSelect?.(agent)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onAgentSelect?.(agent);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Select agent ${agent.display_name}`}
-                >
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <AgentAvatar avatar={agent.avatar} name={agent.display_name || agent.name} size="list" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-deep-charcoal group-hover:text-progress-teal transition-colors">
-                          {agent.display_name}
-                        </h3>
-                        {agent.is_custom && (
-                          <Badge variant="outline" className="text-xs">
-                            Custom
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-medical-gray truncate">
-                        {agent.description}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {(() => {
-                        const functionName = getFunctionName(agent.function_id) ||
-                                            agent.business_function?.replace(/_/g, ' ');
-                        return functionName ? (
-                          <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                            {functionName.toUpperCase()}
-                          </Badge>
-                        ) : null;
-                      })()}
-                      {agent.knowledge_domains && agent.knowledge_domains.length > 0 && (
-                        <Badge className={cn('text-xs', getDomainColor(agent.knowledge_domains))}>
-                          {agent.knowledge_domains[0]}
-                        </Badge>
-                      )}
-                      {savedAgents.has(agent.id) && (
-                        <Heart className="h-4 w-4 fill-current text-red-500" />
-                      )}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            onAgentSelect?.(agent);
-                          }}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          {onAddToChat && (
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              onAddToChat(agent);
-                            }}>
-                              <MessageSquare className="h-4 w-4 mr-2" />
-                              Add to Chat
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditAgent(agent);
-                          }}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            handleDuplicateAgent(agent);
-                          }}>
-                            <Copy className="h-4 w-4 mr-2" />
-                            Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            handleSaveToLibrary(agent.id);
-                          }}>
-                            <Heart className={cn(
-                              'h-4 w-4 mr-2',
-                              savedAgents.has(agent.id) && 'fill-current text-red-500'
-                            )} />
-                            {savedAgents.has(agent.id) ? 'Remove from Library' : 'Save to Library'}
-                          </DropdownMenuItem>
-                          {agent.is_custom && (
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteAgent(agent);
-                              }}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardContent>
-                </Card>
+                />
               );
             })}
           </div>
@@ -989,29 +734,17 @@ export function AgentsBoard({
 
       {/* Empty State */}
       {!isLoading && filteredAgents.length === 0 && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Brain className="h-12 w-12 text-medical-gray mx-auto mb-4" />
-            <h3 className="font-semibold text-deep-charcoal mb-2">
-              No agents found
-            </h3>
-            <p className="text-medical-gray mb-4">
-              Try adjusting your search terms or filters, or create a new agent.
-            </p>
-            {showCreateButton && (
-              <Button
-                onClick={() => {
-                  setEditingAgent(null);
-                  setShowCreateModal(true);
-                }}
-                className="bg-progress-teal hover:bg-progress-teal/90"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First Agent
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+        <AssetEmptyState
+          icon={Brain}
+          title="No agents found"
+          description="Try adjusting your search terms or filters, or create a new agent."
+          actionLabel="Create Your First Agent"
+          onAction={() => {
+            setEditingAgent(null);
+            setShowCreateModal(true);
+          }}
+          showAction={showCreateButton}
+        />
       )}
 
       {/* Agent Creator Modal (for creating new agents) */}

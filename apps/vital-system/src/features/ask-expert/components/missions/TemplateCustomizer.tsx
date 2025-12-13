@@ -67,7 +67,8 @@ export interface MissionCustomizations {
 
   // Agent Configuration
   agentCount: number;
-  preferredAgentTiers: ('tier1' | 'tier2' | 'tier3')[];
+  /** 5-level agent hierarchy: L1 (Masters) → L5 (Tools) */
+  preferredAgentLevels: ('L1' | 'L2' | 'L3' | 'L4' | 'L5')[];
   requireHumanApproval: boolean;
 
   // Execution Settings
@@ -108,7 +109,7 @@ const DEFAULT_CUSTOMIZATIONS: MissionCustomizations = {
   maxDuration: null,
   priorityLevel: 'normal',
   agentCount: 3,
-  preferredAgentTiers: ['tier2', 'tier3'],
+  preferredAgentLevels: ['L2', 'L3'], // L2 Experts + L3 Specialists by default
   requireHumanApproval: true,
   parallelExecution: true,
   enableCaching: true,
@@ -140,10 +141,13 @@ const CITATION_OPTIONS = [
   { value: 'comprehensive', label: 'Comprehensive', description: 'All claims cited' },
 ] as const;
 
-const TIER_OPTIONS = [
-  { value: 'tier1', label: 'Tier 1', description: 'Foundational agents - fast, cost-effective' },
-  { value: 'tier2', label: 'Tier 2', description: 'Specialist agents - balanced expertise' },
-  { value: 'tier3', label: 'Tier 3', description: 'Ultra-specialist agents - highest accuracy' },
+/** 5-Level Agent Hierarchy (replaces old tier1/tier2/tier3 system) */
+const LEVEL_OPTIONS = [
+  { value: 'L1', label: 'L1 - Masters', description: 'Domain leaders - strategic oversight' },
+  { value: 'L2', label: 'L2 - Experts', description: 'Expert agents - deep domain expertise' },
+  { value: 'L3', label: 'L3 - Specialists', description: 'Specialized knowledge - focused tasks' },
+  { value: 'L4', label: 'L4 - Workers', description: 'Task execution - operational efficiency' },
+  { value: 'L5', label: 'L5 - Tools', description: 'Utility functions - fast, cost-effective' },
 ] as const;
 
 // =============================================================================
@@ -267,12 +271,12 @@ export function TemplateCustomizer({
     }
   }, [template, customizations, onLaunch]);
 
-  const toggleTier = useCallback((tier: 'tier1' | 'tier2' | 'tier3') => {
+  const toggleLevel = useCallback((level: 'L1' | 'L2' | 'L3' | 'L4' | 'L5') => {
     setCustomizations((prev) => {
-      const tiers = prev.preferredAgentTiers.includes(tier)
-        ? prev.preferredAgentTiers.filter((t) => t !== tier)
-        : [...prev.preferredAgentTiers, tier];
-      return { ...prev, preferredAgentTiers: tiers.length > 0 ? tiers : [tier] };
+      const levels = prev.preferredAgentLevels.includes(level)
+        ? prev.preferredAgentLevels.filter((l) => l !== level)
+        : [...prev.preferredAgentLevels, level];
+      return { ...prev, preferredAgentLevels: levels.length > 0 ? levels : [level] };
     });
   }, []);
 
@@ -307,11 +311,13 @@ export function TemplateCustomizer({
       timeMultiplier *= 2.5;
     }
 
-    // Tier impact
-    if (customizations.preferredAgentTiers.includes('tier3') && !customizations.preferredAgentTiers.includes('tier1')) {
-      costMultiplier *= 1.3;
-    } else if (customizations.preferredAgentTiers.includes('tier1') && !customizations.preferredAgentTiers.includes('tier3')) {
-      costMultiplier *= 0.7;
+    // Level impact (L1-L2 = premium, L4-L5 = cost-effective)
+    const hasHighLevels = customizations.preferredAgentLevels.some(l => ['L1', 'L2'].includes(l));
+    const hasLowLevels = customizations.preferredAgentLevels.some(l => ['L4', 'L5'].includes(l));
+    if (hasHighLevels && !hasLowLevels) {
+      costMultiplier *= 1.3; // Higher cost for expert agents only
+    } else if (hasLowLevels && !hasHighLevels) {
+      costMultiplier *= 0.7; // Lower cost for worker/tool agents only
     }
 
     // Agent count impact
@@ -460,33 +466,33 @@ export function TemplateCustomizer({
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Preferred Agent Tiers
+                    Preferred Agent Levels
                   </label>
                   <div className="space-y-2">
-                    {TIER_OPTIONS.map((tier) => (
+                    {LEVEL_OPTIONS.map((level) => (
                       <button
-                        key={tier.value}
-                        onClick={() => toggleTier(tier.value)}
+                        key={level.value}
+                        onClick={() => toggleLevel(level.value)}
                         className={cn(
                           'w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all',
-                          customizations.preferredAgentTiers.includes(tier.value)
+                          customizations.preferredAgentLevels.includes(level.value)
                             ? 'border-purple-500 bg-purple-50'
                             : 'border-slate-200 hover:border-slate-300'
                         )}
                       >
                         <div className={cn(
                           'w-5 h-5 rounded flex items-center justify-center',
-                          customizations.preferredAgentTiers.includes(tier.value)
+                          customizations.preferredAgentLevels.includes(level.value)
                             ? 'bg-purple-500 text-white'
                             : 'border border-slate-300'
                         )}>
-                          {customizations.preferredAgentTiers.includes(tier.value) && (
+                          {customizations.preferredAgentLevels.includes(level.value) && (
                             <CheckCircle2 className="w-4 h-4" />
                           )}
                         </div>
                         <div className="flex-1">
-                          <span className="font-medium text-sm text-slate-900">{tier.label}</span>
-                          <p className="text-xs text-slate-500">{tier.description}</p>
+                          <span className="font-medium text-sm text-slate-900">{level.label}</span>
+                          <p className="text-xs text-slate-500">{level.description}</p>
                         </div>
                       </button>
                     ))}

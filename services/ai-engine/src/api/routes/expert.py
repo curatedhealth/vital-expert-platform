@@ -4,11 +4,11 @@ Unified Ask Expert streaming endpoint (Modes 1 & 2).
 World-Class LangGraph Streaming Implementation.
 
 Flows:
-- Mode 1: User supplies expert_id → Mode 1 Workflow
+- Mode 1: User supplies agent_id → Mode 1 Workflow
 - Mode 2: Auto-select via Fusion Search → Mode 1 Workflow
 
 Pipeline:
-1) Mode 2: Fusion Search (GraphRAG) auto-selects expert
+1) Mode 2: Fusion Search (GraphRAG) auto-selects agent
 2) Both modes: Use AskExpertMode1Workflow for generation
 3) SSE streaming with real-time tokens using LangGraph best practices
 
@@ -63,7 +63,10 @@ router = APIRouter(prefix="/api/expert", tags=["ask-expert"])
 class ExpertStreamRequest(BaseModel):
     mode: int = Field(..., ge=1, le=2, description="Mode 1 (manual) or Mode 2 (auto-select)")
     message: str = Field(..., min_length=1, max_length=10000)
-    expert_id: Optional[str] = Field(None, description="Required for Mode 1")
+    # Primary field: agent_id (standard across modes 1-4)
+    agent_id: Optional[str] = Field(None, description="Required for Mode 1 - agent UUID")
+    # Backwards compatibility alias (deprecated - use agent_id)
+    expert_id: Optional[str] = Field(None, description="DEPRECATED: Use agent_id instead")
     tenant_id: Optional[str] = Field(None, description="Tenant context")
     user_id: Optional[str] = Field(None, description="User ID")
     session_id: Optional[str] = Field(None, description="Session ID for conversation continuity")
@@ -83,10 +86,18 @@ class ExpertStreamRequest(BaseModel):
     max_tokens: Optional[int] = Field(None, ge=1, le=8000, description="Override max tokens (defaults to agent's config)")
     max_results: int = Field(10, description="Max RAG results", ge=1, le=50)
 
-    @validator("expert_id")
-    def require_expert_for_mode1(cls, v, values):
-        if values.get("mode") == 1 and not v:
-            raise ValueError("expert_id is required for mode 1")
+    @validator("agent_id", pre=True, always=True)
+    def resolve_agent_id(cls, v, values):
+        """Resolve agent_id from either agent_id or expert_id (backwards compat)"""
+        return v or values.get("expert_id")
+
+    @validator("expert_id", pre=True, always=True)
+    def require_agent_for_mode1(cls, v, values):
+        """Validate Mode 1 requires an agent"""
+        # Use resolved agent_id (checked after resolve_agent_id runs)
+        effective_agent_id = values.get("agent_id") or v
+        if values.get("mode") == 1 and not effective_agent_id:
+            raise ValueError("agent_id is required for mode 1")
         return v
 
 
@@ -172,9 +183,9 @@ async def select_expert_via_fusion(supabase, query: str, tenant_id: str) -> Opti
         }
 
         logger.info(
-            "mode2_fusion_selected_expert",
-            expert_id=top_expert.get("id"),
-            expert_name=top_expert.get("name"),
+            "mode2_fusion_selected_agent",
+            agent_id=top_expert.get("id"),
+            agent_name=top_expert.get("name"),
             fused_score=round(top_expert.get("fused_score", 0), 4),
             level=top_expert.get("level"),
             confidence=top_expert.get("confidence", {}).get("overall", 0),
@@ -525,8 +536,8 @@ async def expert_stream(
     """
     Unified streaming endpoint for Modes 1/2.
 
-    Mode 1: User supplies expert_id → Mode 1 Workflow
-    Mode 2: Fusion Search selects expert → Mode 1 Workflow
+    Mode 1: User supplies agent_id → Mode 1 Workflow
+    Mode 2: Fusion Search selects agent → Mode 1 Workflow
 
     Both modes use the same LangGraph workflow for generation.
     SSE events: thinking | token | sources | tool | done | error
@@ -546,35 +557,35 @@ async def expert_stream(
             yield f"data: {json.dumps({'event': 'error', 'message': 'Database connection failed'})}\n\n"
         return StreamingResponse(error_gen(), media_type="text/event-stream")
 
-    # Determine expert_id
+    # Determine agent_id (supports both agent_id and deprecated expert_id)
     selected_expert = None
-    expert_id = payload.expert_id
+    agent_id = payload.agent_id or payload.expert_id
 
     if payload.mode == 2:
         # Mode 2: Use Fusion Search to auto-select expert
         logger.info("mode2_fusion_search_starting", query_preview=payload.message[:100])
 
         async def mode2_generator():
-            nonlocal expert_id, selected_expert
+            nonlocal agent_id, selected_expert
 
-            # Emit thinking event for expert selection
-            yield f"data: {json.dumps({'event': 'thinking', 'step': 'fusion_search', 'status': 'running', 'message': 'Selecting best expert via Fusion Search...'})}\n\n"
+            # Emit thinking event for agent selection
+            yield f"data: {json.dumps({'event': 'thinking', 'step': 'fusion_search', 'status': 'running', 'message': 'Selecting best agent via Fusion Search...'})}\n\n"
 
             selected_expert = await select_expert_via_fusion(supabase, payload.message, tenant_id)
 
             if not selected_expert:
-                yield f"data: {json.dumps({'event': 'error', 'message': 'No expert could be selected via Fusion Search'})}\n\n"
+                yield f"data: {json.dumps({'event': 'error', 'message': 'No agent could be selected via Fusion Search'})}\n\n"
                 return
 
-            expert_id = selected_expert.get("id")
-            expert_name = selected_expert.get("display_name") or selected_expert.get("name", "Unknown")
+            agent_id = selected_expert.get("id")
+            agent_name = selected_expert.get("display_name") or selected_expert.get("name", "Unknown")
 
             # Emit agent_selected event (standard SSE format for frontend)
             agent_selected_event = {
                 "event": "agent_selected",
                 "agent": {
-                    "id": expert_id,
-                    "name": expert_name,
+                    "id": agent_id,
+                    "name": agent_name,
                     "avatar_url": selected_expert.get("avatar_url"),
                     "department": selected_expert.get("department_name"),
                     "score": selected_expert.get("score", 0),
@@ -586,9 +597,9 @@ async def expert_stream(
             # Also emit thinking event for UI compatibility
             selection_event = {
                 "event": "thinking",
-                "step": "expert_selected",
+                "step": "agent_selected",
                 "status": "completed",
-                "message": f"Selected expert: {expert_name}"
+                "message": f"Selected agent: {agent_name}"
             }
             yield f"data: {json.dumps(selection_event)}\n\n"
 
@@ -621,7 +632,7 @@ async def expert_stream(
                     mode=WorkflowMode.MODE_1_MANUAL,  # Use Mode 1 workflow for generation
                     query=payload.message,
                     request_id=request_id,
-                    selected_agents=[expert_id],
+                    selected_agents=[agent_id],
                     enable_rag=payload.enable_rag,
                     enable_tools=payload.enable_tools,
                     selected_rag_domains=payload.selected_rag_domains,
@@ -654,19 +665,19 @@ async def expert_stream(
         )
 
     else:
-        # Mode 1: User provided expert_id directly
-        logger.info("mode1_direct_expert", expert_id=expert_id)
+        # Mode 1: User provided agent_id directly
+        logger.info("mode1_direct_agent", agent_id=agent_id)
 
         async def mode1_generator():
             try:
                 # Check for client disconnect early
                 if req and hasattr(req, 'is_disconnected') and await req.is_disconnected():
-                    logger.warning("client_disconnected_before_start", expert_id=expert_id)
+                    logger.warning("client_disconnected_before_start", agent_id=agent_id)
                     return
 
                 # Emit agent_selected event early (frontend needs this)
                 # Fetch agent info for proper event
-                agent_info = supabase.table("agents").select("id, name, display_name, avatar_url, department_name").eq("id", expert_id).single().execute()
+                agent_info = supabase.table("agents").select("id, name, display_name, avatar_url, department_name").eq("id", agent_id).single().execute()
                 if agent_info.data:
                     agent_data = agent_info.data
                     agent_selected_event = {
@@ -708,7 +719,7 @@ async def expert_stream(
                     mode=WorkflowMode.MODE_1_MANUAL,
                     query=payload.message,
                     request_id=request_id,
-                    selected_agents=[expert_id],
+                    selected_agents=[agent_id],
                     enable_rag=payload.enable_rag,
                     enable_tools=payload.enable_tools,
                     selected_rag_domains=payload.selected_rag_domains,

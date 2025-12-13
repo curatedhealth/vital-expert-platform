@@ -1,7 +1,7 @@
 # Ask Expert Service - Unified Implementation Overview
 
-**Version:** 2.6 FINAL
-**Date:** December 12, 2025 (Updated: agent_id Field Standardization Complete)
+**Version:** 2.8 FINAL
+**Date:** December 12, 2025 (Updated: VitalStreamText Standardization Complete)
 **Author:** Claude Code
 **Scope:** Full Stack - Frontend UI/UX + Backend API + Security + Production Readiness + File Inventory + Wiring Verification
 
@@ -393,6 +393,286 @@ type SSEEventType =
 
 **UX Issue:** Level system is implemented but underutilized in the UI.
 
+### 3.4 4-Layer AI UI Component Architecture (148 Components)
+
+The VITAL frontend implements an **Atomic Design pattern** adapted for AI interfaces, with 4 distinct layers that enable maximum reuse while maintaining platform-specific flexibility.
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│  Layer 4: FEATURE COMPONENTS (59 files)                                    │
+│  features/ask-expert/components/                                           │
+│  Domain-specific: Interactive, Autonomous, Artifacts, Mission UI           │
+│  ┌────────────────────────────────────────────────────────────────────┐   │
+│  │ InteractiveConsultation  MissionDashboard  ArtifactViewer          │   │
+│  │ AutonomousWorkflow       AgentSelector     ConsensusPanel          │   │
+│  └────────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────┘
+                                     │ composes
+                                     ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│  Layer 3: PLATFORM COMPONENTS (50 files)                                   │
+│  vital-ai-ui/                                                              │
+│  VITAL-specific: VitalStreamText, VitalTeamView, domain compositions      │
+│  ┌────────────────────────────────────────────────────────────────────┐   │
+│  │ VitalStreamText       VitalAgentCard       VitalReasoningPanel     │   │
+│  │ VitalTeamView         VitalEvidenceList    VitalCheckpointUI       │   │
+│  │ VitalCitationStrip    VitalConfidenceBadge VitalMissionProgress    │   │
+│  └────────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────┘
+                                     │ extends
+                                     ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│  Layer 2: DESIGN SYSTEM COMPONENTS (31 files)                              │
+│  ai-elements/ (from langgraph-gui/ai/)                                     │
+│  Reusable AI primitives: Canvas, Reasoning, Sources, Conversation          │
+│  ┌────────────────────────────────────────────────────────────────────┐   │
+│  │ Conversation          Reasoning           Sources                   │   │
+│  │ Message               Task                PhaseStatus               │   │
+│  │ PromptInput           Loader              Canvas                    │   │
+│  └────────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────┘
+                                     │ wraps
+                                     ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│  Layer 1: BASE PRIMITIVES (8 files)                                        │
+│  ui/shadcn-io/ai/                                                          │
+│  Foundation: HoverCard-based citations, raw Streamdown wrappers            │
+│  ┌────────────────────────────────────────────────────────────────────┐   │
+│  │ InlineCitation         InlineCitationCard    InlineCitationSource  │   │
+│  │ InlineCitationCarousel Streamdown (external) HoverCard (shadcn)    │   │
+│  └────────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 3.4.1 Layer 1: Base Primitives (`ui/shadcn-io/ai/`)
+
+**Location:** `apps/vital-system/src/components/ui/shadcn-io/ai/`
+**Count:** 8 files
+**Purpose:** Foundation components from shadcn/ui with AI-specific extensions
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `InlineCitation` | `inline-citation.tsx` | HoverCard wrapper for citation pills |
+| `InlineCitationCard` | `inline-citation.tsx` | Card container with trigger + body |
+| `InlineCitationCardTrigger` | `inline-citation.tsx` | Clickable citation marker `[1]` |
+| `InlineCitationCardBody` | `inline-citation.tsx` | Hover popover with source details |
+| `InlineCitationCarousel` | `inline-citation.tsx` | Multi-source navigation |
+| `InlineCitationSource` | `inline-citation.tsx` | Individual source display |
+
+**Key Integration:** Uses Radix UI's `HoverCard` primitive for accessible tooltips.
+
+```typescript
+// Example: Base citation primitive usage
+<InlineCitation>
+  <InlineCitationCard>
+    <InlineCitationCardTrigger sources={[url]}>[1]</InlineCitationCardTrigger>
+    <InlineCitationCardBody>
+      <InlineCitationSource url={url} title={title} excerpt={excerpt} />
+    </InlineCitationCardBody>
+  </InlineCitationCard>
+</InlineCitation>
+```
+
+#### 3.4.2 Layer 2: Design System (`ai-elements/`)
+
+**Location:** `apps/vital-system/src/components/langgraph-gui/ai/`
+**Count:** 31 files
+**Purpose:** Reusable AI interface primitives independent of business domain
+
+| Category | Components | Files |
+|----------|------------|-------|
+| **Conversation** | `Conversation`, `ConversationContent`, `ConversationScrollButton` | 3 |
+| **Message** | `Message`, `MessageAvatar`, `MessageContent`, `MessageHeader` | 4 |
+| **Reasoning** | `Reasoning`, `ReasoningTrigger`, `ReasoningContent` | 3 |
+| **Sources** | `Sources`, `SourcesTrigger`, `SourcesContent`, `Source` | 4 |
+| **Task** | `Task`, `TaskTrigger`, `TaskContent`, `TaskItem`, `TaskItemFile` | 5 |
+| **Phase Status** | `PhaseStatus`, `PhaseStatusTrigger`, `PhaseStatusContent`, `PhaseStatusItem` | 4 |
+| **Prompt Input** | `PromptInput`, `PromptInputTextarea`, `PromptInputToolbar`, `PromptInputSubmit` | 4 |
+| **Canvas** | `Canvas`, `CanvasContent`, `CanvasControls` | 3 |
+| **Loader** | `Loader` | 1 |
+
+**Design Principles:**
+- Compound component pattern (Trigger + Content)
+- Tailwind-based styling with CSS variables
+- Fully accessible (ARIA attributes)
+- Animation-ready with `data-state` attributes
+
+```typescript
+// Example: Design system reasoning component
+<Reasoning isStreaming={true} defaultOpen={true}>
+  <ReasoningTrigger />
+  <ReasoningContent>{thinkingText}</ReasoningContent>
+</Reasoning>
+```
+
+#### 3.4.3 Layer 3: Platform Components (`vital-ai-ui/`)
+
+**Location:** `apps/vital-system/src/components/vital-ai-ui/`
+**Count:** 50 files (7 subdirectories)
+**Purpose:** VITAL-specific compositions combining design system primitives
+
+| Subdirectory | Files | Key Components |
+|--------------|-------|----------------|
+| `conversation/` | 12 | `VitalStreamText`, `VitalMessageBubble`, `VitalTypingIndicator` |
+| `agents/` | 8 | `VitalAgentCard`, `VitalAgentAvatar`, `VitalAgentSelector` |
+| `evidence/` | 7 | `VitalCitationStrip`, `VitalEvidenceCard`, `VitalSourcePill` |
+| `workflow/` | 6 | `VitalCheckpointUI`, `VitalMissionProgress`, `VitalTaskTree` |
+| `reasoning/` | 5 | `VitalReasoningPanel`, `VitalThinkingIndicator` |
+| `collaboration/` | 6 | `VitalTeamView`, `VitalConsensusPanel`, `VitalDebateView` |
+| `artifacts/` | 6 | `VitalArtifactCard`, `VitalDocumentPreview`, `VitalExportOptions` |
+
+**Star Component: `VitalStreamText`**
+
+The most critical component in the platform, handling jitter-free streaming markdown with inline citations:
+
+```typescript
+// VitalStreamText integration path:
+// User Message → SSE Stream → VitalStreamText → Streamdown → InlineCitation pills
+
+export interface VitalStreamTextProps {
+  content: string;
+  isStreaming: boolean;
+  citations?: CitationData[];      // Parsed from SSE events
+  inlineCitations?: boolean;       // Render [1] as hover pills
+  highlightCode?: boolean;         // Shiki syntax highlighting
+  enableMermaid?: boolean;         // Diagram rendering
+}
+
+// Key feature: Citation marker replacement
+// Input:  "FDA approval requires [1] extensive trials [2]."
+// Output: "FDA approval requires <HoverPill>[1]</HoverPill> extensive trials <HoverPill>[2]</HoverPill>."
+```
+
+**Citation Data Flow:**
+
+```
+┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│   SSE Stream     │ →  │  Citation Parser │ →  │  VitalStreamText │
+│  {citations:[]} │    │  extractCitations│    │  processCitations│
+└──────────────────┘    └──────────────────┘    └──────────────────┘
+                                                         │
+                        ┌────────────────────────────────┘
+                        ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  Streamdown (parseIncompleteMarkdown=true)                        │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  Custom Components Override:                                │  │
+│  │  p, h1-h6, li, strong, em, td, th, blockquote               │  │
+│  │  → processCitationsInText() → InlineCitation pills          │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+#### 3.4.4 Layer 4: Feature Components (`features/ask-expert/components/`)
+
+**Location:** `apps/vital-system/src/features/ask-expert/components/`
+**Count:** 59 files (5 subdirectories)
+**Purpose:** Mode-specific page compositions and workflows
+
+| Subdirectory | Files | Purpose |
+|--------------|-------|---------|
+| `interactive/` | 15 | Mode 1 & 2 chat interfaces |
+| `autonomous/` | 18 | Mode 3 & 4 mission dashboards |
+| `artifacts/` | 12 | Document viewers, exporters |
+| `shared/` | 8 | Cross-mode utilities |
+| `panels/` | 6 | Ask Panel multi-agent views |
+
+**Mode-Specific Component Mapping:**
+
+| Mode | Primary Components | Layer 3 Dependencies |
+|------|-------------------|---------------------|
+| Mode 1 (Interactive Manual) | `InteractiveChat`, `AgentDirectSelector` | `VitalStreamText`, `VitalAgentCard` |
+| Mode 2 (Interactive Auto) | `AutoSelectChat`, `FusionResults` | `VitalStreamText`, `VitalEvidenceCard` |
+| Mode 3 (Autonomous Manual) | `MissionDashboard`, `CheckpointReview` | `VitalMissionProgress`, `VitalCheckpointUI` |
+| Mode 4 (Autonomous Auto) | `BackgroundMission`, `ArtifactGallery` | `VitalTaskTree`, `VitalArtifactCard` |
+
+**Example: Mode 3 Component Composition**
+
+```typescript
+// features/ask-expert/components/autonomous/MissionDashboard.tsx
+import { VitalMissionProgress } from '@/components/vital-ai-ui/workflow';
+import { VitalCheckpointUI } from '@/components/vital-ai-ui/workflow';
+import { VitalStreamText } from '@/components/vital-ai-ui/conversation';
+import { VitalArtifactCard } from '@/components/vital-ai-ui/artifacts';
+
+export function MissionDashboard({ mission }: Props) {
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      <VitalMissionProgress mission={mission} />      {/* Layer 3 */}
+      <div className="col-span-2">
+        <VitalStreamText                              {/* Layer 3 */}
+          content={mission.currentOutput}
+          isStreaming={mission.status === 'running'}
+          citations={mission.citations}
+        />
+        {mission.checkpoints.map(cp => (
+          <VitalCheckpointUI                          {/* Layer 3 */}
+            key={cp.id}
+            checkpoint={cp}
+            onResolve={handleResolve}
+          />
+        ))}
+      </div>
+      <VitalArtifactCard artifacts={mission.artifacts} />
+    </div>
+  );
+}
+```
+
+#### 3.4.5 Key Data Flows
+
+**1. Streaming Message Flow:**
+```
+SSE Event → useSSEStream hook → VitalStreamText → Streamdown → DOM
+                                      │
+                                      ├── citations[] → InlineCitation pills
+                                      ├── reasoning → VitalReasoningPanel
+                                      └── sources[] → VitalCitationStrip
+```
+
+**2. Citation Processing Flow:**
+```
+Backend: {citations: [{id, title, url, excerpt}]}
+                    │
+                    ▼
+Frontend: CitationData[] parsed by SSE handler
+                    │
+                    ▼
+VitalStreamText: citationMap = Map<index, CitationData>
+                    │
+                    ▼
+Streamdown custom components: processCitationsInText()
+                    │
+                    ▼
+Regex match [1], [2] → InlineCitation → HoverCard popup
+```
+
+**3. Agent Identity Flow:**
+```
+Backend: {agent_id, agent_name, agent_level, agent_avatar}
+                    │
+                    ▼
+expertIdentityManager.getExpert(agent_id)
+                    │
+                    ▼
+VitalAgentAvatar: icon, color, badge based on level
+                    │
+                    ▼
+MessageAvatar: Renders with level-appropriate styling
+```
+
+#### 3.4.6 Component Count Summary
+
+| Layer | Location | Files | Description |
+|-------|----------|-------|-------------|
+| L1 | `ui/shadcn-io/ai/` | 8 | Base primitives |
+| L2 | `langgraph-gui/ai/` | 31 | Design system |
+| L3 | `vital-ai-ui/` | 50 | Platform components |
+| L4 | `features/ask-expert/` | 59 | Feature components |
+| **Total** | — | **148** | AI UI component files |
+
+*Note: Additional shared components (hooks, utilities) bring the total documented components to 156 as detailed in `UI_COMPONENT_IMPLEMENTATION_MAP.md`.*
+
 ---
 
 ## Part 4: Security Hardening (A+ Grade)
@@ -553,12 +833,30 @@ id, name, prompt_starter, description, detailed_prompt, category
 
 **User Requirement:** "we should use for all agent_id for consistency" - standardize on `agent_id` as the primary field name.
 
-**Files Fixed:**
+#### Backend API Route Files Fixed:
 
 | File | Fix Applied |
 |------|-------------|
 | `apps/vital-system/src/app/api/expert/mode1/stream/route.ts` | Reordered destructuring to `agent_id` first, added `effectiveAgentId` pattern, updated error message |
 | `apps/vital-system/src/app/api/expert/mode3/stream/route.ts` | Same pattern applied - `agent_id` as primary with `expert_id` backwards compatibility |
+
+#### Frontend Component Files Fixed:
+
+| File | Line(s) | Fix Applied |
+|------|---------|-------------|
+| `StreamingPanelConsultation.tsx` | 27-33, 318 | Added `agentIds` prop with JSDoc, marked `expertIds` as `@deprecated`, changed badge from `{expertIds.length} Experts` to `{effectiveAgentIds.length} Agents` |
+| `panel-workflow-diagram.tsx` | 529 | Changed prop from `expertIds={agentIds}` to `agentIds={agentIds}` |
+| `AIChatbot.tsx` | 52-55, 203-208 | Interface already had both fields; updated usage to `message.agentId \|\| message.expertId` fallback pattern |
+| `action-item-extractor.ts` | 129-131 | Updated expert reply mapping to use `reply.agentId \|\| reply.expertId` |
+
+#### Frontend Files Already Standardized (Verified):
+
+| File | Status |
+|------|--------|
+| `usePanelAPI.ts` | ✅ Has both `agentIds` and `expertIds` callbacks with deprecation |
+| `useAutonomousMode.ts` | ✅ Sends both `agent_id` and `expertId` for backwards compat |
+| `WorkflowBuilder.tsx` | ✅ Interface and mapping properly handle both field names |
+| `sidebar-ask-expert.tsx` | ✅ Sends both fields for backwards compatibility |
 
 **Pattern Applied (Field Normalization):**
 ```typescript
@@ -589,6 +887,19 @@ body: JSON.stringify({
 }),
 ```
 
+**Frontend Interface Pattern (JSDoc Deprecation):**
+```typescript
+interface Props {
+  /** Agent IDs for the operation */
+  agentIds?: string[];
+  /** @deprecated Use agentIds instead */
+  expertIds?: string[];
+}
+
+// Usage with fallback
+const effectiveAgentIds = agentIds || expertIds || [];
+```
+
 **Architecture Alignment:**
 ```
 Frontend (useAskExpert.ts)     BFF Route (mode*/stream)      Python Backend
@@ -608,6 +919,140 @@ Frontend (useAskExpert.ts)     BFF Route (mode*/stream)      Python Backend
 - **Mode 4 (Auto-autonomous):** `agent_id` optional (Fusion selects)
 
 **Backwards Compatibility:** Existing clients sending `expert_id` continue to work via fallback pattern.
+
+**Files Intentionally Keeping "Expert" Terminology:**
+These files appropriately use "expert" because it refers to domain concepts, not API parameters:
+- `expertIdentity.ts` - UI display utilities for expert personas
+- `mixture-of-experts.ts` - Domain model for Mixture of Experts (MoE) pattern
+- `advisory/route.ts` - Advisory board domain concept
+
+### 5.5 VitalStreamText Unified Rendering Standardization (FIXED - December 12, 2025)
+
+**Issue:** Inconsistent markdown rendering across components - some used `ReactMarkdown`, others used raw HTML injection patterns, and others used basic `<pre>` tags. This caused formatting differences between streaming and completed messages.
+
+**Root Cause:** Legacy implementations used various markdown renderers before VitalStreamText (Streamdown) was standardized as the unified renderer.
+
+**Design System Rule:** All markdown and code rendering MUST use `VitalStreamText` to ensure:
+1. Consistent formatting between streaming and completed messages
+2. Jitter-free streaming with Streamdown library
+3. Inline citation pill support
+4. Syntax highlighting via Shiki
+5. Mermaid diagram rendering
+
+#### Files Fixed (December 12, 2025):
+
+| File | Component | Fix Applied |
+|------|-----------|-------------|
+| `VitalMessage.tsx` | Assistant message bubble | Migrated from inline prose rendering to `VitalStreamText` with `isStreaming={false}` |
+| `ArtifactPreview.tsx` | Artifact modal preview | Replaced `<pre>` tags with `VitalStreamText` for Markdown, Code, and JSON renderers |
+
+#### Removed Dependencies:
+
+| Dependency | Status | Replacement |
+|------------|--------|-------------|
+| `react-markdown` | Removed from ask-expert | `VitalStreamText` |
+| Raw HTML injection | Removed | `VitalStreamText` (secure rendering) |
+| Basic `<pre>` tags | Replaced | `VitalStreamText` with code fence wrapping |
+
+#### Migration Pattern Applied:
+
+**For Markdown Content:**
+```typescript
+// Before:
+<div className="prose prose-sm">
+  <ReactMarkdown>{content}</ReactMarkdown>
+</div>
+
+// After:
+<VitalStreamText
+  content={content}
+  isStreaming={false}
+  highlightCode={true}
+  enableMermaid={true}
+  showControls={false}
+  className="prose prose-sm max-w-none"
+/>
+```
+
+**For Code Content (using code fence wrapping):**
+```typescript
+// Before:
+<pre className="bg-slate-100 p-4 rounded">
+  <code>{content}</code>
+</pre>
+
+// After:
+const codeContent = `\`\`\`${language || ''}\n${content}\n\`\`\``;
+<VitalStreamText
+  content={codeContent}
+  isStreaming={false}
+  highlightCode={true}
+  enableMermaid={false}
+  showControls={false}
+/>
+```
+
+**For JSON Content:**
+```typescript
+// Before:
+<pre className="text-sm">{JSON.stringify(data, null, 2)}</pre>
+
+// After:
+const jsonContent = `\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
+<VitalStreamText
+  content={jsonContent}
+  isStreaming={false}
+  highlightCode={true}
+  enableMermaid={false}
+  showControls={false}
+/>
+```
+
+#### VitalStreamText Props Reference:
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `content` | `string` | required | Markdown content to render |
+| `isStreaming` | `boolean` | `false` | Enable jitter-free streaming mode |
+| `highlightCode` | `boolean` | `true` | Enable Shiki syntax highlighting |
+| `enableMermaid` | `boolean` | `true` | Enable Mermaid diagram rendering |
+| `showControls` | `boolean` | `true` | Show copy/expand controls |
+| `citations` | `CitationData[]` | `[]` | Citation data for inline pills |
+| `inlineCitations` | `boolean` | `true` | Render `[1]` as hover pill cards |
+| `className` | `string` | - | Additional CSS classes |
+
+#### Benefits of Unified Rendering:
+
+1. **Consistency:** Streaming and completed messages render identically
+2. **Jitter-Free:** Streamdown's `parseIncompleteMarkdown` prevents layout shifts during streaming
+3. **Citations:** Inline `[1]` markers automatically become hover cards with source details
+4. **Syntax Highlighting:** Shiki provides accurate highlighting for 100+ languages
+5. **Diagrams:** Mermaid diagrams render inline without external dependencies
+6. **Accessibility:** Proper semantic HTML output
+7. **Security:** No raw HTML injection - all content safely rendered through Streamdown
+
+#### Component Usage Hierarchy:
+
+```
+ask-expert/components/
+├── interactive/VitalMessage.tsx   → Uses VitalStreamText
+├── artifacts/ArtifactPreview.tsx  → Uses VitalStreamText
+├── autonomous/MissionDashboard.tsx → Uses VitalStreamText
+└── shared/*                        → Uses VitalStreamText
+                    │
+                    ▼
+vital-ai-ui/conversation/VitalStreamText.tsx
+├── Wraps Streamdown library
+├── Handles citation marker replacement
+├── Integrates InlineCitation hover cards
+└── Manages streaming vs completed modes
+                    │
+                    ▼
+External: streamdown (npm package)
+├── parseIncompleteMarkdown for jitter-free streaming
+├── Shiki syntax highlighting
+└── Mermaid diagram integration
+```
 
 ---
 

@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
 import { AssetOverviewStats, StatCardConfig } from '@/components/shared/AssetOverviewStats';
 import { RecentAssetsCard, RecentAssetItem } from '@/components/shared/RecentAssetsCard';
 import { ActiveFiltersBar } from '@/components/shared/ActiveFiltersBar';
@@ -44,14 +43,37 @@ import { VitalAssetView, type VitalAsset } from '@vital/ai-ui';
 
 // Import prompts feature components
 import {
-  PromptEditModal,
+  PromptEditModalV2,
   PromptDeleteModal,
   PRISM_SUITES,
   getSuiteByCode,
-  DEFAULT_PROMPT,
-  type Prompt,
   type SubSuite,
 } from '@/features/prompts/components';
+
+// Import Prompt type from schema for type consistency
+import type { Prompt } from '@/lib/forms/schemas';
+
+// Default values for new prompt creation
+const DEFAULT_PROMPT_VALUES: Partial<Prompt> = {
+  name: '',
+  display_name: '',
+  description: '',
+  prompt_starter: '',
+  detailed_prompt: '',
+  system_prompt: '',
+  user_template: '',
+  domain: undefined,
+  complexity: 'basic',
+  task_type: undefined,
+  pattern_type: undefined,
+  tags: [],
+  variables: [],
+  version: '1.0',
+  rag_enabled: false,
+  expert_validated: false,
+  status: 'active',
+  is_active: true,
+};
 
 // Complexity badges
 const COMPLEXITY_BADGES: Record<string, { color: string; bgColor: string; icon: typeof CheckCircle2; label: string }> = {
@@ -301,7 +323,7 @@ function PromptsPageContent() {
   };
 
   const handleCreatePrompt = () => {
-    setEditingPrompt({ ...DEFAULT_PROMPT });
+    setEditingPrompt({ ...DEFAULT_PROMPT_VALUES });
     setError(null);
     setIsModalOpen(true);
   };
@@ -310,44 +332,22 @@ function PromptsPageContent() {
     router.push(`/prompts/${asset.id}?edit=true`);
   };
 
-  const handleSavePrompt = async () => {
-    if (!editingPrompt) return;
-
-    // Validation
-    if (!editingPrompt.name?.trim()) {
-      setError('Name is required');
-      return;
-    }
-
+  const handleSavePrompt = async (data: Prompt) => {
     setIsSaving(true);
     setError(null);
 
     try {
-      const payload = {
-        name: editingPrompt.name.trim(),
-        display_name: editingPrompt.display_name?.trim() || editingPrompt.name.trim(),
-        description: editingPrompt.description?.trim() || '',
-        content: editingPrompt.content || '',
-        system_prompt: editingPrompt.system_prompt || '',
-        user_prompt_template: editingPrompt.user_template || '',
-        domain: editingPrompt.domain || 'general',
-        complexity_level: editingPrompt.complexity || 'basic',
-        tags: editingPrompt.tags || [],
-        status: 'active',
-      };
-
-      const isUpdate = !!editingPrompt.id;
+      const isUpdate = !!data.id;
       const method = isUpdate ? 'PUT' : 'POST';
-      const body = isUpdate ? { id: editingPrompt.id, ...payload } : payload;
 
       const response = await fetch('/api/prompts-crud', {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify(data),
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to save prompt');
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to save prompt');
 
       await loadPrompts();
       setIsModalOpen(false);
@@ -458,9 +458,6 @@ function PromptsPageContent() {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-3 border-b">
-          <VitalBreadcrumb showHome items={[{ label: 'Prompts' }]} />
-        </div>
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -478,14 +475,8 @@ function PromptsPageContent() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Compact Header with Breadcrumb, Search, and Actions */}
+      {/* Action Bar */}
       <div className="flex items-center gap-4 px-6 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        {/* Breadcrumb */}
-        <VitalBreadcrumb
-          showHome
-          items={[{ label: 'Prompts' }]}
-        />
-
         {/* Search - only show in non-overview modes */}
         {!isOverviewMode && (
           <div className="flex-1 max-w-sm">
@@ -530,8 +521,8 @@ function PromptsPageContent() {
           <RefreshCw className="h-4 w-4" />
         </Button>
 
-        {/* Selection mode toggle (admin only) */}
-        {isAdmin && !isOverviewMode && (
+        {/* Selection mode toggle */}
+        {!isOverviewMode && (
           <Button
             variant={isSelectionMode ? 'secondary' : 'outline'}
             size="sm"
@@ -544,16 +535,14 @@ function PromptsPageContent() {
         )}
 
         {/* Create button */}
-        {isAdmin && (
-          <Button onClick={handleCreatePrompt} size="sm" className="gap-2 h-8">
-            <Plus className="h-4 w-4" />
-            Create
-          </Button>
-        )}
+        <Button onClick={handleCreatePrompt} size="sm" className="gap-2 h-8">
+          <Plus className="h-4 w-4" />
+          Create
+        </Button>
       </div>
 
       {/* Batch Actions Bar - Show when in selection mode */}
-      {isSelectionMode && isAdmin && (
+      {isSelectionMode && (
         <div className="flex items-center gap-4 px-6 py-2 border-b bg-blue-50 dark:bg-blue-950">
           <div className="flex items-center gap-2">
             <Checkbox
@@ -681,11 +670,11 @@ function PromptsPageContent() {
               showCategoryFilter={false}
               showSort={false}
               showRefresh={false}
-              isAdmin={isAdmin}
+              isAdmin={true}
               cardVariant="rich"
               gridColumns={{ sm: 1, md: 2, lg: 3, xl: 4 }}
               kanbanColumns={KANBAN_COLUMNS_BY_SUITE}
-              kanbanDraggable={isAdmin}
+              kanbanDraggable={true}
               onAssetClick={handlePromptClick}
               onEdit={handleEditPrompt}
               onDelete={handleDeleteConfirm}
@@ -804,11 +793,10 @@ function PromptsPageContent() {
       </div>
 
       {/* Modals */}
-      <PromptEditModal
+      <PromptEditModalV2
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditingPrompt(null); setError(null); }}
         prompt={editingPrompt}
-        onPromptChange={setEditingPrompt}
         onSave={handleSavePrompt}
         isSaving={isSaving}
         error={error}

@@ -41,10 +41,17 @@ export interface Agent {
 export interface AskExpertSession {
   sessionId: string;
   title?: string;
+  firstMessagePreview?: string; // First user message for intelligent title generation
   agent?: {
+    id?: string;
     name?: string;
     description?: string;
     avatar?: string | null;
+  };
+  /** Conversation metadata (agent_id, mode, etc.) */
+  metadata?: {
+    agent_id?: string;
+    mode?: string;
   };
   lastMessage: string;
   messageCount: number;

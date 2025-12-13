@@ -42,13 +42,20 @@ import {
   Quote,
 } from 'lucide-react';
 
-import type { CitationEvent } from '../../hooks/useSSEStream';
+// Note: CitationEvent type from useSSEStream has different source/type values
+// than our UI Citation interface which includes 'journal', 'guideline', 'internal'
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
-export interface Citation extends Partial<CitationEvent> {
+/**
+ * Citation interface for UI display.
+ * Note: This is intentionally NOT extending CitationEvent because
+ * the type values differ (UI includes 'journal'/'guideline'/'internal' vs SSE has different source types)
+ * and we need different optional/required field semantics.
+ */
+export interface Citation {
   id: string;
   title: string;
   source?: string;
@@ -59,6 +66,9 @@ export interface Citation extends Partial<CitationEvent> {
   type?: 'pubmed' | 'web' | 'document' | 'database' | 'journal' | 'guideline' | 'internal';
   confidence?: number;
   pageNumber?: number;
+  // Optional fields from CitationEvent for compatibility
+  index?: number;
+  metadata?: Record<string, unknown>;
 }
 
 export interface CitationListProps {

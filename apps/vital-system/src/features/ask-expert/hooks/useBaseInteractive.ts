@@ -56,8 +56,14 @@ export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
+  agentId?: string;
+  agentName?: string;
+  agentLevel?: string;
+  /** @deprecated Use agentId instead */
   expertId?: string;
+  /** @deprecated Use agentName instead */
   expertName?: string;
+  /** @deprecated Use agentLevel instead */
   expertLevel?: string;
   reasoning?: ReasoningEvent[];
   citations?: CitationEvent[];
@@ -87,6 +93,8 @@ export interface SendMessageOptions {
 
 export interface UseBaseInteractiveOptions {
   conversationId?: string;
+  agentId?: string;
+  /** @deprecated Use agentId instead */
   expertId?: string;
   tenantId?: string;
   onError?: (error: Error) => void;
@@ -133,7 +141,8 @@ export function useBaseInteractive(
 ): BaseInteractiveState & BaseInteractiveActions {
   const {
     conversationId: initialConversationId,
-    expertId,
+    agentId,
+    expertId, // Deprecated - use agentId
     tenantId,
     onError,
     onMessageComplete,
@@ -141,6 +150,9 @@ export function useBaseInteractive(
     baseUrl = '/api/expert',
     mode,
   } = options;
+
+  // Resolve effective agent ID (agentId takes precedence over deprecated expertId)
+  const effectiveAgentId = agentId || expertId;
 
   // Determine endpoint based on mode
   const streamUrl = mode === 'mode1_manual_interactive' 
@@ -244,6 +256,11 @@ export function useBaseInteractive(
           role: 'assistant',
           content: currentContent,
           timestamp: new Date(),
+          // New standardized naming
+          agentId: selectedExpert?.id,
+          agentName: selectedExpert?.name,
+          agentLevel: selectedExpert?.level,
+          // Deprecated aliases for backwards compatibility
           expertId: selectedExpert?.id,
           expertName: selectedExpert?.name,
           expertLevel: selectedExpert?.level,
@@ -332,9 +349,9 @@ export function useBaseInteractive(
     (message: string, sendOptions?: SendMessageOptions) => {
       if (!message.trim() || isStreaming) return;
 
-      // Mode 1: Require expert selection
-      if (mode === 'mode1_manual_interactive' && !selectedExpert && !expertId) {
-        onError?.(new Error('Please select an expert before sending a message'));
+      // Mode 1: Require agent selection
+      if (mode === 'mode1_manual_interactive' && !selectedExpert && !effectiveAgentId) {
+        onError?.(new Error('Please select an agent before sending a message'));
         return;
       }
 
@@ -361,10 +378,19 @@ export function useBaseInteractive(
         conversationIdRef.current = crypto.randomUUID();
       }
 
-      // Build request payload
+      // Build request payload with conversation history for context
+      // The AI engine needs previous messages to maintain conversation memory
+      const conversationHistory = messages.map(m => ({
+        role: m.role,
+        content: m.content,
+      }));
+
       const payload: Record<string, any> = {
         conversation_id: conversationIdRef.current,
         message,
+        // Include conversation history for multi-turn context
+        // This enables the agent to remember previous exchanges
+        messages: conversationHistory,
         mode,
         tenant_id: tenantId,
         options: {
@@ -374,15 +400,15 @@ export function useBaseInteractive(
         },
       };
 
-      // Mode 1: Include selected expert ID
+      // Mode 1: Include selected agent ID
       if (mode === 'mode1_manual_interactive') {
-        payload.expert_id = selectedExpert?.id || expertId;
+        payload.agent_id = selectedExpert?.id || effectiveAgentId;
       }
-      // Mode 2: Fusion will auto-select experts
+      // Mode 2: Fusion will auto-select agents
 
       connect(payload);
     },
-    [connect, expertId, tenantId, selectedExpert, isStreaming, mode, onError]
+    [connect, effectiveAgentId, tenantId, selectedExpert, isStreaming, mode, onError]
   );
 
   const selectExpert = useCallback((expert: Expert) => {
@@ -398,8 +424,14 @@ export function useBaseInteractive(
         role: 'assistant',
         content: currentContent + '\n\n*[Generation stopped by user]*',
         timestamp: new Date(),
+        // New standardized naming
+        agentId: selectedExpert?.id,
+        agentName: selectedExpert?.name,
+        agentLevel: selectedExpert?.level,
+        // Deprecated aliases for backwards compatibility
         expertId: selectedExpert?.id,
         expertName: selectedExpert?.name,
+        expertLevel: selectedExpert?.level,
         reasoning: currentReasoning.length > 0 ? [...currentReasoning] : undefined,
         citations: currentCitations.length > 0 ? [...currentCitations] : undefined,
         toolCalls: currentToolCalls.length > 0 ? [...currentToolCalls] : undefined,

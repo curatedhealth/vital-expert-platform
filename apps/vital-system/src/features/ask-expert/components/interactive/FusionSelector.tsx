@@ -92,12 +92,50 @@ type SelectionPhase = 'input' | 'analyzing' | 'selected';
 // DEFAULT SUGGESTIONS
 // =============================================================================
 
+// Categorized example prompts for Mode 2 (Smart Copilot)
+// These are generic examples - will be personalized based on user profile later
 const DEFAULT_SUGGESTIONS = [
   "What are the latest FDA guidelines for accelerated approval?",
   "Help me analyze this clinical trial protocol",
   "Compare biosimilar vs reference product regulatory pathways",
   "Explain HEOR methodology for market access submissions",
   "Review adverse event reporting requirements for this drug class",
+];
+
+// Structured prompt starters with categories for richer display
+const EXAMPLE_PROMPTS = [
+  {
+    category: 'Regulatory',
+    icon: '📋',
+    prompts: [
+      { text: 'FDA accelerated approval requirements', full: 'What are the FDA requirements for accelerated approval of oncology drugs?' },
+      { text: 'EMA vs FDA comparison', full: 'Compare EMA and FDA regulatory pathways for biosimilars' },
+    ]
+  },
+  {
+    category: 'Clinical',
+    icon: '🔬',
+    prompts: [
+      { text: 'Phase III trial design', full: 'Help me design a Phase III clinical trial protocol for a rare disease' },
+      { text: 'Endpoint selection', full: 'What are the best primary endpoints for oncology trials?' },
+    ]
+  },
+  {
+    category: 'Market Access',
+    icon: '📊',
+    prompts: [
+      { text: 'HEOR evidence dossier', full: 'What should be included in an HEOR evidence dossier for payer submission?' },
+      { text: 'Pricing strategy', full: 'How do I develop a value-based pricing strategy for a specialty drug?' },
+    ]
+  },
+  {
+    category: 'Safety',
+    icon: '⚠️',
+    prompts: [
+      { text: 'Adverse event reporting', full: 'Review adverse event reporting requirements for post-market surveillance' },
+      { text: 'Risk management', full: 'How do I create a risk management plan for a biologic?' },
+    ]
+  },
 ];
 
 // =============================================================================
@@ -313,24 +351,39 @@ export function FusionSelector({
                 </Button>
               </div>
 
-              {/* Suggestions */}
-              <div className="mt-6">
-                <p className="text-sm text-slate-500 mb-3">Try asking about:</p>
-                <div className="flex flex-wrap gap-2">
-                  {suggestions.slice(0, 4).map((suggestion, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleSuggestionClick(suggestion)}
+              {/* Categorized Example Prompts */}
+              <div className="mt-8">
+                <p className="text-sm text-slate-500 mb-4 text-center">Try asking about:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {EXAMPLE_PROMPTS.map((category, catIdx) => (
+                    <div
+                      key={catIdx}
                       className={cn(
-                        'text-sm px-3 py-1.5 rounded-full border',
-                        'transition-colors',
-                        theme.accentBg,
-                        theme.accentHover,
-                        theme.accent
+                        'p-4 rounded-xl border bg-white/60 backdrop-blur-sm',
+                        'hover:border-blue-200 hover:bg-blue-50/30 transition-colors'
                       )}
                     >
-                      {suggestion.length > 50 ? suggestion.slice(0, 50) + '...' : suggestion}
-                    </button>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-lg">{category.icon}</span>
+                        <span className="text-sm font-medium text-slate-700">{category.category}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {category.prompts.map((prompt, promptIdx) => (
+                          <button
+                            key={promptIdx}
+                            onClick={() => handleSuggestionClick(prompt.full)}
+                            className={cn(
+                              'w-full text-left text-sm px-3 py-2 rounded-lg',
+                              'transition-all duration-200',
+                              'hover:bg-blue-100 hover:text-blue-700',
+                              'text-slate-600 bg-slate-50/80'
+                            )}
+                          >
+                            {prompt.text}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

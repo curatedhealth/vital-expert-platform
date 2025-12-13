@@ -138,8 +138,16 @@ class AgentSelectionResult:
 # =============================================================================
 
 def _is_valid_uuid(value: Optional[str]) -> bool:
-    """Check if a string is a valid UUID format."""
-    if not value or value == "anonymous":
+    """Check if a string is a valid UUID format.
+
+    Explicitly rejects:
+    - None (Python None)
+    - "None" (string literal - common serialization artifact)
+    - "anonymous" (placeholder value)
+    - Empty strings
+    - "null" (JSON null serialized as string)
+    """
+    if not value or value in ("anonymous", "None", "null", "undefined"):
         return False
     try:
         uuid_module.UUID(str(value))

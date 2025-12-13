@@ -34,10 +34,6 @@ import {
   User,
   Sparkles,
   Zap,
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
 } from 'lucide-react';
 
 type ModeConfig = {
@@ -57,9 +53,13 @@ const MODE_1: ModeConfig = {
   mode: 1,
   title: 'Interactive Manual',
   nickname: 'Expert Chat',
-  description: 'You select the expert for real-time Q&A',
+  description: 'Browse and select a specific expert for direct Q&A. Perfect when you know exactly which specialist you need.',
   icon: <User className="h-5 w-5" />,
-  features: ['User selects expert', 'Quick Q&A', 'Citations'],
+  features: [
+    'Browse 200+ specialized experts by domain',
+    'Real-time conversation with citations',
+    'Full control over expert selection',
+  ],
   color: 'blue',
   bgGradient: 'from-blue-500/10 via-blue-400/5 to-transparent',
   route: '/ask-expert/interactive?mode=manual',
@@ -69,9 +69,13 @@ const MODE_2: ModeConfig = {
   mode: 2,
   title: 'Interactive Auto',
   nickname: 'Smart Copilot',
-  description: 'AI auto-routes to the best expert',
+  description: 'Just ask your question - AI analyzes it and routes to the best expert automatically. Great for new users.',
   icon: <Sparkles className="h-5 w-5" />,
-  features: ['Auto-routing', 'Suggestions', 'Model switching'],
+  features: [
+    'AI analyzes your question intent',
+    'Automatic expert matching & routing',
+    'Smart follow-up suggestions',
+  ],
   color: 'violet',
   bgGradient: 'from-violet-500/10 via-violet-400/5 to-transparent',
   route: '/ask-expert/interactive?mode=auto',
@@ -81,9 +85,13 @@ const MODE_3: ModeConfig = {
   mode: 3,
   title: 'Autonomous Manual',
   nickname: 'Mission Control',
-  description: 'You pick template & approve checkpoints',
+  description: 'Launch deep research missions with structured templates. You review plans and approve key checkpoints.',
   icon: <Target className="h-5 w-5" />,
-  features: ['User picks template', 'Plan approval', 'Checkpoints'],
+  features: [
+    'Choose from research templates',
+    'Review & approve execution plans',
+    'Checkpoint-based progress tracking',
+  ],
   color: 'emerald',
   bgGradient: 'from-emerald-500/10 via-emerald-400/5 to-transparent',
   route: '/ask-expert/autonomous?mode=manual',
@@ -93,9 +101,13 @@ const MODE_4: ModeConfig = {
   mode: 4,
   title: 'Autonomous Auto',
   nickname: 'Background Mission',
-  description: 'Fire & forget with full autonomy',
+  description: 'Submit complex research tasks and let AI handle everything. Get notified when your report is ready.',
   icon: <Zap className="h-5 w-5" />,
-  features: ['Fire & forget', 'Full autonomy', 'Self-correction'],
+  features: [
+    'Fire-and-forget research tasks',
+    'AI self-corrects and adapts',
+    'Email notification on completion',
+  ],
   color: 'amber',
   bgGradient: 'from-amber-500/10 via-amber-400/5 to-transparent',
   route: '/ask-expert/autonomous?mode=auto',
@@ -182,108 +194,81 @@ export default function AskExpertLandingPage() {
   const router = useRouter();
 
   return (
-    <div className="container max-w-5xl mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Ask Expert</h1>
-        <p className="text-muted-foreground">
-          Choose your interaction style and agent selection mode
-        </p>
-      </div>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Main Content - Scrollable (breadcrumb now in global header) */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-5xl mx-auto p-6 space-y-6">
+          {/* Matrix Container */}
+          <div className="relative max-w-4xl mx-auto">
+            {/* X-Axis Labels */}
+            <div className="flex justify-between items-center mb-4 px-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <User className="h-4 w-4" />
+                <span className="font-medium">Manual Selection</span>
+              </div>
+              <div className="flex-1 h-px bg-gradient-to-r from-blue-200 via-transparent to-amber-200 mx-4" />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Sparkles className="h-4 w-4" />
+                <span className="font-medium">Automatic Selection</span>
+              </div>
+            </div>
 
-      {/* Matrix Container */}
-      <div className="relative max-w-4xl mx-auto">
-        {/* Y-Axis Label (Left) - INTERACTIVE */}
-        <div className="absolute -left-16 top-1/2 -translate-y-1/2 hidden lg:flex flex-col items-center gap-2">
-          <ArrowUp className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground font-medium tracking-wider uppercase vertical-text">
-            Interactive
-          </span>
-        </div>
+            {/* 2x2 Matrix Grid - Mode 4 top-right, Mode 1 bottom-left */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* TOP ROW - Automatic Selection */}
+              <ModeCard config={MODE_2} /> {/* Top-Left: Mode 2 (Interactive + Auto) */}
+              <ModeCard config={MODE_4} /> {/* Top-Right: Mode 4 (Autonomous + Auto) */}
 
-        {/* Y-Axis Label (Right) - AUTONOMOUS */}
-        <div className="absolute -right-16 top-1/2 -translate-y-1/2 hidden lg:flex flex-col items-center gap-2">
-          <ArrowDown className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground font-medium tracking-wider uppercase vertical-text">
-            Autonomous
-          </span>
-        </div>
+              {/* BOTTOM ROW - Manual Selection */}
+              <ModeCard config={MODE_1} /> {/* Bottom-Left: Mode 1 (Interactive + Manual) */}
+              <ModeCard config={MODE_3} /> {/* Bottom-Right: Mode 3 (Autonomous + Manual) */}
+            </div>
 
-        {/* X-Axis Labels */}
-        <div className="flex justify-between items-center mb-4 px-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <User className="h-4 w-4" />
-            <span className="font-medium">Manual Selection</span>
+            {/* Y-Axis Labels (Bottom) */}
+            <div className="flex justify-between items-center mt-4 px-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MessageSquare className="h-4 w-4" />
+                <span className="font-medium">Interactive</span>
+              </div>
+              <div className="flex-1 h-px bg-gradient-to-r from-blue-200 via-transparent to-emerald-200 mx-4" />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Target className="h-4 w-4" />
+                <span className="font-medium">Autonomous</span>
+              </div>
+            </div>
           </div>
-          <div className="flex-1 h-px bg-gradient-to-r from-blue-200 via-transparent to-amber-200 mx-4" />
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Sparkles className="h-4 w-4" />
-            <span className="font-medium">Automatic Selection</span>
+
+          {/* Quick Links */}
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Quick Links</p>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <button
+                type="button"
+                onClick={() => router.push('/ask-expert/missions')}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Mission History
+              </button>
+              <span className="text-muted-foreground/30">•</span>
+              <button
+                type="button"
+                onClick={() => router.push('/ask-expert/templates')}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Research Templates
+              </button>
+              <span className="text-muted-foreground/30">•</span>
+              <button
+                type="button"
+                onClick={() => router.push('/agents')}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Browse Experts
+              </button>
+            </div>
           </div>
-        </div>
-
-        {/* 2x2 Matrix Grid - Mode 4 top-right, Mode 1 bottom-left */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* TOP ROW - Automatic Selection */}
-          <ModeCard config={MODE_2} /> {/* Top-Left: Mode 2 (Interactive + Auto) */}
-          <ModeCard config={MODE_4} /> {/* Top-Right: Mode 4 (Autonomous + Auto) */}
-
-          {/* BOTTOM ROW - Manual Selection */}
-          <ModeCard config={MODE_1} /> {/* Bottom-Left: Mode 1 (Interactive + Manual) */}
-          <ModeCard config={MODE_3} /> {/* Bottom-Right: Mode 3 (Autonomous + Manual) */}
-        </div>
-
-        {/* Y-Axis Labels (Bottom) */}
-        <div className="flex justify-between items-center mt-4 px-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MessageSquare className="h-4 w-4" />
-            <span className="font-medium">Interactive</span>
-          </div>
-          <div className="flex-1 h-px bg-gradient-to-r from-blue-200 via-transparent to-emerald-200 mx-4" />
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Target className="h-4 w-4" />
-            <span className="font-medium">Autonomous</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Links */}
-      <div className="mt-10 text-center">
-        <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Quick Links</p>
-        <div className="flex items-center justify-center gap-4 flex-wrap">
-          <button
-            type="button"
-            onClick={() => router.push('/ask-expert/missions')}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Mission History
-          </button>
-          <span className="text-muted-foreground/30">•</span>
-          <button
-            type="button"
-            onClick={() => router.push('/ask-expert/templates')}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Research Templates
-          </button>
-          <span className="text-muted-foreground/30">•</span>
-          <button
-            type="button"
-            onClick={() => router.push('/agents')}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Browse Experts
-          </button>
         </div>
       </div>
-
-      {/* Add vertical text CSS */}
-      <style jsx>{`
-        .vertical-text {
-          writing-mode: vertical-rl;
-          text-orientation: mixed;
-        }
-      `}</style>
     </div>
   );
 }

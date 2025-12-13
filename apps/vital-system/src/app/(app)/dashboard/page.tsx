@@ -1,6 +1,9 @@
 /**
  * Dashboard Page
  * Central hub for all 4 services with strategic and operational views
+ *
+ * Brand: "Human Genius, Amplified"
+ * Design System: VITAL Brand Guidelines v6.0
  */
 
 'use client';
@@ -18,7 +21,6 @@ import {
   Box,
   Play,
   Clock,
-  CheckCircle2,
   AlertCircle,
   TrendingUp,
   Activity,
@@ -26,14 +28,57 @@ import {
   Zap,
   BarChart3,
   ArrowRight,
+  Brain,
+  Network,
+  Cog,
 } from 'lucide-react';
+import { BRAND_MESSAGING, VALUE_CYCLE } from '@/lib/brand/brand-tokens';
+
+// Map icon names to Lucide components for VALUE_CYCLE
+const VALUE_ICONS: Record<string, typeof Brain> = {
+  Brain,
+  Network,
+  Cog,
+  TrendingUp,
+};
 
 export default function DashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-[#FAFAF9]">
+      {/* Hero Section - Brand Messaging */}
+      <section className="border-b border-stone-200 bg-gradient-to-r from-vital-primary-50 to-[#FAFAF9]">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold text-stone-800 mb-2">
+                {BRAND_MESSAGING.tagline}
+              </h1>
+              <p className="text-stone-600 max-w-xl">
+                {BRAND_MESSAGING.philosophy}
+              </p>
+            </div>
+            <div className="hidden lg:flex items-center gap-6">
+              {VALUE_CYCLE.map((item) => {
+                const Icon = VALUE_ICONS[item.icon] || Brain;
+                return (
+                  <div key={item.id} className="flex flex-col items-center text-center">
+                    <div className="w-10 h-10 rounded-xl bg-vital-primary-100 flex items-center justify-center mb-2">
+                      <Icon size={20} className="text-vital-primary-600" />
+                    </div>
+                    <span className="text-xs font-semibold text-vital-primary-600">
+                      {item.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Page Header */}
       <PageHeader
         icon={BarChart3}

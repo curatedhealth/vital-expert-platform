@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         // Mode 3: agent_id is provided for manual selection
         agent_id: effectiveAgentId,
         goal,
-        template_id: template_id || 'deep-research', // Default template
+        template_id: template_id || 'comprehensive_analysis', // Default: deep research template
         inputs: options.inputs || {},
         budget_limit: options.budget_limit,
         timeout_minutes: options.timeout_minutes || 60,

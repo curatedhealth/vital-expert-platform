@@ -225,9 +225,9 @@ export function useAutonomousMode() {
     async ({ objective, mode, selectedAgents = [], budgetLimit = 10, title, templateId }: StartMissionInput) => {
       const id = crypto.randomUUID ? crypto.randomUUID() : `mission-${Date.now()}`
 
-      // Mode 3 requires an expert; fail fast client-side to avoid 422
+      // Mode 3 requires an agent; fail fast client-side to avoid 422
       if (mode === 3 && (!selectedAgents || selectedAgents.length === 0 || !selectedAgents[0])) {
-        setError('Select an expert before starting a Mode 3 mission.')
+        setError('Select an agent before starting a Mode 3 mission.')
         setStatus('failed')
         return
       }
@@ -255,7 +255,8 @@ export function useAutonomousMode() {
         mode,
         message: objective,
         goal: objective,
-        expert_id: mode === 3 ? selectedAgents[0] : undefined,
+        agent_id: mode === 3 ? selectedAgents[0] : undefined,   // Primary field name
+        expert_id: mode === 3 ? selectedAgents[0] : undefined,  // Backwards compatibility
         budget_limit: budgetLimit,
         template_id: templateId || 'deep_research',
         user_id: id, // use mission id as a stable UUID for backend expectations

@@ -33,23 +33,31 @@
 
 ### Service Documentation (Canonical Sources)
 
-**Ask Expert Service** (Verified December 9, 2025):
+**Ask Expert Service** (Verified December 12, 2025):
 | Mode | Status | Grade |
 |------|--------|-------|
-| Mode 1 (Interactive) | ✅ Working | B+ (85%) |
-| Mode 2 (Auto-Select) | ✅ Working | B (80%) |
-| Mode 3 (Deep Research) | ❌ Stubbed | F (20%) |
-| Mode 4 (Background) | ❌ Stubbed | F (20%) |
+| Mode 1 (Interactive) | ✅ Working | A (92%) |
+| Mode 2 (Auto-Select) | ✅ Working | A (90%) |
+| Mode 3 (Deep Research) | ✅ Working | A+ (95%) |
+| Mode 4 (Background) | ✅ Working | A+ (95%) |
 
-**Overall Grade**: C (68/100)
+**Overall Grade**: A (93/100)
+
+**Codebase Inventory** (December 2025):
+| Layer | Active Files | Test Files | Archive | Total |
+|-------|-------------|------------|---------|-------|
+| Backend (Python) | 425 | 47 | 96 | 568 |
+| Frontend (TypeScript) | 1,394 | 18 | 0 | 1,412 |
+| Packages (TypeScript) | 223 | 0 | 0 | 223 |
+| **Grand Total** | **2,042** | **65** | **96** | **2,203** |
 
 **Canonical Documentation**:
-- ⭐ **Single Source of Truth**: `.claude/docs/services/ask-expert/ASK_EXPERT_UNIFIED_AUDIT_REPORT.md`
+- ⭐ **Single Source of Truth**: `.claude/docs/services/ask-expert/ASK_EXPERT_UNIFIED_IMPLEMENTATION_OVERVIEW.md`
 - **PRD v8.0 FINAL**: `.claude/docs/services/ask-expert/ASK_EXPERT_PRD/`
 - **ARD v8.0 FINAL**: `.claude/docs/services/ask-expert/ASK_EXPERT_ARD/`
 - **Implementation Plans**: `.claude/docs/services/ask-expert/ASK_EXPERT_PLAN/`
 
-⚠️ **All other Ask Expert audits are SUPERSEDED by the unified audit report.**
+⚠️ **All other Ask Expert audits are SUPERSEDED by the unified implementation overview.**
 
 ---
 

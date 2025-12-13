@@ -20,7 +20,7 @@ export {
   type PromptSubSuiteFilterProps,
 } from './PromptSubSuiteFilter';
 
-// CRUD Modals
+// CRUD Modals (Legacy - state-based)
 export {
   PromptEditModal,
   PromptDeleteModal,
@@ -28,7 +28,13 @@ export {
   generatePromptSlug,
   COMPLEXITY_OPTIONS,
   DOMAIN_OPTIONS,
+  TASK_TYPE_OPTIONS,
+  PATTERN_TYPE_OPTIONS,
+  STATUS_OPTIONS,
   type Prompt,
   type PromptEditModalProps,
   type PromptDeleteModalProps,
 } from './PromptModals';
+
+// CRUD Modals (V2 - React Hook Form + Zod)
+export { PromptEditModalV2 } from './PromptEditModalV2';

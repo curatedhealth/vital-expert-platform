@@ -138,19 +138,6 @@ export function AppSidebar({
 
   return (
     <Sidebar collapsible="icon" className={cn("border-r border-border/40 bg-sidebar", className)} {...props}>
-      <SidebarHeader className="px-3 py-3 border-b border-border/40 relative">
-        {/* Subtle gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
-
-        <div className="relative flex items-center gap-3">
-          {/* Animated status indicator with glow */}
-          <div className="relative">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
-            <div className="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-ping opacity-75"></div>
-          </div>
-          <span className="text-sm font-semibold text-foreground group-data-[collapsible=icon]:hidden">VITAL Platform</span>
-        </div>
-      </SidebarHeader>
 
       <SidebarContent className="px-3 py-4 space-y-4 overflow-y-auto relative">
         {/* Subtle gradient overlay at top for depth */}

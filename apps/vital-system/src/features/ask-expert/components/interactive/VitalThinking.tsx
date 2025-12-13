@@ -37,19 +37,33 @@ import {
   Scale,
 } from 'lucide-react';
 
-import type { ReasoningEvent } from '../../hooks/useSSEStream';
+// Note: ReasoningEvent type from useSSEStream is not used directly here
+// ThinkingStep has different type values for UI display purposes
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
-export interface ThinkingStep extends Partial<ReasoningEvent> {
+/**
+ * ThinkingStep interface for UI display.
+ * Note: This is intentionally NOT extending ReasoningEvent because
+ * we have different type values and optional/required semantics for UI display.
+ */
+export interface ThinkingStep {
   id: string;
   step: string;
   type?: 'analysis' | 'search' | 'calculation' | 'warning' | 'conclusion' | 'insight' | 'comparison' | 'research';
   timestamp?: Date;
   confidence?: number;
   duration?: number; // milliseconds
+  // Optional fields from ReasoningEvent for compatibility
+  stepIndex?: number;
+  agentLevel?: 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
+  agentId?: string;
+  agentName?: string;
+  content?: string;
+  status?: 'thinking' | 'complete' | 'error';
+  durationMs?: number;
 }
 
 export interface VitalThinkingProps {
@@ -66,7 +80,7 @@ export interface VitalThinkingProps {
 }
 
 // =============================================================================
-// STEP TYPE CONFIG
+// STEP TYPE CONFIG - Maps semantic types to icons
 // =============================================================================
 
 const STEP_TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
@@ -80,6 +94,107 @@ const STEP_TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string;
   comparison: { icon: Scale, color: 'text-cyan-600', bgColor: 'bg-cyan-50' },
   target: { icon: Target, color: 'text-rose-600', bgColor: 'bg-rose-50' },
 };
+
+// =============================================================================
+// WORKFLOW STEP NAME MAPPING - Converts backend step names to user-friendly labels with icons
+// =============================================================================
+
+interface WorkflowStepMapping {
+  label: string;
+  type: keyof typeof STEP_TYPE_CONFIG;
+}
+
+const WORKFLOW_STEP_MAPPING: Record<string, WorkflowStepMapping> = {
+  // Input Processing
+  'process_input': { label: 'Analyzing your question', type: 'analysis' },
+  'analyze_query': { label: 'Understanding your request', type: 'analysis' },
+  'parse_input': { label: 'Processing input', type: 'analysis' },
+
+  // Session & Tenant
+  'load_session': { label: 'Loading context', type: 'analysis' },
+  'validate_tenant': { label: 'Verifying access', type: 'target' },
+  'authenticate': { label: 'Authenticating', type: 'target' },
+
+  // Agent Loading
+  'load_agent': { label: 'Preparing expert', type: 'insight' },
+  'select_agent': { label: 'Selecting expert', type: 'insight' },
+  'agent_selected': { label: 'Expert assigned', type: 'conclusion' },
+
+  // Orchestration
+  'l3_orchestrate': { label: 'Orchestrating specialists', type: 'analysis' },
+  'orchestrate': { label: 'Coordinating response', type: 'analysis' },
+  'delegate': { label: 'Delegating task', type: 'comparison' },
+
+  // RAG & Research
+  'rag_retrieval': { label: 'Searching knowledge base', type: 'search' },
+  'retrieve': { label: 'Retrieving information', type: 'search' },
+  'search_documents': { label: 'Searching documents', type: 'research' },
+  'search_pubmed': { label: 'Searching PubMed', type: 'research' },
+  'search_clinical_trials': { label: 'Searching clinical trials', type: 'research' },
+
+  // Execution
+  'execute_expert': { label: 'Expert analyzing', type: 'insight' },
+  'execute': { label: 'Processing', type: 'analysis' },
+  'run_tool': { label: 'Running tool', type: 'calculation' },
+
+  // Response Generation
+  'generate_response': { label: 'Generating response', type: 'insight' },
+  'synthesize': { label: 'Synthesizing findings', type: 'conclusion' },
+  'format_output': { label: 'Formatting response', type: 'analysis' },
+
+  // Saving & Completion
+  'save_message': { label: 'Saving to history', type: 'conclusion' },
+  'complete': { label: 'Completing', type: 'conclusion' },
+  'done': { label: 'Done', type: 'conclusion' },
+
+  // Error & Validation
+  'validate': { label: 'Validating', type: 'target' },
+  'error': { label: 'Error occurred', type: 'warning' },
+  'retry': { label: 'Retrying', type: 'warning' },
+};
+
+/**
+ * Converts a backend workflow step name to a user-friendly label and type
+ */
+function mapWorkflowStep(stepName: string): WorkflowStepMapping {
+  // Check direct mapping first
+  const mapping = WORKFLOW_STEP_MAPPING[stepName.toLowerCase()];
+  if (mapping) return mapping;
+
+  // Try to match partial patterns
+  const lowerStep = stepName.toLowerCase();
+
+  if (lowerStep.includes('search') || lowerStep.includes('retriev')) {
+    return { label: 'Searching...', type: 'search' };
+  }
+  if (lowerStep.includes('load') || lowerStep.includes('session')) {
+    return { label: 'Loading...', type: 'analysis' };
+  }
+  if (lowerStep.includes('agent') || lowerStep.includes('expert')) {
+    return { label: 'Expert working...', type: 'insight' };
+  }
+  if (lowerStep.includes('generat') || lowerStep.includes('response')) {
+    return { label: 'Generating...', type: 'insight' };
+  }
+  if (lowerStep.includes('save') || lowerStep.includes('complete')) {
+    return { label: 'Finishing...', type: 'conclusion' };
+  }
+  if (lowerStep.includes('valid') || lowerStep.includes('check')) {
+    return { label: 'Validating...', type: 'target' };
+  }
+  if (lowerStep.includes('error') || lowerStep.includes('fail')) {
+    return { label: 'Issue detected', type: 'warning' };
+  }
+
+  // Fallback: humanize the step name
+  const humanized = stepName
+    .replace(/_/g, ' ')
+    .replace(/([A-Z])/g, ' $1')
+    .trim()
+    .replace(/^\w/, c => c.toUpperCase());
+
+  return { label: humanized || 'Processing...', type: 'analysis' };
+}
 
 // =============================================================================
 // COMPONENT
@@ -281,8 +396,17 @@ interface ThinkingStepCardProps {
 
 const ThinkingStepCard = forwardRef<HTMLDivElement, ThinkingStepCardProps>(
   function ThinkingStepCard({ step, index, isLast }, ref) {
-    const config = STEP_TYPE_CONFIG[step.type || 'analysis'] || STEP_TYPE_CONFIG.analysis;
+    // Map workflow step name to user-friendly label and type
+    const mappedStep = mapWorkflowStep(step.step);
+
+    // Use mapped type to get icon config, fallback to explicit type if provided
+    const config = STEP_TYPE_CONFIG[step.type || mappedStep.type] || STEP_TYPE_CONFIG.analysis;
     const Icon = config.icon;
+
+    // Use content if available (for real-time LLM tokens), otherwise use mapped label
+    const displayText = step.content && step.content.length > 0
+      ? step.content
+      : mappedStep.label;
 
     return (
       <motion.div
@@ -292,7 +416,7 @@ const ThinkingStepCard = forwardRef<HTMLDivElement, ThinkingStepCardProps>(
         transition={{ delay: index * 0.05 }}
         className="flex items-start gap-3"
       >
-        {/* Step number and icon */}
+        {/* Step icon (no numbers - just adaptive icons) */}
         <div className="flex flex-col items-center gap-1">
           <div className={cn(
             'w-6 h-6 rounded-full flex items-center justify-center',
@@ -305,10 +429,10 @@ const ThinkingStepCard = forwardRef<HTMLDivElement, ThinkingStepCardProps>(
           )}
         </div>
 
-        {/* Step content */}
+        {/* Step content - shows user-friendly label or real LLM content */}
         <div className="flex-1 min-w-0 pb-2">
           <p className="text-sm text-slate-700">
-            {step.step}
+            {displayText}
           </p>
 
           {/* Metadata row */}

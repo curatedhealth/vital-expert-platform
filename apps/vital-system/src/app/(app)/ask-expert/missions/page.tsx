@@ -39,8 +39,8 @@ export default function MissionsPage() {
       mode: Number(mode),
       goal,
       template_id: selectedTemplate,
-      // Mode 3 requires expert_id; placeholder null for now (frontend to supply real)
-      expert_id: mode === '3' ? 'expert-required' : undefined,
+      // Mode 3 requires agent_id; placeholder null for now (frontend to supply real)
+      agent_id: mode === '3' ? 'agent-required' : undefined,
       user_context: {},
     };
     const res = await fetch('/api/v1/missions', {

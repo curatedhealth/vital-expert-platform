@@ -7,30 +7,28 @@
  * User browses and selects an expert from categorized cards.
  *
  * Features:
- * - Category-based filtering (by department/function)
- * - Search functionality
  * - Expert cards with avatar, name, expertise, level badge
- * - Hover preview with detailed capabilities
- * - Keyboard navigation support
+ * - Grouped by expertise level (L1-L4)
+ * - User guide with collapsible instructions
+ * - Hover preview with selection indicator
  *
  * Design System: VITAL Brand v6.0 - Blue theme for interactive modes
- * Phase 2 Implementation - December 11, 2025
+ * Updated: December 12, 2025 - Simplified UI, removed header/search/filters
  */
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Search,
-  Sparkles,
   Users,
   ChevronRight,
-  Filter,
+  ChevronDown,
   X,
+  BookOpen,
+  Lightbulb,
 } from 'lucide-react';
 
 // =============================================================================
@@ -62,8 +60,6 @@ export interface ExpertPickerProps {
   onSelect: (expert: Expert) => void;
   /** Called to switch to Mode 2 */
   onModeSwitch?: () => void;
-  /** Pre-selected category filter */
-  initialCategory?: string;
   /** Custom class names */
   className?: string;
 }
@@ -185,7 +181,6 @@ export function ExpertPicker({
   tenantId,
   onSelect,
   onModeSwitch,
-  initialCategory,
   className,
 }: ExpertPickerProps) {
   // =========================================================================
@@ -195,9 +190,8 @@ export function ExpertPicker({
   const [experts, setExperts] = useState<Expert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory || null);
   const [hoveredExpert, setHoveredExpert] = useState<Expert | null>(null);
+  const [showGuide, setShowGuide] = useState(true);
 
   // =========================================================================
   // DATA FETCHING
@@ -258,45 +252,8 @@ export function ExpertPicker({
   // COMPUTED VALUES
   // =========================================================================
 
-  // Extract unique categories (departments/functions)
-  const categories = useMemo(() => {
-    const depts = new Set<string>();
-    experts.forEach(e => {
-      if (e.department) depts.add(e.department);
-      if (e.function) depts.add(e.function);
-    });
-    return Array.from(depts).sort();
-  }, [experts]);
-
-  // Filter experts by search and category
-  const filteredExperts = useMemo(() => {
-    return experts.filter(expert => {
-      // Category filter
-      if (selectedCategory) {
-        const matchesCategory =
-          expert.department === selectedCategory ||
-          expert.function === selectedCategory;
-        if (!matchesCategory) return false;
-      }
-
-      // Search filter
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const searchableText = [
-          expert.name,
-          expert.tagline,
-          expert.description,
-          expert.domain,
-          ...(expert.capabilities || []),
-          ...(expert.expertise || []),
-        ].filter(Boolean).join(' ').toLowerCase();
-
-        if (!searchableText.includes(query)) return false;
-      }
-
-      return true;
-    });
-  }, [experts, selectedCategory, searchQuery]);
+  // All active experts (no filtering since search/category UI removed)
+  const filteredExperts = useMemo(() => experts, [experts]);
 
   // Group experts by level for display
   const groupedExperts = useMemo(() => {
@@ -321,14 +278,6 @@ export function ExpertPicker({
   // HANDLERS
   // =========================================================================
 
-  const handleCategorySelect = useCallback((category: string | null) => {
-    setSelectedCategory(prev => prev === category ? null : category);
-  }, []);
-
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  }, []);
-
   const handleExpertClick = useCallback((expert: Expert) => {
     onSelect(expert);
   }, [onSelect]);
@@ -339,90 +288,95 @@ export function ExpertPicker({
 
   return (
     <div className={cn('flex flex-col h-full', className)}>
-      {/* Header */}
-      <div className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-white">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">
-              Choose Your Expert
-            </h1>
-            <p className="text-sm text-slate-600 mt-1">
-              Select a specialist to start your conversation
-            </p>
-          </div>
+      {/* User Guide Section - Collapsible */}
+      <AnimatePresence>
+        {showGuide && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-6 py-4 bg-gradient-to-r from-blue-50 via-blue-50/50 to-white border-b">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-blue-100">
+                    <BookOpen className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <h2 className="text-sm font-semibold text-slate-800">How Expert Chat Works</h2>
+                </div>
+                <button
+                  onClick={() => setShowGuide(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition-colors"
+                  aria-label="Dismiss guide"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
 
-          {/* Mode Switch Button */}
-          {onModeSwitch && (
-            <Button
-              variant="outline"
-              onClick={onModeSwitch}
-              className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
-            >
-              <Sparkles className="h-4 w-4" />
-              Let AI Choose
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Step 1 */}
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-white/70 border border-blue-100">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold shrink-0">
+                    1
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">Browse Experts</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Search or filter by category to find the right specialist
+                    </p>
+                  </div>
+                </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            type="text"
-            placeholder="Search experts by name, expertise, or capability..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="pl-10 bg-white"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+                {/* Step 2 */}
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-white/70 border border-blue-100">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold shrink-0">
+                    2
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">Select an Expert</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Click on a card to choose that expert for your conversation
+                    </p>
+                  </div>
+                </div>
 
-        {/* Category Filter Pills */}
-        {categories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            <Button
-              variant={selectedCategory === null ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleCategorySelect(null)}
-              className={cn(
-                'h-7 text-xs',
-                selectedCategory === null && 'bg-blue-600 hover:bg-blue-700'
-              )}
-            >
-              <Users className="h-3 w-3 mr-1" />
-              All Experts
-            </Button>
-            {categories.slice(0, 8).map(category => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => handleCategorySelect(category)}
-                className={cn(
-                  'h-7 text-xs',
-                  selectedCategory === category && 'bg-blue-600 hover:bg-blue-700'
-                )}
-              >
-                {category}
-              </Button>
-            ))}
-            {categories.length > 8 && (
-              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500">
-                <Filter className="h-3 w-3 mr-1" />
-                +{categories.length - 8} more
-              </Button>
-            )}
-          </div>
+                {/* Step 3 */}
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-white/70 border border-blue-100">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold shrink-0">
+                    3
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">Start Chatting</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Use suggested prompts or ask your own questions
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-400 mt-3 flex items-center gap-1">
+                <Lightbulb className="h-3 w-3" />
+                Tip: Not sure which expert to pick? Try &quot;Let AI Choose&quot; for automatic matching.
+              </p>
+            </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
+
+      {/* Show collapsed guide toggle when hidden */}
+      {!showGuide && (
+        <button
+          onClick={() => setShowGuide(true)}
+          className="flex items-center gap-2 px-6 py-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50/50 border-b transition-colors"
+        >
+          <BookOpen className="h-3.5 w-3.5" />
+          <span>Show user guide</span>
+          <ChevronDown className="h-3.5 w-3.5" />
+        </button>
+      )}
+
 
       {/* Expert Grid */}
       <div className="flex-1 overflow-auto p-6">
@@ -442,16 +396,7 @@ export function ExpertPicker({
         ) : filteredExperts.length === 0 ? (
           <div className="text-center py-12">
             <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-600">No experts found</p>
-            {searchQuery && (
-              <Button
-                variant="link"
-                onClick={() => setSearchQuery('')}
-                className="mt-2 text-blue-600"
-              >
-                Clear search
-              </Button>
-            )}
+            <p className="text-slate-600">No experts available</p>
           </div>
         ) : (
           <div className="space-y-8">

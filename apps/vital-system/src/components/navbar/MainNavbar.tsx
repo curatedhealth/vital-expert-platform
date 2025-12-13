@@ -69,7 +69,7 @@ import { TenantSwitcher } from '@/components/tenant-switcher'
 import { cn } from '@/lib/utils'
 
 // ============================================
-// NAVIGATION STRUCTURE: Hub | Consult | Craft | Discover | Optimize
+// NAVIGATION STRUCTURE: Hub | Consult | Discover | Craft | Optimize
 // ============================================
 
 // CONSULT - AI consultation services
@@ -353,49 +353,6 @@ export function MainNavbar() {
               </NavigationMenuContent>
             </NavigationMenuItem>
 
-            {/* CRAFT - Build and design tools */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger
-                className={cn(
-                  craftItems.some(item => isPathActive(item.href)) && 'bg-accent/50'
-                )}
-              >
-                <Palette className="mr-2 h-4 w-4" />
-                Craft
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <div className="relative w-[450px]">
-                  <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-orange-500/5 pointer-events-none rounded-lg" />
-
-                  <div className="relative p-5 pb-3 border-b border-border/50">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-gradient-to-br from-pink-500/20 to-orange-500/20">
-                        <Palette className="h-5 w-5 text-pink-600 dark:text-pink-400" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold">Craft</h4>
-                        <p className="text-xs text-muted-foreground">Build and design your AI solutions</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <ul className="relative grid gap-2 p-4">
-                    {craftItems.map((item) => (
-                      <ListItem
-                        key={item.href}
-                        title={item.label}
-                        href={item.href}
-                        icon={item.icon}
-                        description={item.description}
-                      />
-                    ))}
-                  </ul>
-
-                  <div className="h-1 w-full bg-gradient-to-r from-pink-500/20 via-orange-500/20 to-transparent" />
-                </div>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-
             {/* DISCOVER - Browse and explore */}
             <NavigationMenuItem>
               <NavigationMenuTrigger
@@ -439,6 +396,49 @@ export function MainNavbar() {
               </NavigationMenuContent>
             </NavigationMenuItem>
 
+            {/* CRAFT - Build and design tools */}
+            <NavigationMenuItem>
+              <NavigationMenuTrigger
+                className={cn(
+                  craftItems.some(item => isPathActive(item.href)) && 'bg-accent/50'
+                )}
+              >
+                <Palette className="mr-2 h-4 w-4" />
+                Craft
+              </NavigationMenuTrigger>
+              <NavigationMenuContent>
+                <div className="relative w-[500px]">
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-orange-500/5 pointer-events-none rounded-lg" />
+
+                  <div className="relative p-5 pb-3 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-pink-500/20 to-orange-500/20">
+                        <Palette className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold">Craft</h4>
+                        <p className="text-xs text-muted-foreground">Build and design your AI solutions</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <ul className="relative grid gap-2 p-4 md:grid-cols-2">
+                    {craftItems.map((item) => (
+                      <ListItem
+                        key={item.href}
+                        title={item.label}
+                        href={item.href}
+                        icon={item.icon}
+                        description={item.description}
+                      />
+                    ))}
+                  </ul>
+
+                  <div className="h-1 w-full bg-gradient-to-r from-pink-500/20 via-orange-500/20 to-transparent" />
+                </div>
+              </NavigationMenuContent>
+            </NavigationMenuItem>
+
             {/* OPTIMIZE - Analytics and insights */}
             <NavigationMenuItem>
               <NavigationMenuTrigger
@@ -450,7 +450,7 @@ export function MainNavbar() {
                 Optimize
               </NavigationMenuTrigger>
               <NavigationMenuContent>
-                <div className="relative w-[380px]">
+                <div className="relative w-[500px]">
                   <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-emerald-500/5 pointer-events-none rounded-lg" />
 
                   <div className="relative p-5 pb-3 border-b border-border/50">
@@ -465,7 +465,7 @@ export function MainNavbar() {
                     </div>
                   </div>
 
-                  <ul className="relative grid gap-2 p-4">
+                  <ul className="relative grid gap-2 p-4 md:grid-cols-2">
                     {optimizeItems.map((item) => (
                       <ListItem
                         key={item.href}
@@ -699,9 +699,9 @@ export function MainNavbar() {
 
           <CommandSeparator />
 
-          {/* Craft */}
-          <CommandGroup heading="Craft">
-            {craftItems.map((item) => (
+          {/* Discover */}
+          <CommandGroup heading="Discover">
+            {discoverItems.map((item) => (
               <CommandItem
                 key={item.href}
                 onSelect={() => handleCommandSelect(() => router.push(item.href))}
@@ -714,9 +714,9 @@ export function MainNavbar() {
 
           <CommandSeparator />
 
-          {/* Discover */}
-          <CommandGroup heading="Discover">
-            {discoverItems.map((item) => (
+          {/* Craft */}
+          <CommandGroup heading="Craft">
+            {craftItems.map((item) => (
               <CommandItem
                 key={item.href}
                 onSelect={() => handleCommandSelect(() => router.push(item.href))}

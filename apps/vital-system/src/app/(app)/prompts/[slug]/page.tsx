@@ -6,19 +6,31 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { PageHeader } from '@/components/page-header';
 import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
+
+// Import Vital Forms Library for inline editing
+import {
+  VitalForm,
+  VitalFormGrid,
+  VitalFormSection,
+  useVitalForm,
+  VitalInputField,
+  VitalTextareaField,
+  VitalSelectField,
+  VitalSwitchField,
+  VitalTagInputField,
+} from '@/lib/forms';
+import {
+  editPromptSchema,
+  type Prompt as PromptType,
+  COMPLEXITY_OPTIONS,
+  DOMAIN_OPTIONS,
+  TASK_TYPE_OPTIONS,
+  PATTERN_TYPE_OPTIONS,
+  STATUS_OPTIONS,
+} from '@/lib/forms/schemas';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import {
   ArrowLeft,
@@ -167,7 +179,7 @@ function PromptDetailContent({ slug }: { slug: string }) {
 
   // Check if edit mode is requested via query param
   const editParam = searchParams.get('edit');
-  const startInEditMode = editParam === 'true' && isAdmin;
+  const startInEditMode = editParam === 'true';
 
   const [prompt, setPrompt] = useState<Prompt | null>(null);
   const [loading, setLoading] = useState(true);
@@ -397,7 +409,7 @@ function PromptDetailContent({ slug }: { slug: string }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && !isEditing && (
+          {!isEditing && (
             <>
               <Button variant="outline" onClick={() => setIsEditing(true)}>
                 <Pencil className="h-4 w-4 mr-2" />

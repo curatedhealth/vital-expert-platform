@@ -222,7 +222,8 @@ export function WorkflowTestModal({
     // Add agent/expert information if available
     if (msg.agentName) {
       chatMsg.name = msg.agentName;
-      chatMsg.expertId = msg.agentId;
+      chatMsg.agentId = msg.agentId;
+      chatMsg.expertId = msg.agentId; // Deprecated - for backwards compat
     }
     
     // Mark consensus/summary messages

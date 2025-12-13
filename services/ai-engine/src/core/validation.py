@@ -156,7 +156,13 @@ def is_valid_uuid(value: Any) -> bool:
     Accepts:
     - UUID objects
     - Valid UUID strings (with or without hyphens)
-    - None (returns False)
+
+    Rejects:
+    - None (Python None)
+    - "None" (string literal - common serialization artifact)
+    - "null" (JSON null serialized as string)
+    - "undefined" (JavaScript undefined serialized as string)
+    - Empty strings
     """
     if value is None:
         return False
@@ -165,6 +171,10 @@ def is_valid_uuid(value: Any) -> bool:
         return True
 
     if not isinstance(value, str):
+        return False
+
+    # Reject common string representations of null values
+    if value in ("None", "null", "undefined", ""):
         return False
 
     # Remove hyphens and check format

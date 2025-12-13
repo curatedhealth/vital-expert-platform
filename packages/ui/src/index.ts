@@ -45,6 +45,9 @@ export * from './components/agents';
 // AI Components
 export * from './components/ai/inline-citation';
 
+// Marketing Components (landing pages)
+export * from './components/marketing';
+
 // Types (canonical)
 export * from './types';
 

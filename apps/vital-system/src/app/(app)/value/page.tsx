@@ -14,6 +14,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Layers,
@@ -139,6 +140,19 @@ export default function ValuePage() {
     vpanes,
     getActiveFilterCount,
   } = useValueViewStore()
+
+  // URL params for bookmarkable view mode
+  const searchParams = useSearchParams()
+
+  // Sync URL params to Zustand on mount and URL change
+  useEffect(() => {
+    const urlView = searchParams.get('view')
+    if (urlView && ['stack', 'radar', 'heatmap', 'flow', 'metrics', 'list'].includes(urlView)) {
+      if (urlView !== viewMode) {
+        setViewMode(urlView as ViewMode)
+      }
+    }
+  }, [searchParams, viewMode, setViewMode])
 
   // Local state for AI Companion
   const [messages, setMessages] = useState<AICompanionMessage[]>([])

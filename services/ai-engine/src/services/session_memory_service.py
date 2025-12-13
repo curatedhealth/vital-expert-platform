@@ -52,8 +52,17 @@ logger = structlog.get_logger()
 import uuid as uuid_module
 
 def _is_valid_uuid(value) -> bool:
-    """Check if a value is a valid UUID format."""
-    if value is None or value == "anonymous" or value == "None":
+    """Check if a value is a valid UUID format.
+
+    Explicitly rejects:
+    - None (Python None)
+    - "None" (string literal - common serialization artifact)
+    - "anonymous" (placeholder value)
+    - "null" (JSON null serialized as string)
+    - "undefined" (JavaScript undefined serialized as string)
+    - Empty strings
+    """
+    if not value or value in ("anonymous", "None", "null", "undefined"):
         return False
     try:
         uuid_module.UUID(str(value))

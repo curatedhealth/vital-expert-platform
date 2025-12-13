@@ -493,7 +493,7 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
             <StreamingPanelConsultation
               question={question}
               panelId={panel.id}
-              expertIds={activeAgents.map(a => a.id)}
+              agentIds={activeAgents.map(a => a.id)}
               tenantId={STARTUP_TENANT_ID}
               enableDebate={true}
               maxRounds={3}

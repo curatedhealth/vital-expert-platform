@@ -126,8 +126,9 @@ class ActionItemExtractorService {
     console.log('🎯 Extracting action items from panel discussion...');
 
     // Build context from expert replies
+    // Support both agentId (new) and expertId (deprecated) for backwards compat
     const expertContext = expertReplies
-      .map(reply => `**${reply.expertName || reply.expertId}:**\n${reply.content}`)
+      .map(reply => `**${reply.agentName || reply.expertName || reply.agentId || reply.expertId}:**\n${reply.content}`)
       .join('\n\n');
 
     const prompt = `You are an expert project manager analyzing a pharmaceutical advisory board discussion.

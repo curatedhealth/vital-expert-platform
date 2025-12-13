@@ -9,7 +9,7 @@
  * Features:
  * - User and assistant message styling
  * - Expert avatar for assistant messages
- * - Inline citation markers with hover preview
+ * - Inline citation markers with hover preview (via VitalStreamText)
  * - Expandable reasoning section
  * - Artifact card integration
  * - Tool call display
@@ -17,6 +17,7 @@
  *
  * Design System: VITAL Brand v6.0
  * Phase 2 Implementation - December 11, 2025
+ * Updated: December 12, 2025 - Unified rendering with VitalStreamText for consistent formatting
  */
 
 import { useState, useCallback, useMemo } from 'react';
@@ -30,13 +31,13 @@ import {
   ChevronDown,
   Brain,
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
 
 import type { Expert } from './ExpertPicker';
 import type { CitationEvent, ReasoningEvent, ToolCallEvent, ArtifactEvent } from '../../hooks/useSSEStream';
 import { CitationList } from './CitationList';
 import { ToolCallList } from './ToolCallList';
 import { VitalLevelBadge } from './AgentSelectionCard';
+import { VitalStreamText, type CitationData } from '@/components/vital-ai-ui/conversation/VitalStreamText';
 
 // =============================================================================
 // TYPES
@@ -100,18 +101,35 @@ export function VitalMessage({
   }, []);
 
   // =========================================================================
-  // CONTENT WITH CITATION MARKERS
+  // CITATIONS CONVERSION FOR VITASTREAMTEXT
   // =========================================================================
 
-  const contentWithCitations = useMemo(() => {
+  /**
+   * Convert CitationEvent[] to CitationData[] for VitalStreamText
+   * This ensures consistent rendering between streaming and completed messages
+   *
+   * CitationEvent has: id, index, source, title, excerpt, url, confidence, metadata
+   * CitationData needs: id, index, source, title, excerpt?, url?, confidence?, authors?, date?
+   */
+  const citationsForStreamText = useMemo((): CitationData[] => {
     if (!message.citations || message.citations.length === 0) {
-      return message.content;
+      return [];
     }
 
-    // Insert citation markers [1], [2], etc. based on citation references in text
-    // This is a simplified version - real implementation would parse citation refs
-    return message.content;
-  }, [message.content, message.citations]);
+    return message.citations.map((citation, idx) => ({
+      id: citation.id || `citation-${idx}`,
+      index: citation.index ?? idx + 1,
+      source: citation.source || 'Unknown Source',
+      title: citation.title || 'Untitled',
+      excerpt: citation.excerpt,
+      url: citation.url,
+      confidence: citation.confidence,
+      // Extract authors and date from metadata if available
+      authors: (citation.metadata?.authors as string[]) || undefined,
+      date: (citation.metadata?.date as string) || (citation.metadata?.publication_date as string) || undefined,
+      metadata: citation.metadata,
+    }));
+  }, [message.citations]);
 
   // =========================================================================
   // RENDER
@@ -170,55 +188,40 @@ export function VitalMessage({
           </div>
         )}
 
-        {/* Main message bubble */}
+        {/* Main message container - flat for assistant, bubble for user */}
         <div
           className={cn(
-            'relative rounded-2xl px-4 py-3 max-w-[85%]',
+            'relative',
             isUser
-              ? 'bg-blue-600 text-white ml-auto rounded-br-md'
-              : 'bg-slate-100 text-slate-800 rounded-bl-md'
+              ? 'rounded-2xl px-4 py-3 max-w-[85%] bg-blue-600 text-white ml-auto rounded-br-md'
+              : 'py-2 text-slate-800'
           )}
         >
-          {/* Message content */}
-          <div className={cn(
-            'prose prose-sm max-w-none',
-            isUser && 'prose-invert'
-          )}>
-            <ReactMarkdown
-              components={{
-                // Style links
-                a: ({ children, href }) => (
-                  <a
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(
-                      'underline',
-                      isUser ? 'text-blue-200' : 'text-blue-600'
-                    )}
-                  >
-                    {children}
-                  </a>
-                ),
-                // Style code blocks
-                code: ({ className, children }) => {
-                  const isInline = !className;
-                  return isInline ? (
-                    <code className={cn(
-                      'px-1 py-0.5 rounded text-sm',
-                      isUser ? 'bg-blue-500' : 'bg-slate-200'
-                    )}>
-                      {children}
-                    </code>
-                  ) : (
-                    <code className={className}>{children}</code>
-                  );
-                },
-              }}
-            >
-              {contentWithCitations}
-            </ReactMarkdown>
-          </div>
+          {/* Message content - Using VitalStreamText for unified rendering */}
+          {/* This ensures consistent formatting between streaming and completed messages */}
+          {isUser ? (
+            // User messages - simple text display
+            <div className="prose prose-sm prose-invert max-w-none">
+              <p className="whitespace-pre-wrap">{message.content}</p>
+            </div>
+          ) : (
+            // Assistant messages - rich rendering with VitalStreamText
+            // Provides: syntax highlighting, Mermaid diagrams, inline citation pills
+            <VitalStreamText
+              content={message.content}
+              isStreaming={false} // Completed message, not streaming
+              highlightCode={true}
+              enableMermaid={true}
+              showControls={false} // No copy controls inside bubble (we have our own)
+              citations={citationsForStreamText}
+              inlineCitations={true}
+              className={cn(
+                // Override prose colors for the slate background
+                '[&_.prose]:prose-slate',
+                '[&_a]:text-blue-600 [&_a:hover]:underline'
+              )}
+            />
+          )}
 
           {/* Copy button (on hover) */}
           <Button
@@ -240,7 +243,7 @@ export function VitalMessage({
 
         {/* Reasoning section (assistant only) */}
         {!isUser && message.reasoning && message.reasoning.length > 0 && (
-          <div className="max-w-[85%]">
+          <div>
             <button
               onClick={toggleReasoning}
               className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
@@ -274,9 +277,10 @@ export function VitalMessage({
           </div>
         )}
 
-        {/* Citations (assistant only) */}
-        {!isUser && message.citations && message.citations.length > 0 && (
-          <div className="max-w-[85%]">
+        {/* Citations list (assistant only) - Shows as footer when there are many citations */}
+        {/* Note: Inline citations are handled by VitalStreamText above */}
+        {!isUser && message.citations && message.citations.length > 3 && (
+          <div>
             <CitationList
               citations={message.citations}
               inline={false}
@@ -286,8 +290,8 @@ export function VitalMessage({
 
         {/* Tool Calls (assistant only) */}
         {!isUser && message.toolCalls && message.toolCalls.length > 0 && (
-          <div className="max-w-[85%]">
-            <ToolCallList calls={message.toolCalls} />
+          <div>
+            <ToolCallList calls={message.toolCalls as unknown as import('./ToolCallList').ToolCall[]} />
           </div>
         )}
 

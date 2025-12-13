@@ -7,8 +7,8 @@
  * ARCHITECTURE (Dec 2025):
  * - Mode 1 and Mode 2 use the SAME interactive executor
  * - The only difference is agent selection:
- *   - Mode 1: expert_id is provided (manual selection)
- *   - Mode 2: expert_id is null (Fusion auto-selection)
+ *   - Mode 1: agent_id is provided (manual selection)
+ *   - Mode 2: agent_id is null (Fusion auto-selection)
  *
  * Backend Endpoint: /api/expert/interactive (unified interactive endpoint)
  */
@@ -50,10 +50,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Note: Mode 2 does NOT require expert_id - Fusion Intelligence auto-selects
+    // Note: Mode 2 does NOT require agent_id - Fusion Intelligence auto-selects
 
     // Forward to Python backend - Unified Interactive endpoint
-    // Mode 2 = NO expert_id → backend uses Fusion auto-selection
+    // Mode 2 = NO agent_id → backend uses Fusion auto-selection
     const backendResponse = await fetch(`${AI_ENGINE_URL}/api/expert/interactive`, {
       method: 'POST',
       headers: {

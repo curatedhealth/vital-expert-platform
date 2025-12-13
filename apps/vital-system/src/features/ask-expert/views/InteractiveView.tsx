@@ -4,13 +4,14 @@
  * VITAL Platform - InteractiveView Component
  *
  * Master view for Modes 1 & 2 (Interactive Chat modes):
- * - Mode 1 (Expert Chat): User manually selects an expert via ExpertPicker
+ * - Mode 1 (Expert Chat): User selects an expert via the sidebar, then chats
  * - Mode 2 (Smart Copilot): User types query → FusionSelector AI picks expert
  *
  * Architecture:
- * - Two phases: Selection → Conversation
+ * - Mode 1: Skips to conversation phase; sidebar triggers expert selection via custom event
+ * - Mode 2: Selection phase with FusionSelector → Conversation phase
  * - Uses streamReducer for centralized SSE state management
- * - Blue theme for interactive modes (vs purple for autonomous)
+ * - Purple theme for VITAL brand consistency
  *
  * Note: FusionSelector is SHARED between Mode 2 and Mode 4:
  * - Mode 2: FusionSelector → Interactive conversation
@@ -18,24 +19,22 @@
  * The difference is what happens AFTER expert selection.
  *
  * Design System: VITAL Brand v6.0 (#9055E0)
- * Phase 2 Implementation - December 11, 2025
+ * Phase 2 Implementation - December 12, 2025
  */
 
 import { useState, useReducer, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from '@/lib/auth/supabase-auth-context';
 import {
   Sparkles,
   ChevronRight,
   ChevronDown,
   Loader2,
   MessageSquare,
-  HelpCircle,
   Users,
-  MessageCircle,
-  Lightbulb,
-  X,
+  ArrowLeft,
   type LucideIcon
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
@@ -45,7 +44,7 @@ import { streamReducer, initialStreamState, streamActions, type StreamState } fr
 import { useSSEStream, type TokenEvent, type ReasoningEvent, type CitationEvent, type ToolCallEvent, type DoneEvent, type ErrorEvent } from '../hooks/useSSEStream';
 
 // Components
-import { ExpertPicker, type Expert } from '../components/interactive/ExpertPicker';
+import { type Expert } from '../components/interactive/ExpertPicker';
 import { FusionSelector } from '../components/interactive/FusionSelector';
 import { ExpertHeader } from '../components/interactive/ExpertHeader';
 import { VitalMessage, type Message } from '../components/interactive/VitalMessage';
@@ -55,8 +54,7 @@ import { VitalSuggestionChips, type Suggestion } from '../components/interactive
 // Use enhanced VitalPromptInput from vital-ai-ui (AI enhance, drag-drop, character counter)
 import { VitalPromptInput } from '@/components/vital-ai-ui/conversation/VitalPromptInput';
 
-// Shared breadcrumb component for navigation context
-import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
+// Note: Breadcrumb is handled globally by DashboardHeader - no local import needed
 
 // HITL Components (Human-in-the-Loop)
 import { HITLCheckpointModal, type CheckpointData, type CheckpointDecision } from '../components/interactive/HITLCheckpointModal';
@@ -70,12 +68,40 @@ import { ToolExecutionFeedback, type ToolExecution } from '../components/interac
 
 export type InteractiveMode = 'mode1' | 'mode2';
 
+/** Loaded conversation data for continuing an existing chat */
+export interface LoadedConversation {
+  id: string;
+  title: string;
+  metadata?: {
+    agent_id?: string;
+    mode?: string;
+  };
+  context?: {
+    messages?: Array<{
+      role: string;
+      content: string;
+      timestamp?: string;
+    }>;
+  };
+  agent?: {
+    id: string;
+    name: string;
+    display_name?: string;
+    description?: string;
+    avatar_url?: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
 export interface InteractiveViewProps {
   /** Mode 1 = manual expert selection, Mode 2 = AI selection */
   mode: InteractiveMode;
   /** Tenant ID for multi-tenant isolation */
   tenantId: string;
-  /** Optional pre-selected expert ID (skips selection phase) */
+  /** Optional pre-selected agent ID (skips selection phase) */
+  initialAgentId?: string;
+  /** @deprecated Use initialAgentId instead */
   initialExpertId?: string;
   /** Session ID for conversation continuity */
   sessionId?: string;
@@ -83,6 +109,8 @@ export interface InteractiveViewProps {
   className?: string;
   /** Callback when mode changes */
   onModeChange?: (mode: InteractiveMode) => void;
+  /** Pre-loaded conversation to continue */
+  initialConversation?: LoadedConversation;
 }
 
 export type ViewPhase = 'selection' | 'conversation';
@@ -98,7 +126,7 @@ export type ViewPhase = 'selection' | 'conversation';
 function getPromptStarterIcon(iconName: string | undefined): LucideIcon {
   if (!iconName) return MessageSquare;
   // Dynamic lookup from LucideIcons namespace - no hardcoding needed
-  const Icon = (LucideIcons as Record<string, LucideIcon>)[iconName];
+  const Icon = (LucideIcons as unknown as Record<string, LucideIcon>)[iconName];
   return Icon || MessageSquare;
 }
 
@@ -140,11 +168,19 @@ function createAssistantMessage(
 export function InteractiveView({
   mode,
   tenantId,
-  initialExpertId,
+  initialAgentId,
+  initialExpertId, // Deprecated - use initialAgentId
   sessionId: initialSessionId,
   className,
   onModeChange,
+  initialConversation,
 }: InteractiveViewProps) {
+  // Resolve effective agent ID (initialAgentId takes precedence over deprecated initialExpertId)
+  const effectiveInitialAgentId = initialAgentId || initialExpertId;
+
+  // Auth context for user ID (needed for message persistence)
+  const { user } = useAuth();
+
   // =========================================================================
   // STATE
   // =========================================================================
@@ -152,18 +188,44 @@ export function InteractiveView({
   // Session management
   const [sessionId] = useState(() => initialSessionId || uuidv4());
 
+  // Conversation metadata for display
+  const [conversationMeta, setConversationMeta] = useState<{
+    title: string;
+    createdAt: string;
+    updatedAt: string;
+    messageCount: number;
+  } | null>(null);
+
   // Phase management
   const [phase, setPhase] = useState<ViewPhase>(() => {
-    // Skip selection if we have an initial expert ID
-    if (initialExpertId) return 'conversation';
-    // Mode 1 always starts with selection
-    if (mode === 'mode1') return 'selection';
-    // Mode 2 starts with selection (for query input)
+    // Skip selection if we have a loaded conversation or initial agent ID
+    if (initialConversation || effectiveInitialAgentId) return 'conversation';
+    // Mode 1: Skip to conversation - user picks expert from sidebar
+    // The sidebar will emit 'ask-expert:expert-selected' event when user picks
+    if (mode === 'mode1') return 'conversation';
+    // Mode 2 starts with selection (for query input via FusionSelector)
     return 'selection';
   });
 
   // Expert state
-  const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
+  const [selectedExpert, setSelectedExpert] = useState<Expert | null>(() => {
+    // If we have a loaded conversation with agent data, pre-populate expert
+    if (initialConversation?.agent) {
+      const agent = initialConversation.agent;
+      return {
+        id: agent.id,
+        name: agent.display_name || agent.name,
+        slug: agent.id,
+        domain: agent.description || '',
+        level: 'L2' as const,
+        tier: 2,
+        status: 'active',
+        expertise: [],
+        avatarUrl: agent.avatar_url,
+      };
+    }
+    return null;
+  });
 
   // Message history
   const [messages, setMessages] = useState<Message[]>([]);
@@ -187,11 +249,11 @@ export function InteractiveView({
   }>>([]);
   const [isLoadingPromptStarters, setIsLoadingPromptStarters] = useState(false);
 
-  // User guide state (shown during selection phase)
-  const [showUserGuide, setShowUserGuide] = useState(true);
-
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
+  const lastScrollPositionRef = useRef(0);
 
   // =========================================================================
   // SSE STREAM HOOK
@@ -246,6 +308,34 @@ export function InteractiveView({
   // EFFECTS
   // =========================================================================
 
+  // Load initial conversation messages and metadata when provided
+  useEffect(() => {
+    if (!initialConversation) return;
+
+    // Set conversation metadata for display (time, date, etc.)
+    const contextMessages = initialConversation.context?.messages || [];
+    setConversationMeta({
+      title: initialConversation.title || 'Conversation',
+      createdAt: initialConversation.created_at,
+      updatedAt: initialConversation.updated_at,
+      messageCount: contextMessages.length,
+    });
+
+    // Convert stored messages to Message type with timestamps
+    const loadedMessages: Message[] = contextMessages.map((msg, index) => ({
+      id: `loaded-${index}-${Date.now()}`,
+      role: msg.role === 'human' || msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.content,
+      timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(initialConversation.created_at),
+      // If assistant message, attach expert info
+      ...(msg.role !== 'human' && msg.role !== 'user' && selectedExpert ? {
+        expert: selectedExpert,
+      } : {}),
+    }));
+
+    setMessages(loadedMessages);
+  }, [initialConversation, selectedExpert]);
+
   // Listen for expert selection from sidebar (Mode 1)
   // This wires the global sidebar's expert selection to InteractiveView
   useEffect(() => {
@@ -253,7 +343,8 @@ export function InteractiveView({
     if (mode === 'mode2') return;
 
     interface ExpertSelectedEvent {
-      expertId: string;
+      agentId: string;          // Primary field name (standardized)
+      expertId?: string;        // Backwards compatibility
       expert: { id: string; name: string; level: string; specialty: string };
     }
 
@@ -315,10 +406,161 @@ export function InteractiveView({
     fetchPromptStarters();
   }, [selectedExpert?.id]);
 
-  // Auto-scroll to bottom when messages change
+  // =========================================================================
+  // SMART SCROLL LOGIC
+  // =========================================================================
+
+  // Track scroll position to detect if user is near bottom
+  const handleScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+    // Consider "near bottom" if within 150px of bottom
+    isNearBottomRef.current = distanceFromBottom < 150;
+    lastScrollPositionRef.current = scrollTop;
+  }, []);
+
+  // Attach scroll listener to messages container
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  // Smart auto-scroll: only scroll when user is near bottom
+  // Uses scrollTop for smoother updates during streaming (no animation jitter)
+  useEffect(() => {
+    if (!isNearBottomRef.current) return; // Don't auto-scroll if user scrolled up
+
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Use requestAnimationFrame for smooth scroll during streaming
+    requestAnimationFrame(() => {
+      container.scrollTop = container.scrollHeight;
+    });
+  }, [streamState.content]);
+
+  // When new messages are added (not streaming), scroll to bottom with smooth animation
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamState.content]);
+    // Reset near-bottom flag after adding new messages
+    isNearBottomRef.current = true;
+  }, [messages.length]);
+
+  // =========================================================================
+  // MESSAGE PERSISTENCE (must be defined before stream completion effect)
+  // =========================================================================
+
+  /**
+   * Track if we've created the conversation in the database
+   * This enables upsert logic: POST for new, PUT for existing
+   */
+  const [conversationCreated, setConversationCreated] = useState(!!initialConversation);
+
+  /**
+   * Persist messages to database via POST (create) or PUT (update)
+   * This enables chat history to be displayed in sidebar and restored on click
+   *
+   * Upsert Logic:
+   * - If initialConversation exists OR conversationCreated is true -> PUT to update
+   * - Otherwise -> POST to create, then set conversationCreated=true
+   */
+  const persistMessages = useCallback(async (updatedMessages: Message[]) => {
+    // Need user ID and session ID to persist
+    if (!user?.id || !sessionId) {
+      console.warn('[InteractiveView] Cannot persist messages: missing user or session ID');
+      return;
+    }
+
+    try {
+      // Convert Message[] to format expected by API (role, content, timestamp)
+      const messagesForApi = updatedMessages.map(m => ({
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp.toISOString(),
+      }));
+
+      // Generate title from first user message if available
+      const firstUserMessage = updatedMessages.find(m => m.role === 'user');
+      const title = firstUserMessage
+        ? firstUserMessage.content.slice(0, 100) + (firstUserMessage.content.length > 100 ? '...' : '')
+        : 'New Conversation';
+
+      // Determine if we need to CREATE (POST) or UPDATE (PUT)
+      const isExistingConversation = !!initialConversation || conversationCreated;
+      const method = isExistingConversation ? 'PUT' : 'POST';
+      const conversationId = initialConversation?.id || sessionId;
+
+      const requestBody = isExistingConversation
+        ? {
+            // PUT request body - requires conversationId
+            userId: user.id,
+            conversationId,
+            title,
+            messages: messagesForApi,
+            agentId: selectedExpert?.id,
+            mode: mode,
+          }
+        : {
+            // POST request body - creates new conversation
+            userId: user.id,
+            title,
+            messages: messagesForApi,
+            agentId: selectedExpert?.id,
+            mode: mode,
+          };
+
+      const response = await fetch('/api/conversations', {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[InteractiveView] Failed to ${method} messages:`, errorText);
+
+        // If PUT fails because conversation doesn't exist, try POST
+        if (method === 'PUT' && response.status === 404) {
+          console.log('[InteractiveView] Conversation not found, creating new one...');
+          const createResponse = await fetch('/api/conversations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: user.id,
+              title,
+              messages: messagesForApi,
+              agentId: selectedExpert?.id,
+              mode: mode,
+            }),
+          });
+
+          if (createResponse.ok) {
+            setConversationCreated(true);
+          } else {
+            console.error('[InteractiveView] Failed to create conversation:', await createResponse.text());
+          }
+        }
+      } else {
+        // Successfully persisted - mark as created for future updates
+        if (method === 'POST') {
+          setConversationCreated(true);
+        }
+      }
+    } catch (error) {
+      console.error('[InteractiveView] Error persisting messages:', error);
+    }
+  }, [user?.id, sessionId, initialConversation, conversationCreated, selectedExpert?.id, mode]);
 
   // Finalize assistant message when stream completes
   useEffect(() => {
@@ -328,11 +570,17 @@ export function InteractiveView({
         selectedExpert,
         streamState
       );
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => {
+        const updatedMessages = [...prev, assistantMessage];
+        // Persist messages to database for sidebar history
+        // Using setTimeout to ensure state update completes first
+        setTimeout(() => persistMessages(updatedMessages), 100);
+        return updatedMessages;
+      });
       // Reset stream state for next message
       dispatch(streamActions.reset());
     }
-  }, [streamState.status, streamState.content, selectedExpert]);
+  }, [streamState.status, streamState.content, selectedExpert, persistMessages]);
 
   // =========================================================================
   // HANDLERS
@@ -502,19 +750,30 @@ export function InteractiveView({
   // RENDER
   // =========================================================================
 
-  // Build dynamic breadcrumb items based on mode and phase
-  const breadcrumbItems = [
-    { label: 'Ask Expert', href: '/ask-expert' },
-    {
-      label: mode === 'mode1' ? 'Expert Consultation' : 'Smart Copilot',
-      href: phase === 'selection' ? undefined : `/ask-expert/${mode}`,
-    },
-    // Add expert name when in conversation phase
-    ...(phase === 'conversation' && selectedExpert
-      ? [{ label: selectedExpert.name }]
-      : []
-    ),
-  ];
+  // Note: Breadcrumb navigation is now handled globally by DashboardHeader
+  // This provides consistent breadcrumb behavior across all pages
+
+  // Helper to format conversation date/time for display
+  const formatConversationDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const isYesterday = new Date(now.getTime() - 86400000).toDateString() === date.toDateString();
+
+    if (isToday) {
+      return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (isYesterday) {
+      return `Yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+      return date.toLocaleDateString([], {
+        month: 'short',
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+  };
 
   return (
     <div className={cn(
@@ -523,72 +782,61 @@ export function InteractiveView({
       'interactive-view--blue-theme',
       className
     )}>
-      {/* Breadcrumb Navigation */}
-      <VitalBreadcrumb
-        showHome
-        homeHref="/dashboard"
-        items={breadcrumbItems}
-        className="px-4 pt-3 pb-2"
-      />
+      {/* Breadcrumb removed - now handled by global DashboardHeader */}
 
-      {/* User Guide Banner (Selection Phase Only - Mode 1) */}
-      {phase === 'selection' && mode === 'mode1' && (
-        <AnimatePresence>
-          {showUserGuide && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="mx-4 mb-3"
-            >
-              <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 p-2 rounded-lg bg-blue-100">
-                    <Lightbulb className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <h3 className="font-semibold text-blue-900">
-                        How Expert Consultation Works
-                      </h3>
-                      <button
-                        onClick={() => setShowUserGuide(false)}
-                        className="p-1 rounded-md hover:bg-blue-100 transition-colors"
-                        aria-label="Dismiss guide"
-                      >
-                        <X className="h-4 w-4 text-blue-400 hover:text-blue-600" />
-                      </button>
+      {/* Conversation Metadata Header (shown when loading existing conversation) */}
+      {conversationMeta && (
+        <div className="px-4 pb-3 border-b bg-muted/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {selectedExpert && (
+                <div className="flex items-center gap-2">
+                  {(selectedExpert as Expert & { avatarUrl?: string }).avatarUrl ? (
+                    <img
+                      src={(selectedExpert as Expert & { avatarUrl?: string }).avatarUrl}
+                      alt={selectedExpert.name}
+                      className="w-8 h-8 rounded-full border border-border"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <MessageSquare className="w-4 h-4 text-primary" />
                     </div>
-                    <ul className="space-y-1.5 text-sm text-blue-800">
-                      <li className="flex items-start gap-2">
-                        <Users className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                        <span><strong>Select an expert</strong> from the grid below based on your topic</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <MessageCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                        <span><strong>Ask questions</strong> directly to get specialized insights</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <HelpCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                        <span><strong>Not sure which expert?</strong> Try <button onClick={() => onModeChange?.('mode2')} className="text-blue-600 underline hover:text-blue-800">Smart Copilot</button> mode for AI-guided selection</span>
-                      </li>
-                    </ul>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {selectedExpert.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedExpert.domain}
+                    </p>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              )}
+            </div>
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-xs text-muted-foreground">
+                Started {formatConversationDate(conversationMeta.createdAt)}
+              </span>
+              {conversationMeta.createdAt !== conversationMeta.updatedAt && (
+                <span className="text-xs text-muted-foreground/70">
+                  Last updated {formatConversationDate(conversationMeta.updatedAt)}
+                </span>
+              )}
+              <span className="text-[10px] text-muted-foreground/60">
+                {conversationMeta.messageCount} messages
+              </span>
+            </div>
+          </div>
+        </div>
       )}
 
       <AnimatePresence mode="wait">
         {/* ═══════════════════════════════════════════════════════════════
-            SELECTION PHASE
-            Mode 1: ExpertPicker (manual grid selection)
+            SELECTION PHASE (Mode 2 only)
+            Mode 1: Skips to conversation - user picks expert from sidebar
             Mode 2: FusionSelector (query-first, AI selects)
             ═══════════════════════════════════════════════════════════════ */}
-        {phase === 'selection' && (
+        {phase === 'selection' && mode === 'mode2' && (
           <motion.div
             key="selection"
             initial={{ opacity: 0, y: 20 }}
@@ -597,25 +845,17 @@ export function InteractiveView({
             transition={{ duration: 0.3, ease: 'easeOut' }}
             className="flex-1 overflow-auto"
           >
-            {mode === 'mode1' ? (
-              <ExpertPicker
-                tenantId={tenantId}
-                onSelect={handleExpertSelect}
-                onModeSwitch={handleModeSwitch}
-              />
-            ) : (
-              <FusionSelector
-                tenantId={tenantId}
-                onQuerySubmit={(query) => {
-                  // In Mode 2, submitting a query starts the fusion process
-                  // The expert will be auto-selected based on the query
-                  handleSend(query);
-                  setPhase('conversation');
-                }}
-                onExpertSelected={handleExpertSelect}
-                onModeSwitch={handleModeSwitch}
-              />
-            )}
+            <FusionSelector
+              tenantId={tenantId}
+              onQuerySubmit={(query) => {
+                // In Mode 2, submitting a query starts the fusion process
+                // The expert will be auto-selected based on the query
+                handleSend(query);
+                setPhase('conversation');
+              }}
+              onExpertSelected={handleExpertSelect}
+              onModeSwitch={handleModeSwitch}
+            />
           </motion.div>
         )}
 
@@ -640,67 +880,117 @@ export function InteractiveView({
             )}
 
             {/* Message List */}
-            <div className="flex-1 overflow-auto p-4 space-y-4">
-              {/* Prompt Starters (shown when no messages yet) */}
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 overflow-auto p-4 space-y-4"
+            >
+              {/* Empty state for Mode 1: Guide user to pick expert from sidebar */}
+              {mode === 'mode1' && !selectedExpert && messages.length === 0 && (
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="text-center max-w-md"
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-4">
+                      <ArrowLeft className="h-8 w-8 text-purple-500" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-slate-900 mb-2">
+                      Select an Expert
+                    </h2>
+                    <p className="text-muted-foreground mb-6">
+                      Browse and select an AI expert from the sidebar to start your conversation.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-sm text-purple-600 bg-purple-50 rounded-lg px-4 py-2">
+                      <Users className="h-4 w-4" />
+                      <span>Experts are organized by specialty</span>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+
+              {/* ═══════════════════════════════════════════════════════════════
+                  EMPTY STATE: Prompt Starters + Input at TOP
+                  (shown when expert selected but no messages yet)
+                  ═══════════════════════════════════════════════════════════════ */}
               {messages.length === 0 && selectedExpert && (
-                <div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
                   {isLoadingPromptStarters ? (
                     <div className="flex flex-col items-center gap-3">
                       <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
                       <p className="text-sm text-muted-foreground">Loading suggestions...</p>
                     </div>
-                  ) : promptStarters.length > 0 ? (
-                    <div className="w-full max-w-3xl space-y-4">
-                      <div className="text-center mb-6">
+                  ) : (
+                    <div className="w-full max-w-3xl space-y-6">
+                      {/* Welcome Header */}
+                      <div className="text-center mb-4">
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 text-purple-700 text-sm font-medium mb-2">
                           <Sparkles className="h-4 w-4" />
-                          Get Started
+                          {promptStarters.length > 0 ? 'Get Started' : 'Ready to Chat'}
                         </div>
                         <p className="text-muted-foreground text-sm">
-                          Choose a topic or type your own question below
+                          {promptStarters.length > 0
+                            ? 'Choose a topic or type your own question below'
+                            : `Ask ${selectedExpert.name} anything`
+                          }
                         </p>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {/* Limit to 4 prompt starters for cleaner UX in Mode 1 & Mode 2 */}
-                        {promptStarters.slice(0, 4).map((starter, index) => (
-                          <motion.button
-                            key={index}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            onClick={() => handleSend(starter.fullPrompt || starter.text)}
-                            className="group p-4 rounded-xl border border-slate-200 bg-white hover:border-purple-300 hover:shadow-md transition-all text-left"
-                          >
-                            <div className="flex items-start gap-3">
-                              {(() => {
-                                const IconComponent = getPromptStarterIcon(starter.icon);
-                                return <IconComponent className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" />;
-                              })()}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-2">
-                                  {starter.text}
-                                </p>
-                                {starter.description && (
-                                  <p className="text-sm text-slate-500 mt-1 line-clamp-1">
-                                    {starter.description}
+
+                      {/* Prompt Starters Grid */}
+                      {promptStarters.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                          {promptStarters.slice(0, 4).map((starter, index) => (
+                            <motion.button
+                              key={index}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.05 }}
+                              onClick={() => handleSend(starter.fullPrompt || starter.text)}
+                              className="group p-4 rounded-xl border border-slate-200 bg-white hover:border-purple-300 hover:shadow-md transition-all text-left"
+                            >
+                              <div className="flex items-start gap-3">
+                                {(() => {
+                                  const IconComponent = getPromptStarterIcon(starter.icon);
+                                  return <IconComponent className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" />;
+                                })()}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-2">
+                                    {starter.text}
                                   </p>
-                                )}
+                                  {starter.description && (
+                                    <p className="text-sm text-slate-500 mt-1 line-clamp-1">
+                                      {starter.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
                               </div>
-                              <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
-                            </div>
-                          </motion.button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 text-slate-600 text-sm font-medium mb-2">
-                        <Sparkles className="h-4 w-4" />
-                        Ready to Chat
-                      </div>
-                      <p className="text-muted-foreground text-sm">
-                        Type your question below to get started
-                      </p>
+                            </motion.button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* ═══════════════════════════════════════════════════════════
+                          PROMPT INPUT AT TOP - Centered under prompt starters
+                          ═══════════════════════════════════════════════════════════ */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2, duration: 0.3 }}
+                        className="w-full"
+                      >
+                        <VitalPromptInput
+                          onSubmit={handleSend}
+                          onEnhance={handlePromptEnhance}
+                          isLoading={isStreaming}
+                          onStop={() => disconnect()}
+                          placeholder={`Ask ${selectedExpert.name}...`}
+                          showAttachments={true}
+                          showEnhance={true}
+                          maxLength={4000}
+                        />
+                      </motion.div>
                     </div>
                   )}
                 </div>
@@ -788,21 +1078,36 @@ export function InteractiveView({
               />
             )}
 
-            {/* Chat Input - Enhanced with AI prompt enhancement */}
-            <VitalPromptInput
-              onSubmit={handleSend}
-              onEnhance={handlePromptEnhance}
-              isLoading={isStreaming}
-              onStop={() => disconnect()}
-              placeholder={
-                selectedExpert
-                  ? `Ask ${selectedExpert.name}...`
-                  : 'Type your question...'
-              }
-              showAttachments={true}
-              showEnhance={!!selectedExpert}
-              maxLength={4000}
-            />
+            {/* ═══════════════════════════════════════════════════════════════
+                CHAT INPUT AT BOTTOM - Only shown after messages exist
+                (Input starts at TOP under prompt starters, then moves here)
+                ═══════════════════════════════════════════════════════════════ */}
+            {/* For Mode 1: Only show input when expert is selected (from sidebar) */}
+            {/* For Mode 2: Always show input once in conversation phase */}
+            {/* IMPORTANT: Only show at bottom when messages.length > 0 (input moves from top) */}
+            {messages.length > 0 && (mode === 'mode2' || selectedExpert) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="border-t bg-white/80 backdrop-blur-sm"
+              >
+                <VitalPromptInput
+                  onSubmit={handleSend}
+                  onEnhance={handlePromptEnhance}
+                  isLoading={isStreaming}
+                  onStop={() => disconnect()}
+                  placeholder={
+                    selectedExpert
+                      ? `Continue chatting with ${selectedExpert.name}...`
+                      : 'Type your question...'
+                  }
+                  showAttachments={true}
+                  showEnhance={!!selectedExpert}
+                  maxLength={4000}
+                />
+              </motion.div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

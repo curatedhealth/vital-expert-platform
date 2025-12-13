@@ -1,8 +1,8 @@
 /**
  * Agent Statistics API Endpoint
- * 
+ *
  * GET /api/agents/[id]/stats
- * 
+ *
  * Fetches comprehensive statistics for an agent including:
  * - Total consultations/sessions
  * - Satisfaction scores
@@ -13,9 +13,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-// All statistics are fetched from Python AI-engine which queries the agent_metrics table.
-// No synthetic/mock data is used - returns empty stats if no data is available.
+// Statistics are fetched directly from Supabase agent_metrics table.
+// Falls back to empty stats if no data is available.
 
 export interface AgentStats {
   totalConsultations: number;
@@ -51,22 +52,30 @@ const FALLBACK_STATS: AgentStats = {
   recentFeedback: [],
 };
 
-const API_TIMEOUT_MS = 4_000;
 const CACHE_TTL_MS = 60_000;
-const FAILURE_COOLDOWN_MS = 30_000;
 
 const statsCache = new Map<
   string,
   { timestamp: number; data: AgentStats }
 >();
 
-let lastFailureTimestamp = 0;
+// Create Supabase client for direct database queries
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    return null;
+  }
+
+  return createClient(supabaseUrl, supabaseKey);
+}
 
 /**
  * GET /api/agents/[id]/stats
- * 
- * Fetches comprehensive statistics for an agent from Python AI-engine.
- * Replaces synthetic/mock data with real data from agent_metrics table.
+ *
+ * Fetches statistics directly from Supabase agent_metrics table.
+ * Returns empty stats if no data is available.
  */
 export async function GET(
   request: NextRequest,
@@ -83,8 +92,8 @@ export async function GET(
     }
 
     // Get days parameter from query string (default: 7 days)
-   const { searchParams } = new URL(request.url);
-   const days = parseInt(searchParams.get('days') || '7', 10);
+    const { searchParams } = new URL(request.url);
+    const days = parseInt(searchParams.get('days') || '7', 10);
 
     const cacheKey = `${agentId}:${days}`;
     const now = Date.now();
@@ -97,58 +106,45 @@ export async function GET(
       });
     }
 
-    // Call Python AI-engine via API Gateway
-    const apiGatewayUrl = process.env.API_GATEWAY_URL || process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:3001';
-    
-    try {
-      if (now - lastFailureTimestamp < FAILURE_COOLDOWN_MS) {
-        throw new Error('Python AI-engine recently unavailable; using fallback');
-      }
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
-
-      const response = await fetch(`${apiGatewayUrl}/api/agents/${agentId}/stats?days=${days}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Python AI-engine returned ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const stats: AgentStats = data.data || FALLBACK_STATS;
-      statsCache.set(cacheKey, { timestamp: now, data: stats });
-      lastFailureTimestamp = 0;
-
-      // Return the response from Python AI-engine (which returns empty stats if no data, not synthetic)
-      return NextResponse.json({
-        success: true,
-        data: stats,
-      });
-    } catch (fetchError) {
-      console.error('[Agent Stats] Python AI-engine call failed:', fetchError);
-      lastFailureTimestamp = Date.now();
-      if (cached) {
-        return NextResponse.json({
-          success: true,
-          data: cached.data,
-          meta: { cacheHit: true, stale: true },
-        });
-      }
-      
-      // If Python service is unavailable, return empty stats instead of synthetic data
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      console.warn('[Agent Stats] Supabase not configured, returning fallback stats');
       return NextResponse.json({
         success: true,
         data: FALLBACK_STATS,
-        meta: { fallback: true },
+        meta: { fallback: true, reason: 'supabase_not_configured' },
       });
     }
+
+    // Calculate date range
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Query agent_metrics table for this agent
+    const { data: metrics, error } = await supabase
+      .from('agent_metrics')
+      .select('*')
+      .eq('agent_id', agentId)
+      .gte('recorded_at', startDate.toISOString())
+      .order('recorded_at', { ascending: false });
+
+    if (error) {
+      console.error('[Agent Stats] Supabase query error:', error);
+      return NextResponse.json({
+        success: true,
+        data: FALLBACK_STATS,
+        meta: { fallback: true, reason: 'query_error' },
+      });
+    }
+
+    // Calculate aggregated stats from metrics
+    const stats: AgentStats = calculateStats(metrics || []);
+    statsCache.set(cacheKey, { timestamp: now, data: stats });
+
+    return NextResponse.json({
+      success: true,
+      data: stats,
+    });
   } catch (error) {
     console.error('[Agent Stats] Error:', error);
     return NextResponse.json(
@@ -161,5 +157,31 @@ export async function GET(
   }
 }
 
-// All statistics calculation is now handled by Python AI-engine.
-// This endpoint simply proxies requests to the Python service via API Gateway.
+/**
+ * Calculate aggregated statistics from metrics records.
+ */
+function calculateStats(metrics: any[]): AgentStats {
+  if (!metrics || metrics.length === 0) {
+    return FALLBACK_STATS;
+  }
+
+  const totalConsultations = metrics.length;
+  const avgSatisfaction = metrics.reduce((sum, m) => sum + (m.satisfaction_score || 0), 0) / totalConsultations;
+  const successCount = metrics.filter(m => m.success === true).length;
+  const avgResponseTime = metrics.reduce((sum, m) => sum + (m.response_time_ms || 0), 0) / totalConsultations / 1000;
+  const totalTokens = metrics.reduce((sum, m) => sum + (m.tokens_used || 0), 0);
+  const totalCost = metrics.reduce((sum, m) => sum + (m.cost_usd || 0), 0);
+
+  return {
+    totalConsultations,
+    satisfactionScore: Math.round(avgSatisfaction * 10) / 10,
+    successRate: Math.round((successCount / totalConsultations) * 100),
+    averageResponseTime: Math.round(avgResponseTime * 100) / 100,
+    certifications: [], // Would need separate table query
+    totalTokensUsed: totalTokens,
+    totalCost: Math.round(totalCost * 100) / 100,
+    confidenceLevel: Math.min(100, Math.round(totalConsultations / 10) * 10), // Simple heuristic
+    availability: 'online',
+    recentFeedback: [], // Would need separate feedback table query
+  };
+}

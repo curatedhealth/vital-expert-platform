@@ -111,7 +111,10 @@ export * from './canvas';
 export * from './advanced';
 
 // ============================================================================
-// Domain M: Mission & Team (4)
+// Domain M: Mission & Team (8)
+// VitalMissionTemplateSelector, VitalTemplateRecommendation, VitalTeamAssemblyView,
+// VitalGenericTemplateOption, VitalMissionGoalInput, VitalMissionBriefing,
+// VitalMissionExecution, VitalMissionComplete
 // ============================================================================
 export * from './mission';
 

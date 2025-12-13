@@ -8,7 +8,6 @@ import {
   RefreshCwIcon,
   SearchIcon,
   SparklesIcon,
-  UserCircle2Icon,
   Trash2Icon,
   CheckIcon,
   ChevronDown,
@@ -19,6 +18,10 @@ import {
   Target,
   Zap,
   User,
+  MessageSquare,
+  Users,
+  Pencil,
+  X,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
@@ -31,6 +34,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Collapsible,
   CollapsibleContent,
@@ -77,6 +81,25 @@ function getAgentLevelDisplay(tier: number): string {
     case 3: return 'L3'
     default: return `L${tier}`
   }
+}
+
+// Helper to convert avatar code to full URL path
+// Matches the avatar handling in the agent-card.tsx component
+function getAvatarUrl(avatar: string | null | undefined): string | null {
+  if (!avatar) return null;
+
+  // If already a full URL or path, return as-is
+  if (avatar.startsWith('http') || avatar.startsWith('/')) {
+    return avatar;
+  }
+
+  // If it's an avatar code like "avatar_0001", convert to full path
+  if (avatar.match(/^avatar_\d{3,4}$/)) {
+    return `/icons/png/avatars/${avatar}.png`;
+  }
+
+  // Fallback: assume it's a code and try to construct the path
+  return `/icons/png/avatars/${avatar}.png`;
 }
 
 export function SidebarAskExpert() {
@@ -138,10 +161,14 @@ export function SidebarAskExpert() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [pinnedSessions, setPinnedSessions] = useState<Set<string>>(new Set())
   const [archivedSessions, setArchivedSessions] = useState<Set<string>>(new Set())
+  const [customTitles, setCustomTitles] = useState<Record<string, string>>({})
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState("")
   const [selectedConversationIndex, setSelectedConversationIndex] = useState(0)
   const conversationSearchRef = useRef<HTMLInputElement>(null)
+  const editInputRef = useRef<HTMLInputElement>(null)
 
-  // Load pinned/archived from localStorage
+  // Load pinned/archived/custom titles from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('ask-expert-pinned-sessions')
@@ -151,6 +178,10 @@ export function SidebarAskExpert() {
       const archivedStored = localStorage.getItem('ask-expert-archived-sessions')
       if (archivedStored) {
         setArchivedSessions(new Set(JSON.parse(archivedStored)))
+      }
+      const titlesStored = localStorage.getItem('ask-expert-custom-titles')
+      if (titlesStored) {
+        setCustomTitles(JSON.parse(titlesStored))
       }
     }
   }, [])
@@ -167,6 +198,102 @@ export function SidebarAskExpert() {
       localStorage.setItem('ask-expert-archived-sessions', JSON.stringify(Array.from(archivedSessions)))
     }
   }, [archivedSessions])
+
+  // Save custom titles to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && Object.keys(customTitles).length > 0) {
+      localStorage.setItem('ask-expert-custom-titles', JSON.stringify(customTitles))
+    }
+  }, [customTitles])
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (editingSessionId && editInputRef.current) {
+      editInputRef.current.focus()
+      editInputRef.current.select()
+    }
+  }, [editingSessionId])
+
+  const startRename = useCallback((sessionId: string, currentTitle: string) => {
+    setEditingSessionId(sessionId)
+    setEditingTitle(currentTitle)
+  }, [])
+
+  const saveRename = useCallback(() => {
+    if (editingSessionId && editingTitle.trim()) {
+      setCustomTitles(prev => ({
+        ...prev,
+        [editingSessionId]: editingTitle.trim()
+      }))
+    }
+    setEditingSessionId(null)
+    setEditingTitle("")
+  }, [editingSessionId, editingTitle])
+
+  const cancelRename = useCallback(() => {
+    setEditingSessionId(null)
+    setEditingTitle("")
+  }, [])
+
+  // Generate intelligent title from message content (like Claude.ai/ChatGPT)
+  const generateTitleFromMessage = useCallback((message: string): string => {
+    if (!message || message.length < 3) return ""
+
+    // Clean up the message
+    const cleaned = message
+      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+      .replace(/\[.*?\]\(.*?\)/g, '') // Remove markdown links
+      .replace(/[#*_~`]/g, '')        // Remove markdown formatting
+      .replace(/\s+/g, ' ')           // Normalize whitespace
+      .trim()
+
+    if (cleaned.length < 3) return ""
+
+    // Extract first sentence or meaningful chunk
+    const firstSentenceMatch = cleaned.match(/^([^.!?\n]+[.!?]?)/)
+    const firstChunk = firstSentenceMatch?.[1] || cleaned
+
+    // Truncate to reasonable length (40-50 chars max)
+    let title = firstChunk.slice(0, 50).trim()
+
+    // If truncated mid-word, cut at last space
+    if (firstChunk.length > 50 && title.lastIndexOf(' ') > 20) {
+      title = title.slice(0, title.lastIndexOf(' '))
+    }
+
+    // Capitalize first letter if not already
+    if (title && title[0] !== title[0].toUpperCase()) {
+      title = title[0].toUpperCase() + title.slice(1)
+    }
+
+    // Remove trailing punctuation except ?
+    title = title.replace(/[.,;:]+$/, '')
+
+    return title || ""
+  }, [])
+
+  // Helper to get session title (custom > generated > from session > default)
+  const getSessionTitle = useCallback((session: typeof sessions[0]): string => {
+    // Check custom title first
+    if (customTitles[session.sessionId]) {
+      return customTitles[session.sessionId]
+    }
+    // Then check session's own title (if not generic)
+    if (session.title && session.title !== "New Consultation") {
+      return session.title
+    }
+    // Try to generate from first message preview (if available in session)
+    if ((session as any).firstMessagePreview) {
+      const generated = generateTitleFromMessage((session as any).firstMessagePreview)
+      if (generated) return generated
+    }
+    // Then agent name with context
+    if (session.agent?.name) {
+      return `Chat with ${session.agent.name}`
+    }
+    // Final fallback - use "Chat" with short session ID
+    return `Chat ${session.sessionId.slice(0, 6)}`
+  }, [customTitles, generateTitleFromMessage])
 
   const togglePin = useCallback((sessionId: string) => {
     setPinnedSessions(prev => {
@@ -428,6 +555,51 @@ export function SidebarAskExpert() {
     const isPinned = pinnedSessions.has(session.sessionId)
     const isActive = session.sessionId === activeSessionId
     const isKeyboardSelected = index !== undefined && index === selectedConversationIndex
+    const isEditing = editingSessionId === session.sessionId
+    const displayTitle = getSessionTitle(session)
+
+    // Handle rename via inline edit
+    if (isEditing) {
+      return (
+        <SidebarMenuItem key={session.sessionId}>
+          <div className="flex items-center gap-2 px-2 py-1.5">
+            <MessageSquare className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <Input
+              ref={editInputRef}
+              value={editingTitle}
+              onChange={(e) => setEditingTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  saveRename()
+                } else if (e.key === 'Escape') {
+                  cancelRename()
+                }
+              }}
+              onBlur={saveRename}
+              className="h-7 text-sm flex-1"
+              placeholder="Chat name..."
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 shrink-0"
+              onClick={saveRename}
+            >
+              <CheckIcon className="h-3.5 w-3.5 text-green-500" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 shrink-0"
+              onClick={cancelRename}
+            >
+              <X className="h-3.5 w-3.5 text-muted-foreground" />
+            </Button>
+          </div>
+        </SidebarMenuItem>
+      )
+    }
 
     return (
       <SidebarMenuItem key={session.sessionId}>
@@ -436,61 +608,131 @@ export function SidebarAskExpert() {
             isActive={isActive}
             onClick={() => {
               setActiveSessionId(session.sessionId);
-              window.dispatchEvent(new CustomEvent('ask-expert:open-chat', {
-                detail: { sessionId: session.sessionId, conversationId: session.sessionId }
-              }));
+              // Navigate to conversation detail view with conversationId
+              // Determine mode from conversation metadata or default to manual
+              const mode = session.metadata?.mode === 'auto' ? 'auto' : 'manual';
+              router.push(`/ask-expert/interactive?mode=${mode}&conversationId=${session.sessionId}`);
             }}
             className={cn(
-              isKeyboardSelected && !isActive && "ring-1 ring-primary/50"
+              "py-2.5 px-2 rounded-lg transition-all duration-150",
+              isActive && "bg-primary/10 border-l-2 border-primary",
+              !isActive && "hover:bg-muted/60",
+              isKeyboardSelected && !isActive && "ring-1 ring-primary/40 bg-muted/40"
             )}
           >
-            <UserCircle2Icon className="h-4 w-4" />
-            <div className="flex flex-1 flex-col items-start min-w-0">
-              <div className="flex items-center gap-1 w-full">
-                {isPinned && <Pin className="h-3 w-3 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />}
-                <span className="text-sm truncate">
-                  {session.title || session.agent?.name || "Consultation"}
-                </span>
+            <div className="flex items-start gap-2.5 w-full min-w-0">
+              {/* Agent Avatar or Fallback Icon */}
+              <div className="relative shrink-0 mt-0.5">
+                {(() => {
+                  const avatarUrl = getAvatarUrl(session.agent?.avatar);
+                  return avatarUrl ? (
+                    <Avatar className="h-6 w-6 border border-border/40">
+                      <AvatarImage src={avatarUrl} alt={session.agent?.name || 'Agent'} />
+                      <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                        {(session.agent?.name || 'AI').slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className={cn(
+                      "h-6 w-6 rounded-full flex items-center justify-center",
+                      isActive ? "bg-primary/15" : "bg-muted"
+                    )}>
+                      <MessageSquare className={cn(
+                        "h-3.5 w-3.5",
+                        isActive ? "text-primary" : "text-muted-foreground/70"
+                      )} />
+                    </div>
+                  );
+                })()}
+                {isPinned && (
+                  <Pin className="h-2.5 w-2.5 text-amber-500 absolute -top-1 -right-1" />
+                )}
               </div>
-              <span className="text-xs text-muted-foreground">
-                {formatTimestamp(session.lastMessage)}
-              </span>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="flex items-center gap-1.5">
+                  <span className={cn(
+                    "text-[13px] truncate leading-tight",
+                    isActive ? "font-semibold text-foreground" : "font-medium text-foreground/90"
+                  )}>
+                    {displayTitle}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {session.agent?.name && (
+                    <span className="text-[10px] text-primary/70 truncate max-w-[80px]">
+                      {session.agent.name}
+                    </span>
+                  )}
+                  {session.messageCount > 0 && (
+                    <span className="text-[10px] text-muted-foreground/50 shrink-0">
+                      · {session.messageCount}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-            {session.messageCount > 0 && (
-              <Badge variant="outline" className="ml-auto text-xs">
-                {session.messageCount}
-              </Badge>
-            )}
           </SidebarMenuButton>
 
-          {/* Quick Actions Dropdown */}
-          <div className="absolute top-1 right-1 opacity-0 group-hover/session:opacity-100 transition-opacity">
+          {/* Quick Actions - Always visible edit button + More menu on hover */}
+          <div className="absolute top-1/2 -translate-y-1/2 right-1.5 flex items-center gap-0.5">
+            {/* Edit button - more visible */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-6 w-6 p-0 rounded-md transition-opacity duration-150",
+                isActive ? "opacity-100" : "opacity-0 group-hover/session:opacity-100"
+              )}
+              onClick={(e) => {
+                e.stopPropagation()
+                startRename(session.sessionId, displayTitle)
+              }}
+            >
+              <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+            </Button>
+            {/* More actions dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0"
+                  className={cn(
+                    "h-6 w-6 p-0 rounded-md hover:bg-muted transition-opacity duration-150",
+                    isActive ? "opacity-100" : "opacity-0 group-hover/session:opacity-100"
+                  )}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreVertical className="h-3 w-3" />
+                  <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuContent align="end" className="w-36">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    startRename(session.sessionId, displayTitle)
+                  }}
+                  className="text-[13px]"
+                >
+                  <Pencil className="h-3.5 w-3.5 mr-2" />
+                  Rename
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation()
                     togglePin(session.sessionId)
                   }}
+                  className="text-[13px]"
                 >
                   {isPinned ? (
                     <>
-                      <PinOff className="h-4 w-4 mr-2" />
+                      <PinOff className="h-3.5 w-3.5 mr-2" />
                       Unpin
                     </>
                   ) : (
                     <>
-                      <Pin className="h-4 w-4 mr-2" />
+                      <Pin className="h-3.5 w-3.5 mr-2" />
                       Pin
                     </>
                   )}
@@ -500,13 +742,14 @@ export function SidebarAskExpert() {
                     e.stopPropagation()
                     toggleArchive(session.sessionId)
                   }}
+                  className="text-[13px]"
                 >
-                  <Archive className="h-4 w-4 mr-2" />
+                  <Archive className="h-3.5 w-3.5 mr-2" />
                   Archive
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600 dark:text-red-400">
-                  <Trash2Icon className="h-4 w-4 mr-2" />
+                <DropdownMenuItem className="text-red-600 dark:text-red-400 text-[13px]">
+                  <Trash2Icon className="h-3.5 w-3.5 mr-2" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -532,7 +775,8 @@ export function SidebarAskExpert() {
       if (selectedAgent) {
         window.dispatchEvent(new CustomEvent('ask-expert:expert-selected', {
           detail: {
-            expertId: selectedAgents[0],
+            agentId: selectedAgents[0],        // Primary field name (standardized)
+            expertId: selectedAgents[0],       // Backwards compatibility
             expert: {
               id: selectedAgent.id,
               name: selectedAgent.displayName,
@@ -552,12 +796,15 @@ export function SidebarAskExpert() {
       if (selectedAgent) {
         window.dispatchEvent(new CustomEvent('ask-expert:expert-selected', {
           detail: {
-            expertId: selectedResearchExpert,
+            agentId: selectedResearchExpert,        // Primary field name (standardized)
+            expertId: selectedResearchExpert,       // Backwards compatibility
             expert: {
               id: selectedAgent.id,
               name: selectedAgent.displayName,
+              slug: selectedAgent.slug || selectedAgent.id, // Required by Expert type
               level: getAgentLevelDisplay(selectedAgent.tier),
-              specialty: selectedAgent.description?.slice(0, 50) || ''
+              specialty: selectedAgent.description?.slice(0, 50) || '',
+              domain: selectedAgent.department || selectedAgent.function || ''
             }
           }
         }))
@@ -574,7 +821,8 @@ export function SidebarAskExpert() {
         if (selectedAgent) {
           window.dispatchEvent(new CustomEvent('ask-expert:expert-selected', {
             detail: {
-              expertId: selectedAgents[0],
+              agentId: selectedAgents[0],        // Primary field name (standardized)
+              expertId: selectedAgents[0],       // Backwards compatibility
               expert: {
                 id: selectedAgent.id,
                 name: selectedAgent.displayName,
@@ -591,7 +839,8 @@ export function SidebarAskExpert() {
         if (selectedAgent) {
           window.dispatchEvent(new CustomEvent('ask-expert:expert-selected', {
             detail: {
-              expertId: selectedResearchExpert,
+              agentId: selectedResearchExpert,        // Primary field name (standardized)
+              expertId: selectedResearchExpert,       // Backwards compatibility
               expert: {
                 id: selectedAgent.id,
                 name: selectedAgent.displayName,
@@ -612,6 +861,70 @@ export function SidebarAskExpert() {
 
   return (
     <>
+      {/* Title - Responsive: icon only when collapsed, full title when expanded */}
+      <div className="px-2 py-3 mb-2">
+        <div className="flex items-center gap-2">
+          <SparklesIcon className="h-5 w-5 text-primary shrink-0" />
+          <span className="text-base font-semibold group-data-[collapsible=icon]:hidden">Ask Expert</span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1 ml-7 group-data-[collapsible=icon]:hidden">AI-powered expert consultation</p>
+      </div>
+
+      {/* Modes Section (when on landing page - matches Views pattern in Tools/Skills) */}
+      {!currentMode && (
+        <Collapsible defaultOpen className="group/collapsible">
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+                <span className="flex items-center gap-2">
+                  <SparklesIcon className="h-3.5 w-3.5" />
+                  Modes
+                </span>
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href="/ask-expert/interactive?mode=manual">
+                        <User className="h-4 w-4" />
+                        <span>Expert Chat</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href="/ask-expert/interactive?mode=auto">
+                        <SparklesIcon className="h-4 w-4" />
+                        <span>Smart Copilot</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href="/ask-expert/autonomous?mode=manual">
+                        <Target className="h-4 w-4" />
+                        <span>Mission Control</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href="/ask-expert/autonomous?mode=auto">
+                        <Zap className="h-4 w-4" />
+                        <span>Background Mission</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
+      )}
+
       {/* Mode Header (shown when in a specific mode) */}
       {currentMode && (
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -659,40 +972,91 @@ export function SidebarAskExpert() {
                     const isSelected = currentMode.mode === 3
                       ? selectedResearchExpert === agent.id
                       : selectedAgents.includes(agent.id)
-                    const colorClass = currentMode.mode === 3 ? 'emerald' : 'blue'
 
                     return (
-                      <button
-                        key={agent.id}
-                        type="button"
-                        onClick={() => {
-                          if (currentMode.mode === 3) {
-                            setSelectedResearchExpert(agent.id)
-                          } else {
-                            // Mode 1: single select
-                            setSelectedAgents(isSelected ? [] : [agent.id])
-                          }
-                        }}
-                        className={cn(
-                          "w-full px-3 py-2 rounded-md text-left transition-all flex items-center gap-2",
-                          isSelected && currentMode.mode === 3 && "bg-emerald-500/10 border border-emerald-500/50",
-                          isSelected && currentMode.mode === 1 && "bg-blue-500/10 border border-blue-500/50",
-                          !isSelected && "hover:bg-muted/50"
-                        )}
-                      >
-                        <span className="font-medium text-sm truncate flex-1">
-                          {cleanDisplayName(agent.displayName)}
-                        </span>
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {getAgentLevelDisplay(agent.tier)}
-                        </Badge>
-                        {isSelected && (
-                          <CheckIcon className={cn(
-                            "h-4 w-4 shrink-0",
-                            currentMode.mode === 3 ? "text-emerald-500" : "text-blue-500"
-                          )} />
-                        )}
-                      </button>
+                      <div key={agent.id} className="group/agent relative">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (currentMode.mode === 3) {
+                              setSelectedResearchExpert(agent.id)
+                            } else {
+                              // Mode 1: single select
+                              setSelectedAgents(isSelected ? [] : [agent.id])
+                            }
+                          }}
+                          className={cn(
+                            "w-full px-2 py-2.5 rounded-lg text-left transition-all flex items-start gap-2.5",
+                            isSelected && currentMode.mode === 3 && "bg-emerald-500/10 border-l-2 border-emerald-500",
+                            isSelected && currentMode.mode === 1 && "bg-blue-500/10 border-l-2 border-blue-500",
+                            !isSelected && "hover:bg-muted/60"
+                          )}
+                        >
+                          {/* Agent Avatar */}
+                          <div className="relative shrink-0 mt-0.5">
+                            {(() => {
+                              const avatarUrl = getAvatarUrl(agent.avatar);
+                              return avatarUrl ? (
+                                <Avatar className="h-6 w-6 border border-border/40">
+                                  <AvatarImage src={avatarUrl} alt={agent.displayName} />
+                                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                    {agent.displayName.slice(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                              ) : (
+                                <div className={cn(
+                                  "h-6 w-6 rounded-full flex items-center justify-center",
+                                  isSelected ? "bg-primary/15" : "bg-muted"
+                                )}>
+                                  <User className={cn(
+                                    "h-3.5 w-3.5",
+                                    isSelected ? "text-primary" : "text-muted-foreground/70"
+                                  )} />
+                                </div>
+                              );
+                            })()}
+                            {isSelected && (
+                              <CheckIcon className={cn(
+                                "h-2.5 w-2.5 absolute -top-1 -right-1",
+                                currentMode.mode === 3 ? "text-emerald-500" : "text-blue-500"
+                              )} />
+                            )}
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <div className="flex items-center gap-1.5">
+                              <span className={cn(
+                                "text-[13px] truncate leading-tight",
+                                isSelected ? "font-semibold text-foreground" : "font-medium text-foreground/90"
+                              )}>
+                                {cleanDisplayName(agent.displayName)}
+                              </span>
+                            </div>
+                            {agent.description && (
+                              <p className="text-[10px] text-muted-foreground/60 truncate mt-0.5">
+                                {agent.description.slice(0, 40)}...
+                              </p>
+                            )}
+                          </div>
+                        </button>
+
+                        {/* Edit button on hover */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "absolute top-1/2 -translate-y-1/2 right-1.5 h-6 w-6 p-0 rounded-md transition-opacity duration-150",
+                            isSelected ? "opacity-100" : "opacity-0 group-hover/agent:opacity-100"
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/agents/${agent.id}`)
+                          }}
+                        >
+                          <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        </Button>
+                      </div>
                     )
                   })}
                   {filteredAgents.length === 0 && !agentsLoading && (
@@ -738,7 +1102,10 @@ export function SidebarAskExpert() {
         <SidebarGroup>
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              Quick Actions
+              <span className="flex items-center gap-2">
+                <Zap className="h-3.5 w-3.5" />
+                Quick Actions
+              </span>
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
@@ -794,7 +1161,10 @@ export function SidebarAskExpert() {
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              Conversations
+              <span className="flex items-center gap-2">
+                <MessageSquare className="h-3.5 w-3.5" />
+                Conversations
+              </span>
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
@@ -836,8 +1206,11 @@ export function SidebarAskExpert() {
                     {/* Pinned Conversations */}
                     {groupedSessions.pinned.length > 0 && (
                       <>
-                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-                          Pinned
+                        <div className="flex items-center gap-1.5 px-2 pt-2 pb-1">
+                          <Pin className="h-3 w-3 text-amber-500" />
+                          <span className="text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wide">
+                            Pinned
+                          </span>
                         </div>
                         {groupedSessions.pinned.map((session, idx) => renderSessionItem(session, idx))}
                       </>
@@ -846,8 +1219,10 @@ export function SidebarAskExpert() {
                     {/* Today */}
                     {groupedSessions.today.length > 0 && (
                       <>
-                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-                          Today
+                        <div className="px-2 pt-3 pb-1">
+                          <span className="text-[11px] font-medium text-muted-foreground/70">
+                            Today
+                          </span>
                         </div>
                         {groupedSessions.today.map((session, idx) =>
                           renderSessionItem(session, groupedSessions.pinned.length + idx)
@@ -858,8 +1233,10 @@ export function SidebarAskExpert() {
                     {/* Yesterday */}
                     {groupedSessions.yesterday.length > 0 && (
                       <>
-                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-                          Yesterday
+                        <div className="px-2 pt-3 pb-1">
+                          <span className="text-[11px] font-medium text-muted-foreground/70">
+                            Yesterday
+                          </span>
                         </div>
                         {groupedSessions.yesterday.map((session, idx) =>
                           renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + idx)
@@ -870,8 +1247,10 @@ export function SidebarAskExpert() {
                     {/* Last 7 Days */}
                     {groupedSessions.last7Days.length > 0 && (
                       <>
-                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-                          Last 7 Days
+                        <div className="px-2 pt-3 pb-1">
+                          <span className="text-[11px] font-medium text-muted-foreground/70">
+                            Previous 7 Days
+                          </span>
                         </div>
                         {groupedSessions.last7Days.map((session, idx) =>
                           renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + groupedSessions.yesterday.length + idx)
@@ -882,8 +1261,10 @@ export function SidebarAskExpert() {
                     {/* Last 30 Days */}
                     {groupedSessions.last30Days.length > 0 && (
                       <>
-                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-                          Last 30 Days
+                        <div className="px-2 pt-3 pb-1">
+                          <span className="text-[11px] font-medium text-muted-foreground/70">
+                            Previous 30 Days
+                          </span>
                         </div>
                         {groupedSessions.last30Days.map((session, idx) =>
                           renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + groupedSessions.yesterday.length + groupedSessions.last7Days.length + idx)
@@ -894,8 +1275,10 @@ export function SidebarAskExpert() {
                     {/* Older */}
                     {groupedSessions.older.length > 0 && (
                       <>
-                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-                          Older
+                        <div className="px-2 pt-3 pb-1">
+                          <span className="text-[11px] font-medium text-muted-foreground/70">
+                            Older
+                          </span>
                         </div>
                         {groupedSessions.older.map((session, idx) =>
                           renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + groupedSessions.yesterday.length + groupedSessions.last7Days.length + groupedSessions.last30Days.length + idx)
@@ -916,7 +1299,10 @@ export function SidebarAskExpert() {
           <SidebarGroup className="group-data-[collapsible=icon]:hidden">
             <SidebarGroupLabel asChild>
               <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-                Browse Agents
+                <span className="flex items-center gap-2">
+                  <Users className="h-3.5 w-3.5" />
+                  Browse Agents
+                </span>
                 <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
               </CollapsibleTrigger>
             </SidebarGroupLabel>
@@ -958,19 +1344,54 @@ export function SidebarAskExpert() {
                     )}
 
                     {!agentsLoading && filteredAgents.slice(0, 15).map((agent) => (
-                      <button
-                        key={agent.id}
-                        type="button"
-                        onClick={() => router.push(`/agents/${agent.id}`)}
-                        className="w-full px-3 py-2 rounded-md text-left transition-all flex items-center gap-2 hover:bg-muted/50"
-                      >
-                        <span className="font-medium text-sm truncate flex-1">
-                          {cleanDisplayName(agent.displayName)}
-                        </span>
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {getAgentLevelDisplay(agent.tier)}
-                        </Badge>
-                      </button>
+                      <div key={agent.id} className="group/browse relative">
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/agents/${agent.id}`)}
+                          className="w-full px-2 py-2.5 rounded-lg text-left transition-all flex items-start gap-2.5 hover:bg-muted/60"
+                        >
+                          {/* Agent Avatar */}
+                          <div className="relative shrink-0 mt-0.5">
+                            {(() => {
+                              const avatarUrl = getAvatarUrl(agent.avatar);
+                              return avatarUrl ? (
+                                <Avatar className="h-6 w-6 border border-border/40">
+                                  <AvatarImage src={avatarUrl} alt={agent.displayName} />
+                                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                    {agent.displayName.slice(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                              ) : (
+                                <div className="h-6 w-6 rounded-full flex items-center justify-center bg-muted">
+                                  <User className="h-3.5 w-3.5 text-muted-foreground/70" />
+                                </div>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[13px] font-medium text-foreground/90 truncate leading-tight">
+                                {cleanDisplayName(agent.displayName)}
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+
+                        {/* Edit button on hover */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute top-1/2 -translate-y-1/2 right-1.5 h-6 w-6 p-0 rounded-md opacity-0 group-hover/browse:opacity-100 transition-opacity duration-150"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/agents/${agent.id}`)
+                          }}
+                        >
+                          <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        </Button>
+                      </div>
                     ))}
                   </div>
                 </ScrollArea>

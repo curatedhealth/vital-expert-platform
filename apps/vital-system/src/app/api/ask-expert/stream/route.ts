@@ -31,7 +31,8 @@ export async function POST(request: NextRequest) {
       ? {
           mode: Number(mode),
           message: body.message,
-          expert_id: agentId,
+          agent_id: agentId,   // Primary field name (standardized)
+          expert_id: agentId,  // Backwards compatibility
           tenant_id: tenantId,
           user_id: userId,
           session_id: body.session_id,
@@ -42,7 +43,8 @@ export async function POST(request: NextRequest) {
           mode: Number(mode),
           goal: body.message || body.goal,
           template_id: body.template_id,
-          expert_id: agentId,
+          agent_id: agentId,   // Primary field name (standardized)
+          expert_id: agentId,  // Backwards compatibility
           mission_id: body.mission_id,
           options: body.options,
           user_context: body.user_context || {},

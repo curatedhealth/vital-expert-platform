@@ -110,15 +110,23 @@ export async function GET(request: NextRequest) {
       const agent = agentId ? agentMap.get(agentId) : null;
       const messagesArray = conv.context?.messages || [];
 
+      // Extract first user message for intelligent title generation
+      const firstUserMessage = messagesArray.find((m: any) => m.role === 'user' || m.type === 'human');
+      const firstMessagePreview = firstUserMessage?.content?.slice?.(0, 100) || '';
+
       return {
         sessionId: conv.id,
         conversationId: conv.id,
         title: conv.title || 'New Consultation',
+        firstMessagePreview, // Include first message for intelligent naming
         agent: agent ? {
+          id: agent.id,
           name: agent.display_name || agent.name,
           description: agent.description,
           avatar: agent.avatar_url,
         } : undefined,
+        // Include metadata for mode detection and navigation
+        metadata: conv.metadata || undefined,
         lastMessage: conv.updated_at || conv.created_at,
         messageCount: messagesArray.length,
       };

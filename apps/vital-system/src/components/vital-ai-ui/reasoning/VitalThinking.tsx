@@ -384,4 +384,4 @@ function StepItem({
 }
 
 export default VitalThinking;
-export type { ReasoningStep, VitalThinkingProps };
+// Types are already exported inline with their interfaces above

@@ -23,7 +23,7 @@ export default function TemplatesPage() {
         mode: 3,
         template_id: templateId,
         goal: '',
-        expert_id: 'expert-required', // placeholder; real expert selection to be added
+        agent_id: 'agent-required', // placeholder; real agent selection to be added
         user_context: {},
       }),
     });

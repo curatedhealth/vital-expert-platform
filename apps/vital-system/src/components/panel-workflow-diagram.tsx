@@ -526,7 +526,7 @@ export function PanelWorkflowDiagram({
               <StreamingPanelConsultation
                 question={testQuestion}
                 panelId={panelId}
-                expertIds={agentIds}
+                agentIds={agentIds}
                 tenantId={tenantId}
                 enableDebate={true}
                 maxRounds={3}

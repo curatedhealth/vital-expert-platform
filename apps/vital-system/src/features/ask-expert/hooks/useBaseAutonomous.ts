@@ -140,6 +140,8 @@ export interface StartMissionOptions {
 
 export interface UseBaseAutonomousOptions {
   missionId?: string;
+  agentId?: string;
+  /** @deprecated Use agentId instead */
   expertId?: string;
   tenantId?: string;
   onError?: (error: Error) => void;
@@ -219,7 +221,8 @@ export function useBaseAutonomous(
 ): BaseAutonomousState & BaseAutonomousActions {
   const {
     missionId: initialMissionId,
-    expertId,
+    agentId,
+    expertId, // Deprecated - use agentId
     tenantId,
     onError,
     onCheckpoint,
@@ -234,6 +237,9 @@ export function useBaseAutonomous(
     mode,
     pollingInterval = 5000,
   } = options;
+
+  // Resolve effective agent ID (agentId takes precedence over deprecated expertId)
+  const effectiveAgentId = agentId || expertId;
 
   // Determine endpoints based on mode
   const modePrefix = mode === 'mode3_manual_autonomous' ? 'mode3' : 'mode4';
@@ -677,9 +683,9 @@ export function useBaseAutonomous(
     (goal: string, missionOptions?: StartMissionOptions) => {
       if (!goal.trim() || isStreaming) return;
       
-      // Mode 3: Require expert selection
-      if (mode === 'mode3_manual_autonomous' && !selectedExpert && !expertId) {
-        onError?.(new Error('Please select an expert before starting the mission'));
+      // Mode 3: Require agent selection
+      if (mode === 'mode3_manual_autonomous' && !selectedExpert && !effectiveAgentId) {
+        onError?.(new Error('Please select an agent before starting the mission'));
         return;
       }
 
@@ -716,16 +722,16 @@ export function useBaseAutonomous(
         },
       };
 
-      // Mode 3: Include selected expert
+      // Mode 3: Include selected agent
       if (mode === 'mode3_manual_autonomous') {
-        payload.expert_id = selectedExpert?.id || expertId;
+        payload.agent_id = selectedExpert?.id || effectiveAgentId;
       }
       // Mode 4: Fusion will auto-select team
 
       connect(payload);
       onNotification?.('Mission started', 'info');
     },
-    [connect, expertId, tenantId, selectedExpert, isStreaming, mode, onError, onNotification]
+    [connect, effectiveAgentId, tenantId, selectedExpert, isStreaming, mode, onError, onNotification]
   );
 
   const selectExpert = useCallback((expert: Expert) => {

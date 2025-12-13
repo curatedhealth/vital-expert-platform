@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { LandingPage } from '@/features/landing'
+import { LandingPagePremium } from '@/features/landing'
 
 export const metadata: Metadata = {
   title: 'VITALexpert - Human Genius, Amplified',
@@ -20,5 +20,5 @@ export const metadata: Metadata = {
 }
 
 export default function Home() {
-  return <LandingPage />
+  return <LandingPagePremium />
 }

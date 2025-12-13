@@ -81,8 +81,10 @@ export interface SelectedExpert {
 export interface MissionInputProps {
   /** Is this auto-select mode (Mode 4) or manual (Mode 3) */
   autoSelect: boolean;
-  /** Currently selected expert (Mode 3 only) */
+  /** Currently selected expert (Mode 3 only - optional with mission-first flow) */
   selectedExpert?: SelectedExpert | null;
+  /** Selected mission family (Mode 3 mission-first flow) */
+  selectedMissionFamily?: MissionFamily | null;
   /** Callback when mission should start */
   onStartMission: (goal: string, config: MissionConfig) => void;
   /** Whether a mission is currently running */

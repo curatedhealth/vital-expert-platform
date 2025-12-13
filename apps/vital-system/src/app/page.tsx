@@ -1,26 +1,24 @@
 import { Metadata } from 'next'
-import { redirect } from 'next/navigation'
+import { LandingPage } from '@/features/landing'
 
 export const metadata: Metadata = {
-  title: 'VITAL Expert - AI-Powered Healthcare Innovation Platform',
-  description: 'Replace $3M in consulting with 136+ healthcare AI experts. Get FDA approval 91% faster. Available 24/7.',
-  keywords: 'healthcare AI, FDA approval, medical device consulting, digital health, regulatory compliance',
+  title: 'VITALexpert - Human Genius, Amplified',
+  description: 'Agentic Intelligence Platform for Enterprise. Transform complex challenges into actionable insights - 90% faster.',
+  keywords: 'AI agents, enterprise intelligence, innovation platform, expert consultation, workflow automation, agentic AI',
   openGraph: {
-    title: 'VITAL Expert - Transform Healthcare Innovation with AI',
-    description: 'Replace expensive consultants with AI-powered expert intelligence.',
+    title: 'VITALexpert - Human Genius, Amplified',
+    description: 'Orchestrating expertise, transforming scattered knowledge into compounding structures of insight.',
     images: ['/og-image.png'],
     url: 'https://vital.expert',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'VITAL Expert - Healthcare AI Platform',
-    description: 'Transform healthcare innovation with AI-powered expert intelligence.',
+    title: 'VITALexpert - Human Genius, Amplified',
+    description: 'The right AI agent for every task. Fully customizable agent hierarchies with 5 levels of seniority.',
     images: ['/twitter-image.png'],
   },
 }
 
 export default function Home() {
-  // Temporary emergency fix: redirect to dashboard to avoid styled-jsx SSR error
-  // TODO: Restore EnhancedLandingPage after Phase 2-3 UI library rebuild
-  redirect('/dashboard')
+  return <LandingPage />
 }

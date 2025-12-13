@@ -8,6 +8,7 @@ import {
   LLMProviderHealthCheck,
   LLMRequest,
   LLMResponse,
+  RawProviderResponse,
   ProviderSelectionCriteria,
   ProviderRecommendation,
   LLMError,
@@ -131,7 +132,7 @@ export class LLMProviderService {
       throw new Error(`Provider ${providerId} not found`);
     }
 
-    const updateData: unknown = { ...updates };
+    const updateData: Record<string, unknown> = { ...updates };
 
     // Handle API key encryption
     if (updates.api_key) {
@@ -546,7 +547,7 @@ export class LLMProviderService {
     const startTime = Date.now();
 
     // Provider-specific API calls
-    let response: unknown;
+    let response: RawProviderResponse;
 
     switch (provider.provider_type) {
       case ProviderType.OPENAI:
@@ -592,7 +593,7 @@ export class LLMProviderService {
   }
 
   // Provider-specific API implementations
-  private async callOpenAI(provider: LLMProvider, request: LLMRequest): Promise<unknown> {
+  private async callOpenAI(provider: LLMProvider, request: LLMRequest): Promise<RawProviderResponse> {
     const apiKey = await this.decryptApiKey(provider.api_key_encrypted!);
 
     const response = await fetch(`${provider.api_endpoint}/chat/completions`, {
@@ -646,7 +647,7 @@ export class LLMProviderService {
     };
   }
 
-  private async callAnthropic(provider: LLMProvider, request: LLMRequest): Promise<unknown> {
+  private async callAnthropic(provider: LLMProvider, request: LLMRequest): Promise<RawProviderResponse> {
     const apiKey = await this.decryptApiKey(provider.api_key_encrypted!);
 
     const response = await fetch(`${provider.api_endpoint}/messages`, {
@@ -697,12 +698,12 @@ export class LLMProviderService {
     };
   }
 
-  private async callGoogle(provider: LLMProvider, request: LLMRequest): Promise<unknown> {
+  private async callGoogle(provider: LLMProvider, request: LLMRequest): Promise<RawProviderResponse> {
     // Implement Google/Vertex AI API call
     throw new Error('Google provider not yet implemented');
   }
 
-  private async callAzure(provider: LLMProvider, request: LLMRequest): Promise<unknown> {
+  private async callAzure(provider: LLMProvider, request: LLMRequest): Promise<RawProviderResponse> {
     // Implement Azure OpenAI API call
     throw new Error('Azure provider not yet implemented');
   }
@@ -818,43 +819,43 @@ export class LLMProviderService {
     }
   }
 
-  private transformDBProvider(dbProvider: unknown): LLMProvider {
+  private transformDBProvider(dbProvider: Record<string, unknown>): LLMProvider {
     return {
-      id: dbProvider.id,
-      provider_name: dbProvider.provider_name,
+      id: dbProvider.id as string,
+      provider_name: dbProvider.provider_name as string,
       provider_type: dbProvider.provider_type as ProviderType,
-      api_endpoint: dbProvider.api_endpoint,
-      api_key_encrypted: dbProvider.api_key_encrypted,
-      model_id: dbProvider.model_id,
-      model_version: dbProvider.model_version,
+      api_endpoint: dbProvider.api_endpoint as string | undefined,
+      api_key_encrypted: dbProvider.api_key_encrypted as string | undefined,
+      model_id: dbProvider.model_id as string,
+      model_version: dbProvider.model_version as string | undefined,
       capabilities: dbProvider.capabilities as LLMCapabilities,
-      cost_per_1k_input_tokens: parseFloat(dbProvider.cost_per_1k_input_tokens),
-      cost_per_1k_output_tokens: parseFloat(dbProvider.cost_per_1k_output_tokens),
-      max_tokens: dbProvider.max_tokens,
-      temperature_default: parseFloat(dbProvider.temperature_default),
-      rate_limit_rpm: dbProvider.rate_limit_rpm,
-      rate_limit_tpm: dbProvider.rate_limit_tpm,
-      rate_limit_concurrent: dbProvider.rate_limit_concurrent,
-      priority_level: dbProvider.priority_level,
-      weight: parseFloat(dbProvider.weight),
+      cost_per_1k_input_tokens: parseFloat(String(dbProvider.cost_per_1k_input_tokens)),
+      cost_per_1k_output_tokens: parseFloat(String(dbProvider.cost_per_1k_output_tokens)),
+      max_tokens: dbProvider.max_tokens as number,
+      temperature_default: parseFloat(String(dbProvider.temperature_default)),
+      rate_limit_rpm: dbProvider.rate_limit_rpm as number,
+      rate_limit_tpm: dbProvider.rate_limit_tpm as number,
+      rate_limit_concurrent: dbProvider.rate_limit_concurrent as number,
+      priority_level: dbProvider.priority_level as number,
+      weight: parseFloat(String(dbProvider.weight)),
       status: dbProvider.status as ProviderStatus,
-      is_active: dbProvider.is_active,
-      is_hipaa_compliant: dbProvider.is_hipaa_compliant,
-      is_production_ready: dbProvider.is_production_ready,
-      medical_accuracy_score: dbProvider.medical_accuracy_score ? parseFloat(dbProvider.medical_accuracy_score) : undefined,
-      average_latency_ms: dbProvider.average_latency_ms,
-      uptime_percentage: parseFloat(dbProvider.uptime_percentage),
-      health_check_enabled: dbProvider.health_check_enabled,
-      health_check_interval_minutes: dbProvider.health_check_interval_minutes,
-      health_check_timeout_seconds: dbProvider.health_check_timeout_seconds,
-      custom_headers: dbProvider.custom_headers || { /* TODO: implement */ },
+      is_active: dbProvider.is_active as boolean,
+      is_hipaa_compliant: dbProvider.is_hipaa_compliant as boolean,
+      is_production_ready: dbProvider.is_production_ready as boolean,
+      medical_accuracy_score: dbProvider.medical_accuracy_score ? parseFloat(String(dbProvider.medical_accuracy_score)) : undefined,
+      average_latency_ms: dbProvider.average_latency_ms as number,
+      uptime_percentage: parseFloat(String(dbProvider.uptime_percentage)),
+      health_check_enabled: dbProvider.health_check_enabled as boolean,
+      health_check_interval_minutes: dbProvider.health_check_interval_minutes as number,
+      health_check_timeout_seconds: dbProvider.health_check_timeout_seconds as number,
+      custom_headers: (dbProvider.custom_headers as Record<string, string>) || {},
       retry_config: dbProvider.retry_config as RetryConfig,
-      metadata: dbProvider.metadata || { /* TODO: implement */ },
-      tags: dbProvider.tags || [],
-      created_at: new Date(dbProvider.created_at),
-      updated_at: new Date(dbProvider.updated_at),
-      created_by: dbProvider.created_by,
-      updated_by: dbProvider.updated_by
+      metadata: (dbProvider.metadata as Record<string, unknown>) || {},
+      tags: (dbProvider.tags as string[]) || [],
+      created_at: new Date(String(dbProvider.created_at)),
+      updated_at: new Date(String(dbProvider.updated_at)),
+      created_by: dbProvider.created_by as string,
+      updated_by: dbProvider.updated_by as string
     };
   }
 

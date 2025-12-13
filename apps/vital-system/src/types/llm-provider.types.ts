@@ -400,6 +400,20 @@ export interface LLMResponse {
   created_at: Date;
 }
 
+// Raw response from provider API calls (internal use)
+export interface RawProviderResponse {
+  content: string;
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+  };
+  function_calls?: unknown[];
+  confidence_score?: number;
+  finish_reason: 'stop' | 'length' | 'function_call' | 'content_filter' | 'error';
+  metadata?: Record<string, unknown>;
+}
+
 // Analytics and reporting types
 export interface ProviderAnalytics {
   provider_id: string;

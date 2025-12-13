@@ -94,7 +94,7 @@ const statusConfig: Record<ApprovalStatus, { icon: typeof Clock; color: string; 
   pending: { icon: Clock, color: 'text-yellow-500', label: 'Pending' },
   approved: { icon: CheckCircle2, color: 'text-green-500', label: 'Approved' },
   rejected: { icon: XCircle, color: 'text-red-500', label: 'Rejected' },
-  expired: { icon: AlertTriangle, color: 'text-gray-500', label: 'Expired' },
+  expired: { icon: AlertTriangle, color: 'text-stone-500', label: 'Expired' },
 };
 
 export function VitalApprovalCard({
@@ -150,7 +150,7 @@ export function VitalApprovalCard({
         status === 'pending' && 'border-yellow-200 shadow-yellow-100/50 shadow-lg',
         status === 'approved' && 'border-green-200 bg-green-50/30',
         status === 'rejected' && 'border-red-200 bg-red-50/30',
-        status === 'expired' && 'border-gray-200 bg-gray-50/30 opacity-75',
+        status === 'expired' && 'border-stone-200 bg-stone-50/30 opacity-75',
         className
       )}
     >

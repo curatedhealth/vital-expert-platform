@@ -38,7 +38,7 @@ const ONTOLOGY_NODE_TYPES = [
   { id: 'jtbd', label: 'JTBDs', icon: Target, color: 'text-amber-500' },
   { id: 'value', label: 'Value Categories', icon: TrendingUp, color: 'text-cyan-500' },
   { id: 'agent', label: 'AI Agents', icon: Bot, color: 'text-yellow-500' },
-  { id: 'persona', label: 'Personas', icon: Users, color: 'text-gray-500' },
+  { id: 'persona', label: 'Personas', icon: Users, color: 'text-stone-500' },
   { id: 'workflow', label: 'Workflows', icon: Workflow, color: 'text-pink-500' },
 ] as const
 

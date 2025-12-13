@@ -32,7 +32,7 @@ const AGENT_DESCRIPTIONS: Record<AgentLevel, string> = {
 export function MissionPlan({ steps, currentStep, className = '' }: MissionPlanProps) {
   if (steps.length === 0) {
     return (
-      <div className={`text-center py-8 text-gray-500 ${className}`}>
+      <div className={`text-center py-8 text-stone-500 ${className}`}>
         <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
         <p>Planning in progress...</p>
       </div>
@@ -43,13 +43,13 @@ export function MissionPlan({ steps, currentStep, className = '' }: MissionPlanP
     <div className={`space-y-4 ${className}`}>
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-lg">Execution Plan</h3>
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-stone-500">
           {steps.filter((s) => s.status === 'completed').length}/{steps.length} complete
         </span>
       </div>
 
       <div className="relative">
-        <div className="absolute left-4 top-8 bottom-8 w-0.5 bg-gray-200" />
+        <div className="absolute left-4 top-8 bottom-8 w-0.5 bg-stone-200" />
 
         <div className="space-y-4">
           {steps.map((step, index) => {
@@ -68,7 +68,7 @@ export function MissionPlan({ steps, currentStep, className = '' }: MissionPlanP
                       ? 'border-green-200 bg-green-50/50'
                       : isFailed
                         ? 'border-red-200 bg-red-50/50'
-                        : 'border-gray-200 bg-white'
+                        : 'border-stone-200 bg-white'
                 }`}
               >
                 <div className="relative z-10 flex-shrink-0">
@@ -85,8 +85,8 @@ export function MissionPlan({ steps, currentStep, className = '' }: MissionPlanP
                       <XCircle className="h-5 w-5 text-white" />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                      <Circle className="h-5 w-5 text-gray-400" />
+                    <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center">
+                      <Circle className="h-5 w-5 text-stone-400" />
                     </div>
                   )}
                 </div>
@@ -98,7 +98,7 @@ export function MissionPlan({ steps, currentStep, className = '' }: MissionPlanP
                       {step.agent}
                     </span>
                     {step.stage && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">
                         {step.stage}
                       </span>
                     )}
@@ -107,12 +107,12 @@ export function MissionPlan({ steps, currentStep, className = '' }: MissionPlanP
                     )}
                   </div>
 
-                  <p className="text-sm text-gray-600 mt-1">{step.description}</p>
+                  <p className="text-sm text-stone-600 mt-1">{step.description}</p>
 
                   {step.tools && step.tools.length > 0 && (
                     <div className="flex gap-1 mt-2 flex-wrap">
                       {step.tools.map((tool, i) => (
-                        <span key={i} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                        <span key={i} className="text-xs px-2 py-0.5 bg-stone-100 text-stone-600 rounded">
                           {tool}
                         </span>
                       ))}
@@ -120,14 +120,14 @@ export function MissionPlan({ steps, currentStep, className = '' }: MissionPlanP
                   )}
 
                   {(step.startedAt || step.completedAt) && (
-                    <div className="text-xs text-gray-400 mt-2">
+                    <div className="text-xs text-stone-400 mt-2">
                       {step.startedAt && !step.completedAt && <span>Started {formatTime(step.startedAt)}</span>}
                       {step.completedAt && <span>Completed {formatTime(step.completedAt)}</span>}
                     </div>
                   )}
                 </div>
 
-                <div className="flex-shrink-0 text-sm text-gray-400">
+                <div className="flex-shrink-0 text-sm text-stone-400">
                   {index + 1}/{steps.length}
                 </div>
               </div>
@@ -136,7 +136,7 @@ export function MissionPlan({ steps, currentStep, className = '' }: MissionPlanP
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 text-xs text-gray-500 pt-4 border-t">
+      <div className="flex flex-wrap gap-4 text-xs text-stone-500 pt-4 border-t">
         {Object.entries(AGENT_STYLES).map(([level, style]) => (
           <div key={level} className="flex items-center gap-1">
             <span className={`w-3 h-3 rounded-full ${style.bg} ${style.border} border`} />

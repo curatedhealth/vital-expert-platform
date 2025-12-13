@@ -81,9 +81,9 @@ export const TOOL_CATEGORIES: Record<string, ToolCategoryConfig> = {
   },
   'General': {
     icon: Wrench,
-    color: 'text-gray-800',
-    bgColor: 'bg-gray-100',
-    borderColor: 'border-gray-200',
+    color: 'text-stone-800',
+    bgColor: 'bg-stone-100',
+    borderColor: 'border-stone-200',
     description: 'General purpose tools'
   },
   // Healthcare categories
@@ -221,9 +221,9 @@ export const TOOL_CATEGORIES: Record<string, ToolCategoryConfig> = {
 // Default category for unknown categories
 export const DEFAULT_TOOL_CATEGORY: ToolCategoryConfig = {
   icon: Wrench,
-  color: 'text-gray-800',
-  bgColor: 'bg-gray-100',
-  borderColor: 'border-gray-200',
+  color: 'text-stone-800',
+  bgColor: 'bg-stone-100',
+  borderColor: 'border-stone-200',
   description: 'General tool'
 };
 
@@ -252,8 +252,8 @@ export const LIFECYCLE_BADGES: Record<ToolLifecycleStage, ToolLifecycleConfig> =
   },
   development: {
     icon: AlertCircle,
-    color: 'text-gray-800',
-    bgColor: 'bg-gray-100',
+    color: 'text-stone-800',
+    bgColor: 'bg-stone-100',
     label: 'Development'
   },
 };
@@ -279,8 +279,8 @@ export const HEALTH_STATUS_CONFIG: Record<ToolHealthStatus, { color: string; bgC
     label: 'Unhealthy'
   },
   unknown: {
-    color: 'text-gray-800',
-    bgColor: 'bg-gray-100',
+    color: 'text-stone-800',
+    bgColor: 'bg-stone-100',
     label: 'Unknown'
   },
 };

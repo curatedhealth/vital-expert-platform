@@ -167,7 +167,7 @@ export function VitalDocumentation({
       case 'final':
         return 'bg-green-100 text-green-700';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-stone-100 text-stone-700';
     }
   };
 

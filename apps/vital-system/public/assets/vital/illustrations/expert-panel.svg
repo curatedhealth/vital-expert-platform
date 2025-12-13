@@ -1,0 +1,37 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <g id="isometric-cube-outline-small">
+            <path d="M12 4L0 10L12 16L24 10L12 4Z" stroke="#1C1917" stroke-width="0.5"/>
+            <path d="M0 10V22L12 28V16L0 10Z" stroke="#1C1917" stroke-width="0.5"/>
+            <path d="M12 28L24 22V10L12 16V28Z" stroke="#1C1917" stroke-width="0.5"/>
+        </g>
+    </defs>
+
+    <!-- Central Hub -->
+    <g transform="translate(88, 70)">
+        <use href="#isometric-cube-outline-small" x="0" y="0"/>
+    </g>
+
+    <!-- Surrounding Panels -->
+    <g transform="translate(50, 90)">
+        <use href="#isometric-cube-outline-small" x="0" y="0"/>
+    </g>
+    <g transform="translate(126, 90)">
+        <use href="#isometric-cube-outline-small" x="0" y="0"/>
+    </g>
+    <g transform="translate(88, 120)">
+        <use href="#isometric-cube-outline-small" x="0" y="0"/>
+    </g>
+
+    <!-- Connecting Lines (Collaboration/Data Flow) -->
+    <line x1="100" y1="90" x2="62" y2="110" stroke="#1C1917" stroke-width="0.5" stroke-dasharray="2 2"/>
+    <line x1="100" y1="90" x2="138" y2="110" stroke="#1C1917" stroke-width="0.5" stroke-dasharray="2 2"/>
+    <line x1="62" y1="110" x2="100" y2="140" stroke="#1C1917" stroke-width="0.5" stroke-dasharray="2 2"/>
+    <line x1="138" y1="110" x2="100" y2="140" stroke="#1C1917" stroke-width="0.5" stroke-dasharray="2 2"/>
+
+    <!-- Purple Nodes (Experts/Focal Points) -->
+    <circle cx="100" cy="90" r="3" fill="#9055E0"/>
+    <circle cx="62" cy="110" r="3" fill="#A855F7"/>
+    <circle cx="138" cy="110" r="3" fill="#00CAFF"/>
+    <circle cx="100" cy="140" r="3" fill="#F59E0B"/>
+</svg>

@@ -1,8 +1,9 @@
 # VITAL Path Backend - Repository Structure Audit
 
-**Version:** 1.0  
-**Date:** December 5, 2025  
+**Version:** 1.1
+**Date:** December 13, 2025
 **Scope:** Full hierarchical audit from L0 (root) to lowest branch
+**Updated:** Phase 2 HIGH Priority fixes (H1/H7) - resilience infrastructure and tests added
 
 ---
 
@@ -243,6 +244,11 @@ src/                                    # L2: 195 Python files, 6.5MB
 │   │   └── template_base.py           # 242 lines
 │   ├── mixins/                        # L4: Empty
 │   ├── modes/                         # L4: Empty
+│   ├── modes34/                       # L4: Phase 2 Resilience ✅ NEW (Dec 2025)
+│   │   ├── __init__.py                # ~15 lines
+│   │   └── resilience/                # L5: Exception handling
+│   │       ├── __init__.py            # ~40 lines (module exports)
+│   │       └── graceful_degradation.py # ~200 lines (H7 decorator)
 │   └── node_compilers/                # L4: 7 files
 │       ├── __init__.py
 │       ├── agent_node_compiler.py     # 127 lines
@@ -482,13 +488,15 @@ tests/                                  # L2: 87 test files
 ├── uat/                               # L3: 2 files
 │   ├── __init__.py
 │   └── test_evidence_based_responses.py
-├── unit/                              # L3: 6 files ⚠️ INSUFFICIENT
+├── unit/                              # L3: 8 files ✅ Phase 2 Tests Added
 │   ├── __init__.py
 │   ├── test_artifacts.py
 │   ├── test_compliance_service.py
 │   ├── test_core_services.py
+│   ├── test_graceful_degradation.py  # 509 lines, 29 tests ✅ NEW (H7)
 │   ├── test_l5_tools.py
-│   └── test_mode1_components.py
+│   ├── test_mode1_components.py
+│   └── test_validation.py            # 386 lines, 32 tests ✅ NEW (H1)
 └── workflows/                         # L3: 1 file
     └── test_simple_panel_workflow.py
 ```

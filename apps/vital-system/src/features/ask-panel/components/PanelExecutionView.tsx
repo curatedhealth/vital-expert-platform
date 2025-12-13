@@ -810,7 +810,7 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
                               {isPanelSuggested && (
                                 <Badge 
                                   variant="outline" 
-                                  className="absolute top-2 right-2 text-xs z-10 bg-white dark:bg-gray-800"
+                                  className="absolute top-2 right-2 text-xs z-10 bg-white dark:bg-stone-800"
                                 >
                                   Panel
                                 </Badge>

@@ -48,7 +48,7 @@ export function PanelTemplates({ onTemplateSelect, onCreateExpertPanel }: PanelT
       case 'low': return 'bg-green-100 text-green-700 border-green-200';
       case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
       case 'high': return 'bg-red-100 text-red-700 border-red-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      default: return 'bg-stone-100 text-stone-700 border-stone-200';
     }
   };
 

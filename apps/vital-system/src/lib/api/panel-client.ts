@@ -392,12 +392,12 @@ export function formatPanelStatus(status: PanelStatus): string {
  */
 export function getPanelStatusColor(status: PanelStatus): string {
   const colorMap: Record<PanelStatus, string> = {
-    created: 'text-gray-600 bg-gray-100',
+    created: 'text-stone-600 bg-stone-100',
     running: 'text-blue-600 bg-blue-100',
     completed: 'text-green-600 bg-green-100',
     failed: 'text-red-600 bg-red-100',
   };
-  return colorMap[status] || 'text-gray-600 bg-gray-100';
+  return colorMap[status] || 'text-stone-600 bg-stone-100';
 }
 
 /**

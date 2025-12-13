@@ -275,7 +275,7 @@ function EvidenceHierarchyCard() {
       color: "bg-indigo-500",
     },
     { level: "3", name: "Case Series", count: 156, color: "bg-purple-500" },
-    { level: "4", name: "Expert Opinion", count: 78, color: "bg-gray-400" },
+    { level: "4", name: "Expert Opinion", count: 78, color: "bg-stone-400" },
   ];
 
   const totalEvidence = evidenceLevels.reduce((sum, e) => sum + e.count, 0);
@@ -319,7 +319,7 @@ function TherapeuticAreaCard({ area }: { area: TherapeuticArea }) {
       return <TrendingUp className="h-3 w-3 text-green-500" />;
     if (area.trend === "down")
       return <TrendingUp className="h-3 w-3 text-red-500 rotate-180" />;
-    return <Activity className="h-3 w-3 text-gray-400" />;
+    return <Activity className="h-3 w-3 text-stone-400" />;
   };
 
   return (
@@ -559,7 +559,7 @@ function DecisionFrameworkCard() {
               ) : decision.status === "in_progress" ? (
                 <Activity className="h-4 w-4 text-blue-500" />
               ) : (
-                <Target className="h-4 w-4 text-gray-400" />
+                <Target className="h-4 w-4 text-stone-400" />
               )}
               <div>
                 <div className="text-sm font-medium">{decision.name}</div>

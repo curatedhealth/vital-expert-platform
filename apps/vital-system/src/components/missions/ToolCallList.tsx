@@ -23,7 +23,7 @@ export function ToolCallList({ toolCalls }: { toolCalls: ToolCall[] }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+      <div className="flex items-center gap-2 text-sm font-semibold text-stone-700">
         <Wrench className="h-4 w-4" />
         Tool Activity
       </div>
@@ -49,18 +49,18 @@ export function ToolCallList({ toolCalls }: { toolCalls: ToolCall[] }) {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium">{call.tool_name || call.tool_id || call.id}</span>
                   {call.tool_type && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">
                       {call.tool_type}
                     </span>
                   )}
                   {call.duration_ms !== undefined && (
-                    <span className="text-xs text-gray-500">{call.duration_ms} ms</span>
+                    <span className="text-xs text-stone-500">{call.duration_ms} ms</span>
                   )}
                 </div>
                 {call.error ? (
                   <div className="text-xs text-red-600 mt-1">{call.error}</div>
                 ) : (
-                  <div className="text-xs text-gray-600 mt-1 truncate">
+                  <div className="text-xs text-stone-600 mt-1 truncate">
                     {String(call.output || '')}
                   </div>
                 )}

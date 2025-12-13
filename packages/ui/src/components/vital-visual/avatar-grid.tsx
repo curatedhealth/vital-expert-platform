@@ -134,8 +134,8 @@ export const AvatarGrid: React.FC<AvatarGridProps> = ({
       <div className="p-4 border-b space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">Select Avatar</h3>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <h3 className="text-sm font-semibold text-stone-900">Select Avatar</h3>
+            <p className="text-xs text-stone-500 mt-0.5">
               {filteredAvatars.length} avatar{filteredAvatars.length !== 1 ? "s" : ""}
             </p>
           </div>
@@ -154,7 +154,7 @@ export const AvatarGrid: React.FC<AvatarGridProps> = ({
         <div className="space-y-2">
           {/* Persona Type Filter */}
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Persona Type</label>
+            <label className="text-xs font-medium text-stone-700 mb-1.5 block">Persona Type</label>
             <ScrollArea className="w-full" orientation="horizontal">
               <div className="flex gap-2 pb-2">
                 <button
@@ -163,7 +163,7 @@ export const AvatarGrid: React.FC<AvatarGridProps> = ({
                     "px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors",
                     !personaType
                       ? "bg-purple-100 text-purple-700 ring-2 ring-purple-500"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      : "bg-stone-100 text-stone-600 hover:bg-stone-200"
                   )}
                 >
                   All
@@ -176,7 +176,7 @@ export const AvatarGrid: React.FC<AvatarGridProps> = ({
                       "px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors flex items-center gap-2",
                       personaType === type.value
                         ? "bg-purple-100 text-purple-700 ring-2 ring-purple-500"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        : "bg-stone-100 text-stone-600 hover:bg-stone-200"
                     )}
                   >
                     <div
@@ -192,7 +192,7 @@ export const AvatarGrid: React.FC<AvatarGridProps> = ({
 
           {/* Department Filter */}
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Department</label>
+            <label className="text-xs font-medium text-stone-700 mb-1.5 block">Department</label>
             <ScrollArea className="w-full" orientation="horizontal">
               <div className="flex gap-2 pb-2">
                 <button
@@ -201,7 +201,7 @@ export const AvatarGrid: React.FC<AvatarGridProps> = ({
                     "px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors",
                     !department
                       ? "bg-teal-100 text-teal-700 ring-2 ring-teal-500"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      : "bg-stone-100 text-stone-600 hover:bg-stone-200"
                   )}
                 >
                   All
@@ -214,7 +214,7 @@ export const AvatarGrid: React.FC<AvatarGridProps> = ({
                       "px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors",
                       department === dept.value
                         ? "bg-teal-100 text-teal-700 ring-2 ring-teal-500"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        : "bg-stone-100 text-stone-600 hover:bg-stone-200"
                     )}
                   >
                     {dept.label}
@@ -231,8 +231,8 @@ export const AvatarGrid: React.FC<AvatarGridProps> = ({
         {filteredAvatars.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="text-4xl mb-4">🔍</div>
-            <p className="text-sm text-gray-500">No avatars found</p>
-            <p className="text-xs text-gray-400 mt-1">Try adjusting your search or filters</p>
+            <p className="text-sm text-stone-500">No avatars found</p>
+            <p className="text-xs text-stone-400 mt-1">Try adjusting your search or filters</p>
           </div>
         ) : (
           <div className={cn("grid gap-4", gridColsClass)}>
@@ -249,7 +249,7 @@ export const AvatarGrid: React.FC<AvatarGridProps> = ({
                     "relative group flex flex-col items-center p-3 rounded-xl transition-all hover:scale-105",
                     isSelected
                       ? "bg-purple-50 ring-2 ring-purple-500"
-                      : "bg-gray-50 hover:bg-gray-100"
+                      : "bg-stone-50 hover:bg-stone-100"
                   )}
                 >
                   <AgentAvatar
@@ -264,10 +264,10 @@ export const AvatarGrid: React.FC<AvatarGridProps> = ({
 
                   {showDetails && (
                     <div className="mt-2 text-center">
-                      <p className="text-[10px] font-medium text-gray-900 truncate max-w-full">
+                      <p className="text-[10px] font-medium text-stone-900 truncate max-w-full">
                         {avatar.personaType}
                       </p>
-                      <p className="text-[9px] text-gray-500 truncate max-w-full">
+                      <p className="text-[9px] text-stone-500 truncate max-w-full">
                         #{avatar.variant}
                       </p>
                     </div>
@@ -295,15 +295,15 @@ export const AvatarGrid: React.FC<AvatarGridProps> = ({
 
       {/* Footer */}
       {selectedAvatar && (
-        <div className="px-4 py-3 border-t bg-gray-50">
+        <div className="px-4 py-3 border-t bg-stone-50">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-600">Selected Avatar</p>
+              <p className="text-xs text-stone-600">Selected Avatar</p>
               <p className="text-xs font-mono text-purple-700 mt-0.5">{selectedAvatar}</p>
             </div>
             <button
               onClick={() => onSelect("")}
-              className="text-xs text-gray-500 hover:text-gray-700 underline"
+              className="text-xs text-stone-500 hover:text-stone-700 underline"
             >
               Clear
             </button>

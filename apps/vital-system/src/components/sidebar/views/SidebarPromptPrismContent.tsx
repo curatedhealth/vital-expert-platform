@@ -169,7 +169,7 @@ export function SidebarPromptPrismContent() {
             <SidebarMenuItem>
               <SidebarMenuButton asChild data-active={!currentSuite}>
                 <Link href={buildUrl({ suite: null, subSuite: null })}>
-                  <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                  <CheckCircle2 className="h-4 w-4 text-stone-500" />
                   <span>All Suites</span>
                 </Link>
               </SidebarMenuButton>
@@ -200,7 +200,7 @@ export function SidebarPromptPrismContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentComplexity}>
               <Link href={buildUrl({ complexity: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Levels</span>
               </Link>
             </SidebarMenuButton>

@@ -183,9 +183,9 @@ export function getRoleColor(role: UserRole): string {
     case UserRole.USER:
       return 'text-green-600 bg-green-50 border-green-200';
     case UserRole.VIEWER:
-      return 'text-gray-600 bg-gray-50 border-gray-200';
+      return 'text-stone-600 bg-stone-50 border-stone-200';
     default:
-      return 'text-gray-600 bg-gray-50 border-gray-200';
+      return 'text-stone-600 bg-stone-50 border-stone-200';
   }
 }
 

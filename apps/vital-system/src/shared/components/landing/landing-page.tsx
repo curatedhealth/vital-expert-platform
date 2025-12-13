@@ -15,7 +15,7 @@ import { Button } from '@vital/ui';
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-stone-50">
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-trust-blue/5 to-progress-teal/5 py-20">

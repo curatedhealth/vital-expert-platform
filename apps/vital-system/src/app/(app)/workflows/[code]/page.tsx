@@ -322,7 +322,7 @@ export default function UseCaseDetailPage() {
                 <CardContent>
                   {tasks[workflow.id] && tasks[workflow.id].length > 0 ? (
                     <div className="space-y-4 p-2">
-                      <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <h4 className="text-sm font-semibold text-stone-700 flex items-center gap-2">
                         <CheckCircle className="w-4 h-4" />
                         Tasks ({tasks[workflow.id].length})
                       </h4>

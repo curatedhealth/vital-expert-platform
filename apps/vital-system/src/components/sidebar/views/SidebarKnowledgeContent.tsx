@@ -143,7 +143,7 @@ const THERAPEUTIC_AREAS = [
 
 // Lifecycle status options
 const STATUS_OPTIONS = [
-  { value: 'draft', label: 'Draft', color: 'bg-gray-500' },
+  { value: 'draft', label: 'Draft', color: 'bg-stone-500' },
   { value: 'active', label: 'Active', color: 'bg-green-500' },
   { value: 'review', label: 'Under Review', color: 'bg-yellow-500' },
   { value: 'deprecated', label: 'Deprecated', color: 'bg-orange-500' },
@@ -273,7 +273,7 @@ export function SidebarKnowledgeContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentCategory}>
               <Link href={buildUrl({ category: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Categories</span>
               </Link>
             </SidebarMenuButton>
@@ -328,7 +328,7 @@ export function SidebarKnowledgeContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentTherapeutic}>
               <Link href={buildUrl({ therapeutic: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Areas</span>
               </Link>
             </SidebarMenuButton>
@@ -352,7 +352,7 @@ export function SidebarKnowledgeContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentStatus}>
               <Link href={buildUrl({ status: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Status</span>
               </Link>
             </SidebarMenuButton>
@@ -378,7 +378,7 @@ export function SidebarKnowledgeContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentAccess}>
               <Link href={buildUrl({ access: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Levels</span>
               </Link>
             </SidebarMenuButton>

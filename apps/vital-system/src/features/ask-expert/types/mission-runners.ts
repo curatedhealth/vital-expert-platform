@@ -488,7 +488,7 @@ export const CATEGORY_COLORS: Record<RunnerCategory, string> = {
   discover: 'bg-purple-600',
   design: 'bg-pink-600',
   govern: 'bg-stone-500',
-  secure: 'bg-gray-600',
+  secure: 'bg-stone-600',
   execute: 'bg-emerald-600',
 };
 
@@ -515,7 +515,7 @@ export const FAMILY_COLORS: Record<MissionFamily, string> = {
   PREPARATION: 'bg-indigo-600',
   MONITORING: 'bg-cyan-600',
   PROBLEM_SOLVING: 'bg-emerald-600',
-  GENERIC: 'bg-gray-500',
+  GENERIC: 'bg-stone-500',
 };
 
 /**

@@ -180,7 +180,7 @@ const levelColors: Record<AgentLevel, string> = {
   L2: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
   L3: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
   L4: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  L5: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
+  L5: 'bg-stone-100 text-stone-800 dark:bg-stone-900/30 dark:text-stone-300',
 };
 
 const riskColors: Record<RiskLevel, string> = {

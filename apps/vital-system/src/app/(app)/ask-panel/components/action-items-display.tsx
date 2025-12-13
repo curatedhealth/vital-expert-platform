@@ -53,14 +53,14 @@ const CATEGORY_COLORS = {
   commercial: 'bg-green-100 text-green-800',
   operational: 'bg-orange-100 text-orange-800',
   strategic: 'bg-pink-100 text-pink-800',
-  other: 'bg-gray-100 text-gray-800',
+  other: 'bg-stone-100 text-stone-800',
 };
 
 const RACI_COLORS = {
   R: 'bg-blue-600 text-white',
   A: 'bg-purple-600 text-white',
   C: 'bg-yellow-600 text-white',
-  I: 'bg-gray-600 text-white',
+  I: 'bg-stone-600 text-white',
 };
 
 export function ActionItemsDisplay({
@@ -205,7 +205,7 @@ export function ActionItemsDisplay({
                   </thead>
                   <tbody>
                     {raciMatrix.matrix.map(row => (
-                      <tr key={row.actionItemId} className="border-b hover:bg-gray-50">
+                      <tr key={row.actionItemId} className="border-b hover:bg-stone-50">
                         <td className="p-2 text-sm">{row.actionItemTitle}</td>
                         {raciMatrix.roles.map(role => {
                           const assignment = row.assignments[role];
@@ -245,7 +245,7 @@ export function ActionItemsDisplay({
                 {criticalPath.map((action, index) => (
                   <div key={action.id} className="relative">
                     {index < criticalPath.length - 1 && (
-                      <div className="absolute left-6 top-full h-4 w-0.5 bg-gray-300" />
+                      <div className="absolute left-6 top-full h-4 w-0.5 bg-stone-300" />
                     )}
                     <ActionItemCard
                       action={action}
@@ -272,7 +272,7 @@ export function ActionItemsDisplay({
               </div>
               <button
                 onClick={() => setSelectedAction(null)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-stone-500 hover:text-stone-700"
               >
                 ✕
               </button>

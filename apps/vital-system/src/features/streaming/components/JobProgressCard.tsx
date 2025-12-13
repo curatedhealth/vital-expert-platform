@@ -66,7 +66,7 @@ const statusConfig: Record<JobStatus, {
   },
   cancelled: {
     icon: Ban,
-    color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
+    color: 'bg-stone-100 text-stone-800 dark:bg-stone-900/30 dark:text-stone-300',
     label: 'Cancelled',
   },
 };
@@ -163,7 +163,7 @@ export function JobProgressCard({
                     ? 'bg-green-500'
                     : index === progress.currentStep
                     ? 'bg-blue-500'
-                    : 'bg-gray-200 dark:bg-gray-700'
+                    : 'bg-stone-200 dark:bg-stone-700'
                 )}
               />
             ))}

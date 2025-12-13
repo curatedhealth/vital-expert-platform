@@ -1,0 +1,41 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <g id="isometric-cube-outline-tiny">
+            <path d="M8 4L0 8L8 12L16 8L8 4Z" stroke="#1C1917" stroke-width="0.5"/>
+            <path d="M0 8V16L8 20V12L0 8Z" stroke="#1C1917" stroke-width="0.5"/>
+            <path d="M8 20L16 16V8L8 12V20Z" stroke="#1C1917" stroke-width="0.5"/>
+        </g>
+        <g id="isometric-cube-outline-small">
+            <path d="M12 4L0 10L12 16L24 10L12 4Z" stroke="#1C1917" stroke-width="0.5"/>
+            <path d="M0 10V22L12 28V16L0 10Z" stroke="#1C1917" stroke-width="0.5"/>
+            <path d="M12 28L24 22V10L12 16V28Z" stroke="#1C1917" stroke-width="0.5"/>
+        </g>
+    </defs>
+
+    <!-- Individual building blocks -->
+    <g transform="translate(60, 100)">
+        <use href="#isometric-cube-outline-tiny" x="0" y="0" fill="#9055E0" opacity="0.1"/>
+        <circle cx="8" cy="12" r="2" fill="#9055E0"/>
+    </g>
+    <g transform="translate(90, 110)">
+        <use href="#isometric-cube-outline-tiny" x="0" y="0" fill="#00CAFF" opacity="0.1"/>
+        <circle cx="8" cy="12" r="2" fill="#00CAFF"/>
+    </g>
+    <g transform="translate(70, 70)">
+        <use href="#isometric-cube-outline-tiny" x="0" y="0" fill="#4F46E5" opacity="0.1"/>
+        <circle cx="8" cy="12" r="2" fill="#4F46E5"/>
+    </g>
+
+    <!-- Assembly Lines (implied connection) -->
+    <path d="M90 105 L110 95" stroke="#D6D3D1" stroke-width="0.5" stroke-dasharray="1 1"/>
+    <path d="M100 85 L120 75" stroke="#D6D3D1" stroke-width="0.5" stroke-dasharray="1 1"/>
+
+    <!-- Larger formed structure (output) -->
+    <g transform="translate(130, 50)" fill="#A855F7" opacity="0.2">
+        <use href="#isometric-cube-outline-small" x="0" y="0"/>
+        <use href="#isometric-cube-outline-small" x="24" y="0"/>
+        <use href="#isometric-cube-outline-small" x="0" y="18"/>
+        <use href="#isometric-cube-outline-small" x="24" y="18"/>
+    </g>
+    <circle cx="150" cy="70" r="3" fill="#A855F7"/>
+</svg>

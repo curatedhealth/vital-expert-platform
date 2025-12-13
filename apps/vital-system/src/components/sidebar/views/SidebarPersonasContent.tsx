@@ -118,7 +118,7 @@ export function SidebarPersonasContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentArchetype}>
               <Link href={buildUrl({ archetype: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Archetypes</span>
               </Link>
             </SidebarMenuButton>
@@ -164,7 +164,7 @@ export function SidebarPersonasContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentSeniority}>
               <Link href={buildUrl({ seniority: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Levels</span>
               </Link>
             </SidebarMenuButton>
@@ -204,7 +204,7 @@ export function SidebarPersonasContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={isSeniorityActive("entry")}>
               <Link href={buildUrl({ seniority: "entry" })}>
-                <User className="h-4 w-4 text-gray-500" />
+                <User className="h-4 w-4 text-stone-500" />
                 <span>Entry</span>
               </Link>
             </SidebarMenuButton>

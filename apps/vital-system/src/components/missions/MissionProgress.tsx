@@ -38,7 +38,7 @@ export function MissionProgress({
     <div className={`space-y-4 ${className}`}>
       <div className="space-y-2">
         <div className="flex justify-between items-center text-sm">
-          <span className="text-gray-600 flex items-center gap-1">
+          <span className="text-stone-600 flex items-center gap-1">
             <TrendingUp className="h-4 w-4" />
             Progress
           </span>
@@ -46,7 +46,7 @@ export function MissionProgress({
             {currentStep}/{totalSteps || '?'} steps ({Math.round(progress)}%)
           </span>
         </div>
-        <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-3 bg-stone-200 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
@@ -56,7 +56,7 @@ export function MissionProgress({
 
       <div className="space-y-2">
         <div className="flex justify-between items-center text-sm">
-          <span className="text-gray-600 flex items-center gap-1">
+          <span className="text-stone-600 flex items-center gap-1">
             <DollarSign className="h-4 w-4" />
             Budget
           </span>
@@ -64,7 +64,7 @@ export function MissionProgress({
             ${budgetSpent.toFixed(2)} / ${budgetLimit.toFixed(2)}
           </span>
         </div>
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
           <div
             className={`h-full transition-all duration-500 ${budgetProgress > 80 ? 'bg-amber-500' : 'bg-green-500'}`}
             style={{ width: `${Math.min(budgetProgress, 100)}%` }}
@@ -74,10 +74,10 @@ export function MissionProgress({
       </div>
 
       {stage && (
-        <div className="flex items-center gap-2 text-sm p-3 bg-gray-50 rounded-lg">
+        <div className="flex items-center gap-2 text-sm p-3 bg-stone-50 rounded-lg">
           <Sparkles className="h-4 w-4 text-blue-500" />
           <span className="font-medium">Stage:</span>
-          <span className="text-gray-600">{stage}</span>
+          <span className="text-stone-600">{stage}</span>
         </div>
       )}
 
@@ -86,7 +86,7 @@ export function MissionProgress({
       <div className="flex items-center justify-between">
         <StatusBadge status={status} />
         {elapsed && (
-          <span className="text-sm text-gray-500 flex items-center gap-1">
+          <span className="text-sm text-stone-500 flex items-center gap-1">
             <Clock className="h-4 w-4" />
             {elapsed}
           </span>
@@ -110,10 +110,10 @@ export function ThinkingIndicator({ agent, task, stage }: { agent: string; task:
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-900">{agent}</span>
+            <span className="font-medium text-stone-900">{agent}</span>
             <span className="text-blue-600 text-sm">is thinking...</span>
           </div>
-          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{task}</p>
+          <p className="text-sm text-stone-600 mt-1 line-clamp-2">{task}</p>
           {stage && (
             <span className="inline-block mt-2 text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
               {stage}
@@ -133,7 +133,7 @@ export function ThinkingIndicator({ agent, task, stage }: { agent: string; task:
 
 export function StatusBadge({ status, size = 'md' }: { status: MissionStatus; size?: 'sm' | 'md' }) {
   const styles: Record<MissionStatus, { bg: string; text: string; icon: string }> = {
-    idle: { bg: 'bg-gray-100', text: 'text-gray-600', icon: '○' },
+    idle: { bg: 'bg-stone-100', text: 'text-stone-600', icon: '○' },
     planning: { bg: 'bg-blue-100', text: 'text-blue-700', icon: '📋' },
     running: { bg: 'bg-green-100', text: 'text-green-700', icon: '▶️' },
     awaiting_checkpoint: { bg: 'bg-amber-100', text: 'text-amber-700', icon: '⏸️' },

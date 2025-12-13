@@ -104,16 +104,16 @@ export const IconPicker: React.FC<IconPickerProps> = ({
       {/* Header */}
       <div className="p-4 border-b space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900">Select Icon</h3>
+          <h3 className="text-sm font-semibold text-stone-900">Select Icon</h3>
           {variant === "both" && (
-            <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+            <div className="flex gap-1 p-1 bg-stone-100 rounded-lg">
               <button
                 onClick={() => setActiveVariant("black")}
                 className={cn(
                   "px-3 py-1 text-xs font-medium rounded transition-colors",
                   activeVariant === "black"
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-600 hover:text-gray-900"
+                    ? "bg-stone-900 text-white"
+                    : "text-stone-600 hover:text-stone-900"
                 )}
               >
                 Black
@@ -124,7 +124,7 @@ export const IconPicker: React.FC<IconPickerProps> = ({
                   "px-3 py-1 text-xs font-medium rounded transition-colors",
                   activeVariant === "purple"
                     ? "bg-purple-600 text-white"
-                    : "text-gray-600 hover:text-gray-900"
+                    : "text-stone-600 hover:text-stone-900"
                 )}
               >
                 Purple
@@ -151,7 +151,7 @@ export const IconPicker: React.FC<IconPickerProps> = ({
                 "px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap transition-colors",
                 !selectedCategory
                   ? "bg-purple-100 text-purple-700"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  : "bg-stone-100 text-stone-600 hover:bg-stone-200"
               )}
             >
               All
@@ -164,7 +164,7 @@ export const IconPicker: React.FC<IconPickerProps> = ({
                   "px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap transition-colors",
                   selectedCategory === category
                     ? "bg-purple-100 text-purple-700"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "bg-stone-100 text-stone-600 hover:bg-stone-200"
                 )}
               >
                 {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -178,7 +178,7 @@ export const IconPicker: React.FC<IconPickerProps> = ({
       <ScrollArea style={{ maxHeight }} className="p-4">
         {filteredIcons.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+            <div className="w-16 h-16 mb-4 rounded-full bg-stone-100 flex items-center justify-center">
               <svg
                 width="32"
                 height="32"
@@ -190,8 +190,8 @@ export const IconPicker: React.FC<IconPickerProps> = ({
                 <path d="M21 21l-4.35-4.35" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </div>
-            <p className="text-sm text-gray-500">No icons found</p>
-            <p className="text-xs text-gray-400 mt-1">Try adjusting your search or filters</p>
+            <p className="text-sm text-stone-500">No icons found</p>
+            <p className="text-xs text-stone-400 mt-1">Try adjusting your search or filters</p>
           </div>
         ) : (
           <div className="grid grid-cols-6 gap-3">
@@ -203,7 +203,7 @@ export const IconPicker: React.FC<IconPickerProps> = ({
                   "relative group flex items-center justify-center p-3 rounded-lg transition-all hover:scale-105",
                   selectedIcon === iconName
                     ? "bg-purple-50 ring-2 ring-purple-500"
-                    : "bg-gray-50 hover:bg-gray-100"
+                    : "bg-stone-50 hover:bg-stone-100"
                 )}
                 title={iconName}
               >
@@ -229,7 +229,7 @@ export const IconPicker: React.FC<IconPickerProps> = ({
 
       {/* Footer */}
       {selectedIcon && (
-        <div className="px-4 py-3 border-t bg-gray-50 text-xs text-gray-600">
+        <div className="px-4 py-3 border-t bg-stone-50 text-xs text-stone-600">
           Selected: <span className="font-mono text-purple-700">{selectedIcon}</span>
         </div>
       )}

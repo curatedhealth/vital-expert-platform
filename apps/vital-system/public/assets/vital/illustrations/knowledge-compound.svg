@@ -1,0 +1,27 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <g id="isometric-cube-outline">
+      <path d="M16 8L0 16L16 24L32 16L16 8Z" stroke="#1C1917" stroke-width="1"/>
+      <path d="M0 16V32L16 40V24L0 16Z" stroke="#1C1917" stroke-width="1"/>
+      <path d="M16 40L32 32V16L16 24V40Z" stroke="#1C1917" stroke-width="1"/>
+    </g>
+  </defs>
+
+  <!-- Base Layer -->
+  <g fill="#9055E0">
+    <use href="#isometric-cube-outline" x="16" y="80"/>
+    <use href="#isometric-cube-outline" x="48" y="80"/>
+    <use href="#isometric-cube-outline" x="80" y="80"/>
+  </g>
+
+  <!-- Second Layer -->
+  <g fill="#A855F7">
+    <use href="#isometric-cube-outline" x="32" y="56"/>
+    <use href="#isometric-cube-outline" x="64" y="56"/>
+  </g>
+
+  <!-- Top Layer -->
+  <g fill="#00CAFF">
+    <use href="#isometric-cube-outline" x="48" y="32"/>
+  </g>
+</svg>

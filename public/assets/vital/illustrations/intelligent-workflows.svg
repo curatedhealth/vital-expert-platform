@@ -1,25 +1,30 @@
 <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-        <g id="cube-small">
-            <path d="M16 8L0 16L16 24L32 16L16 8Z" fill-opacity="0.7"/>
-            <path d="M0 16V32L16 40V24L0 16Z"/>
-            <path d="M16 40L32 32V16L16 24V40Z" fill-opacity="0.9"/>
+        <g id="isometric-cube-outline-small">
+            <path d="M12 4L0 10L12 16L24 10L12 4Z" stroke="#1C1917" stroke-width="0.5"/>
+            <path d="M0 10V22L12 28V16L0 10Z" stroke="#1C1917" stroke-width="0.5"/>
+            <path d="M12 28L24 22V10L12 16V28Z" stroke="#1C1917" stroke-width="0.5"/>
         </g>
     </defs>
 
-    <g fill="#9055E0">
-        <use href="#cube-small" x="20" y="80"/>
+    <!-- First Cube (Start) -->
+    <g transform="translate(30, 80)">
+        <use href="#isometric-cube-outline-small" x="0" y="0" fill="#9055E0"/>
     </g>
-    <path d="M52 96L84 96" stroke="#D6D3D1" stroke-width="2"/>
-    <path d="M80 93L84 96L80 99" stroke="#D6D3D1" stroke-width="2"/>
-    
-    <g fill="#00CAFF">
-        <use href="#cube-small" x="84" y="80"/>
-    </g>
-    <path d="M116 96L148 96" stroke="#D6D3D1" stroke-width="2"/>
-    <path d="M144 93L148 96L144 99" stroke="#D6D3D1" stroke-width="2"/>
+    <circle cx="62" cy="96" r="3" fill="#9055E0"/>
+    <path d="M62 96 L94 96" stroke="#1C1917" stroke-width="0.5" stroke-dasharray="2 2"/>
+    <path d="M90 93L94 96L90 99" stroke="#1C1917" stroke-width="0.5"/>
 
-    <g fill="#4F46E5">
-        <use href="#cube-small" x="148" y="80"/>
+    <!-- Second Cube (Process) -->
+    <g transform="translate(94, 80)">
+        <use href="#isometric-cube-outline-small" x="0" y="0" fill="#00CAFF"/>
+    </g>
+    <circle cx="126" cy="96" r="3" fill="#00CAFF"/>
+    <path d="M126 96 L158 96" stroke="#1C1917" stroke-width="0.5" stroke-dasharray="2 2"/>
+    <path d="M154 93L158 96L154 99" stroke="#1C1917" stroke-width="0.5"/>
+
+    <!-- Third Cube (End) -->
+    <g transform="translate(158, 80)">
+        <use href="#isometric-cube-outline-small" x="0" y="0" fill="#4F46E5"/>
     </g>
 </svg>

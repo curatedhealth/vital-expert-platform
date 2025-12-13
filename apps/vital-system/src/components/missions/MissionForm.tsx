@@ -131,7 +131,7 @@ export function MissionForm({
           className="w-full px-3 py-2 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           disabled={isLoading || disabled}
         />
-        <div className="flex justify-between text-xs text-gray-500">
+        <div className="flex justify-between text-xs text-stone-500">
           <span>{objective.length < 10 ? `${10 - objective.length} more characters needed` : 'Good length'}</span>
           <span>{objective.length}/2000</span>
         </div>
@@ -145,14 +145,14 @@ export function MissionForm({
             onClick={() => !lockMode && setMode(3)}
             disabled={isLoading || disabled || lockMode}
             className={`p-4 border-2 rounded-lg text-left transition-all ${
-              mode === 3 ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+              mode === 3 ? 'border-blue-500 bg-blue-50' : 'border-stone-200 hover:border-stone-300'
             }`}
           >
             <div className="flex items-center gap-2 mb-1">
               <Users className="h-5 w-5 text-blue-600" />
               <span className="font-medium">Mode 3: Manual</span>
             </div>
-            <p className="text-sm text-gray-600">You select which experts to involve.</p>
+            <p className="text-sm text-stone-600">You select which experts to involve.</p>
           </button>
 
           <button
@@ -160,14 +160,14 @@ export function MissionForm({
             onClick={() => !lockMode && setMode(4)}
             disabled={isLoading || disabled || lockMode}
             className={`p-4 border-2 rounded-lg text-left transition-all ${
-              mode === 4 ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
+              mode === 4 ? 'border-purple-500 bg-purple-50' : 'border-stone-200 hover:border-stone-300'
             }`}
           >
             <div className="flex items-center gap-2 mb-1">
               <Wand2 className="h-5 w-5 text-purple-600" />
               <span className="font-medium">Mode 4: Automatic</span>
             </div>
-            <p className="text-sm text-gray-600">AI selects the optimal expert team.</p>
+            <p className="text-sm text-stone-600">AI selects the optimal expert team.</p>
           </button>
         </div>
       </div>
@@ -178,7 +178,7 @@ export function MissionForm({
             <label className="block text-sm font-medium">
               Select Experts <span className="text-red-500">*</span>
             </label>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-stone-500">
               {selectedAgentNames.length > 0 ? selectedAgentNames.join(', ') : 'None selected'}
               {lockAgentSelection && ' (locked)'}
             </span>
@@ -190,17 +190,17 @@ export function MissionForm({
                 <div key={group.category} className="border rounded-lg">
                   <button
                     type="button"
-                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50"
+                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-stone-50"
                     onClick={() => setExpandedCategory(expandedCategory === group.category ? null : group.category)}
                   >
                     <div className="flex items-center gap-2">
-                      <Rocket className="h-4 w-4 text-gray-500" />
+                      <Rocket className="h-4 w-4 text-stone-500" />
                       <span className="font-medium">{group.category}</span>
                     </div>
                     {expandedCategory === group.category ? (
-                      <ChevronUp className="h-4 w-4 text-gray-500" />
+                      <ChevronUp className="h-4 w-4 text-stone-500" />
                     ) : (
-                      <ChevronDown className="h-4 w-4 text-gray-500" />
+                      <ChevronDown className="h-4 w-4 text-stone-500" />
                     )}
                   </button>
 
@@ -214,19 +214,19 @@ export function MissionForm({
                             key={agent.id}
                             onClick={() => toggleAgent(agent.id)}
                             className={`w-full px-4 py-3 flex items-center justify-between text-left transition-all ${
-                              selected ? 'bg-blue-50 border-l-2 border-blue-400' : 'hover:bg-gray-50'
+                              selected ? 'bg-blue-50 border-l-2 border-blue-400' : 'hover:bg-stone-50'
                             }`}
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-xl">{agent.icon}</span>
                               <div>
                                 <div className="font-medium">{agent.name}</div>
-                                <div className="text-sm text-gray-500">{agent.description}</div>
+                                <div className="text-sm text-stone-500">{agent.description}</div>
                               </div>
                             </div>
                             <span
                               className={`text-xs px-2 py-1 rounded-full ${
-                                selected ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                                selected ? 'bg-blue-100 text-blue-700' : 'bg-stone-100 text-stone-600'
                               }`}
                             >
                               {selected ? 'Selected' : 'Select'}
@@ -247,7 +247,7 @@ export function MissionForm({
         <div className="space-y-2">
           <label className="block text-sm font-medium">Budget Limit (USD)</label>
           <div className="flex items-center gap-3">
-            <DollarSign className="h-5 w-5 text-gray-500" />
+            <DollarSign className="h-5 w-5 text-stone-500" />
             <input
               type="range"
               min={5}
@@ -260,7 +260,7 @@ export function MissionForm({
             />
             <span className="text-sm font-medium">${budget}</span>
           </div>
-          <p className="text-xs text-gray-500">Budget is soft-capped; checkpoints will fire above 80% usage.</p>
+          <p className="text-xs text-stone-500">Budget is soft-capped; checkpoints will fire above 80% usage.</p>
         </div>
 
         <div className="space-y-2">
@@ -287,7 +287,7 @@ export function MissionForm({
         </button>
 
         {showAdvanced && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-gray-50">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-stone-50">
             <div className="space-y-2">
               <label className="block text-sm font-medium">Template</label>
               <div className="space-y-2">
@@ -305,7 +305,7 @@ export function MissionForm({
                   ))}
                 </select>
                 {templateId && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-stone-500">
                     {MISSION_TEMPLATES.find((t) => t.id === templateId)?.description}
                   </p>
                 )}
@@ -325,7 +325,7 @@ export function MissionForm({
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500 flex items-center gap-2">
+        <div className="text-sm text-stone-500 flex items-center gap-2">
           <Rocket className="h-4 w-4" />
           Mode 3 requires at least one agent; Mode 4 will auto-select.
         </div>

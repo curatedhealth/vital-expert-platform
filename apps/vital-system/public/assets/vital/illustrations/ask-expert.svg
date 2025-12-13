@@ -1,0 +1,37 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <g id="isometric-cube-outline-small">
+            <path d="M12 4L0 10L12 16L24 10L12 4Z" stroke="#1C1917" stroke-width="0.5"/>
+            <path d="M0 10V22L12 28V16L0 10Z" stroke="#1C1917" stroke-width="0.5"/>
+            <path d="M12 28L24 22V10L12 16V28Z" stroke="#1C1917" stroke-width="0.5"/>
+        </g>
+    </defs>
+
+    <!-- Central Cube (Expert Core) -->
+    <g transform="translate(88, 70)">
+        <use href="#isometric-cube-outline-small" x="0" y="0"/>
+    </g>
+
+    <!-- Outward connections (Questions/Queries) -->
+    <line x1="100" y1="90" x2="140" y2="70" stroke="#1C1917" stroke-width="0.5" stroke-dasharray="2 2"/>
+    <circle cx="150" cy="65" r="3" fill="#9055E0"/> <!-- Question Node -->
+
+    <line x1="100" y1="90" x2="140" y2="110" stroke="#1C1917" stroke-width="0.5" stroke-dasharray="2 2"/>
+    <circle cx="150" cy="115" r="3" fill="#9055E0"/> <!-- Query Node -->
+
+    <!-- Inward connections (Knowledge Base/Data) -->
+    <line x1="100" y1="90" x2="60" y2="70" stroke="#1C1917" stroke-width="0.5" stroke-dasharray="2 2"/>
+    <g transform="translate(50, 65)">
+        <use href="#isometric-cube-outline-small" x="0" y="0" transform="scale(0.5)" fill="#A8A29E"/> <!-- Data Source -->
+    </g>
+
+    <line x1="100" y1="90" x2="60" y2="110" stroke="#1C1917" stroke-width="0.5" stroke-dasharray="2 2"/>
+    <g transform="translate(50, 115)">
+        <circle cx="0" cy="0" r="4" fill="#A8A29E"/> <!-- Knowledge Node -->
+        <circle cx="4" cy="4" r="2" fill="#A8A29E" opacity="0.5"/>
+    </g>
+
+    <!-- Subtle sparkle/insight indicator -->
+    <path d="M110 50 L115 55 L110 60 L105 55 Z" fill="#9055E0" opacity="0.2"/>
+    <circle cx="110" cy="55" r="1" fill="#9055E0"/>
+</svg>

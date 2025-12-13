@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
@@ -9,7 +10,7 @@ export interface Feature {
   title: string;
   details: string;
   tutorialLink: string;
-  image?: React.ReactNode;
+  image?: string; // Changed from React.ReactNode to string
 }
 
 interface Features06Props {
@@ -25,7 +26,7 @@ const defaultFeatures: Feature[] = [
     details:
       'Get immediate answers from specialized AI agents trained on millions of healthcare documents. No scheduling, no waiting—just expert-level insights on demand.',
     tutorialLink: '/ask-expert',
-    image: <img src="/assets/vital/illustrations/ask-expert.svg" alt="Ask Expert" />,
+    image: '/assets/vital/illustrations/ask-expert.svg', // Changed to string path
   },
   {
     category: 'Expert Panel',
@@ -33,7 +34,7 @@ const defaultFeatures: Feature[] = [
     details:
       'Assemble virtual advisory boards for complex decisions. Multiple AI experts debate, validate, and synthesize recommendations with full transparency.',
     tutorialLink: '/ask-panel',
-    image: <img src="/assets/vital/illustrations/expert-panel.svg" alt="Expert Panel" />,
+    image: '/assets/vital/illustrations/expert-panel.svg', // Changed to string path
   },
   {
     category: 'Intelligent Workflows',
@@ -41,7 +42,7 @@ const defaultFeatures: Feature[] = [
     details:
       'Design and deploy multi-step workflows that orchestrate agents, tools, and data sources. From literature review to regulatory analysis—all automated.',
     tutorialLink: '/workflows',
-    image: <img src="/assets/vital/illustrations/intelligent-workflows.svg" alt="Intelligent Workflows" />,
+    image: '/assets/vital/illustrations/intelligent-workflows.svg', // Changed to string path
   },
   {
     category: 'Solution Builder',
@@ -49,7 +50,7 @@ const defaultFeatures: Feature[] = [
     details:
       'Build tailored intelligence solutions combining agents, knowledge bases, and integrations. Your unique workflows, amplified by AI.',
     tutorialLink: '/solution-builder',
-    image: <img src="/assets/vital/illustrations/solution-builder.svg" alt="Solution Builder" />,
+    image: '/assets/vital/illustrations/solution-builder.svg', // Changed to string path
   },
   {
     category: 'Knowledge Compound',
@@ -57,7 +58,7 @@ const defaultFeatures: Feature[] = [
     details:
       "Unlike traditional consultants, VITAL never forgets. Every insight compounds into your organization's permanent intelligence layer, accessible forever.",
     tutorialLink: '/knowledge',
-    image: <img src="/assets/vital/illustrations/knowledge-compound.svg" alt="Knowledge Compound" />,
+    image: '/assets/vital/illustrations/knowledge-compound.svg', // Changed to string path
   },
 ];
 
@@ -76,37 +77,53 @@ export function Features06({
           {subtitle}
         </p>
         <div className="mt-8 md:mt-16 w-full mx-auto space-y-20">
-          {features.map((feature, index) => (
-            <div
-              key={feature.category}
-              className={`flex flex-col md:flex-row items-center gap-x-12 gap-y-6 ${
-                index % 2 === 1 ? 'md:flex-row-reverse' : ''
-              }`}
-            >
-              {/* Image placeholder - can be customized with feature.image */}
-              <div className="w-full aspect-[4/3] bg-stone-100 rounded-xl border border-stone-200/50 basis-1/2 flex items-center justify-center">
-                {feature.image || (
-                  <div className="text-stone-400 text-sm">
-                    {feature.category} Visual
-                  </div>
-                )}
+          {features.map((feature, index) => {
+            const [isHovered, setIsHovered] = React.useState(false); // Using React.useState
+
+            return (
+              <div
+                key={feature.category}
+                className={`flex flex-col md:flex-row items-center gap-x-12 gap-y-6 ${
+                  index % 2 === 1 ? 'md:flex-row-reverse' : ''
+                }`}
+              >
+                {/* Image container with hover effect */}
+                <div
+                  className="w-full aspect-[4/3] bg-stone-100 rounded-xl border border-stone-200/50 basis-1/2 flex items-center justify-center overflow-hidden"
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                >
+                  {feature.image ? (
+                    <img
+                      src={feature.image}
+                      alt={feature.category + " Visual"}
+                      className={`w-full h-full object-contain transition-transform duration-300 ease-in-out ${
+                        isHovered ? 'scale-105' : 'scale-100'
+                      }`}
+                    />
+                  ) : (
+                    <div className="text-stone-400 text-sm">
+                      {feature.category} Visual
+                    </div>
+                  )}
+                </div>
+                <div className="basis-1/2 shrink-0">
+                  <span className="uppercase font-medium text-sm text-purple-600">
+                    {feature.category}
+                  </span>
+                  <h4 className="my-3 text-3xl font-semibold tracking-[-0.02em] text-stone-800">
+                    {feature.title}
+                  </h4>
+                  <p className="text-muted-foreground">{feature.details}</p>
+                  <Button asChild size="lg" className="mt-6 rounded-full gap-3 bg-purple-600 hover:bg-purple-700">
+                    <Link href={feature.tutorialLink}>
+                      Learn More <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </Button>
+                </div>
               </div>
-              <div className="basis-1/2 shrink-0">
-                <span className="uppercase font-medium text-sm text-purple-600">
-                  {feature.category}
-                </span>
-                <h4 className="my-3 text-3xl font-semibold tracking-[-0.02em] text-stone-800">
-                  {feature.title}
-                </h4>
-                <p className="text-muted-foreground">{feature.details}</p>
-                <Button asChild size="lg" className="mt-6 rounded-full gap-3 bg-purple-600 hover:bg-purple-700">
-                  <Link href={feature.tutorialLink}>
-                    Learn More <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

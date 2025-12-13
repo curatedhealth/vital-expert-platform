@@ -237,7 +237,7 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({ isActive = true, clas
     <div
       className={cn(
         'h-2 w-2 rounded-full',
-        isActive ? 'bg-green-500' : 'bg-gray-400'
+        isActive ? 'bg-green-500' : 'bg-stone-400'
       )}
     />
     <span className="text-xs text-muted-foreground">

@@ -57,7 +57,7 @@ export function ChatInputSkeleton() {
  */
 export function ChatSidebarSkeleton() {
   return (
-    <div className="w-64 border-r bg-gray-50 p-4 space-y-3">
+    <div className="w-64 border-r bg-stone-50 p-4 space-y-3">
       <Skeleton className="h-10 w-full rounded-lg mb-4" />
       {[1, 2, 3, 4, 5].map((i) => (
         <Card key={i} className="p-3">
@@ -142,7 +142,7 @@ export function AgentGridSkeleton({ count = 6 }: { count?: number }) {
  */
 export function AgentProfileHeaderSkeleton() {
   return (
-    <div className="border-b px-6 py-3 bg-gray-50">
+    <div className="border-b px-6 py-3 bg-stone-50">
       <div className="max-w-4xl mx-auto flex items-center gap-3">
         <Skeleton className="h-10 w-10 rounded-full" />
         <div className="flex-1 space-y-2">
@@ -264,7 +264,7 @@ export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; column
   return (
     <div className="border rounded-lg overflow-hidden">
       <table className="w-full">
-        <thead className="bg-gray-50 border-b">
+        <thead className="bg-stone-50 border-b">
           <tr>
             {Array.from({ length: columns }).map((_, i) => (
               <th key={i} className="p-4 text-left">

@@ -144,7 +144,7 @@ export function SidebarSkillsContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentCategory}>
               <Link href={buildUrl({ category: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Categories</span>
               </Link>
             </SidebarMenuButton>
@@ -198,7 +198,7 @@ export function SidebarSkillsContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentComplexity}>
               <Link href={buildUrl({ complexity: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Levels</span>
               </Link>
             </SidebarMenuButton>
@@ -252,7 +252,7 @@ export function SidebarSkillsContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentType}>
               <Link href={buildUrl({ type: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Types</span>
               </Link>
             </SidebarMenuButton>

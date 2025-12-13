@@ -41,8 +41,8 @@ interface WorkflowExecutionOverlayProps {
 const nodeStatusConfig = {
   pending: {
     icon: Clock,
-    color: 'text-gray-500',
-    bg: 'bg-gray-100 dark:bg-gray-800',
+    color: 'text-stone-500',
+    bg: 'bg-stone-100 dark:bg-stone-800',
   },
   running: {
     icon: Loader2,

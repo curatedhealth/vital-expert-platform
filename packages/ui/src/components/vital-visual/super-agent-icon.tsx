@@ -156,7 +156,7 @@ export const SuperAgentIcon = React.forwardRef<HTMLDivElement, SuperAgentIconPro
             <circle cx="12" cy="12" r="10" stroke={accentColor} strokeWidth="2" />
             <path d="M12 8v4M12 16h.01" stroke={accentColor} strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <span className="mt-2 text-xs text-gray-500">Not found</span>
+          <span className="mt-2 text-xs text-stone-500">Not found</span>
         </div>
       )
     }

@@ -24,8 +24,8 @@ export interface AssetOverviewStatsProps {
 const VARIANT_STYLES: Record<string, { card: string; title: string; value: string }> = {
   default: {
     card: '',
-    title: 'text-gray-600',
-    value: 'text-gray-900 dark:text-gray-100',
+    title: 'text-stone-600',
+    value: 'text-stone-900 dark:text-stone-100',
   },
   success: {
     card: 'border-2 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800',

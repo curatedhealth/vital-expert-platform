@@ -9,21 +9,24 @@ import {
 } from './flat-visuals';
 
 export const ParadigmShiftSection = () => {
+  const [hoveredLeftIndex, setHoveredLeftIndex] = React.useState<number | null>(null);
+  const [hoveredRightIndex, setHoveredRightIndex] = React.useState<number | null>(null);
+
   const leftItems = [
     {
       title: 'FIXED CAPACITY',
       description: '10-20 FTEs Max',
-      visual: <img src="/assets/vital/illustrations/rigid-structure.svg" alt="Fixed Capacity" className="w-32 h-32 mx-auto" />,
+      visual: <img src="/assets/vital/illustrations/rigid-structure.svg" alt="Fixed Capacity" className="w-32 h-32 object-contain transition-transform duration-300 ease-in-out" />,
     },
     {
       title: 'LINEAR GROWTH',
       description: 'Linear growth trajectory',
-      visual: <div className="w-36 h-24 mx-auto"><LinearGrowth /></div>,
+      visual: <div className="w-36 h-24 mx-auto transition-transform duration-300 ease-in-out"><LinearGrowth /></div>,
     },
     {
       title: 'KNOWLEDGE LOSS',
       description: 'Knowledge walks out the door',
-      visual: <div className="w-36 h-28 mx-auto"><KnowledgeLoss animated /></div>,
+      visual: <div className="w-36 h-28 mx-auto transition-transform duration-300 ease-in-out"><KnowledgeLoss animated /></div>,
     },
   ];
 
@@ -31,17 +34,17 @@ export const ParadigmShiftSection = () => {
     {
       title: 'INFINITE CAPACITY',
       description: 'Unlimited Scale',
-      visual: <img src="/assets/vital/illustrations/elastic-structure.svg" alt="Infinite Capacity" className="w-40 h-40 mx-auto" />,
+      visual: <img src="/assets/vital/illustrations/elastic-structure.svg" alt="Infinite Capacity" className="w-40 h-40 object-contain transition-transform duration-300 ease-in-out" />,
     },
     {
       title: 'EXPONENTIAL GROWTH',
       description: 'Exponential growth potential',
-      visual: <div className="w-44 h-28 mx-auto"><ExponentialGrowth animated /></div>,
+      visual: <div className="w-44 h-28 mx-auto transition-transform duration-300 ease-in-out"><ExponentialGrowth animated /></div>,
     },
     {
       title: 'KNOWLEDGE COMPOUND',
       description: 'Knowledge compounds forever',
-      visual: <div className="w-36 h-32 mx-auto"><KnowledgePyramid animated /></div>,
+      visual: <div className="w-36 h-32 mx-auto transition-transform duration-300 ease-in-out"><KnowledgePyramid animated /></div>,
     },
   ];
 
@@ -57,8 +60,12 @@ export const ParadigmShiftSection = () => {
             <h3 className="text-xl font-bold text-stone-700 text-center mb-8">TRADITIONAL (RIGID) ORGANIZATION</h3>
             <div className="space-y-8">
               {leftItems.map((item, index) => (
-                <div key={index} className="text-center">
-                  {item.visual}
+                <div key={index} className="text-center"
+                  onMouseEnter={() => setHoveredLeftIndex(index)}
+                  onMouseLeave={() => setHoveredLeftIndex(null)}>
+                  <div className={`mx-auto ${hoveredLeftIndex === index ? 'scale-105' : 'scale-100'} transition-transform duration-300 ease-in-out`}>
+                    {item.visual}
+                  </div>
                   <h4 className="text-lg font-semibold text-stone-800 mt-4">{item.title}</h4>
                   <p className="text-stone-600">{item.description}</p>
                 </div>
@@ -71,8 +78,12 @@ export const ParadigmShiftSection = () => {
             <h3 className="text-xl font-bold text-purple-600 text-center mb-8">ELASTIC (VITAL) ORGANIZATION</h3>
             <div className="space-y-8">
               {rightItems.map((item, index) => (
-                <div key={index} className="text-center">
-                  {item.visual}
+                <div key={index} className="text-center"
+                  onMouseEnter={() => setHoveredRightIndex(index)}
+                  onMouseLeave={() => setHoveredRightIndex(null)}>
+                  <div className={`mx-auto ${hoveredRightIndex === index ? 'scale-105' : 'scale-100'} transition-transform duration-300 ease-in-out`}>
+                    {item.visual}
+                  </div>
                   <h4 className="text-lg font-semibold text-purple-700 mt-4">{item.title}</h4>
                   <p className="text-purple-900/70">{item.description}</p>
                 </div>

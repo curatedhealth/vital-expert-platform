@@ -213,10 +213,10 @@ export const STATUS_COLORS: Record<AgentStatus | 'inactive', {
     label: 'Deprecated',
   },
   inactive: {
-    bg: 'bg-gray-500/10',
-    text: 'text-gray-500 dark:text-gray-400',
-    border: 'border-gray-500/20',
-    dot: 'bg-gray-400',
+    bg: 'bg-stone-500/10',
+    text: 'text-stone-500 dark:text-stone-400',
+    border: 'border-stone-500/20',
+    dot: 'bg-stone-400',
     glow: '',
     label: 'Inactive',
   },
@@ -244,9 +244,9 @@ export const AVAILABILITY_COLORS: Record<AgentAvailability, {
     label: 'Busy',
   },
   offline: {
-    bg: 'bg-gray-500/10',
-    text: 'text-gray-500',
-    dot: 'bg-gray-400',
+    bg: 'bg-stone-500/10',
+    text: 'text-stone-500',
+    dot: 'bg-stone-400',
     label: 'Offline',
   },
   maintenance: {

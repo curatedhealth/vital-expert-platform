@@ -1077,8 +1077,10 @@ Align lifecycle to your domain lifecycle framework (draft → building → ready
 - `/app/(app)/knowledge` uses the live domain list for filters (falls back to static constants if the API is empty).
 - `/features/knowledge/knowledge-viewer` pulls domains from the same API for search filters, with a guarded fallback.
 - `/app/(app)/knowledge/documents` now sources domains from the API rather than legacy `knowledge_domains_new`, so filter values align to `slug`.
-- Next step: replace mocked RAG data in `/knowledge/page.tsx` with real knowledge base data (e.g., from `knowledge_documents` + `document_domains` or a dedicated `knowledge_bases` view).
+- `/api/knowledge/bases` now serves marketplace data from `knowledge_sources`; if empty, it falls back to `knowledge_documents` + `document_domains` (slug-based). Ensure at least one of these tables is populated to avoid an empty marketplace.
+- Next step: replace mocked RAG data in `/knowledge/page.tsx` with real knowledge base data (done via `/api/knowledge/bases`); consider richer aggregation (docs/chunks per base) via a dedicated `knowledge_bases` view.
 - UX split: `/knowledge` is the marketplace (browse/use), `/designer/knowledge` is the builder (create/manage domains, sources, documents, evals). Keep filters/components shared and driven by `/api/knowledge-domains` to avoid divergence.
+- Pinecone namespaces ↔ Supabase domains: seed `knowledge_domains` slugs matching namespaces (e.g., reg-fda, dh-samd) and map them in `domain_namespaces` for cross-link; seed `knowledge_sources` with at least (id, title, file_name, domain, chunk_count, metadata) so `/knowledge` has entries even before documents are linked.
 
 ---
 

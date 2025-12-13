@@ -211,7 +211,7 @@ const levelColors: Record<AgentLevel, string> = {
   L2: 'text-blue-600 dark:text-blue-400',
   L3: 'text-cyan-600 dark:text-cyan-400',
   L4: 'text-green-600 dark:text-green-400',
-  L5: 'text-gray-600 dark:text-gray-400',
+  L5: 'text-stone-600 dark:text-stone-400',
 };
 
 // ============================================================================

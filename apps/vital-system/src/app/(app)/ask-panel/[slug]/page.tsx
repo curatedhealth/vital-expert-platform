@@ -582,7 +582,7 @@ export default function PanelDetailPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-stone-400" />
         </div>
       </div>
     );
@@ -630,7 +630,7 @@ export default function PanelDetailPage() {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-3">
             <Badge variant="outline" className="font-mono">{panel.slug}</Badge>
-            <Badge className={modeColors[panel.mode] || 'text-gray-700 bg-gray-100'}>
+            <Badge className={modeColors[panel.mode] || 'text-stone-700 bg-stone-100'}>
               {panel.mode}
             </Badge>
             <Badge variant="outline">
@@ -638,10 +638,10 @@ export default function PanelDetailPage() {
               {panel.agents.length} experts
             </Badge>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
+          <h1 className="text-4xl font-bold text-stone-900 mb-3">
             {panel.name}
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-stone-600">
             {panel.description}
           </p>
         </div>
@@ -720,7 +720,7 @@ export default function PanelDetailPage() {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-gray-100">
+        <TabsList className="bg-stone-100">
           <TabsTrigger value="overview" className="data-[state=active]:bg-white">
             <FileText className="w-4 h-4 mr-2" />
             Overview

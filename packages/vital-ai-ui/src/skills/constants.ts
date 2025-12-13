@@ -88,9 +88,9 @@ export const SKILL_CATEGORIES: Record<string, SkillCategoryConfig> = {
   },
   'Execution': {
     icon: Cog,
-    color: 'text-gray-800',
-    bgColor: 'bg-gray-100',
-    borderColor: 'border-gray-200',
+    color: 'text-stone-800',
+    bgColor: 'bg-stone-100',
+    borderColor: 'border-stone-200',
     description: 'Task execution and automation'
   },
   'File Operations': {
@@ -161,9 +161,9 @@ export const SKILL_CATEGORIES: Record<string, SkillCategoryConfig> = {
 // Default category for unknown categories
 export const DEFAULT_CATEGORY: SkillCategoryConfig = {
   icon: Sparkles,
-  color: 'text-gray-800',
-  bgColor: 'bg-gray-100',
-  borderColor: 'border-gray-200',
+  color: 'text-stone-800',
+  bgColor: 'bg-stone-100',
+  borderColor: 'border-stone-200',
   description: 'General skill'
 };
 

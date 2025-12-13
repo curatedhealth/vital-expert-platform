@@ -152,9 +152,9 @@ export const ASSET_CATEGORIES: Record<string, AssetCategoryConfig> = {
   },
   'Execution': {
     icon: Cog,
-    color: 'text-gray-800',
-    bgColor: 'bg-gray-100',
-    borderColor: 'border-gray-200',
+    color: 'text-stone-800',
+    bgColor: 'bg-stone-100',
+    borderColor: 'border-stone-200',
     description: 'Task execution and automation'
   },
   'File Operations': {
@@ -245,9 +245,9 @@ export const ASSET_CATEGORIES: Record<string, AssetCategoryConfig> = {
   },
   'General': {
     icon: Wrench,
-    color: 'text-gray-800',
-    bgColor: 'bg-gray-100',
-    borderColor: 'border-gray-200',
+    color: 'text-stone-800',
+    bgColor: 'bg-stone-100',
+    borderColor: 'border-stone-200',
     description: 'General purpose tools'
   },
 
@@ -368,9 +368,9 @@ export const ASSET_CATEGORIES: Record<string, AssetCategoryConfig> = {
 // Default category for unknown categories
 export const DEFAULT_CATEGORY: AssetCategoryConfig = {
   icon: Database,
-  color: 'text-gray-800',
-  bgColor: 'bg-gray-100',
-  borderColor: 'border-gray-200',
+  color: 'text-stone-800',
+  bgColor: 'bg-stone-100',
+  borderColor: 'border-stone-200',
   description: 'General asset'
 };
 
@@ -399,8 +399,8 @@ export const LIFECYCLE_BADGES: Record<string, AssetLifecycleConfig> = {
   },
   development: {
     icon: Cog,
-    color: 'text-gray-800',
-    bgColor: 'bg-gray-100',
+    color: 'text-stone-800',
+    bgColor: 'bg-stone-100',
     label: 'Development'
   },
   deprecated: {
@@ -498,8 +498,8 @@ export const DEFAULT_KANBAN_COLUMNS: AssetKanbanColumn[] = [
     id: 'development',
     title: 'Development',
     filter: (asset: VitalAsset) => asset.lifecycle_stage === 'development',
-    color: 'text-gray-800',
-    bgColor: 'bg-gray-50',
+    color: 'text-stone-800',
+    bgColor: 'bg-stone-50',
   },
   {
     id: 'testing',

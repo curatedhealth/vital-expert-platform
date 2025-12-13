@@ -38,7 +38,7 @@ const DOMAIN_COLORS: Record<string, string> = {
   'Quality': 'bg-red-100 text-red-800',
   'Commercial': 'bg-cyan-100 text-cyan-800',
   'Manufacturing': 'bg-orange-100 text-orange-800',
-  default: 'bg-gray-100 text-gray-800',
+  default: 'bg-stone-100 text-stone-800',
 };
 
 function getDomainColor(domains: string[]): string {

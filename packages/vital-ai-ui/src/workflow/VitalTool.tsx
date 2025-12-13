@@ -190,7 +190,7 @@ const categoryColors: Record<ToolCategory, string> = {
   'Knowledge Retrieval': 'text-green-600 dark:text-green-400',
   'Web Search': 'text-orange-600 dark:text-orange-400',
   'External API': 'text-amber-600 dark:text-amber-400',
-  'Internal': 'text-gray-600 dark:text-gray-400',
+  'Internal': 'text-stone-600 dark:text-stone-400',
 };
 
 // ============================================================================

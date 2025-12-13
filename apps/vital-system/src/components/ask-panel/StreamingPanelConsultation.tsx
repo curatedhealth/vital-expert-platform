@@ -253,7 +253,7 @@ export function StreamingPanelConsultation({
       case "summary":
         return <FileText className="w-5 h-5 text-green-500" />;
       case "system":
-        return <Sparkles className="w-5 h-5 text-gray-500" />;
+        return <Sparkles className="w-5 h-5 text-stone-500" />;
     }
   };
 
@@ -266,7 +266,7 @@ export function StreamingPanelConsultation({
       case "summary":
         return "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800";
       case "system":
-        return "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700";
+        return "bg-stone-50 dark:bg-stone-900 border-stone-200 dark:border-stone-700";
     }
   };
 

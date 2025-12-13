@@ -37,7 +37,7 @@ export const EXPERT_TYPE_COLORS: Record<string, { bg: string; text: string }> = 
   neurology_expert: { bg: 'bg-indigo-500', text: 'text-white' },
   safety_expert: { bg: 'bg-yellow-500', text: 'text-yellow-900' },
   research_expert: { bg: 'bg-teal-500', text: 'text-white' },
-  default: { bg: 'bg-gray-500', text: 'text-white' },
+  default: { bg: 'bg-stone-500', text: 'text-white' },
 };
 
 // Track expert identities

@@ -155,10 +155,10 @@ export default function CreateToolPage() {
             Back
           </Button>
           <div className="flex items-center gap-3">
-            <Wrench className="h-8 w-8 text-gray-600" />
+            <Wrench className="h-8 w-8 text-stone-600" />
             <div>
               <h1 className="text-2xl font-bold">Create New Tool</h1>
-              <p className="text-sm text-gray-500">Add a new tool to the registry</p>
+              <p className="text-sm text-stone-500">Add a new tool to the registry</p>
             </div>
           </div>
         </div>
@@ -220,7 +220,7 @@ export default function CreateToolPage() {
                   onChange={(e) => setForm({ ...form, code: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '_') })}
                   placeholder="tool_code"
                 />
-                <p className="text-xs text-gray-500">Used as identifier. Lowercase letters, numbers, underscores, and hyphens only.</p>
+                <p className="text-xs text-stone-500">Used as identifier. Lowercase letters, numbers, underscores, and hyphens only.</p>
               </div>
 
               {/* Description */}
@@ -244,7 +244,7 @@ export default function CreateToolPage() {
                   onChange={(e) => setForm({ ...form, llm_description: e.target.value })}
                   placeholder="Short description for AI agent selection"
                 />
-                <p className="text-xs text-gray-500">Brief description used by AI agents to determine when to use this tool.</p>
+                <p className="text-xs text-stone-500">Brief description used by AI agents to determine when to use this tool.</p>
               </div>
 
               {/* Category */}
@@ -364,7 +364,7 @@ export default function CreateToolPage() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Active Status</Label>
-                    <p className="text-sm text-gray-500">Enable or disable this tool</p>
+                    <p className="text-sm text-stone-500">Enable or disable this tool</p>
                   </div>
                   <Switch
                     checked={form.is_active ?? true}
@@ -375,7 +375,7 @@ export default function CreateToolPage() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>LangGraph Compatible</Label>
-                    <p className="text-sm text-gray-500">Can be used in LangGraph workflows</p>
+                    <p className="text-sm text-stone-500">Can be used in LangGraph workflows</p>
                   </div>
                   <Switch
                     checked={form.langgraph_compatible ?? false}

@@ -207,7 +207,7 @@ const levelColors: Record<AgentLevel, string> = {
   L2: 'text-blue-600 dark:text-blue-400',
   L3: 'text-cyan-600 dark:text-cyan-400',
   L4: 'text-green-600 dark:text-green-400',
-  L5: 'text-gray-600 dark:text-gray-400',
+  L5: 'text-stone-600 dark:text-stone-400',
 };
 
 const statusIcons: Record<TaskStatus, ReactNode> = {
@@ -351,7 +351,7 @@ export const VitalTask = ({
             )}
             {/* L5 Tools invoked */}
             {toolsInvoked && toolsInvoked.length > 0 && (
-              <span className="text-gray-500">
+              <span className="text-stone-500">
                 L5: {toolsInvoked.join(', ')}
               </span>
             )}

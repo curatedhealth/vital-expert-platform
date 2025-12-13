@@ -188,7 +188,7 @@ export const TOOL_CATEGORY_COLORS: Record<ToolCategory, string> = {
   api: 'bg-purple-500',
   calculation: 'bg-orange-500',
   validation: 'bg-yellow-500',
-  formatting: 'bg-gray-500',
+  formatting: 'bg-stone-500',
   file: 'bg-teal-500',
   web: 'bg-indigo-500',
   ai: 'bg-pink-500',
@@ -310,7 +310,7 @@ export const AGENT_LEVEL_COLORS: Record<AgentLevel, string> = {
   L2: 'bg-blue-600',    // Domain Experts
   L3: 'bg-cyan-500',    // Task Specialists
   L4: 'bg-green-500',   // Context Workers
-  L5: 'bg-gray-500',    // Tools
+  L5: 'bg-stone-500',    // Tools
 };
 
 /**

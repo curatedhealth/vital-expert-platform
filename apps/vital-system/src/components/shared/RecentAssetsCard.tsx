@@ -58,13 +58,13 @@ export function RecentAssetsCard({
               onClick={() => onItemClick?.(item)}
               className={`p-4 border rounded-lg transition-colors ${
                 onItemClick
-                  ? 'hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer'
+                  ? 'hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer'
                   : ''
               }`}
             >
               <div className="font-medium">{item.name}</div>
               {item.description && (
-                <div className="text-sm text-gray-500 line-clamp-2 mt-1">
+                <div className="text-sm text-stone-500 line-clamp-2 mt-1">
                   {item.description}
                 </div>
               )}

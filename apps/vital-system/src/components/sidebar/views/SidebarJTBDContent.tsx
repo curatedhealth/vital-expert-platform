@@ -105,7 +105,7 @@ export function SidebarJTBDContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentPriority}>
               <Link href={buildUrl({ priority: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Priorities</span>
               </Link>
             </SidebarMenuButton>
@@ -151,7 +151,7 @@ export function SidebarJTBDContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentStatus}>
               <Link href={buildUrl({ status: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Statuses</span>
               </Link>
             </SidebarMenuButton>
@@ -183,7 +183,7 @@ export function SidebarJTBDContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={isStatusActive("draft")}>
               <Link href={buildUrl({ status: "draft" })}>
-                <FileText className="h-4 w-4 text-gray-500" />
+                <FileText className="h-4 w-4 text-stone-500" />
                 <span>Draft</span>
               </Link>
             </SidebarMenuButton>
@@ -197,7 +197,7 @@ export function SidebarJTBDContent() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-active={!currentCategory}>
               <Link href={buildUrl({ category: null })}>
-                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <CheckCircle2 className="h-4 w-4 text-stone-500" />
                 <span>All Types</span>
               </Link>
             </SidebarMenuButton>

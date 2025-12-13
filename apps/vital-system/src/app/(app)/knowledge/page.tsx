@@ -141,6 +141,16 @@ interface RagCardProps {
 }
 
 function RagCard({ rag, isSelected, isSelectionMode, onToggleSelect, onClick, onEdit, onDelete, viewMode }: RagCardProps) {
+  const displayStatus = rag.status || 'active';
+  const displayAccess = rag.access_level || 'organization';
+  const displayChunks = rag.total_chunks ?? 0;
+  const displayDocs = rag.document_count ?? 1;
+  const domainBadges = rag.knowledge_domains?.length
+    ? rag.knowledge_domains.slice(0, 2)
+    : ['unassigned'];
+  const extraDomainCount = Math.max(0, (rag.knowledge_domains?.length || 0) - domainBadges.length);
+  const sourceLabel = rag.purpose_description || rag.metadata?.source || 'Pinecone';
+
   if (viewMode === 'list') {
     return (
       <Card className={`hover:shadow-md transition-shadow cursor-pointer ${isSelected ? 'ring-2 ring-primary' : ''}`}>
@@ -157,15 +167,29 @@ function RagCard({ rag, isSelected, isSelectionMode, onToggleSelect, onClick, on
             <div className="flex-1 min-w-0" onClick={onClick}>
               <div className="flex items-center gap-2">
                 <h3 className="font-medium truncate">{rag.display_name}</h3>
-                <Badge variant={getStatusVariant(rag.status)} className="text-xs">
-                  {rag.status}
+                <Badge variant={getStatusVariant(displayStatus)} className="text-xs">
+                  {displayStatus}
+                </Badge>
+                <Badge variant="outline" className="text-xs capitalize">
+                  {displayAccess}
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground truncate">{rag.description || 'No description'}</p>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {domainBadges.map((d) => (
+                  <Badge key={d} variant="secondary" className="text-2xs capitalize">
+                    {d}
+                  </Badge>
+                ))}
+                {extraDomainCount > 0 && (
+                  <Badge variant="secondary" className="text-2xs">+{extraDomainCount}</Badge>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{formatNumber(rag.document_count)} docs</span>
-              <span>{formatNumber(rag.total_chunks || 0)} chunks</span>
+              <span>{formatNumber(displayDocs)} docs</span>
+              <span>{formatNumber(displayChunks)} chunks</span>
+              <span className="text-2xs text-muted-foreground truncate max-w-[120px]">{sourceLabel}</span>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -240,22 +264,36 @@ function RagCard({ rag, isSelected, isSelectionMode, onToggleSelect, onClick, on
         </p>
 
         <div className="flex items-center gap-2 flex-wrap mb-3">
-          <Badge variant={getStatusVariant(rag.status)}>
-            {rag.status}
+          <Badge variant={getStatusVariant(displayStatus)}>
+            {displayStatus}
           </Badge>
           <Badge variant={getRagTypeVariant(rag.rag_type)}>
             {rag.rag_type.replace('-', ' ')}
           </Badge>
+          <Badge variant="outline" className="capitalize">
+            {displayAccess}
+          </Badge>
+          {domainBadges.map((d) => (
+            <Badge key={d} variant="secondary" className="text-2xs capitalize">
+              {d}
+            </Badge>
+          ))}
+          {extraDomainCount > 0 && (
+            <Badge variant="secondary" className="text-2xs">+{extraDomainCount}</Badge>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <FileText className="h-3 w-3" />
-            <span>{formatNumber(rag.document_count)} docs</span>
+            <span>{formatNumber(displayDocs)} docs</span>
           </div>
           <div className="flex items-center gap-1">
             <BookOpen className="h-3 w-3" />
-            <span>{formatNumber(rag.total_chunks || 0)} chunks</span>
+            <span>{formatNumber(displayChunks)} chunks</span>
+          </div>
+          <div className="col-span-2 flex items-center gap-2 text-2xs text-muted-foreground">
+            <span className="truncate">{sourceLabel}</span>
           </div>
         </div>
 
@@ -448,6 +486,10 @@ function KnowledgePageContent() {
   const avgQuality = rags.length > 0
     ? rags.reduce((acc, r) => acc + (r.quality_score || 0), 0) / rags.length
     : 0;
+
+  // Derived domain list for filters (hide empty status/access filters if no data)
+  const uniqueStatuses = Array.from(new Set(rags.map(r => r.status).filter(Boolean)));
+  const uniqueAccess = Array.from(new Set(rags.map(r => r.access_level).filter(Boolean)));
 
   const statsCards: StatCardConfig[] = [
     { label: 'Knowledge Bases', value: rags.length, icon: Database },

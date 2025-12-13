@@ -411,7 +411,7 @@ export function PanelWorkflowDiagram({
   }, []);
 
   return (
-    <Card className="border-2 border-gray-200">
+    <Card className="border-2 border-stone-200">
       <CardHeader>
         <CardTitle className="text-2xl font-bold">Structured Panel Workflow</CardTitle>
       </CardHeader>
@@ -435,7 +435,7 @@ export function PanelWorkflowDiagram({
               showFitView
               showInteractive
               position="top-left"
-              className="!bg-gray-800 !border-2 !border-gray-600 !rounded-xl !shadow-lg"
+              className="!bg-stone-800 !border-2 !border-stone-600 !rounded-xl !shadow-lg"
             />
             <MiniMap
               nodeColor={(node) => {
@@ -446,13 +446,13 @@ export function PanelWorkflowDiagram({
                 return '#3b82f6';
               }}
               maskColor="rgba(0, 0, 0, 0.6)"
-              className="!bg-gray-800 !border-2 !border-gray-600 !rounded-xl !shadow-lg"
+              className="!bg-stone-800 !border-2 !border-stone-600 !rounded-xl !shadow-lg"
               position="bottom-right"
               pannable
               zoomable
             />
             <Panel position="top-right" className="!m-4 !flex !flex-col !gap-2">
-              <div className="!bg-gray-800 !text-white !p-3 !rounded-lg !shadow-lg">
+              <div className="!bg-stone-800 !text-white !p-3 !rounded-lg !shadow-lg">
                 <div className="text-sm font-semibold">{panelName} Workflow</div>
               </div>
               <Button

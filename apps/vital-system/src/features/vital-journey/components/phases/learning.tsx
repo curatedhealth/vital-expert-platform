@@ -413,7 +413,7 @@ export function LearningPhase({ onComplete }: LearningPhaseProps) {
                   <li key={i} className="flex items-center gap-2 text-sm">
                     <div className={cn(
                       "w-2 h-2 rounded-full",
-                      i < step ? "bg-green-500" : "bg-gray-300"
+                      i < step ? "bg-green-500" : "bg-stone-300"
                     )} />
                     {del}
                   </li>

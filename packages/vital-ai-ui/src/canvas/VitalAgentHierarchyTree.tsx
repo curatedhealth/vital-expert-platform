@@ -74,7 +74,7 @@ const levelConfig: Record<AgentLevel, { icon: typeof Brain; color: string; bg: s
 };
 
 const statusConfig: Record<AgentStatus, { color: string; pulseColor: string; label: string }> = {
-  idle: { color: 'bg-gray-400', pulseColor: '', label: 'Idle' },
+  idle: { color: 'bg-stone-400', pulseColor: '', label: 'Idle' },
   active: { color: 'bg-blue-500', pulseColor: 'animate-pulse', label: 'Active' },
   waiting: { color: 'bg-amber-500', pulseColor: 'animate-pulse', label: 'Waiting' },
   done: { color: 'bg-green-500', pulseColor: '', label: 'Done' },

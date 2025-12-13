@@ -140,7 +140,7 @@ export function SkillEditModal({
               }
               placeholder="e.g., data-analysis"
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-stone-500">
               Lowercase letters, numbers, and hyphens only
             </p>
           </div>
@@ -262,7 +262,7 @@ export function SkillEditModal({
               onChange={(e) =>
                 onSkillChange({ ...skill, is_active: e.target.checked })
               }
-              className="rounded border-gray-300"
+              className="rounded border-stone-300"
             />
             <Label htmlFor="is_active">Active</Label>
           </div>

@@ -260,7 +260,7 @@ export function AgentAvatar({
   return (
     <div
       className={cn(
-        'flex items-center justify-center rounded-lg overflow-hidden flex-shrink-0 bg-gray-50',
+        'flex items-center justify-center rounded-lg overflow-hidden flex-shrink-0 bg-stone-50',
         sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md,
         className
       )}

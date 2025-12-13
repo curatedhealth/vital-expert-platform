@@ -167,7 +167,7 @@ const defaultColumns: AssetTableColumn[] = [
         <div
           className={cn(
             'h-2.5 w-2.5 rounded-full',
-            asset.is_active ? 'bg-green-500' : 'bg-gray-400'
+            asset.is_active ? 'bg-green-500' : 'bg-stone-400'
           )}
         />
       </div>

@@ -201,7 +201,7 @@ export function PanelDesigner({ panel, onSave }: PanelDesignerProps) {
                   className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
                     isSelected
                       ? 'border-purple-500 bg-purple-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      : 'border-stone-200 hover:border-stone-300'
                   }`}
                 >
                   <div className="flex items-center justify-between">

@@ -80,7 +80,7 @@ interface Capability {
 }
 
 const maturityLevels = [
-  { level: 'L1', name: 'Foundation', description: 'Core infrastructure & compliance', color: 'bg-gray-100 text-gray-800' },
+  { level: 'L1', name: 'Foundation', description: 'Core infrastructure & compliance', color: 'bg-stone-100 text-stone-800' },
   { level: 'L2', name: 'Essential', description: 'Basic healthcare workflows', color: 'bg-blue-100 text-blue-800' },
   { level: 'L3', name: 'Advanced', description: 'AI-powered intelligence', color: 'bg-green-100 text-green-800' },
   { level: 'L4', name: 'Optimized', description: 'Predictive & prescriptive analytics', color: 'bg-purple-100 text-purple-800' },
@@ -697,7 +697,7 @@ export default function CapabilitiesPage() {
 
   const getMaturityColor = (level: string) => {
     const maturity = maturityLevels.find((m: any) => m.level === level);
-    return maturity?.color || 'bg-gray-100 text-gray-800';
+    return maturity?.color || 'bg-stone-100 text-stone-800';
   };
 
   const getStatusColor = (status: string) => {
@@ -705,7 +705,7 @@ export default function CapabilitiesPage() {
       case 'active': return 'bg-green-100 text-green-800';
       case 'development': return 'bg-blue-100 text-blue-800';
       case 'deprecated': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-stone-100 text-stone-800';
     }
   };
 
@@ -714,7 +714,7 @@ export default function CapabilitiesPage() {
       case 'low': return 'bg-green-100 text-green-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'high': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-stone-100 text-stone-800';
     }
   };
 

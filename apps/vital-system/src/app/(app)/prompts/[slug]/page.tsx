@@ -464,7 +464,7 @@ function PromptDetailContent({ slug }: { slug: string }) {
             </Badge>
             {/* Category Badge */}
             {prompt.category && (
-              <Badge variant="outline" className="bg-gray-50">
+              <Badge variant="outline" className="bg-stone-50">
                 {prompt.category}
               </Badge>
             )}
@@ -530,7 +530,7 @@ function PromptDetailContent({ slug }: { slug: string }) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="p-4 bg-white dark:bg-gray-900 rounded-lg border border-emerald-200 dark:border-emerald-700">
+                <div className="p-4 bg-white dark:bg-stone-900 rounded-lg border border-emerald-200 dark:border-emerald-700">
                   <p className="text-base font-medium text-emerald-800 dark:text-emerald-200">
                     &ldquo;{prompt.prompt_starter}&rdquo;
                   </p>
@@ -840,37 +840,37 @@ function PromptDetailContent({ slug }: { slug: string }) {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {prompt.usage_count !== undefined && (
-                    <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-center p-3 bg-stone-50 dark:bg-stone-800 rounded-lg">
                       <p className="text-2xl font-bold text-blue-600">{prompt.usage_count}</p>
                       <p className="text-xs text-muted-foreground">Total Uses</p>
                     </div>
                   )}
                   {prompt.accuracy_clinical !== undefined && prompt.accuracy_clinical > 0 && (
-                    <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-center p-3 bg-stone-50 dark:bg-stone-800 rounded-lg">
                       <p className="text-2xl font-bold text-green-600">{prompt.accuracy_clinical}%</p>
                       <p className="text-xs text-muted-foreground">Clinical Accuracy</p>
                     </div>
                   )}
                   {prompt.accuracy_regulatory !== undefined && prompt.accuracy_regulatory > 0 && (
-                    <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-center p-3 bg-stone-50 dark:bg-stone-800 rounded-lg">
                       <p className="text-2xl font-bold text-purple-600">{prompt.accuracy_regulatory}%</p>
                       <p className="text-xs text-muted-foreground">Regulatory Accuracy</p>
                     </div>
                   )}
                   {prompt.user_satisfaction !== undefined && prompt.user_satisfaction > 0 && (
-                    <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-center p-3 bg-stone-50 dark:bg-stone-800 rounded-lg">
                       <p className="text-2xl font-bold text-amber-600">{prompt.user_satisfaction}%</p>
                       <p className="text-xs text-muted-foreground">User Satisfaction</p>
                     </div>
                   )}
                   {prompt.avg_latency_ms !== undefined && prompt.avg_latency_ms > 0 && (
-                    <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-center p-3 bg-stone-50 dark:bg-stone-800 rounded-lg">
                       <p className="text-2xl font-bold text-cyan-600">{prompt.avg_latency_ms}ms</p>
                       <p className="text-xs text-muted-foreground">Avg Latency</p>
                     </div>
                   )}
                   {prompt.estimated_time_minutes !== undefined && prompt.estimated_time_minutes > 0 && (
-                    <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-center p-3 bg-stone-50 dark:bg-stone-800 rounded-lg">
                       <p className="text-2xl font-bold text-indigo-600">{prompt.estimated_time_minutes}m</p>
                       <p className="text-xs text-muted-foreground">Est. Time</p>
                     </div>
@@ -927,7 +927,7 @@ function PromptDetailContent({ slug }: { slug: string }) {
                 {prompt.prompt_code && (
                   <div>
                     <span className="text-muted-foreground text-xs">Prompt Code</span>
-                    <p className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">{prompt.prompt_code}</p>
+                    <p className="font-mono text-xs bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded">{prompt.prompt_code}</p>
                   </div>
                 )}
                 {prompt.domain && (
@@ -1040,7 +1040,7 @@ function PromptDetailLoading() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="px-6 pt-4">
-        <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
+        <div className="h-5 w-48 bg-stone-200 rounded animate-pulse" />
       </div>
       <div className="flex-1 flex items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-blue-600" />

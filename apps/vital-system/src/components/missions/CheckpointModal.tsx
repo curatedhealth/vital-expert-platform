@@ -56,8 +56,8 @@ const CHECKPOINT_CONFIG: Record<
   },
   default: {
     icon: <HelpCircle className="h-6 w-6" />,
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-100',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100',
     title: 'Decision Required',
   },
 }
@@ -100,10 +100,10 @@ export function CheckpointModal({ checkpoint, isOpen, onRespond, onDismiss }: Ch
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={config.color}>{config.icon}</div>
-              <h2 className="text-lg font-semibold text-gray-900">{config.title}</h2>
+              <h2 className="text-lg font-semibold text-stone-900">{config.title}</h2>
             </div>
             {onDismiss && (
-              <button onClick={onDismiss} className="text-gray-500 hover:text-gray-700 transition-colors">
+              <button onClick={onDismiss} className="text-stone-500 hover:text-stone-700 transition-colors">
                 <X className="h-5 w-5" />
               </button>
             )}
@@ -111,7 +111,7 @@ export function CheckpointModal({ checkpoint, isOpen, onRespond, onDismiss }: Ch
         </div>
 
         <div className="px-6 py-4">
-          <p className="text-gray-700 mb-6">{checkpoint.message || checkpoint.description}</p>
+          <p className="text-stone-700 mb-6">{checkpoint.message || checkpoint.description}</p>
 
           <div className="space-y-3">
             {checkpoint.options.map((option) => (
@@ -126,9 +126,9 @@ export function CheckpointModal({ checkpoint, isOpen, onRespond, onDismiss }: Ch
           </div>
 
           {selectedOption && checkpoint.options.find((o) => o.id === selectedOption)?.action === 'increase_budget' && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-4 p-4 bg-stone-50 rounded-lg">
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-600">New Budget Limit</span>
+                <span className="text-stone-600">New Budget Limit</span>
                 <span className="font-medium">${budgetIncrease}</span>
               </div>
               <input
@@ -145,18 +145,18 @@ export function CheckpointModal({ checkpoint, isOpen, onRespond, onDismiss }: Ch
 
           {checkpoint.metadata && Object.keys(checkpoint.metadata).length > 0 && (
             <details className="mt-4 text-sm">
-              <summary className="text-gray-500 cursor-pointer hover:text-gray-700">View details</summary>
-              <pre className="mt-2 p-3 bg-gray-50 rounded text-xs overflow-auto">
+              <summary className="text-stone-500 cursor-pointer hover:text-stone-700">View details</summary>
+              <pre className="mt-2 p-3 bg-stone-50 rounded text-xs overflow-auto">
                 {JSON.stringify(checkpoint.metadata, null, 2)}
               </pre>
             </details>
           )}
         </div>
 
-        <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
+        <div className="px-6 py-4 bg-stone-50 border-t flex justify-end gap-3">
           <button
             onClick={onDismiss}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+            className="px-4 py-2 text-stone-600 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition-colors"
             disabled={isSubmitting}
           >
             Cancel
@@ -191,17 +191,17 @@ function OptionButton({
       onClick={onSelect}
       disabled={disabled}
       className={`w-full p-4 border rounded-lg text-left transition-all ${
-        isSelected ? 'border-blue-400 bg-blue-50 shadow-sm' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+        isSelected ? 'border-blue-400 bg-blue-50 shadow-sm' : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50'
       }`}
     >
       <div className="flex items-center justify-between">
         <div>
-          <div className="font-medium text-gray-900">{option.label}</div>
-          {option.description && <div className="text-sm text-gray-600 mt-1">{option.description}</div>}
+          <div className="font-medium text-stone-900">{option.label}</div>
+          {option.description && <div className="text-sm text-stone-600 mt-1">{option.description}</div>}
         </div>
         <div
           className={`w-5 h-5 rounded-full border ${
-            isSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+            isSelected ? 'border-blue-500 bg-blue-500' : 'border-stone-300'
           }`}
         />
       </div>

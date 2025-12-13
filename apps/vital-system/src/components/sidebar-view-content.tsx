@@ -1476,7 +1476,7 @@ export function SidebarKnowledgeContent() {
 
   // Lifecycle status options
   const STATUS_OPTIONS = [
-    { value: 'draft', label: 'Draft', color: 'bg-gray-500' },
+    { value: 'draft', label: 'Draft', color: 'bg-stone-500' },
     { value: 'active', label: 'Active', color: 'bg-green-500' },
     { value: 'review', label: 'Under Review', color: 'bg-yellow-500' },
     { value: 'deprecated', label: 'Deprecated', color: 'bg-orange-500' },
@@ -1610,7 +1610,7 @@ export function SidebarKnowledgeContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentCategory}>
                     <Link href={buildUrl({ category: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Categories</span>
                     </Link>
                   </SidebarMenuButton>
@@ -1692,7 +1692,7 @@ export function SidebarKnowledgeContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentTherapeutic}>
                     <Link href={buildUrl({ therapeutic: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Areas</span>
                     </Link>
                   </SidebarMenuButton>
@@ -1731,7 +1731,7 @@ export function SidebarKnowledgeContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentStatus}>
                     <Link href={buildUrl({ status: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Status</span>
                     </Link>
                   </SidebarMenuButton>
@@ -1772,7 +1772,7 @@ export function SidebarKnowledgeContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentAccess}>
                     <Link href={buildUrl({ access: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Levels</span>
                     </Link>
                   </SidebarMenuButton>
@@ -2145,7 +2145,7 @@ export function SidebarPromptPrismContent() {
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild data-active={!currentSuite}>
                       <Link href={buildUrl({ suite: null, subSuite: null })}>
-                        <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                        <CheckCircle2 className="h-4 w-4 text-stone-500" />
                         <span>All Suites</span>
                       </Link>
                     </SidebarMenuButton>
@@ -2191,7 +2191,7 @@ export function SidebarPromptPrismContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentComplexity}>
                     <Link href={buildUrl({ complexity: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Levels</span>
                     </Link>
                   </SidebarMenuButton>
@@ -2392,7 +2392,7 @@ export function SidebarPersonasContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentArchetype}>
                     <Link href={buildUrl({ archetype: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Archetypes</span>
                     </Link>
                   </SidebarMenuButton>
@@ -2453,7 +2453,7 @@ export function SidebarPersonasContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentSeniority}>
                     <Link href={buildUrl({ seniority: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Levels</span>
                     </Link>
                   </SidebarMenuButton>
@@ -2493,7 +2493,7 @@ export function SidebarPersonasContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={isSeniorityActive("entry")}>
                     <Link href={buildUrl({ seniority: "entry" })}>
-                      <User className="h-4 w-4 text-gray-500" />
+                      <User className="h-4 w-4 text-stone-500" />
                       <span>Entry</span>
                     </Link>
                   </SidebarMenuButton>
@@ -2609,7 +2609,7 @@ export function SidebarJTBDContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentPriority}>
                     <Link href={buildUrl({ priority: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Priorities</span>
                     </Link>
                   </SidebarMenuButton>
@@ -2670,7 +2670,7 @@ export function SidebarJTBDContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentStatus}>
                     <Link href={buildUrl({ status: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Statuses</span>
                     </Link>
                   </SidebarMenuButton>
@@ -2702,7 +2702,7 @@ export function SidebarJTBDContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={isStatusActive("draft")}>
                     <Link href={buildUrl({ status: "draft" })}>
-                      <FileText className="h-4 w-4 text-gray-500" />
+                      <FileText className="h-4 w-4 text-stone-500" />
                       <span>Draft</span>
                     </Link>
                   </SidebarMenuButton>
@@ -2731,7 +2731,7 @@ export function SidebarJTBDContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentCategory}>
                     <Link href={buildUrl({ category: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Types</span>
                     </Link>
                   </SidebarMenuButton>
@@ -2856,7 +2856,7 @@ const ONTOLOGY_NODE_TYPES = [
   { id: 'jtbd', label: 'JTBDs', icon: Target, color: 'text-amber-500' },
   { id: 'value', label: 'Value Categories', icon: TrendingUp, color: 'text-cyan-500' },
   { id: 'agent', label: 'AI Agents', icon: Bot, color: 'text-yellow-500' },
-  { id: 'persona', label: 'Personas', icon: Users, color: 'text-gray-500' },
+  { id: 'persona', label: 'Personas', icon: Users, color: 'text-stone-500' },
   { id: 'workflow', label: 'Workflows', icon: Workflow, color: 'text-pink-500' },
 ] as const
 
@@ -4790,7 +4790,7 @@ export function SidebarToolsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentCategory}>
                     <Link href={buildUrl({ category: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Categories</span>
                     </Link>
                   </SidebarMenuButton>
@@ -4859,7 +4859,7 @@ export function SidebarToolsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentStatus}>
                     <Link href={buildUrl({ status: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Statuses</span>
                     </Link>
                   </SidebarMenuButton>
@@ -4883,7 +4883,7 @@ export function SidebarToolsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={isStatusActive("development")}>
                     <Link href={buildUrl({ status: "development" })}>
-                      <Settings className="h-4 w-4 text-gray-500" />
+                      <Settings className="h-4 w-4 text-stone-500" />
                       <span>Development</span>
                     </Link>
                   </SidebarMenuButton>
@@ -4912,7 +4912,7 @@ export function SidebarToolsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentType}>
                     <Link href={buildUrl({ type: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Types</span>
                     </Link>
                   </SidebarMenuButton>
@@ -5176,7 +5176,7 @@ export function SidebarSkillsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentCategory}>
                     <Link href={buildUrl({ category: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Categories</span>
                     </Link>
                   </SidebarMenuButton>
@@ -5245,7 +5245,7 @@ export function SidebarSkillsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentComplexity}>
                     <Link href={buildUrl({ complexity: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Levels</span>
                     </Link>
                   </SidebarMenuButton>
@@ -5314,7 +5314,7 @@ export function SidebarSkillsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentType}>
                     <Link href={buildUrl({ type: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
                       <span>All Types</span>
                     </Link>
                   </SidebarMenuButton>

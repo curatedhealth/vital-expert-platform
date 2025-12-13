@@ -363,10 +363,10 @@ function SkillDetailContent({ slug }: { slug: string }) {
             Back
           </Button>
           <div className="flex items-center gap-3">
-            <CategoryIcon className="h-8 w-8 text-gray-600" />
+            <CategoryIcon className="h-8 w-8 text-stone-600" />
             <div>
               <h1 className="text-2xl font-bold">{skill.name}</h1>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-stone-500">
                 <span>{skill.slug}</span>
                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={handleCopySlug}>
                   {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
@@ -423,10 +423,10 @@ function SkillDetailContent({ slug }: { slug: string }) {
 
           {/* Status Badges */}
           <div className="flex flex-wrap gap-3">
-            <Badge className={skill.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+            <Badge className={skill.is_active ? 'bg-green-100 text-green-800' : 'bg-stone-100 text-stone-800'}>
               {skill.is_active ? 'Active' : 'Inactive'}
             </Badge>
-            <Badge className={categoryConfig?.color || 'bg-gray-100 text-gray-800'}>
+            <Badge className={categoryConfig?.color || 'bg-stone-100 text-stone-800'}>
               <CategoryIcon className="h-3 w-3 mr-1" />
               {skill.category}
             </Badge>
@@ -469,7 +469,7 @@ function SkillDetailContent({ slug }: { slug: string }) {
                     onChange={(e) => setEditForm({ ...editForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
                     placeholder="skill-slug"
                   />
-                  <p className="text-xs text-gray-500">Used in URLs. Lowercase letters, numbers, and hyphens only.</p>
+                  <p className="text-xs text-stone-500">Used in URLs. Lowercase letters, numbers, and hyphens only.</p>
                 </div>
 
                 {/* Description */}
@@ -542,7 +542,7 @@ function SkillDetailContent({ slug }: { slug: string }) {
                     max={10}
                     step={1}
                   />
-                  <div className="flex justify-between text-xs text-gray-500">
+                  <div className="flex justify-between text-xs text-stone-500">
                     <span>1 (Basic)</span>
                     <span>5 (Intermediate)</span>
                     <span>10 (Expert)</span>
@@ -553,7 +553,7 @@ function SkillDetailContent({ slug }: { slug: string }) {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Active Status</Label>
-                    <p className="text-sm text-gray-500">Enable or disable this skill</p>
+                    <p className="text-sm text-stone-500">Enable or disable this skill</p>
                   </div>
                   <Switch
                     checked={editForm.is_active ?? true}
@@ -570,7 +570,7 @@ function SkillDetailContent({ slug }: { slug: string }) {
                   <CardTitle>Description</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                  <p className="text-stone-700 dark:text-stone-300 whitespace-pre-wrap">
                     {skill.description || 'No description provided.'}
                   </p>
                 </CardContent>
@@ -583,13 +583,13 @@ function SkillDetailContent({ slug }: { slug: string }) {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <Label className="text-gray-500">Type</Label>
+                      <Label className="text-stone-500">Type</Label>
                       <p className="font-medium capitalize">{skill.implementation_type?.replace('_', ' ') || 'Unknown'}</p>
                     </div>
                     {skill.implementation_ref && (
                       <div>
-                        <Label className="text-gray-500">Reference</Label>
-                        <p className="font-mono text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded">
+                        <Label className="text-stone-500">Reference</Label>
+                        <p className="font-mono text-sm bg-stone-100 dark:bg-stone-800 p-2 rounded">
                           {skill.implementation_ref}
                         </p>
                       </div>
@@ -604,12 +604,12 @@ function SkillDetailContent({ slug }: { slug: string }) {
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-4">
                       <div className="text-4xl font-bold">{skill.complexity_score}</div>
-                      <div className="text-gray-500">/10</div>
+                      <div className="text-stone-500">/10</div>
                       <Badge className={complexityBadge.color}>
                         {complexityBadge.label}
                       </Badge>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                    <div className="w-full bg-stone-200 dark:bg-stone-700 rounded-full h-3">
                       <div
                         className="bg-blue-600 h-3 rounded-full transition-all"
                         style={{ width: `${(skill.complexity_score / 10) * 100}%` }}
@@ -625,7 +625,7 @@ function SkillDetailContent({ slug }: { slug: string }) {
                     <CardTitle className="text-lg">Metadata</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <pre className="text-sm bg-gray-100 dark:bg-gray-800 p-4 rounded overflow-x-auto">
+                    <pre className="text-sm bg-stone-100 dark:bg-stone-800 p-4 rounded overflow-x-auto">
                       {JSON.stringify(skill.metadata, null, 2)}
                     </pre>
                   </CardContent>
@@ -639,11 +639,11 @@ function SkillDetailContent({ slug }: { slug: string }) {
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <Label className="text-gray-500">Created</Label>
+                      <Label className="text-stone-500">Created</Label>
                       <p>{skill.created_at ? new Date(skill.created_at).toLocaleString() : 'N/A'}</p>
                     </div>
                     <div>
-                      <Label className="text-gray-500">Last Updated</Label>
+                      <Label className="text-stone-500">Last Updated</Label>
                       <p>{skill.updated_at ? new Date(skill.updated_at).toLocaleString() : 'N/A'}</p>
                     </div>
                   </div>
@@ -688,22 +688,22 @@ function SkillDetailLoading() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="px-6 pt-4">
-        <div className="h-6 w-64 bg-gray-200 animate-pulse rounded" />
+        <div className="h-6 w-64 bg-stone-200 animate-pulse rounded" />
       </div>
       <div className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center gap-4">
-          <div className="h-8 w-16 bg-gray-200 animate-pulse rounded" />
+          <div className="h-8 w-16 bg-stone-200 animate-pulse rounded" />
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 bg-gray-200 animate-pulse rounded" />
+            <div className="h-8 w-8 bg-stone-200 animate-pulse rounded" />
             <div>
-              <div className="h-6 w-48 bg-gray-200 animate-pulse rounded mb-2" />
-              <div className="h-4 w-32 bg-gray-200 animate-pulse rounded" />
+              <div className="h-6 w-48 bg-stone-200 animate-pulse rounded mb-2" />
+              <div className="h-4 w-32 bg-stone-200 animate-pulse rounded" />
             </div>
           </div>
         </div>
       </div>
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-stone-400" />
       </div>
     </div>
   );

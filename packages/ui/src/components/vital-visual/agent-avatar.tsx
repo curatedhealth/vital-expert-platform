@@ -66,8 +66,8 @@ const tierStyles = {
   1: "ring-4 ring-purple-500 ring-offset-2", // Master
   2: "ring-2 ring-blue-500 ring-offset-1",   // Expert
   3: "ring-2 ring-teal-400",                  // Specialist
-  4: "border-2 border-gray-300",              // Worker
-  5: "border border-gray-200",                // Tool
+  4: "border-2 border-stone-300",              // Worker
+  5: "border border-stone-200",                // Tool
 }
 
 export const AgentAvatar = React.forwardRef<HTMLDivElement, AgentAvatarProps>(
@@ -135,15 +135,15 @@ export const AgentAvatar = React.forwardRef<HTMLDivElement, AgentAvatarProps>(
         <div ref={ref} className={cn("flex flex-col items-center", className)} {...props}>
           <div
             className={cn(
-              "flex items-center justify-center rounded-lg animate-pulse bg-gray-100",
+              "flex items-center justify-center rounded-lg animate-pulse bg-stone-100",
               container,
               tierStyles[tier]
             )}
           >
-            <div className={cn("rounded-full bg-gray-300", size === "xs" ? "w-4 h-4" : "w-8 h-8")} />
+            <div className={cn("rounded-full bg-stone-300", size === "xs" ? "w-4 h-4" : "w-8 h-8")} />
           </div>
           {showName && (
-            <div className={cn("mt-2 h-4 w-16 rounded bg-gray-200 animate-pulse", badge)} />
+            <div className={cn("mt-2 h-4 w-16 rounded bg-stone-200 animate-pulse", badge)} />
           )}
         </div>
       )
@@ -154,7 +154,7 @@ export const AgentAvatar = React.forwardRef<HTMLDivElement, AgentAvatarProps>(
         <div ref={ref} className={cn("flex flex-col items-center", className)} {...props}>
           <div
             className={cn(
-              "flex items-center justify-center rounded-lg bg-gray-50",
+              "flex items-center justify-center rounded-lg bg-stone-50",
               container,
               tierStyles[tier]
             )}
@@ -162,7 +162,7 @@ export const AgentAvatar = React.forwardRef<HTMLDivElement, AgentAvatarProps>(
             <span className="text-2xl">🤖</span>
           </div>
           {showName && name && (
-            <span className={cn("mt-2 font-medium text-center text-gray-900", badge)}>
+            <span className={cn("mt-2 font-medium text-center text-stone-900", badge)}>
               {name}
             </span>
           )}

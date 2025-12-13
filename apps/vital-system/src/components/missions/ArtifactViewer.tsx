@@ -37,7 +37,7 @@ export function ArtifactViewer({ artifacts, className = '' }: ArtifactViewerProp
 
   if (artifacts.length === 0) {
     return (
-      <div className={`text-center py-8 text-gray-500 ${className}`}>
+      <div className={`text-center py-8 text-stone-500 ${className}`}>
         <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
         <p>No artifacts generated yet</p>
       </div>
@@ -51,7 +51,7 @@ export function ArtifactViewer({ artifacts, className = '' }: ArtifactViewerProp
           <FileText className="h-5 w-5" />
           Artifacts
         </h3>
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-stone-500">
           {artifacts.length} {artifacts.length === 1 ? 'artifact' : 'artifacts'}
         </span>
       </div>
@@ -99,7 +99,7 @@ function ArtifactCard({ artifact, isExpanded, onToggle }: { artifact: Artifact; 
 
   return (
     <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
-      <div className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+      <div className="w-full flex items-center justify-between p-4 hover:bg-stone-50 transition-colors">
         {/* Clickable area for toggle - excludes action buttons */}
         <div
           role="button"
@@ -113,10 +113,10 @@ function ArtifactCard({ artifact, isExpanded, onToggle }: { artifact: Artifact; 
           }}
           className="flex items-center gap-3 min-w-0 flex-1 text-left cursor-pointer"
         >
-          <div className="flex-shrink-0 text-gray-500">{getArtifactIcon(artifact.name)}</div>
+          <div className="flex-shrink-0 text-stone-500">{getArtifactIcon(artifact.name)}</div>
           <div className="min-w-0">
             <div className="font-medium truncate">{artifact.name}</div>
-            <div className="text-sm text-gray-500 flex items-center gap-2">
+            <div className="text-sm text-stone-500 flex items-center gap-2">
               <span>Step: {artifact.step || 'n/a'}</span>
               {artifact.citations.length > 0 && (
                 <>
@@ -138,21 +138,21 @@ function ArtifactCard({ artifact, isExpanded, onToggle }: { artifact: Artifact; 
               )}
             </div>
           </div>
-          <div className="text-gray-400 ml-auto">{isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}</div>
+          <div className="text-stone-400 ml-auto">{isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}</div>
         </div>
 
         {/* Action buttons - separate from toggle */}
         <div className="flex items-center gap-2 flex-shrink-0 ml-2">
           <button
             onClick={handleCopy}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
             title="Copy content"
           >
             {copied ? '✅' : <Copy className="h-4 w-4" />}
           </button>
           <button
             onClick={handleDownload}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
             title="Download"
           >
             <Download className="h-4 w-4" />
@@ -162,7 +162,7 @@ function ArtifactCard({ artifact, isExpanded, onToggle }: { artifact: Artifact; 
 
       {isExpanded && (
         <div className="border-t">
-          <div className="p-4 bg-gray-50">
+          <div className="p-4 bg-stone-50">
             <div className="prose prose-sm max-w-none dark:prose-invert">
               <ArtifactContent content={artifact.content} />
             </div>
@@ -175,7 +175,7 @@ function ArtifactCard({ artifact, isExpanded, onToggle }: { artifact: Artifact; 
           )}
 
           {artifact.artifactPath && (
-            <div className="px-4 py-2 border-t bg-gray-50 text-xs text-gray-500">Path: {artifact.artifactPath}</div>
+            <div className="px-4 py-2 border-t bg-stone-50 text-xs text-stone-500">Path: {artifact.artifactPath}</div>
           )}
         </div>
       )}
@@ -194,7 +194,7 @@ function ArtifactContent({ content }: { content: string }) {
         if (line.startsWith('- ') || line.startsWith('* '))
           return (
             <div key={i} className="flex items-start gap-2 ml-4">
-              <span className="text-gray-400 mt-1.5">•</span>
+              <span className="text-stone-400 mt-1.5">•</span>
               <span>{line.slice(2)}</span>
             </div>
           )
@@ -202,7 +202,7 @@ function ArtifactContent({ content }: { content: string }) {
         if (numberedMatch)
           return (
             <div key={i} className="flex items-start gap-2 ml-4">
-              <span className="text-gray-500 font-medium">{numberedMatch[1]}.</span>
+              <span className="text-stone-500 font-medium">{numberedMatch[1]}.</span>
               <span>{line.slice(numberedMatch[0].length)}</span>
             </div>
           )
@@ -224,7 +224,7 @@ function CitationList({ citations }: { citations: Citation[] }) {
       <ul className="space-y-2">
         {citations.map((citation, i) => (
           <li key={i} className="flex items-start gap-2 text-sm">
-            <span className="text-gray-400 font-mono text-xs mt-0.5">[{i + 1}]</span>
+            <span className="text-stone-400 font-mono text-xs mt-0.5">[{i + 1}]</span>
             <div className="flex-1 min-w-0">
               {citation.url ? (
                 <a href={citation.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
@@ -232,11 +232,11 @@ function CitationList({ citations }: { citations: Citation[] }) {
                   <ExternalLink className="h-3 w-3 flex-shrink-0" />
                 </a>
               ) : (
-                <span className="text-gray-700">{citation.title || citation.id}</span>
+                <span className="text-stone-700">{citation.title || citation.id}</span>
               )}
-              {citation.source && <span className="ml-2 text-xs text-gray-400">({citation.source})</span>}
+              {citation.source && <span className="ml-2 text-xs text-stone-400">({citation.source})</span>}
               {citation.confidence !== undefined && (
-                <span className="ml-2 text-xs text-gray-400">{Math.round((citation.confidence || 0) * 100)}% relevant</span>
+                <span className="ml-2 text-xs text-stone-400">{Math.round((citation.confidence || 0) * 100)}% relevant</span>
               )}
             </div>
           </li>

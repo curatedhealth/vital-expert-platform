@@ -16,7 +16,7 @@ import SolutionSection from './SolutionSection'
 
 export default function EnhancedLandingPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-stone-50">
       <Navigation />
       
       {/* Hero Section with Gradient Background */}

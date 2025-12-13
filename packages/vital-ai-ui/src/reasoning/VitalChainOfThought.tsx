@@ -96,7 +96,7 @@ const levelStyles: Record<AgentLevel, { color: string; weight: string; size: str
   L2: { color: 'text-blue-600 dark:text-blue-400', weight: 'font-medium', size: 'text-sm' },
   L3: { color: 'text-cyan-600 dark:text-cyan-400', weight: 'font-medium', size: 'text-sm' },
   L4: { color: 'text-green-600 dark:text-green-400', weight: 'font-normal', size: 'text-sm' },
-  L5: { color: 'text-gray-500 dark:text-gray-400', weight: 'font-normal', size: 'text-xs' },
+  L5: { color: 'text-stone-500 dark:text-stone-400', weight: 'font-normal', size: 'text-xs' },
 };
 
 const levelIcons: Record<AgentLevel, LucideIcon> = {
@@ -112,7 +112,7 @@ const levelBadgeColors: Record<AgentLevel, string> = {
   L2: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   L3: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
   L4: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  L5: 'bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-300',
+  L5: 'bg-stone-100 text-stone-700 dark:bg-stone-800/50 dark:text-stone-300',
 };
 
 // ============================================================================

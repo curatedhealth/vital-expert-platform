@@ -1,9 +1,34 @@
 # Codebase File Status Registry
 
-**Version:** 2.0
+**Version:** 2.1
 **Date:** December 13, 2025
+**Last Updated:** December 13, 2025 - Phase 1B Complete
 **Purpose:** Track production-ready vs deprecated files for codebase cleanup
 **Total Files Tracked:** 970 frontend files (286,611 lines)
+
+---
+
+## 🎉 Phase 1B Update (December 13, 2025)
+
+### Files Removed (Committed in `09f6772c`)
+| File | Lines | Reason |
+|------|-------|--------|
+| `components/auth/input.tsx` | ~50 | Duplicate of @vital/ui |
+| `components/auth/label.tsx` | ~30 | Duplicate of @vital/ui |
+| `services/ai-engine/.../ontology_investigator.py` | ~300 | Deprecated API route |
+| `services/ai-engine/.../value_investigator.py` | ~300 | Deprecated API route |
+| `services/ai-engine/.../ask_expert/archive/*` | ~2,500 | Archived workflows |
+| `services/ai-engine/.../postgres_checkpointer.py` | ~500 | Replaced by factory |
+| **TOTAL REMOVED** | **3,724** | Clean git status |
+
+### Type Fixes Applied (Committed in `210da1e4`)
+| File | Fix |
+|------|-----|
+| `types/agent.types.ts` | Added `slug`, `level`, `agent_level`, `reasoning`, `function` |
+| `contexts/TenantContext.tsx` | Added `domain`, `subscription_tier` to Tenant type |
+| `components/rag/index.ts` | Fixed exports, added local type definitions |
+| `components/sidebar/index.ts` | Fixed named vs default exports |
+| `components/landing/enhanced/index.ts` | Fixed EnhancedLandingPage export |
 
 ---
 

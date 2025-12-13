@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3]
+# DEPENDENCIES: [langgraph_workflows.ask_expert, services.deep_research_service]
 """
 Mode 3: Deep Research (Manual Autonomous) - Clean workflow
 Uses a dedicated deep research pipeline (plan + reasoning + RAG) for Mode 3.

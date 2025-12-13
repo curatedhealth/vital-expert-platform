@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [langgraph_workflows.modes34, services.runner_registry, services.checkpoint_store]
 """
 Unified Missions API for Ask Expert Modes 3/4 (autonomous).
 

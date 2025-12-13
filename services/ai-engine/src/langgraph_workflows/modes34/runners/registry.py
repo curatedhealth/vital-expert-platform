@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [services.supabase_client, langgraph_workflows.modes34.unified_autonomous_workflow, structlog]
 """
 Runner Registry for Modes 3/4 - Production Database Integration
 
@@ -126,13 +130,23 @@ async def _load_templates_from_db() -> Dict[str, Dict[str, Any]]:
 
         return templates
 
+    except asyncio.CancelledError:
+        # CRITICAL C5 FIX: NEVER swallow CancelledError
+        raise
     except Exception as exc:
         logger.error(
             "mission_templates_load_failed",
             error=str(exc)[:200],
             error_type=type(exc).__name__,
         )
-        return {}
+        # CRITICAL C4 FIX: Raise exception instead of silent failure
+        # Import here to avoid circular dependency
+        from langgraph_workflows.modes34.resilience.exceptions import DatabaseConnectionError
+        raise DatabaseConnectionError(
+            table_name="mission_templates",
+            operation="select",
+            original_error=exc,
+        )
 
 
 async def refresh_template_cache(force: bool = False) -> int:

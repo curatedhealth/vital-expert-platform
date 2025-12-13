@@ -3,6 +3,14 @@ import { persist } from 'zustand/middleware';
 
 import { agentService, type Agent as DbAgent } from '@/features/agents/services/agent-service';
 
+// Canonical agent level mapping (agent_level_id -> level number)
+export const AGENT_LEVEL_MAP: Record<string, number> = {
+  '5e27905e-6f58-462e-93a4-6fad5388ebaf': 1, // L1 Master
+  'a6e394b0-6ca1-4cb1-8097-719523ee6782': 2, // L2 Expert
+  '5a3647eb-a2bd-43f2-9c8b-6413d39ed0fb': 3, // L3 Specialist
+  'c6f7eec5-3fc5-4f10-b030-bce0d22480e8': 4, // L4 Worker
+  '45420d67-67bf-44cf-a842-44bbaf3145e7': 5, // L5 Tool
+};
 export interface Agent {
   id: string;
   name: string;
@@ -26,6 +34,9 @@ export interface Agent {
   tier: number;
   priority: number;
   implementation_phase: number;
+  // Level mapping
+  agent_level_id?: string;
+  agent_level_number?: number;
   knowledge_domains?: string[];
   business_function?: string | null; // Business function name (aliased from function_name)
   department?: string | null; // Department name (aliased from department_name)
@@ -194,6 +205,10 @@ const agentStatsCache = new Map<string, AgentStats>();
 // Note: The API already normalizes display_name and resolves avatar URLs, so we preserve those values
 const convertDbAgentToStoreFormat = (dbAgent: DbAgent | any): Agent => {
   const metadata = dbAgent.metadata || {};
+
+  // Derive tier from agent_level_id first (canonical mapping), then fall back
+  const tierFromLevelId = dbAgent.agent_level_id ? AGENT_LEVEL_MAP[dbAgent.agent_level_id] : undefined;
+  const resolvedTier = tierFromLevelId ?? dbAgent.tier ?? metadata.tier ?? 2;
   
   // The API already provides normalized data, so we should preserve it
   // Check if dbAgent already has display_name (from API normalization)
@@ -217,7 +232,9 @@ const convertDbAgentToStoreFormat = (dbAgent: DbAgent | any): Agent => {
     max_tokens: dbAgent.max_tokens ?? metadata.max_tokens ?? 2000,
     is_custom: dbAgent.is_custom ?? metadata.is_custom ?? false,
     status: dbAgent.status || metadata.status || "active",
-    tier: dbAgent.tier ?? metadata.tier ?? 1,
+    tier: resolvedTier,
+    agent_level_id: dbAgent.agent_level_id,
+    agent_level_number: resolvedTier,
     priority: 1, // Default priority since it's not in the actual schema
     implementation_phase: dbAgent.implementation_phase ?? metadata.implementation_phase ?? 1,
     knowledge_domains: dbAgent.knowledge_domains || metadata.knowledge_domains || [],

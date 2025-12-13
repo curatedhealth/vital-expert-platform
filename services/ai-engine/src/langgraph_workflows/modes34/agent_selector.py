@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [4]
+# DEPENDENCIES: [services.graphrag_selector, services.hybrid_agent_search, services.runner_registry]
 """
 Mode 4 Agent Selector - Production GraphRAG Integration
 
@@ -130,6 +134,13 @@ async def select_team_graphrag(
 
         return team
 
+    except asyncio.CancelledError:
+        # CRITICAL C5 FIX: NEVER swallow CancelledError - propagate for graceful shutdown
+        logger.warning(
+            "graphrag_selection_cancelled",
+            goal_preview=goal[:100],
+        )
+        raise
     except Exception as exc:
         logger.error(
             "graphrag_selection_failed",

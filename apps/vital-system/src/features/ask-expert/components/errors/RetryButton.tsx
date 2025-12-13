@@ -139,8 +139,8 @@ export function RetryButton({
         base,
         state === 'success' && 'bg-green-600 text-white',
         state === 'failed' && 'bg-red-600 text-white',
-        state === 'idle' && 'bg-blue-600 text-white hover:bg-blue-700',
-        state === 'retrying' && 'bg-blue-500 text-white'
+        state === 'idle' && 'bg-purple-600 text-white hover:bg-purple-700',
+        state === 'retrying' && 'bg-purple-500 text-white'
       ),
       secondary: cn(
         base,
@@ -148,14 +148,14 @@ export function RetryButton({
         state === 'success' && 'border-green-300 bg-green-50 text-green-700',
         state === 'failed' && 'border-red-300 bg-red-50 text-red-700',
         state === 'idle' && 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
-        state === 'retrying' && 'border-blue-200 bg-blue-50 text-blue-700'
+        state === 'retrying' && 'border-purple-200 bg-purple-50 text-purple-700'
       ),
       ghost: cn(
         base,
         state === 'success' && 'text-green-600 hover:bg-green-50',
         state === 'failed' && 'text-red-600 hover:bg-red-50',
         state === 'idle' && 'text-slate-600 hover:bg-slate-100',
-        state === 'retrying' && 'text-blue-600'
+        state === 'retrying' && 'text-purple-600'
       ),
     };
 

@@ -132,7 +132,7 @@ export function AgentAnalyticsDashboard() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <RefreshCw className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-4" />
           <p className="text-neutral-600">Loading agent analytics...</p>
         </div>
       </div>
@@ -145,8 +145,8 @@ export function AgentAnalyticsDashboard() {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center">
-              <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <p className="text-red-600 mb-4">{error}</p>
+              <AlertTriangle className="h-12 w-12 text-rose-500 mx-auto mb-4" />
+              <p className="text-rose-600 mb-4">{error}</p>
               <Button onClick={fetchAnalytics} variant="outline">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry
@@ -243,7 +243,7 @@ export function AgentAnalyticsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.summary.errorRate.toFixed(2)}%</div>
-            <p className={`text-xs mt-1 ${analytics.summary.errorRate > 1 ? 'text-red-600' : 'text-green-600'}`}>
+            <p className={`text-xs mt-1 ${analytics.summary.errorRate > 1 ? 'text-rose-600' : 'text-green-600'}`}>
               {analytics.summary.errorRate > 1 ? 'Above target' : 'Within target'}
             </p>
           </CardContent>
@@ -310,7 +310,7 @@ export function AgentAnalyticsDashboard() {
                             {count.toLocaleString()} ({percentage.toFixed(1)}%)
                           </span>
                         </div>
-                        <Progress value={percentage} className={color === 'red' ? '[&>div]:bg-red-500' : color === 'yellow' ? '[&>div]:bg-yellow-500' : ''} />
+                        <Progress value={percentage} className={color === 'red' ? '[&>div]:bg-rose-500' : color === 'yellow' ? '[&>div]:bg-yellow-500' : ''} />
                       </div>
                     );
                   })}
@@ -337,26 +337,26 @@ export function AgentAnalyticsDashboard() {
                 <div>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm">P95 Latency</span>
-                    <span className={`text-sm font-medium ${analytics.summary.p95Latency > 1000 ? 'text-red-600' : 'text-green-600'}`}>
+                    <span className={`text-sm font-medium ${analytics.summary.p95Latency > 1000 ? 'text-rose-600' : 'text-green-600'}`}>
                       {analytics.summary.p95Latency}ms
                     </span>
                   </div>
                   <Progress 
                     value={Math.min((analytics.summary.p95Latency / 2000) * 100, 100)} 
-                    className={analytics.summary.p95Latency > 1000 ? '[&>div]:bg-red-500' : ''}
+                    className={analytics.summary.p95Latency > 1000 ? '[&>div]:bg-rose-500' : ''}
                   />
                   {analytics.summary.p95Latency > 1000 && (
-                    <p className="text-xs text-red-600 mt-1">⚠️ Exceeds 1s target</p>
+                    <p className="text-xs text-rose-600 mt-1">⚠️ Exceeds 1s target</p>
                   )}
                 </div>
                 <div>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm">Error Rate</span>
-                    <span className={`text-sm font-medium ${analytics.summary.errorRate > 1 ? 'text-red-600' : 'text-green-600'}`}>
+                    <span className={`text-sm font-medium ${analytics.summary.errorRate > 1 ? 'text-rose-600' : 'text-green-600'}`}>
                       {analytics.summary.errorRate.toFixed(2)}%
                     </span>
                   </div>
-                  <Progress value={analytics.summary.errorRate * 10} className={analytics.summary.errorRate > 1 ? '[&>div]:bg-red-500' : '[&>div]:bg-green-500'} />
+                  <Progress value={analytics.summary.errorRate * 10} className={analytics.summary.errorRate > 1 ? '[&>div]:bg-rose-500' : '[&>div]:bg-green-500'} />
                 </div>
               </CardContent>
             </Card>
@@ -372,7 +372,7 @@ export function AgentAnalyticsDashboard() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">Errors</span>
-                  <span className="font-medium text-red-600">{analytics.searchMetrics.errors.toLocaleString()}</span>
+                  <span className="font-medium text-rose-600">{analytics.searchMetrics.errors.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">Success Rate</span>
@@ -455,7 +455,7 @@ export function AgentAnalyticsDashboard() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">Errors</span>
-                    <span className="font-medium text-red-600">{analytics.modeMetrics.mode1.error}</span>
+                    <span className="font-medium text-rose-600">{analytics.modeMetrics.mode1.error}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">Avg Latency</span>
@@ -486,7 +486,7 @@ export function AgentAnalyticsDashboard() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">Errors</span>
-                  <span className="font-medium text-red-600">{analytics.modeMetrics.mode2.error}</span>
+                  <span className="font-medium text-rose-600">{analytics.modeMetrics.mode2.error}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">Avg Latency</span>
@@ -494,7 +494,7 @@ export function AgentAnalyticsDashboard() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">P95 Latency</span>
-                  <span className={`font-medium ${analytics.modeMetrics.mode2.p95Latency > 5000 ? 'text-red-600' : ''}`}>
+                  <span className={`font-medium ${analytics.modeMetrics.mode2.p95Latency > 5000 ? 'text-rose-600' : ''}`}>
                     {analytics.modeMetrics.mode2.p95Latency}ms
                   </span>
                 </div>
@@ -521,7 +521,7 @@ export function AgentAnalyticsDashboard() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">Errors</span>
-                  <span className="font-medium text-red-600">{analytics.modeMetrics.mode3.error}</span>
+                  <span className="font-medium text-rose-600">{analytics.modeMetrics.mode3.error}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">Avg Latency</span>
@@ -529,7 +529,7 @@ export function AgentAnalyticsDashboard() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">P95 Latency</span>
-                  <span className={`font-medium ${analytics.modeMetrics.mode3.p95Latency > 30000 ? 'text-red-600' : ''}`}>
+                  <span className={`font-medium ${analytics.modeMetrics.mode3.p95Latency > 30000 ? 'text-rose-600' : ''}`}>
                     {analytics.modeMetrics.mode3.p95Latency}ms
                   </span>
                 </div>

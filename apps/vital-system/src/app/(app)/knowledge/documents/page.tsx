@@ -42,7 +42,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@vital/ui';
-import { createClient } from '@vital/sdk/client';
 
 interface DocumentMetadata {
   id: string;
@@ -92,36 +91,22 @@ function DocumentsLibraryContent() {
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'source' | 'size'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const supabase = createClient();
-
   // Fetch domains
   useEffect(() => {
     const fetchDomains = async () => {
       try {
-        const { data: newData, error: newError } = await supabase
-          .from('knowledge_domains_new')
-          .select('domain_id, domain_name, tier')
-          .eq('is_active', true)
-          .order('tier')
-          .order('priority');
-
-        if (!newError && newData && newData.length > 0) {
-          setDomains(newData.map((d: any) => ({
-            id: d.domain_id,
-            name: d.domain_name || d.domain_id,
-          })));
-        } else {
-          const { data: oldData } = await supabase
-            .from('knowledge_domains')
-            .select('slug, name')
-            .eq('is_active', true);
-
-          if (oldData) {
-            setDomains(oldData.map((d: any) => ({
-              id: d.slug,
-              name: d.name || d.slug,
-            })));
-          }
+        const res = await fetch('/api/knowledge-domains');
+        if (!res.ok) return;
+        const body = await res.json();
+        if (Array.isArray(body.domains) && body.domains.length > 0) {
+          setDomains(
+            body.domains
+              .filter((d: any) => d.slug && d.name)
+              .map((d: any) => ({
+                id: d.slug,
+                name: d.name,
+              })),
+          );
         }
       } catch (err) {
         console.error('Error fetching domains:', err);
@@ -618,4 +603,3 @@ export default function DocumentsLibraryPage() {
     </Suspense>
   );
 }
-

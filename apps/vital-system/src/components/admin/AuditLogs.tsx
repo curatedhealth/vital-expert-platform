@@ -221,8 +221,8 @@ export function AuditLogs() {
 
   const getOperationIcon = (operation: string) => {
     if (operation.includes('create')) return <CheckCircle className="h-4 w-4 text-green-600" />;
-    if (operation.includes('delete')) return <XCircle className="h-4 w-4 text-red-600" />;
-    if (operation.includes('update')) return <Activity className="h-4 w-4 text-blue-600" />;
+    if (operation.includes('delete')) return <XCircle className="h-4 w-4 text-rose-600" />;
+    if (operation.includes('update')) return <Activity className="h-4 w-4 text-purple-600" />;
     return <Eye className="h-4 w-4 text-neutral-600" />;
   };
 
@@ -237,7 +237,7 @@ export function AuditLogs() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-4" />
+          <RefreshCw className="h-8 w-8 text-purple-600 animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading audit logs...</p>
         </div>
       </div>
@@ -294,7 +294,7 @@ export function AuditLogs() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Failures</CardTitle>
-            <XCircle className="h-4 w-4 text-red-600" />
+            <XCircle className="h-4 w-4 text-rose-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.failure}</div>
@@ -307,7 +307,7 @@ export function AuditLogs() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Today</CardTitle>
-            <Calendar className="h-4 w-4 text-blue-600" />
+            <Calendar className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.today}</div>

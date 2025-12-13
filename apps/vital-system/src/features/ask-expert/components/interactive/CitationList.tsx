@@ -88,13 +88,14 @@ export interface CitationListProps {
 // SOURCE TYPE CONFIG
 // =============================================================================
 
+// Brand v6.0 Purple-centric source type colors
 const SOURCE_TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; bgColor: string; label: string }> = {
-  pubmed: { icon: GraduationCap, color: 'text-emerald-700', bgColor: 'bg-emerald-50', label: 'PubMed' },
-  journal: { icon: BookOpen, color: 'text-blue-700', bgColor: 'bg-blue-50', label: 'Journal' },
-  guideline: { icon: Building2, color: 'text-purple-700', bgColor: 'bg-purple-50', label: 'Guideline' },
-  web: { icon: Globe, color: 'text-amber-700', bgColor: 'bg-amber-50', label: 'Web' },
-  document: { icon: FileText, color: 'text-slate-700', bgColor: 'bg-slate-50', label: 'Document' },
-  database: { icon: Database, color: 'text-cyan-700', bgColor: 'bg-cyan-50', label: 'Database' },
+  pubmed: { icon: GraduationCap, color: 'text-green-700', bgColor: 'bg-green-50', label: 'PubMed' },
+  journal: { icon: BookOpen, color: 'text-purple-700', bgColor: 'bg-purple-50', label: 'Journal' },
+  guideline: { icon: Building2, color: 'text-violet-700', bgColor: 'bg-violet-50', label: 'Guideline' },
+  web: { icon: Globe, color: 'text-fuchsia-700', bgColor: 'bg-fuchsia-50', label: 'Web' },
+  document: { icon: FileText, color: 'text-stone-700', bgColor: 'bg-stone-50', label: 'Document' },
+  database: { icon: Database, color: 'text-pink-700', bgColor: 'bg-pink-50', label: 'Database' },
   internal: { icon: Link2, color: 'text-rose-700', bgColor: 'bg-rose-50', label: 'Internal' },
   news: { icon: Newspaper, color: 'text-orange-700', bgColor: 'bg-orange-50', label: 'News' },
 };
@@ -383,7 +384,7 @@ function CitationPreview({ citation }: CitationPreviewProps) {
 
       {/* Link hint */}
       {citation.url && (
-        <div className="text-xs text-blue-600 flex items-center gap-1">
+        <div className="text-xs text-purple-600 flex items-center gap-1">
           <ExternalLink className="h-3 w-3" />
           Click to open source
         </div>

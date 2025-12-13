@@ -634,7 +634,7 @@ export const ReactRenderer = memo(function ReactRenderer({
                     'text-xs font-mono flex items-start gap-2',
                     msg.type === 'error' && 'text-red-400',
                     msg.type === 'warn' && 'text-amber-400',
-                    msg.type === 'info' && 'text-blue-400',
+                    msg.type === 'info' && 'text-violet-400',
                     msg.type === 'log' && (theme === 'dark' ? 'text-stone-300' : 'text-stone-600')
                   )}
                 >

@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [agents.l2_experts]
 """
 L2ExpertWrapper - Enhanced wrapper for L2 Domain Experts with runner integration.
 

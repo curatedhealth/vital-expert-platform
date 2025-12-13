@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [All]
+# DEPENDENCIES: [stream_manager, sse_formatter, token_streamer, custom_writer, sse_validator]
 """
 World-Class LangGraph Streaming Infrastructure.
 
@@ -66,6 +70,20 @@ from .custom_writer import (
     create_custom_writer,
     write_custom_event,
 )
+from .sse_validator import (
+    SSEEventType,
+    ValidationError,
+    SSEValidationResult,
+    StreamValidationSummary,
+    parse_sse_event,
+    validate_sse_event,
+    validate_sse_stream,
+    is_valid_sse_event,
+    get_event_type,
+    get_event_data,
+    REQUIRED_FIELDS,
+    OPTIONAL_FIELDS,
+)
 
 __all__ = [
     # Stream Manager
@@ -93,4 +111,17 @@ __all__ = [
     "CustomStreamData",
     "create_custom_writer",
     "write_custom_event",
+    # SSE Validator (M8)
+    "SSEEventType",
+    "ValidationError",
+    "SSEValidationResult",
+    "StreamValidationSummary",
+    "parse_sse_event",
+    "validate_sse_event",
+    "validate_sse_stream",
+    "is_valid_sse_event",
+    "get_event_type",
+    "get_event_data",
+    "REQUIRED_FIELDS",
+    "OPTIONAL_FIELDS",
 ]

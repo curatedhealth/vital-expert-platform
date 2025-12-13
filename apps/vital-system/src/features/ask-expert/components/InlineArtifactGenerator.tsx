@@ -249,11 +249,11 @@ export function InlineArtifactGenerator({
         transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
         className={cn('w-full', className)}
       >
-        <Card className="border-2 border-blue-200/80 shadow-lg">
+        <Card className="border-2 border-purple-200/80 shadow-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold flex items-center gap-2 text-blue-900">
-                <Sparkles className="h-5 w-5 text-blue-600" />
+              <CardTitle className="text-base font-semibold flex items-center gap-2 text-purple-900">
+                <Sparkles className="h-5 w-5 text-purple-600" />
                 Generate Document
               </CardTitle>
               <Button
@@ -295,8 +295,8 @@ export function InlineArtifactGenerator({
                             role="button"
                             tabIndex={0}
                             className={cn(
-                              'cursor-pointer border border-blue-100 transition-colors hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400',
-                              selectedTemplateId === template.id && 'ring-2 ring-blue-400'
+                              'cursor-pointer border border-purple-100 transition-colors hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400',
+                              selectedTemplateId === template.id && 'ring-2 ring-purple-400'
                             )}
                             onClick={() => handleTemplateSelect(template.id)}
                             onKeyDown={(event) => {
@@ -308,7 +308,7 @@ export function InlineArtifactGenerator({
                           >
                             <CardContent className="p-3 space-y-2">
                               <div className="flex items-center justify-between">
-                                <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                                <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
                                   {template.icon}
                                 </div>
                                 {template.popular && (
@@ -327,7 +327,7 @@ export function InlineArtifactGenerator({
 
                               <div className="flex items-center justify-between text-xs text-muted-foreground">
                                 <span className="inline-flex items-center gap-1">
-                                  <Sparkles className="h-3 w-3 text-blue-500" />
+                                  <Sparkles className="h-3 w-3 text-purple-500" />
                                   {template.category}
                                 </span>
                                 <span className="inline-flex items-center gap-1">
@@ -343,12 +343,12 @@ export function InlineArtifactGenerator({
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                      <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                    <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-100">
+                      <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
                         {selectedTemplate.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm text-blue-900">
+                        <h4 className="font-medium text-sm text-purple-900">
                           {selectedTemplate.name}
                         </h4>
                         <p className="text-xs text-muted-foreground mt-0.5">
@@ -397,13 +397,13 @@ export function InlineArtifactGenerator({
                     </div>
 
                     {isGenerating && (
-                      <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                      <div className="space-y-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-sm text-purple-700">
                         <div className="flex items-center justify-between">
-                          <span className="inline-flex items-center gap-2 text-blue-800">
+                          <span className="inline-flex items-center gap-2 text-purple-800">
                             <LoaderIndicator />
                             Generating document...
                           </span>
-                          <span className="font-medium text-blue-900">{progress}%</span>
+                          <span className="font-medium text-purple-900">{progress}%</span>
                         </div>
                         <Progress value={progress} className="h-2" />
                       </div>
@@ -479,7 +479,7 @@ export function InlineArtifactGenerator({
                     resetGenerator();
                     setSelectedTemplateId('');
                   }}
-                  className="w-full text-blue-700 hover:text-blue-800"
+                  className="w-full text-purple-700 hover:text-purple-800"
                 >
                   Generate Another
                 </Button>

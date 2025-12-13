@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PageHeader } from '@/components/page-header';
 import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import {
@@ -69,15 +68,11 @@ export default function CreateToolPage() {
   if (!isAdmin) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader
-          icon={AlertCircle}
-          title="Access Denied"
-          description="You need admin permissions to create tools"
-        />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">Admin access required</p>
+            <AlertCircle className="h-12 w-12 text-rose-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-stone-800 mb-2">Access Denied</h2>
+            <p className="text-stone-600 mb-4">You need admin permissions to create tools</p>
             <Button onClick={() => router.push('/discover/tools')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Tools

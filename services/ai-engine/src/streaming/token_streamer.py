@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [All]
+# DEPENDENCIES: [sse_formatter]
 """
 Token Streamer - Direct LLM token streaming utility.
 

@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_CORE
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [All]
+# DEPENDENCIES: [api.routes.*, api.frameworks, api.enhanced_features, api.auth, graphrag.api]
 """
 VITAL Path AI Services - Route Registration
 

@@ -393,7 +393,7 @@ export function ToolManagement() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-4" />
+          <RefreshCw className="h-8 w-8 text-purple-600 animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading tools...</p>
         </div>
       </div>
@@ -457,7 +457,7 @@ export function ToolManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Deprecated</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertCircle className="h-4 w-4 text-rose-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.deprecated}</div>
@@ -581,7 +581,7 @@ export function ToolManagement() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => openDeleteDialog(tool)}
-                            className="text-red-600"
+                            className="text-rose-600"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
@@ -1022,7 +1022,7 @@ export function ToolManagement() {
                     href={selectedTool.documentation_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline block mt-1"
+                    className="text-purple-600 hover:underline block mt-1"
                   >
                     {selectedTool.documentation_url}
                   </a>

@@ -9,7 +9,7 @@ import { Database, Brain, Settings, BarChart3, Plus } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle, Button, Tabs, TabsContent, TabsList, TabsTrigger, Badge } from '@/shared/components/ui';
-import { RagKnowledgeBase } from '@/shared/services/rag/RagService';
+import type { RagKnowledgeBase } from './index';
 
 import { AgentRagAssignments } from './AgentRagAssignments';
 import { CreateRagModal } from './CreateRagModal';

@@ -28,7 +28,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@vital/ui";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageHeader } from "@/components/page-header";
 import { AIPoweredInsight } from "@/components/value-view/AIPoweredInsight";
 import { cn } from "@/lib/utils";
 import {
@@ -665,24 +664,17 @@ export default function MedicalStrategyDashboard() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden h-full">
-      {/* Page Header */}
-      <PageHeader
-        icon={Target}
-        title="Global Medical Strategy"
-        description="Evidence-based decision making hub for strategic planning"
-        actions={
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="gap-1">
-              <Sparkles className="h-3 w-3" />
-              AI-Enhanced
-            </Badge>
-            <Button variant="outline" size="sm" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Export Report
-            </Button>
-          </div>
-        }
-      />
+      {/* Action Bar */}
+      <div className="flex items-center justify-end gap-2 px-6 py-3 border-b bg-white/50 backdrop-blur-sm">
+        <Badge variant="outline" className="gap-1">
+          <Sparkles className="h-3 w-3" />
+          AI-Enhanced
+        </Badge>
+        <Button variant="outline" size="sm" className="gap-2">
+          <BarChart3 className="h-4 w-4" />
+          Export Report
+        </Button>
+      </div>
 
       {/* Strategic Metrics Overview */}
       <div className="px-6 py-4 border-b bg-muted/30">

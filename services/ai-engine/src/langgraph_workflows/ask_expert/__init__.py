@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_CORE
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [1, 2, 3, 4]
+# DEPENDENCIES: [ask_expert_mode1_workflow, ask_expert_mode2_workflow, unified_interactive_workflow, modes34]
 """
 VITAL Path AI Services - Ask Expert Workflows
 

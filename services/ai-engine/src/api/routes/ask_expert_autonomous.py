@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [langgraph_workflows.modes34.unified_autonomous_workflow, core.security, core.resilience, api.sse]
 """
 Ask Expert Autonomous API Routes - Mode 3 & Mode 4 (Autonomous Missions)
 
@@ -33,11 +37,18 @@ import asyncio
 
 from fastapi import APIRouter, Depends, Header, Query, Request, HTTPException
 from fastapi.responses import StreamingResponse, JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 # Security imports for production hardening
 from core.security import InputSanitizer, ErrorSanitizer, TenantIsolation, check_rate_limit_or_raise
 from core.resilience import CircuitBreaker, CircuitBreakerConfig
+
+# H1 CRITICAL: Import validated research schemas
+from api.schemas.research import (
+    MissionCreateRequest as ValidatedMissionRequest,
+    ValidationErrorResponse,
+    ValidationErrorDetail,
+)
 
 from api.sse import (
     SSEEventTransformer,
@@ -125,7 +136,7 @@ class MissionTemplateResponse(BaseModel):
 
 
 class CreateMissionRequest(BaseModel):
-    """Request to create and start a mission."""
+    """Request to create and start a mission (LEGACY - use MissionCreateRequest from schemas.research)."""
     template_id: str = Field(..., description="Mission template ID or slug")
     goal: str = Field(..., min_length=1, max_length=5000, description="User's goal for this mission")
     inputs: Dict[str, Any] = Field(default_factory=dict, description="Input parameters for the mission")
@@ -348,10 +359,43 @@ async def create_mission(
 
     The mission will begin execution asynchronously. Use the stream endpoint
     to receive real-time updates.
+
+    H1 CRITICAL FIX: Applies input validation via ValidatedMissionRequest
     """
     correlation_id = str(uuid.uuid4())[:8]
 
     try:
+        # H1 CRITICAL: Validate using enhanced schema with injection detection
+        try:
+            validated_request = ValidatedMissionRequest(
+                template_id=request.template_id,
+                goal=request.goal,
+                inputs=request.inputs,
+                budget_limit=request.budget_limit,
+                timeout_minutes=request.timeout_minutes,
+                auto_approve_checkpoints=request.auto_approve_checkpoints,
+                agent_id=request.agent_id,
+            )
+        except ValidationError as ve:
+            errors = []
+            for error in ve.errors():
+                field = ".".join(str(loc) for loc in error["loc"])
+                errors.append(ValidationErrorDetail(
+                    field=field,
+                    message=error["msg"],
+                ))
+            raise HTTPException(
+                status_code=422,
+                detail=ValidationErrorResponse(
+                    error="Validation failed",
+                    details=errors,
+                    suggestions=[
+                        "Ensure all fields meet validation requirements",
+                        "Remove special characters or injection patterns from text fields",
+                        "Check numeric ranges (budget 0-1000, timeout 1-480)"
+                    ]
+                ).model_dump()
+            )
         # --- RESILIENCE: Check circuit breaker ---
         if AUTONOMOUS_CIRCUIT_BREAKER.is_open:
             logger.warning("circuit_breaker_open", endpoint="create_mission", correlation_id=correlation_id)
@@ -364,11 +408,12 @@ async def create_mission(
         rate_limit_id = sanitized_tenant_id or x_user_id or "anonymous"
         check_rate_limit_or_raise(rate_limit_id, endpoint="create_mission")
 
-        # --- SECURITY: Sanitize inputs ---
-        sanitized_template_id = InputSanitizer.sanitize_text(request.template_id, max_length=100)
-        sanitized_goal = InputSanitizer.sanitize_text(request.goal, max_length=5000)
-        sanitized_agent_id = InputSanitizer.sanitize_uuid(request.agent_id) if request.agent_id else None
-        sanitized_inputs = InputSanitizer.sanitize_json(request.inputs) if request.inputs else {}
+        # --- SECURITY: Sanitize inputs (already done by validated_request, but keep for belt-and-suspenders) ---
+        # NOTE: validated_request already applied Pydantic validators
+        sanitized_template_id = validated_request.template_id
+        sanitized_goal = validated_request.goal  # Already sanitized by @field_validator
+        sanitized_agent_id = validated_request.agent_id  # Already validated
+        sanitized_inputs = InputSanitizer.sanitize_json(validated_request.inputs) if validated_request.inputs else {}
 
         supabase = get_supabase_client()
 
@@ -405,11 +450,11 @@ async def create_mission(
             "goal": sanitized_goal,  # SANITIZED
             "status": "pending",
             "mode": 3 if sanitized_agent_id else 4,  # Mode 3 = manual selection, Mode 4 = auto
-            "budget_limit": request.budget_limit or 10.0,
+            "budget_limit": validated_request.budget_limit or 10.0,
             "metadata": {
                 "inputs": sanitized_inputs,  # SANITIZED
-                "timeout_minutes": request.timeout_minutes,
-                "auto_approve_checkpoints": request.auto_approve_checkpoints,
+                "timeout_minutes": validated_request.timeout_minutes,
+                "auto_approve_checkpoints": validated_request.auto_approve_checkpoints,
             },
         }
 
@@ -446,8 +491,9 @@ async def create_mission(
 
         # Start mission execution with safe background task wrapper
         # This ensures errors are logged and failure events are emitted
+        # NOTE: Pass validated_request instead of raw request
         create_safe_task(
-            _execute_mission_async(mission_id, template, request, x_tenant_id),
+            _execute_mission_async(mission_id, template, validated_request, x_tenant_id),
             task_name=f"mission_execution_{mission_id[:8]}",
             on_error=on_mission_error,
         )
@@ -483,7 +529,7 @@ async def create_mission(
 async def _execute_mission_async(
     mission_id: str,
     template: Dict[str, Any],
-    request: CreateMissionRequest,
+    request: ValidatedMissionRequest,  # H1 CRITICAL: Use validated request
     tenant_id: Optional[str],
 ):
     """

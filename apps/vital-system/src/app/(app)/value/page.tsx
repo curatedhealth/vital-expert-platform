@@ -56,7 +56,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { PageHeader } from '@/components/page-header'
 
 // Import Value View components
 import { OntologyFilterStack, OpportunityRadar, OpportunityDetailPanel, ValueMetrics } from '@/components/value-view'
@@ -531,11 +530,6 @@ export default function ValuePage() {
   if (isLoading && Object.values(layers).every((l) => l.count === 0)) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader
-          icon={Layers}
-          title="Value View"
-          description="Loading enterprise ontology..."
-        />
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-purple-600" />
@@ -548,63 +542,56 @@ export default function ValuePage() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-slate-50/50 via-white to-purple-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/20">
-      {/* Header */}
-      <PageHeader
-        icon={Layers}
-        title="Value View"
-        description="8-Layer Semantic Ontology & AI Transformation Opportunities"
-        actions={
-          <div className="flex items-center gap-2">
-            {/* Filter Sheet Trigger */}
-            <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="relative bg-white/80 backdrop-blur-sm">
-                  <SlidersHorizontal className="h-4 w-4 mr-2" />
-                  Filters
-                  {activeFilterCount > 0 && (
-                    <Badge
-                      variant="secondary"
-                      className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                    >
-                      {activeFilterCount}
-                    </Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[400px] sm:w-[540px] p-0">
-                <SheetHeader className="p-6 pb-4 border-b">
-                  <SheetTitle className="flex items-center gap-2">
-                    <Filter className="h-5 w-5 text-purple-600" />
-                    Ontology Filters
-                  </SheetTitle>
-                  <SheetDescription>
-                    Filter by layer to drill down into specific areas
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="p-0 h-[calc(100vh-140px)]">
-                  <OntologyFilterStack
-                    className="h-full"
-                    onFilterChange={() => {
-                      loadAllData()
-                      setFilterSheetOpen(false)
-                    }}
-                    onClose={() => setFilterSheetOpen(false)}
-                  />
-                </div>
-              </SheetContent>
-            </Sheet>
+      {/* Action Bar */}
+      <div className="flex items-center justify-end gap-2 px-6 py-3 border-b bg-white/50 backdrop-blur-sm">
+        {/* Filter Sheet Trigger */}
+        <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm" className="relative bg-white/80 backdrop-blur-sm">
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
+              Filters
+              {activeFilterCount > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                >
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[400px] sm:w-[540px] p-0">
+            <SheetHeader className="p-6 pb-4 border-b">
+              <SheetTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5 text-purple-600" />
+                Ontology Filters
+              </SheetTitle>
+              <SheetDescription>
+                Filter by layer to drill down into specific areas
+              </SheetDescription>
+            </SheetHeader>
+            <div className="p-0 h-[calc(100vh-140px)]">
+              <OntologyFilterStack
+                className="h-full"
+                onFilterChange={() => {
+                  loadAllData()
+                  setFilterSheetOpen(false)
+                }}
+                onClose={() => setFilterSheetOpen(false)}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
 
-            <Button variant="outline" size="sm" onClick={() => loadAllData()} className="bg-white/80 backdrop-blur-sm">
-              <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
-              Refresh
-            </Button>
-            <Button variant="outline" size="sm" className="bg-white/80 backdrop-blur-sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        }
-      />
+        <Button variant="outline" size="sm" onClick={() => loadAllData()} className="bg-white/80 backdrop-blur-sm">
+          <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
+          Refresh
+        </Button>
+        <Button variant="outline" size="sm" className="bg-white/80 backdrop-blur-sm">
+          <Download className="h-4 w-4 mr-2" />
+          Export
+        </Button>
+      </div>
 
       {/* Active Filters Indicator */}
       <AnimatePresence>
@@ -662,11 +649,11 @@ export default function ValuePage() {
                   <Target className="h-4 w-4" />
                   Opportunities
                 </TabsTrigger>
-                <TabsTrigger value="workflows" className="gap-2 data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
+                <TabsTrigger value="workflows" className="gap-2 data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-700">
                   <Workflow className="h-4 w-4" />
                   Workflows
                 </TabsTrigger>
-                <TabsTrigger value="insights" className="gap-2 data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
+                <TabsTrigger value="insights" className="gap-2 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">
                   <Sparkles className="h-4 w-4" />
                   Insights
                 </TabsTrigger>

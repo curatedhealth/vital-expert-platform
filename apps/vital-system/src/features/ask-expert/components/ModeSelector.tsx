@@ -41,7 +41,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
     if (!isAutomatic && !isAutonomous) return {
       name: 'Mode 1: Manual-Conversational',
       number: 1,
-      color: 'blue',
+      color: 'purple',
       description: 'Direct Q&A with your selected expert'
     };
     if (isAutomatic && !isAutonomous) return {
@@ -84,7 +84,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
             {isAutomatic ? (
               <Zap className="h-4 w-4 text-green-500" />
             ) : (
-              <User className="h-4 w-4 text-blue-500" />
+              <User className="h-4 w-4 text-purple-500" />
             )}
             <Label htmlFor="automatic-mode" className="cursor-pointer">
               Expert Selection
@@ -107,7 +107,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
             {isAutonomous ? (
               <Brain className="h-4 w-4 text-purple-500" />
             ) : (
-              <MessageCircle className="h-4 w-4 text-blue-500" />
+              <MessageCircle className="h-4 w-4 text-violet-500" />
             )}
             <Label htmlFor="autonomous-mode" className="cursor-pointer">
               Interaction Type

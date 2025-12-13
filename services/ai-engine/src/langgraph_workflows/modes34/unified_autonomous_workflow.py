@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [langgraph, checkpoint.postgres, state, wrappers.*, services.graphrag]
 """
 Master graph for Modes 3/4 with typed state, basic routing, and checkpoint hooks.
 
@@ -97,48 +101,150 @@ from .research_quality import (
     MAX_REFLECTION_ITERATIONS,
 )
 
+# Phase 1 CRITICAL Fix: Resilience Infrastructure (C1, C2, C4, C5)
+from .resilience import (
+    handle_node_errors,
+    NodeExecutionError,
+    add_error_to_state,
+)
+
 
 logger = structlog.get_logger(__name__)
+
+
+class WorkflowCheckpointerFactory:
+    """
+    Factory for creating workflow checkpointers with H6 fallback logging.
+
+    Phase 2 H6 Enhancement:
+    - Explicit logging when falling back to MemorySaver
+    - Impact assessment for mission state persistence
+    - Distinguishes between connection failure vs. no configuration
+    """
+
+    @staticmethod
+    def create(mission_id: str = "default") -> Any:
+        """
+        Create checkpointer with enhanced fallback logging.
+
+        Args:
+            mission_id: Mission identifier for logging context
+
+        Returns:
+            PostgresSaver if available and configured, otherwise MemorySaver
+        """
+        db_url = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")
+        environment = os.getenv("ENVIRONMENT", "development")
+
+        # Case 1: No database URL configured
+        if not db_url:
+            logger.info(
+                "checkpointer_using_memory",
+                mission_id=mission_id,
+                reason="no_connection_string",
+                environment=environment,
+                impact="mission_state_not_persisted",
+                recovery="restart_will_lose_progress",
+                recommendation="Set DATABASE_URL or SUPABASE_DB_URL for persistence",
+            )
+            return MemorySaver()
+
+        # Case 2: PostgresSaver not available (dependency not installed)
+        if not POSTGRES_AVAILABLE:
+            logger.warning(
+                "checkpointer_fallback_to_memory",
+                mission_id=mission_id,
+                reason="postgres_dependency_not_installed",
+                environment=environment,
+                impact="mission_state_not_persisted",
+                recovery="restart_will_lose_progress",
+                recommendation="Install langgraph[postgres] for persistence",
+            )
+            return MemorySaver()
+
+        # Case 3: Attempt PostgresSaver connection
+        try:
+            # Redact password from URL for safe logging
+            def redact_url(url: str) -> str:
+                if "@" in url:
+                    parts = url.split("@")
+                    if ":" in parts[0]:
+                        user_pw = parts[0].split("//")[-1].split(":")
+                        return f"{url.split('//')[0]}//{user_pw[0]}:***@{parts[1][:40]}..."
+                return url[:40] + "..."
+
+            logger.info(
+                "checkpointer_postgres_connecting",
+                mission_id=mission_id,
+                db_url_redacted=redact_url(db_url),
+                environment=environment,
+            )
+
+            # Measure connection latency
+            import time
+            start_time = time.time()
+            checkpointer = PostgresSaver.from_conn_string(db_url)
+            latency_ms = int((time.time() - start_time) * 1000)
+
+            logger.info(
+                "checkpointer_postgres_connected",
+                mission_id=mission_id,
+                environment=environment,
+                persistence="enabled",
+                latency_ms=latency_ms,
+                impact="Mission state persisted across restarts",
+            )
+            return checkpointer
+
+        except Exception as exc:
+            # Case 4: Connection failure - log with full context
+            error_type = type(exc).__name__
+            error_msg = str(exc)[:200]
+
+            logger.warning(
+                "checkpointer_fallback_to_memory",
+                mission_id=mission_id,
+                error=error_msg,
+                error_type=error_type,
+                environment=environment,
+                impact="mission_state_not_persisted",
+                recovery="restart_will_lose_progress",
+                action="Check database connectivity and credentials",
+                db_url_prefix=db_url[:30] + "...",
+            )
+
+            # Additional warning for production environments
+            if environment == "production":
+                logger.error(
+                    "checkpointer_postgres_failed_critical",
+                    mission_id=mission_id,
+                    error=error_msg,
+                    error_type=error_type,
+                    severity="HIGH",
+                    impact="Production missions will lose state on restart",
+                    action="URGENT: Fix database connection or disable production mode",
+                )
+
+            return MemorySaver()
 
 
 def _get_checkpointer():
     """
     Choose PostgresSaver if DATABASE_URL is set, otherwise MemorySaver.
 
-    Production Hardening:
+    Production Hardening (H6):
     - PostgresSaver is STRONGLY preferred for production (persistence, resumability)
-    - MemorySaver is a fallback but emits WARNING for production deployments
+    - MemorySaver is a fallback with explicit logging and impact assessment
     - Checks both DATABASE_URL and SUPABASE_DB_URL environment variables
+    - Logs fallback scenarios with recovery guidance
     """
-    db_url = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")
-
-    if db_url and POSTGRES_AVAILABLE:
-        try:
-            logger.info("checkpointer_postgres_enabled", db_url_prefix=db_url[:30] + "...")
-            return PostgresSaver.from_conn_string(db_url)
-        except Exception as exc:  # pragma: no cover
-            logger.error(
-                "checkpointer_postgres_failed_critical",
-                error=str(exc)[:200],
-                fallback="memory",
-            )
-
-    # WARNING: MemorySaver loses state on restart - not production-ready
-    if os.getenv("ENVIRONMENT", "development") == "production":
-        logger.warning(
-            "checkpointer_memory_in_production_NOT_RECOMMENDED",
-            reason="MemorySaver loses checkpoint state on restart",
-            action="Set DATABASE_URL to enable PostgresSaver",
-        )
-    else:
-        logger.info("checkpointer_memory_development_mode")
-
-    return MemorySaver()
+    return WorkflowCheckpointerFactory.create(mission_id="workflow_graph")
 
 
 def build_master_graph() -> CompiledStateGraph:
     graph = StateGraph(MissionState)
 
+    @handle_node_errors("initialize", recoverable=True)
     async def _initialize(state: MissionState) -> Dict[str, Any]:
         """Initialize mission with Phase 1 research quality defaults."""
         return {
@@ -183,6 +289,7 @@ def build_master_graph() -> CompiledStateGraph:
     # =========================================================================
     # Phase 1 Enhancement 2: Query Decomposition Node
     # =========================================================================
+    @handle_node_errors("decompose_query", recoverable=True)
     async def _decompose_query(state: MissionState) -> Dict[str, Any]:
         """
         Decompose complex queries into searchable sub-queries.
@@ -217,6 +324,7 @@ def build_master_graph() -> CompiledStateGraph:
             "status": "planning",
         }
 
+    @handle_node_errors("plan", recoverable=True)
     async def _plan(state: MissionState) -> Dict[str, Any]:
         """
         Generate or normalize plan from template tasks.
@@ -323,6 +431,7 @@ def build_master_graph() -> CompiledStateGraph:
         logger.info("plan_generated_default", step_count=len(plan), goal=goal[:100])
         return {"plan": plan, "total_steps": len(plan), "status": "planning"}
 
+    @handle_node_errors("select_team", recoverable=True)
     async def _select_team(state: MissionState) -> Dict[str, Any]:
         """
         Phase 2: Production GraphRAG Agent Selection
@@ -391,6 +500,7 @@ def build_master_graph() -> CompiledStateGraph:
         # Mode 3: No team selection needed (single expert already assigned)
         return {"status": "running"}
 
+    @handle_node_errors("execute_step", recoverable=False)
     async def _execute_step(state: MissionState) -> Dict[str, Any]:
         plan = state.get("plan") or []
         artifacts = state.get("artifacts") or []
@@ -498,11 +608,13 @@ def build_master_graph() -> CompiledStateGraph:
             "status": status,
         }
 
+    @handle_node_errors("checkpoint", recoverable=True)
     async def _checkpoint(state: MissionState) -> Dict[str, Any]:
         if state.get("checkpoint_pending") and not state.get("human_response"):
             return {"status": "awaiting_checkpoint"}
         return {"status": "running", "checkpoint_pending": None, "human_response": None}
 
+    @handle_node_errors("synthesize", recoverable=False)
     async def _synthesize(state: MissionState) -> Dict[str, Any]:
         """Synthesize all artifacts into world-class comprehensive research report.
 
@@ -674,6 +786,7 @@ def build_master_graph() -> CompiledStateGraph:
     # =========================================================================
     # Phase 1 Enhancement 1 & 3: Confidence Gate Node (Iterative Refinement)
     # =========================================================================
+    @handle_node_errors("confidence_gate", recoverable=True)
     async def _confidence_gate(state: MissionState) -> Dict[str, Any]:
         """
         Check if collected evidence meets confidence threshold.
@@ -749,6 +862,7 @@ def build_master_graph() -> CompiledStateGraph:
     # =========================================================================
     # Phase 1 Enhancement 4: Citation Verification Node
     # =========================================================================
+    @handle_node_errors("verify_citations", recoverable=True)
     async def _verify_citations(state: MissionState) -> Dict[str, Any]:
         """
         Verify citations against PubMed, CrossRef, and DOI resolvers.
@@ -790,6 +904,7 @@ def build_master_graph() -> CompiledStateGraph:
     # =========================================================================
     # Phase 1 Enhancement 5: Quality Gate Node (RACE/FACT Metrics)
     # =========================================================================
+    @handle_node_errors("quality_gate", recoverable=True)
     async def _quality_gate(state: MissionState) -> Dict[str, Any]:
         """
         Assess response quality using RACE/FACT metrics.
@@ -835,6 +950,7 @@ def build_master_graph() -> CompiledStateGraph:
     # =========================================================================
     # Phase 2 Enhancement 6: Self-Reflection Node
     # =========================================================================
+    @handle_node_errors("reflection_gate", recoverable=True)
     async def _reflection_gate(state: MissionState) -> Dict[str, Any]:
         """
         Self-reflection node: agent reviews its own reasoning before finalizing.

@@ -28,27 +28,27 @@ const agentLevelConfig = {
     icon: Star,
     description: 'Top-level orchestrator'
   },
-  'Expert': { 
-    label: 'Expert', 
-    color: 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-800 border-blue-300',
+  'Expert': {
+    label: 'Expert',
+    color: 'bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-800 border-purple-300',
     icon: Shield,
     description: 'Deep domain specialist'
   },
-  'Specialist': { 
-    label: 'Specialist', 
-    color: 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-300',
+  'Specialist': {
+    label: 'Specialist',
+    color: 'bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 border-emerald-300',
     icon: CheckCircle,
     description: 'Focused sub-domain expert'
   },
-  'Worker': { 
-    label: 'Worker', 
+  'Worker': {
+    label: 'Worker',
     color: 'bg-gradient-to-r from-orange-50 to-amber-50 text-orange-700 border-orange-300',
     icon: Target,
     description: 'Task execution agent'
   },
-  'Tool': { 
-    label: 'Tool', 
-    color: 'bg-gradient-to-r from-neutral-50 to-slate-50 text-neutral-700 border-neutral-300',
+  'Tool': {
+    label: 'Tool',
+    color: 'bg-gradient-to-r from-stone-50 to-slate-50 text-stone-700 border-stone-300',
     icon: Zap,
     description: 'API/Tool wrapper'
   }
@@ -149,7 +149,7 @@ export function EnhancedAgentCard({
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex-1 min-w-0">
                 <h4 className={cn(
-                  'text-neutral-900 truncate group-hover:text-vital-primary-700 transition-colors',
+                  'text-stone-900 truncate group-hover:text-vital-primary-700 transition-colors',
                   config.title
                 )}>
                   {agent.display_name || agent.name}
@@ -158,7 +158,7 @@ export function EnhancedAgentCard({
                 {/* Role/Department */}
                 {(agent.role || agent.department || agent.business_function) && (
                   <p className={cn(
-                    'text-neutral-600 truncate mt-0.5',
+                    'text-stone-600 truncate mt-0.5',
                     config.description
                   )}>
                     {agent.role || agent.department || agent.business_function}
@@ -199,7 +199,7 @@ export function EnhancedAgentCard({
 
             {/* Description */}
             <p className={cn(
-              'text-neutral-600 mb-2 line-clamp-2',
+              'text-stone-600 mb-2 line-clamp-2',
               config.description
             )}>
               {agent.description}
@@ -218,13 +218,13 @@ export function EnhancedAgentCard({
                   <div className="inline-flex items-center gap-1">
                     <MessageCircle className="w-3.5 h-3.5 text-[#0046FF]" />
                     <span className={cn(
-                      'font-semibold text-neutral-900',
+                      'font-semibold text-stone-900',
                       size === 'sm' ? 'text-[10px]' : 'text-xs'
                     )}>
                       {consultations}
                     </span>
                     <span className={cn(
-                      'text-neutral-500',
+                      'text-stone-500',
                       size === 'sm' ? 'text-[9px]' : 'text-[10px]'
                     )}>
                       chats
@@ -235,13 +235,13 @@ export function EnhancedAgentCard({
                   <div className="inline-flex items-center gap-1">
                     <ThumbsUp className="w-3.5 h-3.5 text-[#22c55e]" />
                     <span className={cn(
-                      'font-semibold text-neutral-900',
+                      'font-semibold text-stone-900',
                       size === 'sm' ? 'text-[10px]' : 'text-xs'
                     )}>
                       {satisfaction}%
                     </span>
                     <span className={cn(
-                      'text-neutral-500',
+                      'text-stone-500',
                       size === 'sm' ? 'text-[9px]' : 'text-[10px]'
                     )}>
                       satisfied
@@ -253,9 +253,9 @@ export function EnhancedAgentCard({
 
             {/* Reasoning */}
             {showReasoning && agent.reasoning && (
-              <div className="mt-2 p-2 bg-neutral-50 rounded-lg border border-neutral-200">
+              <div className="mt-2 p-2 bg-stone-50 rounded-lg border border-stone-200">
                 <p className={cn(
-                  'text-neutral-500 italic',
+                  'text-stone-500 italic',
                   config.reasoning
                 )}>
                   {agent.reasoning}
@@ -271,7 +271,7 @@ export function EnhancedAgentCard({
                     key={index}
                     variant="secondary"
                     className={cn(
-                      'text-xs px-2 py-0.5 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors',
+                      'text-xs px-2 py-0.5 bg-stone-100 text-stone-700 hover:bg-stone-200 transition-colors',
                       config.badge
                     )}
                   >
@@ -282,7 +282,7 @@ export function EnhancedAgentCard({
                   <Badge
                     variant="outline"
                     className={cn(
-                      'text-xs px-2 py-0.5 text-neutral-500',
+                      'text-xs px-2 py-0.5 text-stone-500',
                       config.badge
                     )}
                   >
@@ -310,7 +310,7 @@ export function EnhancedAgentCard({
 
             {/* Add to Chat Button */}
             {onAddToChat && (
-              <div className="mt-3 pt-3 border-t border-neutral-200">
+              <div className="mt-3 pt-3 border-t border-stone-200">
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();

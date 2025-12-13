@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [1, 2]
+# DEPENDENCIES: [langgraph, base_workflow, state_schemas, unified_agent_selector, shared]
 """
 VITAL Path AI Services - Unified Interactive Workflow
 

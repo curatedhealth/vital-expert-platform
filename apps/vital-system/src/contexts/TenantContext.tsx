@@ -20,6 +20,8 @@ type Tenant = {
   name: string;
   slug: string;
   type: 'platform' | 'client' | 'solution' | 'industry';
+  domain?: string;
+  subscription_tier?: 'starter' | 'professional' | 'enterprise';
   is_active: boolean;
   created_at?: string;
   updated_at?: string;

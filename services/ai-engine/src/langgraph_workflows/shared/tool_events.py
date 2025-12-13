@@ -1,3 +1,10 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [json]
+"""
+Tool event payload builder for SSE streaming in Modes 3/4.
+"""
 from __future__ import annotations
 
 from typing import Any, Dict

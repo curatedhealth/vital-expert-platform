@@ -749,5 +749,195 @@ export const RUNNERS: Runner[] = [
 
 ---
 
-*Generated: December 11, 2025*
+## 13. Landing Page Components (Brand v6.0)
+
+### 13.1 Component Library
+
+The VITAL landing page uses a modular component system based on shadcn UI blocks with Brand Guidelines v6.0 colors.
+
+| Component | File Path | Purpose |
+|-----------|-----------|---------|
+| Hero01 | `src/components/landing/enhanced/Hero01.tsx` | Hero section with navbar |
+| Features03 | `src/components/landing/enhanced/Features03.tsx` | Paradigm shift comparison |
+| Features06 | `src/components/landing/enhanced/Features06.tsx` | Alternating feature showcase |
+
+### 13.2 Hero01 Component
+
+Full-featured hero section with integrated scroll-aware navbar.
+
+```tsx
+import { Hero01 } from '@/components/landing/enhanced/Hero01';
+
+<Hero01
+  badge={{ text: 'Now in Beta', href: '#' }}
+  title={<>Human Genius, <span className="text-purple-600">Amplified</span></>}
+  subtitle="Your value proposition"
+  primaryCTA={{ text: 'Get Started', onClick: handleGetStarted }}
+  secondaryCTA={{ text: 'Watch Demo', onClick: handleWatchDemo }}
+  showNavbar={true}
+  navbarProps={{
+    navItems: [
+      { name: 'Solutions', href: '#solutions' },
+      { name: 'Features', href: '#features' },
+      { name: 'Pricing', href: '#pricing' },
+    ],
+    loginHref: '/login',
+    signupHref: '/register',
+  }}
+/>
+```
+
+**Features:**
+- Fixed navbar with scroll transparency (transparent → white on scroll)
+- Mobile hamburger menu with slide animation
+- Badge with pulse indicator
+- Primary and secondary CTAs with lucide icons
+
+### 13.3 Features03 Component (Paradigm Shift)
+
+Two-column comparison layout for "Traditional vs VITAL" paradigm visualization.
+
+```tsx
+import { Features03 } from '@/components/landing/enhanced/Features03';
+
+<Features03
+  title="PARADIGM SHIFT: FROM FIXED TO ELASTIC"
+  description="Transform your organization's capacity, growth trajectory, and knowledge management"
+  leftCard={{
+    title: 'Traditional Organization',
+    subtitle: 'Rigid Structure',
+    bulletItems: [
+      { icon: <UsersIcon />, title: 'FIXED CAPACITY', description: '10-20 FTEs Max' },
+      { icon: <TrendingUpIcon />, title: 'LINEAR GROWTH', description: 'Constrained trajectory' },
+      { icon: <LogOutIcon />, title: 'KNOWLEDGE LOSS', description: 'Walks out the door' },
+    ],
+    media: <FixedGrid />,  // Visualization component
+  }}
+  rightCard={{
+    title: 'VITAL Organization',
+    subtitle: 'Elastic Structure',
+    bulletItems: [
+      { icon: <InfinityIcon />, title: 'INFINITE CAPACITY', description: 'Unlimited Scale' },
+      { icon: <RocketIcon />, title: 'EXPONENTIAL GROWTH', description: 'Compound trajectory' },
+      { icon: <DatabaseIcon />, title: 'KNOWLEDGE COMPOUND', description: 'Compounds forever' },
+    ],
+    media: <ElasticNetwork animated />,  // Animated visualization
+    accent: true,  // Purple accent styling
+  }}
+/>
+```
+
+**Layout:**
+- Desktop: Two cards side-by-side with equal width
+- Mobile: Stacked vertically
+- Bullet items with icons, titles, and descriptions
+- Optional media slot for visualizations
+
+### 13.4 Features06 Component
+
+Alternating left-right layout for feature showcases.
+
+```tsx
+import { Features06 } from '@/components/landing/enhanced/Features06';
+
+<Features06
+  features={[
+    {
+      name: 'Always-On Expertise',
+      description: 'Access specialized knowledge 24/7 across every domain.',
+      image: '/images/feature-1.png',
+    },
+    {
+      name: 'Intelligent Delegation',
+      description: 'The right expert for every task, selected automatically.',
+      image: '/images/feature-2.png',
+    },
+  ]}
+/>
+```
+
+### 13.5 Brand v6.0 Color Reference
+
+```typescript
+// tailwind.config.js theme extension for VITAL Brand v6.0
+const brandColors = {
+  // Primary Palette
+  primary: '#9055E0',      // Warm Purple (purple-600)
+  primaryHover: '#7C3AED', // Warm Purple Hover (purple-700)
+
+  // Canvas & Surface
+  canvas: '#FAFAF9',       // stone-50
+  surface: '#FFFFFF',      // white
+
+  // Text Hierarchy
+  textPrimary: '#292524',   // stone-800
+  textSecondary: '#57534E', // stone-600
+  textMuted: '#A8A29E',     // stone-400
+
+  // Semantic Colors
+  success: {
+    light: 'emerald-100',
+    DEFAULT: 'emerald-500',
+    dark: 'emerald-700',
+  },
+  warning: {
+    light: 'amber-100',
+    DEFAULT: 'amber-500',
+    dark: 'amber-700',
+  },
+  error: {
+    light: 'rose-100',
+    DEFAULT: 'rose-500',
+    dark: 'rose-700',
+  },
+  info: {
+    light: 'sky-100',
+    DEFAULT: 'sky-500',
+    dark: 'sky-700',
+  },
+};
+
+// Color Migration Map
+const colorMigration = {
+  'gray-*': 'stone-*',     // All neutral grays
+  'blue-*': 'purple-*',    // Primary actions
+  'blue-*': 'sky-*',       // Informational (context-dependent)
+  'green-*': 'emerald-*',  // Success states
+  'red-*': 'rose-*',       // Error states
+  'yellow-*': 'amber-*',   // Warning states
+  'neutral-*': 'stone-*',  // Neutral backgrounds
+};
+```
+
+### 13.6 Icon Library
+
+The landing page uses `lucide-react` v0.561.0 for consistent iconography.
+
+```typescript
+import {
+  ArrowUpRight,    // CTAs, external links
+  CirclePlay,      // Video/demo buttons
+  Menu, X,         // Mobile navigation
+  Users,           // Team/panel features
+  MessageSquare,   // Chat/expert features
+  GitBranch,       // Workflow features
+  Boxes,           // Solution builder
+  Infinity,        // Unlimited capacity
+  TrendingUp,      // Growth visualization
+  Database,        // Knowledge storage
+} from 'lucide-react';
+```
+
+### 13.7 Responsive Breakpoints
+
+| Breakpoint | Tailwind | Usage |
+|------------|----------|-------|
+| Mobile | `<md` | Single column, hamburger menu |
+| Tablet | `md:` | Two columns, may hide nav items |
+| Desktop | `lg:` | Full layout, all nav items |
+| Large | `xl:` | Extra padding, larger text |
+
+---
+
+*Generated: December 13, 2025*
 *Contact: AI Engine Team for questions*

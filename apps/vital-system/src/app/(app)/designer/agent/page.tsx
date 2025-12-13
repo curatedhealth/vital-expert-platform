@@ -55,7 +55,6 @@ import {
 } from '@vital/ui';
 
 // App-specific components
-import { PageHeader } from '@/components/page-header';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
 
@@ -354,13 +353,6 @@ export default function AgentBuilderPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden h-full">
-      {/* Page Header */}
-      <PageHeader
-        icon={Bot}
-        title="Agent Builder"
-        description="Create, import, configure, and manage AI agent lifecycle"
-      />
-
         {/* Main Content with Tabs */}
         <div className="flex-1 overflow-auto p-6">
           <Tabs defaultValue="create" className="w-full">

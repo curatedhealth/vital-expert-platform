@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [All]
+# DEPENDENCIES: [core.context, infrastructure.database.repositories.job_repo]
 """
 VITAL Path - Jobs API Routes
 

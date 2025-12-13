@@ -246,12 +246,13 @@ function SectionHeader({
   hasRecommendation,
   children,
 }: SectionHeaderProps) {
+  // Brand v6.0 Purple-centric section colors
   const sectionColors: Record<string, string> = {
     goal: 'bg-purple-50',
-    family: 'bg-blue-50',
-    parameters: 'bg-amber-50',
+    family: 'bg-violet-50',
+    parameters: 'bg-fuchsia-50',
     team: 'bg-green-50',
-    execution: 'bg-slate-50',
+    execution: 'bg-stone-50',
   };
 
   return (

@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { PageHeader } from '@/components/page-header';
 import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
 
 // Import Vital Forms Library for inline editing

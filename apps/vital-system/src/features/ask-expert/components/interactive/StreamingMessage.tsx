@@ -138,11 +138,11 @@ export function StreamingMessage({
             className="w-8 h-8 rounded-full object-cover"
           />
         ) : expert ? (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-medium text-sm">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
             {expert.name.charAt(0)}
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
             <Brain className="h-4 w-4 text-white" />
           </div>
         )}

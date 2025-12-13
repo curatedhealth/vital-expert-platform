@@ -1,7 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+/**
+ * Knowledge Builder Page - Brand Guidelines v6.0
+ *
+ * Create, configure, and manage knowledge bases for AI agents
+ * Refactored December 2025 - extracted hooks and types to feature folder
+ *
+ * @since December 2025
+ */
+
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import {
   BookOpen,
@@ -24,13 +32,16 @@ import {
   Hash,
   Target,
   Zap,
+  FlaskConical,
+  Shield,
+  Globe,
+  HeartPulse,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { PageHeader } from '@/components/page-header';
 
 // Import existing knowledge components
 import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
@@ -45,275 +56,55 @@ import { SearchAnalyticsDashboard } from '@/features/knowledge/components/search
 // Import citation components
 import { CitationDisplay } from '@/features/chat/components/citation-display';
 
-// Type definitions for search (matching API response structure)
-interface MatchedEntity {
-  entity_id: string;
-  entity_type: string;
-  entity_text: string;
-  match_type: 'exact' | 'partial' | 'semantic';
-  confidence: number;
-}
-
-interface SearchResult {
-  chunk_id: string;
-  document_id: string;
-  content: string;
-  metadata: any;
-  scores: {
-    vector?: number;
-    keyword?: number;
-    entity?: number;
-    combined: number;
-  };
-  matched_entities?: MatchedEntity[];
-  source_title?: string;
-  domain?: string;
-}
-
-// Types
-interface KnowledgeDomain {
-  domain_id: string;
-  domain_name: string;
-  description?: string;
-  tier: number;
-  priority: number;
-  document_count: number;
-  is_active: boolean;
-  function_name?: string;
-  embedding_model?: string;
-}
-
-interface KnowledgeDocument {
-  id: string;
-  name: string;
-  type: string;
-  size: number;
-  uploadedAt: string;
-  status: 'processing' | 'completed' | 'failed' | 'pending';
-  domain: string | null;
-  chunks: number;
-}
-
-interface KnowledgeStats {
-  totalDomains: number;
-  totalDocuments: number;
-  totalChunks: number;
-  recentUploads: number;
-}
-
-// External Evidence Types
-interface ClinicalTrialResult {
-  id: string;
-  nctId: string;
-  title: string;
-  status: string;
-  phase: string;
-  conditions: string[];
-  interventions: string[];
-  sponsor: string;
-  startDate?: string;
-  completionDate?: string;
-  enrollmentCount?: number;
-  studyType: string;
-  url: string;
-  sourceType: 'clinical-trial';
-}
-
-interface FDAResult {
-  id: string;
-  brandName: string;
-  genericName: string;
-  manufacturer: string;
-  approvalDate: string;
-  indication: string;
-  route: string[];
-  substanceName: string;
-  approvalType: string;
-  url: string;
-  sourceType: 'fda-approval';
-}
-
-interface PubMedResult {
-  id: string;
-  pmid: string;
-  title: string;
-  authors: string[];
-  journal: string;
-  publicationDate: string;
-  abstract: string | null;
-  doi: string | null;
-  url: string;
-  sourceType: 'pubmed';
-}
-
-interface GuidanceResult {
-  note: string;
-  searchUrl: string;
-  instructions: string[];
-  resources: { name: string; url: string; description: string }[];
-  sourceType: 'ema-guidance' | 'who-guidance';
-  whatIsEML?: {
-    purpose: string;
-    coreList: string;
-    complementaryList: string;
-  };
-}
-
-interface ExternalSource {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
-  status: 'connected' | 'available' | 'coming_soon';
-  apiAvailable: boolean;
-  searchExample: string;
-}
+// Import hooks and types from feature folder
+import {
+  useKnowledgeDesigner,
+  useKnowledgeQuery,
+  useExternalEvidence,
+  type KnowledgeDomain,
+  type KnowledgeDocument,
+  type KnowledgeStats,
+  type SearchResult,
+  type MatchedEntity,
+  type SearchStrategy,
+  type ClinicalTrialResult,
+  type FDAResult,
+  type PubMedResult,
+  type GuidanceResult,
+  type ExternalSource,
+} from '@/features/designer/hooks';
 
 function KnowledgeBuilderContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'overview';
-
-  // State
-  const [domains, setDomains] = useState<KnowledgeDomain[]>([]);
-  const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
-  const [stats, setStats] = useState<KnowledgeStats>({
-    totalDomains: 0,
-    totalDocuments: 0,
-    totalChunks: 0,
-    recentUploads: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedDomain, setSelectedDomain] = useState<KnowledgeDomain | null>(null);
-
-  // Fetch all data (domains + documents)
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Fetch domains and documents in parallel
-      const [domainsResponse, documentsResponse] = await Promise.all([
-        fetch('/api/knowledge-domains'),
-        fetch('/api/knowledge/documents'),
-      ]);
-
-      // Process domains
-      let rawDomains: { id: string; name: string }[] = [];
-      if (domainsResponse.ok) {
-        const domainsData = await domainsResponse.json();
-        rawDomains = domainsData.domains || [];
-      }
-
-      // Process documents
-      let rawDocuments: KnowledgeDocument[] = [];
-      if (documentsResponse.ok) {
-        const documentsData = await documentsResponse.json();
-        if (documentsData.success) {
-          rawDocuments = documentsData.documents || [];
-        }
-      }
-
-      // Calculate document counts per domain
-      const domainCounts: Record<string, number> = {};
-      rawDocuments.forEach((doc) => {
-        const domainKey = doc.domain || 'unassigned';
-        domainCounts[domainKey] = (domainCounts[domainKey] || 0) + 1;
-      });
-
-      // Build enhanced domain objects
-      const enhancedDomains: KnowledgeDomain[] = rawDomains.map((d, index) => ({
-        domain_id: d.id || d.name,
-        domain_name: d.name,
-        description: `Knowledge domain for ${d.name}`,
-        tier: index < 3 ? 1 : index < 8 ? 2 : 3, // Auto-assign tiers based on order
-        priority: index + 1,
-        document_count: domainCounts[d.name] || 0,
-        is_active: true,
-        function_name: 'General',
-        embedding_model: 'text-embedding-3-small',
-      }));
-
-      // Add domains discovered from documents (not in domain list)
-      const existingDomainNames = new Set(rawDomains.map((d) => d.name));
-      Object.keys(domainCounts).forEach((domainName) => {
-        if (!existingDomainNames.has(domainName) && domainName !== 'unassigned') {
-          enhancedDomains.push({
-            domain_id: domainName,
-            domain_name: domainName,
-            description: `Auto-discovered domain from documents`,
-            tier: 3,
-            priority: enhancedDomains.length + 1,
-            document_count: domainCounts[domainName],
-            is_active: true,
-            function_name: 'Discovered',
-            embedding_model: 'text-embedding-3-small',
-          });
-        }
-      });
-
-      // Calculate stats
-      const totalChunks = rawDocuments.reduce((sum, doc) => sum + (doc.chunks || 0), 0);
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const recentUploads = rawDocuments.filter(
-        (doc) => new Date(doc.uploadedAt) > sevenDaysAgo
-      ).length;
-
-      setDomains(enhancedDomains);
-      setDocuments(rawDocuments);
-      setStats({
-        totalDomains: enhancedDomains.length,
-        totalDocuments: rawDocuments.length,
-        totalChunks,
-        recentUploads,
-      });
-    } catch (err) {
-      console.error('Failed to fetch knowledge data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // Handle tab change
-  const handleTabChange = (value: string) => {
-    router.push(`/designer/knowledge?tab=${value}`);
-  };
-
-  // Handle upload complete
-  const handleUploadComplete = () => {
-    fetchData();
-  };
+  // Use the extracted hook for all data fetching and state management
+  const {
+    domains,
+    documents,
+    stats,
+    loading,
+    error,
+    activeTab,
+    selectedDomain,
+    fetchData,
+    handleTabChange,
+    setSelectedDomain,
+    handleUploadComplete,
+  } = useKnowledgeDesigner();
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Page Header */}
-      <PageHeader
-        icon={BookOpen}
-        title="Knowledge Builder"
-        description="Create, configure, and manage knowledge bases for AI agents"
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/knowledge">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                View Knowledge Library
-              </Link>
-            </Button>
-            <Button size="sm" onClick={() => handleTabChange('upload')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Upload Documents
-            </Button>
-          </div>
-        }
-      />
+    <div className="flex-1 flex flex-col overflow-hidden bg-stone-50">
+      {/* Action Bar */}
+      <div className="flex items-center justify-end gap-2 px-6 py-3 border-b bg-white/50 backdrop-blur-sm">
+        <Button variant="outline" size="sm" asChild className="border-stone-200">
+          <Link href="/knowledge">
+            <ExternalLink className="h-4 w-4 mr-2" />
+            View Knowledge Library
+          </Link>
+        </Button>
+        <Button size="sm" onClick={() => handleTabChange('upload')} className="bg-purple-600 hover:bg-purple-700">
+          <Plus className="h-4 w-4 mr-2" />
+          Upload Documents
+        </Button>
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
@@ -485,7 +276,7 @@ function KnowledgeBuilderContent() {
                 <CardContent>
                   {loading ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
                     </div>
                   ) : domains.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
@@ -552,7 +343,7 @@ function KnowledgeBuilderContent() {
                 <CardContent>
                   {loading ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
                     </div>
                   ) : documents.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
@@ -582,7 +373,7 @@ function KnowledgeBuilderContent() {
                           </div>
                           <div className="flex items-center gap-2">
                             {doc.status === 'completed' && (
-                              <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">
+                              <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">
                                 <CheckCircle2 className="h-3 w-3 mr-1" />
                                 Indexed
                               </Badge>
@@ -760,7 +551,7 @@ function DomainsManager({
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
         </div>
       ) : filteredDomains.length === 0 ? (
         <Card>
@@ -832,7 +623,7 @@ function DomainCard({ domain, onClick }: { domain: KnowledgeDomain; onClick: () 
           <h4 className="font-medium text-sm line-clamp-1">{domain.domain_name}</h4>
           <Badge
             variant={domain.is_active ? 'default' : 'secondary'}
-            className={domain.is_active ? 'bg-green-500/10 text-green-600' : ''}
+            className={domain.is_active ? 'bg-emerald-500/10 text-emerald-600' : ''}
           >
             {domain.is_active ? 'Active' : 'Inactive'}
           </Badge>
@@ -884,19 +675,19 @@ function EmbeddingsManager({
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-600">{completedDocs.length}</div>
+            <div className="text-2xl font-bold text-emerald-600">{completedDocs.length}</div>
             <p className="text-xs text-muted-foreground">Indexed Documents</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-yellow-600">{processingDocs.length}</div>
+            <div className="text-2xl font-bold text-amber-600">{processingDocs.length}</div>
             <p className="text-xs text-muted-foreground">Processing</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-red-600">{failedDocs.length}</div>
+            <div className="text-2xl font-bold text-rose-600">{failedDocs.length}</div>
             <p className="text-xs text-muted-foreground">Failed</p>
           </CardContent>
         </Card>
@@ -949,7 +740,7 @@ function EmbeddingsManager({
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+                    <div className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse" />
                     <div>
                       <p className="font-medium text-sm">Pinecone Vector Store</p>
                       <p className="text-xs text-muted-foreground">
@@ -957,7 +748,7 @@ function EmbeddingsManager({
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-green-500/10 text-green-600">
+                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600">
                     <CheckCircle2 className="h-3 w-3 mr-1" />
                     Connected
                   </Badge>
@@ -976,7 +767,7 @@ function EmbeddingsManager({
                     <CardContent className="py-3 px-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
                           <span className="text-sm font-medium">{doc.name}</span>
                         </div>
                         <Badge variant="secondary">Processing</Badge>
@@ -988,7 +779,7 @@ function EmbeddingsManager({
             ) : (
               <Card>
                 <CardContent className="py-8 text-center text-muted-foreground">
-                  <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                  <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-500" />
                   <p className="text-sm">All documents have been processed</p>
                 </CardContent>
               </Card>
@@ -1108,8 +899,8 @@ function QueryManager({ domains }: { domains: KnowledgeDomain[] }) {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 0.8) return 'bg-green-500';
-    if (score >= 0.6) return 'bg-yellow-500';
+    if (score >= 0.8) return 'bg-emerald-500';
+    if (score >= 0.6) return 'bg-amber-500';
     return 'bg-orange-500';
   };
 
@@ -1374,7 +1165,7 @@ function QueryManager({ domains }: { domains: KnowledgeDomain[] }) {
                   <div className="text-muted-foreground">Semantic similarity</div>
                 </div>
                 <div className="p-3 bg-muted rounded-lg">
-                  <Hash className="h-5 w-5 mx-auto mb-1 text-green-500" />
+                  <Hash className="h-5 w-5 mx-auto mb-1 text-emerald-500" />
                   <div className="font-medium">Keyword</div>
                   <div className="text-muted-foreground">Full-text search</div>
                 </div>
@@ -1486,8 +1277,8 @@ function UploadManager({
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3 text-sm">
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <div className="p-2 bg-emerald-100 dark:bg-emerald-900 rounded-lg">
+                <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
                 <h5 className="font-medium">Naming Convention</h5>
@@ -1528,12 +1319,12 @@ function UploadManager({
 // External Evidence Result Renderers
 function ClinicalTrialResultCard({ result }: { result: ClinicalTrialResult }) {
   const statusColor = {
-    'RECRUITING': 'bg-green-500',
-    'ACTIVE_NOT_RECRUITING': 'bg-yellow-500',
+    'RECRUITING': 'bg-emerald-500',
+    'ACTIVE_NOT_RECRUITING': 'bg-amber-500',
     'COMPLETED': 'bg-blue-500',
-    'TERMINATED': 'bg-red-500',
-    'WITHDRAWN': 'bg-gray-500',
-  }[result.status?.toUpperCase()] || 'bg-gray-400';
+    'TERMINATED': 'bg-rose-500',
+    'WITHDRAWN': 'bg-stone-500',
+  }[result.status?.toUpperCase()] || 'bg-stone-400';
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -1593,8 +1384,8 @@ function FDAResultCard({ result }: { result: FDAResult }) {
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900 text-red-600">
-            <ShieldIcon className="h-5 w-5" />
+          <div className="p-2 rounded-lg bg-rose-100 dark:bg-rose-900 text-rose-600">
+            <Shield className="h-5 w-5" />
           </div>
           <div className="flex-1 space-y-2">
             <div className="flex items-start justify-between gap-2">
@@ -1645,7 +1436,7 @@ function PubMedResultCard({ result }: { result: PubMedResult }) {
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900 text-orange-600">
-            <BookOpenIcon className="h-5 w-5" />
+            <BookOpen className="h-5 w-5" />
           </div>
           <div className="flex-1 space-y-2">
             <div className="flex items-start justify-between gap-2">
@@ -1688,7 +1479,7 @@ function PubMedResultCard({ result }: { result: PubMedResult }) {
 
 function GuidanceResultCard({ result, sourceName }: { result: GuidanceResult; sourceName: string }) {
   const isWHO = result.sourceType === 'who-guidance';
-  const iconColor = isWHO ? 'bg-green-100 dark:bg-green-900 text-green-600' : 'bg-blue-100 dark:bg-blue-900 text-blue-600';
+  const iconColor = isWHO ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600' : 'bg-blue-100 dark:bg-blue-900 text-blue-600';
 
   return (
     <div className="space-y-4">
@@ -1879,7 +1670,7 @@ function ConnectionsManager({ domains }: { domains: KnowledgeDomain[] }) {
       id: 'clinicaltrials',
       name: 'ClinicalTrials.gov',
       description: 'Search clinical trials by condition, intervention, or sponsor',
-      icon: <FlaskConicalIcon className="h-6 w-6" />,
+      icon: <FlaskConical className="h-6 w-6" />,
       color: 'text-purple-600 bg-purple-100 dark:bg-purple-900',
       status: 'connected',
       apiAvailable: true,
@@ -1889,8 +1680,8 @@ function ConnectionsManager({ domains }: { domains: KnowledgeDomain[] }) {
       id: 'fda',
       name: 'FDA Approvals',
       description: 'Search FDA OpenFDA database for drug approvals and labels',
-      icon: <ShieldIcon className="h-6 w-6" />,
-      color: 'text-red-600 bg-red-100 dark:bg-red-900',
+      icon: <Shield className="h-6 w-6" />,
+      color: 'text-rose-600 bg-rose-100 dark:bg-rose-900',
       status: 'connected',
       apiAvailable: true,
       searchExample: 'adalimumab',
@@ -1899,7 +1690,7 @@ function ConnectionsManager({ domains }: { domains: KnowledgeDomain[] }) {
       id: 'ema',
       name: 'EMA (European)',
       description: 'European Medicines Agency regulatory information',
-      icon: <GlobeIcon className="h-6 w-6" />,
+      icon: <Globe className="h-6 w-6" />,
       color: 'text-blue-600 bg-blue-100 dark:bg-blue-900',
       status: 'available',
       apiAvailable: false,
@@ -1909,8 +1700,8 @@ function ConnectionsManager({ domains }: { domains: KnowledgeDomain[] }) {
       id: 'who',
       name: 'WHO Essential Medicines',
       description: 'World Health Organization Essential Medicines List',
-      icon: <HeartPulseIcon className="h-6 w-6" />,
-      color: 'text-green-600 bg-green-100 dark:bg-green-900',
+      icon: <HeartPulse className="h-6 w-6" />,
+      color: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900',
       status: 'available',
       apiAvailable: false,
       searchExample: 'metformin',
@@ -1919,7 +1710,7 @@ function ConnectionsManager({ domains }: { domains: KnowledgeDomain[] }) {
       id: 'pubmed',
       name: 'PubMed',
       description: 'Search biomedical literature from NCBI/NIH',
-      icon: <BookOpenIcon className="h-6 w-6" />,
+      icon: <BookOpen className="h-6 w-6" />,
       color: 'text-orange-600 bg-orange-100 dark:bg-orange-900',
       status: 'connected',
       apiAvailable: true,
@@ -2034,9 +1825,9 @@ function ConnectionsManager({ domains }: { domains: KnowledgeDomain[] }) {
                           variant={source.status === 'connected' ? 'default' : 'secondary'}
                           className={
                             source.status === 'connected'
-                              ? 'bg-green-500/10 text-green-600'
+                              ? 'bg-emerald-500/10 text-emerald-600'
                               : source.status === 'coming_soon'
-                              ? 'bg-gray-500/10 text-gray-600'
+                              ? 'bg-stone-500/10 text-stone-600'
                               : ''
                           }
                         >
@@ -2157,49 +1948,13 @@ function ConnectionsManager({ domains }: { domains: KnowledgeDomain[] }) {
   );
 }
 
-// Icon components for external sources (using Lucide naming conventions)
-const FlaskConicalIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 3v7.4a2 2 0 0 0 .6 1.4l4.5 4.5a2 2 0 0 1 .5 1.4V19a2 2 0 0 1-2 2H6.4a2 2 0 0 1-2-2v-1.3a2 2 0 0 1 .5-1.4l4.5-4.5a2 2 0 0 0 .6-1.4V3" />
-    <path d="M8 3h8" />
-  </svg>
-);
-
-const ShieldIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-  </svg>
-);
-
-const GlobeIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-    <path d="M2 12h20" />
-  </svg>
-);
-
-const HeartPulseIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-    <path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" />
-  </svg>
-);
-
-const BookOpenIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-  </svg>
-);
-
 // Main Export
 export default function KnowledgeBuilderPage() {
   return (
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-screen">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
         </div>
       }
     >

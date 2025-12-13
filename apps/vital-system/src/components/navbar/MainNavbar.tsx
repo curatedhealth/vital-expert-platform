@@ -3,34 +3,31 @@
 import * as React from 'react'
 import Image from 'next/image'
 import {
-  ChevronsUpDown,
   UserCircle,
   LogOut,
   Settings as SettingsIcon,
-  MessageSquare,
-  Users,
-  Workflow,
-  Wrench,
-  BookOpen,
-  Brain,
-  Target,
-  Lightbulb,
   LayoutDashboard,
   Shield,
   Search,
   Bell,
   Plus,
-  Command as CommandIcon,
-  FileText,
-  Zap,
+  MessageSquare,
   Palette,
   Layers,
-  Building2,
-  Bot,
-  UsersRound,
-  GitBranch,
-  Network
+  Users,
+  Workflow,
+  Brain,
 } from 'lucide-react'
+
+// Import centralized navigation config (A+ architecture)
+import {
+  consultItems,
+  craftItems,
+  discoverItems,
+  optimizeItems,
+  quickActions,
+  navigationSections,
+} from './navigation-config'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,133 +65,8 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { TenantSwitcher } from '@/components/tenant-switcher'
 import { cn } from '@/lib/utils'
 
-// ============================================
-// NAVIGATION STRUCTURE: Hub | Consult | Discover | Craft | Optimize
-// ============================================
-
-// CONSULT - AI consultation services
-const consultItems = [
-  {
-    label: 'Ask Expert',
-    href: '/ask-expert',
-    description: '1:1 expert consultation with AI agents',
-    icon: MessageSquare
-  },
-  {
-    label: 'Ask Panel',
-    href: '/ask-panel',
-    description: 'Multi-expert panel discussions',
-    icon: Users
-  },
-  {
-    label: 'Quick Chat',
-    href: '/ask-expert?mode=1',
-    description: 'Fast answers with Mode 1 (instant)',
-    icon: Zap
-  },
-]
-
-// CRAFT - Build and design tools
-const craftItems = [
-  {
-    label: 'Agent Builder',
-    href: '/designer/agent',
-    description: 'Design and configure custom AI agents',
-    icon: Bot
-  },
-  {
-    label: 'Workflow Studio',
-    href: '/workflows',
-    description: 'Build automated workflows and processes',
-    icon: GitBranch
-  },
-  {
-    label: 'Panel Designer',
-    href: '/designer/panel',
-    description: 'Create multi-expert panel configurations',
-    icon: UsersRound
-  },
-  {
-    label: 'Solution Builder',
-    href: '/solution-builder',
-    description: 'Build custom solutions',
-    icon: Wrench
-  },
-  {
-    label: 'Knowledge Builder',
-    href: '/designer/knowledge',
-    description: 'Create and manage knowledge bases for RAG',
-    icon: BookOpen
-  },
-]
-
-// DISCOVER - Browse and explore assets
-const discoverItems = [
-  {
-    label: 'Agents',
-    href: '/agents',
-    description: 'Browse expert AI agents',
-    icon: Brain
-  },
-  {
-    label: 'Skills',
-    href: '/discover/skills',
-    description: 'Agent skills and capabilities',
-    icon: Zap
-  },
-  {
-    label: 'Tools',
-    href: '/discover/tools',
-    description: 'Browse available tools and integrations',
-    icon: Wrench
-  },
-  {
-    label: 'Knowledge',
-    href: '/knowledge',
-    description: 'Domain knowledge base',
-    icon: BookOpen
-  },
-  {
-    label: 'Prompts',
-    href: '/prism',
-    description: 'Prompt templates and patterns',
-    icon: Lightbulb
-  },
-]
-
-// OPTIMIZE - Analytics, insights and strategy
-const optimizeItems = [
-  {
-    label: 'Jobs-to-be-Done',
-    href: '/optimize/jobs-to-be-done',
-    description: 'JTBD framework and outcome mapping',
-    icon: Target
-  },
-  {
-    label: 'Personas',
-    href: '/optimize/personas',
-    description: 'User personas and organizational archetypes',
-    icon: UserCircle
-  },
-  {
-    label: 'Ontology',
-    href: '/optimize/ontology',
-    description: 'Interactive graph visualization of the enterprise',
-    icon: Network
-  },
-  {
-    label: 'Value View',
-    href: '/value',
-    description: 'Value drivers and strategic priorities',
-    icon: Layers
-  },
-  {
-    label: 'Insights',
-    href: '/medical-strategy',
-    description: 'Evidence-based decision making and strategy',
-    icon: FileText
-  },
-]
+// Navigation config is now imported from ./navigation-config.ts
+// This provides centralized, type-safe navigation structure
 
 // ListItem component for navigation menu items
 const ListItem = React.forwardRef<

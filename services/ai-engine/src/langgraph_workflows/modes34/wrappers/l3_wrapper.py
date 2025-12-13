@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [services.deepagents_tools, services.runner_registry, l5_tool_mapper, registry]
 from __future__ import annotations
 
 from typing import Any, Dict

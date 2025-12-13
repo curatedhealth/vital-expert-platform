@@ -83,15 +83,16 @@ export interface VitalThinkingProps {
 // STEP TYPE CONFIG - Maps semantic types to icons
 // =============================================================================
 
+// Brand v6.0 Purple-centric color palette for step types
 const STEP_TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
-  analysis: { icon: Brain, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+  analysis: { icon: Brain, color: 'text-purple-600', bgColor: 'bg-purple-50' },
   search: { icon: Search, color: 'text-amber-600', bgColor: 'bg-amber-50' },
-  research: { icon: BookOpen, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
-  calculation: { icon: Calculator, color: 'text-purple-600', bgColor: 'bg-purple-50' },
+  research: { icon: BookOpen, color: 'text-violet-600', bgColor: 'bg-violet-50' },
+  calculation: { icon: Calculator, color: 'text-fuchsia-600', bgColor: 'bg-fuchsia-50' },
   warning: { icon: AlertCircle, color: 'text-red-600', bgColor: 'bg-red-50' },
   conclusion: { icon: CheckCircle2, color: 'text-green-600', bgColor: 'bg-green-50' },
   insight: { icon: Lightbulb, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-  comparison: { icon: Scale, color: 'text-cyan-600', bgColor: 'bg-cyan-50' },
+  comparison: { icon: Scale, color: 'text-pink-600', bgColor: 'bg-pink-50' },
   target: { icon: Target, color: 'text-rose-600', bgColor: 'bg-rose-50' },
 };
 
@@ -259,8 +260,8 @@ export function VitalThinking({
       exit={{ opacity: 0, height: 0 }}
       className={cn(
         'rounded-xl overflow-hidden',
-        'border border-blue-200',
-        'bg-gradient-to-br from-blue-50/80 to-white',
+        'border border-purple-200',
+        'bg-gradient-to-br from-purple-50/80 to-white',
         'backdrop-blur-sm',
         className
       )}
@@ -270,7 +271,7 @@ export function VitalThinking({
         onClick={handleToggle}
         className={cn(
           'w-full px-4 py-3 flex items-center gap-3',
-          'hover:bg-blue-50/50 transition-colors',
+          'hover:bg-purple-50/50 transition-colors',
           'text-left'
         )}
         aria-expanded={isExpanded}
@@ -280,21 +281,21 @@ export function VitalThinking({
         <div
           className={cn(
             'relative p-2 rounded-lg',
-            isActive ? 'bg-blue-100' : 'bg-slate-100'
+            isActive ? 'bg-purple-100' : 'bg-stone-100'
           )}
           aria-hidden="true"
         >
           {isActive ? (
             <>
-              <Brain className="h-4 w-4 text-blue-600" />
+              <Brain className="h-4 w-4 text-purple-600" />
               <motion.div
-                className="absolute inset-0 rounded-lg border-2 border-blue-400"
+                className="absolute inset-0 rounded-lg border-2 border-purple-400"
                 animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               />
             </>
           ) : (
-            <Sparkles className="h-4 w-4 text-slate-500" />
+            <Sparkles className="h-4 w-4 text-stone-500" />
           )}
         </div>
 
@@ -303,15 +304,15 @@ export function VitalThinking({
           <div className="flex items-center gap-2">
             <span className={cn(
               'text-sm font-medium',
-              isActive ? 'text-blue-700' : 'text-slate-700'
+              isActive ? 'text-purple-700' : 'text-stone-700'
             )}>
               {isActive ? 'Thinking...' : 'Reasoning Complete'}
             </span>
             {isActive && (
-              <Loader2 className="h-3 w-3 text-blue-500 animate-spin" />
+              <Loader2 className="h-3 w-3 text-purple-500 animate-spin" />
             )}
           </div>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-stone-500">
             {steps.length} step{steps.length !== 1 ? 's' : ''}
           </span>
         </div>
@@ -357,13 +358,13 @@ export function VitalThinking({
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex items-center gap-2 py-2 px-3 rounded-lg bg-blue-50/50"
+                  className="flex items-center gap-2 py-2 px-3 rounded-lg bg-purple-50/50"
                 >
                   <div className="flex gap-1">
                     {[0, 1, 2].map(i => (
                       <motion.div
                         key={i}
-                        className="w-1.5 h-1.5 rounded-full bg-blue-400"
+                        className="w-1.5 h-1.5 rounded-full bg-purple-400"
                         animate={{ scale: [1, 1.5, 1] }}
                         transition={{
                           duration: 0.6,
@@ -373,7 +374,7 @@ export function VitalThinking({
                       />
                     ))}
                   </div>
-                  <span className="text-xs text-blue-600">Processing...</span>
+                  <span className="text-xs text-purple-600">Processing...</span>
                 </motion.div>
               )}
             </div>
@@ -507,16 +508,16 @@ export function VitalThinkingCompact({
       exit={{ opacity: 0, y: -5 }}
       className={cn(
         'inline-flex items-center gap-2 px-3 py-1.5 rounded-full',
-        'bg-blue-50 border border-blue-200',
+        'bg-purple-50 border border-purple-200',
         className
       )}
     >
       {isActive ? (
-        <Loader2 className="h-3 w-3 text-blue-500 animate-spin" />
+        <Loader2 className="h-3 w-3 text-purple-500 animate-spin" />
       ) : (
-        <Brain className="h-3 w-3 text-blue-500" />
+        <Brain className="h-3 w-3 text-purple-500" />
       )}
-      <span className="text-xs text-blue-700 max-w-[200px] truncate">
+      <span className="text-xs text-purple-700 max-w-[200px] truncate">
         {currentStep || 'Thinking...'}
       </span>
     </motion.div>

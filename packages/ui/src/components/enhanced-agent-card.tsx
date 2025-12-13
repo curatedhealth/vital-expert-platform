@@ -1,34 +1,70 @@
 /**
- * EnhancedAgentCard - Minimalist Design
- * Following VITAL Brand Guidelines v5.0
- * 
+ * EnhancedAgentCard - Premium Design
+ * Following VITAL Brand Guidelines v6.0
+ *
  * Design Principles:
- * - Clean White Background
- * - Atomic geometry (circles, squares)
- * - Clean tenant-based color badges
- * - Inter typography
- * - Intentional minimalism
- * - VITAL Icons for actions
+ * - Warm Purple (#9055E0) as primary accent
+ * - Stone neutrals for backgrounds and text
+ * - Subtle gradient overlays for visual depth
+ * - Enhanced shadows and hover effects
+ * - Inter typography with improved hierarchy
+ * - Level-based color coding with premium feel
  */
 
-import { Crown, Star, Shield, Wrench, Cog, Edit, Trash2, MoreVertical, Zap, Plus, Copy, Bookmark, BookmarkCheck, MessageSquarePlus, MessageCircle, ThumbsUp, ArrowRightLeft } from 'lucide-react';
+import {
+  Crown,
+  Star,
+  Shield,
+  Wrench,
+  Cog,
+  Edit,
+  Trash2,
+  MoreVertical,
+  Zap,
+  Copy,
+  Bookmark,
+  BookmarkCheck,
+  MessageSquarePlus,
+  MessageCircle,
+  ThumbsUp,
+  ArrowRightLeft,
+} from 'lucide-react';
 import React from 'react';
-import Image from 'next/image';
 
-import { AgentAvatar } from '@vital/ui';
-import { Badge } from '@vital/ui';
-import { Button } from '@vital/ui';
-import { Card, CardContent } from '@vital/ui';
+import { AgentAvatar } from './agent-avatar';
+import { Button } from './button';
+import { Card, CardContent } from './card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@vital/ui';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@vital/ui';
-import { type Agent } from '@/lib/stores/chat-store';
-import { cn } from '@vital/ui/lib/utils';
+} from './dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
+import { cn } from '../lib/utils';
+
+/**
+ * Agent interface for EnhancedAgentCard
+ * Extends basic agent properties with optional extended fields
+ */
+interface Agent {
+  id: string;
+  name: string;
+  display_name?: string;
+  description?: string;
+  avatar?: string;
+  avatar_url?: string;
+  business_function?: string;
+  department?: string;
+  capabilities?: string[];
+  tier?: number;
+  status?: string;
+  consultation_count?: number;
+  usage_count?: number;
+  satisfaction_rating?: number;
+  rating?: number;
+}
 
 interface EnhancedAgentCardProps {
   agent: Agent;
@@ -46,95 +82,128 @@ interface EnhancedAgentCardProps {
   isBookmarked?: boolean;
   isInComparison?: boolean;
   className?: string;
-  showReasoning?: boolean;
+  /** @deprecated Use showLevel instead */
+  showTier?: boolean;
   showLevel?: boolean;
   showLevelName?: boolean;
   size?: 'sm' | 'md' | 'lg';
 }
 
 // ============================================================================
-// VITAL BRAND COLORS (from Brand Guidelines v5.0)
+// VITAL BRAND COLORS (Brand Guidelines v6.0)
 // ============================================================================
 
-// Agent Level Colors - Based on AgentOS 3.0 Hierarchy
+// Primary accent: Warm Purple #9055E0
+// Neutrals: Stone palette (stone-50 to stone-900)
+// Background: Off-white #FAFAF9
+
+// Agent Level Colors - Premium feel with gradient support
 const levelConfig = {
-  1: { 
+  1: {
     label: 'L1 Master',
     name: 'Master',
-    // Expert Purple - Strategy, Intelligence
-    bg: 'bg-[#9B5DE0]',
+    // Warm Purple - Strategy, Orchestration
+    bg: 'bg-gradient-to-br from-purple-600 to-purple-700',
+    bgSolid: 'bg-purple-600',
     text: 'text-white',
-    border: 'border-[#9B5DE0]/20',
+    border: 'border-purple-300',
+    lightBg: 'bg-purple-50',
+    lightText: 'text-purple-700',
     icon: Crown,
-    description: 'Orchestrator'
+    description: 'Orchestrator',
+    accentColor: '#9055E0',
   },
-  2: { 
+  2: {
     label: 'L2 Expert',
     name: 'Expert',
-    // Pharma Blue - Precision, Compliance
-    bg: 'bg-[#0046FF]',
+    // Deep Blue - Precision, Expertise
+    bg: 'bg-gradient-to-br from-blue-600 to-blue-700',
+    bgSolid: 'bg-blue-600',
     text: 'text-white',
-    border: 'border-[#0046FF]/20',
+    border: 'border-blue-300',
+    lightBg: 'bg-blue-50',
+    lightText: 'text-blue-700',
     icon: Star,
-    description: 'Domain Specialist'
+    description: 'Domain Specialist',
+    accentColor: '#3B82F6',
   },
-  3: { 
+  3: {
     label: 'L3 Specialist',
     name: 'Specialist',
-    // Systems Teal - Infrastructure, Flow
-    bg: 'bg-[#00B5AD]',
+    // Emerald Teal - Growth, Specialization
+    bg: 'bg-gradient-to-br from-emerald-600 to-emerald-700',
+    bgSolid: 'bg-emerald-600',
     text: 'text-white',
-    border: 'border-[#00B5AD]/20',
+    border: 'border-emerald-300',
+    lightBg: 'bg-emerald-50',
+    lightText: 'text-emerald-700',
     icon: Shield,
-    description: 'Sub-Expert'
+    description: 'Sub-Expert',
+    accentColor: '#10B981',
   },
-  4: { 
+  4: {
     label: 'L4 Worker',
     name: 'Worker',
-    // Velocity Orange - Energy, Acceleration
-    bg: 'bg-[#FF6B00]',
+    // Warm Amber - Energy, Execution
+    bg: 'bg-gradient-to-br from-amber-500 to-amber-600',
+    bgSolid: 'bg-amber-500',
     text: 'text-white',
-    border: 'border-[#FF6B00]/20',
+    border: 'border-amber-300',
+    lightBg: 'bg-amber-50',
+    lightText: 'text-amber-700',
     icon: Wrench,
-    description: 'Task Executor'
+    description: 'Task Executor',
+    accentColor: '#F59E0B',
   },
-  5: { 
+  5: {
     label: 'L5 Tool',
     name: 'Tool',
-    // Neutral-600 - Utility
-    bg: 'bg-[#555555]',
+    // Stone - Utility, Integration
+    bg: 'bg-gradient-to-br from-stone-500 to-stone-600',
+    bgSolid: 'bg-stone-500',
     text: 'text-white',
-    border: 'border-[#555555]/20',
+    border: 'border-stone-300',
+    lightBg: 'bg-stone-100',
+    lightText: 'text-stone-700',
     icon: Cog,
-    description: 'Integration'
-  }
+    description: 'Integration',
+    accentColor: '#78716C',
+  },
 };
 
-// Status Colors - Semantic States
+// Status Colors - Semantic States with pulse animations
 const statusConfig = {
   active: {
-    dot: 'bg-[#22c55e]',
-    text: 'text-[#22c55e]',
-    label: 'Active'
+    dot: 'bg-emerald-500',
+    ring: 'ring-emerald-500/30',
+    text: 'text-emerald-600',
+    label: 'Active',
+    pulse: true,
   },
   testing: {
-    dot: 'bg-[#f59e0b]',
-    text: 'text-[#f59e0b]',
-    label: 'Testing'
+    dot: 'bg-amber-500',
+    ring: 'ring-amber-500/30',
+    text: 'text-amber-600',
+    label: 'Testing',
+    pulse: true,
   },
   development: {
-    dot: 'bg-[#3b82f6]',
-    text: 'text-[#3b82f6]',
-    label: 'Dev'
+    dot: 'bg-blue-500',
+    ring: 'ring-blue-500/30',
+    text: 'text-blue-600',
+    label: 'Dev',
+    pulse: false,
   },
   inactive: {
-    dot: 'bg-[#9ca3af]',
-    text: 'text-[#9ca3af]',
-    label: 'Inactive'
-  }
+    dot: 'bg-stone-400',
+    ring: 'ring-stone-400/30',
+    text: 'text-stone-500',
+    label: 'Inactive',
+    pulse: false,
+  },
 };
 
-// Size configurations
+// Size configurations with enhanced spacing
 const sizeConfig = {
   sm: {
     card: 'p-3',
@@ -142,7 +211,8 @@ const sizeConfig = {
     title: 'text-sm font-semibold',
     description: 'text-xs',
     badge: 'text-[10px] px-1.5 py-0.5',
-    gap: 'gap-2.5'
+    gap: 'gap-2.5',
+    iconSize: 'w-3 h-3',
   },
   md: {
     card: 'p-4',
@@ -150,7 +220,8 @@ const sizeConfig = {
     title: 'text-sm font-semibold',
     description: 'text-xs',
     badge: 'text-[11px] px-2 py-0.5',
-    gap: 'gap-3'
+    gap: 'gap-3',
+    iconSize: 'w-3.5 h-3.5',
   },
   lg: {
     card: 'p-5',
@@ -158,38 +229,49 @@ const sizeConfig = {
     title: 'text-base font-semibold',
     description: 'text-sm',
     badge: 'text-xs px-2.5 py-1',
-    gap: 'gap-4'
-  }
+    gap: 'gap-4',
+    iconSize: 'w-4 h-4',
+  },
 };
 
 // ============================================================================
-// LEVEL BADGE COMPONENT - Minimalist
+// LEVEL BADGE COMPONENT - Premium with gradient
 // ============================================================================
 
-function LevelBadge({ 
-  level, 
-  size = 'md' 
-}: { 
-  level: number; 
+function LevelBadge({
+  level,
+  size = 'md',
+  variant = 'solid',
+}: {
+  level: number;
   size?: 'sm' | 'md' | 'lg';
+  variant?: 'solid' | 'outline' | 'soft';
 }) {
   const config = levelConfig[level as keyof typeof levelConfig];
   if (!config) return null;
-  
+
   const Icon = config.icon;
   const sizeClasses = {
     sm: 'text-[9px] px-1.5 py-0.5 gap-0.5',
     md: 'text-[10px] px-2 py-0.5 gap-1',
-    lg: 'text-[11px] px-2.5 py-1 gap-1'
+    lg: 'text-[11px] px-2.5 py-1 gap-1.5',
   };
-  
+
+  const variantClasses = {
+    solid: cn(config.bg, config.text, 'shadow-sm'),
+    outline: cn('bg-transparent border', config.border, config.lightText),
+    soft: cn(config.lightBg, config.lightText),
+  };
+
   return (
-    <span className={cn(
-      'inline-flex items-center rounded-md font-medium',
-      config.bg,
-      config.text,
-      sizeClasses[size]
-    )}>
+    <span
+      className={cn(
+        'inline-flex items-center rounded-md font-medium',
+        'transition-all duration-200',
+        sizeClasses[size],
+        variantClasses[variant]
+      )}
+    >
       <Icon className="w-2.5 h-2.5" />
       <span>{config.label}</span>
     </span>
@@ -197,41 +279,37 @@ function LevelBadge({
 }
 
 // ============================================================================
-// STATUS INDICATOR - Minimal Dot
+// STATUS INDICATOR - Enhanced with pulse animation
 // ============================================================================
 
-function StatusIndicator({ 
+function StatusIndicator({
   status,
-  showLabel = false 
-}: { 
+  showLabel = false,
+}: {
   status: string;
   showLabel?: boolean;
 }) {
   const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.inactive;
-  
+
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className={cn('w-1.5 h-1.5 rounded-full', config.dot)} />
+      <span className="relative flex h-2 w-2">
+        {config.pulse && (
+          <span
+            className={cn(
+              'animate-ping absolute inline-flex h-full w-full rounded-full opacity-75',
+              config.dot
+            )}
+          />
+        )}
+        <span className={cn('relative inline-flex rounded-full h-2 w-2', config.dot)} />
+      </span>
       {showLabel && (
-        <span className={cn('text-[10px] font-medium', config.text)}>
-          {config.label}
-        </span>
+        <span className={cn('text-[10px] font-medium', config.text)}>{config.label}</span>
       )}
     </span>
   );
 }
-
-// ============================================================================
-// ACTION ICONS - Using Lucide React Icons
-// ============================================================================
-
-// Icon mapping for action buttons using Lucide React
-const ActionIcons = {
-  add: MessageSquarePlus,
-  duplicate: Copy,
-  bookmark: Bookmark,
-  'bookmark-filled': BookmarkCheck,
-} as const;
 
 // ============================================================================
 // MAIN CARD COMPONENT
@@ -253,10 +331,9 @@ export function EnhancedAgentCard({
   isBookmarked = false,
   isInComparison = false,
   className,
-  showReasoning = true,
   showLevel = true,
   showLevelName = true,
-  size = 'md'
+  size = 'md',
 }: EnhancedAgentCardProps) {
   const config = sizeConfig[size];
   
@@ -271,18 +348,26 @@ export function EnhancedAgentCard({
   return (
     <Card
       className={cn(
-        // Base styles - Clean white aesthetic
+        // Base styles - Premium Brand v6.0 aesthetic
         'group relative cursor-pointer',
-        'bg-white border border-gray-200',
+        'bg-white border border-stone-200',
         'rounded-xl overflow-hidden',
+        // Subtle top gradient accent based on level
+        'before:absolute before:inset-x-0 before:top-0 before:h-0.5',
+        `before:bg-gradient-to-r before:from-transparent before:via-[${levelInfo?.accentColor || '#9055E0'}] before:to-transparent`,
+        'before:opacity-0 before:transition-opacity before:duration-300',
+        'hover:before:opacity-100',
         // Transitions
-        'transition-all duration-200 ease-out',
-        // Hover state - subtle lift
-        'hover:border-gray-300 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]',
+        'transition-all duration-300 ease-out',
+        // Hover state - elevated with purple glow
+        'hover:border-purple-200 hover:shadow-[0_8px_24px_rgba(144,85,224,0.12)]',
+        'hover:-translate-y-0.5',
         // Focus state
-        'focus:outline-none focus:ring-2 focus:ring-[#9B5DE0]/30 focus:ring-offset-1',
+        'focus:outline-none focus:ring-2 focus:ring-purple-400/40 focus:ring-offset-2',
         // Selected state
-        isSelected && 'ring-2 ring-[#9B5DE0] border-[#9B5DE0] bg-[#9B5DE0]/5',
+        isSelected && 'ring-2 ring-purple-500 border-purple-400 bg-purple-50/50 shadow-lg',
+        // Best match highlight
+        isBestMatch && 'ring-2 ring-amber-400 border-amber-300 bg-amber-50/30',
         config.card,
         className
       )}
@@ -300,17 +385,20 @@ export function EnhancedAgentCard({
       <CardContent className="p-0">
         <div className={cn('flex items-start', config.gap)}>
           
-          {/* Avatar - Clean circular design */}
+          {/* Avatar - Premium design with level-based border */}
           <div className="flex-shrink-0 relative">
-            <div className={cn(
-              'rounded-xl overflow-hidden',
-              'border-2 border-gray-200',
-              'bg-white',
-              'transition-all duration-200',
-              'group-hover:border-purple-300',
-              isSelected && 'border-[#9B5DE0]',
-              config.avatar
-            )}>
+            <div
+              className={cn(
+                'rounded-xl overflow-hidden',
+                'border-2',
+                'bg-stone-50',
+                'transition-all duration-300',
+                'group-hover:scale-105 group-hover:shadow-md',
+                levelInfo?.border || 'border-stone-200',
+                isSelected && 'border-purple-400 shadow-lg',
+                config.avatar
+              )}
+            >
               <AgentAvatar
                 agent={agent}
                 size={size === 'sm' ? 'md' : size === 'md' ? 'lg' : 'xl'}
@@ -319,10 +407,10 @@ export function EnhancedAgentCard({
                 businessFunction={agent.business_function}
               />
             </div>
-            
-            {/* Can Spawn indicator */}
+
+            {/* Can Spawn indicator - Level 1-3 can spawn */}
             {agentLevel <= 3 && (
-              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-green-500 border-2 border-white flex items-center justify-center">
+              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center shadow-sm">
                 <Zap className="w-2 h-2 text-white" />
               </div>
             )}
@@ -335,36 +423,38 @@ export function EnhancedAgentCard({
               <div className="flex items-center gap-2">
                 {showLevel && <LevelBadge level={agentLevel} size={size} />}
                 {showLevelName && levelInfo && (
-                  <span className={cn(
-                    'font-semibold text-[#1A1A1A]',
-                    size === 'sm' ? 'text-[10px]' : size === 'md' ? 'text-[11px]' : 'text-xs'
-                  )}>
+                  <span
+                    className={cn(
+                      'font-semibold text-stone-800',
+                      size === 'sm' ? 'text-[10px]' : size === 'md' ? 'text-[11px]' : 'text-xs'
+                    )}
+                  >
                     {levelInfo.name}
                   </span>
                 )}
                 <StatusIndicator status={agentStatus} />
               </div>
-              
+
               {/* Actions Menu (for Edit/Delete) */}
               {(canEdit || canDelete) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-stone-500 hover:text-stone-900 hover:bg-stone-100"
                     >
                       <MoreVertical className="h-3.5 w-3.5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-36 bg-white border-gray-200">
+                  <DropdownMenuContent align="end" className="w-36 bg-white border-stone-200">
                     {canEdit && onEdit && (
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
                           onEdit(agent);
                         }}
-                        className="text-gray-900 focus:bg-gray-50"
+                        className="text-stone-900 focus:bg-stone-50"
                       >
                         <Edit className="h-3.5 w-3.5 mr-2" />
                         Edit
@@ -372,15 +462,15 @@ export function EnhancedAgentCard({
                     )}
                     {canDelete && onDelete && (
                       <>
-                        {canEdit && <DropdownMenuSeparator className="bg-gray-200" />}
-                        <DropdownMenuItem 
+                        {canEdit && <DropdownMenuSeparator className="bg-stone-200" />}
+                        <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
                             if (confirm(`Delete "${agent.display_name || agent.name}"?`)) {
                               onDelete(agent);
                             }
                           }}
-                          className="text-[#EF4444] focus:text-[#EF4444] focus:bg-red-50"
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
                         >
                           <Trash2 className="h-3.5 w-3.5 mr-2" />
                           Delete
@@ -393,41 +483,39 @@ export function EnhancedAgentCard({
             </div>
 
             {/* Agent Name */}
-            <h4 className={cn(
-              'text-[#1A1A1A] truncate',
-              'group-hover:text-[#9B5DE0] transition-colors',
-              config.title
-            )}>
+            <h4
+              className={cn(
+                'text-stone-900 truncate',
+                'group-hover:text-purple-700 transition-colors duration-200',
+                config.title
+              )}
+            >
               {agent.display_name || agent.name}
             </h4>
-            
+
             {/* Function/Department - Muted */}
             {(agent.business_function || agent.department) && (
-              <p className={cn(
-                'text-[#555555] truncate mt-0.5',
-                config.description
-              )}>
+              <p className={cn('text-stone-500 truncate mt-0.5', config.description)}>
                 {agent.business_function || agent.department}
               </p>
             )}
 
             {/* Description - 2 lines max */}
-            <p className={cn(
-              'text-[#555555] mt-1 line-clamp-2 leading-snug',
-              config.description
-            )}>
+            <p className={cn('text-stone-600 mt-1 line-clamp-2 leading-snug', config.description)}>
               {agent.description}
             </p>
 
-            {/* Capabilities - Minimal pills */}
+            {/* Capabilities - Premium pills with hover effects */}
             {agent.capabilities && agent.capabilities.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
-                {agent.capabilities.slice(0, 2).map((capability, index) => (
+                {agent.capabilities.slice(0, 2).map((capability: string, index: number) => (
                   <span
                     key={index}
                     className={cn(
                       'inline-flex items-center rounded-md',
-                      'bg-gray-100 text-gray-600',
+                      'bg-stone-100 text-stone-600',
+                      'hover:bg-purple-50 hover:text-purple-700',
+                      'transition-colors duration-200',
                       'font-medium',
                       config.badge
                     )}
@@ -436,12 +524,14 @@ export function EnhancedAgentCard({
                   </span>
                 ))}
                 {agent.capabilities.length > 2 && (
-                  <span className={cn(
-                    'inline-flex items-center rounded-md',
-                    'bg-transparent text-[#9B5DE0] border border-[#9B5DE0]/30',
-                    'font-medium',
-                    config.badge
-                  )}>
+                  <span
+                    className={cn(
+                      'inline-flex items-center rounded-md',
+                      'bg-purple-50 text-purple-600 border border-purple-200',
+                      'font-medium',
+                      config.badge
+                    )}
+                  >
                     +{agent.capabilities.length - 2}
                   </span>
                 )}
@@ -449,27 +539,35 @@ export function EnhancedAgentCard({
             )}
 
             {/* Action Row - Stats + Action Buttons */}
-            <div className="mt-2.5 pt-2.5 border-t border-gray-200">
+            <div className="mt-2.5 pt-2.5 border-t border-stone-100">
               <div className="flex items-center justify-between">
                 {/* Stats Badges */}
                 {(() => {
-                  const idHash = (agent.id || agent.name || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                  const consultations = (agent as any).consultation_count ?? (agent as any).usage_count ?? (50 + (idHash % 500));
-                  const satisfaction = (agent as any).satisfaction_rating ?? (agent as any).rating ?? (85 + (idHash % 15));
+                  const idHash = (agent.id || agent.name || '')
+                    .split('')
+                    .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+                  const consultations =
+                    (agent as any).consultation_count ??
+                    (agent as any).usage_count ??
+                    50 + (idHash % 500);
+                  const satisfaction =
+                    (agent as any).satisfaction_rating ??
+                    (agent as any).rating ??
+                    85 + (idHash % 15);
 
                   return (
                     <div className="flex items-center gap-3">
                       {/* Consultation Count */}
                       <div className="inline-flex items-center gap-1">
-                        <MessageCircle className="w-3 h-3 text-[#0046FF]" />
-                        <span className="font-semibold text-[#1A1A1A] text-[10px]">
+                        <MessageCircle className="w-3 h-3 text-blue-500" />
+                        <span className="font-semibold text-stone-700 text-[10px]">
                           {consultations}
                         </span>
                       </div>
                       {/* Satisfaction Rating */}
                       <div className="inline-flex items-center gap-1">
-                        <ThumbsUp className="w-3 h-3 text-[#22c55e]" />
-                        <span className="font-semibold text-[#1A1A1A] text-[10px]">
+                        <ThumbsUp className="w-3 h-3 text-emerald-500" />
+                        <span className="font-semibold text-stone-700 text-[10px]">
                           {satisfaction}%
                         </span>
                       </div>
@@ -477,9 +575,9 @@ export function EnhancedAgentCard({
                   );
                 })()}
 
-                {/* Action Buttons - All icon-only */}
+                {/* Action Buttons - All icon-only with Brand v6.0 styling */}
                 <div className="flex items-center gap-1.5">
-                  {/* Add to Chat Button */}
+                  {/* Add to Chat Button - Primary action */}
                   {onAddToChat && (
                     <TooltipProvider>
                       <Tooltip>
@@ -493,8 +591,9 @@ export function EnhancedAgentCard({
                             size="icon"
                             className={cn(
                               'flex-shrink-0',
-                              'border-[#9B5DE0]/30 text-[#9B5DE0]',
-                              'hover:bg-[#9B5DE0] hover:text-white hover:border-[#9B5DE0]',
+                              'border-purple-300 text-purple-600',
+                              'hover:bg-purple-600 hover:text-white hover:border-purple-600',
+                              'hover:shadow-md hover:shadow-purple-200',
                               'transition-all duration-200',
                               'h-7 w-7'
                             )}
@@ -502,7 +601,7 @@ export function EnhancedAgentCard({
                             <MessageSquarePlus className="w-3.5 h-3.5" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" className="bg-[#1A1A1A] text-white text-xs">
+                        <TooltipContent className="bg-stone-900 text-white text-xs">
                           Add to Chat
                         </TooltipContent>
                       </Tooltip>
@@ -523,8 +622,8 @@ export function EnhancedAgentCard({
                             size="icon"
                             className={cn(
                               'flex-shrink-0',
-                              'border-gray-200 text-[#555555]',
-                              'hover:text-[#9B5DE0] hover:border-[#9B5DE0]/30 hover:bg-[#9B5DE0]/5',
+                              'border-stone-200 text-stone-500',
+                              'hover:text-purple-600 hover:border-purple-200 hover:bg-purple-50',
                               'transition-all duration-200',
                               'h-7 w-7'
                             )}
@@ -532,7 +631,7 @@ export function EnhancedAgentCard({
                             <Copy className="w-3.5 h-3.5" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" className="bg-[#1A1A1A] text-white text-xs">
+                        <TooltipContent className="bg-stone-900 text-white text-xs">
                           Duplicate Agent
                         </TooltipContent>
                       </Tooltip>
@@ -555,8 +654,8 @@ export function EnhancedAgentCard({
                               'flex-shrink-0',
                               'transition-all duration-200',
                               isBookmarked
-                                ? 'text-[#9B5DE0] border-[#9B5DE0]/30 bg-[#9B5DE0]/10'
-                                : 'border-gray-200 text-[#555555] hover:text-[#9B5DE0] hover:border-[#9B5DE0]/30 hover:bg-[#9B5DE0]/5',
+                                ? 'text-purple-600 border-purple-300 bg-purple-50'
+                                : 'border-stone-200 text-stone-500 hover:text-purple-600 hover:border-purple-200 hover:bg-purple-50',
                               'h-7 w-7'
                             )}
                           >
@@ -567,7 +666,7 @@ export function EnhancedAgentCard({
                             )}
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" className="bg-[#1A1A1A] text-white text-xs">
+                        <TooltipContent className="bg-stone-900 text-white text-xs">
                           {isBookmarked ? 'Remove Bookmark' : 'Bookmark Agent'}
                         </TooltipContent>
                       </Tooltip>
@@ -590,15 +689,15 @@ export function EnhancedAgentCard({
                               'flex-shrink-0',
                               'transition-all duration-200',
                               isInComparison
-                                ? 'text-[#0046FF] border-[#0046FF]/30 bg-[#0046FF]/10'
-                                : 'border-gray-200 text-[#555555] hover:text-[#0046FF] hover:border-[#0046FF]/30 hover:bg-[#0046FF]/5',
+                                ? 'text-blue-600 border-blue-300 bg-blue-50'
+                                : 'border-stone-200 text-stone-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50',
                               'h-7 w-7'
                             )}
                           >
                             <ArrowRightLeft className="w-3.5 h-3.5" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" className="bg-[#1A1A1A] text-white text-xs">
+                        <TooltipContent className="bg-stone-900 text-white text-xs">
                           {isInComparison ? 'Remove from Compare' : 'Add to Compare'}
                         </TooltipContent>
                       </Tooltip>

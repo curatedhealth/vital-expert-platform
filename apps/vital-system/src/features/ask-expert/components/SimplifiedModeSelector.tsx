@@ -51,8 +51,8 @@ const MODE_MATRIX: Record<string, ModeInfo> = {
     title: 'Focused Expert Conversation',
     description: 'Have an in-depth conversation with your chosen expert',
     icon: <MessageSquare className="h-6 w-6" />,
-    color: 'text-blue-600',
-    gradient: 'from-blue-500 to-cyan-500',
+    color: 'text-purple-600',
+    gradient: 'from-purple-500 to-violet-500',
     features: [
       'Pick your expert',
       'Multi-turn conversation',
@@ -164,14 +164,14 @@ export function SimplifiedModeSelector({
         <Card className={`p-6 border-2 transition-all ${
           isAutonomous
             ? 'border-amber-400 bg-amber-50'
-            : 'border-blue-400 bg-blue-50'
+            : 'border-purple-400 bg-purple-50'
         }`}>
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-3">
               {isAutonomous ? (
                 <Zap className="h-8 w-8 text-amber-600" />
               ) : (
-                <MessageSquare className="h-8 w-8 text-blue-600" />
+                <MessageSquare className="h-8 w-8 text-purple-600" />
               )}
               <div>
                 <Label className="text-lg font-semibold">
@@ -190,16 +190,16 @@ export function SimplifiedModeSelector({
           <div className="space-y-3">
             <div className={`p-3 rounded-lg transition-all ${
               !isAutonomous
-                ? 'bg-blue-100 border-2 border-blue-400'
+                ? 'bg-purple-100 border-2 border-purple-400'
                 : 'bg-canvas-surface border border-neutral-200'
             }`}>
               <div className="flex items-center space-x-2 mb-1">
-                <MessageSquare className="h-4 w-4 text-blue-600" />
+                <MessageSquare className="h-4 w-4 text-purple-600" />
                 <span className="font-medium text-sm text-neutral-900">
                   Interactive
                 </span>
                 {!isAutonomous && (
-                  <Badge variant="default" className="ml-auto bg-blue-600">
+                  <Badge variant="default" className="ml-auto bg-purple-600">
                     Selected
                   </Badge>
                 )}

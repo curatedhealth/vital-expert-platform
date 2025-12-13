@@ -17,7 +17,7 @@
  * - GraphRAG + Vector + Relational hybrid scoring visualization
  *
  * Design System: VITAL Brand v6.0
- * - Mode 2: Blue theme (interactive)
+ * - Mode 2: Violet theme (interactive)
  * - Mode 4: Purple theme (autonomous)
  *
  * Phase 2 Implementation - December 11, 2025
@@ -142,6 +142,7 @@ const EXAMPLE_PROMPTS = [
 // THEME CONFIGURATION
 // =============================================================================
 
+// Brand v6.0 Purple-centric theme configuration
 const THEME_CONFIG: Record<FusionMode, {
   accent: string;
   accentBg: string;
@@ -150,18 +151,18 @@ const THEME_CONFIG: Record<FusionMode, {
   ring: string;
 }> = {
   mode2: {
-    accent: 'text-blue-600',
-    accentBg: 'bg-blue-50',
-    accentHover: 'hover:bg-blue-100',
-    gradient: 'from-blue-500 to-blue-600',
-    ring: 'focus:ring-blue-500',
+    accent: 'text-violet-600',
+    accentBg: 'bg-violet-50',
+    accentHover: 'hover:bg-violet-100',
+    gradient: 'from-violet-500 to-violet-600',
+    ring: 'focus:ring-violet-500',
   },
   mode4: {
-    accent: 'text-[var(--ae-accent-primary,#9055E0)]',
-    accentBg: 'bg-[var(--ae-accent-light,rgba(144,85,224,0.08))]',
-    accentHover: 'hover:bg-[var(--ae-accent-light,rgba(144,85,224,0.12))]',
-    gradient: 'from-[#9055E0] to-[#7C3AED]',
-    ring: 'focus:ring-[var(--ae-accent-primary,#9055E0)]',
+    accent: 'text-purple-600',
+    accentBg: 'bg-purple-50',
+    accentHover: 'hover:bg-purple-100',
+    gradient: 'from-purple-600 to-purple-700',
+    ring: 'focus:ring-purple-500',
   },
 };
 
@@ -353,19 +354,19 @@ export function FusionSelector({
 
               {/* Categorized Example Prompts */}
               <div className="mt-8">
-                <p className="text-sm text-slate-500 mb-4 text-center">Try asking about:</p>
+                <p className="text-sm text-stone-500 mb-4 text-center">Try asking about:</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {EXAMPLE_PROMPTS.map((category, catIdx) => (
                     <div
                       key={catIdx}
                       className={cn(
                         'p-4 rounded-xl border bg-white/60 backdrop-blur-sm',
-                        'hover:border-blue-200 hover:bg-blue-50/30 transition-colors'
+                        'hover:border-purple-200 hover:bg-purple-50/30 transition-colors'
                       )}
                     >
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-lg">{category.icon}</span>
-                        <span className="text-sm font-medium text-slate-700">{category.category}</span>
+                        <span className="text-sm font-medium text-stone-700">{category.category}</span>
                       </div>
                       <div className="space-y-2">
                         {category.prompts.map((prompt, promptIdx) => (
@@ -375,8 +376,8 @@ export function FusionSelector({
                             className={cn(
                               'w-full text-left text-sm px-3 py-2 rounded-lg',
                               'transition-all duration-200',
-                              'hover:bg-blue-100 hover:text-blue-700',
-                              'text-slate-600 bg-slate-50/80'
+                              'hover:bg-purple-100 hover:text-purple-700',
+                              'text-stone-600 bg-stone-50/80'
                             )}
                           >
                             {prompt.text}

@@ -76,7 +76,7 @@ function CheckpointIcon({ type }: { type: string }) {
     case 'sub_agent_spawning':
       return <GitBranch className="h-5 w-5 text-purple-500" />;
     case 'critical_decision':
-      return <ShieldCheck className="h-5 w-5 text-red-500" />;
+      return <ShieldCheck className="h-5 w-5 text-rose-500" />;
     case 'artifact_generation':
       return <Settings className="h-5 w-5 text-green-500" />;
     default:
@@ -219,7 +219,7 @@ function ApprovalCard({ approval, onApprove, onReject, onModify }: ApprovalCardP
               size="sm"
               onClick={handleReject}
               disabled={isProcessing}
-              className="text-red-600 hover:bg-red-50"
+              className="text-rose-600 hover:bg-rose-50"
             >
               <XCircle className="h-4 w-4 mr-1" />
               Reject
@@ -477,7 +477,7 @@ export function HITLReviewPanel({
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <RefreshCw className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-4" />
           <p className="text-neutral-600">Loading HITL approvals...</p>
         </div>
       </div>
@@ -568,7 +568,7 @@ export function HITLReviewPanel({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-rose-600">
                 {stats.total_rejected}
               </div>
             </CardContent>
@@ -590,9 +590,9 @@ export function HITLReviewPanel({
 
       {/* Error Display */}
       {error && (
-        <Card className="border-red-500 bg-red-50 dark:bg-red-900/20">
+        <Card className="border-rose-500 bg-rose-50 dark:bg-red-900/20">
           <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-red-600">
+            <div className="flex items-center gap-2 text-rose-600">
               <AlertTriangle className="h-5 w-5" />
               <span>{error}</span>
             </div>

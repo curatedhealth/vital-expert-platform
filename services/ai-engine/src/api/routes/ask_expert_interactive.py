@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [1, 2]
+# DEPENDENCIES: [langgraph_workflows.ask_expert, services.graphrag_selector, core.security, core.resilience, streaming.token_streamer]
 """
 Ask Expert Interactive API Routes - Mode 1 & Mode 2 (Consultations)
 

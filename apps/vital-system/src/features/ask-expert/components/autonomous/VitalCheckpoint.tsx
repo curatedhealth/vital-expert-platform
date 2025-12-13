@@ -110,9 +110,9 @@ const TYPE_CONFIG: Record<CheckpointType, {
 }> = {
   plan_approval: {
     icon: FileText,
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/30',
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-500/10',
+    borderColor: 'border-purple-500/30',
     title: 'Plan Approval',
     urgency: 'medium',
     helpText: 'Review the proposed plan before execution begins',

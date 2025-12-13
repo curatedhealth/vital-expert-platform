@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: STUB
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: []
 """
 Missions API - status endpoints (Phase 1 stub).
 """

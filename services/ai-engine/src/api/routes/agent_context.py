@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [All]
+# DEPENDENCIES: [supabase, api.enhanced_features]
 """
 VITAL API - Agent Context Endpoints
 ====================================

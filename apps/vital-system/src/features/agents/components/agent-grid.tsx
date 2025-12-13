@@ -122,7 +122,7 @@ export const AgentGrid: React.FC<AgentGridProps> = ({
 
   // Get card height for virtual scrolling estimation
   const cardHeight = CARD_SIZES[cardSize].height;
-  const gap = 16; // 1rem gap between cards
+  const gap = 12; // tighten vertical spacing
   const rowHeight = cardHeight + gap;
 
   // Calculate total rows (agents divided by columns, rounded up)

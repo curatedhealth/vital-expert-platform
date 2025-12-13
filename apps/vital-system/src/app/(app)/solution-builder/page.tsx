@@ -1,13 +1,12 @@
 'use client';
 
-import { Rocket, Star, CheckCircle, ArrowRight, Layers, Box, Clock } from 'lucide-react';
+import { Star, CheckCircle, ArrowRight, Layers, Box, Clock, Rocket } from 'lucide-react';
 import { useState } from 'react';
 import Image from 'next/image';
 
 import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
-import { PageHeader } from '@/components/page-header';
 
 // Helper function to render icons
 const renderIcon = (iconPath: string, size: number = 48) => {
@@ -157,32 +156,15 @@ export default function SolutionBuilderPage() {
 
   const getComplexityColor = (complexity: string) => {
     switch (complexity) {
-      case 'low': return 'bg-green-100 text-green-700 border-green-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'high': return 'bg-red-100 text-red-700 border-red-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'low': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'medium': return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'high': return 'bg-rose-100 text-rose-700 border-rose-200';
+      default: return 'bg-stone-100 text-stone-700 border-stone-200';
     }
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Page Header */}
-      <PageHeader
-        icon={Rocket}
-        title="Solution Builder"
-        description="Build digital health solutions with pre-validated templates"
-        actions={
-          <Button
-            size="default"
-            className="flex items-center gap-2"
-            onClick={() => window.alert('Custom solution builder coming soon!')}
-          >
-            <Layers className="h-4 w-4" />
-            Start from Scratch
-          </Button>
-        }
-      />
-
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6">
@@ -311,7 +293,7 @@ export default function SolutionBuilderPage() {
                     <div className="space-y-2">
                       {selectedTemplate.features.map((feature, index) => (
                         <div key={index} className="flex items-start gap-2">
-                          <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
                           <span className="text-sm">{feature}</span>
                         </div>
                       ))}

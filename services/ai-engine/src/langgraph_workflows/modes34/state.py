@@ -1,3 +1,12 @@
+# PRODUCTION_TAG: PRODUCTION_CORE
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: []
+"""
+Mode 3/4 Mission State TypedDict definitions.
+
+Contains MissionState for autonomous deep research workflows.
+"""
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, TypedDict

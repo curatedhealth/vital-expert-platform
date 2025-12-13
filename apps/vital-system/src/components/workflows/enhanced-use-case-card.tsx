@@ -38,15 +38,15 @@ interface UseCaseCardProps {
 
 const COMPLEXITY_CONFIG = {
   Basic: {
-    color: 'text-green-700',
-    bg: 'bg-green-100',
-    border: 'border-green-200',
+    color: 'text-emerald-700',
+    bg: 'bg-emerald-100',
+    border: 'border-emerald-200',
     icon: Zap
   },
   Intermediate: {
-    color: 'text-blue-700',
-    bg: 'bg-blue-100',
-    border: 'border-blue-200',
+    color: 'text-sky-700',
+    bg: 'bg-sky-100',
+    border: 'border-sky-200',
     icon: Layers
   },
   Advanced: {
@@ -56,9 +56,9 @@ const COMPLEXITY_CONFIG = {
     icon: TrendingUp
   },
   Expert: {
-    color: 'text-red-700',
-    bg: 'bg-red-100',
-    border: 'border-red-200',
+    color: 'text-rose-700',
+    bg: 'bg-rose-100',
+    border: 'border-rose-200',
     icon: TrendingUp
   }
 };
@@ -123,8 +123,8 @@ export function EnhancedUseCaseCard({
           <div className="grid grid-cols-2 gap-2">
             {/* Duration */}
             <div className="flex items-center gap-1.5 text-xs">
-              <div className="p-1.5 bg-blue-50 rounded">
-                <Clock className="h-3.5 w-3.5 text-blue-600" />
+              <div className="p-1.5 bg-sky-50 rounded">
+                <Clock className="h-3.5 w-3.5 text-sky-600" />
               </div>
               <div>
                 <p className="text-[10px] text-medical-gray uppercase tracking-wide">Duration</p>
@@ -149,8 +149,8 @@ export function EnhancedUseCaseCard({
 
             {/* Tasks */}
             <div className="flex items-center gap-1.5 text-xs">
-              <div className="p-1.5 bg-green-50 rounded">
-                <FileText className="h-3.5 w-3.5 text-green-600" />
+              <div className="p-1.5 bg-emerald-50 rounded">
+                <FileText className="h-3.5 w-3.5 text-emerald-600" />
               </div>
               <div>
                 <p className="text-[10px] text-medical-gray uppercase tracking-wide">Tasks</p>

@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_CORE
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [1, 2, 3, 4]
+# DEPENDENCIES: [input_processor, rag_retriever, response_formatter, error_handler, l3_context_engineer, parallel_tools_executor]
 """
 VITAL Path AI Services - Ask Expert Shared Nodes
 

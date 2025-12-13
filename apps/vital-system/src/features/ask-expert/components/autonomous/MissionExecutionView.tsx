@@ -912,7 +912,7 @@ export const MissionExecutionView: React.FC<MissionExecutionViewProps> = ({
             {state.sources.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
-                  <Link2 className="w-4 h-4 text-blue-400" />
+                  <Link2 className="w-4 h-4 text-purple-400" />
                   Sources Found
                 </h4>
                 <div className="space-y-2">
@@ -921,16 +921,16 @@ export const MissionExecutionView: React.FC<MissionExecutionViewProps> = ({
                       key={source.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="flex items-center gap-2 p-2 bg-blue-500/10 rounded-lg"
+                      className="flex items-center gap-2 p-2 bg-purple-500/10 rounded-lg"
                     >
-                      <Link2 className="w-4 h-4 text-blue-400" />
-                      <span className="text-sm text-blue-300 truncate">{source.title}</span>
+                      <Link2 className="w-4 h-4 text-purple-400" />
+                      <span className="text-sm text-purple-300 truncate">{source.title}</span>
                       {source.url && (
                         <a
                           href={source.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-blue-400 hover:underline ml-auto"
+                          className="text-xs text-purple-400 hover:underline ml-auto"
                         >
                           Open
                         </a>

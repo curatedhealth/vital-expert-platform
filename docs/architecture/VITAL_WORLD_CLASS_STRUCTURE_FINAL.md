@@ -1,9 +1,12 @@
 # VITAL Path - World-Class Project Structure (FINAL)
 
-**Version:** 4.0 (WORLD-CLASS COMPLETE)  
-**Date:** December 5, 2025  
-**Status:** ✅ ALL WORLD-CLASS COMPONENTS COMPLETE  
+**Version:** 4.1 (WORLD-CLASS COMPLETE + Production Registry)
+**Date:** December 5, 2025
+**Updated:** December 13, 2025
+**Status:** ✅ ALL WORLD-CLASS COMPONENTS COMPLETE
 **Type:** AI Healthcare Platform - Modular Monolith Architecture
+
+> **See Also:** [`PRODUCTION_FILE_REGISTRY.md`](./PRODUCTION_FILE_REGISTRY.md) - Complete file-level inventory with production tags
 
 ---
 
@@ -212,6 +215,32 @@ vital-path/
 ---
 
 ## Backend Architecture (Golden Standard)
+
+> **Production Status:** ✅ 132 files tagged with production status
+> **See:** [`PRODUCTION_FILE_REGISTRY.md`](./PRODUCTION_FILE_REGISTRY.md) for complete file inventory
+
+### Backend Production Status (December 2025)
+
+| Category | Files | Tag | Status |
+|----------|------:|-----|--------|
+| Streaming Infrastructure | 6 | PRODUCTION_READY | ✅ All modes |
+| Validation (M9, M10) | 3 | PRODUCTION_READY | ✅ Modes 3, 4 |
+| Core Infrastructure | 3 | PRODUCTION_CORE | ✅ All modes |
+| API Routes | 26 | PRODUCTION_READY | ✅ All modes |
+| LangGraph Workflows | 15 | PRODUCTION_READY | ✅ Modes 1-4 |
+| GraphRAG Services | 8 | PRODUCTION_READY | ✅ Agent selection |
+| Services | 12 | PRODUCTION_READY | ✅ Core services |
+| **Total Backend** | **73** | **✅** | **Ready for Production** |
+
+### Production File Tags (Applied to Source Files)
+
+```python
+# PRODUCTION_TAG: PRODUCTION_READY | PRODUCTION_CORE | NEEDS_REVIEW | DEPRECATED | EXPERIMENTAL
+# LAST_VERIFIED: YYYY-MM-DD
+# MODES_SUPPORTED: [1, 2, 3, 4] or [All]
+# DEPENDENCIES: [list of critical imports]
+# PHASE: (optional) M8/M9/M10 for Phase 3 MEDIUM priority
+```
 
 ### services/ai-engine/ - The FINAL Structure
 
@@ -490,10 +519,42 @@ services/ai-engine/
 
 ## Frontend Architecture
 
-### apps/web/ Structure
+> **Production Status:** ✅ 318 files tagged as PRODUCTION_READY
+> **See:** [`PRODUCTION_FILE_REGISTRY.md`](./PRODUCTION_FILE_REGISTRY.md) for complete file inventory
+
+### Production-Ready Components (December 2025)
+
+| Category | Files | Status |
+|----------|------:|--------|
+| Sidebar Views | 17 | ✅ PRODUCTION_READY |
+| Sidebar Shared | 4 | ✅ PRODUCTION_READY |
+| Navigation | 2 | ✅ PRODUCTION_READY |
+| Landing | 14 | ✅ PRODUCTION_READY |
+| @vital/ui | 81 | ✅ PRODUCTION_READY |
+| @vital/vital-ai-ui | 171 | ✅ PRODUCTION_READY |
+| Page Routes | 25 | ✅ PRODUCTION_READY |
+| **Total** | **314** | **✅ Ready for Deployment** |
+
+### Key Production Components
+
+**Sidebar System (Refactored December 13, 2025):**
+- `components/sidebar/views/` - 17 modular view components (4,985 lines)
+- `components/sidebar/shared/` - 3 reusable components (124 lines)
+- URL-based state management with `useSearchParams()`
+- Cascading filters (Industry → Function → Department → Role → JTBD)
+
+**Navigation (Brand v6.0):**
+- `MainNavbar.tsx` - Hub | Consult | Discover | Craft | Optimize structure
+- Consult includes: Ask Expert, Ask Panel, Workflows, Solution Builder
+
+**Shared Packages:**
+- `@vital/ui` - 81 shadcn-based components
+- `@vital/vital-ai-ui` - 171 AI-specific components (agents, reasoning, workflow)
+
+### apps/vital-system/ Structure (Actual)
 
 ```
-apps/web/
+apps/vital-system/
 │
 ├── 📁 src/
 │   │

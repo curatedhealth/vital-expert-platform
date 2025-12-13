@@ -217,6 +217,7 @@ interface GraphState {
   zoom: number;
   panPosition: { x: number; y: number };
   interactionMode: InteractionMode;
+  fitVersion: number;
 
   // Filters
   nodeFilters: NodeFilter[];
@@ -304,6 +305,7 @@ export const useGraphStore = create<GraphState>()(
         zoom: 1,
         panPosition: { x: 0, y: 0 },
         interactionMode: "pan",
+        fitVersion: 0,
 
         nodeFilters: DEFAULT_NODE_FILTERS,
         searchQuery: "",
@@ -335,6 +337,10 @@ export const useGraphStore = create<GraphState>()(
             }
 
             const data: GraphResponse = await response.json();
+            if (!data.nodes?.length) {
+              throw new Error("Supabase returned no nodes");
+            }
+
             set({
               nodes: data.nodes,
               edges: data.edges,
@@ -356,6 +362,10 @@ export const useGraphStore = create<GraphState>()(
               if (!response.ok) throw new Error("AI Engine unavailable");
 
               const data: GraphResponse = await response.json();
+              if (!data.nodes?.length) {
+                throw new Error("AI Engine returned no nodes");
+              }
+
               set({
                 nodes: data.nodes,
                 edges: data.edges,
@@ -584,12 +594,55 @@ export const useGraphStore = create<GraphState>()(
 
         fetchNodeNeighbors: async (nodeId, maxHops = 2) => {
           set({ isLoading: true, error: null });
-          try {
-            // For now, fetch full graph and filter locally
-            // A more sophisticated approach would add a /neighbors endpoint
-            const { nodes, edges } = get();
 
-            // Find neighbors by traversing edges
+          // Try Neo4j neighbors endpoint first (read-only). Merge results into current graph.
+          try {
+            const params = new URLSearchParams({ nodeId, limit: String(200) });
+            const response = await fetch(`${NEO4J_API}?${params.toString()}`);
+            const data: GraphResponse = await response.json();
+
+            if (response.ok && data.nodes?.length) {
+              const existing = get();
+              const seenNodes = new Set(existing.nodes.map((n) => n.id));
+              const seenEdges = new Set(existing.edges.map((e) => e.id));
+
+              const mergedNodes = [...existing.nodes];
+              data.nodes.forEach((n) => {
+                if (!seenNodes.has(n.id)) {
+                  mergedNodes.push(n);
+                  seenNodes.add(n.id);
+                }
+              });
+
+              const mergedEdges = [...existing.edges];
+              data.edges.forEach((e) => {
+                if (!seenEdges.has(e.id)) {
+                  mergedEdges.push(e);
+                  seenEdges.add(e.id);
+                }
+              });
+
+              set((state) => ({
+                nodes: mergedNodes,
+                edges: mergedEdges,
+                selection: {
+                  ...state.selection,
+                  selectedNodeIds: [nodeId],
+                  highlightedNodeIds: mergedNodes.map((n) => n.id).filter((id) => id !== nodeId),
+                },
+                mode: "live",
+                dataSource: "neo4j",
+                isLoading: false,
+              }));
+              return;
+            }
+          } catch (error) {
+            console.warn("Neo4j neighbor fetch failed, falling back to local traversal:", error);
+          }
+
+          // Fallback: local traversal on current edges
+          try {
+            const { nodes, edges } = get();
             const neighborIds = new Set<string>();
             const visitedNodes = new Set<string>();
             const queue: { id: string; hops: number }[] = [{ id: nodeId, hops: 0 }];
@@ -610,7 +663,6 @@ export const useGraphStore = create<GraphState>()(
               });
             }
 
-            // Highlight neighbor nodes
             set((state) => ({
               selection: {
                 ...state.selection,
@@ -788,8 +840,10 @@ export const useGraphStore = create<GraphState>()(
         setInteractionMode: (mode) => set({ interactionMode: mode }),
 
         fitToView: () => {
-          // This would be called from the graph component
-          set({ zoom: 1, panPosition: { x: 0, y: 0 } });
+          // Signal the canvas to fit bounds
+          set((state) => ({
+            fitVersion: state.fitVersion + 1,
+          }));
         },
 
         focusOnNode: (nodeId) => {

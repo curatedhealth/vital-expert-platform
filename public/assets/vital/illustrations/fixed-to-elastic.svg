@@ -1,0 +1,22 @@
+<svg width="400" height="200" viewBox="0 0 400 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rigid Structure -->
+  <rect x="20" y="70" width="20" height="20" fill="#1A1A1A"/>
+  <rect x="50" y="70" width="20" height="20" fill="#1A1A1A"/>
+  <rect x="80" y="70" width="20" height="20" fill="#1A1A1A"/>
+  <rect x="20" y="100" width="20" height="20" fill="#1A1A1A"/>
+  <rect x="50" y="100" width="20" height="20" fill="#1A1A1A"/>
+  <rect x="80" y="100" width="20" height="20" fill="#1A1A1A"/>
+  <rect x="20" y="130" width="20" height="20" fill="#1A1A1A"/>
+  <rect x="50" y="130" width="20" height="20" fill="#1A1A1A"/>
+  <rect x="80" y="130" width="20"height="20" fill="#1A1A1A"/>
+
+  <!-- Transformation Arrow -->
+  <path d="M150 110L190 110" stroke="#1A1A1A" stroke-width="2"/>
+  <path d="M185 105L190 110L185 115" stroke="#1A1A1A" stroke-width="2"/>
+
+  <!-- Elastic Structure -->
+  <circle cx="250" cy="90" r="15" fill="#9B5DE0"/>
+  <circle cx="290" cy="130" r="20" fill="#FF3796"/>
+  <rect x="320" y="80" width="40" height="40" rx="10" fill="#00B5AD"/>
+  <circle cx="260" cy="140" r="10" fill="#FF6B00"/>
+</svg>

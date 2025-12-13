@@ -43,8 +43,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'active';
-    const level = searchParams.get('level'); // Filter by agent level (1, 2, 3, etc.)
-    const limit = searchParams.get('limit') || '50';
+    const level = searchParams.get('level'); // Filter by agent level (level_number or agent_level_id)
+    const limit = searchParams.get('limit') || '10000';
 
     console.log(`[${requestId}] Fetching agents from Supabase`, {
       url: supabaseUrl,
@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
       limit,
     });
 
-    // Build query - Include organizational structure IDs and names
-    // Note: Only select columns that actually exist in the agents table
+    // Build query - Include organizational structure IDs and names.
+    // Note: Only select columns that actually exist in the agents table.
     let query = supabaseAdmin
       .from('agents')
       .select(`
@@ -82,8 +82,6 @@ export async function GET(request: NextRequest) {
         function_id,
         department_name,
         department_id,
-        level,
-        tier,
         agent_level_id
       `);
 
@@ -92,14 +90,34 @@ export async function GET(request: NextRequest) {
       query = query.eq('status', status);
     }
 
-    // Filter by level if specified (1=L1 Master, 2=L2 Expert, 3=L3 Specialist)
+    // Filter by level if specified.
+    // Accept either numeric level_number (1-5) or agent_level_id string.
     if (level) {
-      query = query.eq('level', parseInt(level, 10));
+      const maybeNumber = Number(level);
+      if (!Number.isNaN(maybeNumber)) {
+        // Lookup level_number -> id first
+        const { data: levelRow, error: levelErr } = await supabaseAdmin
+          .from('agent_levels')
+          .select('id')
+          .eq('level_number', maybeNumber)
+          .single();
+        if (!levelErr && levelRow?.id) {
+          query = query.eq('agent_level_id', levelRow.id);
+        } else {
+          // If no match, return empty quickly
+          return NextResponse.json(
+            { success: true, agents: [], count: 0, requestId },
+            { status: 200 }
+          );
+        }
+      } else {
+        query = query.eq('agent_level_id', level);
+      }
     }
 
     query = query
       .order('name', { ascending: true })
-      .limit(parseInt(limit, 10));
+      .limit(Math.min(parseInt(limit, 10), 10000));
 
     const { data, error } = await query;
 
@@ -190,5 +208,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-

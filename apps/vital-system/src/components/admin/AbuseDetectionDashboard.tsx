@@ -325,7 +325,7 @@ export function AbuseDetectionDashboard() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-4" />
+          <RefreshCw className="h-8 w-8 text-purple-600 animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Analyzing patterns...</p>
         </div>
       </div>
@@ -372,10 +372,10 @@ export function AbuseDetectionDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Critical Alerts</CardTitle>
-            <Ban className="h-4 w-4 text-red-600" />
+            <Ban className="h-4 w-4 text-rose-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.criticalAnomalies}</div>
+            <div className="text-2xl font-bold text-rose-600">{stats.criticalAnomalies}</div>
             <p className="text-xs text-muted-foreground">
               Require immediate action
             </p>

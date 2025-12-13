@@ -185,7 +185,7 @@ export default function ExecutiveDashboard() {
       case 'degraded':
         return 'text-yellow-500';
       case 'critical':
-        return 'text-red-500';
+        return 'text-rose-500';
       default:
         return 'text-neutral-500';
     }
@@ -198,7 +198,7 @@ export default function ExecutiveDashboard() {
       case 'degraded':
         return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       case 'critical':
-        return <XCircle className="h-5 w-5 text-red-500" />;
+        return <XCircle className="h-5 w-5 text-rose-500" />;
       default:
         return <Activity className="h-5 w-5 text-neutral-500" />;
     }
@@ -208,7 +208,7 @@ export default function ExecutiveDashboard() {
     if (trend > 0) {
       return <ArrowUpRight className="h-4 w-4 text-green-500" />;
     } else if (trend < 0) {
-      return <ArrowDownRight className="h-4 w-4 text-red-500" />;
+      return <ArrowDownRight className="h-4 w-4 text-rose-500" />;
     }
     return null;
   };
@@ -346,7 +346,7 @@ export default function ExecutiveDashboard() {
               {getTrendIcon(platformMetrics.activeUsersTrend)}
               <span
                 className={
-                  platformMetrics.activeUsersTrend > 0 ? 'text-green-500' : 'text-red-500'
+                  platformMetrics.activeUsersTrend > 0 ? 'text-green-500' : 'text-rose-500'
                 }
               >
                 {Math.abs(platformMetrics.activeUsersTrend)}%
@@ -367,7 +367,7 @@ export default function ExecutiveDashboard() {
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               {getTrendIcon(platformMetrics.sessionsTrend)}
               <span
-                className={platformMetrics.sessionsTrend > 0 ? 'text-green-500' : 'text-red-500'}
+                className={platformMetrics.sessionsTrend > 0 ? 'text-green-500' : 'text-rose-500'}
               >
                 {Math.abs(platformMetrics.sessionsTrend)}%
               </span>
@@ -387,7 +387,7 @@ export default function ExecutiveDashboard() {
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               {getTrendIcon(platformMetrics.queriesTrend)}
               <span
-                className={platformMetrics.queriesTrend > 0 ? 'text-green-500' : 'text-red-500'}
+                className={platformMetrics.queriesTrend > 0 ? 'text-green-500' : 'text-rose-500'}
               >
                 {Math.abs(platformMetrics.queriesTrend)}%
               </span>
@@ -433,7 +433,7 @@ export default function ExecutiveDashboard() {
                 <div className="text-2xl font-bold">{formatCost(costMetrics.dailyCost)}</div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   {getTrendIcon(costMetrics.dailyTrend)}
-                  <span className={costMetrics.dailyTrend > 0 ? 'text-red-500' : 'text-green-500'}>
+                  <span className={costMetrics.dailyTrend > 0 ? 'text-rose-500' : 'text-green-500'}>
                     {Math.abs(costMetrics.dailyTrend)}% from yesterday
                   </span>
                 </div>

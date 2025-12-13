@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_CORE
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [All]
+# DEPENDENCIES: [state_schemas, checkpoint_manager, base_workflow, observability, ask_expert.*, modes34.*]
 """
 LangGraph Workflows Package
 

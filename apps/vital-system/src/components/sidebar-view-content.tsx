@@ -2304,13 +2304,13 @@ export function SidebarPersonasContent() {
 
   return (
     <>
-      {/* Title */}
+      {/* Title - VITAL Brand v6.0: Purple accent */}
       <div className="px-2 py-3 mb-2">
         <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" />
-          <span className="text-base font-semibold">Personas</span>
+          <Users className="h-5 w-5 text-purple-600" />
+          <span className="text-base font-semibold text-stone-800">Personas</span>
         </div>
-        <p className="text-xs text-muted-foreground mt-1 ml-7">MECE user archetypes</p>
+        <p className="text-xs text-stone-500 mt-1 ml-7">MECE user archetypes</p>
       </div>
 
       {/* Views */}
@@ -2537,13 +2537,13 @@ export function SidebarJTBDContent() {
 
   return (
     <>
-      {/* Title */}
+      {/* Title - VITAL Brand v6.0: Purple accent */}
       <div className="px-2 py-3 mb-2">
         <div className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-primary" />
-          <span className="text-base font-semibold">Jobs-to-Be-Done</span>
+          <Target className="h-5 w-5 text-purple-600" />
+          <span className="text-base font-semibold text-stone-800">Jobs-to-Be-Done</span>
         </div>
-        <p className="text-xs text-muted-foreground mt-1 ml-7">ODI-scored job statements</p>
+        <p className="text-xs text-stone-500 mt-1 ml-7">ODI-scored job statements</p>
       </div>
 
       {/* Views */}
@@ -2892,6 +2892,15 @@ export function SidebarOntologyContent() {
 
   return (
     <>
+      {/* Title - VITAL Brand v6.0: Purple accent */}
+      <div className="px-2 py-3 mb-2">
+        <div className="flex items-center gap-2">
+          <Network className="h-5 w-5 text-purple-600" />
+          <span className="text-base font-semibold text-stone-800">Ontology Explorer</span>
+        </div>
+        <p className="text-xs text-stone-500 mt-1 ml-7">8-layer enterprise ontology</p>
+      </div>
+
       {/* Views */}
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup>

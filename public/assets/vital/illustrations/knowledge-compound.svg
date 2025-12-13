@@ -1,0 +1,21 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <g id="purple-cube">
+        <path d="M16 8L0 16L16 24L32 16L16 8Z" fill="#9055E0" fill-opacity="0.7"/>
+        <path d="M0 16V32L16 40V24L0 16Z" fill="#9055E0"/>
+        <path d="M16 40L32 32V16L16 24V40Z" fill="#9055E0" fill-opacity="0.9"/>
+    </g>
+  </defs>
+
+  <!-- Base Layer -->
+  <use href="#purple-cube" x="16" y="80"/>
+  <use href="#purple-cube" x="48" y="80"/>
+  <use href="#purple-cube" x="80" y="80"/>
+
+  <!-- Second Layer -->
+  <use href="#purple-cube" x="32" y="56"/>
+  <use href="#purple-cube" x="64" y="56"/>
+
+  <!-- Top Layer -->
+  <use href="#purple-cube" x="48" y="32"/>
+</svg>

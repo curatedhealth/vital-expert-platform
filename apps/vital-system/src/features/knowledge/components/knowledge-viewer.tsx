@@ -12,7 +12,7 @@ import {
   Globe,
   User,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
@@ -52,16 +52,44 @@ export function KnowledgeViewer() {
   const [selectedDomain, setSelectedDomain] = useState('all');
   const [selectedScope, setSelectedScope] = useState('all');
   const [expandedChunk, setExpandedChunk] = useState<string | null>(null);
-
-  const domains = [
+  const [domains, setDomains] = useState<{ value: string; label: string }[]>([
     { value: 'all', label: 'All Domains' },
-    { value: 'digital-health', label: 'Digital Health' },
-    { value: 'clinical-research', label: 'Clinical Research' },
-    { value: 'market-access', label: 'Market Access' },
-    { value: 'regulatory', label: 'Regulatory' },
-    { value: 'quality-assurance', label: 'Quality Assurance' },
-    { value: 'health-economics', label: 'Health Economics' },
-  ];
+  ]);
+
+  // Load live domains for search filters (fallback to a few defaults on error)
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDomains = async () => {
+      try {
+        const res = await fetch('/api/knowledge-domains');
+        if (!res.ok) return;
+        const body = await res.json();
+        if (isMounted && Array.isArray(body.domains) && body.domains.length > 0) {
+          const mapped = body.domains
+            .filter((d: any) => d.slug && d.name)
+            .map((d: any) => ({ value: d.slug, label: d.name }));
+          if (mapped.length > 0) {
+            setDomains([{ value: 'all', label: 'All Domains' }, ...mapped]);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('[KnowledgeViewer] Failed to load domains, using defaults.', err);
+      }
+      if (isMounted) {
+        setDomains([
+          { value: 'all', label: 'All Domains' },
+          { value: 'digital-health', label: 'Digital Health' },
+          { value: 'regulatory', label: 'Regulatory' },
+          { value: 'market-access', label: 'Market Access' },
+        ]);
+      }
+    };
+    fetchDomains();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const mockResults: KnowledgeChunk[] = [
     {

@@ -444,7 +444,7 @@ export function TemplateCustomizer({
               {/* Agent Configuration */}
               <CollapsibleSection
                 title="Agent Configuration"
-                icon={<Users className="w-5 h-5 text-blue-500" />}
+                icon={<Users className="w-5 h-5 text-violet-500" />}
               >
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">

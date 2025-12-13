@@ -92,16 +92,17 @@ export interface ReasoningChainViewerProps {
 // CONSTANTS
 // =============================================================================
 
+// Brand v6.0 Purple-centric reasoning type colors
 const TYPE_CONFIG: Record<ReasoningType, { icon: typeof Brain; color: string; bgColor: string; label: string }> = {
   analysis: { icon: Brain, color: 'text-purple-400', bgColor: 'bg-purple-500/20', label: 'Analysis' },
-  search: { icon: Search, color: 'text-blue-400', bgColor: 'bg-blue-500/20', label: 'Search' },
+  search: { icon: Search, color: 'text-violet-400', bgColor: 'bg-violet-500/20', label: 'Search' },
   synthesis: { icon: Sparkles, color: 'text-pink-400', bgColor: 'bg-pink-500/20', label: 'Synthesis' },
-  calculation: { icon: Calculator, color: 'text-cyan-400', bgColor: 'bg-cyan-500/20', label: 'Calculation' },
+  calculation: { icon: Calculator, color: 'text-fuchsia-400', bgColor: 'bg-fuchsia-500/20', label: 'Calculation' },
   inference: { icon: Lightbulb, color: 'text-amber-400', bgColor: 'bg-amber-500/20', label: 'Inference' },
   validation: { icon: CheckCircle2, color: 'text-green-400', bgColor: 'bg-green-500/20', label: 'Validation' },
-  decision: { icon: GitBranch, color: 'text-indigo-400', bgColor: 'bg-indigo-500/20', label: 'Decision' },
+  decision: { icon: GitBranch, color: 'text-violet-400', bgColor: 'bg-violet-500/20', label: 'Decision' },
   warning: { icon: AlertTriangle, color: 'text-orange-400', bgColor: 'bg-orange-500/20', label: 'Warning' },
-  insight: { icon: Lightbulb, color: 'text-yellow-400', bgColor: 'bg-yellow-500/20', label: 'Insight' },
+  insight: { icon: Lightbulb, color: 'text-amber-400', bgColor: 'bg-amber-500/20', label: 'Insight' },
 };
 
 // =============================================================================
@@ -270,13 +271,13 @@ const ReasoningNodeCard: React.FC<ReasoningNodeCardProps> = ({
                         <p className="text-xs font-medium text-neutral-500">Sources:</p>
                         {node.sources.map((source, idx) => (
                           <div key={idx} className="flex items-center gap-2 text-xs">
-                            <FileText className="w-3 h-3 text-blue-400" />
+                            <FileText className="w-3 h-3 text-purple-400" />
                             {source.url ? (
                               <a
                                 href={source.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-400 hover:underline"
+                                className="text-purple-400 hover:underline"
                               >
                                 {source.title}
                               </a>

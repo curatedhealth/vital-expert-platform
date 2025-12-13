@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [Panel]
+# DEPENDENCIES: [domain.panel_types, domain.panel_models, repositories.panel_repository, workflows.simple_panel_workflow]
 """
 FastAPI Routes for Ask Panel MVP
 

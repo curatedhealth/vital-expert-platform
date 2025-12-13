@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [agents.l5_tools, agents.l5_tools.tool_registry]
 """
 L5 Tool Mapper - Maps runner codes and plan tools to L5 tool slugs.
 

@@ -329,7 +329,7 @@ export function CostAnalyticsDashboard() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-4" />
+          <RefreshCw className="h-8 w-8 text-purple-600 animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading cost analytics...</p>
         </div>
       </div>
@@ -387,8 +387,8 @@ export function CostAnalyticsDashboard() {
             <div className="flex items-center gap-1 text-xs">
               {stats.costChange >= 0 ? (
                 <>
-                  <TrendingUp className="h-3 w-3 text-red-600" />
-                  <span className="text-red-600">+{stats.costChange.toFixed(1)}%</span>
+                  <TrendingUp className="h-3 w-3 text-rose-600" />
+                  <span className="text-rose-600">+{stats.costChange.toFixed(1)}%</span>
                 </>
               ) : (
                 <>

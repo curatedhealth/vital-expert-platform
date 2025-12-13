@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [1, 2]
+# DEPENDENCIES: [services.hybrid_agent_search, services.search_cache, services.ab_testing_framework]
 """
 FastAPI Production Endpoints for Hybrid GraphRAG Agent Search
 

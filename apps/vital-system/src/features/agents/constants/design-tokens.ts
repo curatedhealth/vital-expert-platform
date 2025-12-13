@@ -276,9 +276,9 @@ export const GRID_COLUMNS = {
   xs: 1,   // 1 column on mobile
   sm: 2,   // 2 columns on large mobile
   md: 2,   // 2 columns on tablet
-  lg: 3,   // 3 columns on desktop
-  xl: 4,   // 4 columns on large desktop
-  '2xl': 4, // 4 columns on XL screens (max 4 per row)
+  lg: 4,   // 4 columns on desktop
+  xl: 5,   // 5 columns on large desktop
+  '2xl': 5, // 5 columns on XL screens
 } as const;
 
 // ============================================================================
@@ -287,19 +287,19 @@ export const GRID_COLUMNS = {
 
 export const CARD_SIZES = {
   compact: {
-    height: 180,
+    height: 160,
     avatarSize: 56,
     titleSize: 'text-base',
     descriptionLines: 2,
   },
   comfortable: {
-    height: 200,
+    height: 180,
     avatarSize: 72,
     titleSize: 'text-lg',
     descriptionLines: 3,
   },
   detailed: {
-    height: 240,
+    height: 210,
     avatarSize: 96,
     titleSize: 'text-xl',
     descriptionLines: 4,

@@ -152,18 +152,19 @@ const getStatusColor = (status: TimelineStep['status']) => {
   }
 };
 
+// Brand v6.0 Purple-centric level colors
 const getLevelColor = (level?: AgentLevel) => {
   switch (level) {
     case 'L1':
-      return 'text-blue-400 bg-blue-400/10';
-    case 'L2':
       return 'text-purple-400 bg-purple-400/10';
+    case 'L2':
+      return 'text-violet-400 bg-violet-400/10';
     case 'L3':
-      return 'text-amber-400 bg-amber-400/10';
+      return 'text-fuchsia-400 bg-fuchsia-400/10';
     case 'L4':
-      return 'text-emerald-400 bg-emerald-400/10';
-    case 'L5':
       return 'text-pink-400 bg-pink-400/10';
+    case 'L5':
+      return 'text-stone-400 bg-stone-400/10';
     default:
       return 'text-neutral-400 bg-neutral-400/10';
   }

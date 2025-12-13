@@ -25,8 +25,8 @@ function LoadingState() {
   return (
     <div className="flex-1 flex items-center justify-center h-[calc(100vh-4rem)]">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-        <p className="text-sm text-muted-foreground">Loading Smart Copilot...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+        <p className="text-sm text-stone-500">Loading Smart Copilot...</p>
       </div>
     </div>
   );

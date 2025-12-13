@@ -103,11 +103,12 @@ function getCheckpointIcon(type: CheckpointType) {
   return icons[type] || icons.plan_approval;
 }
 
+// Brand v6.0 Purple-centric checkpoint colors
 function getCheckpointColor(type: CheckpointType) {
   const colors: Record<CheckpointType, { bg: string; border: string; icon: string }> = {
-    plan_approval: { bg: 'bg-blue-50', border: 'border-blue-200', icon: 'text-blue-600' },
-    tool_approval: { bg: 'bg-amber-50', border: 'border-amber-200', icon: 'text-amber-600' },
-    sub_agent_approval: { bg: 'bg-purple-50', border: 'border-purple-200', icon: 'text-purple-600' },
+    plan_approval: { bg: 'bg-purple-50', border: 'border-purple-200', icon: 'text-purple-600' },
+    tool_approval: { bg: 'bg-violet-50', border: 'border-violet-200', icon: 'text-violet-600' },
+    sub_agent_approval: { bg: 'bg-fuchsia-50', border: 'border-fuchsia-200', icon: 'text-fuchsia-600' },
     critical_decision: { bg: 'bg-red-50', border: 'border-red-200', icon: 'text-red-600' },
     final_review: { bg: 'bg-green-50', border: 'border-green-200', icon: 'text-green-600' },
   };
@@ -360,8 +361,8 @@ export function HITLCheckpointModal({
                           className={cn(
                             'w-full p-3 rounded-lg border-2 text-left transition-all',
                             selectedOption === option.id
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
+                              ? 'border-purple-500 bg-purple-50'
+                              : 'border-stone-200 hover:border-purple-300 hover:bg-stone-50'
                           )}
                         >
                           <div className="flex items-center justify-between">
@@ -396,8 +397,8 @@ export function HITLCheckpointModal({
                       onChange={(e) => setModificationNotes(e.target.value)}
                       placeholder="Add notes or modifications..."
                       className={cn(
-                        'w-full mt-2 p-3 rounded-lg border border-slate-200',
-                        'focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                        'w-full mt-2 p-3 rounded-lg border border-stone-200',
+                        'focus:ring-2 focus:ring-purple-500 focus:border-purple-500',
                         'resize-none'
                       )}
                       rows={2}

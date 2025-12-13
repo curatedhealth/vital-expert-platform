@@ -10,7 +10,6 @@ import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PageHeader } from '@/components/page-header';
 import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import {
@@ -258,9 +257,11 @@ function SubSuitePageContent() {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader icon={Layers} title={subSuiteCode} description="Loading..." />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-4" />
+            <p className="text-stone-600">Loading {subSuiteCode}...</p>
+          </div>
         </div>
       </div>
     );

@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [1]
+# DEPENDENCIES: [langgraph_workflows.ask_expert, services.agent_orchestrator, services.unified_rag_service]
 """
 Mode 1 Interactive Manual - API Routes
 

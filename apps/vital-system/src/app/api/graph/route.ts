@@ -74,6 +74,28 @@ interface SupabaseValueDriver {
   description?: string | null;
 }
 
+interface SupabaseJtbdRole {
+  jtbd_id: string | null;
+  role_id: string | null;
+}
+
+interface SupabaseJtbdFunction {
+  jtbd_id: string | null;
+  function_id: string | null;
+}
+
+interface SupabaseJtbdDepartment {
+  jtbd_id: string | null;
+  department_id: string | null;
+}
+
+interface SupabaseJtbdCategoryMapping {
+  jtbd_id: string | null;
+  value_category_id?: string | null;
+  value_driver_id?: string | null;
+  pillar_id?: string | null;
+}
+
 async function fetchFromSupabase<T>(table: string, select: string, limit = 200): Promise<T[]> {
   const url = `${SUPABASE_URL}/rest/v1/${table}?select=${select}&limit=${limit}`;
   const response = await fetch(url, {
@@ -124,43 +146,74 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "100");
 
     // Fetch all data in parallel
-    const [functions, departments, roles, jtbds, agents, valueCategories, valueDrivers] =
-      await Promise.all([
-        fetchFromSupabase<SupabaseFunction>(
-          "org_functions",
-          "id,name,slug,description,mission_statement,industry",
-          50
-        ),
-        fetchFromSupabase<SupabaseDepartment>(
-          "org_departments",
-          "id,name,slug,description,function_id",
-          limit
-        ),
-        fetchFromSupabase<SupabaseRole>(
-          "org_roles",
-          "id,name,slug,description,function_id,department_id,seniority_level,role_type",
-          limit
-        ),
-        fetchFromSupabase<SupabaseJTBD>(
-          "jtbd",
-          "id,code,name,job_statement,job_category,complexity",
-          limit
-        ),
-        fetchFromSupabase<SupabaseAgent>(
-          "agents",
-          "id,name,slug,description,function_id,department_id,status,expertise_level",
-          limit
-        ),
-        fetchFromSupabase<SupabaseValueCategory>(
-          "value_categories",
-          "id,code,name,description"
-        ),
-        fetchFromSupabase<SupabaseValueDriver>(
-          "value_drivers",
-          "id,code,name,value_category_id,description",
-          100
-        ),
-      ]);
+    const [
+      functions,
+      departments,
+      roles,
+      jtbds,
+      agents,
+      valueCategories,
+      valueDrivers,
+      jtbdRoles,
+      jtbdFunctions,
+      jtbdDepartments,
+      jtbdCategoryMappings,
+    ] = await Promise.all([
+      fetchFromSupabase<SupabaseFunction>(
+        "org_functions",
+        "id,name,slug,description,mission_statement,industry",
+        50
+      ),
+      fetchFromSupabase<SupabaseDepartment>(
+        "org_departments",
+        "id,name,slug,description,function_id",
+        limit
+      ),
+      fetchFromSupabase<SupabaseRole>(
+        "org_roles",
+        "id,name,slug,description,function_id,department_id,seniority_level,role_type",
+        limit
+      ),
+      fetchFromSupabase<SupabaseJTBD>(
+        "jtbd",
+        "id,code,name,job_statement,job_category,complexity",
+        limit
+      ),
+      fetchFromSupabase<SupabaseAgent>(
+        "agents",
+        "id,name,slug,description,function_id,department_id,status,expertise_level",
+        limit
+      ),
+      fetchFromSupabase<SupabaseValueCategory>(
+        "value_categories",
+        "id,code,name,description"
+      ),
+      fetchFromSupabase<SupabaseValueDriver>(
+        "value_drivers",
+        "id,code,name,value_category_id,description",
+        100
+      ),
+      fetchFromSupabase<SupabaseJtbdRole>(
+        "jtbd_roles",
+        "jtbd_id,role_id",
+        limit
+      ),
+      fetchFromSupabase<SupabaseJtbdFunction>(
+        "jtbd_functions",
+        "jtbd_id,function_id",
+        limit
+      ),
+      fetchFromSupabase<SupabaseJtbdDepartment>(
+        "jtbd_departments",
+        "jtbd_id,department_id",
+        limit
+      ),
+      fetchFromSupabase<SupabaseJtbdCategoryMapping>(
+        "jtbd_category_mappings",
+        "jtbd_id,value_category_id,value_driver_id,pillar_id",
+        limit
+      ),
+    ]);
 
     const nodes: GraphNode[] = [];
     const edges: GraphEdge[] = [];
@@ -298,6 +351,49 @@ export async function GET(request: NextRequest) {
         }
       });
     }
+
+    const nodeIdSet = new Set(nodes.map((n) => n.id));
+
+    // JTBD -> Role relationships (PERFORMS)
+    jtbdRoles.forEach((rel) => {
+      if (rel.role_id && rel.jtbd_id && nodeIdSet.has(rel.role_id) && nodeIdSet.has(rel.jtbd_id)) {
+        edges.push(createEdge(rel.role_id, rel.jtbd_id, "PERFORMS"));
+      }
+    });
+
+    // JTBD -> Function relationships
+    jtbdFunctions.forEach((rel) => {
+      if (rel.jtbd_id && rel.function_id && nodeIdSet.has(rel.jtbd_id) && nodeIdSet.has(rel.function_id)) {
+        edges.push(createEdge(rel.jtbd_id, rel.function_id, "BELONGS_TO"));
+      }
+    });
+
+    // JTBD -> Department relationships
+    jtbdDepartments.forEach((rel) => {
+      if (
+        rel.jtbd_id &&
+        rel.department_id &&
+        nodeIdSet.has(rel.jtbd_id) &&
+        nodeIdSet.has(rel.department_id)
+      ) {
+        edges.push(createEdge(rel.jtbd_id, rel.department_id, "BELONGS_TO"));
+      }
+    });
+
+    // JTBD -> Value mappings
+    jtbdCategoryMappings.forEach((rel) => {
+      if (rel.jtbd_id && nodeIdSet.has(rel.jtbd_id)) {
+        if (rel.value_category_id && nodeIdSet.has(rel.value_category_id)) {
+          edges.push(createEdge(rel.jtbd_id, rel.value_category_id, "DELIVERS_VALUE"));
+        }
+        if (rel.value_driver_id && nodeIdSet.has(rel.value_driver_id)) {
+          edges.push(createEdge(rel.jtbd_id, rel.value_driver_id, "DELIVERS_VALUE"));
+        }
+        if (rel.pillar_id && nodeIdSet.has(rel.pillar_id)) {
+          edges.push(createEdge(rel.jtbd_id, rel.pillar_id, "DELIVERS_VALUE"));
+        }
+      }
+    });
 
     // Calculate stats
     const nodeTypeCounts: Record<string, number> = {};

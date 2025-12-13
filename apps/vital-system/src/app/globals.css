@@ -633,4 +633,30 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     TYPOGRAPHY SYSTEM A+ - Global defaults for Inter + JetBrains Mono
+     Enforces consistent typography across all components
+     ═══════════════════════════════════════════════════════════════════ */
+
+  /* Default sans-serif for all UI elements */
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Code blocks, pre, kbd - always monospace */
+  code, pre, kbd, samp, .font-mono {
+    font-family: 'JetBrains Mono', 'Menlo', 'Monaco', monospace !important;
+  }
+
+  /* Ensure headings use proper weight */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  /* Smooth transitions for interactive elements */
+  button, a, input, textarea, select {
+    transition: all 150ms ease-in-out;
+  }
 }

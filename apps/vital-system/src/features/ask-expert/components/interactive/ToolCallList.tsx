@@ -88,22 +88,24 @@ export interface ToolCallListProps {
 // TOOL TYPE CONFIG
 // =============================================================================
 
+// Brand v6.0 Purple-centric tool type colors
 const TOOL_TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; bgColor: string; label: string }> = {
-  search: { icon: Search, color: 'text-amber-600', bgColor: 'bg-amber-50', label: 'Search' },
-  database: { icon: Database, color: 'text-blue-600', bgColor: 'bg-blue-50', label: 'Database' },
-  calculate: { icon: Calculator, color: 'text-purple-600', bgColor: 'bg-purple-50', label: 'Calculator' },
+  search: { icon: Search, color: 'text-purple-600', bgColor: 'bg-purple-50', label: 'Search' },
+  database: { icon: Database, color: 'text-violet-600', bgColor: 'bg-violet-50', label: 'Database' },
+  calculate: { icon: Calculator, color: 'text-fuchsia-600', bgColor: 'bg-fuchsia-50', label: 'Calculator' },
   document: { icon: FileText, color: 'text-emerald-600', bgColor: 'bg-emerald-50', label: 'Document' },
-  code: { icon: Code, color: 'text-slate-600', bgColor: 'bg-slate-50', label: 'Code' },
-  web: { icon: Globe, color: 'text-cyan-600', bgColor: 'bg-cyan-50', label: 'Web' },
+  code: { icon: Code, color: 'text-stone-600', bgColor: 'bg-stone-50', label: 'Code' },
+  web: { icon: Globe, color: 'text-pink-600', bgColor: 'bg-pink-50', label: 'Web' },
   chat: { icon: MessageSquare, color: 'text-rose-600', bgColor: 'bg-rose-50', label: 'Chat' },
-  api: { icon: Zap, color: 'text-yellow-600', bgColor: 'bg-yellow-50', label: 'API' },
-  workflow: { icon: Workflow, color: 'text-indigo-600', bgColor: 'bg-indigo-50', label: 'Workflow' },
-  default: { icon: Wrench, color: 'text-slate-600', bgColor: 'bg-slate-50', label: 'Tool' },
+  api: { icon: Zap, color: 'text-amber-600', bgColor: 'bg-amber-50', label: 'API' },
+  workflow: { icon: Workflow, color: 'text-violet-600', bgColor: 'bg-violet-50', label: 'Workflow' },
+  default: { icon: Wrench, color: 'text-stone-600', bgColor: 'bg-stone-50', label: 'Tool' },
 };
 
+// Brand v6.0 Purple-centric status colors
 const STATUS_CONFIG: Record<string, { icon: React.ElementType; color: string; bgColor: string; label: string }> = {
-  pending: { icon: Clock, color: 'text-slate-500', bgColor: 'bg-slate-100', label: 'Pending' },
-  running: { icon: Loader2, color: 'text-blue-600', bgColor: 'bg-blue-100', label: 'Running' },
+  pending: { icon: Clock, color: 'text-stone-500', bgColor: 'bg-stone-100', label: 'Pending' },
+  running: { icon: Loader2, color: 'text-purple-600', bgColor: 'bg-purple-100', label: 'Running' },
   completed: { icon: CheckCircle2, color: 'text-green-600', bgColor: 'bg-green-100', label: 'Completed' },
   failed: { icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-100', label: 'Failed' },
 };
@@ -199,7 +201,7 @@ function ToolCallBadge({ call, isActive, index }: ToolCallBadgeProps) {
         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs',
         'border transition-all',
         statusConfig.bgColor,
-        isActive && 'ring-2 ring-blue-400 ring-offset-1'
+        isActive && 'ring-2 ring-purple-400 ring-offset-1'
       )}
     >
       <ToolIcon className={cn('h-3 w-3', toolConfig.color)} />
@@ -243,7 +245,7 @@ function ToolCallCard({ call, isActive, index }: ToolCallCardProps) {
       className={cn(
         'rounded-lg border overflow-hidden',
         call.status === 'failed' ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-white',
-        isActive && 'ring-2 ring-blue-400'
+        isActive && 'ring-2 ring-purple-400'
       )}
     >
       {/* Header */}
@@ -352,7 +354,7 @@ function ToolCallCard({ call, isActive, index }: ToolCallCardProps) {
       {/* Running progress bar */}
       {call.status === 'running' && (
         <motion.div
-          className="h-0.5 bg-blue-500"
+          className="h-0.5 bg-purple-500"
           initial={{ width: '0%' }}
           animate={{ width: '100%' }}
           transition={{ duration: 10, ease: 'linear' }}

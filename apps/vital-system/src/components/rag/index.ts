@@ -10,16 +10,44 @@ export { CreateRagModal } from './CreateRagModal';
 export { RagContextModal } from './RagContextModal';
 export { RagAnalytics } from './RagAnalytics';
 
-// Re-export types for convenience
+// Re-export types from supabase-rag-service
 export type {
-  RagKnowledgeBase,
-  AgentRagAssignment,
-  RagDocument,
-  RagUsageAnalytics
-} from '@/shared/services/rag/RagService';
+  KnowledgeSource as RagKnowledgeBase,
+  DocumentChunk as RagDocument,
+  SearchResult,
+} from '@/lib/rag/supabase-rag-service';
 
-export type {
-  ChatMessage,
-  RagEnhancedMessage,
-  AgentChatContext
-} from '@/shared/services/chat/ChatRagIntegration';
+// Local type definitions for missing types
+export interface AgentRagAssignment {
+  agent_id: string;
+  rag_id: string;
+  priority: number;
+  is_enabled: boolean;
+  usage_context?: string;
+  custom_prompt_instructions?: string;
+  is_primary?: boolean;
+}
+
+export interface RagUsageAnalytics {
+  rag_id: string;
+  total_queries: number;
+  avg_relevance_score: number;
+  last_used_at: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+}
+
+export interface RagEnhancedMessage extends ChatMessage {
+  sources?: Array<{ title: string; content: string; relevance: number }>;
+}
+
+export interface AgentChatContext {
+  agent_id: string;
+  session_id: string;
+  messages: ChatMessage[];
+}

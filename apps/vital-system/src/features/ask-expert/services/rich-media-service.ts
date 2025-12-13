@@ -426,7 +426,7 @@ export const MEDIA_TYPE_ICONS = {
 
 // Media file type colors
 export const MEDIA_TYPE_COLORS = {
-  image: 'bg-blue-100 text-blue-700',
+  image: 'bg-violet-100 text-violet-700',
   pdf: 'bg-red-100 text-red-700',
   document: 'bg-green-100 text-green-700',
   chart: 'bg-purple-100 text-purple-700',

@@ -118,8 +118,9 @@ function getModeLabel(mode: 'mode1' | 'mode2'): string {
   return mode === 'mode1' ? 'Expert Chat' : 'Smart Copilot';
 }
 
+// Brand v6.0 Purple-centric mode colors
 function getModeColor(mode: 'mode1' | 'mode2'): string {
-  return mode === 'mode1' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700';
+  return mode === 'mode1' ? 'bg-purple-100 text-purple-700' : 'bg-violet-100 text-violet-700';
 }
 
 // =============================================================================
@@ -150,8 +151,8 @@ function ConversationItem({
       className={cn(
         'group relative p-3 rounded-lg cursor-pointer transition-all',
         isActive
-          ? 'bg-blue-50 border border-blue-200'
-          : 'hover:bg-slate-50 border border-transparent'
+          ? 'bg-purple-50 border border-purple-200'
+          : 'hover:bg-stone-50 border border-transparent'
       )}
       onClick={onSelect}
       onMouseEnter={() => setShowActions(true)}
@@ -162,7 +163,7 @@ function ConversationItem({
         {/* Avatar */}
         <div className={cn(
           'flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-sm font-medium',
-          isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+          isActive ? 'bg-purple-100 text-purple-700' : 'bg-stone-100 text-stone-600'
         )}>
           {conversation.expertAvatar ? (
             <img
@@ -182,7 +183,7 @@ function ConversationItem({
           <div className="flex items-center gap-2">
             <span className={cn(
               'font-medium truncate text-sm',
-              isActive ? 'text-blue-900' : 'text-slate-900'
+              isActive ? 'text-purple-900' : 'text-stone-900'
             )}>
               {conversation.title}
             </span>
@@ -207,7 +208,7 @@ function ConversationItem({
         {/* Arrow */}
         <ChevronRight className={cn(
           'w-4 h-4 flex-shrink-0 transition-colors',
-          isActive ? 'text-blue-500' : 'text-slate-300 group-hover:text-slate-400'
+          isActive ? 'text-purple-500' : 'text-stone-300 group-hover:text-stone-400'
         )} />
       </div>
 
@@ -320,7 +321,7 @@ export function ConversationHistorySidebar({
         </button>
         <button
           onClick={onNewConversation}
-          className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          className="p-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors"
           title="New conversation"
         >
           <Plus className="w-5 h-5" />
@@ -363,8 +364,8 @@ export function ConversationHistorySidebar({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations..."
             className={cn(
-              'w-full pl-9 pr-8 py-2 text-sm border border-slate-200 rounded-lg',
-              'focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              'w-full pl-9 pr-8 py-2 text-sm border border-stone-200 rounded-lg',
+              'focus:ring-2 focus:ring-purple-500 focus:border-purple-500'
             )}
           />
           {searchQuery && (
@@ -400,8 +401,8 @@ export function ConversationHistorySidebar({
           onClick={onNewConversation}
           className={cn(
             'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg',
-            'bg-blue-600 text-white font-medium text-sm',
-            'hover:bg-blue-700 transition-colors'
+            'bg-purple-600 text-white font-medium text-sm',
+            'hover:bg-purple-700 transition-colors'
           )}
         >
           <Plus className="w-4 h-4" />
@@ -438,7 +439,7 @@ export function ConversationHistorySidebar({
             {!searchQuery && !showFavoritesOnly && (
               <button
                 onClick={onNewConversation}
-                className="mt-3 text-sm text-blue-600 hover:text-blue-700"
+                className="mt-3 text-sm text-purple-600 hover:text-purple-700"
               >
                 Start your first conversation
               </button>

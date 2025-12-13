@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Ontology Explorer Client Component
+ * Ontology Explorer Client Component - VITAL Brand Guidelines v6.0
  *
  * Main container for the graph visualization interface.
  * Combines:
@@ -9,6 +9,11 @@
  * - GraphCanvas for visualization
  * - NodeDetailsDrawer for inspecting selected nodes
  * - ChatSidebar for AI-powered navigation
+ *
+ * Design:
+ * - Warm canvas background (#FAFAF9)
+ * - Purple accent (#9055E0)
+ * - Stone neutrals for text and borders
  */
 
 import { useState, useCallback } from "react";
@@ -17,17 +22,9 @@ import { GraphCanvas } from "@/features/ontology-explorer/components/graph-canva
 import { GraphToolbar } from "@/features/ontology-explorer/components/graph-toolbar";
 import { NodeDetailsDrawer } from "@/features/ontology-explorer/components/node-details-drawer";
 import { ChatSidebar } from "@/features/ontology-explorer/components/chat-sidebar";
-import { PageHeader } from "@/components/page-header";
 import { Button } from "@vital/ui";
 import { cn } from "@/lib/utils";
-import {
-  Network,
-  MessageSquare,
-  PanelRightOpen,
-  PanelRightClose,
-  Layers,
-  Bot,
-} from "lucide-react";
+import { Layers, Bot } from "lucide-react";
 
 export default function OntologyExplorer() {
   // Panel states
@@ -64,27 +61,7 @@ export default function OntologyExplorer() {
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden h-full">
-      {/* Page Header */}
-      <PageHeader
-        icon={Network}
-        title="Ontology Explorer"
-        description="Interactive visualization of the VITAL Enterprise Ontology"
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              variant={isChatOpen ? "default" : "outline"}
-              size="sm"
-              onClick={handleChatToggle}
-              className="gap-2"
-            >
-              <Bot className="h-4 w-4" />
-              <span className="hidden sm:inline">AI Navigator</span>
-            </Button>
-          </div>
-        }
-      />
-
+    <div className="flex-1 flex flex-col overflow-hidden h-full bg-stone-50">
       {/* Toolbar */}
       <GraphToolbar className="relative" />
 
@@ -138,47 +115,52 @@ export default function OntologyExplorer() {
 }
 
 /**
- * Node Type Legend Component
- * Shows color-coded node types for reference
+ * Node Type Legend Component - VITAL Brand v6.0
+ * Shows color-coded node types with brand-aligned palette
+ *
+ * Colors use the VITAL purple-forward palette where:
+ * - Primary entities (Function, Agent) use warm purple (#9055E0)
+ * - Supporting entities use complementary colors from the design system
  */
 function NodeTypeLegend() {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Brand-aligned node type colors (v6.0)
   const nodeTypes = [
-    { type: "Function", color: "#8B5CF6", description: "Organizational functions" },
-    { type: "Department", color: "#3B82F6", description: "Departments within functions" },
+    { type: "Function", color: "#9055E0", description: "Organizational functions" },
+    { type: "Department", color: "#7C3AED", description: "Departments within functions" },
     { type: "Role", color: "#10B981", description: "Job roles and positions" },
     { type: "JTBD", color: "#F59E0B", description: "Jobs to be done" },
     { type: "ValueCategory", color: "#06B6D4", description: "Value categories (SMARTER, etc.)" },
     { type: "ValueDriver", color: "#14B8A6", description: "Value drivers" },
-    { type: "Agent", color: "#EAB308", description: "AI agents" },
-    { type: "Persona", color: "#6B7280", description: "User personas" },
+    { type: "Agent", color: "#A855F7", description: "AI agents" },
+    { type: "Persona", color: "#78716C", description: "User personas" },
     { type: "Workflow", color: "#EC4899", description: "Automated workflows" },
   ];
 
   return (
-    <div className="bg-background/90 backdrop-blur-sm border rounded-lg shadow-lg">
+    <div className="bg-stone-50/95 backdrop-blur-sm border border-stone-200 rounded-lg shadow-lg">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center gap-2 px-3 py-2 w-full text-left text-sm font-medium hover:bg-muted rounded-lg"
+        className="flex items-center gap-2 px-3 py-2 w-full text-left text-sm font-medium text-stone-700 hover:bg-stone-100 rounded-lg transition-colors duration-150"
       >
-        <Layers className="h-4 w-4" />
+        <Layers className="h-4 w-4 text-purple-600" />
         <span>Node Types</span>
-        <span className="ml-auto text-xs text-muted-foreground">
+        <span className="ml-auto text-xs text-stone-500">
           {isExpanded ? "−" : "+"}
         </span>
       </button>
 
       {isExpanded && (
-        <div className="px-3 pb-3 space-y-1.5 border-t pt-2">
+        <div className="px-3 pb-3 space-y-1.5 border-t border-stone-200 pt-2">
           {nodeTypes.map(({ type, color, description }) => (
             <div key={type} className="flex items-center gap-2 text-xs">
               <div
-                className="h-3 w-3 rounded-full flex-shrink-0"
+                className="h-3 w-3 rounded-full flex-shrink-0 ring-1 ring-stone-200"
                 style={{ backgroundColor: color }}
               />
-              <span className="font-medium">{type}</span>
-              <span className="text-muted-foreground hidden sm:inline">
+              <span className="font-medium text-stone-700">{type}</span>
+              <span className="text-stone-500 hidden sm:inline">
                 — {description}
               </span>
             </div>

@@ -98,13 +98,14 @@ export interface SubAgentDelegationCardProps {
 // HELPERS
 // =============================================================================
 
+// Brand v6.0 Purple-centric tier colors
 function getTierInfo(tier: AgentTier) {
   const tiers: Record<AgentTier, { label: string; color: string; icon: React.ReactNode }> = {
-    1: { label: 'L1', color: 'bg-slate-100 text-slate-600 border-slate-200', icon: <Bot className="w-3 h-3" /> },
-    2: { label: 'L2', color: 'bg-blue-100 text-blue-600 border-blue-200', icon: <Zap className="w-3 h-3" /> },
-    3: { label: 'L3', color: 'bg-purple-100 text-purple-600 border-purple-200', icon: <Star className="w-3 h-3" /> },
-    4: { label: 'L4', color: 'bg-amber-100 text-amber-600 border-amber-200', icon: <Sparkles className="w-3 h-3" /> },
-    5: { label: 'L5', color: 'bg-emerald-100 text-emerald-600 border-emerald-200', icon: <Shield className="w-3 h-3" /> },
+    1: { label: 'L1', color: 'bg-purple-100 text-purple-600 border-purple-200', icon: <Bot className="w-3 h-3" /> },
+    2: { label: 'L2', color: 'bg-violet-100 text-violet-600 border-violet-200', icon: <Zap className="w-3 h-3" /> },
+    3: { label: 'L3', color: 'bg-fuchsia-100 text-fuchsia-600 border-fuchsia-200', icon: <Star className="w-3 h-3" /> },
+    4: { label: 'L4', color: 'bg-pink-100 text-pink-600 border-pink-200', icon: <Sparkles className="w-3 h-3" /> },
+    5: { label: 'L5', color: 'bg-stone-100 text-stone-600 border-stone-200', icon: <Shield className="w-3 h-3" /> },
   };
   return tiers[tier] || tiers[1];
 }
@@ -128,7 +129,7 @@ function getStatusInfo(status: DelegationStatus) {
     },
     in_progress: {
       label: 'In Progress',
-      color: 'bg-blue-100 text-blue-700',
+      color: 'bg-purple-100 text-purple-700',
       icon: <Loader2 className="w-4 h-4 animate-spin" />,
     },
     completed: {
@@ -145,10 +146,11 @@ function getStatusInfo(status: DelegationStatus) {
   return statuses[status] || statuses.pending_approval;
 }
 
+// Brand v6.0 Purple-centric priority colors
 function getPriorityColor(priority?: 'low' | 'normal' | 'high' | 'urgent') {
   const colors = {
-    low: 'text-slate-500',
-    normal: 'text-blue-500',
+    low: 'text-stone-500',
+    normal: 'text-purple-500',
     high: 'text-amber-500',
     urgent: 'text-red-500',
   };
@@ -170,12 +172,12 @@ function AgentBadge({ agent, side }: AgentBadgeProps) {
   return (
     <div className={cn(
       'flex items-center gap-2 p-2 rounded-lg bg-white border',
-      side === 'to' ? 'border-blue-200' : 'border-slate-200'
+      side === 'to' ? 'border-purple-200' : 'border-stone-200'
     )}>
       {/* Avatar */}
       <div className={cn(
         'w-10 h-10 rounded-lg flex items-center justify-center text-lg font-semibold',
-        side === 'to' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'
+        side === 'to' ? 'bg-purple-100 text-purple-700' : 'bg-stone-100 text-stone-700'
       )}>
         {agent.avatar ? (
           <img src={agent.avatar} alt={agent.displayName} className="w-full h-full rounded-lg object-cover" />
@@ -243,7 +245,7 @@ export function SubAgentDelegationCard({
       className={cn(
         'bg-white rounded-xl border shadow-sm overflow-hidden',
         isPending ? 'border-amber-200' : 'border-slate-200',
-        isActive && 'border-blue-200 ring-1 ring-blue-100',
+        isActive && 'border-purple-200 ring-1 ring-purple-100',
         className
       )}
     >
@@ -275,10 +277,10 @@ export function SubAgentDelegationCard({
           <div className="flex-shrink-0 flex flex-col items-center">
             <div className={cn(
               'w-10 h-10 rounded-full flex items-center justify-center',
-              isActive ? 'bg-blue-100' : 'bg-slate-100'
+              isActive ? 'bg-purple-100' : 'bg-stone-100'
             )}>
               {isActive ? (
-                <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
               ) : (
                 <ArrowRight className="w-5 h-5 text-slate-400" />
               )}
@@ -374,7 +376,7 @@ export function SubAgentDelegationCard({
                       {delegation.toAgent.capabilities.map((cap, i) => (
                         <span
                           key={i}
-                          className="px-2 py-0.5 text-xs bg-blue-50 text-blue-700 rounded"
+                          className="px-2 py-0.5 text-xs bg-purple-50 text-purple-700 rounded"
                         >
                           {cap}
                         </span>

@@ -144,7 +144,7 @@ const MOCK_SYSTEM_HEALTH: SystemHealth = {
 const KPICard: React.FC<{ metric: KPIMetric }> = ({ metric }) => {
   const Icon = metric.icon;
   const changeColor = metric.changeType === 'increase' ? 'text-green-600' :
-                      metric.changeType === 'decrease' ? 'text-red-600' : 'text-neutral-600';
+                      metric.changeType === 'decrease' ? 'text-rose-600' : 'text-neutral-600';
   const changeIcon = metric.changeType === 'increase' ? '↗' :
                      metric.changeType === 'decrease' ? '↘' : '→';
 
@@ -175,8 +175,8 @@ const AlertItem: React.FC<{ alert: Alert; onAcknowledge: (id: string) => void }>
   const alertConfig: Record<string, { color: string; icon: string }> = {
     info: { color: 'bg-blue-100 text-blue-800 border-blue-200', icon: '💡' },
     warning: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: '⚠️' },
-    error: { color: 'bg-red-100 text-red-800 border-red-200', icon: '❌' },
-    critical: { color: 'bg-red-200 text-red-900 border-red-300', icon: '🚨' }
+    error: { color: 'bg-rose-100 text-rose-800 border-rose-200', icon: '❌' },
+    critical: { color: 'bg-rose-200 text-rose-900 border-rose-300', icon: '🚨' }
   };
 
   const config = alertConfig[alert.severity] || alertConfig.info;
@@ -214,7 +214,7 @@ const SystemHealthPanel: React.FC<{ health: SystemHealth }> = ({ health }) => {
     switch (status) {
       case 'healthy': return 'text-green-600';
       case 'warning': return 'text-yellow-600';
-      case 'critical': return 'text-red-600';
+      case 'critical': return 'text-rose-600';
       default: return 'text-neutral-600';
     }
   };
@@ -244,7 +244,7 @@ const SystemHealthPanel: React.FC<{ health: SystemHealth }> = ({ health }) => {
               <div className="flex items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${
                   component.status === 'healthy' ? 'bg-green-500' :
-                  component.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                  component.status === 'warning' ? 'bg-yellow-500' : 'bg-rose-500'
                 }`} />
                 <span className="font-medium">{component.name}</span>
               </div>
@@ -309,7 +309,7 @@ const ChartWidget: React.FC<{ data: ChartData }> = ({ data }) => {
               <span className="text-sm text-neutral-600">Loading chart data...</span>
             </div>
           ) : data.status === 'error' ? (
-            <div className="flex flex-col items-center gap-2 text-red-600">
+            <div className="flex flex-col items-center gap-2 text-rose-600">
               <AlertTriangle className="h-8 w-8" />
               <span className="text-sm">Failed to load chart data</span>
             </div>
@@ -474,7 +474,7 @@ const DashboardMain: React.FC = () => {
           <TabsTrigger value="alerts" className="relative">
             Alerts
             {unacknowledgedAlerts.length > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-rose-500 text-white text-xs flex items-center justify-center">
                 {unacknowledgedAlerts.length}
               </Badge>
             )}
@@ -609,10 +609,10 @@ const DashboardMain: React.FC = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {[
-                      { severity: 'Critical', count: criticalAlerts.length, color: 'text-red-600' },
-                      { severity: 'Error', count: alerts.filter((a: any) => a.severity === 'error' && !a.acknowledged).length, color: 'text-red-500' },
+                      { severity: 'Critical', count: criticalAlerts.length, color: 'text-rose-600' },
+                      { severity: 'Error', count: alerts.filter((a: any) => a.severity === 'error' && !a.acknowledged).length, color: 'text-rose-500' },
                       { severity: 'Warning', count: alerts.filter((a: any) => a.severity === 'warning' && !a.acknowledged).length, color: 'text-yellow-600' },
-                      { severity: 'Info', count: alerts.filter((a: any) => a.severity === 'info' && !a.acknowledged).length, color: 'text-blue-600' }
+                      { severity: 'Info', count: alerts.filter((a: any) => a.severity === 'info' && !a.acknowledged).length, color: 'text-purple-600' }
                     ].map((item, index) => (
                       <div key={index} className="flex items-center justify-between">
                         <span className="text-sm font-medium">{item.severity}</span>

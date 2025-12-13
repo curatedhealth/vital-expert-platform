@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_CORE
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [agents.l2_experts, agents.l3_specialists, agents.l4_workers]
 """
 Lazy registries for L2/L3/L4 agents to avoid circular imports and enable
 dynamic code-to-class mapping. Expand mappings as new agents are added.

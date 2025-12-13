@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [1, 2, 3, 4]
+# DEPENDENCIES: [langgraph, langchain, postgres]
 """
 LangGraph Compilation Package
 Compiles agent graphs from PostgreSQL into executable LangGraph workflows

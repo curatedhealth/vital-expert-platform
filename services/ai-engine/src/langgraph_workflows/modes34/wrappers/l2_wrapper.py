@@ -1,5 +1,10 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [services.deepagents_tools, services.runner_registry, resilience.llm_timeout, l5_tool_mapper, registry]
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Dict, AsyncIterator, Callable, Optional
 from uuid import uuid4
 import structlog
@@ -9,6 +14,15 @@ from .utils import make_config
 from services.runner_registry import runner_registry
 from .registry import get_l2_class
 from .l5_tool_mapper import get_l5_executor, L5ExecutionSummary
+
+# Phase 1 CRITICAL Fix C1: LLM timeout protection
+from langgraph_workflows.modes34.resilience import (
+    invoke_llm_with_timeout,
+    LLMTimeoutError,
+    LLMRetryExhaustedError,
+    L2_EXPERT_TIMEOUT,
+    L2_EXPERT_MAX_RETRIES,
+)
 
 logger = structlog.get_logger()
 _fs = VirtualFilesystem()
@@ -80,12 +94,39 @@ async def delegate_to_l2(
             l5_summary.all_sources.extend(l5_plan_summary.all_sources)
             l5_summary.raw_results.extend(l5_plan_summary.raw_results)
 
-    try:
-        result = await expert.execute(
+    # Phase 1 CRITICAL Fix C1: Wrap LLM call with timeout protection
+    # L2 experts get 120s timeout (complex reasoning), 2 retries
+    async def _execute_expert():
+        return await expert.execute(
             task=task,
             params={"goal": task, "runner": runner},
             context=exec_context,
         )
+
+    try:
+        result = await invoke_llm_with_timeout(
+            llm_callable=_execute_expert,
+            timeout_seconds=L2_EXPERT_TIMEOUT,  # Environment-configurable (default: 120s)
+            max_retries=L2_EXPERT_MAX_RETRIES,  # Environment-configurable (default: 2)
+            operation_name=f"L2_{expert_code}",
+        )
+    except asyncio.CancelledError:
+        # CRITICAL C5: NEVER swallow CancelledError
+        logger.warning(
+            "l2_agent_execution_cancelled",
+            expert_code=expert_code,
+            task_preview=task[:120],
+        )
+        raise
+    except (LLMTimeoutError, LLMRetryExhaustedError) as exc:
+        logger.error(
+            "l2_agent_timeout_or_retry_exhausted",
+            expert_code=expert_code,
+            error=str(exc),
+            error_type=type(exc).__name__,
+            task_preview=task[:120],
+        )
+        raise
     except Exception as exc:
         logger.error(
             "l2_agent_execution_failed",
@@ -273,14 +314,37 @@ async def delegate_to_l2_streaming(
                     summary = chunk.get("output") or chunk.get("analysis") or ""
                     citations = chunk.get("citations", [])
         else:
-            # Fallback to non-streaming
-            result = await expert.execute(
-                task=task,
-                params={"goal": task, "runner": runner},
-                context=exec_context,
+            # Phase 1 CRITICAL Fix C1: Wrap non-streaming fallback with timeout
+            async def _execute_expert_fallback():
+                return await expert.execute(
+                    task=task,
+                    params={"goal": task, "runner": runner},
+                    context=exec_context,
+                )
+
+            result = await invoke_llm_with_timeout(
+                llm_callable=_execute_expert_fallback,
+                timeout_seconds=L2_EXPERT_TIMEOUT,  # Environment-configurable (default: 120s)
+                max_retries=L2_EXPERT_MAX_RETRIES,  # Environment-configurable (default: 2)
+                operation_name=f"L2_stream_fallback_{expert_code}",
             )
             summary = result.get("output") or result.get("analysis") or ""
             citations = result.get("citations", [])
+    except asyncio.CancelledError:
+        # CRITICAL C5: NEVER swallow CancelledError
+        logger.warning(
+            "l2_agent_streaming_cancelled",
+            expert_code=expert_code,
+        )
+        raise
+    except (LLMTimeoutError, LLMRetryExhaustedError) as exc:
+        logger.error(
+            "l2_agent_streaming_timeout",
+            expert_code=expert_code,
+            error=str(exc),
+        )
+        yield {"event": "error", "error": f"LLM timeout: {str(exc)}"}
+        return
     except Exception as exc:
         logger.error(
             "l2_agent_streaming_failed",

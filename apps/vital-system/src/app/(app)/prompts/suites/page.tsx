@@ -10,7 +10,6 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PageHeader } from '@/components/page-header';
 import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
 import { Loader2, ArrowRight, FolderOpen } from 'lucide-react';
 import { PRISM_SUITES, type SuiteConfig } from '@/features/prompts/components';
@@ -92,9 +91,11 @@ export default function PromptSuitesPage() {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader icon={FolderOpen} title="PRISM™ Suites" description="Loading suites..." />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-4" />
+            <p className="text-stone-600">Loading suites...</p>
+          </div>
         </div>
       </div>
     );
@@ -113,15 +114,6 @@ export default function PromptSuitesPage() {
             { label: 'Prompts', href: '/prompts' },
             { label: 'Suites' },
           ]}
-        />
-      </div>
-
-      {/* Page Header */}
-      <div className="px-6 py-4 border-b">
-        <PageHeader
-          icon={FolderOpen}
-          title="PRISM™ Prompt Suites"
-          description={`${PRISM_SUITES.length} domain suites containing ${totalPrompts} prompts across ${totalSubSuites} sub-suites`}
         />
       </div>
 

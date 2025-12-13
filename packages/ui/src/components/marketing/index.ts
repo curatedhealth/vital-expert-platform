@@ -26,6 +26,7 @@ export { Footer } from './footer';
 export { IsometricCube, IsometricCubeGrid, IsometricPyramid } from './isometric-cube';
 export { NetworkConstellation } from './network-constellation';
 export { ParadigmComparison } from './paradigm-comparison';
+export { ParadigmShiftSection } from './ParadigmShiftSection';
 
 // VITAL Flat 2D visualizations (clean, minimal)
 export {

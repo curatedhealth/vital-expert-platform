@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [2]
+# DEPENDENCIES: [services.graphrag_selector, services.agent_instantiation_service, langgraph_workflows.ask_expert]
 """
 VITAL Path AI Services - Mode 2 Auto Interactive (Smart Copilot) Routes
 

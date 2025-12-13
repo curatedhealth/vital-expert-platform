@@ -312,16 +312,16 @@ export function TemplatePreview({
                 {template.expectedInputs && template.expectedInputs.length > 0 && (
                   <section>
                     <h3 className="text-lg font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                      <ArrowRight className="w-5 h-5 text-blue-500" />
+                      <ArrowRight className="w-5 h-5 text-violet-500" />
                       What You'll Provide
                     </h3>
                     <div className="space-y-3">
                       {template.expectedInputs.map((input, index) => (
                         <div
                           key={index}
-                          className="flex items-start gap-3 p-3 bg-blue-50/50 rounded-lg border border-blue-100"
+                          className="flex items-start gap-3 p-3 bg-violet-50/50 rounded-lg border border-violet-100"
                         >
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 text-sm font-medium">
                             {index + 1}
                           </div>
                           <div className="flex-1">

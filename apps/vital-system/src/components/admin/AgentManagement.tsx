@@ -439,7 +439,7 @@ export function AgentManagement() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-4" />
+          <RefreshCw className="h-8 w-8 text-purple-600 animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading agents...</p>
         </div>
       </div>
@@ -608,7 +608,7 @@ export function AgentManagement() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => openDeleteDialog(agent)}
-                            className="text-red-600"
+                            className="text-rose-600"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete

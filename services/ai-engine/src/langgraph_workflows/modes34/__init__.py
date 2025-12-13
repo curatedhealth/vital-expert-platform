@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [state, unified_autonomous_workflow, agent_selector, research_quality, validation, resilience, wrappers]
 """
 Modes 3/4 LangGraph scaffolding with World-Class Deep Research Enhancements.
 

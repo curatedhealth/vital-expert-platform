@@ -1,7 +1,10 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [services.deepagents_tools, services.runner_registry, resilience.llm_timeout, l5_tool_mapper, registry]
 from __future__ import annotations
 
-from __future__ import annotations
-
+import asyncio
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -12,6 +15,15 @@ from services.deepagents_tools import VirtualFilesystem
 from services.runner_registry import runner_registry
 from .registry import get_l4_class
 from .l5_tool_mapper import get_l5_executor, L5ExecutionSummary
+
+# Phase 1 CRITICAL Fix C1: LLM timeout protection
+from langgraph_workflows.modes34.resilience import (
+    invoke_llm_with_timeout,
+    LLMTimeoutError,
+    LLMRetryExhaustedError,
+    L4_WORKER_TIMEOUT,
+    L4_WORKER_MAX_RETRIES,
+)
 
 logger = logging.getLogger(__name__)
 _fs = VirtualFilesystem()
@@ -95,7 +107,47 @@ async def delegate_to_l4(
         "l5_data": l5_summary.raw_results,
     }
     start_time = datetime.utcnow()
-    worker_result = await worker.execute(task=task, params={"goal": task, "runner": runner}, context=exec_context)
+
+    # Phase 1 CRITICAL Fix C1: Wrap LLM call with timeout protection
+    # L4 workers get 60s timeout (faster task execution), 3 retries
+    async def _execute_worker():
+        return await worker.execute(
+            task=task,
+            params={"goal": task, "runner": runner},
+            context=exec_context,
+        )
+
+    try:
+        worker_result = await invoke_llm_with_timeout(
+            llm_callable=_execute_worker,
+            timeout_seconds=L4_WORKER_TIMEOUT,  # Environment-configurable (default: 60s)
+            max_retries=L4_WORKER_MAX_RETRIES,  # Environment-configurable (default: 3)
+            operation_name=f"L4_{worker_code}",
+        )
+    except asyncio.CancelledError:
+        # CRITICAL C5: NEVER swallow CancelledError
+        logger.warning(
+            "l4_worker_execution_cancelled worker=%s task_preview=%s",
+            worker_code,
+            task[:120],
+        )
+        raise
+    except (LLMTimeoutError, LLMRetryExhaustedError) as exc:
+        logger.error(
+            "l4_worker_timeout_or_retry_exhausted worker=%s error=%s",
+            worker_code,
+            str(exc),
+        )
+        raise
+    except Exception as exc:
+        logger.error(
+            "l4_worker_execution_failed worker=%s error=%s",
+            worker_code,
+            str(exc),
+            exc_info=True,
+        )
+        raise
+
     exec_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
 
     summary_text = str(worker_result.get("output") or worker_result.get("analysis") or "")

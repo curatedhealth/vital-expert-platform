@@ -129,9 +129,9 @@ const LEVEL_CONFIG: Record<AgentLevel, {
     label: 'Specialist',
     description: 'Domain-specific sub-experts for complex tasks',
     icon: UserCog,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
+    color: 'text-violet-600',
+    bgColor: 'bg-violet-50',
+    borderColor: 'border-violet-200',
   },
   L4: {
     label: 'Worker',
@@ -508,13 +508,13 @@ export function AgentTeamSetup({
               </Badge>
             )}
             {value.specialists.map((s) => (
-              <Badge key={s.id} variant="secondary" className="bg-blue-100 text-blue-700 gap-1">
+              <Badge key={s.id} variant="secondary" className="bg-violet-100 text-violet-700 gap-1">
                 <UserCog className="w-3 h-3" />
                 {s.name}
                 {!isLocked && (
                   <button
                     onClick={() => handleSpecialistToggle(s)}
-                    className="ml-1 hover:text-blue-900"
+                    className="ml-1 hover:text-violet-900"
                   >
                     <X className="w-3 h-3" />
                   </button>

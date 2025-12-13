@@ -320,6 +320,7 @@ function KnowledgePageContent() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [batchDeleteConfirmOpen, setBatchDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [domainOptions, setDomainOptions] = useState<{ value: string; label: string; category?: string }[]>(KNOWLEDGE_DOMAINS);
 
   // Get current filters from URL
   const currentDomain = getFilterParam('domain');
@@ -327,6 +328,45 @@ function KnowledgePageContent() {
   const currentStatus = getFilterParam('status');
   const currentAccess = getFilterParam('access');
   const currentTherapeutic = getFilterParam('therapeutic');
+
+  // =============================================================================
+  // Domain catalog (live fetch with fallback to static constants)
+  // =============================================================================
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDomains = async () => {
+      try {
+        const res = await fetch('/api/knowledge-domains');
+        if (!res.ok) return;
+        const body = await res.json();
+        if (isMounted && Array.isArray(body.domains) && body.domains.length > 0) {
+          const mapped = body.domains
+            .filter((d: any) => d.slug && d.name)
+            .map((d: any) => ({
+              value: d.slug,
+              label: d.name,
+              category: d.domain_type || 'uncategorized',
+            }));
+          if (mapped.length > 0) {
+            setDomainOptions(mapped);
+          }
+        }
+      } catch (err) {
+        console.warn('[Knowledge] Failed to load live knowledge domains, using static fallback.', err);
+      }
+    };
+
+    fetchDomains();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const domainMap = useMemo(
+    () => new Map(domainOptions.map(d => [d.value, d])),
+    [domainOptions]
+  );
 
   // =============================================================================
   // Data Loading
@@ -337,117 +377,16 @@ function KnowledgePageContent() {
       setLoading(true);
       setError(null);
 
-      // TODO: Replace with actual API call when endpoint is available
-      const mockRags: RagKnowledgeBase[] = [
-        {
-          id: '1',
-          name: 'fda-guidance-library',
-          display_name: 'FDA Guidance Library',
-          description: 'Comprehensive collection of FDA guidance documents, regulations, and compliance materials',
-          purpose_description: 'Use for regulatory compliance questions, FDA guidance interpretation, and submission requirements',
-          rag_type: 'global',
-          access_level: 'organization',
-          status: 'active',
-          knowledge_domains: ['regulatory', 'fda-guidance', 'compliance'],
-          therapeutic_areas: ['oncology', 'cardiology'],
-          document_count: 1247,
-          total_chunks: 45231,
-          quality_score: 0.94,
-          is_active: true,
-          created_at: '2024-01-15T10:00:00Z',
-          updated_at: '2024-12-01T15:30:00Z',
-        },
-        {
-          id: '2',
-          name: 'clinical-trial-protocols',
-          display_name: 'Clinical Trial Protocols Database',
-          description: 'Curated database of successful clinical trial protocols and methodologies',
-          purpose_description: 'Use for clinical trial design, protocol development, and methodology guidance',
-          rag_type: 'global',
-          access_level: 'organization',
-          status: 'active',
-          knowledge_domains: ['clinical-trials', 'protocols', 'biostatistics'],
-          therapeutic_areas: ['oncology'],
-          document_count: 892,
-          total_chunks: 34567,
-          quality_score: 0.91,
-          is_active: true,
-          created_at: '2024-02-20T08:00:00Z',
-          updated_at: '2024-11-15T12:00:00Z',
-        },
-        {
-          id: '3',
-          name: 'pharmacovigilance-guidelines',
-          display_name: 'Pharmacovigilance Guidelines',
-          description: 'Global pharmacovigilance guidelines, safety protocols, and adverse event reporting standards',
-          purpose_description: 'Use for safety assessments, adverse event analysis, and pharmacovigilance compliance',
-          rag_type: 'global',
-          access_level: 'organization',
-          status: 'active',
-          knowledge_domains: ['pharmacovigilance', 'safety-reporting', 'adverse-events'],
-          document_count: 634,
-          total_chunks: 22145,
-          quality_score: 0.89,
-          is_active: true,
-          created_at: '2024-03-10T14:00:00Z',
-          updated_at: '2024-10-25T09:00:00Z',
-        },
-        {
-          id: '4',
-          name: 'oncology-specialist-kb',
-          display_name: 'Oncology Specialist Knowledge Base',
-          description: 'Specialized knowledge for oncology agents including treatment protocols and clinical guidelines',
-          purpose_description: 'Agent-specific knowledge for oncology-related queries and recommendations',
-          rag_type: 'agent-specific',
-          access_level: 'private',
-          status: 'active',
-          knowledge_domains: ['clinical-trials', 'drug-development', 'biomarkers'],
-          therapeutic_areas: ['oncology'],
-          document_count: 456,
-          total_chunks: 18234,
-          quality_score: 0.96,
-          is_active: true,
-          created_at: '2024-04-01T10:00:00Z',
-          updated_at: '2024-12-05T11:00:00Z',
-        },
-        {
-          id: '5',
-          name: 'market-access-intelligence',
-          display_name: 'Market Access Intelligence',
-          description: 'HTA reports, pricing data, and market access strategies across major markets',
-          purpose_description: 'Use for market access planning, pricing decisions, and reimbursement strategies',
-          rag_type: 'global',
-          access_level: 'confidential',
-          status: 'draft',
-          knowledge_domains: ['market-access', 'health-economics', 'pricing-reimbursement'],
-          document_count: 234,
-          total_chunks: 9876,
-          quality_score: 0.85,
-          is_active: false,
-          created_at: '2024-11-01T10:00:00Z',
-          updated_at: '2024-12-10T14:00:00Z',
-        },
-        {
-          id: '6',
-          name: 'digital-health-rwe',
-          display_name: 'Digital Health & RWE Repository',
-          description: 'Real-world evidence studies, digital biomarkers, and DTx development resources',
-          purpose_description: 'Use for digital therapeutics development and real-world evidence analysis',
-          rag_type: 'global',
-          access_level: 'organization',
-          status: 'review',
-          knowledge_domains: ['digital-therapeutics', 'real-world-evidence', 'ai-ml'],
-          therapeutic_areas: ['psychiatry', 'endocrinology'],
-          document_count: 312,
-          total_chunks: 12456,
-          quality_score: 0.88,
-          is_active: true,
-          created_at: '2024-06-01T10:00:00Z',
-          updated_at: '2024-12-08T09:00:00Z',
-        },
-      ];
-
-      setRags(mockRags);
+      const res = await fetch('/api/knowledge/bases');
+      if (!res.ok) {
+        throw new Error('Failed to load knowledge bases');
+      }
+      const body = await res.json();
+      if (Array.isArray(body.bases)) {
+        setRags(body.bases);
+      } else {
+        setRags([]);
+      }
     } catch (err) {
       console.error('Error loading RAGs:', err);
       setError(err instanceof Error ? err.message : 'Failed to load knowledge bases');
@@ -479,7 +418,7 @@ function KnowledgePageContent() {
       // Category filter (maps to domain category)
       const matchesCategory = !currentCategory ||
         rag.knowledge_domains.some(d => {
-          const domain = KNOWLEDGE_DOMAINS.find(kd => kd.value === d);
+          const domain = domainMap.get(d);
           return domain?.category === currentCategory;
         });
 

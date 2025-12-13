@@ -8,10 +8,119 @@ Defines request/response schemas for the 4-mode Ask Expert system:
 - Mode 4: Auto-Autonomous
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
 from enum import Enum
 from datetime import datetime
+import re
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# Phase 2 H1: Input Validation with Injection Protection
+# =============================================================================
+
+# Patterns that indicate potential injection attacks
+INJECTION_PATTERNS = [
+    # SQL Injection patterns
+    r"(?i)\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|TRUNCATE)\s+",
+    r"(?i)(\-\-|\/\*|\*\/|;)",  # SQL comments and statement terminators
+    r"(?i)\bOR\s+1\s*=\s*1",  # Classic SQL injection
+    r"(?i)\bAND\s+1\s*=\s*1",
+
+    # Command Injection patterns
+    r"(?i)(;|\||`|\$\(|\$\{)",  # Shell metacharacters
+    r"(?i)\b(cat|rm|chmod|curl|wget|bash|sh|nc|netcat)\s+",
+
+    # Prompt Injection patterns (for LLM security)
+    r"(?i)(ignore\s+(previous|all|above|prior)\s+(instructions?|prompts?|commands?))",
+    r"(?i)(you\s+are\s+now|pretend\s+you|act\s+as\s+if|forget\s+(everything|all))",
+    r"(?i)(disregard\s+(all|previous)|override\s+instructions?)",
+    r"(?i)\[SYSTEM\]|\[INST\]|\<\|im_start\|\>",  # Format injection
+
+    # XSS patterns
+    r"(?i)<\s*script",
+    r"(?i)javascript\s*:",
+    r"(?i)on(load|error|click|mouseover)\s*=",
+]
+
+# Compiled patterns for performance
+_COMPILED_PATTERNS = [re.compile(p) for p in INJECTION_PATTERNS]
+
+
+class InputValidationError(ValueError):
+    """Raised when input fails security validation."""
+
+    def __init__(self, message: str, pattern_matched: str = None, sanitized_input: str = None):
+        super().__init__(message)
+        self.pattern_matched = pattern_matched
+        self.sanitized_input = sanitized_input
+
+
+def sanitize_query(value: str, strict: bool = False) -> str:
+    """
+    Sanitize user query input for security (H1 CRITICAL fix).
+
+    Args:
+        value: Raw user input
+        strict: If True, reject suspicious input; if False, sanitize and warn
+
+    Returns:
+        Sanitized query string
+
+    Raises:
+        InputValidationError: If strict=True and injection pattern detected
+    """
+    if not value or not isinstance(value, str):
+        return value
+
+    # Normalize whitespace
+    cleaned = " ".join(value.split())
+
+    # Check for injection patterns
+    for i, pattern in enumerate(_COMPILED_PATTERNS):
+        match = pattern.search(cleaned)
+        if match:
+            pattern_name = INJECTION_PATTERNS[i][:50]
+
+            if strict:
+                logger.warning(
+                    "input_validation_rejected",
+                    extra={
+                        "pattern_index": i,
+                        "pattern_preview": pattern_name,
+                        "input_preview": cleaned[:100],
+                        "match": match.group()[:30],
+                    }
+                )
+                raise InputValidationError(
+                    f"Query contains suspicious pattern (index={i})",
+                    pattern_matched=pattern_name,
+                    sanitized_input=cleaned[:100],
+                )
+            else:
+                # Log warning but allow through (sanitize instead)
+                logger.warning(
+                    "input_validation_warning",
+                    extra={
+                        "pattern_index": i,
+                        "pattern_preview": pattern_name,
+                        "input_preview": cleaned[:100],
+                        "action": "sanitized",
+                    }
+                )
+                # Remove the matched pattern
+                cleaned = pattern.sub(" ", cleaned)
+
+    # Additional sanitization: escape angle brackets for XSS prevention
+    cleaned = cleaned.replace("<", "&lt;").replace(">", "&gt;")
+
+    # Limit consecutive special characters (potential obfuscation)
+    cleaned = re.sub(r"([^\w\s])\1{3,}", r"\1\1", cleaned)
+
+    return cleaned.strip()
 
 
 class HITLSafetyLevel(str, Enum):
@@ -96,6 +205,21 @@ class AskExpertRequest(BaseModel):
     enable_tools: bool = Field(default=True, description="Enable tool execution")
     enable_sub_agents: bool = Field(default=True, description="Enable sub-agent spawning")
     
+    # Phase 2 H1: Apply input validation to query field
+    @field_validator("query", mode="before")
+    @classmethod
+    def validate_and_sanitize_query(cls, v: str) -> str:
+        """
+        Apply security sanitization to user query (H1 CRITICAL fix).
+
+        Uses non-strict mode by default: suspicious patterns are sanitized
+        and logged rather than rejected outright. This provides defense-in-depth
+        while maintaining user experience.
+        """
+        if not v:
+            return v
+        return sanitize_query(v, strict=False)
+
     class Config:
         json_schema_extra = {
             "example": {

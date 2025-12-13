@@ -1,1308 +1,674 @@
-# VITAL Platform: Frontend Implementation Plan v1.1
+# VITAL Platform: Frontend Implementation Plan v2.0
 
 **Date:** December 13, 2025
-**Last Updated:** December 13, 2025 - Phase 1 Complete
-**Based On:** FRONTEND_DESIGN_COMPREHENSIVE_AUDIT.md v2.1
+**Last Updated:** December 13, 2025 - Full Audit Integration
+**Based On:** FRONTEND_DESIGN_COMPREHENSIVE_AUDIT.md v3.0
 **Purpose:** Transform VITAL from "healthcare SaaS" to "Human Genius, Amplified" platform
-
----
-
-## 🎉 PHASE 1 COMPLETE - December 13, 2025
-
-### Landing Page Delivered
-
-| Deliverable | Status | Evidence |
-|-------------|--------|----------|
-| Hero Messaging ("Human Genius, Amplified") | ✅ Complete | `src/features/landing/HeroSection.tsx` |
-| Domain-Agnostic Copy | ✅ Complete | All 6 sections use innovation language |
-| Warm Purple Color (#9055E0) | ✅ Complete | Used in CTAs, accents, badges |
-| Off-White Backgrounds (#FAFAF9) | ✅ Complete | Main canvas color |
-| Lucide Icons (NO emojis) | ✅ Complete | All icons from lucide-react |
-| Service Layers Display | ✅ Complete | `ServicesSection.tsx` with 4 services |
-| Multi-Industry Positioning | ✅ Complete | `AudienceSection.tsx` - pharma as ONE option |
-| Root Route Updated | ✅ Complete | `src/app/page.tsx` renders LandingPage |
-| TypeScript Validation | ✅ Complete | Zero errors in landing components |
-| Git Commit & Push | ✅ Complete | Commit 29618e84 on main |
-
-### Files Created/Modified
-
-```
-apps/vital-system/src/features/landing/
-├── HeroSection.tsx      (NEW - 157 lines)
-├── ProblemSection.tsx   (NEW - 95 lines)
-├── SolutionSection.tsx  (NEW - 112 lines)
-├── ServicesSection.tsx  (NEW - 123 lines)
-├── AudienceSection.tsx  (NEW - 141 lines)
-├── CTASection.tsx       (NEW - 84 lines)
-├── LandingPage.tsx      (NEW - 98 lines)
-└── index.ts             (NEW - 17 lines)
-
-apps/vital-system/src/app/page.tsx (MODIFIED - renders LandingPage)
-```
 
 ---
 
 ## Executive Summary
 
-This implementation plan transforms VITAL's frontend from a healthcare-centric SaaS appearance to a world-class "Human Genius, Amplified" innovation platform. The plan is organized into 4 phases over 8 weeks, with clear deliverables, file changes, and verification criteria.
+### Current State: B+ (83/100) ⬆️ +11
 
-**Progress After Phase 1:**
-- Brand Alignment: D (42/100) → C+ (68/100) ✅ +26 points
-- Innovation Positioning: F (40/100) → C+ (70/100) ✅ +30 points
-- Overall Score: C (62/100) → B- (75/100) ✅ +13 points
+| Dimension | Score | Status |
+|-----------|-------|--------|
+| Component Architecture | 68/100 | 🔴 High Debt |
+| Code Quality | 72/100 | 🟡 Acceptable |
+| Production Readiness | 78/100 | 🟢 Near Production |
+| Brand v6.0 Alignment | 88/100 | 🟢 Good Progress |
+| Design Token Implementation | 88/100 | 🟢 Excellent Foundation |
+| Visual Identity | 88/100 | 🟢 Improving |
+| Brand Messaging | 68/100 | 🔴 Critical Gap |
+| Gray-to-Neutral Migration | 70/100 | 🟡 Ask Expert Complete |
+| **Ask Expert Feature** | 95/100 | 🟢 **COMPLETE** |
 
-**Remaining Target:**
-- Brand Alignment: C+ (68/100) → A (90/100)
-- Innovation Positioning: C+ (70/100) → A (90/100)
-- Overall Score: B- (75/100) → A- (90/100)
+### Target State: A- (88/100) in 6 Weeks (Reduced from 8)
 
 ---
 
-## Phase 1: Brand Foundation (Week 1) ✅ COMPLETE
+## 🎉 Completed Work
 
-### P0-1: Color Palette Migration ✅
+### Phase 1A: Landing Page ✅ COMPLETE
 
-**Objective:** Replace cold blue/gray with warm purple/off-white
+| Deliverable | Status | Evidence |
+|-------------|--------|----------|
+| Hero Messaging | ✅ | `src/features/landing/HeroSection.tsx` |
+| Domain-Agnostic Copy | ✅ | All 6 sections use innovation language |
+| Warm Purple (#9055E0) | ✅ | CTAs, accents, badges |
+| Off-White Backgrounds | ✅ | Main canvas #FAFAF9 |
+| Lucide Icons (NO emojis) | ✅ | All icons from lucide-react |
+| TypeScript Validation | ✅ | Zero errors in landing components |
+| Git Commit | ✅ | Commit 29618e84 on main |
 
-**Files to Modify:**
+### Phase 1B: Landing Page Visual Refresh ✅ COMPLETE
 
-1. **`apps/vital-system/tailwind.config.ts`**
-   ```typescript
-   // ADD: VITAL Brand Colors
-   colors: {
-     vital: {
-       purple: {
-         50: '#FAF5FF',
-         100: '#F3E8FF',
-         200: '#E9D5FF',
-         500: '#A855F7',
-         600: '#9055E0',  // PRIMARY
-         700: '#7C3AED',
-         800: '#6B21A8',
-       },
-       canvas: {
-         primary: '#FAFAF9',
-         secondary: '#F5F5F4',
-         subtle: '#E7E5E4',
-         elevated: '#FFFFFF',
-       },
-       stone: {
-         400: '#A8A29E',
-         500: '#78716C',
-         600: '#57534E',
-         700: '#44403C',
-         800: '#292524',
-       },
-     },
-   }
-   ```
+| Deliverable | Status | Evidence |
+|---|---|---|
+| Conceptual Visual Language Codified | ✅ | `VITAL_BRAND_GUIDELINES_V5.0.md` |
+| New SVG Asset Creation | ✅ | `public/assets/vital/illustrations/` |
+| Landing Page Visuals Implemented | ✅ | `LandingPagePremium.tsx`, `Features06.tsx` |
 
-2. **`apps/vital-system/src/app/globals.css`**
-   ```css
-   :root {
-     /* Backgrounds - Warm, Never Pure White */
-     --background: #FAFAF9;
-     --background-surface: #F5F5F4;
-     --background-subtle: #E7E5E4;
+### Sidebar Consolidation ✅ COMPLETE
 
-     /* Text - Warm Stone */
-     --foreground: #57534E;
-     --foreground-heading: #292524;
-     --foreground-secondary: #78716C;
-     --foreground-muted: #A8A29E;
+| Deliverable | Status | Evidence |
+|-------------|--------|----------|
+| ContextualSidebar | ✅ | 340 lines, single orchestrator |
+| 17 Modular Views | ✅ | 1,479 total lines |
+| Consistent Interface | ✅ | All views share props pattern |
+| Grade Improvement | ✅ | D → B+ (55 → 85/100) |
 
-     /* Accent - Warm Purple */
-     --accent: #9055E0;
-     --accent-hover: #7C3AED;
-     --accent-subtle: #F3E8FF;
-     --accent-foreground: #FFFFFF;
+### Icon System Migration ✅ COMPLETE
 
-     /* Borders */
-     --border: #E7E5E4;
-     --border-focus: #9055E0;
+| Deliverable | Status | Evidence |
+|-------------|--------|----------|
+| Emoji Violations | ✅ | 0 found (was 87) |
+| Lucide Adoption | ✅ | 387 components using Lucide |
+| Grade | ✅ | A+ (100/100) |
 
-     /* Focus */
-     --shadow-focus: 0 0 0 3px rgba(144, 85, 224, 0.15);
-   }
-   ```
+---
 
-**Search & Replace Operations:**
+## 🔴 Critical Findings (December 13, 2025 Audit)
 
-| Find | Replace | Estimated Count |
-|------|---------|-----------------|
-| `bg-white` | `bg-canvas-primary` or `bg-[#FAFAF9]` | 387 instances |
-| `bg-blue-500` | `bg-vital-purple-600` | 142 instances |
-| `bg-blue-600` | `bg-vital-purple-700` | ~50 instances |
-| `text-gray-` | `text-stone-` | ~200 instances |
-| `border-gray-` | `border-stone-` | ~150 instances |
+### Quantified Issues
 
-**Verification:**
+| Issue | Count | Impact | Priority |
+|-------|-------|--------|----------|
+| Gray text violations | 516 | 73% of text wrong color | 🔴 Critical |
+| Blue accent violations | 176 | 64% of accents wrong color | 🔴 Critical |
+| Pure white backgrounds | 187 | 89% backgrounds clinical | 🔴 Critical |
+| Knowledge marketplace mocks | 1 page | Blocks real data UX | 🔴 Critical |
+| Agent Card duplicates | 5 files, 1,772 lines | 40% code redundancy | 🔴 Critical |
+| TypeScript errors | 257+ | Build instability | 🔴 Critical |
+| Deleted files in git | 200+ | Pending cleanup | 🟠 High |
+| Brand tagline visibility | 0 | Brand invisible | 🟠 High |
+| Healthcare language | 370+ terms | Domain lock-in | 🟡 Medium |
+| vital-ai-ui adoption | <5% | Package underused | 🟡 Medium |
+| State management stores | 10+ scattered | Pattern inconsistency | 🟡 Medium |
+
+---
+
+## Implementation Phases
+
+### Phase 1B: Critical Foundation (Week 1) 🔴 IMMEDIATE
+
+**Objective:** Prevent new violations, clean up git status, stabilize build
+
+#### Task 1.1: Commit Deleted Files
 ```bash
-# After changes, these should return 0 results:
-grep -r "bg-white" apps/vital-system/src --include="*.tsx" | wc -l
-grep -r "bg-blue-500" apps/vital-system/src --include="*.tsx" | wc -l
+# Clean up 200+ deleted files
+git add -u
+git commit -m "chore: remove 200+ deprecated Python/component files
+
+- Remove legacy Python agent implementations
+- Remove duplicate sidebar implementations
+- Remove deprecated agent card variants
+- Clean up test/demo files
+
+🤖 Generated with Claude Code"
 ```
+
+**Effort:** Low (1 hour)
+**Impact:** Clean git status, smaller repo
 
 ---
 
-### P0-2: Emoji to Lucide Icon Migration
+#### Task 1.X: Unmock Knowledge Marketplace
+- Replace mocked RAG data on `/app/(app)/knowledge/page.tsx` with live APIs (`/api/knowledge-domains`, `/api/knowledge/bases` or documents+domains).
+- Ensure domain filters use `slug`/`domain_type` from DB; no static constants in filters.
+- Add cross-link to builder (`/designer/knowledge?base=<id>`) and keep builder tabs (Domains/Sources/Documents/Evals) discoverable.
+- Mark marketplace and builder components as `PRODUCTION_READY` only when live-data backed.
 
-**Objective:** Replace all 87 emoji instances with Lucide React icons
+#### Task 1.2: Harden Tailwind Config
 
-**Mapping Table:**
+**File:** `apps/vital-system/tailwind.config.ts`
 
-| Emoji | Lucide Icon | Import |
-|-------|-------------|--------|
-| `🏥` (hospital) | `Building2` | `import { Building2 } from 'lucide-react'` |
-| `📱` (mobile) | `Smartphone` | `import { Smartphone } from 'lucide-react'` |
-| `💊` (pill) | `Pill` | `import { Pill } from 'lucide-react'` |
-| `🔬` (microscope) | `Microscope` | `import { Microscope } from 'lucide-react'` |
-| `⚕️` (medical) | `Heart` or `Stethoscope` | `import { Heart } from 'lucide-react'` |
-| `📊` (chart) | `BarChart3` | `import { BarChart3 } from 'lucide-react'` |
-| `🧠` (brain) | `Brain` | `import { Brain } from 'lucide-react'` |
-| `💡` (lightbulb) | `Lightbulb` | `import { Lightbulb } from 'lucide-react'` |
-| `🎯` (target) | `Target` | `import { Target } from 'lucide-react'` |
-| `⚡` (lightning) | `Zap` | `import { Zap } from 'lucide-react'` |
+**Current Problem:** Tailwind extends default colors, allowing blue/gray violations.
 
-**Files with Highest Emoji Density:**
-1. `apps/vital-system/src/features/agents/components/` - Agent cards, descriptions
-2. `apps/vital-system/src/app/(app)/` - Page headers, navigation
-3. `packages/vital-ai-ui/src/agents/` - Agent display components
-4. Database seeds - Agent avatar fields
+**Solution:** Override colors completely:
 
-**Database Update Script:**
-```sql
--- Update agent avatars from emoji to icon paths
-UPDATE agents
-SET avatar = CASE
-  WHEN avatar LIKE '%🏥%' THEN '/icons/png/avatars/avatar_0001.png'
-  WHEN avatar LIKE '%📱%' THEN '/icons/png/avatars/avatar_0002.png'
-  WHEN avatar LIKE '%💊%' THEN '/icons/png/avatars/avatar_0003.png'
-  WHEN avatar LIKE '%🔬%' THEN '/icons/png/avatars/avatar_0004.png'
-  ELSE avatar
-END
-WHERE avatar ~ '[^\x00-\x7F]';
+```typescript
+// BEFORE: Extends defaults (allows violations)
+theme: {
+  extend: {
+    colors: { /* ... */ }
+  }
+}
+
+// AFTER: Override completely (prevents violations)
+import { brandTokens } from './src/lib/brand/brand-tokens'
+
+export default {
+  theme: {
+    colors: {
+      transparent: 'transparent',
+      current: 'currentColor',
+      white: '#FFFFFF', // Only for modals/elevated
+      black: '#000000',
+      // Brand colors only
+      purple: {
+        50: '#FAF5FF',
+        100: '#F3E8FF',
+        200: '#E9D5FF',
+        300: '#D8B4FE',
+        400: '#C084FC',
+        500: '#A855F7',
+        600: '#9055E0', // Primary brand
+        700: '#7C3AED',
+        800: '#6D28D9',
+        900: '#5B21B6',
+      },
+      stone: {
+        50: '#FAFAF9',  // Canvas
+        100: '#F5F5F4', // Surface
+        200: '#E7E5E4', // Border
+        300: '#D6D3D1',
+        400: '#A8A29E', // Muted text
+        500: '#78716C', // Secondary text
+        600: '#57534E', // Body text
+        700: '#44403C',
+        800: '#292524', // Heading text
+        900: '#1C1917',
+      },
+      // Status colors
+      emerald: { /* for success */ },
+      amber: { /* for warning */ },
+      rose: { /* for error */ },
+      // NO blue, NO gray - violations prevented
+    },
+    // ...rest of config
+  }
+}
 ```
 
-**Verification:**
-```bash
-# Should return 0 results:
-grep -rE "[🏥📱💊🔬⚕️📊🧠💡🎯⚡]" apps/vital-system/src --include="*.tsx" | wc -l
-```
+**Effort:** Medium (2 hours)
+**Impact:** Prevents all future blue/gray violations
 
 ---
 
-### P0-3: Copy Rewrite - Remove Healthcare Framing
+#### Task 1.3: Add Brand Tagline
 
-**Objective:** Transform healthcare-centric language to innovation-focused language
+**Files to modify:**
+1. `apps/vital-system/src/app/page.tsx` - Homepage
+2. `apps/vital-system/src/app/(auth)/login/page.tsx` - Login
+3. `apps/vital-system/src/components/layout/footer.tsx` - Footer
 
-**Global Search & Replace:**
-
-| Healthcare Term | Innovation Term |
-|-----------------|-----------------|
-| "Medical expert" | "Domain expert" |
-| "Clinical insights" | "Structured insights" |
-| "Ask an Expert" | "Orchestrate Expertise" |
-| "Pharmaceutical AI" | "Innovation Accelerator" |
-| "Healthcare agents" | "Genius Network" |
-| "Patient outcomes" | "Innovation outcomes" |
-| "Clinical decision" | "Informed decision" |
-| "Medical knowledge" | "Domain knowledge" |
-| "Healthcare platform" | "Intelligence platform" |
-| "Pharma-focused" | "Industry-focused" |
-
-**Files Requiring Manual Review:**
-1. `apps/vital-system/src/app/(app)/page.tsx` - Landing/home page
-2. `apps/vital-system/src/components/` - Shared components
-3. `packages/vital-ai-ui/src/` - UI component library
-4. All `README.md` and documentation files
-
-**New Hero Messaging:**
+**Implementation:**
 ```tsx
-// apps/vital-system/src/app/(app)/page.tsx
-<h1 className="text-stone-800 text-4xl font-semibold">
-  Human Genius, Amplified
+// Add to homepage hero
+<h1 className="text-4xl font-bold text-stone-800">
+  VITAL
 </h1>
-<p className="text-stone-600 text-lg">
-  Orchestrating expertise, transforming scattered knowledge
-  into compounding structures of insight
+<p className="text-xl text-stone-600 mt-2">
+  Human Genius, Amplified
 </p>
 ```
 
+**Effort:** Low (1 hour)
+**Impact:** Brand visibility from 0% → 100% on key pages
+
 ---
 
-### P0-4: Hero Messaging Implementation ✅ COMPLETE
+#### Task 1.4: Fix Critical TypeScript Errors
 
-**Objective:** Establish "Human Genius, Amplified" brand presence
+**Current:** 257+ errors
+**Target:** <100 errors
 
-**Status:** ✅ Implemented in `src/features/landing/HeroSection.tsx`
+**Priority fixes:**
+1. Missing type definitions (40% of errors)
+2. Import resolution errors (30% of errors)
+3. Type mismatches in Zustand stores (20%)
+4. Null safety issues (10%)
 
-**Actual Implementation:**
+**Command:**
+```bash
+npx tsc --noEmit 2>&1 | grep "error TS" | head -100 > ts-errors.txt
+```
 
-```tsx
-// apps/vital-system/src/app/(app)/page.tsx
+**Effort:** High (8 hours)
+**Impact:** Build stability, CI/CD reliability
 
-export default function HomePage() {
-  return (
-    <div className="min-h-screen bg-[#FAFAF9]">
-      {/* Hero Section */}
-      <section className="px-6 py-24 text-center">
-        <h1 className="text-5xl font-semibold text-stone-800 mb-4">
-          Human Genius, Amplified
-        </h1>
-        <p className="text-xl text-stone-600 max-w-2xl mx-auto mb-8">
-          Orchestrating expertise, transforming scattered knowledge
-          into compounding structures of insight
-        </p>
-        <div className="flex justify-center gap-4">
-          <Button className="bg-vital-purple-600 hover:bg-vital-purple-700">
-            Start Orchestrating
-          </Button>
-          <Button variant="outline" className="border-vital-purple-600 text-vital-purple-600">
-            Explore Capabilities
-          </Button>
-        </div>
-      </section>
+---
 
-      {/* Value Proposition */}
-      <section className="px-6 py-16 bg-[#F5F5F4]">
-        <div className="grid grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <ValueCard
-            icon={<Circle className="text-vital-purple-600" />}
-            title="Synthesize Insights"
-            description="Transform scattered knowledge into structured understanding"
-          />
-          <ValueCard
-            icon={<Triangle className="text-emerald-500" />}
-            title="Compound Growth"
-            description="Build on each interaction to accelerate innovation"
-          />
-          <ValueCard
-            icon={<Diamond className="text-pink-500" />}
-            title="Precise Decisions"
-            description="Navigate uncertainty with evidence-based guidance"
-          />
-        </div>
-      </section>
-    </div>
+### Phase 2: Color Migration (Week 2-3) 🟠 HIGH
+
+**Objective:** Complete gray-to-stone and blue-to-purple migration
+
+#### Task 2.1: Automated Color Migration
+
+**Migration Script:**
+```bash
+#!/bin/bash
+# scripts/migrate-colors.sh
+
+echo "Starting color migration..."
+
+# Gray to Stone text colors
+find apps/vital-system/src -name "*.tsx" -exec sed -i '' \
+  -e 's/text-gray-50/text-stone-50/g' \
+  -e 's/text-gray-100/text-stone-100/g' \
+  -e 's/text-gray-200/text-stone-200/g' \
+  -e 's/text-gray-300/text-stone-300/g' \
+  -e 's/text-gray-400/text-stone-400/g' \
+  -e 's/text-gray-500/text-stone-500/g' \
+  -e 's/text-gray-600/text-stone-600/g' \
+  -e 's/text-gray-700/text-stone-700/g' \
+  -e 's/text-gray-800/text-stone-800/g' \
+  -e 's/text-gray-900/text-stone-900/g' \
+  {} +
+
+# Gray to Stone backgrounds
+find apps/vital-system/src -name "*.tsx" -exec sed -i '' \
+  -e 's/bg-gray-50/bg-stone-50/g' \
+  -e 's/bg-gray-100/bg-stone-100/g' \
+  -e 's/bg-gray-200/bg-stone-200/g' \
+  {} +
+
+# Gray to Stone borders
+find apps/vital-system/src -name "*.tsx" -exec sed -i '' \
+  -e 's/border-gray-200/border-stone-200/g' \
+  -e 's/border-gray-300/border-stone-300/g' \
+  {} +
+
+# Blue to Purple accents
+find apps/vital-system/src -name "*.tsx" -exec sed -i '' \
+  -e 's/bg-blue-50/bg-purple-50/g' \
+  -e 's/bg-blue-100/bg-purple-100/g' \
+  -e 's/bg-blue-500/bg-purple-500/g' \
+  -e 's/bg-blue-600/bg-purple-600/g' \
+  -e 's/bg-blue-700/bg-purple-700/g' \
+  -e 's/text-blue-500/text-purple-500/g' \
+  -e 's/text-blue-600/text-purple-600/g' \
+  -e 's/text-blue-700/text-purple-700/g' \
+  -e 's/border-blue-200/border-purple-200/g' \
+  -e 's/border-blue-500/border-purple-500/g' \
+  {} +
+
+echo "Migration complete. Run verification..."
+```
+
+**Verification Script:**
+```bash
+#!/bin/bash
+# scripts/verify-brand-compliance.sh
+
+BLUE=$(grep -r "bg-blue-\|text-blue-\|border-blue-" apps/vital-system/src --include="*.tsx" | wc -l)
+GRAY=$(grep -r "text-gray-\|bg-gray-\|border-gray-" apps/vital-system/src --include="*.tsx" | wc -l)
+
+echo "Brand Compliance Report"
+echo "========================"
+echo "Blue violations: $BLUE (target: <10)"
+echo "Gray violations: $GRAY (target: <25)"
+
+if [ $BLUE -gt 10 ] || [ $GRAY -gt 25 ]; then
+  echo "❌ FAILED - Manual review needed"
+  exit 1
+else
+  echo "✅ PASSED"
+  exit 0
+fi
+```
+
+**Effort:** Medium (4 hours for automation, 4 hours for manual review)
+**Impact:** Gray 516→0, Blue 176→0
+
+---
+
+#### Task 2.2: Background Color Migration
+
+**Current:** 187 instances of `bg-white`
+**Target:** `bg-stone-50` for canvas, `bg-stone-100` for surfaces
+
+**Exceptions (keep white):**
+- Modals and dialogs (elevated surfaces)
+- Input fields (form controls)
+
+**Script:**
+```bash
+# Migrate backgrounds (careful - not all white should change)
+find apps/vital-system/src -name "*.tsx" -exec sed -i '' \
+  -e 's/bg-white shadow-sm/bg-stone-50 shadow-sm/g' \
+  -e 's/bg-white p-/bg-stone-50 p-/g' \
+  -e 's/className="bg-white"/className="bg-stone-50"/g' \
+  {} +
+```
+
+**Manual review needed for:**
+- Modal backgrounds (keep white)
+- Input backgrounds (keep white)
+- Card backgrounds (change to stone-50/100)
+
+---
+
+#### Task 2.3: Update vital-ai-ui Package
+
+**Files:**
+```
+packages/vital-ai-ui/src/
+├── agents/VitalAgentCard.tsx      (15 gray, 8 blue)
+├── agents/VitalExpertAgentCard.tsx (8 gray, 4 blue)
+├── reasoning/VitalThinking.tsx    (12 gray)
+├── layout/VitalSidebar.tsx        (10 gray)
+```
+
+**Apply same migrations to packages.**
+
+---
+
+### Phase 3: Component Consolidation (Week 4-5) 🟡 MEDIUM
+
+#### Task 3.1: Agent Card Consolidation
+
+**Current State:**
+| File | Lines | Action |
+|------|-------|--------|
+| `features/agents/components/agent-card.tsx` | 476 | DELETE |
+| `features/agents/components/agent-card-enhanced.tsx` | 528 | DELETE |
+| `features/agents/components/AgentCard.tsx` | 312 | DELETE |
+| `packages/vital-ai-ui/src/agents/VitalAgentCard.tsx` | 267 | KEEP (Canonical) |
+| `packages/vital-ai-ui/src/agents/VitalExpertAgentCard.tsx` | 189 | KEEP (Expert) |
+
+**Step 1: Create compatibility export**
+```typescript
+// apps/vital-system/src/features/agents/components/agent-card.tsx
+// DEPRECATED: Use VitalAgentCard from @vital/ai-ui
+export { VitalAgentCard as AgentCard } from '@repo/vital-ai-ui';
+export { VitalAgentCard } from '@repo/vital-ai-ui';
+```
+
+**Step 2: Update all imports**
+```bash
+# Find all usages
+grep -r "from.*agent-card" apps/vital-system/src --include="*.tsx" -l
+
+# Update imports to use canonical
+```
+
+**Step 3: Enhance canonical component**
+- Add tier badges with atomic geometry
+- Apply stone/purple color scheme
+- Add variant prop for compact/detailed
+
+**Step 4: Delete deprecated files after verification**
+
+**Effort:** High (8 hours)
+**Impact:** 1,316 lines removed (74% reduction)
+
+---
+
+#### Task 3.2: State Management Centralization
+
+**Current:** 10+ scattered Zustand stores
+**Target:** Centralized store registry
+
+**Create registry:**
+```typescript
+// apps/vital-system/src/stores/index.ts
+export { useAgentStore } from '@/features/agents/stores/agent-store';
+export { useInteractiveStore } from '@/features/interactive-chat/stores/interactive-store';
+export { useMissionStore } from '@/features/ask-expert/stores/mission-store';
+// ... all stores in one place
+```
+
+**Create standard pattern:**
+```typescript
+// apps/vital-system/src/stores/create-store.ts
+import { create } from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
+
+export function createStore<T>(
+  name: string,
+  initialState: T,
+  actions: (set: any, get: any) => object
+) {
+  return create<T>()(
+    devtools(
+      persist(
+        (set, get) => ({
+          ...initialState,
+          ...actions(set, get),
+        }),
+        { name }
+      ),
+      { name }
+    )
   );
 }
 ```
 
+**Effort:** Medium (6 hours)
+**Impact:** Pattern consistency from 40% → 90%
+
 ---
 
-### P0-5: Persona Identification Onboarding
+#### Task 3.3: Healthcare Language Removal
 
-**Objective:** Create first-run experience that identifies innovator type
+**Current:** 370+ instances
+**Target:** <50 instances
 
-**New Files to Create:**
+**Manual review categories:**
+1. Component descriptions
+2. Agent names and descriptions
+3. Button labels and tooltips
+4. Error messages
+5. Documentation
 
-1. **`apps/vital-system/src/features/onboarding/persona-identification.tsx`**
+**Replacement guide:**
+| Healthcare Term | Domain-Agnostic Term |
+|-----------------|----------------------|
+| Medical expert | Domain expert |
+| Clinical insights | Structured insights |
+| Healthcare professional | Domain specialist |
+| Pharmaceutical AI | Innovation Accelerator |
+| Patient outcomes | User outcomes |
+| Clinical decision | Informed decision |
+| Medical knowledge | Domain knowledge |
 
-```tsx
-'use client';
+**Effort:** High (12 hours - manual review)
+**Impact:** Domain-agnostic positioning
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Search, Layers, Compass, Beaker, Building,
-  Map, GitBranch, FlaskConical, Maximize, Mountain
-} from 'lucide-react';
+---
 
-const INNOVATOR_PERSONAS = [
-  {
-    id: 'pattern-seeker',
-    name: 'Pattern Seeker',
-    icon: Search,
-    description: 'Find cross-domain connections others miss',
-    traits: ['Analytical', 'Curious', 'Systems thinker'],
-  },
-  {
-    id: 'evidence-architect',
-    name: 'Evidence Architect',
-    icon: Layers,
-    description: 'Build rigorous, defensible arguments',
-    traits: ['Detail-oriented', 'Methodical', 'Precise'],
-  },
-  {
-    id: 'synthesis-conductor',
-    name: 'Synthesis Conductor',
-    icon: GitBranch,
-    description: 'Orchestrate diverse perspectives into coherence',
-    traits: ['Collaborative', 'Integrative', 'Strategic'],
-  },
-  {
-    id: 'rapid-validator',
-    name: 'Rapid Validator',
-    icon: Beaker,
-    description: 'Quickly test hypotheses to separate signal from noise',
-    traits: ['Action-oriented', 'Iterative', 'Pragmatic'],
-  },
-  {
-    id: 'knowledge-architect',
-    name: 'Knowledge Architect',
-    icon: Building,
-    description: 'Build lasting structures of insight',
-    traits: ['Long-term thinker', 'Organized', 'Foundational'],
-  },
-  {
-    id: 'strategic-navigator',
-    name: 'Strategic Navigator',
-    icon: Compass,
-    description: 'Chart paths through uncertainty',
-    traits: ['Visionary', 'Risk-aware', 'Decisive'],
-  },
-  {
-    id: 'domain-bridger',
-    name: 'Domain Bridger',
-    icon: Map,
-    description: 'Translate between specialties',
-    traits: ['Multilingual', 'Empathetic', 'Connective'],
-  },
-  {
-    id: 'experiment-designer',
-    name: 'Experiment Designer',
-    icon: FlaskConical,
-    description: 'Create structured tests for hypotheses',
-    traits: ['Scientific', 'Hypothesis-driven', 'Controlled'],
-  },
-  {
-    id: 'amplifier',
-    name: 'Amplifier',
-    icon: Maximize,
-    description: 'Scale insights across teams and organizations',
-    traits: ['Communicative', 'Influential', 'Scalable'],
-  },
-  {
-    id: 'frontier-explorer',
-    name: 'Frontier Explorer',
-    icon: Mountain,
-    description: 'Push into unknown territory',
-    traits: ['Adventurous', 'Resilient', 'Pioneering'],
-  },
-];
+### Phase 4: Polish (Week 6-8) 🟢 ENHANCEMENT
 
-export function PersonaIdentification({ onComplete }: { onComplete: (persona: string) => void }) {
-  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
+#### Task 4.1: Storybook Setup
 
-  return (
-    <div className="min-h-screen bg-[#FAFAF9] p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-semibold text-stone-800 mb-2">
-          What kind of innovator are you?
-        </h1>
-        <p className="text-stone-600 mb-8">
-          Select the approach that best describes how you work with knowledge and ideas
-        </p>
-
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          {INNOVATOR_PERSONAS.map((persona) => (
-            <button
-              key={persona.id}
-              onClick={() => setSelectedPersona(persona.id)}
-              className={`p-4 rounded-lg border text-left transition-all ${
-                selectedPersona === persona.id
-                  ? 'border-vital-purple-600 bg-vital-purple-50'
-                  : 'border-stone-200 hover:border-stone-300'
-              }`}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <persona.icon
-                  className={selectedPersona === persona.id
-                    ? 'text-vital-purple-600'
-                    : 'text-stone-500'
-                  }
-                  size={24}
-                />
-                <span className="font-medium text-stone-800">{persona.name}</span>
-              </div>
-              <p className="text-sm text-stone-600 mb-2">{persona.description}</p>
-              <div className="flex gap-2">
-                {persona.traits.map((trait) => (
-                  <span
-                    key={trait}
-                    className="text-xs px-2 py-1 bg-stone-100 rounded-full text-stone-600"
-                  >
-                    {trait}
-                  </span>
-                ))}
-              </div>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex justify-between items-center">
-          <button className="text-stone-500 hover:text-stone-700">
-            Skip for now
-          </button>
-          <Button
-            onClick={() => selectedPersona && onComplete(selectedPersona)}
-            disabled={!selectedPersona}
-            className="bg-vital-purple-600 hover:bg-vital-purple-700"
-          >
-            Continue
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
+**Install and configure:**
+```bash
+npx storybook@latest init
 ```
 
-2. **`apps/vital-system/src/features/onboarding/domain-selection.tsx`**
-
-```tsx
-'use client';
-
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Pill, Cpu, Briefcase, GraduationCap,
-  Building2, FlaskConical, LineChart, Shield
-} from 'lucide-react';
-
-const DOMAINS = [
-  { id: 'pharma', name: 'Pharmaceuticals & Biotech', icon: Pill },
-  { id: 'technology', name: 'Technology & Software', icon: Cpu },
-  { id: 'consulting', name: 'Consulting & Strategy', icon: Briefcase },
-  { id: 'academia', name: 'Academia & Research', icon: GraduationCap },
-  { id: 'enterprise', name: 'Enterprise & Corporate', icon: Building2 },
-  { id: 'research', name: 'R&D & Innovation Labs', icon: FlaskConical },
-  { id: 'finance', name: 'Finance & Investment', icon: LineChart },
-  { id: 'government', name: 'Government & Policy', icon: Shield },
-];
-
-export function DomainSelection({ onComplete }: { onComplete: (domain: string) => void }) {
-  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
-
-  return (
-    <div className="min-h-screen bg-[#FAFAF9] p-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-semibold text-stone-800 mb-2">
-          Choose your starting domain
-        </h1>
-        <p className="text-stone-600 mb-8">
-          VITAL adapts to your domain while enabling cross-domain insights
-        </p>
-
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          {DOMAINS.map((domain) => (
-            <button
-              key={domain.id}
-              onClick={() => setSelectedDomain(domain.id)}
-              className={`p-4 rounded-lg border text-left transition-all ${
-                selectedDomain === domain.id
-                  ? 'border-vital-purple-600 bg-vital-purple-50'
-                  : 'border-stone-200 hover:border-stone-300'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <domain.icon
-                  className={selectedDomain === domain.id
-                    ? 'text-vital-purple-600'
-                    : 'text-stone-500'
-                  }
-                  size={24}
-                />
-                <span className="font-medium text-stone-800">{domain.name}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        <Button
-          onClick={() => selectedDomain && onComplete(selectedDomain)}
-          disabled={!selectedDomain}
-          className="w-full bg-vital-purple-600 hover:bg-vital-purple-700"
-        >
-          Get Started
-        </Button>
-      </div>
-    </div>
-  );
-}
-```
-
----
-
-## Phase 2: Component Consolidation (Week 2-3)
-
-### P1-1: Agent Card Consolidation
-
-**Objective:** Reduce 3 agent card implementations to 1 canonical component
-
-**Current Duplicates:**
-1. `apps/vital-system/src/features/agents/components/agent-card.tsx` (DELETE)
-2. `apps/vital-system/src/features/agents/components/agent-card-enhanced.tsx` (DELETE)
-3. `packages/vital-ai-ui/src/agents/VitalAgentCard.tsx` (KEEP - Canonical)
-
-**Action Plan:**
-
-1. **Audit all usages:**
-   ```bash
-   grep -r "AgentCard" apps/vital-system/src --include="*.tsx" -l
-   grep -r "agent-card" apps/vital-system/src --include="*.tsx" -l
-   ```
-
-2. **Update canonical component:**
-   ```tsx
-   // packages/vital-ai-ui/src/agents/VitalAgentCard.tsx
-   // Add atomic geometry, warm colors, tier badges
-   ```
-
-3. **Create compatibility exports:**
-   ```tsx
-   // apps/vital-system/src/features/agents/components/agent-card.tsx
-   export { VitalAgentCard as AgentCard } from '@vital/ai-ui';
-   ```
-
-4. **Migrate all imports** to use canonical component
-
-5. **Delete duplicate files** after verification
-
-**New Canonical Agent Card:**
-
-```tsx
-// packages/vital-ai-ui/src/agents/VitalAgentCard.tsx
-
-import { cn } from '@/lib/utils';
-import { Circle, Square, Triangle } from 'lucide-react';
-
-interface VitalAgentCardProps {
-  agent: {
-    id: string;
-    name: string;
-    tier: 1 | 2 | 3;
-    avatar?: string;
-    description: string;
-    capabilities?: string[];
-    status: 'active' | 'inactive' | 'thinking';
-  };
-  variant?: 'default' | 'compact' | 'detailed';
-  onClick?: () => void;
-}
-
-const TIER_CONFIG = {
-  1: {
-    icon: Circle,
-    color: 'text-vital-purple-600',
-    bg: 'bg-vital-purple-50',
-    label: 'Foundational'
-  },
-  2: {
-    icon: Square,
-    color: 'text-amber-500',
-    bg: 'bg-amber-50',
-    label: 'Specialist'
-  },
-  3: {
-    icon: Triangle,
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-50',
-    label: 'Ultra-Specialist'
-  },
-};
-
-export function VitalAgentCard({ agent, variant = 'default', onClick }: VitalAgentCardProps) {
-  const tierConfig = TIER_CONFIG[agent.tier];
-  const TierIcon = tierConfig.icon;
-
-  return (
-    <div
-      onClick={onClick}
-      className={cn(
-        'rounded-lg border border-stone-200 bg-[#F5F5F4] p-4 transition-all',
-        'hover:border-vital-purple-300 hover:shadow-sm cursor-pointer',
-        agent.status === 'thinking' && 'animate-pulse'
-      )}
-    >
-      <div className="flex items-start gap-3">
-        {/* Avatar */}
-        <div className="w-10 h-10 rounded-full bg-vital-purple-100 flex items-center justify-center">
-          {agent.avatar ? (
-            <img src={agent.avatar} alt={agent.name} className="w-full h-full rounded-full" />
-          ) : (
-            <TierIcon className={tierConfig.color} size={20} />
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-medium text-stone-800 truncate">{agent.name}</h3>
-            <span className={cn(
-              'text-xs px-2 py-0.5 rounded-full',
-              tierConfig.bg,
-              tierConfig.color
-            )}>
-              {tierConfig.label}
-            </span>
-          </div>
-          <p className="text-sm text-stone-600 line-clamp-2">{agent.description}</p>
-        </div>
-      </div>
-
-      {variant === 'detailed' && agent.capabilities && (
-        <div className="mt-3 pt-3 border-t border-stone-200">
-          <div className="flex flex-wrap gap-1">
-            {agent.capabilities.slice(0, 3).map((cap) => (
-              <span key={cap} className="text-xs px-2 py-1 bg-stone-100 rounded-full text-stone-600">
-                {cap}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-```
-
----
-
-### P1-2: Sidebar Standardization
-
-**Objective:** Reduce 7 sidebar implementations to 1 core + context wrappers
-
-**Current Duplicates:**
-1. `apps/vital-system/src/components/sidebar.tsx`
-2. `apps/vital-system/src/components/enhanced-sidebar.tsx`
-3. `apps/vital-system/src/components/contextual-sidebar.tsx`
-4. `apps/vital-system/src/components/ask-expert-sidebar.tsx`
-5. `apps/vital-system/src/components/chat-history-sidebar.tsx`
-6. `apps/vital-system/src/components/shadcn-dashboard-sidebar.tsx`
-7. `packages/vital-ai-ui/src/layout/VitalSidebar.tsx`
-
-**Consolidation Strategy:**
-
-1. **Core Sidebar** (canonical):
-   ```
-   packages/vital-ai-ui/src/layout/VitalSidebar.tsx
-   ```
-
-2. **Context Wrappers** (thin adapters):
-   ```
-   apps/vital-system/src/components/sidebar/
-   ├── ask-expert-content.tsx  (content only)
-   ├── chat-history-content.tsx (content only)
-   └── dashboard-content.tsx    (content only)
-   ```
-
-3. **Usage Pattern:**
-   ```tsx
-   <VitalSidebar>
-     <AskExpertContent />
-   </VitalSidebar>
-   ```
-
----
-
-### P1-3: Atomic Geometry Icon Library
-
-**Objective:** Create reusable atomic geometry components
-
-**New File:**
-```tsx
-// apps/vital-system/src/components/atomic-icons.tsx
-
-import { cn } from '@/lib/utils';
-
-interface AtomicIconProps {
-  shape: 'circle' | 'square' | 'triangle' | 'line' | 'diamond';
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  variant?: 'solid' | 'outline' | 'gradient';
-  className?: string;
-  animated?: boolean;
-}
-
-const SHAPE_COLORS = {
-  circle: { solid: '#9055E0', gradient: 'from-purple-500 to-purple-700' },
-  square: { solid: '#F59E0B', gradient: 'from-amber-400 to-amber-600' },
-  triangle: { solid: '#10B981', gradient: 'from-emerald-400 to-emerald-600' },
-  line: { solid: '#6366F1', gradient: 'from-indigo-400 to-indigo-600' },
-  diamond: { solid: '#EC4899', gradient: 'from-pink-400 to-pink-600' },
-};
-
-const SIZES = {
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 48,
-};
-
-export function AtomicIcon({ shape, size = 'md', variant = 'solid', className, animated }: AtomicIconProps) {
-  const sizeValue = SIZES[size];
-  const colors = SHAPE_COLORS[shape];
-
-  const baseClass = cn(
-    'inline-flex items-center justify-center',
-    animated && 'animate-pulse',
-    className
-  );
-
-  const renderShape = () => {
-    switch (shape) {
-      case 'circle':
-        return (
-          <svg width={sizeValue} height={sizeValue} viewBox="0 0 24 24">
-            <circle
-              cx="12"
-              cy="12"
-              r="10"
-              fill={variant === 'outline' ? 'none' : colors.solid}
-              stroke={colors.solid}
-              strokeWidth={variant === 'outline' ? 2 : 0}
-            />
-          </svg>
-        );
-      case 'square':
-        return (
-          <svg width={sizeValue} height={sizeValue} viewBox="0 0 24 24">
-            <rect
-              x="2"
-              y="2"
-              width="20"
-              height="20"
-              rx="2"
-              fill={variant === 'outline' ? 'none' : colors.solid}
-              stroke={colors.solid}
-              strokeWidth={variant === 'outline' ? 2 : 0}
-            />
-          </svg>
-        );
-      case 'triangle':
-        return (
-          <svg width={sizeValue} height={sizeValue} viewBox="0 0 24 24">
-            <polygon
-              points="12,2 22,22 2,22"
-              fill={variant === 'outline' ? 'none' : colors.solid}
-              stroke={colors.solid}
-              strokeWidth={variant === 'outline' ? 2 : 0}
-            />
-          </svg>
-        );
-      case 'diamond':
-        return (
-          <svg width={sizeValue} height={sizeValue} viewBox="0 0 24 24">
-            <polygon
-              points="12,2 22,12 12,22 2,12"
-              fill={variant === 'outline' ? 'none' : colors.solid}
-              stroke={colors.solid}
-              strokeWidth={variant === 'outline' ? 2 : 0}
-            />
-          </svg>
-        );
-      case 'line':
-        return (
-          <svg width={sizeValue} height={sizeValue} viewBox="0 0 24 24">
-            <line
-              x1="2"
-              y1="12"
-              x2="22"
-              y2="12"
-              stroke={colors.solid}
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-          </svg>
-        );
-    }
-  };
-
-  return <span className={baseClass}>{renderShape()}</span>;
-}
-
-// Semantic exports
-export const InsightIcon = (props: Omit<AtomicIconProps, 'shape'>) =>
-  <AtomicIcon shape="circle" {...props} />;
-
-export const StructureIcon = (props: Omit<AtomicIconProps, 'shape'>) =>
-  <AtomicIcon shape="square" {...props} />;
-
-export const GrowthIcon = (props: Omit<AtomicIconProps, 'shape'>) =>
-  <AtomicIcon shape="triangle" {...props} />;
-
-export const ConnectionIcon = (props: Omit<AtomicIconProps, 'shape'>) =>
-  <AtomicIcon shape="line" {...props} />;
-
-export const DecisionIcon = (props: Omit<AtomicIconProps, 'shape'>) =>
-  <AtomicIcon shape="diamond" {...props} />;
-```
-
----
-
-### P1-4: Tier Visual Language
-
-**Objective:** Consistent tier representation across all components
-
-**New File:**
-```tsx
-// apps/vital-system/src/components/tier-badge.tsx
-
-import { cn } from '@/lib/utils';
-import { AtomicIcon } from './atomic-icons';
-
-interface TierBadgeProps {
-  tier: 1 | 2 | 3;
-  variant?: 'default' | 'compact' | 'icon-only';
-  showLabel?: boolean;
-  className?: string;
-}
-
-const TIER_CONFIG = {
-  1: {
-    shape: 'circle' as const,
-    label: 'Foundational',
-    shortLabel: 'T1',
-    bgColor: 'bg-vital-purple-50',
-    textColor: 'text-vital-purple-700',
-    borderColor: 'border-vital-purple-200',
-  },
-  2: {
-    shape: 'square' as const,
-    label: 'Specialist',
-    shortLabel: 'T2',
-    bgColor: 'bg-amber-50',
-    textColor: 'text-amber-700',
-    borderColor: 'border-amber-200',
-  },
-  3: {
-    shape: 'triangle' as const,
-    label: 'Ultra-Specialist',
-    shortLabel: 'T3',
-    bgColor: 'bg-emerald-50',
-    textColor: 'text-emerald-700',
-    borderColor: 'border-emerald-200',
-  },
-};
-
-export function TierBadge({ tier, variant = 'default', showLabel = true, className }: TierBadgeProps) {
-  const config = TIER_CONFIG[tier];
-
-  if (variant === 'icon-only') {
-    return <AtomicIcon shape={config.shape} size="sm" className={className} />;
-  }
-
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 px-2 py-1 rounded-full border',
-        config.bgColor,
-        config.textColor,
-        config.borderColor,
-        variant === 'compact' && 'px-1.5 py-0.5 text-xs',
-        className
-      )}
-    >
-      <AtomicIcon shape={config.shape} size="sm" />
-      {showLabel && (
-        <span className="text-xs font-medium">
-          {variant === 'compact' ? config.shortLabel : config.label}
-        </span>
-      )}
-    </span>
-  );
-}
-```
-
----
-
-### P1-5: Mode Chips (Innovation-Focused)
-
-**Objective:** Create service mode indicators with innovation language
-
-**New File:**
-```tsx
-// apps/vital-system/src/components/mode-chip.tsx
-
-import { cn } from '@/lib/utils';
-import {
-  MessageSquare, Zap, Search, Clock,
-  Users, Workflow, Sparkles
-} from 'lucide-react';
-
-type ServiceMode =
-  | 'interactive'
-  | 'auto-select'
-  | 'deep-research'
-  | 'background'
-  | 'panel'
-  | 'workflow'
-  | 'ask-me';
-
-interface ModeChipProps {
-  mode: ServiceMode;
-  variant?: 'default' | 'compact';
-  active?: boolean;
-  className?: string;
-}
-
-const MODE_CONFIG: Record<ServiceMode, {
-  icon: typeof MessageSquare;
-  label: string;
-  description: string;
-  color: string;
-}> = {
-  'interactive': {
-    icon: MessageSquare,
-    label: 'Interactive',
-    description: 'Real-time dialogue with experts',
-    color: 'text-vital-purple-600 bg-vital-purple-50',
-  },
-  'auto-select': {
-    icon: Zap,
-    label: 'Auto-Select',
-    description: 'AI chooses optimal expert',
-    color: 'text-amber-600 bg-amber-50',
-  },
-  'deep-research': {
-    icon: Search,
-    label: 'Deep Research',
-    description: 'Comprehensive multi-source analysis',
-    color: 'text-emerald-600 bg-emerald-50',
-  },
-  'background': {
-    icon: Clock,
-    label: 'Background',
-    description: 'Async processing for complex tasks',
-    color: 'text-blue-600 bg-blue-50',
-  },
-  'panel': {
-    icon: Users,
-    label: 'Expert Panel',
-    description: 'Multi-expert synthesis',
-    color: 'text-indigo-600 bg-indigo-50',
-  },
-  'workflow': {
-    icon: Workflow,
-    label: 'Workflow',
-    description: 'Structured multi-step automation',
-    color: 'text-pink-600 bg-pink-50',
-  },
-  'ask-me': {
-    icon: Sparkles,
-    label: 'Quick Ask',
-    description: 'Fast, simple queries',
-    color: 'text-stone-600 bg-stone-100',
-  },
-};
-
-export function ModeChip({ mode, variant = 'default', active, className }: ModeChipProps) {
-  const config = MODE_CONFIG[mode];
-  const Icon = config.icon;
-
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all',
-        config.color,
-        active && 'ring-2 ring-offset-2 ring-vital-purple-600',
-        variant === 'compact' && 'px-2 py-1 text-xs',
-        className
-      )}
-    >
-      <Icon size={variant === 'compact' ? 14 : 16} />
-      <span className="font-medium">{config.label}</span>
-    </span>
-  );
-}
-```
-
----
-
-## Phase 3: Platform Differentiation (Week 4-5)
-
-### P2-1: Brand Tokens System
-
-**Objective:** Create semantic design tokens for consistent theming
-
-**New File:**
-```tsx
-// apps/vital-system/src/lib/brand/brand-tokens.ts
-
-export const VITAL_TOKENS = {
-  // Semantic Colors
-  colors: {
-    accent: {
-      primary: 'var(--accent)',           // #9055E0
-      hover: 'var(--accent-hover)',       // #7C3AED
-      subtle: 'var(--accent-subtle)',     // #F3E8FF
-      foreground: 'var(--accent-foreground)', // #FFFFFF
-    },
-    canvas: {
-      primary: 'var(--background)',       // #FAFAF9
-      surface: 'var(--background-surface)', // #F5F5F4
-      subtle: 'var(--background-subtle)', // #E7E5E4
-      elevated: '#FFFFFF',                // Modals only
-    },
-    text: {
-      heading: 'var(--foreground-heading)', // #292524
-      body: 'var(--foreground)',          // #57534E
-      secondary: 'var(--foreground-secondary)', // #78716C
-      muted: 'var(--foreground-muted)',   // #A8A29E
-    },
-    geometry: {
-      insight: '#9055E0',     // Circle - Purple
-      structure: '#F59E0B',   // Square - Amber
-      growth: '#10B981',      // Triangle - Emerald
-      connection: '#6366F1',  // Line - Indigo
-      decision: '#EC4899',    // Diamond - Pink
-    },
-    tier: {
-      1: { bg: '#FAF5FF', text: '#7C3AED', border: '#E9D5FF' },
-      2: { bg: '#FFFBEB', text: '#D97706', border: '#FDE68A' },
-      3: { bg: '#ECFDF5', text: '#059669', border: '#A7F3D0' },
-    },
-  },
-
-  // Typography
-  typography: {
-    fontFamily: {
-      sans: 'Inter, system-ui, sans-serif',
-      mono: 'JetBrains Mono, Menlo, monospace',
-      serif: 'Source Serif Pro, Georgia, serif',
-    },
-    fontSize: {
-      xs: '0.75rem',    // 12px
-      sm: '0.875rem',   // 14px
-      base: '1rem',     // 16px
-      lg: '1.125rem',   // 18px
-      xl: '1.25rem',    // 20px
-      '2xl': '1.5rem',  // 24px
-      '3xl': '1.875rem', // 30px
-      '4xl': '2.25rem', // 36px
-    },
-    lineHeight: {
-      tight: '1.25',
-      normal: '1.5',
-      relaxed: '1.625',
-    },
-  },
-
-  // Spacing (4px base)
-  spacing: {
-    0: '0',
-    1: '0.25rem',   // 4px
-    2: '0.5rem',    // 8px
-    3: '0.75rem',   // 12px
-    4: '1rem',      // 16px
-    5: '1.25rem',   // 20px
-    6: '1.5rem',    // 24px
-    8: '2rem',      // 32px
-    12: '3rem',     // 48px
-    16: '4rem',     // 64px
-  },
-
-  // Border Radius
-  radius: {
-    sm: '4px',
-    md: '6px',      // Buttons, inputs
-    lg: '8px',      // Cards
-    xl: '12px',     // Modals
-    '2xl': '16px',  // Message bubbles
-    '3xl': '24px',  // Chat input pill
-    full: '9999px', // Circles
-  },
-
-  // Shadows
-  shadows: {
-    sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
-    md: '0 4px 6px rgba(0, 0, 0, 0.05)',
-    lg: '0 10px 15px rgba(0, 0, 0, 0.1)',
-    focus: '0 0 0 3px rgba(144, 85, 224, 0.15)',
-  },
-
-  // Animation
-  animation: {
-    duration: {
-      fast: '100ms',
-      normal: '150ms',
-      slow: '200ms',
-    },
-    easing: {
-      default: 'cubic-bezier(0.4, 0, 0.2, 1)',
-      in: 'cubic-bezier(0.4, 0, 1, 1)',
-      out: 'cubic-bezier(0, 0, 0.2, 1)',
-    },
-  },
-} as const;
-
-// Tailwind class helpers
-export const tw = {
-  accent: 'bg-vital-purple-600 hover:bg-vital-purple-700 text-white',
-  accentOutline: 'border-vital-purple-600 text-vital-purple-600 hover:bg-vital-purple-50',
-  surface: 'bg-[#F5F5F4]',
-  canvas: 'bg-[#FAFAF9]',
-  elevated: 'bg-white shadow-md',
-  textHeading: 'text-stone-800',
-  textBody: 'text-stone-600',
-  textSecondary: 'text-stone-500',
-  textMuted: 'text-stone-400',
-  border: 'border-stone-200',
-  borderFocus: 'focus:border-vital-purple-600 focus:ring-2 focus:ring-vital-purple-100',
-  rounded: 'rounded-md',
-  roundedLg: 'rounded-lg',
-  roundedPill: 'rounded-3xl',
-  roundedFull: 'rounded-full',
-} as const;
-```
-
----
-
-### P2-2: Knowledge Compounding UI
-
-**Objective:** Visualize insight accumulation and knowledge structures
-
-**New Files to Create:**
-1. `apps/vital-system/src/features/workspace/insight-structures.tsx`
-2. `apps/vital-system/src/features/workspace/knowledge-graph.tsx`
-3. `apps/vital-system/src/features/workspace/session-value-card.tsx`
-
-**Concept:**
-- Show how insights compound across sessions
-- Visualize connections between knowledge nodes
-- Track value delivered per session
-
----
-
-### P2-3: Innovation Workspace
-
-**Objective:** Project/hypothesis containers for persistent context
-
-**New Features:**
-1. Project containers (group related sessions)
-2. Hypothesis tracker (test ideas systematically)
-3. Insight timeline (track knowledge evolution)
-4. Cross-session memory (build on previous work)
-
----
-
-## Phase 4: World-Class Polish (Week 6-8)
-
-### P3-1: Storybook Documentation
-
-**Objective:** 80% component coverage in Storybook
-
-**Priority Components:**
+**Priority components for documentation:**
 1. VitalAgentCard (all variants)
-2. TierBadge (all tiers)
-3. ModeChip (all modes)
-4. AtomicIcon (all shapes)
-5. VitalSidebar (all contexts)
-6. PersonaIdentification (onboarding)
+2. VitalSidebar (all contexts)
+3. TierBadge (all tiers)
+4. ModeChip (all modes)
+5. AtomicIcon (all shapes)
+
+**Target:** 80% component coverage
 
 ---
 
-### P3-2: Accessibility Audit
+#### Task 4.2: Testing Infrastructure
 
-**Objective:** WCAG AA 100% compliance
+**Setup:**
+```bash
+pnpm add -D vitest @testing-library/react @testing-library/jest-dom
+```
+
+**Priority tests:**
+1. Agent card rendering
+2. Color token usage
+3. Sidebar view switching
+4. Form validation
+
+**Target:** 50% component coverage
+
+---
+
+#### Task 4.3: Accessibility Audit
 
 **Checklist:**
-- [ ] Color contrast meets 4.5:1 for body text
-- [ ] Color contrast meets 3:1 for large text
-- [ ] All interactive elements have focus states
-- [ ] Focus ring uses purple accent color
-- [ ] Icons have aria-hidden when decorative
+- [ ] Color contrast 4.5:1 for body text
+- [ ] Color contrast 3:1 for large text
+- [ ] Focus states on all interactive elements
 - [ ] Touch targets minimum 44x44px
-- [ ] Reduced motion supported via media query
+- [ ] ARIA labels on icons
+- [ ] Reduced motion support
 
 ---
 
-### P3-3: Animation System
+## Validation Scripts
 
-**Objective:** Consistent, performant animations
+### Brand Compliance Check (Run Daily)
 
-**Key Animations:**
-1. **Thinking Pulse** - Agent processing state
-2. **Slide Up** - Modal/panel entry
-3. **Scale In** - Button feedback
-4. **Fade** - Content transitions
+```bash
+#!/bin/bash
+# scripts/check-brand-compliance.sh
 
-**Animation Tokens:**
-```css
-@keyframes thinking-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(0.98); }
-}
+echo "=== VITAL Brand Compliance Check ==="
+echo "Date: $(date)"
+echo ""
 
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+# Color violations
+BLUE=$(grep -r "bg-blue-\|text-blue-\|border-blue-" apps/vital-system/src --include="*.tsx" 2>/dev/null | wc -l | tr -d ' ')
+GRAY=$(grep -r "text-gray-\|bg-gray-\|border-gray-" apps/vital-system/src --include="*.tsx" 2>/dev/null | wc -l | tr -d ' ')
+EMOJI=$(grep -r "🏥\|📱\|💊\|🔬\|📊" apps/vital-system/src --include="*.tsx" 2>/dev/null | wc -l | tr -d ' ')
+WHITE=$(grep -r 'bg-white' apps/vital-system/src --include="*.tsx" 2>/dev/null | wc -l | tr -d ' ')
 
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
+# TypeScript errors
+TS_ERRORS=$(cd apps/vital-system && npx tsc --noEmit 2>&1 | grep "error TS" | wc -l | tr -d ' ')
+
+echo "Color Violations:"
+echo "  Blue: $BLUE (target: <10)"
+echo "  Gray: $GRAY (target: <25)"
+echo "  Pure White: $WHITE (target: <50)"
+echo "  Emoji: $EMOJI (target: 0)"
+echo ""
+echo "TypeScript Errors: $TS_ERRORS (target: <50)"
+echo ""
+
+# Calculate score
+SCORE=100
+SCORE=$((SCORE - BLUE * 2))
+SCORE=$((SCORE - GRAY / 10))
+SCORE=$((SCORE - WHITE / 5))
+SCORE=$((SCORE - EMOJI * 10))
+SCORE=$((SCORE - TS_ERRORS / 5))
+
+if [ $SCORE -lt 0 ]; then SCORE=0; fi
+
+echo "Overall Score: $SCORE/100"
+
+if [ $SCORE -ge 85 ]; then
+  echo "Grade: A"
+elif [ $SCORE -ge 75 ]; then
+  echo "Grade: B"
+elif [ $SCORE -ge 65 ]; then
+  echo "Grade: C"
+else
+  echo "Grade: D - Needs Work"
+fi
 ```
 
 ---
 
-## Verification Checklist
+## Progress Tracking
 
-### Phase 1 Complete When: ✅ VERIFIED December 13, 2025
-- [x] Hero messaging live on home page ✅ `src/features/landing/HeroSection.tsx`
-- [x] Landing page with domain-agnostic copy ✅ All 6 sections complete
-- [x] Warm purple (#9055E0) in landing page ✅ CTAs, accents, badges
-- [x] Off-white backgrounds (#FAFAF9) ✅ Main canvas color
-- [x] Lucide icons only (NO emojis) in landing ✅ All icons from lucide-react
-- [x] TypeScript compiles without errors ✅ Verified with `npx tsc --noEmit`
-- [x] Root route updated ✅ `src/app/page.tsx` renders LandingPage
-- [x] Git commit and push ✅ Commit 29618e84 on main
+### Weekly Milestones
 
-**Note:** Full codebase color migration and emoji cleanup deferred to Phase 2-3. Phase 1 establishes the landing page as brand foundation.
+| Week | Phase | Deliverables | Target Score |
+|------|-------|--------------|--------------|
+| 1 | 1B | Git cleanup, Tailwind hardening, tagline, TS fixes | 75/100 |
+| 2 | 2 | Gray→Stone migration (516→0) | 78/100 |
+| 3 | 2 | Blue→Purple migration (176→0), White→Stone-50 | 82/100 |
+| 4 | 3 | Agent Card consolidation | 84/100 |
+| 5 | 3 | State centralization, language cleanup | 86/100 |
+| 6 | 4 | Storybook setup, testing | 87/100 |
+| 7 | 4 | Accessibility audit | 88/100 |
+| 8 | 4 | Final polish, documentation | 88/100 |
 
-### Phase 2 Complete When:
-- [ ] Single canonical VitalAgentCard
-- [ ] Single canonical VitalSidebar + wrappers
-- [ ] AtomicIcon component library created
-- [ ] TierBadge component created
-- [ ] ModeChip component created
+### Metrics Dashboard
 
-### Phase 3 Complete When:
-- [ ] brand-tokens.ts exported and used
-- [ ] Insight structures UI implemented
-- [ ] Innovation workspace created
-- [ ] Session value tracking visible
-
-### Phase 4 Complete When:
-- [ ] 80% Storybook coverage
-- [ ] WCAG AA 100% compliance
-- [ ] Animation system implemented
-- [ ] Performance audit passing
-
----
-
-## Success Metrics
-
-| Metric | Current | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
-|--------|---------|---------|---------|---------|---------|
-| Healthcare language | 95% | <30% | <15% | <5% | <1% |
-| Warm purple usage | 5% | 50% | 70% | 80% | 85% |
-| Lucide icon adoption | 13% | 80% | 95% | 100% | 100% |
-| Off-white backgrounds | 3% | 60% | 80% | 90% | 90% |
-| Component duplication | 40% | 30% | 10% | <5% | <5% |
-| WCAG AA compliance | 75% | 80% | 90% | 95% | 100% |
-| Storybook coverage | 0% | 20% | 40% | 60% | 80% |
+```
+Current State (December 13, 2025):
+├── Purple adoption:     38.6% → Target: 95%
+├── Stone text:          24.6% → Target: 95%
+├── Off-white BG:        11%   → Target: 90%
+├── Emoji violations:    0     → Target: 0 ✅
+├── Lucide icons:        100%  → Target: 100% ✅
+├── TypeScript errors:   257   → Target: <50
+├── Component duplication: 40% → Target: <5%
+├── Brand tagline:       0%    → Target: 100%
+└── Healthcare language: 370+  → Target: <50
+```
 
 ---
 
 ## Risk Mitigation
 
-### Risk 1: Breaking Changes
-**Mitigation:** Create compatibility exports before deleting duplicates
-
-### Risk 2: Scope Creep
-**Mitigation:** Strict phase gates - don't start Phase N+1 until Phase N verified
-
-### Risk 3: Visual Regression
-**Mitigation:** Screenshot testing before/after major color changes
-
-### Risk 4: Performance Impact
-**Mitigation:** Bundle size monitoring, lazy loading for new components
+| Risk | Mitigation |
+|------|------------|
+| Breaking changes | Create compatibility exports before deletion |
+| Visual regression | Screenshot testing before/after changes |
+| Scope creep | Strict phase gates, no Phase N+1 until N verified |
+| Performance impact | Bundle size monitoring, lazy loading |
+| Build failures | Run tsc --noEmit before each commit |
 
 ---
 
-*Generated: December 13, 2025*
-*Based on: FRONTEND_DESIGN_COMPREHENSIVE_AUDIT.md v2.0*
-*Target: Transform VITAL to "Human Genius, Amplified" platform*
+## File Inventory
+
+### To Delete (After Migration)
+
+```
+apps/vital-system/src/features/agents/components/agent-card.tsx
+apps/vital-system/src/features/agents/components/agent-card-enhanced.tsx
+apps/vital-system/src/features/agents/components/AgentCard.tsx
++ 200 files already deleted in git (need commit)
+```
+
+### To Modify (Priority Order)
+
+```
+1. apps/vital-system/tailwind.config.ts       # Harden colors
+2. apps/vital-system/src/app/globals.css      # Stone-50 background
+3. apps/vital-system/src/app/page.tsx         # Add tagline
+4. packages/vital-ai-ui/src/agents/*.tsx      # Color migration
+5. apps/vital-system/src/features/**/*.tsx    # Color migration
+```
+
+### Production Ready (No Changes)
+
+```
+apps/vital-system/src/components/sidebar/     # Recently consolidated ✅
+apps/vital-system/src/components/navbar/      # Well-structured ✅
+apps/vital-system/src/features/landing/       # Brand-aligned ✅
+packages/vital-ai-ui/src/reasoning/           # World-class ✅
+packages/vital-ai-ui/src/workflow/            # Production quality ✅
+```
+
+---
+
+## Conclusion
+
+**Current State:** C+ (72/100)
+
+**8-Week Path to A-:**
+1. **Week 1:** Foundation hardening (config, tagline, TS fixes)
+2. **Week 2-3:** Color migration (gray→stone, blue→purple)
+3. **Week 4-5:** Component consolidation (agent cards, state)
+4. **Week 6-8:** Polish (Storybook, testing, accessibility)
+
+**Key Success Factors:**
+- Run brand compliance check daily
+- No merges with new violations
+- Phase gates strictly enforced
+- Evidence-based progress tracking
+
+---
+
+*Implementation Plan v2.0*
+*Based on: FRONTEND_DESIGN_COMPREHENSIVE_AUDIT.md v3.0*
+*Target: A- (88/100) by Week 8*
+*Updated: December 13, 2025*

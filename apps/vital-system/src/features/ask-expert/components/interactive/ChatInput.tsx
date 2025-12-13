@@ -328,7 +328,7 @@ export function ChatInput({
         'transition-all duration-200',
         attachments.length > 0 && 'rounded-t-none',
         error && attachments.length === 0 && 'rounded-t-none',
-        isFocused && 'border-blue-400 ring-2 ring-blue-100',
+        isFocused && 'border-purple-400 ring-2 ring-purple-100',
         disabled && 'bg-slate-50 opacity-75'
       )}>
         {/* Attachment button */}
@@ -420,8 +420,8 @@ export function ChatInput({
             className={cn(
               'h-9 w-9 shrink-0',
               canSend && !disabled
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-slate-200 text-slate-400'
+                ? 'bg-purple-600 hover:bg-purple-700'
+                : 'bg-stone-200 text-stone-400'
             )}
             aria-label={disabled ? "Sending message" : "Send message"}
           >

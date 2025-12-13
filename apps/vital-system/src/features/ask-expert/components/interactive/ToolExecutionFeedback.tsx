@@ -104,15 +104,16 @@ function getCategoryIcon(category: ToolCategory) {
   return icons[category] || icons.custom;
 }
 
+// Brand v6.0 Purple-centric category colors
 function getCategoryColor(category: ToolCategory) {
   const colors: Record<ToolCategory, string> = {
-    search: 'bg-blue-100 text-blue-600',
+    search: 'bg-purple-100 text-purple-600',
     database: 'bg-green-100 text-green-600',
-    api: 'bg-purple-100 text-purple-600',
-    computation: 'bg-amber-100 text-amber-600',
-    file: 'bg-slate-100 text-slate-600',
-    web: 'bg-indigo-100 text-indigo-600',
-    custom: 'bg-pink-100 text-pink-600',
+    api: 'bg-violet-100 text-violet-600',
+    computation: 'bg-fuchsia-100 text-fuchsia-600',
+    file: 'bg-stone-100 text-stone-600',
+    web: 'bg-pink-100 text-pink-600',
+    custom: 'bg-amber-100 text-amber-600',
   };
   return colors[category] || colors.custom;
 }
@@ -132,8 +133,8 @@ function getStatusInfo(status: ToolExecutionStatus) {
     },
     running: {
       label: 'Running',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100',
       icon: <Loader2 className="w-3.5 h-3.5 animate-spin" />,
     },
     completed: {
@@ -211,7 +212,7 @@ function ExecutionCard({ execution, compact, allowCancel, onCancel }: ExecutionC
         animate={{ opacity: 1, x: 0 }}
         className={cn(
           'flex items-center gap-2 py-1.5 px-2 rounded-lg text-sm',
-          isRunning && 'bg-blue-50'
+          isRunning && 'bg-purple-50'
         )}
       >
         <span className={cn('p-1 rounded', getCategoryColor(execution.category))}>
@@ -238,7 +239,7 @@ function ExecutionCard({ execution, compact, allowCancel, onCancel }: ExecutionC
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         'rounded-lg border overflow-hidden',
-        isRunning ? 'border-blue-200 bg-blue-50/50' : 'border-slate-200 bg-white'
+        isRunning ? 'border-purple-200 bg-purple-50/50' : 'border-stone-200 bg-white'
       )}
     >
       {/* Header */}
@@ -429,7 +430,7 @@ export function ToolExecutionFeedback({
 
         <div className="flex items-center gap-3 text-xs">
           {runningCount > 0 && (
-            <span className="flex items-center gap-1 text-blue-600">
+            <span className="flex items-center gap-1 text-purple-600">
               <Loader2 className="w-3 h-3 animate-spin" />
               {runningCount} running
             </span>
@@ -466,7 +467,7 @@ export function ToolExecutionFeedback({
       {hasMore && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
+          className="flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-700"
         >
           {showAll ? (
             <>

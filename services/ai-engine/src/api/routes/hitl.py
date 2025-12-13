@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [services.hitl_websocket_service, langgraph_compilation, api.auth]
 """
 HITL (Human-in-the-Loop) API Routes
 
@@ -25,7 +29,7 @@ from services.hitl_websocket_service import (
     get_enhanced_hitl_service,
     EnhancedHITLService,
 )
-from langgraph_workflows.postgres_checkpointer import get_postgres_checkpointer
+from langgraph_compilation import get_postgres_checkpointer
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/hitl", tags=["HITL"])

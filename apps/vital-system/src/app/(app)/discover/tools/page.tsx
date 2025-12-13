@@ -1,7 +1,18 @@
-// Healthcare Tools Registry - Using VitalAssetView with Full CRUD
+/**
+ * Healthcare Tools Registry - Brand Guidelines v6.0
+ *
+ * Design System:
+ * - Primary Accent: #9055E0 (Warm Purple) via Tailwind purple-600
+ * - Canvas: stone-50, Surface: white with stone-200 border
+ * - Text: stone-600/700/800
+ * - Transitions: 150ms for interactions
+ *
+ * Refactored: December 2025
+ * - Extracted useToolsData and useToolsCRUD hooks
+ */
 'use client';
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useMemo, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,8 +21,8 @@ import { RecentAssetsCard, RecentAssetItem } from '@/components/shared/RecentAss
 import { ActiveFiltersBar } from '@/components/shared/ActiveFiltersBar';
 import { useAssetFilters } from '@/hooks/useAssetFilters';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
+import { useToolsData, useToolsCRUD, filterToolsByParams, type Tool } from '@/features/discover/hooks';
 import {
-  Activity,
   Shield,
   Microscope,
   Heart,
@@ -40,9 +51,6 @@ import {
 // Import Tool type from schema for consistency
 import type { Tool as ToolSchema } from '@/lib/forms/schemas';
 
-// Import the Tool type from service (for API response)
-import type { Tool } from '@/lib/services/tool-registry-service';
-
 // Convert tool to VitalAsset format
 function toolToAsset(tool: Tool): VitalAsset {
   return {
@@ -60,60 +68,39 @@ function toolToAsset(tool: Tool): VitalAsset {
   } as VitalAsset;
 }
 
-// Filter tools based on URL params
-function filterToolsByParams(
-  tools: Tool[],
-  category: string | null,
-  status: string | null,
-  type: string | null
-): Tool[] {
-  let filtered = [...tools];
-
-  if (category) {
-    const categoryLower = category.toLowerCase();
-    filtered = filtered.filter((t) => {
-      const toolCategory = (t.category || '').toLowerCase();
-      switch (categoryLower) {
-        case 'healthcare':
-          return toolCategory.startsWith('healthcare') ||
-                 t.category_parent === 'Healthcare' ||
-                 ['edc_system', 'ctms', 'pro_registry'].includes(toolCategory);
-        case 'research':
-          return toolCategory === 'research' || toolCategory.startsWith('research');
-        case 'fhir':
-          return toolCategory === 'healthcare/fhir' || toolCategory === 'fhir';
-        default:
-          return toolCategory.includes(categoryLower);
-      }
-    });
-  }
-
-  if (status) {
-    filtered = filtered.filter((t) => t.lifecycle_stage === status);
-  }
-
-  if (type) {
-    const typeLower = type.toLowerCase();
-    filtered = filtered.filter((t) => {
-      switch (typeLower) {
-        case 'langchain':
-          return t.implementation_type === 'langchain_tool';
-        case 'api':
-          return t.tool_type === 'api' || t.implementation_type === 'api';
-        default:
-          return (t.tool_type || '').toLowerCase() === typeLower;
-      }
-    });
-  }
-
-  return filtered;
-}
-
-// Inner component that uses useSearchParams
 function ToolsPageContent() {
   const router = useRouter();
   const { userProfile } = useAuth();
   const isAdmin = userProfile?.role === 'super_admin' || userProfile?.role === 'admin';
+
+  // Data hook
+  const { tools, stats, loading, loadTools } = useToolsData();
+
+  // CRUD hook
+  const {
+    isModalOpen,
+    editingTool,
+    isSaving,
+    deleteConfirmOpen,
+    toolToDelete,
+    isDeleting,
+    error,
+    selectedIds,
+    isSelectionMode,
+    batchDeleteConfirmOpen,
+    handleCreateTool,
+    handleEditTool,
+    handleSaveTool,
+    handleDeleteConfirm,
+    handleDeleteTool,
+    closeModals,
+    setError,
+    exitSelectionMode,
+    handleSelectAll,
+    setSelectedIds,
+    setBatchDeleteConfirmOpen,
+    handleBatchDelete,
+  } = useToolsCRUD();
 
   // Use shared filter hook
   const {
@@ -135,85 +122,14 @@ function ToolsPageContent() {
   const statusParam = getFilterParam('status');
   const typeParam = getFilterParam('type');
 
-  const [tools, setTools] = useState<Tool[]>([]);
-  const [stats, setStats] = useState({
-    total: 0,
-    healthcare: 0,
-    research: 0,
-    production: 0,
-    testing: 0,
-    development: 0,
-    langchainTools: 0,
-    tier1: 0,
-    fhir: 0,
-    nlp: 0,
-    deidentification: 0,
-  });
-  const [loading, setLoading] = useState(true);
-
-  // CRUD state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTool, setEditingTool] = useState<Partial<ToolSchema> | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [toolToDelete, setToolToDelete] = useState<Partial<ToolSchema> | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // Batch selection state
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [batchDeleteConfirmOpen, setBatchDeleteConfirmOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    loadTools();
-  }, []);
-
-  const loadTools = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/tools-crud');
-      if (!response.ok) throw new Error('Failed to fetch tools');
-      const data = await response.json();
-      const allTools = data.tools || [];
-      setTools(allTools);
-
-      // Calculate stats
-      const healthcareTools = allTools.filter((t: Tool) =>
-        t.category?.startsWith('Healthcare') || t.category_parent === 'Healthcare'
-      );
-      const researchTools = allTools.filter((t: Tool) =>
-        t.category === 'Research' || t.category?.startsWith('RESEARCH')
-      );
-
-      setStats({
-        total: allTools.length,
-        healthcare: healthcareTools.length,
-        research: researchTools.length,
-        production: allTools.filter((t: Tool) => t.lifecycle_stage === 'production').length,
-        testing: allTools.filter((t: Tool) => t.lifecycle_stage === 'testing').length,
-        development: allTools.filter((t: Tool) => t.lifecycle_stage === 'development').length,
-        langchainTools: allTools.filter((t: Tool) => t.implementation_type === 'langchain_tool').length,
-        tier1: allTools.filter((t: Tool) => t.metadata?.tier === 1).length,
-        fhir: allTools.filter((t: Tool) => t.category?.includes('FHIR')).length,
-        nlp: allTools.filter((t: Tool) => t.category?.includes('NLP')).length,
-        deidentification: allTools.filter((t: Tool) => t.category?.includes('De-identification')).length,
-      });
-    } catch (error) {
-      console.error('Error loading tools:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Filter and convert tools
-  const filteredTools = useMemo(() =>
-    filterToolsByParams(tools, categoryParam, statusParam, typeParam),
+  const filteredTools = useMemo(
+    () => filterToolsByParams(tools, categoryParam, statusParam, typeParam),
     [tools, categoryParam, statusParam, typeParam]
   );
   const assets = useMemo(() => filteredTools.map(toolToAsset), [filteredTools]);
 
-  // Stats cards configuration
+  // Stats cards configuration - Brand v6.0 colors
   const statsCards: StatCardConfig[] = [
     { label: 'Total', value: stats.total },
     { label: 'Healthcare', value: stats.healthcare, icon: Heart, variant: 'success' },
@@ -238,143 +154,58 @@ function ToolsPageContent() {
     router.push(`/discover/tools/${asset.slug}`);
   };
 
-  // CRUD handlers
-  const handleCreateTool = () => {
-    setEditingTool({ ...DEFAULT_TOOL_VALUES });
-    setError(null);
-    setIsModalOpen(true);
+  // Wrap CRUD handlers to work with assets
+  const onEditTool = (asset: VitalAsset) => {
+    const tool = tools.find((t) => t.id === asset.id);
+    if (tool) handleEditTool(tool);
   };
 
-  const handleEditTool = (asset: VitalAsset) => {
-    const tool = tools.find(t => t.id === asset.id);
-    if (tool) {
-      setEditingTool(tool as unknown as Partial<ToolSchema>);
-      setError(null);
-      setIsModalOpen(true);
-    }
+  const onDeleteConfirm = (asset: VitalAsset) => {
+    const tool = tools.find((t) => t.id === asset.id);
+    if (tool) handleDeleteConfirm(tool);
   };
 
-  const handleSaveTool = async (data: ToolSchema) => {
-    setIsSaving(true);
-    setError(null);
-
-    try {
-      const isUpdate = !!data.id;
-      const method = isUpdate ? 'PUT' : 'POST';
-
-      const response = await fetch('/api/tools-crud', {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to save tool');
-
-      await loadTools();
-      setIsModalOpen(false);
-      setEditingTool(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save tool');
-    } finally {
-      setIsSaving(false);
-    }
+  const onSaveTool = async (data: ToolSchema) => {
+    await handleSaveTool(data, loadTools);
   };
 
-  const handleDeleteConfirm = (asset: VitalAsset) => {
-    const tool = tools.find(t => t.id === asset.id);
-    if (tool) {
-      setToolToDelete(tool as unknown as Partial<ToolSchema>);
-      setDeleteConfirmOpen(true);
-    }
+  const onDeleteTool = async () => {
+    await handleDeleteTool(loadTools);
   };
 
-  const handleDeleteTool = async () => {
-    if (!toolToDelete?.id) return;
-
-    setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/tools-crud?id=${toolToDelete.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to delete tool');
-      }
-
-      await loadTools();
-      setDeleteConfirmOpen(false);
-      setToolToDelete(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete tool');
-    } finally {
-      setIsDeleting(false);
-    }
+  const onBatchDelete = async () => {
+    await handleBatchDelete(loadTools);
   };
 
-  // Batch selection handlers
-  const handleSelectAll = () => {
-    if (selectedIds.size === filteredTools.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredTools.map(t => t.id)));
-    }
-  };
-
-  const handleBatchDelete = async () => {
-    if (selectedIds.size === 0) return;
-
-    setIsDeleting(true);
-    try {
-      const deletePromises = Array.from(selectedIds).map(id =>
-        fetch(`/api/tools-crud?id=${id}`, { method: 'DELETE' })
-      );
-
-      await Promise.all(deletePromises);
-      await loadTools();
-
-      setBatchDeleteConfirmOpen(false);
-      setSelectedIds(new Set());
-      setIsSelectionMode(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete tools');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const exitSelectionMode = () => {
-    setIsSelectionMode(false);
-    setSelectedIds(new Set());
+  const onSelectAll = () => {
+    handleSelectAll(filteredTools.map((t) => t.id));
   };
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-stone-50">
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+          <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-stone-50">
       {/* Action Bar */}
-      <div className="flex items-center gap-4 px-6 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex items-center gap-4 px-6 py-2 border-b border-stone-200 bg-white">
         <div className="flex-1" />
 
         {/* Batch Selection Controls */}
         {isSelectionMode ? (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              {selectedIds.size} selected
-            </span>
+            <span className="text-sm text-stone-600">{selectedIds.size} selected</span>
             <Button
               variant="outline"
               size="sm"
-              onClick={handleSelectAll}
+              onClick={onSelectAll}
+              className="border-stone-300 hover:border-purple-400"
             >
               {selectedIds.size === filteredTools.length ? 'Deselect All' : 'Select All'}
             </Button>
@@ -398,11 +229,19 @@ function ToolsPageContent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsSelectionMode(true)}
+                  onClick={() => {
+                    exitSelectionMode();
+                    setSelectedIds(new Set());
+                  }}
+                  className="border-stone-300 hover:border-purple-400"
                 >
                   Select
                 </Button>
-                <Button onClick={handleCreateTool} size="sm" className="gap-2">
+                <Button
+                  onClick={() => handleCreateTool(DEFAULT_TOOL_VALUES)}
+                  size="sm"
+                  className="gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+                >
                   <Plus className="h-4 w-4" />
                   Create Tool
                 </Button>
@@ -417,9 +256,9 @@ function ToolsPageContent() {
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           {/* Admin badge */}
           {isAdmin && (
-            <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <Shield className="h-4 w-4 text-blue-600" />
-              <span className="text-sm text-blue-700 dark:text-blue-300">
+            <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <Shield className="h-4 w-4 text-purple-600" />
+              <span className="text-sm text-purple-700">
                 Admin mode: You can create, edit, and delete tools
               </span>
             </div>
@@ -432,7 +271,7 @@ function ToolsPageContent() {
             totalCount={stats.total}
             onRemoveFilter={removeFilter}
             onClearAll={clearAllFilters}
-            colorScheme="blue"
+            colorScheme="purple"
           />
 
           {/* Overview Mode */}
@@ -440,81 +279,81 @@ function ToolsPageContent() {
             <>
               <AssetOverviewStats stats={statsCards} />
 
-              {/* Healthcare Highlight Cards */}
+              {/* Healthcare Highlight Cards - Brand v6.0 */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-l-4 border-l-red-500">
+                <Card className="border-l-4 border-l-rose-500 border border-stone-200 bg-white hover:border-rose-300 transition-colors duration-150">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Heart className="h-4 w-4 text-red-500" />
+                    <CardTitle className="text-sm flex items-center gap-2 text-stone-700">
+                      <Heart className="h-4 w-4 text-rose-500" />
                       FHIR Tools
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold">{stats.fhir}</div>
-                    <p className="text-xs text-gray-500">Healthcare interoperability</p>
+                    <div className="text-3xl font-bold text-stone-800">{stats.fhir}</div>
+                    <p className="text-xs text-stone-500">Healthcare interoperability</p>
                   </CardContent>
                 </Card>
 
-                <Card className="border-l-4 border-l-purple-500">
+                <Card className="border-l-4 border-l-purple-500 border border-stone-200 bg-white hover:border-purple-300 transition-colors duration-150">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
+                    <CardTitle className="text-sm flex items-center gap-2 text-stone-700">
                       <Brain className="h-4 w-4 text-purple-500" />
                       Clinical NLP
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold">{stats.nlp}</div>
-                    <p className="text-xs text-gray-500">Natural language processing</p>
+                    <div className="text-3xl font-bold text-stone-800">{stats.nlp}</div>
+                    <p className="text-xs text-stone-500">Natural language processing</p>
                   </CardContent>
                 </Card>
 
-                <Card className="border-l-4 border-l-green-500">
+                <Card className="border-l-4 border-l-emerald-500 border border-stone-200 bg-white hover:border-emerald-300 transition-colors duration-150">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-green-500" />
+                    <CardTitle className="text-sm flex items-center gap-2 text-stone-700">
+                      <Shield className="h-4 w-4 text-emerald-500" />
                       De-identification
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold">{stats.deidentification}</div>
-                    <p className="text-xs text-gray-500">PHI protection tools</p>
+                    <div className="text-3xl font-bold text-stone-800">{stats.deidentification}</div>
+                    <p className="text-xs text-stone-500">PHI protection tools</p>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Lifecycle Stats */}
-              <Card>
+              {/* Lifecycle Stats - Brand v6.0 */}
+              <Card className="border border-stone-200 bg-white">
                 <CardHeader>
-                  <CardTitle>Lifecycle Distribution</CardTitle>
+                  <CardTitle className="text-stone-800">Lifecycle Distribution</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-8 w-8 text-green-500" />
+                      <CheckCircle2 className="h-8 w-8 text-emerald-500" />
                       <div>
-                        <div className="text-2xl font-bold">{stats.production}</div>
-                        <div className="text-sm text-gray-500">Production</div>
+                        <div className="text-2xl font-bold text-stone-800">{stats.production}</div>
+                        <div className="text-sm text-stone-500">Production</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Clock className="h-8 w-8 text-yellow-500" />
+                      <Clock className="h-8 w-8 text-amber-500" />
                       <div>
-                        <div className="text-2xl font-bold">{stats.testing}</div>
-                        <div className="text-sm text-gray-500">Testing</div>
+                        <div className="text-2xl font-bold text-stone-800">{stats.testing}</div>
+                        <div className="text-sm text-stone-500">Testing</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <AlertCircle className="h-8 w-8 text-orange-500" />
                       <div>
-                        <div className="text-2xl font-bold">{stats.development}</div>
-                        <div className="text-sm text-gray-500">Development</div>
+                        <div className="text-2xl font-bold text-stone-800">{stats.development}</div>
+                        <div className="text-sm text-stone-500">Development</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Zap className="h-8 w-8 text-blue-500" />
+                      <Zap className="h-8 w-8 text-purple-500" />
                       <div>
-                        <div className="text-2xl font-bold">{stats.langchainTools}</div>
-                        <div className="text-sm text-gray-500">LangChain</div>
+                        <div className="text-2xl font-bold text-stone-800">{stats.langchainTools}</div>
+                        <div className="text-sm text-stone-500">LangChain</div>
                       </div>
                     </div>
                   </div>
@@ -525,7 +364,9 @@ function ToolsPageContent() {
               <RecentAssetsCard
                 title="Recent Tools"
                 items={recentTools}
-                onItemClick={(item) => router.push(`/discover/tools/${tools.find(t => t.id === item.id)?.code}`)}
+                onItemClick={(item) =>
+                  router.push(`/discover/tools/${tools.find((t) => t.id === item.id)?.code}`)
+                }
               />
             </>
           )}
@@ -551,8 +392,8 @@ function ToolsPageContent() {
               gridColumns={{ sm: 1, md: 2, lg: 3, xl: 4 }}
               kanbanDraggable={isAdmin}
               onAssetClick={handleToolClick}
-              onEdit={handleEditTool}
-              onDelete={handleDeleteConfirm}
+              onEdit={onEditTool}
+              onDelete={onDeleteConfirm}
               tableSelectable={isSelectionMode}
               selectedIds={Array.from(selectedIds)}
               onSelectionChange={(ids) => setSelectedIds(new Set(ids))}
@@ -564,25 +405,18 @@ function ToolsPageContent() {
       {/* Modals */}
       <ToolEditModalV2
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingTool(null);
-          setError(null);
-        }}
+        onClose={closeModals}
         tool={editingTool}
-        onSave={handleSaveTool}
+        onSave={onSaveTool}
         isSaving={isSaving}
         error={error}
       />
 
       <ToolDeleteModal
         isOpen={deleteConfirmOpen}
-        onClose={() => {
-          setDeleteConfirmOpen(false);
-          setToolToDelete(null);
-        }}
+        onClose={closeModals}
         tool={toolToDelete}
-        onConfirm={handleDeleteTool}
+        onConfirm={onDeleteTool}
         isDeleting={isDeleting}
       />
 
@@ -590,37 +424,36 @@ function ToolsPageContent() {
         isOpen={batchDeleteConfirmOpen}
         onClose={() => setBatchDeleteConfirmOpen(false)}
         count={selectedIds.size}
-        onConfirm={handleBatchDelete}
+        onConfirm={onBatchDelete}
         isDeleting={isDeleting}
       />
     </div>
   );
 }
 
-// Loading fallback
+// Loading fallback - Brand v6.0
 function ToolsPageLoading() {
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-stone-50">
       <div className="px-6 pt-4">
-        <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
+        <div className="h-5 w-32 bg-stone-200 rounded animate-pulse" />
       </div>
-      <div className="flex items-center justify-between px-6 py-4 border-b">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200">
         <div className="flex items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
           <div className="space-y-2">
-            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
-            <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+            <div className="h-6 w-32 bg-stone-200 rounded animate-pulse" />
+            <div className="h-4 w-48 bg-stone-200 rounded animate-pulse" />
           </div>
         </div>
       </div>
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500">Loading tools...</p>
+        <p className="text-stone-500">Loading tools...</p>
       </div>
     </div>
   );
 }
 
-// Page component with Suspense
 export default function ToolsPage() {
   return (
     <Suspense fallback={<ToolsPageLoading />}>

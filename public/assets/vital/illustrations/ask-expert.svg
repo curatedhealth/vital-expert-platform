@@ -1,0 +1,20 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <g id="purple-cube-large">
+            <path d="M32 16L0 32L32 48L64 32L32 16Z" fill="#9055E0" fill-opacity="0.7"/>
+            <path d="M0 32V64L32 80V48L0 32Z" fill="#9055E0"/>
+            <path d="M32 80L64 64V32L32 48V80Z" fill="#9055E0" fill-opacity="0.9"/>
+        </g>
+    </defs>
+
+    <use href="#purple-cube-large" x="68" y="60"/>
+
+    <path d="M100 40 L120 50" stroke="#A855F7" stroke-width="2"/>
+    <path d="M100 40 L80 30" stroke="#A855F7" stroke-width="2"/>
+    <path d="M100 160 L120 170" stroke="#A855F7" stroke-width="2" opacity="0.5"/>
+    <path d="M100 160 L80 150" stroke="#A855F7" stroke-width="2" opacity="0.5"/>
+    <path d="M40 100 L50 120" stroke="#A855F7" stroke-width="2" opacity="0.5"/>
+    <path d="M40 100 L30 80" stroke="#A855F7" stroke-width="2" opacity="0.5"/>
+    <path d="M160 100 L170 120" stroke="#A855F7" stroke-width="2"/>
+    <path d="M160 100 L150 80" stroke="#A855F7" stroke-width="2"/>
+</svg>

@@ -114,12 +114,12 @@ function getArtifactIcon(type: ArtifactType): React.ReactNode {
 
 function getArtifactColor(type: ArtifactType): string {
   const colors: Record<ArtifactType, string> = {
-    markdown: 'text-blue-500 bg-blue-100',
+    markdown: 'text-purple-500 bg-purple-100',
     code: 'text-green-500 bg-green-100',
-    chart: 'text-purple-500 bg-purple-100',
+    chart: 'text-violet-500 bg-violet-100',
     table: 'text-amber-500 bg-amber-100',
     image: 'text-pink-500 bg-pink-100',
-    json: 'text-orange-500 bg-orange-100',
+    json: 'text-fuchsia-500 bg-fuchsia-100',
     text: 'text-slate-500 bg-slate-100',
     html: 'text-red-500 bg-red-100',
   };

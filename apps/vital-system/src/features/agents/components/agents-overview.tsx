@@ -21,6 +21,7 @@ import { Badge } from '@vital/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
 import { useAgentsFilter } from '@/contexts/agents-filter-context';
 import { useAgentsStore } from '@/lib/stores/agents-store';
+import { AGENT_LEVEL_MAP } from '@/lib/stores/agents-store';
 
 // ============================================================================
 // VITAL BRAND COLORS
@@ -69,6 +70,11 @@ export function AgentsOverview() {
   // Filter agents based on multi-select filters from context
   const filteredAgents = useMemo(() => {
     return agents.filter((agent: any) => {
+      const levelNumber = agent.agent_level_number
+        || (agent.agent_level_id ? AGENT_LEVEL_MAP[agent.agent_level_id] : undefined)
+        || agent.tier
+        || 2;
+
       // Search filter
       const matchesSearch = !searchQuery ||
         (agent.display_name || agent.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -95,9 +101,8 @@ export function AgentsOverview() {
       // Multi-select level filter
       const matchesLevel = multiFilters.levels.size === 0 ||
         multiFilters.levels.has(agent.agent_level_id) ||
-        multiFilters.levels.has(String(agent.agent_level)) ||
-        multiFilters.levels.has(agent.agent_level_name) ||
-        multiFilters.levels.has(String(agent.tier));
+        multiFilters.levels.has(String(levelNumber)) ||
+        multiFilters.levels.has(agent.agent_level_name);
 
       // Multi-select status filter
       const matchesStatus = multiFilters.statuses.size === 0 ||
@@ -110,16 +115,25 @@ export function AgentsOverview() {
   const statistics = useMemo(() => {
     const total = filteredAgents.length;
     const active = filteredAgents.filter((a: any) => a.status === 'active').length;
-    const canSpawn = filteredAgents.filter((a: any) => (a.tier || 2) <= 3).length;
+    const canSpawn = filteredAgents.filter((a: any) => {
+      const levelNumber = a.agent_level_number
+        || (a.agent_level_id ? AGENT_LEVEL_MAP[a.agent_level_id] : undefined)
+        || a.tier
+        || 2;
+      return levelNumber <= 3;
+    }).length;
 
-    // Count by level (L1-L5)
-    const byLevel = {
-      1: filteredAgents.filter((a: any) => a.tier === 1).length,
-      2: filteredAgents.filter((a: any) => a.tier === 2 || !a.tier).length, // Default to L2
-      3: filteredAgents.filter((a: any) => a.tier === 3).length,
-      4: filteredAgents.filter((a: any) => a.tier === 4).length,
-      5: filteredAgents.filter((a: any) => a.tier === 5).length,
-    };
+    // Count by level (L1-L5) using normalized level number
+    const byLevel: Record<1 | 2 | 3 | 4 | 5, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    filteredAgents.forEach((a: any) => {
+      const levelNumber = a.agent_level_number
+        || (a.agent_level_id ? AGENT_LEVEL_MAP[a.agent_level_id] : undefined)
+        || a.tier
+        || 2;
+      if (levelNumber >= 1 && levelNumber <= 5) {
+        byLevel[levelNumber as 1 | 2 | 3 | 4 | 5] += 1;
+      }
+    });
 
     const byStatus = {
       active: filteredAgents.filter((a: any) => a.status === 'active').length,

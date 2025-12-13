@@ -468,8 +468,8 @@ export interface MissionFilters {
  * Category Colors (Tailwind classes)
  */
 export const CATEGORY_COLORS: Record<RunnerCategory, string> = {
-  understand: 'bg-blue-500',
-  evaluate: 'bg-purple-500',
+  understand: 'bg-purple-500',
+  evaluate: 'bg-violet-500',
   decide: 'bg-amber-500',
   investigate: 'bg-emerald-500',
   watch: 'bg-cyan-500',
@@ -480,14 +480,14 @@ export const CATEGORY_COLORS: Record<RunnerCategory, string> = {
   validate: 'bg-green-500',
   synthesize: 'bg-teal-500',
   plan: 'bg-orange-500',
-  predict: 'bg-violet-500',
-  engage: 'bg-fuchsia-500',
-  align: 'bg-sky-500',
+  predict: 'bg-fuchsia-500',
+  engage: 'bg-fuchsia-600',
+  align: 'bg-violet-600',
   influence: 'bg-red-500',
   adapt: 'bg-yellow-500',
-  discover: 'bg-blue-600',
+  discover: 'bg-purple-600',
   design: 'bg-pink-600',
-  govern: 'bg-slate-500',
+  govern: 'bg-stone-500',
   secure: 'bg-gray-600',
   execute: 'bg-emerald-600',
 };
@@ -498,7 +498,7 @@ export const CATEGORY_COLORS: Record<RunnerCategory, string> = {
 export const DOMAIN_COLORS: Record<PharmaDomain, string> = {
   foresight: 'bg-gradient-to-r from-purple-500 to-indigo-500',
   brand_strategy: 'bg-gradient-to-r from-orange-500 to-red-500',
-  digital_health: 'bg-gradient-to-r from-cyan-500 to-blue-500',
+  digital_health: 'bg-gradient-to-r from-cyan-500 to-violet-500',
   medical_affairs: 'bg-gradient-to-r from-emerald-500 to-teal-500',
   market_access: 'bg-gradient-to-r from-amber-500 to-yellow-500',
   design_thinking: 'bg-gradient-to-r from-pink-500 to-rose-500',
@@ -508,8 +508,8 @@ export const DOMAIN_COLORS: Record<PharmaDomain, string> = {
  * Family Colors
  */
 export const FAMILY_COLORS: Record<MissionFamily, string> = {
-  DEEP_RESEARCH: 'bg-blue-600',
-  EVALUATION: 'bg-purple-600',
+  DEEP_RESEARCH: 'bg-purple-600',
+  EVALUATION: 'bg-violet-600',
   INVESTIGATION: 'bg-red-600',
   STRATEGY: 'bg-amber-600',
   PREPARATION: 'bg-indigo-600',

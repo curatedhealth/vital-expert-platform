@@ -426,7 +426,7 @@ function TourOverlay({ steps }: TourOverlayProps) {
           >
             <div className="bg-white rounded-xl shadow-2xl border overflow-hidden">
               {/* Header */}
-              <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white">
+              <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-purple-500 to-violet-500 text-white">
                 <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
                   {step.icon || <Sparkles className="w-5 h-5" />}
                 </div>

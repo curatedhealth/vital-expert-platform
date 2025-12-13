@@ -212,7 +212,7 @@ export default function BatchUploadPanel() {
   };
 
   const getResultColor = (success: boolean) => {
-    return success ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50';
+    return success ? 'border-green-200 bg-green-50' : 'border-rose-200 bg-rose-50';
   };
 
   return (
@@ -426,7 +426,7 @@ export default function BatchUploadPanel() {
                         {results.success ? (
                           <CheckCircle className="w-5 h-5 text-green-600" />
                         ) : (
-                          <AlertCircle className="w-5 h-5 text-red-600" />
+                          <AlertCircle className="w-5 h-5 text-rose-600" />
                         )}
                         {results.message}
                       </CardTitle>
@@ -434,7 +434,7 @@ export default function BatchUploadPanel() {
                     <CardContent>
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600">{results.results.total}</div>
+                          <div className="text-2xl font-bold text-purple-600">{results.results.total}</div>
                           <div className="text-sm text-muted-foreground">Total</div>
                         </div>
                         <div className="text-center">
@@ -450,7 +450,7 @@ export default function BatchUploadPanel() {
                           <div className="text-sm text-muted-foreground">Skipped</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-red-600">{results.results.errors.length}</div>
+                          <div className="text-2xl font-bold text-rose-600">{results.results.errors.length}</div>
                           <div className="text-sm text-muted-foreground">Errors</div>
                         </div>
                       </div>

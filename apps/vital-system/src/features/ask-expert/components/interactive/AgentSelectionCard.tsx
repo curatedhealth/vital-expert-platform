@@ -54,27 +54,29 @@ export interface AgentSelectionCardProps {
 // LEVEL BADGE CONFIG
 // =============================================================================
 
+// Brand v6.0 Purple-centric level colors
 const LEVEL_CONFIG: Record<string, { label: string; color: string; bgColor: string; description: string }> = {
   L1: { label: 'Master', color: 'text-purple-700', bgColor: 'bg-purple-100', description: 'Strategic orchestrator' },
-  L2: { label: 'Expert', color: 'text-blue-700', bgColor: 'bg-blue-100', description: 'Domain specialist' },
-  L3: { label: 'Specialist', color: 'text-emerald-700', bgColor: 'bg-emerald-100', description: 'Task specialist' },
-  L4: { label: 'Worker', color: 'text-amber-700', bgColor: 'bg-amber-100', description: 'Execution agent' },
-  L5: { label: 'Tool', color: 'text-slate-700', bgColor: 'bg-slate-100', description: 'Utility tool' },
+  L2: { label: 'Expert', color: 'text-violet-700', bgColor: 'bg-violet-100', description: 'Domain specialist' },
+  L3: { label: 'Specialist', color: 'text-fuchsia-700', bgColor: 'bg-fuchsia-100', description: 'Task specialist' },
+  L4: { label: 'Worker', color: 'text-pink-700', bgColor: 'bg-pink-100', description: 'Execution agent' },
+  L5: { label: 'Tool', color: 'text-stone-700', bgColor: 'bg-stone-100', description: 'Utility tool' },
 };
 
 // =============================================================================
 // CONFIDENCE COLORS
 // =============================================================================
 
+// Brand v6.0 Purple-centric confidence colors
 function getConfidenceColor(confidence: number): { text: string; bg: string; border: string; label: string } {
   if (confidence >= 0.9) {
     return { text: 'text-green-700', bg: 'bg-green-50', border: 'border-green-300', label: 'Excellent match' };
   } else if (confidence >= 0.75) {
-    return { text: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-300', label: 'Good match' };
+    return { text: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-300', label: 'Good match' };
   } else if (confidence >= 0.6) {
-    return { text: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-300', label: 'Moderate match' };
+    return { text: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-300', label: 'Moderate match' };
   } else {
-    return { text: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-300', label: 'Low match' };
+    return { text: 'text-stone-700', bg: 'bg-stone-50', border: 'border-stone-300', label: 'Low match' };
   }
 }
 
@@ -160,14 +162,14 @@ export function AgentSelectionCard({
           <div
             className={cn(
               'p-2 rounded-full shrink-0',
-              confidence >= 0.9 ? 'bg-green-100' : 'bg-blue-100'
+              confidence >= 0.9 ? 'bg-green-100' : 'bg-purple-100'
             )}
             aria-hidden="true"
           >
             {confidence >= 0.9 ? (
               <CheckCircle2 className="h-5 w-5 text-green-600" />
             ) : (
-              <Target className="h-5 w-5 text-blue-600" />
+              <Target className="h-5 w-5 text-purple-600" />
             )}
           </div>
 

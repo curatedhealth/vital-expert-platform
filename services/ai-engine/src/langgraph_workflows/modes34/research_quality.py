@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [httpx, pydantic]
 """
 Phase 1: World-Class Deep Research Enhancements for Mode 3/4
 
@@ -26,6 +30,7 @@ Reference: MODE_3_4_COMPLETE_FIX_PLAN_PART_II.md
 from __future__ import annotations
 
 import asyncio
+import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -242,10 +247,23 @@ class SecureHTTPClient:
                 )
                 await asyncio.sleep(delay)
 
+            except (ValueError, TypeError, KeyError) as e:
+                # Data parsing/validation errors
+                last_error = e
+                logger.error(
+                    "http_data_error",
+                    error_type=type(e).__name__,
+                    error=str(e)[:100],
+                    url=url[:100],
+                )
+                break
+
             except Exception as e:
+                # Unexpected errors - log and break
                 last_error = e
                 logger.error(
                     "http_unexpected_error",
+                    error_type=type(e).__name__,
                     error=str(e)[:100],
                     url=url[:100],
                 )
@@ -272,15 +290,37 @@ class SecureHTTPClient:
             try:
                 response = await self._client.head(url, headers=headers)
                 return response
-            except Exception as e:
+
+            except (httpx.ConnectError, httpx.ReadTimeout, httpx.WriteTimeout) as e:
+                # Network errors - retry
                 delay = self.base_delay * (2 ** attempt)
                 logger.debug(
-                    "http_head_retry",
+                    "http_head_network_error",
                     url=url[:100],
                     attempt=attempt + 1,
+                    error_type=type(e).__name__,
                     error=str(e)[:50],
                 )
                 await asyncio.sleep(delay)
+
+            except httpx.HTTPStatusError as e:
+                # HTTP errors - log and break
+                logger.debug(
+                    "http_head_status_error",
+                    url=url[:100],
+                    status=e.response.status_code,
+                )
+                break
+
+            except Exception as e:
+                # Unexpected errors - log and break
+                logger.debug(
+                    "http_head_unexpected_error",
+                    url=url[:100],
+                    error_type=type(e).__name__,
+                    error=str(e)[:50],
+                )
+                break
 
         return None
 
@@ -288,27 +328,36 @@ class SecureHTTPClient:
 # =============================================================================
 # Production Hardening: Error Handling Decorator
 # =============================================================================
-
-def with_graceful_degradation(default_return):
-    """
-    Decorator for graceful degradation on errors.
-
-    Returns a default value instead of raising exceptions,
-    allowing the pipeline to continue with partial results.
-    """
-    def decorator(func):
-        async def wrapper(*args, **kwargs):
-            try:
-                return await func(*args, **kwargs)
-            except Exception as e:
-                logger.error(
-                    f"{func.__name__}_failed_graceful_degradation",
-                    error=str(e)[:200],
-                    error_type=type(e).__name__,
-                )
-                return default_return
-        return wrapper
-    return decorator
+# NOTE: The old with_graceful_degradation decorator has been DEPRECATED.
+#
+# Use the new graceful_degradation decorator from resilience module instead:
+#
+# from langgraph_workflows.modes34.resilience import (
+#     graceful_degradation,
+#     research_operation,  # Convenience decorator for research operations
+# )
+#
+# @graceful_degradation(
+#     domain="research",
+#     fallback_value=default_value,
+#     recoverable=True,
+# )
+# async def your_function():
+#     ...
+#
+# Or use the convenience decorator:
+#
+# @research_operation(fallback_value=default_value)
+# async def your_function():
+#     ...
+#
+# Benefits of the new decorator (H7 fix):
+# - NEVER catches asyncio.CancelledError (C5 compliance)
+# - Classifies exceptions into specific types (not generic Exception)
+# - Logs with structured context for debugging
+# - Distinguishes recoverable vs non-recoverable errors
+# - Provides retry suggestions for infrastructure failures
+# =============================================================================
 
 
 # =============================================================================
@@ -1096,8 +1145,33 @@ async def _verify_via_doi(
                 confidence=0.95,
                 metadata={"resolved_url": str(response.url)},
             )
+
+    except (ValueError, TypeError) as e:
+        # Invalid DOI format
+        logger.debug(
+            "doi_validation_error",
+            doi=doi[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
+    except (httpx.ConnectError, httpx.ReadTimeout) as e:
+        # Network/timeout errors
+        logger.debug(
+            "doi_network_error",
+            doi=doi[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
     except Exception as e:
-        logger.debug("doi_verification_failed", doi=doi[:50], error=str(e)[:100])
+        # Unexpected errors
+        logger.debug(
+            "doi_verification_failed",
+            doi=doi[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
 
     return CitationVerification(
         citation=citation,
@@ -1130,8 +1204,42 @@ async def _verify_via_pubmed_id(
                     confidence=0.95,
                     metadata={"pubmed_data": data["result"].get(pmid, {})},
                 )
+
+    except json.JSONDecodeError as e:
+        # JSON parsing errors
+        logger.debug(
+            "pubmed_id_json_error",
+            pmid=pmid[:20],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
+    except (ValueError, TypeError) as e:
+        # Invalid PMID format
+        logger.debug(
+            "pubmed_id_validation_error",
+            pmid=pmid[:20],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
+    except (httpx.ConnectError, httpx.ReadTimeout, asyncio.TimeoutError) as e:
+        # Network/timeout errors
+        logger.debug(
+            "pubmed_id_network_error",
+            pmid=pmid[:20],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
     except Exception as e:
-        logger.debug("pubmed_id_verification_failed", pmid=pmid[:20], error=str(e)[:100])
+        # JSON parsing or unexpected errors
+        logger.debug(
+            "pubmed_id_verification_failed",
+            pmid=pmid[:20],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
 
     return CitationVerification(
         citation=citation,
@@ -1165,8 +1273,42 @@ async def _verify_via_pubmed_search(
                     confidence=0.8,
                     metadata={"pmids_found": id_list[:5]},
                 )
+
+    except json.JSONDecodeError as e:
+        # JSON parsing errors
+        logger.debug(
+            "pubmed_search_json_error",
+            title=title[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
+    except (ValueError, TypeError) as e:
+        # Invalid title format
+        logger.debug(
+            "pubmed_search_validation_error",
+            title=title[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
+    except (httpx.ConnectError, httpx.ReadTimeout, asyncio.TimeoutError) as e:
+        # Network/timeout errors
+        logger.debug(
+            "pubmed_search_network_error",
+            title=title[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
     except Exception as e:
-        logger.debug("pubmed_search_failed", title=title[:50], error=str(e)[:100])
+        # JSON parsing or unexpected errors
+        logger.debug(
+            "pubmed_search_failed",
+            title=title[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
 
     return CitationVerification(
         citation=citation,
@@ -1201,8 +1343,42 @@ async def _verify_via_crossref(
                     confidence=0.75,
                     metadata={"crossref_doi": items[0].get("DOI")},
                 )
+
+    except json.JSONDecodeError as e:
+        # JSON parsing errors
+        logger.debug(
+            "crossref_search_json_error",
+            title=title[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
+    except (ValueError, TypeError) as e:
+        # Invalid title format
+        logger.debug(
+            "crossref_search_validation_error",
+            title=title[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
+    except (httpx.ConnectError, httpx.ReadTimeout, asyncio.TimeoutError) as e:
+        # Network/timeout errors
+        logger.debug(
+            "crossref_search_network_error",
+            title=title[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
     except Exception as e:
-        logger.debug("crossref_search_failed", title=title[:50], error=str(e)[:100])
+        # JSON parsing or unexpected errors
+        logger.debug(
+            "crossref_search_failed",
+            title=title[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
 
     return CitationVerification(
         citation=citation,
@@ -1229,8 +1405,33 @@ async def _verify_via_url(
                 confidence=0.6,
                 metadata={"final_url": str(response.url)},
             )
+
+    except (ValueError, TypeError) as e:
+        # Invalid URL format
+        logger.debug(
+            "url_validation_error",
+            url=url[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
+    except (httpx.ConnectError, httpx.ReadTimeout, asyncio.TimeoutError) as e:
+        # Network/timeout errors
+        logger.debug(
+            "url_network_error",
+            url=url[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
+
     except Exception as e:
-        logger.debug("url_verification_failed", url=url[:50], error=str(e)[:100])
+        # Unexpected errors
+        logger.debug(
+            "url_verification_failed",
+            url=url[:50],
+            error_type=type(e).__name__,
+            error=str(e)[:100],
+        )
 
     return CitationVerification(
         citation=citation,

@@ -26,8 +26,8 @@ function LoadingState() {
   return (
     <div className="flex-1 flex items-center justify-center h-[calc(100vh-4rem)]">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-        <p className="text-sm text-muted-foreground">Loading Background Agent...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-pink-600" />
+        <p className="text-sm text-stone-500">Loading Background Agent...</p>
       </div>
     </div>
   );

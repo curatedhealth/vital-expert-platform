@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [langgraph_compilation, services.hitl_service, fastapi, redis]
 """
 HITL WebSocket Service for Real-Time Approvals
 
@@ -38,7 +42,7 @@ try:
 except ImportError:
     REDIS_AVAILABLE = False
 
-from langgraph_workflows.postgres_checkpointer import get_postgres_checkpointer
+from langgraph_compilation import get_postgres_checkpointer
 from services.hitl_service import (
     HITLCheckpoint,
     HITLSafetyLevel,

@@ -101,12 +101,13 @@ type TemplateComplexity = 'all' | 'simple' | 'moderate' | 'complex';
 // CONSTANTS
 // =============================================================================
 
+// Brand v6.0 Purple-centric category colors
 const CATEGORY_CONFIG: Record<TemplateCategory, { label: string; icon: typeof BookOpen; color: string }> = {
-  all: { label: 'All Templates', icon: Layers, color: 'text-slate-600' },
-  research: { label: 'Research', icon: BookOpen, color: 'text-blue-600' },
-  analysis: { label: 'Analysis', icon: BarChart3, color: 'text-purple-600' },
+  all: { label: 'All Templates', icon: Layers, color: 'text-stone-600' },
+  research: { label: 'Research', icon: BookOpen, color: 'text-purple-600' },
+  analysis: { label: 'Analysis', icon: BarChart3, color: 'text-violet-600' },
   report: { label: 'Reports', icon: FileText, color: 'text-green-600' },
-  review: { label: 'Reviews', icon: CheckSquare, color: 'text-amber-600' },
+  review: { label: 'Reviews', icon: CheckSquare, color: 'text-fuchsia-600' },
   synthesis: { label: 'Synthesis', icon: Sparkles, color: 'text-pink-600' },
 };
 

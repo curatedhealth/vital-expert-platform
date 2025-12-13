@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_CORE
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [All]
+# DEPENDENCIES: [langgraph, state_schemas, checkpoint_manager, services.cache_manager, services.resilience]
 """
 Base Workflow Class for LangGraph
 

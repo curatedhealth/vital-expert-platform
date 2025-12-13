@@ -395,8 +395,8 @@ export const MissionCompleteView: React.FC<MissionCompleteViewProps> = ({
             className="w-full flex items-center justify-between p-4 bg-neutral-800/50 hover:bg-neutral-800 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <Link2 className="w-4 h-4 text-blue-400" />
+              <div className="p-2 bg-purple-500/20 rounded-lg">
+                <Link2 className="w-4 h-4 text-purple-400" />
               </div>
               <div className="text-left">
                 <h3 className="text-sm font-medium text-white">Sources Used</h3>
@@ -416,7 +416,7 @@ export const MissionCompleteView: React.FC<MissionCompleteViewProps> = ({
                   key={source.id}
                   className="flex items-center gap-3 p-2 bg-neutral-800/50 rounded-lg"
                 >
-                  <Link2 className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                  <Link2 className="w-4 h-4 text-purple-400 flex-shrink-0" />
                   <span className="text-sm text-neutral-300 flex-1 truncate">
                     {source.title}
                   </span>
@@ -425,7 +425,7 @@ export const MissionCompleteView: React.FC<MissionCompleteViewProps> = ({
                       href={source.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-blue-400 hover:underline"
+                      className="text-xs text-purple-400 hover:underline"
                     >
                       Open
                     </a>

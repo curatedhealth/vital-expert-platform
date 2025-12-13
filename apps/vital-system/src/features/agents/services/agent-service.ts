@@ -155,7 +155,9 @@ export class AgentService {
       console.log(`🔍 AgentService: Fetching ${showAll ? 'all' : 'active/testing'} agents from /api/agents-crud...`);
 
       // Use API route with retry logic to handle Next.js dev server cold starts
-      const url = showAll ? '/api/agents-crud?showAll=true' : '/api/agents-crud';
+      const url = showAll
+        ? '/api/agents-crud?showAll=true&limit=10000'
+        : '/api/agents-crud?limit=10000';
       const response = await this.fetchWithRetry(url);
 
       if (!response.ok) {
@@ -210,7 +212,7 @@ export class AgentService {
         
         // Order by name (safe column that should exist)
         queryWithStatus = queryWithStatus.order('name', { ascending: true });
-        queryWithStatus = queryWithStatus.limit(1000);
+        queryWithStatus = queryWithStatus.limit(10000);
         
         const { data: dataWithStatus, error: errorWithStatus } = await queryWithStatus;
         
@@ -228,7 +230,7 @@ export class AgentService {
           .from('agents')
           .select('*')
           .order('name', { ascending: true })
-          .limit(1000);
+          .limit(10000);
         
         const { data: dataWithoutStatus, error: errorWithoutStatus } = await queryWithoutStatus;
         

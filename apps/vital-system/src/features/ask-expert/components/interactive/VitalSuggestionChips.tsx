@@ -64,15 +64,16 @@ export interface VitalSuggestionChipsProps {
 // CATEGORY CONFIG
 // =============================================================================
 
+// Brand v6.0 Purple-centric category colors
 const CATEGORY_CONFIG: Record<string, { icon: React.ElementType; color: string; bgColor: string; borderColor: string }> = {
-  followup: { icon: ArrowRight, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
-  clarification: { icon: HelpCircle, color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
-  'deep-dive': { icon: BookOpen, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
+  followup: { icon: ArrowRight, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
+  clarification: { icon: HelpCircle, color: 'text-violet-600', bgColor: 'bg-violet-50', borderColor: 'border-violet-200' },
+  'deep-dive': { icon: BookOpen, color: 'text-fuchsia-600', bgColor: 'bg-fuchsia-50', borderColor: 'border-fuchsia-200' },
   compare: { icon: Repeat, color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200' },
-  example: { icon: Lightbulb, color: 'text-yellow-600', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' },
+  example: { icon: Lightbulb, color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
   warning: { icon: AlertTriangle, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
-  action: { icon: TrendingUp, color: 'text-cyan-600', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200' },
-  default: { icon: Sparkles, color: 'text-slate-600', bgColor: 'bg-slate-50', borderColor: 'border-slate-200' },
+  action: { icon: TrendingUp, color: 'text-pink-600', bgColor: 'bg-pink-50', borderColor: 'border-pink-200' },
+  default: { icon: Sparkles, color: 'text-stone-600', bgColor: 'bg-stone-50', borderColor: 'border-stone-200' },
 };
 
 // =============================================================================
@@ -152,7 +153,7 @@ export function VitalSuggestionChips({
   if (isLoading) {
     return (
       <div className={cn('flex items-center gap-2 py-2', className)}>
-        <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+        <Loader2 className="h-4 w-4 text-purple-500 animate-spin" />
         <span className="text-sm text-slate-500">Generating suggestions...</span>
         <div className="flex gap-2">
           {[0, 1, 2].map(i => (
@@ -270,7 +271,7 @@ const SuggestionChip = forwardRef<HTMLButtonElement, SuggestionChipProps>(
           config.bgColor,
           config.borderColor,
           'hover:shadow-sm',
-          isFocused && 'ring-2 ring-blue-400 ring-offset-1'
+          isFocused && 'ring-2 ring-purple-400 ring-offset-1'
         )}
       >
         <Icon className={cn('h-3.5 w-3.5 shrink-0', config.color)} />

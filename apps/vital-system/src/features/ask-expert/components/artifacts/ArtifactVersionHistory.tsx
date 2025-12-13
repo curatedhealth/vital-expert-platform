@@ -162,7 +162,7 @@ function getChangeIcon(type: ChangeType): React.ReactNode {
 function getChangeColor(type: ChangeType): string {
   const colors: Record<ChangeType, string> = {
     created: 'bg-green-100 text-green-600',
-    modified: 'bg-blue-100 text-blue-600',
+    modified: 'bg-purple-100 text-purple-600',
     restored: 'bg-amber-100 text-amber-600',
     auto_saved: 'bg-slate-100 text-slate-500',
   };

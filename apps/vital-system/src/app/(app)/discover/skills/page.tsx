@@ -1,7 +1,18 @@
-// Skills Registry - Using VitalAssetView
+/**
+ * Skills Registry - Brand Guidelines v6.0
+ *
+ * Design System:
+ * - Primary Accent: #9055E0 (Warm Purple) via Tailwind purple-600
+ * - Canvas: stone-50, Surface: white with stone-200 border
+ * - Text: stone-600/700/800
+ * - Transitions: 150ms for interactions
+ *
+ * Refactored: December 2025
+ * - Extracted useSkillsData and useSkillsCRUD hooks
+ */
 'use client';
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useMemo, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +21,7 @@ import { RecentAssetsCard, RecentAssetItem } from '@/components/shared/RecentAss
 import { ActiveFiltersBar } from '@/components/shared/ActiveFiltersBar';
 import { useAssetFilters } from '@/hooks/useAssetFilters';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
+import { useSkillsData, useSkillsCRUD, filterSkillsByParams, type Skill } from '@/features/discover/hooks';
 import {
   Sparkles,
   CheckCircle2,
@@ -27,7 +39,6 @@ import {
 import {
   VitalAssetView,
   type VitalAsset,
-  type VitalSkillAsset,
   COMPLEXITY_BADGES,
   getComplexityLevel,
 } from '@vital/ai-ui';
@@ -43,22 +54,6 @@ import {
 // Import Skill type from schema for consistency
 import type { Skill as SkillSchema } from '@/lib/forms/schemas';
 
-// Legacy skill type for API response
-interface Skill {
-  id?: string;
-  name: string;
-  slug?: string;
-  description?: string;
-  category?: string;
-  implementation_type?: string;
-  implementation_ref?: string;
-  complexity_score?: number;
-  is_active?: boolean;
-  metadata?: Record<string, unknown>;
-  created_at?: string;
-  updated_at?: string;
-}
-
 // Convert skill to VitalAsset format
 function skillToAsset(skill: Skill): VitalAsset {
   return {
@@ -67,53 +62,39 @@ function skillToAsset(skill: Skill): VitalAsset {
   } as VitalAsset;
 }
 
-// Filter skills based on URL params
-function filterSkillsByParams(
-  skills: Skill[],
-  category: string | null,
-  complexity: string | null,
-  type: string | null
-): Skill[] {
-  let filtered = [...skills];
-
-  if (category) {
-    const categoryLower = category.toLowerCase();
-    filtered = filtered.filter((s) => {
-      const skillCategory = (s.category || '').toLowerCase();
-      return skillCategory === categoryLower || skillCategory.includes(categoryLower);
-    });
-  }
-
-  if (complexity) {
-    const complexityLower = complexity.toLowerCase();
-    filtered = filtered.filter((s) => {
-      const score = s.complexity_score || 5;
-      switch (complexityLower) {
-        case 'basic': return score >= 1 && score <= 3;
-        case 'intermediate': return score >= 4 && score <= 6;
-        case 'advanced': return score >= 7 && score <= 8;
-        case 'expert': return score >= 9 && score <= 10;
-        default: return true;
-      }
-    });
-  }
-
-  if (type) {
-    const typeLower = type.toLowerCase();
-    filtered = filtered.filter((s) => {
-      const implType = (s.implementation_type || '').toLowerCase();
-      return implType === typeLower;
-    });
-  }
-
-  return filtered;
-}
-
-// Inner component
 function SkillsPageContent() {
   const router = useRouter();
   const { userProfile } = useAuth();
   const isAdmin = userProfile?.role === 'super_admin' || userProfile?.role === 'admin';
+
+  // Data hook
+  const { skills, stats, loading, loadSkills } = useSkillsData();
+
+  // CRUD hook
+  const {
+    isModalOpen,
+    editingSkill,
+    isSaving,
+    deleteConfirmOpen,
+    skillToDelete,
+    isDeleting,
+    error,
+    selectedIds,
+    isSelectionMode,
+    batchDeleteConfirmOpen,
+    handleCreateSkill,
+    handleEditSkill,
+    handleSaveSkill,
+    handleDeleteConfirm,
+    handleDeleteSkill,
+    closeModals,
+    setError,
+    exitSelectionMode,
+    handleSelectAll,
+    setSelectedIds,
+    setBatchDeleteConfirmOpen,
+    handleBatchDelete,
+  } = useSkillsCRUD();
 
   // Use shared filter hook
   const {
@@ -135,86 +116,31 @@ function SkillsPageContent() {
   const complexityParam = getFilterParam('complexity');
   const typeParam = getFilterParam('type');
 
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [stats, setStats] = useState({
-    total: 0,
-    active: 0,
-    byCategory: {} as Record<string, number>,
-    byComplexity: {} as Record<string, number>,
-    builtin: 0,
-    custom: 0,
-  });
-  const [loading, setLoading] = useState(true);
-
-  // CRUD state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingSkill, setEditingSkill] = useState<Partial<SkillSchema> | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [skillToDelete, setSkillToDelete] = useState<Partial<SkillSchema> | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // Batch selection state
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [batchDeleteConfirmOpen, setBatchDeleteConfirmOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    loadSkills();
-  }, []);
-
-  const loadSkills = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/skills?limit=10000');
-      if (!response.ok) throw new Error('Failed to fetch skills');
-      const result = await response.json();
-      const allSkills = result.skills || [];
-      setSkills(allSkills);
-
-      // Calculate stats
-      const byCategory: Record<string, number> = {};
-      const byComplexity: Record<string, number> = {};
-
-      allSkills.forEach((skill: Skill) => {
-        if (skill.category) {
-          byCategory[skill.category] = (byCategory[skill.category] || 0) + 1;
-        }
-        const level = getComplexityLevel(skill.complexity_score || 5);
-        byComplexity[level] = (byComplexity[level] || 0) + 1;
-      });
-
-      setStats({
-        total: allSkills.length,
-        active: allSkills.filter((s: Skill) => s.is_active).length,
-        byCategory,
-        byComplexity,
-        builtin: allSkills.filter((s: Skill) => s.implementation_type === 'tool').length,
-        custom: allSkills.filter((s: Skill) => s.implementation_type === 'prompt' || s.implementation_type === 'workflow').length,
-      });
-    } catch (error) {
-      console.error('Error loading skills:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Filter and convert skills
-  const filteredSkills = useMemo(() =>
-    filterSkillsByParams(skills, categoryParam, complexityParam, typeParam),
+  const filteredSkills = useMemo(
+    () => filterSkillsByParams(skills, categoryParam, complexityParam, typeParam),
     [skills, categoryParam, complexityParam, typeParam]
   );
   const assets = useMemo(() => filteredSkills.map(skillToAsset), [filteredSkills]);
 
-  // Stats cards configuration
+  // Stats cards configuration - Brand v6.0 colors
   const statsCards: StatCardConfig[] = [
     { label: 'Total', value: stats.total },
     { label: 'Active', value: stats.active, icon: CheckCircle2, variant: 'success' },
     { label: 'Built-in', value: stats.builtin, icon: Cog, variant: 'purple' },
     { label: 'Custom', value: stats.custom, icon: Sparkles, variant: 'info' },
-    { label: 'Advanced', value: (stats.byComplexity['advanced'] || 0) + (stats.byComplexity['expert'] || 0), icon: Zap, variant: 'orange' },
-    { label: 'Categories', value: Object.keys(stats.byCategory).length, icon: Database, variant: 'cyan' },
+    {
+      label: 'Advanced',
+      value: (stats.byComplexity['advanced'] || 0) + (stats.byComplexity['expert'] || 0),
+      icon: Zap,
+      variant: 'orange',
+    },
+    {
+      label: 'Categories',
+      value: Object.keys(stats.byCategory).length,
+      icon: Database,
+      variant: 'cyan',
+    },
   ];
 
   // Recent skills for overview
@@ -233,123 +159,42 @@ function SkillsPageContent() {
 
   // Navigation handlers
   const handleSkillClick = (asset: VitalAsset) => {
-    const skill = skills.find(s => s.id === asset.id);
+    const skill = skills.find((s) => s.id === asset.id);
     if (skill?.slug) {
       router.push(`/discover/skills/${skill.slug}`);
     }
   };
 
-  const handleCreateSkill = () => {
-    setEditingSkill({ ...DEFAULT_SKILL_VALUES });
-    setError(null);
-    setIsModalOpen(true);
+  // Wrap CRUD handlers to work with assets
+  const onEditSkill = (asset: VitalAsset) => {
+    const skill = skills.find((s) => s.id === asset.id);
+    if (skill) handleEditSkill(skill);
   };
 
-  const handleEditSkill = (asset: VitalAsset) => {
-    const skill = skills.find(s => s.id === asset.id);
-    if (skill) {
-      setEditingSkill(skill as unknown as Partial<SkillSchema>);
-      setError(null);
-      setIsModalOpen(true);
-    }
+  const onDeleteConfirm = (asset: VitalAsset) => {
+    const skill = skills.find((s) => s.id === asset.id);
+    if (skill) handleDeleteConfirm(skill);
   };
 
-  const handleSaveSkill = async (data: SkillSchema) => {
-    setIsSaving(true);
-    setError(null);
-
-    try {
-      const isUpdate = !!data.id;
-      const url = isUpdate ? `/api/skills/${data.id}` : '/api/skills';
-      const method = isUpdate ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to save skill');
-
-      await loadSkills();
-      setIsModalOpen(false);
-      setEditingSkill(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save skill');
-    } finally {
-      setIsSaving(false);
-    }
+  const onSaveSkill = async (data: SkillSchema) => {
+    await handleSaveSkill(data, loadSkills);
   };
 
-  const handleDeleteConfirm = (asset: VitalAsset) => {
-    const skill = skills.find(s => s.id === asset.id);
-    if (skill) {
-      setSkillToDelete(skill as unknown as Partial<SkillSchema>);
-      setDeleteConfirmOpen(true);
-    }
+  const onDeleteSkill = async () => {
+    await handleDeleteSkill(loadSkills);
   };
 
-  const handleDeleteSkill = async () => {
-    if (!skillToDelete?.id) return;
-
-    setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/skills/${skillToDelete.id}`, { method: 'DELETE' });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to delete skill');
-      }
-
-      await loadSkills();
-      setDeleteConfirmOpen(false);
-      setSkillToDelete(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete skill');
-    } finally {
-      setIsDeleting(false);
-    }
+  const onBatchDelete = async () => {
+    await handleBatchDelete(loadSkills);
   };
 
-  // Batch selection handlers
-  const handleSelectAll = () => {
-    if (selectedIds.size === filteredSkills.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredSkills.map(s => s.id).filter(Boolean) as string[]));
-    }
-  };
-
-  const handleBatchDelete = async () => {
-    if (selectedIds.size === 0) return;
-
-    setIsDeleting(true);
-    try {
-      const deletePromises = Array.from(selectedIds).map(id =>
-        fetch(`/api/skills/${id}`, { method: 'DELETE' })
-      );
-
-      await Promise.all(deletePromises);
-      await loadSkills();
-
-      setBatchDeleteConfirmOpen(false);
-      setSelectedIds(new Set());
-      setIsSelectionMode(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete skills');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const exitSelectionMode = () => {
-    setIsSelectionMode(false);
-    setSelectedIds(new Set());
+  const onSelectAll = () => {
+    handleSelectAll(filteredSkills.map((s) => s.id).filter(Boolean) as string[]);
   };
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-stone-50">
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
         </div>
@@ -358,21 +203,20 @@ function SkillsPageContent() {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-stone-50">
       {/* Action Bar */}
-      <div className="flex items-center gap-4 px-6 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex items-center gap-4 px-6 py-2 border-b border-stone-200 bg-white">
         <div className="flex-1" />
 
         {/* Batch Selection Controls */}
         {isSelectionMode ? (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              {selectedIds.size} selected
-            </span>
+            <span className="text-sm text-stone-600">{selectedIds.size} selected</span>
             <Button
               variant="outline"
               size="sm"
-              onClick={handleSelectAll}
+              onClick={onSelectAll}
+              className="border-stone-300 hover:border-purple-400"
             >
               {selectedIds.size === filteredSkills.length ? 'Deselect All' : 'Select All'}
             </Button>
@@ -396,11 +240,19 @@ function SkillsPageContent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsSelectionMode(true)}
+                  onClick={() => {
+                    exitSelectionMode();
+                    setSelectedIds(new Set());
+                  }}
+                  className="border-stone-300 hover:border-purple-400"
                 >
                   Select
                 </Button>
-                <Button onClick={handleCreateSkill} size="sm" className="gap-2">
+                <Button
+                  onClick={() => handleCreateSkill(DEFAULT_SKILL_VALUES)}
+                  size="sm"
+                  className="gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+                >
                   <Plus className="h-4 w-4" />
                   Create Skill
                 </Button>
@@ -415,9 +267,9 @@ function SkillsPageContent() {
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           {/* Admin badge */}
           {isAdmin && (
-            <div className="flex items-center gap-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+            <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
               <Shield className="h-4 w-4 text-purple-600" />
-              <span className="text-sm text-purple-700 dark:text-purple-300">
+              <span className="text-sm text-purple-700">
                 Admin mode: You can create, edit, and delete skills
               </span>
             </div>
@@ -438,10 +290,10 @@ function SkillsPageContent() {
             <>
               <AssetOverviewStats stats={statsCards} />
 
-              {/* Complexity Distribution */}
-              <Card>
+              {/* Complexity Distribution - Brand v6.0 */}
+              <Card className="border border-stone-200 bg-white">
                 <CardHeader>
-                  <CardTitle>Complexity Distribution</CardTitle>
+                  <CardTitle className="text-stone-800">Complexity Distribution</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -450,10 +302,10 @@ function SkillsPageContent() {
                       const Icon = config.icon;
                       return (
                         <div key={level} className="flex items-center gap-3">
-                          <Icon className="h-8 w-8 text-gray-400" />
+                          <Icon className="h-8 w-8 text-stone-400" />
                           <div>
-                            <div className="text-2xl font-bold">{count}</div>
-                            <div className="text-sm text-gray-500">{config.label}</div>
+                            <div className="text-2xl font-bold text-stone-800">{count}</div>
+                            <div className="text-sm text-stone-500">{config.label}</div>
                           </div>
                         </div>
                       );
@@ -467,7 +319,7 @@ function SkillsPageContent() {
                 title="Recent Skills"
                 items={recentSkills}
                 onItemClick={(item) => {
-                  const skill = skills.find(s => s.id === item.id);
+                  const skill = skills.find((s) => s.id === item.id);
                   if (skill?.slug) router.push(`/discover/skills/${skill.slug}`);
                 }}
               />
@@ -495,8 +347,8 @@ function SkillsPageContent() {
               gridColumns={{ sm: 1, md: 2, lg: 3, xl: 4 }}
               kanbanDraggable={isAdmin}
               onAssetClick={handleSkillClick}
-              onEdit={handleEditSkill}
-              onDelete={handleDeleteConfirm}
+              onEdit={onEditSkill}
+              onDelete={onDeleteConfirm}
               tableSelectable={isSelectionMode}
               selectedIds={Array.from(selectedIds)}
               onSelectionChange={(ids) => setSelectedIds(new Set(ids))}
@@ -508,25 +360,18 @@ function SkillsPageContent() {
       {/* Modals */}
       <SkillEditModalV2
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingSkill(null);
-          setError(null);
-        }}
+        onClose={closeModals}
         skill={editingSkill}
-        onSave={handleSaveSkill}
+        onSave={onSaveSkill}
         isSaving={isSaving}
         error={error}
       />
 
       <SkillDeleteModalV2
         isOpen={deleteConfirmOpen}
-        onClose={() => {
-          setDeleteConfirmOpen(false);
-          setSkillToDelete(null);
-        }}
+        onClose={closeModals}
         skill={skillToDelete}
-        onConfirm={handleDeleteSkill}
+        onConfirm={onDeleteSkill}
         isDeleting={isDeleting}
       />
 
@@ -534,37 +379,36 @@ function SkillsPageContent() {
         isOpen={batchDeleteConfirmOpen}
         onClose={() => setBatchDeleteConfirmOpen(false)}
         count={selectedIds.size}
-        onConfirm={handleBatchDelete}
+        onConfirm={onBatchDelete}
         isDeleting={isDeleting}
       />
     </div>
   );
 }
 
-// Loading fallback
+// Loading fallback - Brand v6.0
 function SkillsPageLoading() {
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-stone-50">
       <div className="px-6 pt-4">
-        <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
+        <div className="h-5 w-32 bg-stone-200 rounded animate-pulse" />
       </div>
-      <div className="flex items-center justify-between px-6 py-4 border-b">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200">
         <div className="flex items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
           <div className="space-y-2">
-            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
-            <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+            <div className="h-6 w-32 bg-stone-200 rounded animate-pulse" />
+            <div className="h-4 w-48 bg-stone-200 rounded animate-pulse" />
           </div>
         </div>
       </div>
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500">Loading skills...</p>
+        <p className="text-stone-500">Loading skills...</p>
       </div>
     </div>
   );
 }
 
-// Page component with Suspense
 export default function SkillsPage() {
   return (
     <Suspense fallback={<SkillsPageLoading />}>

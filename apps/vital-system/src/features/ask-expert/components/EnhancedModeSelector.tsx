@@ -62,8 +62,8 @@ const ENHANCED_MODES: ModeOption[] = [
     shortName: 'Targeted Query',
     description: 'Choose your specific expert for precise answers',
     icon: <Target className="h-6 w-6" />,
-    color: 'text-blue-600',
-    gradient: 'from-blue-500 to-cyan-500',
+    color: 'text-violet-600',
+    gradient: 'from-violet-500 to-fuchsia-500',
     features: [
       'Manual expert selection',
       'Specialized expertise',
@@ -177,7 +177,7 @@ export function EnhancedModeSelector({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Brain className="h-5 w-5 text-blue-600" />
+              <Brain className="h-5 w-5 text-purple-600" />
               Choose Your Consultation Mode
             </h3>
             <p className="text-sm text-muted-foreground">
@@ -213,7 +213,7 @@ export function EnhancedModeSelector({
                   className={cn(
                     "cursor-pointer transition-all duration-200 h-full",
                     selectedMode === mode.id
-                      ? "ring-2 ring-blue-600 bg-blue-50/50"
+                      ? "ring-2 ring-purple-600 bg-purple-50/50"
                       : "hover:shadow-lg"
                   )}
                   onClick={() => onModeChange(mode.id)}
@@ -238,7 +238,7 @@ export function EnhancedModeSelector({
                     <CardTitle className="text-base mt-3 flex items-center gap-2">
                       {mode.shortName}
                       {selectedMode === mode.id && (
-                        <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                        <CheckCircle2 className="h-4 w-4 text-purple-600" />
                       )}
                     </CardTitle>
 
@@ -275,7 +275,7 @@ export function EnhancedModeSelector({
                           <ul className="text-xs space-y-1">
                             {mode.features.map((feature, idx) => (
                               <li key={idx} className="flex items-center gap-1">
-                                <Sparkles className="h-3 w-3 text-blue-500" />
+                                <Sparkles className="h-3 w-3 text-purple-500" />
                                 <span>{feature}</span>
                               </li>
                             ))}
@@ -315,7 +315,7 @@ export function EnhancedModeSelector({
                         key={mode.id}
                         className={cn(
                           "text-center py-3 px-4 cursor-pointer transition-colors",
-                          selectedMode === mode.id && "bg-blue-50"
+                          selectedMode === mode.id && "bg-purple-50"
                         )}
                         onClick={() => onModeChange(mode.id)}
                       >

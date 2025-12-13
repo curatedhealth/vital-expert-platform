@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * GET /api/knowledge-domains
- * Fetches all available RAG knowledge domains from the database
+ * Returns the live knowledge domains catalog (normalized: id/slug/domain_type/name/is_active).
+ * Falls back gracefully to an empty array if the table is missing.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -12,86 +13,41 @@ export async function GET(request: NextRequest) {
 
     if (!supabaseUrl || !supabaseKey) {
       console.warn('[Knowledge Domains API] Supabase configuration missing, returning empty array');
-      return NextResponse.json({ domains: [] });
+      return NextResponse.json({ domains: [], count: 0 });
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get tenant_id from headers or cookies
+    // Tenant scoping (optional)
     const tenantId = request.headers.get('x-tenant-id') || request.cookies.get('tenant_id')?.value;
 
-    // Build query - select only columns that exist
-    // Only return domains that have associated knowledge sources with content
     let query = supabase
       .from('knowledge_domains')
-      .select('id, name')
+      .select('id, name, slug, domain_type, is_active')
       .order('name', { ascending: true });
 
-    // Apply tenant filtering if tenant_id exists
     if (tenantId) {
-      query = query.contains('allowed_tenants', [tenantId]);
+      // If allowed_tenants exists, filter; otherwise ignore
+      query = query.or('allowed_tenants.is.null,allowed_tenants.cs.' + JSON.stringify([tenantId]));
     }
 
-    // Fetch knowledge domains from database
     const { data: domains, error } = await query;
 
     if (error) {
-      console.error('Error fetching knowledge domains:', error);
-      // If table doesn't exist, return empty array instead of error
+      console.error('[Knowledge Domains API] Error fetching knowledge domains:', error);
       if (error.code === '42P01' || error.message?.includes('does not exist')) {
-        console.warn('[Knowledge Domains API] Knowledge domains table does not exist yet, returning empty array');
-        return NextResponse.json({ domains: [] });
+        console.warn('[Knowledge Domains API] Table missing, returning empty array');
+        return NextResponse.json({ domains: [], count: 0 });
       }
-      // For other errors, return empty array gracefully
-      console.warn('[Knowledge Domains API] Database error, returning empty array:', error.message);
-      return NextResponse.json({ domains: [] });
+      return NextResponse.json({ domains: [], count: 0 });
     }
 
-    // Filter domains to only include those with content (knowledge sources)
-    if (domains && domains.length > 0) {
-      const domainNames = domains.map((d: any) => d.name);
-      
-      // Check which domains have knowledge sources with content
-      const { data: sources, error: sourcesError } = await supabase
-        .from('knowledge_sources')
-        .select('domain')
-        .in('domain', domainNames)
-        .eq('is_active', true)
-        .not('processing_status', 'eq', 'failed');
-
-      if (sourcesError) {
-        console.error('Error checking knowledge sources:', sourcesError);
-        // If check fails, return empty array to be safe
-        return NextResponse.json({
-          domains: [],
-          count: 0,
-        });
-      } else if (sources && sources.length > 0) {
-        // Get unique domains that have sources
-        const domainsWithContent = new Set(sources.map((s: any) => s.domain));
-        // Filter domains to only those with content
-        const filteredDomains = domains.filter((d: any) => domainsWithContent.has(d.name));
-        return NextResponse.json({
-          domains: filteredDomains,
-          count: filteredDomains.length,
-        });
-      } else {
-        // No sources found, return empty array
-        return NextResponse.json({
-          domains: [],
-          count: 0,
-        });
-      }
-    }
-
-    // No domains found
     return NextResponse.json({
-      domains: [],
-      count: 0,
+      domains: domains || [],
+      count: domains?.length ?? 0,
     });
   } catch (error) {
     console.error('Unexpected error in knowledge-domains API:', error);
-    // Return empty array instead of error to prevent UI breakage
     return NextResponse.json({
       domains: [],
       count: 0,

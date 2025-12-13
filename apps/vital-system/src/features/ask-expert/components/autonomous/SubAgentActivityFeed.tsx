@@ -115,24 +115,26 @@ function getActivityIcon(type: ActivityType): React.ReactNode {
   return icons[type];
 }
 
+// Brand v6.0 Purple-centric activity colors
 function getActivityColor(type: ActivityType, status?: string): string {
   if (status === 'error') return 'text-red-500 bg-red-100';
   const colors: Record<ActivityType, string> = {
-    delegation: 'text-blue-500 bg-blue-100',
+    delegation: 'text-purple-500 bg-purple-100',
     tool_call: 'text-amber-500 bg-amber-100',
     tool_result: 'text-green-500 bg-green-100',
     completion: 'text-green-500 bg-green-100',
     error: 'text-red-500 bg-red-100',
-    message: 'text-purple-500 bg-purple-100',
-    thinking: 'text-purple-500 bg-purple-100',
+    message: 'text-violet-500 bg-violet-100',
+    thinking: 'text-fuchsia-500 bg-fuchsia-100',
   };
   return colors[type];
 }
 
+// Brand v6.0 Purple-centric tier badges
 function getTierBadge(tier: 1 | 2 | 3): React.ReactNode {
   const styles = {
-    1: 'bg-slate-100 text-slate-600',
-    2: 'bg-blue-100 text-blue-600',
+    1: 'bg-stone-100 text-stone-600',
+    2: 'bg-violet-100 text-violet-600',
     3: 'bg-purple-100 text-purple-600',
   };
   return (

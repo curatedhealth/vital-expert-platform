@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [1]
+# DEPENDENCIES: [langgraph, base_workflow, state_schemas, observability, shared.*]
 """
 VITAL Path AI Services - Ask Expert Mode 1 Workflow
 

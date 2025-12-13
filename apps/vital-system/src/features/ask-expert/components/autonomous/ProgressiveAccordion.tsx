@@ -391,6 +391,7 @@ export const createToolsSection = (
 /**
  * Create a sources section for the accordion
  */
+// Brand v6.0 Purple-centric sources section
 export const createSourcesSection = (
   sources: Array<{ title: string; url?: string; type: string }>
 ): AccordionSection => ({
@@ -398,7 +399,7 @@ export const createSourcesSection = (
   title: 'Sources Found',
   icon: <Link2 className="w-4 h-4" />,
   badge: sources.length,
-  badgeColor: sources.length > 0 ? 'bg-blue-500/20 text-blue-300' : undefined,
+  badgeColor: sources.length > 0 ? 'bg-purple-500/20 text-purple-300' : undefined,
   autoExpand: true,
   priority: 6,
   content: (
@@ -408,7 +409,7 @@ export const createSourcesSection = (
           key={idx}
           className="flex items-center gap-2 p-2 bg-neutral-800/50 rounded-lg"
         >
-          <Link2 className="w-4 h-4 text-blue-400 flex-shrink-0" />
+          <Link2 className="w-4 h-4 text-purple-400 flex-shrink-0" />
           <span className="text-sm text-neutral-300 truncate flex-1">
             {source.title}
           </span>
@@ -417,7 +418,7 @@ export const createSourcesSection = (
               href={source.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-blue-400 hover:underline"
+              className="text-xs text-purple-400 hover:underline"
             >
               Open
             </a>

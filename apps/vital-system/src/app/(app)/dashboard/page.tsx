@@ -13,7 +13,6 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@vital/ui';
 import { Button } from '@vital/ui';
 import { Badge } from '@vital/ui';
-import { PageHeader } from '@/components/page-header';
 import {
   MessageSquare,
   Users,
@@ -79,13 +78,6 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Page Header */}
-      <PageHeader
-        icon={BarChart3}
-        title="Dashboard"
-        description="Overview of your services and recent activity"
-      />
-
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-8">
@@ -112,7 +104,7 @@ export default function DashboardPage() {
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary" className="text-xs">Active</Badge>
                   <Badge variant="outline" className="text-xs">47 chats</Badge>
-                  <Badge variant="outline" className="text-xs text-green-600">3 active</Badge>
+                  <Badge variant="outline" className="text-xs text-emerald-600">3 active</Badge>
                 </div>
               </CardHeader>
 
@@ -124,7 +116,7 @@ export default function DashboardPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    className="h-8 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
                     onClick={(e) => {
                       e.stopPropagation();
                       router.push('/ask-expert');
@@ -198,7 +190,7 @@ export default function DashboardPage() {
 
                 {/* Badges */}
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
                     3 In Progress
                   </Badge>
                   <Badge variant="outline" className="text-xs">8 workflows</Badge>
@@ -214,7 +206,7 @@ export default function DashboardPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                    className="h-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                     onClick={(e) => {
                       e.stopPropagation();
                       router.push('/workflows');
@@ -347,7 +339,7 @@ export default function DashboardPage() {
                     <Card className="border-l-4 border-l-blue-500">
                       <CardContent className="p-4">
                         <div className="flex items-start gap-4">
-                          <Clock className="w-5 h-5 text-blue-600 mt-0.5" />
+                          <Clock className="w-5 h-5 text-purple-600 mt-0.5" />
                           <div className="flex-1">
                             <div className="flex items-start justify-between">
                               <div>
@@ -371,7 +363,7 @@ export default function DashboardPage() {
                     <Card className="border-l-4 border-l-green-500">
                       <CardContent className="p-4">
                         <div className="flex items-start gap-4">
-                          <MessageSquare className="w-5 h-5 text-green-600 mt-0.5" />
+                          <MessageSquare className="w-5 h-5 text-emerald-600 mt-0.5" />
                           <div className="flex-1">
                             <div className="flex items-start justify-between">
                               <div>
@@ -401,7 +393,7 @@ export default function DashboardPage() {
                     <Card className="hover:shadow-md transition-shadow">
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
-                          <FileText className="w-5 h-5 text-blue-600" />
+                          <FileText className="w-5 h-5 text-purple-600" />
                           Target Product Profile
                         </CardTitle>
                       </CardHeader>
@@ -419,7 +411,7 @@ export default function DashboardPage() {
                     <Card className="hover:shadow-md transition-shadow">
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
-                          <Zap className="w-5 h-5 text-green-600" />
+                          <Zap className="w-5 h-5 text-emerald-600" />
                           Endpoint Selection
                         </CardTitle>
                       </CardHeader>
@@ -462,7 +454,7 @@ export default function DashboardPage() {
                 
                 <div className="space-y-3">
                   <div className="flex items-start gap-4 py-3 border-b last:border-0">
-                    <div className="w-2 h-2 rounded-full bg-green-500 mt-2" />
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2" />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold text-sm">Expert Chat: FDA 510k pathway</h4>
@@ -478,7 +470,7 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="flex items-start gap-4 py-3 border-b last:border-0">
-                    <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                    <div className="w-2 h-2 rounded-full bg-purple-500 mt-2" />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold text-sm">Panel Discussion: Primary endpoint</h4>
@@ -533,7 +525,7 @@ export default function DashboardPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-green-600" />
+                      <TrendingUp className="w-5 h-5 text-emerald-600" />
                       This Week
                     </CardTitle>
                   </CardHeader>
@@ -553,7 +545,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Time Saved</span>
-                        <span className="font-semibold text-green-600">24 hours</span>
+                        <span className="font-semibold text-emerald-600">24 hours</span>
                       </div>
                     </div>
                   </CardContent>
@@ -562,7 +554,7 @@ export default function DashboardPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Activity className="w-5 h-5 text-blue-600" />
+                      <Activity className="w-5 h-5 text-purple-600" />
                       Service Usage
                     </CardTitle>
                   </CardHeader>
@@ -573,8 +565,8 @@ export default function DashboardPage() {
                           <span className="text-sm text-muted-foreground">Ask Expert</span>
                           <span className="text-sm font-semibold">47 chats</span>
                         </div>
-                        <div className="h-2 bg-blue-100 rounded-full">
-                          <div className="h-2 bg-blue-600 rounded-full" style={{ width: '85%' }} />
+                        <div className="h-2 bg-purple-100 rounded-full">
+                          <div className="h-2 bg-purple-600 rounded-full" style={{ width: '85%' }} />
                         </div>
                       </div>
                       <div>
@@ -591,8 +583,8 @@ export default function DashboardPage() {
                           <span className="text-sm text-muted-foreground">Workflows</span>
                           <span className="text-sm font-semibold">8 workflows</span>
                         </div>
-                        <div className="h-2 bg-green-100 rounded-full">
-                          <div className="h-2 bg-green-600 rounded-full" style={{ width: '60%' }} />
+                        <div className="h-2 bg-emerald-100 rounded-full">
+                          <div className="h-2 bg-emerald-600 rounded-full" style={{ width: '60%' }} />
                         </div>
                       </div>
                       <div>

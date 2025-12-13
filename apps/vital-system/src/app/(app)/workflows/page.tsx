@@ -26,7 +26,6 @@ import { Button } from '@vital/ui';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@vital/ui';
 import { Input } from '@vital/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
-import { PageHeader } from '@/components/page-header';
 
 // Domain configuration for better UI
 const DOMAIN_CONFIG = {
@@ -75,10 +74,10 @@ const DOMAIN_CONFIG = {
 };
 
 const COMPLEXITY_COLORS = {
-  BEGINNER: 'text-green-600 bg-green-100',
-  INTERMEDIATE: 'text-blue-600 bg-blue-100',
+  BEGINNER: 'text-emerald-600 bg-emerald-100',
+  INTERMEDIATE: 'text-sky-600 bg-sky-100',
   ADVANCED: 'text-orange-600 bg-orange-100',
-  EXPERT: 'text-red-600 bg-red-100',
+  EXPERT: 'text-rose-600 bg-rose-100',
 };
 
 interface UseCase {
@@ -170,19 +169,6 @@ export default function WorkflowsPage() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Page Header */}
-      <PageHeader
-        icon={WorkflowIcon}
-        title="Workflows"
-        description="Guided multi-step processes for digital health use cases"
-        actions={
-          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Use Case
-          </Button>
-        }
-      />
-
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
@@ -192,7 +178,7 @@ export default function WorkflowsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-1">
+              <CardTitle className="text-xs font-medium text-stone-600 flex items-center gap-1">
                 <WorkflowIcon className="h-3 w-3" />
                 Use Cases
               </CardTitle>
@@ -202,21 +188,21 @@ export default function WorkflowsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-green-200 bg-green-50">
+          <Card className="border-2 border-emerald-200 bg-emerald-50">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-green-800 flex items-center gap-1">
+              <CardTitle className="text-xs font-medium text-emerald-800 flex items-center gap-1">
                 <CheckCircle className="h-3 w-3" />
                 Workflows
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.total_workflows}</div>
+              <div className="text-2xl font-bold text-emerald-600">{stats.total_workflows}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-1">
+              <CardTitle className="text-xs font-medium text-stone-600 flex items-center gap-1">
                 <FileText className="h-3 w-3" />
                 Tasks
               </CardTitle>
@@ -247,7 +233,7 @@ export default function WorkflowsPage() {
         <CardContent className="pt-6">
           <div className="flex gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400" />
               <Input
                 placeholder="Search use cases by title, code, or domain..."
                 value={searchQuery}
@@ -339,7 +325,7 @@ export default function WorkflowsPage() {
                     <p>Filtered results: {filteredUseCases.length}</p>
                     <details className="mt-2">
                       <summary className="cursor-pointer">View raw data</summary>
-                      <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-64">
+                      <pre className="mt-2 p-2 bg-stone-100 rounded text-xs overflow-auto max-h-64">
                         {JSON.stringify(useCases.slice(0, 3), null, 2)}
                       </pre>
                     </details>
@@ -374,7 +360,7 @@ function UseCaseCard({ useCase }: UseCaseCardProps) {
   }
   
   const Icon = domainConfig.icon;
-  const complexityColor = COMPLEXITY_COLORS[useCase.complexity] || 'text-gray-600 bg-gray-100';
+  const complexityColor = COMPLEXITY_COLORS[useCase.complexity] || 'text-stone-600 bg-stone-100';
 
   const handleCardClick = () => {
     // Navigate to detail page
@@ -438,7 +424,7 @@ function UseCaseCard({ useCase }: UseCaseCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            className="h-8 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
             onClick={(e) => {
               e.stopPropagation();
               handleExecute(e);

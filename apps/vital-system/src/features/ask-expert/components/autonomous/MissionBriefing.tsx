@@ -91,8 +91,8 @@ const AUTONOMY_BANDS: Record<AutonomyBand, {
     label: 'Supervised',
     description: 'Approve every major step before proceeding',
     icon: Shield,
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-50 border-blue-200',
+    color: 'text-violet-700',
+    bgColor: 'bg-violet-50 border-violet-200',
     checkpointBehavior: 'All checkpoints require approval',
   },
   guided: {
@@ -518,11 +518,11 @@ interface CheckpointBadgeProps {
 }
 
 function CheckpointBadge({ type }: CheckpointBadgeProps) {
-  // Map canonical CheckpointType values to display configs
+  // Map canonical CheckpointType values to display configs (Brand v6.0 Purple-centric)
   const configs: Record<CheckpointType, { label: string; color: string; bgColor: string }> = {
-    plan_approval: { label: 'Plan', color: 'text-blue-700', bgColor: 'bg-blue-100' },
-    tool_approval: { label: 'Tool', color: 'text-amber-700', bgColor: 'bg-amber-100' },
-    sub_agent_approval: { label: 'Sub-agent', color: 'text-purple-700', bgColor: 'bg-purple-100' },
+    plan_approval: { label: 'Plan', color: 'text-purple-700', bgColor: 'bg-purple-100' },
+    tool_approval: { label: 'Tool', color: 'text-violet-700', bgColor: 'bg-violet-100' },
+    sub_agent_approval: { label: 'Sub-agent', color: 'text-fuchsia-700', bgColor: 'bg-fuchsia-100' },
     critical_decision: { label: 'Critical', color: 'text-red-700', bgColor: 'bg-red-100' },
     final_review: { label: 'Final', color: 'text-green-700', bgColor: 'bg-green-100' },
   };

@@ -13,7 +13,10 @@ import {
   ExponentialGrowth,
   KnowledgeLoss,
   KnowledgePyramid,
+  ParadigmShiftSection,
 } from '@vital/ui';
+import { Features06 } from '@/components/landing/enhanced/Features06';
+import { Hero01 } from '@/components/landing/enhanced/Hero01';
 import {
   MessageSquare,
   Users,
@@ -24,6 +27,12 @@ import {
   Linkedin,
   Github,
   Sparkles,
+  UsersRound,
+  TrendingUp,
+  LogOut,
+  Infinity,
+  Rocket,
+  Database,
 } from 'lucide-react';
 import { BRAND_MESSAGING, SERVICE_LAYERS } from '@/lib/brand/brand-tokens';
 
@@ -93,153 +102,37 @@ export function LandingPagePremium() {
   return (
     <main className="min-h-screen bg-stone-50">
       {/* ================================================================== */}
-      {/* HERO SECTION */}
+      {/* HERO SECTION (Hero-01 Pattern with Navbar) */}
       {/* ================================================================== */}
-      <section className="min-h-screen flex items-center">
-        <div className="max-w-[1200px] mx-auto px-6 py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Left: Content */}
-            <div>
-              <span className="inline-flex items-center rounded-full py-1.5 px-4 border border-purple-600/30 bg-white text-purple-600 text-sm font-medium mb-6">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse" />
-                Now in Beta
-              </span>
-
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-stone-800 leading-[1.1] mb-6">
-                Human Genius,{' '}
-                <span className="text-purple-600">Amplified</span>
-              </h1>
-
-              <p className="text-xl text-stone-600 mb-8 leading-relaxed max-w-lg">
-                Orchestrating expertise, transforming scattered knowledge into compounding structures of insight.
-              </p>
-
-              <div className="flex flex-wrap gap-4">
-                <button
-                  onClick={handleGetStarted}
-                  className="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-full font-medium text-lg transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Start Orchestrating
-                  <ArrowRight className="inline-block ml-2 w-5 h-5" />
-                </button>
-                <button
-                  onClick={handleWatchDemo}
-                  className="px-8 py-4 border-2 border-stone-300 text-stone-700 hover:border-purple-600 hover:text-purple-600 rounded-full font-medium text-lg transition-all duration-150"
-                >
-                  Watch Demo
-                </button>
-              </div>
-            </div>
-
-            {/* Right: Elastic Network Visual with motion */}
-            <div className="hidden lg:flex justify-center">
-              <div className="w-[400px] h-[400px]">
-                <ElasticNetwork animated />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Hero01
+        badge={{ text: 'Now in Beta', href: '#' }}
+        title={
+          <>
+            Human Genius, <span className="text-purple-600">Amplified</span>
+          </>
+        }
+        subtitle="Orchestrating expertise, transforming scattered knowledge into compounding structures of insight. The right AI agent for every task."
+        primaryCTA={{ text: 'Start Orchestrating', onClick: handleGetStarted }}
+        secondaryCTA={{ text: 'Watch Demo', onClick: handleWatchDemo }}
+        showNavbar={true}
+        navbarProps={{
+          navItems: [
+            { name: 'Solutions', href: '#solutions' },
+            { name: 'Features', href: '#features' },
+            { name: 'Pricing', href: '#pricing' },
+            { name: 'About', href: '#about' },
+          ],
+          loginHref: '/login',
+          signupHref: '/register',
+          loginText: 'Sign In',
+          signupText: 'Get Started',
+        }}
+      />
 
       {/* ================================================================== */}
-      {/* PARADIGM SHIFT SECTION */}
+      {/* PARADIGM SHIFT SECTION (Features-03 Pattern) */}
       {/* ================================================================== */}
-      <section className="py-24 bg-stone-100">
-        <div className="max-w-[1200px] mx-auto px-6">
-          {/* Header */}
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-stone-800 mb-4">
-              PARADIGM SHIFT: FROM FIXED TO ELASTIC
-            </h2>
-            <div className="w-48 h-1 bg-purple-600 mx-auto rounded-full" />
-          </div>
-
-          {/* Column Headers */}
-          <div className="grid grid-cols-[1fr_80px_1fr] gap-4 mb-12">
-            <div className="text-center">
-              <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider">
-                Traditional (Rigid) Organization
-              </h3>
-            </div>
-            <div className="flex items-center justify-center">
-              <span className="text-xs italic text-stone-400">Transform</span>
-              <ArrowRight className="w-4 h-4 ml-1 text-purple-600" />
-            </div>
-            <div className="text-center">
-              <h3 className="text-sm font-semibold text-purple-600 uppercase tracking-wider">
-                Elastic (VITAL) Organization
-              </h3>
-            </div>
-          </div>
-
-          {/* Comparison Rows */}
-          <div className="space-y-16">
-            {/* Row 1: Capacity */}
-            <div className="grid grid-cols-[1fr_80px_1fr] gap-4 items-center">
-              <div className="text-center">
-                <div className="w-32 h-32 mx-auto mb-4">
-                  <FixedGrid />
-                </div>
-                <h4 className="text-lg font-bold text-stone-700">FIXED CAPACITY</h4>
-                <p className="text-sm text-stone-500">10-20 FTEs Max</p>
-              </div>
-              <div className="h-px bg-stone-300" />
-              <div className="text-center">
-                <div className="w-40 h-40 mx-auto mb-4">
-                  <ElasticNetwork animated />
-                </div>
-                <h4 className="text-lg font-bold text-purple-600">INFINITE CAPACITY</h4>
-                <p className="text-sm text-stone-500">Unlimited Scale</p>
-              </div>
-            </div>
-
-            {/* Row 2: Growth */}
-            <div className="grid grid-cols-[1fr_80px_1fr] gap-4 items-center">
-              <div className="text-center">
-                <div className="w-36 h-24 mx-auto mb-4">
-                  <LinearGrowth />
-                </div>
-                <h4 className="text-lg font-bold text-stone-700">LINEAR GROWTH</h4>
-                <p className="text-sm text-stone-500">Linear growth trajectory</p>
-              </div>
-              <div className="h-px bg-stone-300" />
-              <div className="text-center">
-                <div className="w-44 h-28 mx-auto mb-4">
-                  <ExponentialGrowth animated />
-                </div>
-                <h4 className="text-lg font-bold text-purple-600">EXPONENTIAL GROWTH</h4>
-                <p className="text-sm text-stone-500">Exponential growth potential</p>
-              </div>
-            </div>
-
-            {/* Row 3: Knowledge */}
-            <div className="grid grid-cols-[1fr_80px_1fr] gap-4 items-center">
-              <div className="text-center">
-                <div className="w-36 h-28 mx-auto mb-4">
-                  <KnowledgeLoss animated />
-                </div>
-                <h4 className="text-lg font-bold text-stone-700">KNOWLEDGE LOSS</h4>
-                <p className="text-sm text-stone-500">Knowledge walks out the door</p>
-              </div>
-              <div className="h-px bg-stone-300" />
-              <div className="text-center">
-                <div className="w-36 h-32 mx-auto mb-4">
-                  <KnowledgePyramid animated />
-                </div>
-                <h4 className="text-lg font-bold text-purple-600">KNOWLEDGE COMPOUND</h4>
-                <p className="text-sm text-stone-500">Knowledge compounds forever</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer tagline */}
-          <div className="text-center mt-16 pt-8 border-t border-stone-300">
-            <p className="text-lg font-medium text-stone-600">
-              Beyond Consulting, Beyond Software, Beyond Services
-            </p>
-          </div>
-        </div>
-      </section>
+      <ParadigmShiftSection />
 
       {/* ================================================================== */}
       {/* SERVICES SECTION */}
@@ -273,6 +166,11 @@ export function LandingPagePremium() {
       </section>
 
       {/* ================================================================== */}
+      {/* FEATURES SHOWCASE (Features-06 Pattern) */}
+      {/* ================================================================== */}
+      <Features06 />
+
+      {/* ================================================================== */}
       {/* KNOWLEDGE COMPOUND DEEP DIVE */}
       {/* ================================================================== */}
       <section className="py-24 bg-stone-50">
@@ -281,7 +179,7 @@ export function LandingPagePremium() {
             {/* Left: Pyramid with animation */}
             <div className="flex justify-center order-2 lg:order-1">
               <div className="w-64 h-56">
-                <KnowledgePyramid animated />
+                <img src="/assets/vital/illustrations/knowledge-compound.svg" alt="Knowledge Compound" />
               </div>
             </div>
 

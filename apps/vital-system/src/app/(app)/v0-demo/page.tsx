@@ -15,23 +15,19 @@
 
 import React, { useState, useCallback } from 'react';
 import {
-  Sparkles,
   Wand2,
   Users,
-  Network,
   FileText,
   BarChart3,
   Layout,
   Box,
   Layers,
-  ChevronRight,
   ExternalLink,
-  Check,
-  Copy,
   History,
   Lightbulb,
   Target,
   Workflow,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -39,7 +35,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { PageHeader } from '@/components/page-header';
 
 // Import v0 components from shared package
 // TODO: Configure @vital/ai-ui path alias for production
@@ -418,27 +413,21 @@ export default function V0DemoPage() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <PageHeader
-        icon={Sparkles}
-        title="v0 AI Demo"
-        description="Generate custom UI components for KOL Engagement workflows with AI"
-        actions={
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="gap-1">
-              <Target className="h-3 w-3" />
-              Medical Affairs POC
-            </Badge>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open('https://v0.dev', '_blank')}
-            >
-              <ExternalLink className="h-4 w-4 mr-1" />
-              v0.dev
-            </Button>
-          </div>
-        }
-      />
+      {/* Action Bar */}
+      <div className="flex items-center justify-end gap-2 px-6 py-3 border-b bg-white/50 backdrop-blur-sm">
+        <Badge variant="outline" className="gap-1">
+          <Target className="h-3 w-3" />
+          Medical Affairs POC
+        </Badge>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.open('https://v0.dev', '_blank')}
+        >
+          <ExternalLink className="h-4 w-4 mr-1" />
+          v0.dev
+        </Button>
+      </div>
 
       <div className="flex-1 overflow-hidden p-6">
         <div className="h-full grid grid-cols-12 gap-6">
@@ -539,8 +528,8 @@ export default function V0DemoPage() {
                               prompt.difficulty === 'advanced'
                                 ? 'border-orange-300 text-orange-600'
                                 : prompt.difficulty === 'intermediate'
-                                ? 'border-blue-300 text-blue-600'
-                                : 'border-green-300 text-green-600'
+                                ? 'border-sky-300 text-sky-600'
+                                : 'border-emerald-300 text-emerald-600'
                             }`}
                           >
                             {prompt.difficulty}

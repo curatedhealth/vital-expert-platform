@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [1, 2]
+# DEPENDENCIES: [langgraph_workflows.ask_expert, services.graphrag_selector, services.agent_orchestrator, streaming]
 """
 Unified Ask Expert streaming endpoint (Modes 1 & 2).
 

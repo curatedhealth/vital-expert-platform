@@ -133,10 +133,10 @@ function StepItem({
 }) {
   const levelColors: Record<string, string> = {
     L1: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-    L2: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+    L2: 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300',
     L3: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
     L4: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
-    L5: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    L5: 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300',
   };
   
   return (

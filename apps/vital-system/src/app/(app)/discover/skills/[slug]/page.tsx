@@ -18,7 +18,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { PageHeader } from '@/components/page-header';
 import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import {
@@ -306,13 +305,11 @@ function SkillDetailContent({ slug }: { slug: string }) {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader
-          icon={Sparkles}
-          title="Loading Skill..."
-          description="Please wait"
-        />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-4" />
+            <p className="text-stone-600">Loading skill...</p>
+          </div>
         </div>
       </div>
     );
@@ -321,15 +318,11 @@ function SkillDetailContent({ slug }: { slug: string }) {
   if (error || !skill) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader
-          icon={AlertCircle}
-          title="Error"
-          description={error || 'Skill not found'}
-        />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">{error || 'Skill not found'}</p>
+            <AlertCircle className="h-12 w-12 text-rose-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-stone-800 mb-2">Error</h2>
+            <p className="text-stone-600 mb-4">{error || 'Skill not found'}</p>
             <Button onClick={() => router.push('/discover/skills')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Skills

@@ -45,6 +45,7 @@ export interface Agent {
   // Core Identity
   id?: string;
   name: string;
+  slug?: string;
   display_name: string;
   description: string;
   avatar?: string;
@@ -70,16 +71,22 @@ export interface Agent {
 
   // Business Context
   business_function?: string;
+  businessFunction?: string; // Alias for business_function
+  function?: string; // Alias for business_function
   department?: string;
   role?: string;
   organizational_role?: string; // Mapped from role_id
   tier?: 1 | 2 | 3 | 4 | 5;
+  level?: number; // Alias for tier
+  agent_level?: number; // Alias for tier
+  agent_level_name?: string;
   priority?: number;
   implementation_phase?: 1 | 2 | 3;
   is_custom?: boolean;
   is_library_agent?: boolean;
   cost_per_query?: number;
   target_users?: string[];
+  reasoning?: string; // For showing agent reasoning/thinking
 
   // Foreign key IDs for organizational structure
   business_function_id?: string;

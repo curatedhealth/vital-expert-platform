@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [1, 2, 3, 4]
+# DEPENDENCIES: [langgraph_workflows.state_schemas, structlog]
 """
 VITAL Path AI Services - Ask Expert Error Handler Node
 

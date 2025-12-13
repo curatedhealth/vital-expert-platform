@@ -66,12 +66,12 @@ function TaskNode({ data }: { data: any }) {
         {data.agents && data.agents.length > 0 && (
           <div>
             <div className="flex items-center gap-1 mb-1">
-              <Bot className="h-3 w-3 text-blue-600" />
-              <span className="text-xs font-semibold text-neutral-700">Agents</span>
+              <Bot className="h-3 w-3 text-purple-600" />
+              <span className="text-xs font-semibold text-stone-700">Agents</span>
             </div>
             <div className="space-y-1">
               {data.agents.slice(0, 2).map((agent: any) => (
-                <div key={agent.id} className="text-xs bg-blue-50 px-2 py-1 rounded flex items-center justify-between">
+                <div key={agent.id} className="text-xs bg-purple-50 px-2 py-1 rounded flex items-center justify-between">
                   <span className="truncate flex-1">{agent.name}</span>
                   <Badge variant="outline" className="text-[10px] ml-1 bg-white">
                     {agent.assignment_type === 'PRIMARY_EXECUTOR' ? 'Primary' : 
@@ -80,7 +80,7 @@ function TaskNode({ data }: { data: any }) {
                 </div>
               ))}
               {data.agents.length > 2 && (
-                <div className="text-xs text-neutral-500 italic">
+                <div className="text-xs text-stone-500 italic">
                   +{data.agents.length - 2} more
                 </div>
               )}
@@ -92,12 +92,12 @@ function TaskNode({ data }: { data: any }) {
         {data.tools && data.tools.length > 0 && (
           <div>
             <div className="flex items-center gap-1 mb-1">
-              <Wrench className="h-3 w-3 text-green-600" />
-              <span className="text-xs font-semibold text-neutral-700">Tools</span>
+              <Wrench className="h-3 w-3 text-emerald-600" />
+              <span className="text-xs font-semibold text-stone-700">Tools</span>
             </div>
             <div className="flex flex-wrap gap-1">
               {data.tools.slice(0, 3).map((tool: any) => (
-                <Badge key={tool.id} variant="outline" className="text-[10px] bg-green-50 border-green-200">
+                <Badge key={tool.id} variant="outline" className="text-[10px] bg-emerald-50 border-emerald-200">
                   {tool.name}
                 </Badge>
               ))}
@@ -115,7 +115,7 @@ function TaskNode({ data }: { data: any }) {
           <div>
             <div className="flex items-center gap-1 mb-1">
               <Database className="h-3 w-3 text-purple-600" />
-              <span className="text-xs font-semibold text-neutral-700">Knowledge</span>
+              <span className="text-xs font-semibold text-stone-700">Knowledge</span>
             </div>
             <div className="flex flex-wrap gap-1">
               {data.rags.slice(0, 2).map((rag: any) => (
@@ -139,7 +139,7 @@ function TaskNode({ data }: { data: any }) {
 // Start Node
 function StartNode() {
   return (
-    <div className="bg-green-500 text-white px-4 py-2 rounded-full shadow-lg font-semibold flex items-center gap-2">
+    <div className="bg-emerald-500 text-white px-4 py-2 rounded-full shadow-lg font-semibold flex items-center gap-2">
       <div className="w-3 h-3 bg-white rounded-full"></div>
       Start
     </div>
@@ -149,7 +149,7 @@ function StartNode() {
 // End Node
 function EndNode() {
   return (
-    <div className="bg-red-500 text-white px-4 py-2 rounded-full shadow-lg font-semibold flex items-center gap-2">
+    <div className="bg-rose-500 text-white px-4 py-2 rounded-full shadow-lg font-semibold flex items-center gap-2">
       End
       <div className="w-3 h-3 bg-white rounded-full"></div>
     </div>
@@ -260,7 +260,7 @@ export function WorkflowVisualizer({ tasks, workflowName }: WorkflowVisualizerPr
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   return (
-    <div className="w-full h-[800px] border rounded-lg bg-neutral-50">
+    <div className="w-full h-[800px] border rounded-lg bg-stone-50">
       <ReactFlow
         nodes={nodes}
         edges={edges}

@@ -27,6 +27,9 @@ import structlog
 
 logger = structlog.get_logger()
 
+# Module-level metrics counter for stub agent fallbacks
+STUB_AGENT_FALLBACK_COUNT = 0
+
 
 class GraphRAGSelector:
     """
@@ -113,8 +116,47 @@ class GraphRAGSelector:
             max_agents=max_agents
         )
 
-        # Generate query embedding
-        query_embedding = await self.embedding_service.embed_query(query)
+        try:
+            # Generate query embedding
+            query_embedding = await self.embedding_service.embed_query(query)
+        except Exception as e:
+            # H5: Log embedding failure
+            logger.error(
+                "graphrag_embedding_failed",
+                error=str(e)[:200],
+                error_type=type(e).__name__,
+                query_preview=query[:100],
+                tenant_id=tenant_id,
+                mode=mode,
+                phase="H5_stub_agent_logging"
+            )
+
+            # H5: Log stub agent fallback with full context
+            logger.warning(
+                "graphrag_returning_stub_agent",
+                reason="embedding_generation_failed",
+                methods_tried=["embedding_service"],
+                fallback_type="stub_agent",
+                stub_agent_id="stub-fallback-agent",
+                stub_agent_name="Default Medical Affairs Assistant",
+                tenant_id=tenant_id,
+                query_preview=query[:50],
+                mode=mode,
+                error_type=type(e).__name__,
+                phase="H5_stub_fallback_logging"
+            )
+
+            # Increment stub fallback counter
+            self._increment_stub_fallback(tenant_id, "embedding_generation_failed", query[:50])
+
+            # Return stub agent on critical failure
+            stub_agent = self._create_stub_agent(
+                reason="embedding_generation_failed",
+                query_preview=query[:100],
+                tenant_id=tenant_id,
+                mode=mode
+            )
+            return [stub_agent]
 
         # Parallel execution of all 3 methods
         results = await asyncio.gather(
@@ -136,6 +178,64 @@ class GraphRAGSelector:
         neo4j_results = self._handle_search_error(
             neo4j_results, "Neo4j", []
         )
+
+        # H5: Check if all search methods failed
+        all_methods_failed = (
+            len(postgres_results) == 0 and
+            len(pinecone_results) == 0 and
+            len(neo4j_results) == 0
+        )
+
+        if all_methods_failed:
+            # Determine which methods actually failed vs. returned empty
+            methods_tried = []
+            failed_methods = []
+            if isinstance(results[0], Exception):
+                failed_methods.append("PostgreSQL")
+            methods_tried.append("PostgreSQL")
+
+            if isinstance(results[1], Exception):
+                failed_methods.append("Pinecone")
+            methods_tried.append("Pinecone")
+
+            if isinstance(results[2], Exception):
+                failed_methods.append("Neo4j")
+            methods_tried.append("Neo4j")
+
+            logger.error(
+                "graphrag_all_search_methods_failed",
+                query_preview=query[:100],
+                tenant_id=tenant_id,
+                mode=mode,
+                methods_tried=methods_tried,
+                failed_methods=failed_methods,
+                postgres_error=isinstance(results[0], Exception),
+                pinecone_error=isinstance(results[1], Exception),
+                neo4j_error=isinstance(results[2], Exception),
+                impact="will_return_stub_agent_after_fusion",
+                phase="H5_stub_agent_logging"
+            )
+
+            # H5: Log stub agent fallback with full details
+            logger.warning(
+                "graphrag_returning_stub_agent",
+                reason="all_search_methods_failed",
+                methods_tried=methods_tried,
+                failed_methods=failed_methods,
+                fallback_type="stub_agent",
+                stub_agent_id="stub-fallback-agent",
+                stub_agent_name="Default Medical Affairs Assistant",
+                tenant_id=tenant_id,
+                query_preview=query[:50],
+                mode=mode,
+                postgres_error_type=type(results[0]).__name__ if isinstance(results[0], Exception) else None,
+                pinecone_error_type=type(results[1]).__name__ if isinstance(results[1], Exception) else None,
+                neo4j_error_type=type(results[2]).__name__ if isinstance(results[2], Exception) else None,
+                phase="H5_stub_fallback_logging"
+            )
+
+            # Increment stub fallback counter
+            self._increment_stub_fallback(tenant_id, "all_search_methods_failed", query[:50])
 
         # Weighted score fusion using RRF
         fused_agents = self._fuse_scores(
@@ -166,6 +266,73 @@ class GraphRAGSelector:
 
         # Select top-k agents
         selected = filtered_agents[:max_agents]
+
+        # Phase 2 H5: Stub agent fallback when no agents found after fusion
+        if not selected:
+            # Determine the reason for no results
+            stub_reason = "empty_search_results" if not fused_agents else "no_agents_above_threshold"
+
+            # Determine which methods contributed
+            methods_tried = ["PostgreSQL", "Pinecone", "Neo4j"]
+            contributing_methods = []
+            if len(postgres_results) > 0:
+                contributing_methods.append("PostgreSQL")
+            if len(pinecone_results) > 0:
+                contributing_methods.append("Pinecone")
+            if len(neo4j_results) > 0:
+                contributing_methods.append("Neo4j")
+
+            # Log detailed diagnostic information
+            logger.warning(
+                "graphrag_no_agents_after_fusion",
+                query_preview=query[:100],
+                tenant_id=tenant_id,
+                mode=mode,
+                postgres_count=len(postgres_results),
+                pinecone_count=len(pinecone_results),
+                neo4j_count=len(neo4j_results),
+                contributing_methods=contributing_methods,
+                min_confidence=min_confidence,
+                total_fused=len(fused_agents),
+                agents_filtered_out=len(fused_agents) - len(filtered_agents),
+                top_fused_score=round(fused_agents[0]["fused_score"], 4) if fused_agents else 0.0,
+                recommendation="Consider lowering min_confidence or using fallback agent pool",
+                phase="H5_stub_agent_logging"
+            )
+
+            # H5: Log stub agent fallback with comprehensive context
+            logger.warning(
+                "graphrag_returning_stub_agent",
+                reason=stub_reason,
+                methods_tried=methods_tried,
+                contributing_methods=contributing_methods,
+                fallback_type="stub_agent",
+                stub_agent_id="stub-fallback-agent",
+                stub_agent_name="Default Medical Affairs Assistant",
+                tenant_id=tenant_id,
+                query_preview=query[:50],
+                mode=mode,
+                postgres_count=len(postgres_results),
+                pinecone_count=len(pinecone_results),
+                neo4j_count=len(neo4j_results),
+                total_fused=len(fused_agents),
+                filtered_out=len(fused_agents) - len(filtered_agents),
+                min_confidence_threshold=min_confidence,
+                top_fused_score=round(fused_agents[0]["fused_score"], 4) if fused_agents else 0.0,
+                phase="H5_stub_fallback_logging"
+            )
+
+            # Increment stub fallback counter
+            self._increment_stub_fallback(tenant_id, stub_reason, query[:50])
+
+            # Create and return stub agent with reason metadata
+            stub_agent = self._create_stub_agent(
+                reason=stub_reason,
+                query_preview=query[:100],
+                tenant_id=tenant_id,
+                mode=mode
+            )
+            selected = [stub_agent]
 
         # Calculate confidence metrics
         selected = self._calculate_confidence(selected, query)
@@ -522,6 +689,15 @@ class GraphRAGSelector:
             Agents with confidence metrics added
         """
         for agent in selected_agents:
+            # H5: Skip confidence calculation for stub agents (already have confidence set)
+            if agent.get("metadata", {}).get("is_stub", False):
+                logger.debug(
+                    "skipping_confidence_calculation_for_stub",
+                    agent_id=agent.get("agent_id"),
+                    stub_reason=agent.get("metadata", {}).get("stub_reason")
+                )
+                continue
+
             scores = agent.get("scores", {})
             num_methods = len(scores)
 
@@ -555,20 +731,160 @@ class GraphRAGSelector:
 
     # ==================== Utilities ====================
 
+    def _create_stub_agent(
+        self,
+        reason: str,
+        query_preview: str,
+        tenant_id: str,
+        mode: str
+    ) -> Dict:
+        """
+        Create a stub agent with metadata tracking why it was used (H5 Enhanced).
+
+        This stub agent is returned when no suitable agents are found,
+        allowing the system to degrade gracefully with full observability.
+
+        The stub agent serves as a last-resort fallback and logs detailed
+        diagnostic information to help identify and resolve search issues.
+
+        Args:
+            reason: Why the stub agent was created:
+                - "embedding_generation_failed" - Could not generate query embedding
+                - "all_search_methods_failed" - All 3 search methods returned errors
+                - "empty_search_results" - All search methods returned no results
+                - "no_agents_above_threshold" - Agents found but below min_confidence
+            query_preview: Preview of the query (first 100 chars)
+            tenant_id: Tenant identifier
+            mode: Ask Expert mode (mode1, mode2, mode3, mode4)
+
+        Returns:
+            Dict representing a stub agent with fallback metadata
+        """
+        stub_agent = {
+            "agent_id": "stub-fallback-agent",
+            "agent_name": "Default Medical Affairs Assistant",
+            "description": "Fallback agent used when no suitable specialized agents are found",
+            "fused_score": 0.0,
+            "confidence": {
+                "overall": 0.0,
+                "search_quality": 0.0,
+                "consensus": 0.0,
+                "methods_found": 0,
+                "breakdown": {
+                    "postgres": 0.0,
+                    "pinecone": 0.0,
+                    "neo4j": 0.0
+                }
+            },
+            "scores": {},
+            "ranks": {},
+            "tier": 1,
+            "level": "L2",
+            "capabilities": ["General medical affairs assistance"],
+            "domain_expertise": ["Medical Affairs"],
+            "metadata": {
+                "is_stub": True,
+                "stub_reason": reason,
+                "query_preview": query_preview,
+                "tenant_id": tenant_id,
+                "mode": mode,
+                "recommendation": "Review agent database and search configuration",
+                "fallback_count": STUB_AGENT_FALLBACK_COUNT + 1  # Include anticipated count
+            },
+            "performance": {
+                "total_queries": 0,
+                "avg_rating": 0.0,
+                "success_rate": 0.0
+            }
+        }
+
+        logger.warning(
+            "stub_agent_created",
+            reason=reason,
+            query_preview=query_preview,
+            tenant_id=tenant_id,
+            mode=mode,
+            agent_id=stub_agent["agent_id"],
+            agent_name=stub_agent["agent_name"],
+            impact="using_fallback_agent_with_no_specialization",
+            recommendation="Investigate search configuration, agent database, or lower confidence threshold",
+            anticipated_fallback_count=STUB_AGENT_FALLBACK_COUNT + 1,
+            phase="H5_stub_agent_factory"
+        )
+
+        return stub_agent
+
+    def _increment_stub_fallback(self, tenant_id: str, reason: str, query_preview: str):
+        """
+        Increment stub agent fallback counter and log metrics.
+
+        This helps track how often the system falls back to stub agents,
+        which is a key reliability metric.
+
+        Args:
+            tenant_id: Tenant identifier
+            reason: Why stub agent was returned
+            query_preview: Preview of the query that triggered fallback
+        """
+        global STUB_AGENT_FALLBACK_COUNT
+        STUB_AGENT_FALLBACK_COUNT += 1
+
+        logger.info(
+            "graphrag_stub_fallback_count",
+            count=STUB_AGENT_FALLBACK_COUNT,
+            tenant_id=tenant_id,
+            reason=reason,
+            query_preview=query_preview,
+            metric_type="counter",
+            phase="H5_stub_metrics"
+        )
+
     def _handle_search_error(
         self,
         result: any,
         method_name: str,
         default: List
     ) -> List:
-        """Handle search method exceptions gracefully."""
+        """
+        Handle search method exceptions gracefully (Phase 2 H5 Enhanced).
+
+        Now includes explicit logging when a method returns empty or fails,
+        which helps diagnose stub agent fallback scenarios. This is critical
+        for monitoring search reliability and identifying when stub agents
+        are being used due to search failures.
+
+        Args:
+            result: Result from search method (or Exception if failed)
+            method_name: Name of the search method (PostgreSQL, Pinecone, Neo4j)
+            default: Default value to return on error
+
+        Returns:
+            List of search results or empty list on failure
+        """
         if isinstance(result, Exception):
+            # H5: Explicit error logging with structured fields for monitoring
             logger.error(
-                f"{method_name} search failed",
-                error=str(result),
-                error_type=type(result).__name__
+                "graphrag_search_method_failed",
+                method=method_name,
+                error=str(result)[:200],
+                error_type=type(result).__name__,
+                fallback_action="returning_empty_list",
+                impact="may_trigger_stub_agent_fallback_if_all_methods_fail",
+                recommendation=f"Investigate {method_name} connectivity and configuration",
+                phase="H5_enhanced_stub_logging"
             )
             return default
+
+        # H5: Log when method returns empty results (helps diagnose selection issues)
+        if isinstance(result, list) and len(result) == 0:
+            logger.info(
+                "graphrag_search_method_empty",
+                method=method_name,
+                result_count=0,
+                note="Method returned no results, will not contribute to fusion",
+                impact="reduced_search_coverage"
+            )
+
         return result
 
     async def _enrich_agent_details(

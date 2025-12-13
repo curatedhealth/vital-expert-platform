@@ -93,15 +93,16 @@ export interface SaveTemplateDialogProps {
 // CONSTANTS
 // =============================================================================
 
+// Brand v6.0 Purple-centric visibility options
 const VISIBILITY_OPTIONS = [
   {
     value: 'personal' as TemplateVisibility,
     label: 'Just Me',
     description: 'Only you can see and use this template',
     icon: <User className="w-4 h-4" />,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-300',
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50',
+    borderColor: 'border-purple-300',
   },
   {
     value: 'team' as TemplateVisibility,

@@ -74,10 +74,11 @@ export interface ExpertHeaderProps {
 // STATUS CONFIG
 // =============================================================================
 
+// Brand v6.0 Purple-centric status colors
 const STATUS_CONFIG: Record<string, { color: string; label: string; pulse: boolean }> = {
   idle: { color: 'bg-green-500', label: 'Ready', pulse: false },
-  thinking: { color: 'bg-amber-500', label: 'Thinking', pulse: true },
-  streaming: { color: 'bg-blue-500', label: 'Responding', pulse: true },
+  thinking: { color: 'bg-violet-500', label: 'Thinking', pulse: true },
+  streaming: { color: 'bg-purple-500', label: 'Responding', pulse: true },
   error: { color: 'bg-red-500', label: 'Error', pulse: false },
 };
 
@@ -122,7 +123,7 @@ export function ExpertHeader({
               className="w-8 h-8 rounded-full object-cover"
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-medium text-sm">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
               {expert.name.charAt(0)}
             </div>
           )}
@@ -157,7 +158,7 @@ export function ExpertHeader({
 
   return (
     <div className={cn(
-      'border-b bg-gradient-to-r from-blue-50/50 to-white',
+      'border-b bg-gradient-to-r from-purple-50/50 to-white',
       className
     )}>
       {/* Main header row */}
@@ -171,7 +172,7 @@ export function ExpertHeader({
               className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-md"
             />
           ) : (
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-lg ring-2 ring-white shadow-md">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-semibold text-lg ring-2 ring-white shadow-md">
               {expert.name.charAt(0)}
             </div>
           )}
@@ -190,7 +191,7 @@ export function ExpertHeader({
             </h2>
             <VitalLevelBadge level={expert.level} size="md" />
             {mode === 'mode2' && (
-              <Badge variant="outline" className="text-xs text-blue-600 border-blue-200">
+              <Badge variant="outline" className="text-xs text-purple-600 border-purple-200">
                 <Sparkles className="h-3 w-3 mr-1" />
                 AI Selected
               </Badge>
@@ -318,7 +319,7 @@ export function ExpertHeader({
                   <ul className="text-sm text-slate-600 space-y-1">
                     {expert.capabilities.slice(0, 5).map((cap, idx) => (
                       <li key={idx} className="flex items-start gap-2">
-                        <Brain className="h-3.5 w-3.5 text-blue-500 mt-0.5 shrink-0" />
+                        <Brain className="h-3.5 w-3.5 text-purple-500 mt-0.5 shrink-0" />
                         <span>{cap}</span>
                       </li>
                     ))}

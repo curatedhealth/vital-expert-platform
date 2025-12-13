@@ -30,6 +30,8 @@ import {
   SidebarMedicalStrategyContent,
   SidebarToolsContent,
   SidebarSkillsContent,
+  SidebarJTBDContent,
+  SidebarOntologyContent,
 } from "@/components/sidebar-view-content"
 
 export function AppSidebar({
@@ -106,6 +108,16 @@ export function AppSidebar({
     }
     if (pathname.startsWith("/ontology-explorer")) {
       return <SidebarMedicalStrategyContent />
+    }
+    // Context-specific sidebars for /optimize pages
+    if (pathname.startsWith("/optimize/ontology")) {
+      return <SidebarOntologyContent />
+    }
+    if (pathname.startsWith("/optimize/personas")) {
+      return <SidebarPersonasContent />
+    }
+    if (pathname.startsWith("/optimize/jobs-to-be-done")) {
+      return <SidebarJTBDContent />
     }
     // Context-specific sidebars for /discover pages
     if (pathname.startsWith("/discover/tools")) {

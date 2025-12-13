@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_CORE
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [l2_wrapper, l3_wrapper, l4_wrapper, l5_tool_mapper, registry]
 """
 Wrappers for existing L2/L3/L4 agents (Phase 2 scaffolding).
 

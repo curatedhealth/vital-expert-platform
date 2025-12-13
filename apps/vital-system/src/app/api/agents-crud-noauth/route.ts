@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
       .from('agents')
       .select('*')
       .in('status', ['active', 'testing'])
-      .order('name');
+      .order('name')
+      .limit(10000);
 
     if (error) {
       console.error('[agents-crud-noauth] Error:', error);

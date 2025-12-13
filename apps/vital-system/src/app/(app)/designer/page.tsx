@@ -1,10 +1,6 @@
 'use client';
 
-import { Sparkles, CheckCircle } from 'lucide-react';
 import dynamic from 'next/dynamic';
-
-import { PageHeader } from '@/components/page-header';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Dynamically import WorkflowDesignerEnhanced to avoid SSR issues
 const WorkflowDesignerEnhanced = dynamic(
@@ -45,14 +41,6 @@ export default function DesignerPage() {
 
   return (
     <div className="flex h-full flex-col min-h-0 overflow-hidden">
-      {/* Success Banner - Migration Complete */}
-      {/* Page Header */}
-      <PageHeader
-        icon={Sparkles}
-        title="Workflow Designer"
-        description="Visual workflow builder with AI assistance for creating and executing agent workflows"
-      />
-
       {/* Main Content - Enhanced Workflow Designer */}
       <div className="flex-1 overflow-hidden min-h-0">
         <WorkflowDesignerEnhanced

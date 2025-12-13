@@ -20,6 +20,17 @@ export function MissionPlanPanel({
   title,
   description,
 }: MissionPlanPanelProps) {
+  // Transform plan to WorkflowStep format expected by VitalWorkflowProgress
+  const steps = (plan || []).map((step: any, index: number) => ({
+    id: step.id || `step-${index}`,
+    name: step.name || step.title || `Step ${index + 1}`,
+    status: index < currentStep ? 'complete' : index === currentStep ? 'active' : 'pending',
+    description: step.description,
+    duration: step.duration,
+  }));
+
+  const totalProgress = plan?.length ? (currentStep / plan.length) * 100 : 0;
+
   return (
     <div className="w-full max-w-sm border-r bg-muted/20 flex flex-col">
       <div className="p-4 border-b">
@@ -28,7 +39,7 @@ export function MissionPlanPanel({
       </div>
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-4">
-          <VitalWorkflowProgress steps={plan || []} currentStep={currentStep} totalSteps={plan?.length || 0} />
+          <VitalWorkflowProgress steps={steps} currentStepId={steps[currentStep]?.id} totalProgress={totalProgress} />
           {preflight && (
             <Card>
               <CardHeader>

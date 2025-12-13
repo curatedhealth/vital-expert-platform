@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [All]
+# DEPENDENCIES: [sse_formatter, token_streamer, custom_writer]
 """
 StreamManager - Core streaming orchestration for LangGraph workflows.
 

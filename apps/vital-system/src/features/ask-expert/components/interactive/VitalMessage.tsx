@@ -161,13 +161,13 @@ export function VitalMessage({
                 className="w-8 h-8 rounded-full object-cover"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-medium text-sm">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
                 {displayExpert.name.charAt(0)}
               </div>
             )}
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
             <Brain className="h-4 w-4 text-white" />
           </div>
         )}
@@ -193,8 +193,8 @@ export function VitalMessage({
           className={cn(
             'relative',
             isUser
-              ? 'rounded-2xl px-4 py-3 max-w-[85%] bg-blue-600 text-white ml-auto rounded-br-md'
-              : 'py-2 text-slate-800'
+              ? 'rounded-2xl px-4 py-3 max-w-[85%] bg-purple-600 text-white ml-auto rounded-br-md'
+              : 'py-2 text-stone-800'
           )}
         >
           {/* Message content - Using VitalStreamText for unified rendering */}
@@ -218,7 +218,7 @@ export function VitalMessage({
               className={cn(
                 // Override prose colors for the slate background
                 '[&_.prose]:prose-slate',
-                '[&_a]:text-blue-600 [&_a:hover]:underline'
+                '[&_a]:text-purple-600 [&_a:hover]:underline'
               )}
             />
           )}
@@ -260,15 +260,15 @@ export function VitalMessage({
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
-                className="mt-2 p-3 rounded-lg bg-blue-50 border border-blue-100"
+                className="mt-2 p-3 rounded-lg bg-purple-50 border border-purple-100"
               >
                 <div className="space-y-2">
                   {message.reasoning.map((step, idx) => (
                     <div key={step.id || idx} className="flex items-start gap-2 text-sm">
-                      <span className="shrink-0 w-5 h-5 rounded-full bg-blue-200 text-blue-700 text-xs flex items-center justify-center">
+                      <span className="shrink-0 w-5 h-5 rounded-full bg-purple-200 text-purple-700 text-xs flex items-center justify-center">
                         {idx + 1}
                       </span>
-                      <span className="text-slate-700">{step.step}</span>
+                      <span className="text-stone-700">{step.step}</span>
                     </div>
                   ))}
                 </div>

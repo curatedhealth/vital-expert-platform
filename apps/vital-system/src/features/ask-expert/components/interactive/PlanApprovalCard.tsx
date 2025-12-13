@@ -107,14 +107,15 @@ function getStepIcon(type: PlanStepType) {
   return icons[type] || icons.analyze;
 }
 
+// Brand v6.0 Purple-centric step colors
 function getStepColor(type: PlanStepType) {
   const colors: Record<PlanStepType, string> = {
-    search: 'text-blue-600 bg-blue-50',
-    analyze: 'text-purple-600 bg-purple-50',
-    generate: 'text-amber-600 bg-amber-50',
+    search: 'text-purple-600 bg-purple-50',
+    analyze: 'text-violet-600 bg-violet-50',
+    generate: 'text-fuchsia-600 bg-fuchsia-50',
     tool_call: 'text-green-600 bg-green-50',
-    delegate: 'text-indigo-600 bg-indigo-50',
-    aggregate: 'text-slate-600 bg-slate-50',
+    delegate: 'text-pink-600 bg-pink-50',
+    aggregate: 'text-stone-600 bg-stone-50',
     review: 'text-emerald-600 bg-emerald-50',
   };
   return colors[type] || colors.analyze;
@@ -192,10 +193,10 @@ export function PlanApprovalCard({
       )}
     >
       {/* Header */}
-      <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-slate-100">
+      <div className="p-4 bg-gradient-to-r from-purple-50 to-violet-50 border-b border-stone-100">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center text-blue-600">
+            <div className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center text-purple-600">
               <ListOrdered className="w-5 h-5" />
             </div>
             <div>
@@ -312,7 +313,7 @@ export function PlanApprovalCard({
         {hasMoreSteps && (
           <button
             onClick={() => setShowAllSteps(!showAllSteps)}
-            className="flex items-center gap-1.5 mt-3 text-sm text-blue-600 hover:text-blue-700"
+            className="flex items-center gap-1.5 mt-3 text-sm text-purple-600 hover:text-purple-700"
           >
             {showAllSteps ? (
               <>

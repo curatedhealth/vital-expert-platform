@@ -187,7 +187,7 @@ export function OrganizationManagement() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <RefreshCw className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-4" />
           <p className="text-neutral-600">Loading organizations...</p>
         </div>
       </div>
@@ -327,7 +327,7 @@ export function OrganizationManagement() {
                         size="sm"
                         onClick={() => handleDelete(org)}
                       >
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <Trash2 className="h-4 w-4 text-rose-600" />
                       </Button>
                     </div>
                   </TableCell>

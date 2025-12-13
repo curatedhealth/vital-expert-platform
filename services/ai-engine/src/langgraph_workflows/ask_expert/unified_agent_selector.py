@@ -1,3 +1,7 @@
+# PRODUCTION_TAG: PRODUCTION_READY
+# LAST_VERIFIED: 2025-12-13
+# MODES_SUPPORTED: [2, 4]
+# DEPENDENCIES: [services.graphrag_selector, services.hybrid_agent_search]
 """
 VITAL Path AI Services - Unified Agent Selector
 
@@ -179,6 +183,20 @@ class FusionSearchSelector:
                 if agents:
                     best = agents[0]
 
+                    # H5: Check if the returned agent is a stub
+                    is_stub = best.get('metadata', {}).get('is_stub', False)
+                    if is_stub:
+                        stub_reason = best.get('metadata', {}).get('stub_reason', 'unknown')
+                        logger.warning(
+                            "fusion_search_received_stub_agent",
+                            stub_reason=stub_reason,
+                            query_preview=query[:100],
+                            tenant_id=tenant_id,
+                            mode=mode,
+                            impact="returning_stub_to_caller",
+                            phase="H5_stub_agent_logging"
+                        )
+
                     # Build scores dict from GraphRAG response
                     scores = best.get('scores', {})
                     if not scores:
@@ -189,11 +207,16 @@ class FusionSearchSelector:
                             'neo4j': best.get('confidence', {}).get('breakdown', {}).get('neo4j', 0.0),
                         }
 
+                    # H5: Add stub metadata to scores if present
+                    if is_stub:
+                        scores['is_stub'] = True
+                        scores['stub_reason'] = best.get('metadata', {}).get('stub_reason')
+
                     result = AgentSelectionResult(
                         agent_id=best.get('agent_id', ''),
                         confidence=best.get('fused_score', 0.0),
                         reasoning=self._build_reasoning(best),
-                        method='graphrag_fusion',
+                        method='graphrag_fusion' if not is_stub else 'graphrag_stub_fallback',
                         scores=scores,
                     )
 
@@ -203,15 +226,30 @@ class FusionSearchSelector:
                         confidence=result.confidence,
                         method=result.method,
                         mode=mode,
+                        is_stub=is_stub,
                     )
 
                     return result
+                else:
+                    # H5: Log when GraphRAG returns empty list (shouldn't happen with stub factory)
+                    logger.warning(
+                        "fusion_search_graphrag_empty_response",
+                        query_preview=query[:100],
+                        tenant_id=tenant_id,
+                        mode=mode,
+                        recommendation="Check stub agent factory in GraphRAGSelector",
+                        phase="H5_stub_agent_logging"
+                    )
 
             except Exception as e:
                 logger.error(
                     "fusion_search_graphrag_failed",
                     error=str(e)[:200],
+                    error_type=type(e).__name__,
+                    query_preview=query[:100],
+                    tenant_id=tenant_id,
                     mode=mode,
+                    phase="H5_stub_agent_logging"
                 )
 
         # Fallback: Hybrid search
@@ -228,19 +266,30 @@ class FusionSearchSelector:
             except Exception as e:
                 logger.error("fusion_search_database_failed", error=str(e)[:200])
 
-        # Return default agent
+        # Return default agent (H5: Enhanced stub fallback logging)
         logger.warning(
             "fusion_search_all_methods_failed",
+            query_preview=query[:100],
             tenant_id=tenant_id,
             mode=mode,
+            graphrag_available=self._graphrag is not None,
+            hybrid_available=HYBRID_SEARCH_AVAILABLE,
+            supabase_available=self.supabase is not None,
+            impact="using_default_stub_agent",
+            phase="H5_stub_agent_logging"
         )
 
         return AgentSelectionResult(
             agent_id='default-agent',
             confidence=0.0,
             reasoning='All selection methods failed, using default agent',
-            method='fallback',
-            scores={},
+            method='fallback_stub',
+            scores={
+                'stub_reason': 'all_methods_failed',
+                'graphrag_attempted': self._graphrag is not None,
+                'hybrid_attempted': HYBRID_SEARCH_AVAILABLE,
+                'database_attempted': self.supabase is not None,
+            },
         )
 
     async def select_team(

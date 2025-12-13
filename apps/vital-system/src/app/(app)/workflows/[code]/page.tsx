@@ -73,10 +73,10 @@ interface Task {
 }
 
 const COMPLEXITY_COLORS: Record<string, string> = {
-  'Basic': 'text-green-700 bg-green-100',
-  'Intermediate': 'text-blue-700 bg-blue-100',
+  'Basic': 'text-emerald-700 bg-emerald-100',
+  'Intermediate': 'text-sky-700 bg-sky-100',
   'Advanced': 'text-orange-700 bg-orange-100',
-  'Expert': 'text-red-700 bg-red-100',
+  'Expert': 'text-rose-700 bg-rose-100',
 };
 
 export default function UseCaseDetailPage() {
@@ -147,11 +147,11 @@ export default function UseCaseDetailPage() {
   if (error || !useCase) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-rose-200 bg-rose-50">
           <CardContent className="py-12 text-center">
-            <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-red-900 mb-2">Error Loading Use Case</h2>
-            <p className="text-red-700 mb-4">{error || 'Use case not found'}</p>
+            <AlertCircle className="h-12 w-12 text-rose-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-rose-900 mb-2">Error Loading Use Case</h2>
+            <p className="text-rose-700 mb-4">{error || 'Use case not found'}</p>
             <Button variant="outline" onClick={() => router.push('/workflows')}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Workflows
@@ -162,7 +162,7 @@ export default function UseCaseDetailPage() {
     );
   }
 
-  const complexityColor = COMPLEXITY_COLORS[useCase.complexity] || 'text-gray-600 bg-gray-100';
+  const complexityColor = COMPLEXITY_COLORS[useCase.complexity] || 'text-stone-600 bg-stone-100';
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -184,10 +184,10 @@ export default function UseCaseDetailPage() {
             <Badge variant="outline" className="font-mono">{useCase.code}</Badge>
             <Badge className={complexityColor + " border-0"}>{useCase.complexity}</Badge>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
+          <h1 className="text-4xl font-bold text-stone-900 mb-3">
             {useCase.title}
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-stone-600">
             {useCase.description}
           </p>
         </div>
@@ -266,7 +266,7 @@ export default function UseCaseDetailPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="workflows" className="space-y-6">
-        <TabsList className="bg-gray-100">
+        <TabsList className="bg-stone-100">
           <TabsTrigger value="workflows" className="data-[state=active]:bg-white">
             <WorkflowIcon className="w-4 h-4 mr-2" />
             Workflows & Tasks
@@ -306,8 +306,8 @@ export default function UseCaseDetailPage() {
                       <Badge variant="outline" className="mb-2 font-mono bg-white">
                         Workflow {idx + 1}
                       </Badge>
-                      <CardTitle className="text-2xl text-gray-900">{workflow.name}</CardTitle>
-                      <p className="text-sm text-gray-600 mt-2">
+                      <CardTitle className="text-2xl text-stone-900">{workflow.name}</CardTitle>
+                      <p className="text-sm text-stone-600 mt-2">
                         {workflow.description}
                       </p>
                     </div>

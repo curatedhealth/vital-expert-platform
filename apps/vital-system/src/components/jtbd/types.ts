@@ -1,7 +1,14 @@
 /**
- * JTBD Component Types
+ * JTBD Component Types - Brand Guidelines v6.0
  *
  * Shared type definitions for Jobs-to-Be-Done components
+ *
+ * Design System:
+ * - Primary Accent: #9055E0 (Warm Purple) via Tailwind purple-600
+ * - Neutrals: stone-* palette (warm grays)
+ * - Status colors: emerald (active), cyan (planned), purple (completed)
+ *
+ * @since December 2025
  */
 
 export interface JTBD {
@@ -54,32 +61,32 @@ export interface JTBDStats {
   avgOpportunityScore: number;
 }
 
-// Color utility functions
+// Color utility functions - Brand v6.0 (stone palette)
 export function getPriorityColor(priority?: string): string {
   switch (priority) {
     case 'high':
-      return 'bg-red-100 text-red-800 border-red-200';
+      return 'bg-rose-100 text-rose-800 border-rose-200';
     case 'medium':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      return 'bg-amber-100 text-amber-800 border-amber-200';
     case 'low':
-      return 'bg-blue-100 text-blue-800 border-blue-200';
+      return 'bg-cyan-100 text-cyan-800 border-cyan-200';
     default:
-      return 'bg-neutral-100 text-neutral-800 border-neutral-200';
+      return 'bg-stone-100 text-stone-700 border-stone-200';
   }
 }
 
 export function getStatusColor(status?: string): string {
   switch (status) {
     case 'active':
-      return 'bg-green-100 text-green-800 border-green-200';
+      return 'bg-emerald-100 text-emerald-800 border-emerald-200';
     case 'planned':
-      return 'bg-blue-100 text-blue-800 border-blue-200';
+      return 'bg-cyan-100 text-cyan-800 border-cyan-200';
     case 'completed':
       return 'bg-purple-100 text-purple-800 border-purple-200';
     case 'draft':
-      return 'bg-neutral-100 text-neutral-600 border-neutral-200';
+      return 'bg-stone-100 text-stone-600 border-stone-200';
     default:
-      return 'bg-neutral-100 text-neutral-800 border-neutral-200';
+      return 'bg-stone-100 text-stone-700 border-stone-200';
   }
 }
 
@@ -87,27 +94,27 @@ export function getComplexityColor(complexity?: string): string {
   switch (complexity?.toLowerCase()) {
     case 'very_high':
     case 'high':
-      return 'bg-red-100 text-red-800';
+      return 'bg-rose-100 text-rose-800';
     case 'medium':
-      return 'bg-yellow-100 text-yellow-800';
+      return 'bg-amber-100 text-amber-800';
     case 'low':
-      return 'bg-green-100 text-green-800';
+      return 'bg-emerald-100 text-emerald-800';
     default:
-      return 'bg-neutral-100 text-neutral-800';
+      return 'bg-stone-100 text-stone-700';
   }
 }
 
 export function getOdiTierColor(tier?: string): string {
   switch (tier?.toLowerCase()) {
     case 'extreme':
-      return 'bg-red-500 text-white';
+      return 'bg-rose-500 text-white';
     case 'high':
       return 'bg-orange-100 text-orange-800';
     case 'medium':
-      return 'bg-yellow-100 text-yellow-800';
+      return 'bg-amber-100 text-amber-800';
     case 'low':
-      return 'bg-green-100 text-green-800';
+      return 'bg-emerald-100 text-emerald-800';
     default:
-      return 'bg-neutral-100 text-neutral-800';
+      return 'bg-stone-100 text-stone-700';
   }
 }

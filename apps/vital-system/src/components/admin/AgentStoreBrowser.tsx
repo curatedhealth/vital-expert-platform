@@ -154,7 +154,7 @@ function VirtualizedAgentList({
       case 'draft':
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case 'deprecated':
-        return <XCircle className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-rose-500" />;
       default:
         return null;
     }
@@ -247,7 +247,7 @@ function VirtualizedAgentList({
                       <Activity className="h-4 w-4 mr-2" />
                       View Analytics
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">
+                    <DropdownMenuItem className="text-rose-600">
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete
                     </DropdownMenuItem>
@@ -576,7 +576,7 @@ export function AgentStoreBrowser() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <RefreshCw className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-4" />
           <p className="text-neutral-600">Loading agents...</p>
         </div>
       </div>
@@ -648,7 +648,7 @@ export function AgentStoreBrowser() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-purple-600">
                 {Object.keys(stats.by_domain).length}
               </div>
             </CardContent>
@@ -798,7 +798,7 @@ export function AgentStoreBrowser() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-red-600 hover:bg-red-50"
+                  className="text-rose-600 hover:bg-rose-50"
                 >
                   Delete
                 </Button>
@@ -810,9 +810,9 @@ export function AgentStoreBrowser() {
 
       {/* Error Display */}
       {error && (
-        <Card className="border-red-500 bg-red-50 dark:bg-red-900/20">
+        <Card className="border-rose-500 bg-rose-50 dark:bg-red-900/20">
           <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-red-600">
+            <div className="flex items-center gap-2 text-rose-600">
               <XCircle className="h-5 w-5" />
               <span>{error}</span>
             </div>

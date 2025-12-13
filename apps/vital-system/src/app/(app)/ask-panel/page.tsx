@@ -46,7 +46,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { PageHeader } from '@/components/page-header';
 import { PanelCreationWizard } from '@/features/ask-panel/components/PanelCreationWizard';
 import { PanelConsultationView } from '@/features/ask-panel/components/PanelConsultationView';
 import { PanelExecutionView } from '@/features/ask-panel/components/PanelExecutionView';
@@ -405,13 +404,6 @@ export default function AskPanelPage() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Page Header */}
-      <PageHeader
-        icon={Users}
-        title="Ask Panel"
-        description="Multi-expert advisory board consultations"
-      />
-
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">

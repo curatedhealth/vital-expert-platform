@@ -39,36 +39,36 @@ interface WorkflowSidebarProps {
   onWorkflowRun?: (workflowId: string) => void;
 }
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<string, { icon: typeof Clock; color: string; bg: string; label: string; animate?: boolean }> = {
   idle: {
     icon: Clock,
-    color: 'text-neutral-500',
-    bg: 'bg-neutral-100',
+    color: 'text-stone-500',
+    bg: 'bg-stone-100',
     label: 'Ready'
   },
   pending: {
     icon: Clock,
-    color: 'text-neutral-500',
-    bg: 'bg-neutral-100',
+    color: 'text-stone-500',
+    bg: 'bg-stone-100',
     label: 'Pending'
   },
   running: {
     icon: Loader2,
-    color: 'text-blue-500',
-    bg: 'bg-blue-100',
+    color: 'text-purple-500',
+    bg: 'bg-purple-100',
     label: 'Running',
     animate: true
   },
   completed: {
     icon: CheckCircle2,
-    color: 'text-green-500',
-    bg: 'bg-green-100',
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-100',
     label: 'Completed'
   },
   failed: {
     icon: AlertCircle,
-    color: 'text-red-500',
-    bg: 'bg-red-100',
+    color: 'text-rose-500',
+    bg: 'bg-rose-100',
     label: 'Failed'
   }
 };
@@ -192,13 +192,13 @@ export function WorkflowSidebar({
                           <span>Progress</span>
                           <span>{progress}%</span>
                         </div>
-                        <div className="h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden">
                           <div
                             className={cn(
                               "h-full transition-all duration-300",
-                              status === 'completed' ? "bg-green-500" :
-                              status === 'failed' ? "bg-red-500" :
-                              "bg-blue-500"
+                              status === 'completed' ? "bg-emerald-500" :
+                              status === 'failed' ? "bg-rose-500" :
+                              "bg-purple-500"
                             )}
                             style={{ width: `${progress}%` }}
                           />
@@ -234,7 +234,7 @@ export function WorkflowSidebar({
 
                 {/* Tasks List (when expanded) */}
                 {isExpanded && workflowTasks.length > 0 && (
-                  <div className="mt-3 ml-8 space-y-1.5 border-l-2 border-neutral-200 pl-3">
+                  <div className="mt-3 ml-8 space-y-1.5 border-l-2 border-stone-200 pl-3">
                     {workflowTasks
                       .sort((a, b) => a.position - b.position)
                       .map((task) => {
@@ -248,7 +248,7 @@ export function WorkflowSidebar({
                             key={task.id}
                             className={cn(
                               "flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors hover:bg-white",
-                              isTaskSelected && "bg-blue-50 border border-blue-200"
+                              isTaskSelected && "bg-purple-50 border border-purple-200"
                             )}
                             onClick={() => onTaskSelect?.(task.id)}
                           >

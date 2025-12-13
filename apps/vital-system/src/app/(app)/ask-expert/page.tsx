@@ -48,7 +48,8 @@ type ModeConfig = {
   route: string;
 };
 
-// Mode configurations - ordered for rendering in the matrix
+// Mode configurations - Brand v6.0 Purple-centric palette
+// Using purple shades for cohesion with complementary accents
 const MODE_1: ModeConfig = {
   mode: 1,
   title: 'Interactive Manual',
@@ -60,8 +61,8 @@ const MODE_1: ModeConfig = {
     'Real-time conversation with citations',
     'Full control over expert selection',
   ],
-  color: 'blue',
-  bgGradient: 'from-blue-500/10 via-blue-400/5 to-transparent',
+  color: 'purple',
+  bgGradient: 'from-purple-500/10 via-purple-400/5 to-transparent',
   route: '/ask-expert/interactive?mode=manual',
 };
 
@@ -92,8 +93,8 @@ const MODE_3: ModeConfig = {
     'Review & approve execution plans',
     'Checkpoint-based progress tracking',
   ],
-  color: 'emerald',
-  bgGradient: 'from-emerald-500/10 via-emerald-400/5 to-transparent',
+  color: 'fuchsia',
+  bgGradient: 'from-fuchsia-500/10 via-fuchsia-400/5 to-transparent',
   route: '/ask-expert/autonomous?mode=manual',
 };
 
@@ -108,35 +109,36 @@ const MODE_4: ModeConfig = {
     'AI self-corrects and adapts',
     'Email notification on completion',
   ],
-  color: 'amber',
-  bgGradient: 'from-amber-500/10 via-amber-400/5 to-transparent',
+  color: 'pink',
+  bgGradient: 'from-pink-500/10 via-pink-400/5 to-transparent',
   route: '/ask-expert/autonomous?mode=auto',
 };
 
+// Brand v6.0 Purple-centric color palette
 const colorClasses = {
-  blue: {
-    icon: 'text-blue-500',
-    iconBg: 'bg-blue-500/10',
-    border: 'hover:border-blue-500/50',
-    badge: 'border-blue-500/30 text-blue-600',
+  purple: {
+    icon: 'text-purple-600',
+    iconBg: 'bg-purple-500/10',
+    border: 'hover:border-purple-500/50',
+    badge: 'border-purple-500/30 text-purple-600',
   },
   violet: {
-    icon: 'text-violet-500',
+    icon: 'text-violet-600',
     iconBg: 'bg-violet-500/10',
     border: 'hover:border-violet-500/50',
     badge: 'border-violet-500/30 text-violet-600',
   },
-  emerald: {
-    icon: 'text-emerald-500',
-    iconBg: 'bg-emerald-500/10',
-    border: 'hover:border-emerald-500/50',
-    badge: 'border-emerald-500/30 text-emerald-600',
+  fuchsia: {
+    icon: 'text-fuchsia-600',
+    iconBg: 'bg-fuchsia-500/10',
+    border: 'hover:border-fuchsia-500/50',
+    badge: 'border-fuchsia-500/30 text-fuchsia-600',
   },
-  amber: {
-    icon: 'text-amber-500',
-    iconBg: 'bg-amber-500/10',
-    border: 'hover:border-amber-500/50',
-    badge: 'border-amber-500/30 text-amber-600',
+  pink: {
+    icon: 'text-pink-600',
+    iconBg: 'bg-pink-500/10',
+    border: 'hover:border-pink-500/50',
+    badge: 'border-pink-500/30 text-pink-600',
   },
 };
 
@@ -202,12 +204,12 @@ export default function AskExpertLandingPage() {
           <div className="relative max-w-4xl mx-auto">
             {/* X-Axis Labels */}
             <div className="flex justify-between items-center mb-4 px-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-stone-600">
                 <User className="h-4 w-4" />
                 <span className="font-medium">Manual Selection</span>
               </div>
-              <div className="flex-1 h-px bg-gradient-to-r from-blue-200 via-transparent to-amber-200 mx-4" />
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex-1 h-px bg-gradient-to-r from-purple-200 via-transparent to-pink-200 mx-4" />
+              <div className="flex items-center gap-2 text-sm text-stone-600">
                 <Sparkles className="h-4 w-4" />
                 <span className="font-medium">Automatic Selection</span>
               </div>
@@ -226,12 +228,12 @@ export default function AskExpertLandingPage() {
 
             {/* Y-Axis Labels (Bottom) */}
             <div className="flex justify-between items-center mt-4 px-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-stone-600">
                 <MessageSquare className="h-4 w-4" />
                 <span className="font-medium">Interactive</span>
               </div>
-              <div className="flex-1 h-px bg-gradient-to-r from-blue-200 via-transparent to-emerald-200 mx-4" />
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex-1 h-px bg-gradient-to-r from-purple-200 via-transparent to-fuchsia-200 mx-4" />
+              <div className="flex items-center gap-2 text-sm text-stone-600">
                 <Target className="h-4 w-4" />
                 <span className="font-medium">Autonomous</span>
               </div>

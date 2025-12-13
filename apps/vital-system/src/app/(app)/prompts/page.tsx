@@ -77,11 +77,11 @@ const DEFAULT_PROMPT_VALUES: Partial<Prompt> = {
 
 // Complexity badges
 const COMPLEXITY_BADGES: Record<string, { color: string; bgColor: string; icon: typeof CheckCircle2; label: string }> = {
-  basic: { color: 'text-green-700', bgColor: 'bg-green-100', icon: CheckCircle2, label: 'Basic' },
-  intermediary: { color: 'text-blue-700', bgColor: 'bg-blue-100', icon: Clock, label: 'Intermediary' },
-  intermediate: { color: 'text-blue-700', bgColor: 'bg-blue-100', icon: Clock, label: 'Intermediate' },
+  basic: { color: 'text-emerald-700', bgColor: 'bg-emerald-100', icon: CheckCircle2, label: 'Basic' },
+  intermediary: { color: 'text-sky-700', bgColor: 'bg-sky-100', icon: Clock, label: 'Intermediary' },
+  intermediate: { color: 'text-sky-700', bgColor: 'bg-sky-100', icon: Clock, label: 'Intermediate' },
   advanced: { color: 'text-orange-700', bgColor: 'bg-orange-100', icon: Zap, label: 'Advanced' },
-  expert: { color: 'text-red-700', bgColor: 'bg-red-100', icon: AlertCircle, label: 'Expert' },
+  expert: { color: 'text-rose-700', bgColor: 'bg-rose-100', icon: AlertCircle, label: 'Expert' },
 };
 
 // Kanban columns grouped by PRISM Suite
@@ -312,7 +312,7 @@ function PromptsPageContent() {
       category: prompt.suite || 'General',
       badges: [
         { label: config.label, className: `${config.bgColor} ${config.color}` },
-        ...(prompt.expert_validated ? [{ label: 'Validated', className: 'bg-green-100 text-green-700' }] : []),
+        ...(prompt.expert_validated ? [{ label: 'Validated', className: 'bg-emerald-100 text-emerald-700' }] : []),
       ],
     };
   });
@@ -543,12 +543,12 @@ function PromptsPageContent() {
 
       {/* Batch Actions Bar - Show when in selection mode */}
       {isSelectionMode && (
-        <div className="flex items-center gap-4 px-6 py-2 border-b bg-blue-50 dark:bg-blue-950">
+        <div className="flex items-center gap-4 px-6 py-2 border-b bg-purple-50 dark:bg-purple-950">
           <div className="flex items-center gap-2">
             <Checkbox
               checked={selectedIds.size === searchFilteredPrompts.length && searchFilteredPrompts.length > 0}
               onCheckedChange={selectAllPrompts}
-              className="data-[state=checked]:bg-blue-600"
+              className="data-[state=checked]:bg-purple-600"
             />
             <span className="text-sm font-medium">
               {selectedIds.size === 0
@@ -695,7 +695,7 @@ function PromptsPageContent() {
                   <Card
                     key={prompt.id}
                     className={`relative cursor-pointer transition-all hover:shadow-md ${
-                      isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950' : ''
+                      isSelected ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-950' : ''
                     }`}
                     onClick={() => toggleSelectPrompt(prompt.id || '')}
                   >
@@ -704,15 +704,15 @@ function PromptsPageContent() {
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => toggleSelectPrompt(prompt.id || '')}
-                        className="data-[state=checked]:bg-blue-600"
+                        className="data-[state=checked]:bg-purple-600"
                         onClick={(e) => e.stopPropagation()}
                       />
                     </div>
 
                     <CardHeader className="pb-2">
                       <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg ${suiteConfig?.bgColor || 'bg-gray-100'}`}>
-                          <SuiteIcon className={`h-5 w-5 ${suiteConfig?.textColor || 'text-gray-600'}`} />
+                        <div className={`p-2 rounded-lg ${suiteConfig?.bgColor || 'bg-stone-100'}`}>
+                          <SuiteIcon className={`h-5 w-5 ${suiteConfig?.textColor || 'text-stone-600'}`} />
                         </div>
                         <div className="flex-1 min-w-0 pr-8">
                           <CardTitle className="text-sm font-medium truncate">
@@ -741,7 +741,7 @@ function PromptsPageContent() {
                           {complexityConfig.label}
                         </Badge>
                         {prompt.expert_validated && (
-                          <Badge className="text-xs bg-green-100 text-green-700">Validated</Badge>
+                          <Badge className="text-xs bg-emerald-100 text-emerald-700">Validated</Badge>
                         )}
                       </div>
 
@@ -773,7 +773,7 @@ function PromptsPageContent() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                           onClick={(e) => {
                             e.stopPropagation();
                             setPromptToDelete(prompt);
@@ -815,7 +815,7 @@ function PromptsPageContent() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="max-w-md w-full mx-4">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-600">
+              <CardTitle className="flex items-center gap-2 text-rose-600">
                 <AlertCircle className="h-5 w-5" />
                 Delete {selectedIds.size} Prompts
               </CardTitle>
@@ -825,7 +825,7 @@ function PromptsPageContent() {
                 Are you sure you want to delete {selectedIds.size} selected prompt{selectedIds.size > 1 ? 's' : ''}? This action cannot be undone.
               </p>
               {error && (
-                <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
+                <p className="text-sm text-rose-600 bg-rose-50 p-2 rounded">{error}</p>
               )}
               <div className="flex gap-2 justify-end">
                 <Button
@@ -869,19 +869,19 @@ function PromptsPageLoading() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="px-6 pt-4">
-        <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
+        <div className="h-5 w-32 bg-stone-200 rounded animate-pulse" />
       </div>
       <div className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
           <div className="space-y-2">
-            <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
-            <div className="h-4 w-64 bg-gray-200 rounded animate-pulse" />
+            <div className="h-6 w-48 bg-stone-200 rounded animate-pulse" />
+            <div className="h-4 w-64 bg-stone-200 rounded animate-pulse" />
           </div>
         </div>
       </div>
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500">Loading prompts...</p>
+        <p className="text-stone-500">Loading prompts...</p>
       </div>
     </div>
   );

@@ -310,14 +310,14 @@ export function VitalWorkspace({
                     className={cn(
                       'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm',
                       isInteractive
-                        ? 'bg-blue-50 text-blue-700'
+                        ? 'bg-purple-50 text-purple-700'
                         : 'bg-[var(--ae-accent-light,rgba(144,85,224,0.08))] text-[var(--ae-accent-primary,#9055E0)]'
                     )}
                   >
                     <span
                       className={cn(
                         'h-2 w-2 rounded-full',
-                        isInteractive ? 'bg-blue-500' : 'bg-[var(--ae-accent-primary,#9055E0)]'
+                        isInteractive ? 'bg-purple-500' : 'bg-[var(--ae-accent-primary,#9055E0)]'
                       )}
                     />
                     <span className="font-medium">

@@ -37,8 +37,8 @@ export {
   type AgentCardSelectableProps,
 } from '@vital/ui';
 
-// Legacy admin card (deprecated - use AgentCard from agent-card.tsx)
-export { AgentCard as AgentCardAdmin } from './AgentCard';
+// Legacy admin card REMOVED: was ./AgentCard, now use AgentCard from agent-card.tsx
+// or EnhancedAgentCard/VitalAgentCard from @vital/ui/@vital/ai-ui
 
 // ============================================================================
 // OTHER AGENT COMPONENTS

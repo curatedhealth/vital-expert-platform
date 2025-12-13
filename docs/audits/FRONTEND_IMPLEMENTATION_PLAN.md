@@ -1,7 +1,7 @@
 # VITAL Platform: Frontend Implementation Plan v2.0
 
 **Date:** December 13, 2025
-**Last Updated:** December 13, 2025 - Phase 2A Complete
+**Last Updated:** December 14, 2025 - Phase 2A Complete (incl. Task 2.4 Agent Card Consolidation)
 **Based On:** FRONTEND_DESIGN_COMPREHENSIVE_AUDIT.md v3.0
 **Purpose:** Transform VITAL from "healthcare SaaS" to "Human Genius, Amplified" platform
 
@@ -27,14 +27,29 @@
 
 ### Target State: A- (88/100) in 4 Weeks (Reduced from 5)
 
-### Phase 2A Color Migration: ✅ COMPLETE (December 13, 2025)
+### Phase 2A Color Migration & Component Consolidation: ✅ COMPLETE (December 14, 2025)
 
 | Task | Before | After | Commit |
 |------|--------|-------|--------|
 | 2.1: gray-* → stone-* | 279 violations | 0 | `184add72` |
 | 2.2: blue-* semantic | blocked | restored | `184add72` |
 | 2.3: main canvas | bg-white | bg-stone-50 | `184add72` |
+| 2.4: Agent Card consolidation | 5 duplicates | 1 source (package) | pending |
 | Tailwind config | v4.0 | v4.1 (+blue/sky) | `184add72` |
+
+**Task 2.4 Agent Card Consolidation Details:**
+- **Archived 1,518 lines** of duplicate code to `_archive/2025-12-14/agent-cards-consolidated/`
+- **Files archived:**
+  - `components/ui/enhanced-agent-card.tsx` (364 lines) → Use `@vital/ui`
+  - `components/selected-agent-card.tsx` (140 lines) → Unused
+  - `components/agent-preview-card.tsx` (167 lines) → Unused
+  - `components/vital-ai-ui/agents/VitalAgentCard.tsx` (318 lines) → Use `@vital/ai-ui`
+  - `components/vital-ai-ui/agents/VitalAgentCardEnhanced.tsx` (529 lines) → Use `@vital/ai-ui`
+- **Canonical sources:**
+  - `@vital/ai-ui`: VitalAgentCard (minimal/compact/rich variants)
+  - `@vital/ui`: EnhancedAgentCard, AgentCardGrid
+  - Feature-specific: `features/agents/components/agent-card.tsx` (grid views)
+  - Feature-specific: `features/ask-panel/components/AgentCard.tsx` (panel selection)
 
 ---
 
@@ -89,7 +104,7 @@
 | Blue accent violations | 176 | 64% of accents wrong color | 🔴 Critical |
 | Pure white backgrounds | 187 | 89% backgrounds clinical | 🔴 Critical |
 | Knowledge marketplace mocks | 1 page | Blocks real data UX | 🔴 Critical |
-| Agent Card duplicates | 5 files, 1,772 lines | 40% code redundancy | 🔴 Critical |
+| Agent Card duplicates | ~~5 files, 1,772 lines~~ **1,518 archived** | ~~40% code redundancy~~ **✅ Fixed** | ✅ Done |
 | TypeScript errors | 257+ | Build instability | 🔴 Critical |
 | Deleted files in git | 200+ | Pending cleanup | 🟠 High |
 | Brand tagline visibility | 0 | Brand invisible | 🟠 High |

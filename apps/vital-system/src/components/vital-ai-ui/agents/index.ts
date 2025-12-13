@@ -1,17 +1,21 @@
 /**
  * VITAL AI UI - Agent & Collaboration Components (Domain F)
- * 
+ *
  * Components for displaying agents, teams, and collaboration features.
  * Updated for 5-Level Agent OS Architecture.
- * 
+ *
  * Reference: AGENT_VIEW_PRD_v4.md, AGENT_OS_GOLD_STANDARD.md
+ *
+ * CONSOLIDATION (2025-12-14):
+ * - VitalAgentCard → Use from @vital/ai-ui package
+ * - VitalAgentCardEnhanced → ARCHIVED (use @vital/ai-ui variants)
+ * - Unique components kept: VitalLevelBadge, VitalPersonalityBadge, useAgentContext
  */
 
-// Original components
-export { VitalAgentCard, default as AgentCard } from './VitalAgentCard';
-export { VitalTeamView, default as TeamView } from './VitalTeamView';
+// Re-export from @vital/ai-ui package for backwards compatibility
+export { VitalAgentCard, VitalAgentCard as AgentCard, VitalTeamView, VitalTeamView as TeamView } from '@vital/ai-ui';
 
-// NEW: 5-Level Agent OS Components
+// 5-Level Agent OS Components (unique to this app)
 export {
   VitalLevelBadge,
   getLevelConfig,
@@ -28,8 +32,6 @@ export {
 } from './VitalPersonalityBadge';
 export type { PersonalitySlug } from './VitalPersonalityBadge';
 
-export { VitalAgentCardEnhanced } from './VitalAgentCardEnhanced';
-
 export {
   VitalAgentContextSelector,
   VitalAgentContextDisplay,
@@ -42,7 +44,7 @@ export type {
   SelectedContext,
 } from './VitalAgentContextSelector';
 
-// NEW: Hooks for API integration
+// Hooks for API integration (unique to this app)
 export {
   useAgentContext,
   useAgentSynergies,

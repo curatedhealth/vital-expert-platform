@@ -68,6 +68,8 @@ export default async function proxy(request: NextRequest) {
     // All Ask Expert routes (Mode 1-4, missions, chat, streaming) - CSRF exempt
     // These routes have their own auth via tenant headers and service role keys
     '/api/ask-expert/',
+    '/api/ask-panel-enhanced/', // Ask Panel Enhanced streaming routes (CSRF exempt)
+    '/api/ask-panel/',          // Ask Panel routes (CSRF exempt)
     '/api/prompt-starters',  // Prompt starters for Ask Expert
     '/api/user-agents',
     '/api/chat/conversations',

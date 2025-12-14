@@ -366,15 +366,26 @@ async def create_mission(
 
     try:
         # H1 CRITICAL: Validate using enhanced schema with injection detection
+        # Determine mode: Mode 3 if agent_id is provided (manual selection), Mode 4 if auto-select
+        mission_mode = 3 if request.agent_id else 4
+
+        # Ensure tenant_id is provided (required for validation)
+        if not x_tenant_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Missing required header: x-tenant-id"
+            )
+
         try:
             validated_request = ValidatedMissionRequest(
                 template_id=request.template_id,
                 goal=request.goal,
-                inputs=request.inputs,
+                agent_id=request.agent_id,  # Will be mapped to expert_id by model_validator
+                tenant_id=x_tenant_id,       # Required field from header
+                mode=mission_mode,           # Inferred from agent_id presence
+                hitl_enabled=not request.auto_approve_checkpoints,  # Inverted logic
                 budget_limit=request.budget_limit,
-                timeout_minutes=request.timeout_minutes,
-                auto_approve_checkpoints=request.auto_approve_checkpoints,
-                agent_id=request.agent_id,
+                deadline_hours=request.timeout_minutes // 60 if request.timeout_minutes else None,
             )
         except ValidationError as ve:
             errors = []
@@ -412,8 +423,8 @@ async def create_mission(
         # NOTE: validated_request already applied Pydantic validators
         sanitized_template_id = validated_request.template_id
         sanitized_goal = validated_request.goal  # Already sanitized by @field_validator
-        sanitized_agent_id = validated_request.agent_id  # Already validated
-        sanitized_inputs = InputSanitizer.sanitize_json(validated_request.inputs) if validated_request.inputs else {}
+        sanitized_agent_id = validated_request.expert_id  # model_validator maps agent_id → expert_id
+        sanitized_inputs = InputSanitizer.sanitize_json(request.inputs) if request.inputs else {}  # Use original request.inputs
 
         supabase = get_supabase_client()
 
@@ -453,8 +464,9 @@ async def create_mission(
             "budget_limit": validated_request.budget_limit or 10.0,
             "metadata": {
                 "inputs": sanitized_inputs,  # SANITIZED
-                "timeout_minutes": validated_request.timeout_minutes,
-                "auto_approve_checkpoints": validated_request.auto_approve_checkpoints,
+                "timeout_minutes": request.timeout_minutes,  # Use original request field
+                "auto_approve_checkpoints": request.auto_approve_checkpoints,  # Use original request field
+                "hitl_enabled": validated_request.hitl_enabled,
             },
         }
 

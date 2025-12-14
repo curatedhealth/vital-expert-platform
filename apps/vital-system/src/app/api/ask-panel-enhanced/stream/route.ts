@@ -8,10 +8,13 @@
 
 import { NextRequest } from 'next/server';
 import OpenAI from 'openai';
+import { createClient } from '@supabase/supabase-js';
 
 const AI_ENGINE_URL = process.env.AI_ENGINE_URL || 'http://localhost:8000';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const PANEL_MODEL = process.env.OPENAI_PANEL_MODEL || 'gpt-4o-mini';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const openaiClient = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 
@@ -19,6 +22,32 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
+    
+    // Get auth token from cookies or headers
+    let authToken: string | null = null;
+    
+    // Try to get token from Authorization header first
+    const authHeader = request.headers.get('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      authToken = authHeader.substring(7);
+    } else {
+      // Try to get from Supabase session cookie
+      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+        try {
+          const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            cookies: {
+              get(name: string) {
+                return request.cookies.get(name)?.value;
+              },
+            },
+          });
+          const { data: { session } } = await supabase.auth.getSession();
+          authToken = session?.access_token || null;
+        } catch (error) {
+          console.warn('[Proxy] Could not get session:', error);
+        }
+      }
+    }
 
     // Validate required fields
     if (!body.question || !body.template_slug || !body.selected_agent_ids || !body.tenant_id) {
@@ -35,11 +64,33 @@ export async function POST(request: NextRequest) {
     const backendUrl = `${AI_ENGINE_URL}/api/ask-panel-enhanced/stream`;
     console.log(`[Proxy] Forwarding streaming request to: ${backendUrl}`);
 
+    // Forward authentication headers from the original request
+    const authHeader = request.headers.get('authorization');
+    const tenantId = request.headers.get('x-tenant-id') || body.tenant_id;
+    const userId = request.headers.get('x-user-id');
+
+    const backendHeaders: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    // Forward auth token if present
+    if (authHeader) {
+      backendHeaders['Authorization'] = authHeader;
+    }
+
+    // Forward tenant and user context headers
+    if (tenantId) {
+      backendHeaders['x-tenant-id'] = tenantId;
+      backendHeaders['x-organization-id'] = tenantId; // Backend may use either
+    }
+
+    if (userId) {
+      backendHeaders['x-user-id'] = userId;
+    }
+
     const response = await fetch(backendUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: backendHeaders,
       body: JSON.stringify(body),
     });
 

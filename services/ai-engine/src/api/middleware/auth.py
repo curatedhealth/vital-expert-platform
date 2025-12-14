@@ -54,6 +54,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/docs",
         "/openapi.json",
         "/redoc",
+        # Ask Panel Enhanced - allow for development (can be restricted in production)
+        "/api/ask-panel-enhanced/stream",
+        "/api/ask-panel-enhanced/agents",
     ]
     
     async def dispatch(self, request: Request, call_next):

@@ -13,8 +13,8 @@ MODES_SUPPORTED: [3, 4]
 DEPENDENCIES: [pydantic, uuid]
 """
 
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Dict, Any
+from pydantic import BaseModel, Field, field_validator, model_validator
+from typing import Optional, Dict, Any, Self
 from enum import Enum
 import re
 import logging
@@ -284,6 +284,9 @@ class MissionCreateRequest(BaseModel):
     - Input sanitization for goal/inputs
     - ID format validation
     - Range validation for budgets/timeouts
+
+    Field Aliases:
+    - agent_id → expert_id (frontend compatibility)
     """
     goal: str = Field(
         ...,
@@ -295,9 +298,10 @@ class MissionCreateRequest(BaseModel):
         None,
         description="Mission template ID (UUID format if provided)"
     )
+    # Accept both 'expert_id' and 'agent_id' from frontend (normalized in model_validator)
     expert_id: str = Field(
         ...,
-        description="Expert agent ID (required, UUID format)"
+        description="Expert agent ID (required, UUID format). Alias: agent_id"
     )
     tenant_id: str = Field(
         ...,
@@ -330,6 +334,35 @@ class MissionCreateRequest(BaseModel):
         description="Deadline in hours (1-168 range, max 7 days)"
     )
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_field_aliases(cls, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Normalize field aliases for frontend compatibility.
+
+        Maps:
+        - agent_id → expert_id (frontend sends agent_id)
+
+        Validates that required fields are provided.
+        """
+        if isinstance(data, dict):
+            # Map agent_id → expert_id (frontend compatibility)
+            if "agent_id" in data and data.get("agent_id"):
+                if not data.get("expert_id"):
+                    data["expert_id"] = data["agent_id"]
+                # Remove agent_id to avoid duplicate field issues
+                del data["agent_id"]
+
+            # Validate required fields after normalization
+            if not data.get("expert_id"):
+                raise ValueError("Either expert_id or agent_id is required")
+            if not data.get("tenant_id"):
+                raise ValueError("tenant_id is required")
+            if data.get("mode") is None:
+                raise ValueError("mode is required (3 or 4)")
+
+        return data
+
     @field_validator("goal", mode="before")
     @classmethod
     def validate_and_sanitize_goal(cls, v: str) -> str:
@@ -357,17 +390,32 @@ class MissionCreateRequest(BaseModel):
     @field_validator("template_id", mode="before")
     @classmethod
     def validate_template_id(cls, v: Optional[str]) -> Optional[str]:
-        """Validate template ID format (UUID if provided)."""
+        """Validate template ID format (UUID or slug string).
+
+        Templates can use either:
+        - UUID format: 550e8400-e29b-41d4-a716-446655440001
+        - Slug format: comprehensive_analysis, decision_framing
+        """
         if v is None:
+            return None
+
+        # Strip whitespace
+        v = v.strip()
+
+        if not v:
             return None
 
         # UUID pattern validation
         uuid_pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-
         if re.match(uuid_pattern, v, re.IGNORECASE):
             return v.lower()
 
-        raise ValueError(f"Invalid template_id format (must be UUID): {v}")
+        # Slug pattern validation (alphanumeric with underscores/hyphens)
+        slug_pattern = r'^[a-zA-Z][a-zA-Z0-9_-]{2,63}$'
+        if re.match(slug_pattern, v):
+            return v.lower()
+
+        raise ValueError(f"Invalid template_id format (must be UUID or valid slug): {v}")
 
     @field_validator("expert_id", "tenant_id", mode="before")
     @classmethod

@@ -246,6 +246,12 @@ function RagCard({ rag, isSelected, isSelectionMode, onToggleSelect, onClick, on
                 <Eye className="h-4 w-4 mr-2" />
                 View
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/designer/knowledge?base=${rag.id}`}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Manage in Designer
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={onEdit}>
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
@@ -653,7 +659,13 @@ function KnowledgePageContent() {
             <Button variant="outline" size="sm" asChild>
               <Link href="/designer/knowledge">
                 <Wrench className="h-4 w-4 mr-2" />
-                Builder
+                Designer
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/designer/knowledge">
+                <Database className="h-4 w-4 mr-2" />
+                Manage Bases
               </Link>
             </Button>
             <Button variant="outline" size="sm" onClick={() => setIsSelectionMode(true)}>

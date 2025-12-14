@@ -95,14 +95,11 @@ function KnowledgeBuilderContent() {
       {/* Action Bar */}
       <div className="flex items-center justify-end gap-2 px-6 py-3 border-b bg-white/50 backdrop-blur-sm">
         <Button variant="outline" size="sm" asChild className="border-stone-200">
-          <Link href="/knowledge">
-            <ExternalLink className="h-4 w-4 mr-2" />
-            View Knowledge Library
-          </Link>
+          <Link href="/knowledge">View Knowledge Library</Link>
         </Button>
         <Button size="sm" onClick={() => handleTabChange('upload')} className="bg-purple-600 hover:bg-purple-700">
           <Plus className="h-4 w-4 mr-2" />
-          Upload Documents
+          Create / Upload Knowledge Base
         </Button>
       </div>
 

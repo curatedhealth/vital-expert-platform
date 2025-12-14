@@ -65,50 +65,51 @@ export function useKnowledgeDesigner(): UseKnowledgeDesignerResult {
       setLoading(true);
       setError(null);
 
-      // Fetch domains and documents in parallel
-      const [domainsResponse, documentsResponse] = await Promise.all([
+      // Fetch domains and bases in parallel
+      const [domainsResponse, basesResponse] = await Promise.all([
         fetch('/api/knowledge-domains'),
-        fetch('/api/knowledge/documents'),
+        fetch('/api/knowledge/bases'),
       ]);
 
       // Process domains
-      let rawDomains: { id: string; name: string }[] = [];
+      let rawDomains: { id: string; name: string; slug?: string; domain_type?: string }[] = [];
       if (domainsResponse.ok) {
         const domainsData = await domainsResponse.json();
         rawDomains = domainsData.domains || [];
       }
 
-      // Process documents
-      let rawDocuments: KnowledgeDocument[] = [];
-      if (documentsResponse.ok) {
-        const documentsData = await documentsResponse.json();
-        if (documentsData.success) {
-          rawDocuments = documentsData.documents || [];
-        }
+      // Process bases (knowledge sources)
+      let bases: any[] = [];
+      if (basesResponse.ok) {
+        const basesData = await basesResponse.json();
+        bases = basesData.bases || [];
       }
 
       // Calculate document counts per domain
       const domainCounts: Record<string, number> = {};
-      rawDocuments.forEach((doc) => {
-        const domainKey = doc.domain || 'unassigned';
-        domainCounts[domainKey] = (domainCounts[domainKey] || 0) + 1;
+      bases.forEach((base) => {
+        const domains = base.knowledge_domains || [];
+        domains.forEach((d: string) => {
+          const key = d || 'unassigned';
+          domainCounts[key] = (domainCounts[key] || 0) + 1;
+        });
       });
 
       // Build enhanced domain objects
       const enhancedDomains: KnowledgeDomain[] = rawDomains.map((d, index) => ({
         domain_id: d.id || d.name,
         domain_name: d.name,
-        description: `Knowledge domain for ${d.name}`,
+        description: d.domain_type ? `${d.domain_type} domain` : `Knowledge domain for ${d.name}`,
         tier: index < 3 ? 1 : index < 8 ? 2 : 3, // Auto-assign tiers based on order
         priority: index + 1,
-        document_count: domainCounts[d.name] || 0,
+        document_count: domainCounts[d.slug || d.name] || 0,
         is_active: true,
-        function_name: 'General',
+        function_name: d.domain_type || 'General',
         embedding_model: 'text-embedding-3-small',
       }));
 
       // Add domains discovered from documents (not in domain list)
-      const existingDomainNames = new Set(rawDomains.map((d) => d.name));
+      const existingDomainNames = new Set(rawDomains.map((d) => d.slug || d.name));
       Object.keys(domainCounts).forEach((domainName) => {
         if (!existingDomainNames.has(domainName) && domainName !== 'unassigned') {
           enhancedDomains.push({
@@ -125,6 +126,22 @@ export function useKnowledgeDesigner(): UseKnowledgeDesignerResult {
         }
       });
 
+      // Build document stubs from bases (for lists and stats)
+      const rawDocuments: KnowledgeDocument[] = bases.map((b) => {
+        const uploadedAt = b.updated_at || b.created_at || new Date().toISOString();
+        const domain = Array.isArray(b.knowledge_domains) ? b.knowledge_domains[0] : null;
+        return {
+          id: b.id,
+          name: b.display_name || b.name || 'Untitled',
+          type: 'knowledge-base',
+          size: 0,
+          uploadedAt,
+          status: 'completed',
+          domain,
+          chunks: b.total_chunks || 0,
+        };
+      });
+
       // Calculate stats
       const totalChunks = rawDocuments.reduce((sum, doc) => sum + (doc.chunks || 0), 0);
       const sevenDaysAgo = new Date();
@@ -137,7 +154,7 @@ export function useKnowledgeDesigner(): UseKnowledgeDesignerResult {
       setDocuments(rawDocuments);
       setStats({
         totalDomains: enhancedDomains.length,
-        totalDocuments: rawDocuments.length,
+        totalDocuments: bases.length,
         totalChunks,
         recentUploads,
       });

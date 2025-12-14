@@ -6,15 +6,7 @@ module.exports = {
     node: true,
     jest: true,
   },
-  extends: [
-    'eslint:recommended',
-    'next/core-web-vitals',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:react-hooks/recommended',
-    'plugin:jsx-a11y/recommended',
-    'plugin:security/recommended',
-    'prettier',
-  ],
+  extends: ['eslint:recommended', 'next/core-web-vitals', 'plugin:@typescript-eslint/recommended', 'plugin:react-hooks/recommended', 'plugin:jsx-a11y/recommended', 'plugin:security/recommended', 'prettier', 'plugin:storybook/recommended'],
   plugins: [
     '@typescript-eslint',
     'react',

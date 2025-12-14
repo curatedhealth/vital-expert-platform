@@ -105,6 +105,14 @@ def _register_panel_routes(app: FastAPI) -> None:
         logger.info("✅ Ask Panel routes registered")
     except ImportError as e:
         logger.warning("panel_routes_import_failed", error=str(e))
+    
+    # Register Ask Panel Enhanced streaming routes
+    try:
+        from api.routes.ask_panel_streaming import router as ask_panel_enhanced_router
+        app.include_router(ask_panel_enhanced_router, prefix="", tags=["ask-panel-enhanced"])
+        logger.info("✅ Ask Panel Enhanced routes registered")
+    except ImportError as e:
+        logger.warning("ask_panel_enhanced_routes_import_failed", error=str(e))
 
 
 def _register_expert_routes(app: FastAPI) -> None:

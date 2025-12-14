@@ -15,11 +15,12 @@
 
 import { Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTenant } from '@/contexts/TenantContext';
 import { AutonomousView, type AutonomousMode } from '@/features/ask-expert/views/AutonomousView';
 import { ErrorBoundary } from '@/features/ask-expert/components/errors';
 import { Loader2 } from 'lucide-react';
 
-function AutonomousPageContent() {
+function AutonomousPageContent({ tenantId }: { tenantId: string }) {
   const searchParams = useSearchParams();
   const modeParam = searchParams.get('mode');
 
@@ -41,7 +42,7 @@ function AutonomousPageContent() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <AutonomousView
         mode={mode}
-        tenantId="00000000-0000-0000-0000-000000000001"
+        tenantId={tenantId}
         onMissionComplete={handleMissionComplete}
         onMissionFail={handleMissionFail}
       />
@@ -61,10 +62,16 @@ function LoadingState() {
 }
 
 export default function AutonomousPage() {
+  const tenant = useTenant();
+
+  if (!tenant) {
+    return <LoadingState />;
+  }
+
   return (
     <ErrorBoundary componentName="AutonomousPage">
       <Suspense fallback={<LoadingState />}>
-        <AutonomousPageContent />
+        <AutonomousPageContent tenantId={tenant.id} />
       </Suspense>
     </ErrorBoundary>
   );

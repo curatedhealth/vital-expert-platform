@@ -192,89 +192,6 @@ export interface AutonomousViewProps {
 }
 
 // =============================================================================
-// MOCK DATA (Replace with real API calls)
-// =============================================================================
-
-const MOCK_TEMPLATES: LocalMissionTemplate[] = [
-  {
-    id: 'literature-review',
-    name: 'Literature Review',
-    description: 'Comprehensive review of scientific literature on a topic',
-    icon: BookOpen,
-    category: 'research',
-    estimatedDuration: '15-30 min',
-    complexity: 'moderate',
-    requiredInputs: [
-      {
-        id: 'topic',
-        name: 'Research Topic',
-        type: 'textarea',
-        required: true,
-        placeholder: 'Enter the topic or research question...',
-      },
-      {
-        id: 'scope',
-        name: 'Scope',
-        type: 'select',
-        required: true,
-        options: ['Last 5 years', 'Last 10 years', 'All time'],
-      },
-    ],
-    defaultCheckpoints: [
-      { type: 'plan', description: 'Review search strategy', timeout: 300 },
-      { type: 'critical', description: 'Validate key findings', timeout: 600 },
-      { type: 'final', description: 'Approve final report', timeout: 900 },
-    ],
-    steps: [
-      { id: '1', name: 'Search Strategy', description: 'Define search terms and databases', estimatedDuration: '2 min' },
-      { id: '2', name: 'Literature Search', description: 'Search PubMed, Google Scholar, etc.', estimatedDuration: '5 min', tools: ['pubmed_search', 'google_scholar'] },
-      { id: '3', name: 'Screening', description: 'Filter and rank relevant papers', estimatedDuration: '8 min' },
-      { id: '4', name: 'Analysis', description: 'Extract key findings and themes', estimatedDuration: '10 min' },
-      { id: '5', name: 'Synthesis', description: 'Generate comprehensive review', estimatedDuration: '5 min' },
-    ],
-    tags: ['research', 'literature', 'review', 'systematic'],
-  },
-  {
-    id: 'competitive-analysis',
-    name: 'Competitive Analysis',
-    description: 'Analyze competitor landscape and market positioning',
-    icon: BarChart3,
-    category: 'analysis',
-    estimatedDuration: '20-45 min',
-    complexity: 'complex',
-    requiredInputs: [
-      {
-        id: 'product',
-        name: 'Product/Drug Name',
-        type: 'text',
-        required: true,
-        placeholder: 'Enter product name...',
-      },
-      {
-        id: 'competitors',
-        name: 'Known Competitors',
-        type: 'textarea',
-        required: false,
-        placeholder: 'Optional: List known competitors...',
-      },
-    ],
-    defaultCheckpoints: [
-      { type: 'plan', description: 'Approve analysis scope', timeout: 300 },
-      { type: 'tool', description: 'Validate data sources', timeout: 300 },
-      { type: 'critical', description: 'Review competitive matrix', timeout: 600 },
-      { type: 'final', description: 'Approve final analysis', timeout: 900 },
-    ],
-    steps: [
-      { id: '1', name: 'Market Scan', description: 'Identify all competitors', estimatedDuration: '5 min' },
-      { id: '2', name: 'Data Collection', description: 'Gather competitive data', estimatedDuration: '15 min', tools: ['web_search', 'database_query'] },
-      { id: '3', name: 'Analysis', description: 'Build competitive matrix', estimatedDuration: '15 min' },
-      { id: '4', name: 'Insights', description: 'Generate strategic insights', estimatedDuration: '10 min' },
-    ],
-    tags: ['competitive', 'market', 'analysis', 'strategy'],
-  },
-];
-
-// =============================================================================
 // COMPONENT
 // =============================================================================
 
@@ -308,9 +225,9 @@ export function AutonomousView({
   // Mission state
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
   const [selectedFamily, setSelectedFamily] = useState<MissionFamily | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<LocalMissionTemplate | null>(
-    initialTemplateId ? MOCK_TEMPLATES.find(t => t.id === initialTemplateId) || null : null
-  );
+  const [templates, setTemplates] = useState<LocalMissionTemplate[]>([]);
+  const [isTemplatesLoading, setIsTemplatesLoading] = useState<boolean>(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<LocalMissionTemplate | null>(null);
   const [missionConfig, setMissionConfig] = useState<LocalMissionConfig | null>(null);
   const [missionGoal, setMissionGoal] = useState<string>('');
 
@@ -330,8 +247,66 @@ export function AutonomousView({
 
   // Debug: Track phase changes
   useEffect(() => {
-    console.log('[AutonomousView] Phase changed to:', phase, '| mode:', mode, '| selectedExpert:', selectedExpert?.name || 'none');
+    logger.debug('[AutonomousView] Phase changed', { phase, mode, selectedExpert: selectedExpert?.name || 'none' });
   }, [phase, mode, selectedExpert]);
+
+  // Load mission templates from backend (replaces mock data)
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTemplates = async () => {
+      setIsTemplatesLoading(true);
+      try {
+        const response = await fetch('/api/ask-expert/missions/templates');
+        if (!response.ok) {
+          throw new Error('Failed to load mission templates');
+        }
+
+        const payload = await response.json();
+        const rawTemplates = payload?.templates || payload?.data || [];
+
+        const mappedTemplates: LocalMissionTemplate[] = rawTemplates.map((tpl: any, index: number) => ({
+          id: tpl.slug || tpl.id || `template-${index}`,
+          name: tpl.name || tpl.title || 'Mission Template',
+          description: tpl.description || '',
+          icon: BookOpen,
+          category: tpl.category || 'research',
+          estimatedDuration: tpl.estimatedDuration || tpl.estimated_hours || '10-20 min',
+          complexity: tpl.complexity || 'moderate',
+          requiredInputs: tpl.requiredInputs || tpl.inputs || [],
+          defaultCheckpoints: tpl.defaultCheckpoints || tpl.checkpoints || [],
+          steps: tpl.steps || tpl.tasks || [],
+          tags: tpl.tags || [],
+        }));
+
+        if (isMounted) {
+          setTemplates(mappedTemplates);
+          if (initialTemplateId) {
+            const initial = mappedTemplates.find((t) => t.id === initialTemplateId);
+            if (initial) {
+              setSelectedTemplate(initial);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[AutonomousView] Failed to load templates', error);
+        if (isMounted) {
+          setTemplates([]);
+          setSelectedTemplate(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsTemplatesLoading(false);
+        }
+      }
+    };
+
+    loadTemplates();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialTemplateId]);
 
   // Mode 3: Listen for expert selection from sidebar
   // The sidebar emits 'ask-expert:expert-selected' when user picks an agent
@@ -902,8 +877,10 @@ export function AutonomousView({
   }, []);
 
   const handleCustomizerLaunch = useCallback((templateId: string, customizations: MissionCustomizations) => {
-    const template = MOCK_TEMPLATES.find((t) => t.id === templateId) || MOCK_TEMPLATES[0];
-    setSelectedTemplate(template);
+    const template = templates.find((t) => t.id === templateId) || templates[0];
+    if (template) {
+      setSelectedTemplate(template);
+    }
     setIsCustomizerOpen(false);
 
     // Convert customizations to mission config
@@ -914,12 +891,12 @@ export function AutonomousView({
     };
 
     handleLaunch(config);
-  }, [handleLaunch]);
+  }, [handleLaunch, templates]);
 
   // Handle selecting a recommended template - goes directly to briefing
   const handleRecommendationSelect = useCallback((templateId: string) => {
-    const template = MOCK_TEMPLATES.find((t) => t.id === templateId) ||
-      // Also check DEFAULT_MISSION_TEMPLATES and convert if needed
+    const template =
+      templates.find((t) => t.id === templateId) ||
       (() => {
         const canonical = DEFAULT_MISSION_TEMPLATES.find((t) => t.id === templateId);
         if (canonical && canonical.name && canonical.description) {
@@ -928,10 +905,10 @@ export function AutonomousView({
             name: canonical.name!,
             description: canonical.description!,
             icon: BookOpen, // Default icon
-            category: canonical.category as LocalMissionTemplate['category'] || 'research',
+            category: (canonical.category as LocalMissionTemplate['category']) || 'research',
             estimatedDuration: `${canonical.estimatedDurationMin || 30}-${canonical.estimatedDurationMax || 60} min`,
-            complexity: canonical.complexity as LocalMissionTemplate['complexity'] || 'moderate',
-            requiredInputs: (canonical.requiredInputs || []).map(input => ({
+            complexity: (canonical.complexity as LocalMissionTemplate['complexity']) || 'moderate',
+            requiredInputs: (canonical.requiredInputs || []).map((input) => ({
               id: input.name,
               name: input.name,
               type: input.type as 'text' | 'textarea' | 'file' | 'select' | 'multiselect',
@@ -944,14 +921,19 @@ export function AutonomousView({
             tags: canonical.tags || [],
           } as LocalMissionTemplate;
         }
-        return MOCK_TEMPLATES[0]; // Fallback
+        return templates[0] ?? null;
       })();
+
+    if (!template) {
+      console.error('[AutonomousView] No templates available for recommendation');
+      return;
+    }
 
     console.log('[AutonomousView] Selected recommended template:', template.name);
     setSelectedTemplate(template);
     setShowAllTemplates(false);
     setPhase('briefing');  // Skip full library, go directly to briefing
-  }, []);
+  }, [templates]);
 
   // Handle dismissing a recommendation (user wants something else)
   const handleRecommendationDismiss = useCallback(() => {

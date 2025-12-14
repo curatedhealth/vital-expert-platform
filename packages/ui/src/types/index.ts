@@ -54,3 +54,11 @@ export {
   TIER_LABELS,
   STATUS_COLORS,
 } from './agent.types';
+
+// Mission Types
+export type {
+  Mission,
+  MissionArtifact,
+  MissionCheckpoint,
+  MissionStatus,
+} from './mission.types';

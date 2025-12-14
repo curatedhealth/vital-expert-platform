@@ -68,6 +68,7 @@ from api.sse import (
     is_stream_ready,
 )
 from core.resilience import create_safe_task
+from core.config import get_settings
 
 logger = structlog.get_logger()
 
@@ -369,19 +370,20 @@ async def create_mission(
         # Determine mode: Mode 3 if agent_id is provided (manual selection), Mode 4 if auto-select
         mission_mode = 3 if request.agent_id else 4
 
-        # Ensure tenant_id is provided (required for validation)
-        if not x_tenant_id:
-            raise HTTPException(
-                status_code=400,
-                detail="Missing required header: x-tenant-id"
-            )
+        # Resolve tenant_id: use header if provided, otherwise fetch from config default
+        # Per platform architecture: all assets map to the current tenant
+        effective_tenant_id = x_tenant_id or get_settings().default_tenant_id
+        logger.debug("tenant_resolved",
+                     header_value=x_tenant_id,
+                     effective_tenant_id=effective_tenant_id,
+                     source="header" if x_tenant_id else "config_default")
 
         try:
             validated_request = ValidatedMissionRequest(
                 template_id=request.template_id,
                 goal=request.goal,
-                agent_id=request.agent_id,  # Will be mapped to expert_id by model_validator
-                tenant_id=x_tenant_id,       # Required field from header
+                agent_id=request.agent_id,
+                tenant_id=effective_tenant_id,  # Resolved from header or config default
                 mode=mission_mode,           # Inferred from agent_id presence
                 hitl_enabled=not request.auto_approve_checkpoints,  # Inverted logic
                 budget_limit=request.budget_limit,
@@ -413,7 +415,7 @@ async def create_mission(
             raise HTTPException(status_code=503, detail="Service temporarily unavailable. Please retry shortly.")
 
         # --- SECURITY: Validate tenant ---
-        sanitized_tenant_id = validate_and_sanitize_tenant(x_tenant_id)
+        sanitized_tenant_id = validate_and_sanitize_tenant(effective_tenant_id)
 
         # --- SECURITY: Rate limiting ---
         rate_limit_id = sanitized_tenant_id or x_user_id or "anonymous"
@@ -423,7 +425,7 @@ async def create_mission(
         # NOTE: validated_request already applied Pydantic validators
         sanitized_template_id = validated_request.template_id
         sanitized_goal = validated_request.goal  # Already sanitized by @field_validator
-        sanitized_agent_id = validated_request.expert_id  # model_validator maps agent_id → expert_id
+        sanitized_agent_id = validated_request.agent_id
         sanitized_inputs = InputSanitizer.sanitize_json(request.inputs) if request.inputs else {}  # Use original request.inputs
 
         supabase = get_supabase_client()
@@ -653,20 +655,40 @@ async def _execute_mission_async(
                     }).eq("id", mission_id).execute()
 
                 # Handle different node types
-                if node_name == "preflight":
-                    # Preflight completed
+                # NOTE: Node names must match LangGraph graph definition exactly:
+                # initialize, decompose_query, plan_mission, select_team, execute_step,
+                # confidence_gate, checkpoint, synthesize, verify_citations, quality_gate, reflection_gate
+                if node_name == "initialize":
+                    # Initialization completed (was "preflight")
                     await emit_mission_event(mission_id, "preflight_completed", {
                         "mission_id": mission_id,
-                        "checks": node_output.get("preflight", {}),
+                        "checks": node_output.get("preflight", node_output.get("initialization", {})),
                     })
 
-                elif node_name == "planning":
-                    # Planning completed
+                elif node_name == "decompose_query":
+                    # Query decomposition completed (NEW)
+                    await emit_mission_event(mission_id, "query_decomposed", {
+                        "mission_id": mission_id,
+                        "sub_queries": node_output.get("sub_queries", []),
+                        "intent": node_output.get("intent", {}),
+                    })
+
+                elif node_name == "plan_mission":
+                    # Planning completed (was "planning")
                     plan = node_output.get("plan", [])
                     await emit_mission_event(mission_id, "plan_ready", {
                         "mission_id": mission_id,
                         "plan": plan,
                         "total_steps": len(plan),
+                    })
+
+                elif node_name == "select_team":
+                    # Team selection completed (NEW)
+                    team = node_output.get("team", [])
+                    await emit_mission_event(mission_id, "team_selected", {
+                        "mission_id": mission_id,
+                        "team": team,
+                        "team_count": len(team),
                     })
 
                 elif node_name in ["execute_step", "execute"]:
@@ -706,6 +728,47 @@ async def _execute_mission_async(
                     # Final synthesis
                     final_output = node_output.get("final_output")
                     output_validation = node_output.get("output_validation", {})
+                    await emit_mission_event(mission_id, "synthesis_complete", {
+                        "mission_id": mission_id,
+                        "has_output": final_output is not None,
+                    })
+
+                elif node_name == "confidence_gate":
+                    # Confidence gate check (NEW)
+                    confidence = node_output.get("confidence", 0.0)
+                    await emit_mission_event(mission_id, "confidence_check", {
+                        "mission_id": mission_id,
+                        "confidence": confidence,
+                        "passed": confidence >= node_output.get("threshold", 0.7),
+                    })
+
+                elif node_name == "verify_citations":
+                    # Citation verification (NEW)
+                    citations = node_output.get("verified_citations", [])
+                    await emit_mission_event(mission_id, "citations_verified", {
+                        "mission_id": mission_id,
+                        "citation_count": len(citations),
+                        "verified": node_output.get("all_verified", False),
+                    })
+
+                elif node_name == "quality_gate":
+                    # Quality gate check (NEW)
+                    quality_score = node_output.get("quality_score", 0.0)
+                    await emit_mission_event(mission_id, "quality_check", {
+                        "mission_id": mission_id,
+                        "quality_score": quality_score,
+                        "passed": quality_score >= node_output.get("threshold", 0.8),
+                    })
+
+                elif node_name == "reflection_gate":
+                    # Reflection/iteration gate (NEW)
+                    iteration = node_output.get("iteration", 0)
+                    should_continue = node_output.get("should_continue", False)
+                    await emit_mission_event(mission_id, "reflection_complete", {
+                        "mission_id": mission_id,
+                        "iteration": iteration,
+                        "continuing": should_continue,
+                    })
 
                 # Track costs
                 if "current_cost" in node_output:

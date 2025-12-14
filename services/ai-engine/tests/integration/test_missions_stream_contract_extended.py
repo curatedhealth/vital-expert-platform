@@ -13,7 +13,7 @@ async def test_missions_stream_emits_plan_artifact_cost_toolcall():
     async with httpx.AsyncClient(timeout=15.0) as client:
         resp = await client.post(
             "http://localhost:8000/api/missions/stream",
-            json={"mode": 3, "goal": "Contract test mission", "expert_id": "regulatory", "budget_limit": 5},
+            json={"mode": 3, "goal": "Contract test mission", "agent_id": "regulatory", "budget_limit": 5},
             headers={"Accept": "text/event-stream"},
         )
         assert resp.status_code == 200

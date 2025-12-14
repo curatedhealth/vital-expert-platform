@@ -13,7 +13,7 @@ async def test_mode3_stream_starts():
     payload = {
         "mode": 3,
         "goal": "test objective",
-        "expert_id": "regulatory",
+        "agent_id": "regulatory",
         "mission_id": "test-mission-1",
         "template_id": "deep_research",
     }

@@ -13,7 +13,7 @@ import {
   CheckCircle,
   Settings
 } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -171,126 +171,7 @@ export default function EnhancedCapabilityManagement({
   const [showPanelRecommended, setShowPanelRecommended] = useState<boolean>(false);
   const [selectedCapability, setSelectedCapability] = useState<Capability | null>(null);
 
-  // Mock data for demonstration
-  useEffect(() => {
-    const mockCapabilities: Capability[] = [
-      {
-        id: '1',
-        capability_key: 'market_opportunity_assessment',
-        name: 'Market Opportunity Assessment',
-        description: 'Systematic identification and quantification of unmet clinical needs with commercial viability analysis',
-        stage: 'unmet_needs_investigation',
-        vital_component: 'V_value_discovery',
-        priority: 'critical_immediate',
-        maturity: 'level_4_leading',
-        is_new: false,
-        panel_recommended: false,
-        competencies: [
-          'Market sizing and segmentation analysis',
-          'Patient population quantification',
-          'Burden of disease calculations',
-          'Competitive gap analysis'
-        ],
-        tools: ['Market research databases', 'Economic modeling software'],
-        knowledge_base: ['Disease epidemiology data', 'Payer coverage policies'],
-        category: 'market_analysis',
-        domain: 'business_strategy',
-        lead_agent: {
-          name: 'Dr. David Wilson',
-          organization: 'McKinsey Health Institute'
-        },
-        supporting_agents_count: 3
-      },
-      {
-        id: '2',
-        capability_key: 'explainable_ai_architecture',
-        name: 'Explainable AI Architecture',
-        description: 'Designing transparent and interpretable AI systems for healthcare',
-        stage: 'solution_design',
-        vital_component: 'T_transformation_design',
-        priority: 'critical_immediate',
-        maturity: 'level_2_developing',
-        is_new: true,
-        panel_recommended: true,
-        competencies: [
-          'Model interpretability frameworks',
-          'Clinical reasoning visualization',
-          'Uncertainty quantification methods',
-          'Bias detection and mitigation'
-        ],
-        tools: ['XAI frameworks', 'Model interpretability tools'],
-        knowledge_base: ['AI ethics guidelines', 'Regulatory requirements'],
-        category: 'ai_ml',
-        domain: 'technology_engineering',
-        lead_agent: {
-          name: 'Dr. Priya Sharma',
-          organization: 'Google Health AI'
-        },
-        supporting_agents_count: 2
-      },
-      {
-        id: '3',
-        capability_key: 'regulatory_strategy_development',
-        name: 'Regulatory Strategy Development',
-        description: 'Navigation of global medical device regulatory pathways',
-        stage: 'regulatory_pathway',
-        vital_component: 'T_transformation_design',
-        priority: 'critical_immediate',
-        maturity: 'level_4_leading',
-        is_new: false,
-        panel_recommended: false,
-        competencies: [
-          'FDA classification determination',
-          '510(k) preparation and submission',
-          'De Novo pathway navigation',
-          'CE marking for EU MDR'
-        ],
-        tools: ['Regulatory platforms', 'Submission tools'],
-        knowledge_base: ['FDA guidance', 'Global regulations'],
-        category: 'regulatory',
-        domain: 'global_regulatory',
-        lead_agent: {
-          name: 'Dr. Thomas Anderson',
-          organization: 'FDA Center for Devices'
-        },
-        supporting_agents_count: 4
-      }
-    ];
-
-    const mockAgents: Agent[] = [
-      {
-        id: '1',
-        name: 'dr-sarah-chen-ux-expert',
-        display_name: 'Dr. Sarah Chen',
-        description: 'Healthcare UX expert specializing in patient-centered design',
-        domain_expertise: 'medical',
-        tier: 1,
-        medical_specialty: 'Healthcare Design',
-        capabilities: ['user-experience-design', 'healthcare-accessibility'],
-        avatar: '👩‍💻',
-        color: '#3B82F6'
-      },
-      {
-        id: '2',
-        name: 'dr-robert-kim-clinical-ai',
-        display_name: 'Dr. Robert Kim',
-        description: 'Clinical informaticist and AI expert',
-        domain_expertise: 'medical',
-        tier: 1,
-        medical_specialty: 'Internal Medicine',
-        capabilities: ['clinical-decision-support', 'evidence-based-medicine'],
-        avatar: '👨‍⚕️',
-        color: '#10B981'
-      }
-    ];
-
-    if (initialCapabilities.length === 0) {
-      setCapabilities(mockCapabilities);
-    }
-    if (initialAgents.length === 0) {
-      setAgents(mockAgents);
-    }
-  }, [initialCapabilities, initialAgents]);
+  // Data should be provided by callers; no mock data fallback
 
   // Filter capabilities based on selected criteria
   const filteredCapabilities = capabilities.filter((capability) => {

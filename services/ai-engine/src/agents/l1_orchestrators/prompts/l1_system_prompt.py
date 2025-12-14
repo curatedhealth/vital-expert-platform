@@ -75,8 +75,8 @@ For team selection, respond with valid JSON:
 {
   "selected_experts": [
     {
-      "expert_id": "expert-uuid",
-      "expert_name": "Clinical Pharmacologist",
+      "agent_id": "agent-uuid",
+      "agent_name": "Clinical Pharmacologist",
       "role": "Primary domain expert for drug interaction analysis",
       "evidence": {
         "vector_score": 0.94,
@@ -89,7 +89,7 @@ For team selection, respond with valid JSON:
   "reasoning": "Selected Clinical Pharmacologist as primary expert because...",
   "alternatives_considered": [
     {
-      "expert_id": "other-expert",
+      "agent_id": "other-agent",
       "reason_not_selected": "Lower vector similarity (0.72) and no direct graph path"
     }
   ],
@@ -147,7 +147,7 @@ Break down the user's mission into discrete, executable steps that can be:
       "task_type": "analysis",
       "description": "Analyze drug interaction potential",
       "assigned_level": "L2",
-      "assigned_expert_type": "clinical_pharmacologist",
+      "assigned_agent_type": "clinical_pharmacologist",
       "dependencies": ["task-1"],
       "success_criteria": "Interaction profile with confidence assessment"
     }

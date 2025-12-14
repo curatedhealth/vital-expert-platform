@@ -26,8 +26,12 @@ except ImportError:
 
 logger = structlog.get_logger()
 
-# Platform Tenant ID (fallback) - VITAL System tenant
-PLATFORM_TENANT_ID = "c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244"
+# Canonical Tenant ID - Single source of truth for single-tenant deployment
+# All entities (agents, missions, templates) must use this tenant_id
+CANONICAL_TENANT_ID = "00000000-0000-0000-0000-000000000001"
+
+# Alias for backward compatibility
+PLATFORM_TENANT_ID = CANONICAL_TENANT_ID
 
 
 def get_tenant_id(

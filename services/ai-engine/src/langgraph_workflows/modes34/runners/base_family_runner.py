@@ -52,6 +52,7 @@ from pydantic import BaseModel, Field
 # Resilience imports
 from langgraph_workflows.modes34.resilience import (
     graceful_degradation,
+    handle_node_errors,
     invoke_llm_with_timeout,
 )
 
@@ -434,7 +435,9 @@ class BaseFamilyRunner(ABC, Generic[StateT]):
         # Add family-specific nodes
         nodes = self._create_nodes()
         for node_name, node_func in nodes.items():
-            graph.add_node(node_name, node_func)
+            # Wrap every node with standardized error handling
+            safe_node = handle_node_errors(node_name, recoverable=True)(node_func)
+            graph.add_node(node_name, safe_node)
             logger.debug(f"Added node: {node_name}")
 
         # Add family-specific edges
@@ -671,6 +674,47 @@ class BaseFamilyRunner(ABC, Generic[StateT]):
         state.hitl_reason = reason
         logger.info(f"HITL triggered: {reason}")
         return state
+
+    def _emit_sse_event(
+        self,
+        event_type: SSEEventType,
+        data: Dict[str, Any],
+        mission_id: Optional[str] = None,
+        session_id: str = "",
+    ) -> SSEEvent:
+        """Helper to emit a standardized SSE event."""
+        return SSEEvent(
+            event_type=event_type,
+            data=data,
+            mission_id=mission_id,
+            session_id=session_id,
+        )
+
+    def _create_hitl_checkpoint_node(
+        self,
+        checkpoint_id: str,
+        checkpoint_type: str = "approval",
+    ) -> Callable[[StateT], StateT]:
+        """
+        Create a reusable HITL checkpoint node with error handling and interrupt.
+        """
+
+        @handle_node_errors(checkpoint_id, recoverable=True)
+        async def checkpoint_node(state: StateT) -> StateT:
+            # Notify UI that a checkpoint is required
+            self._emit_sse_event(
+                SSEEventType.HITL_REQUIRED,
+                {
+                    "checkpoint_id": checkpoint_id,
+                    "checkpoint_type": checkpoint_type,
+                },
+                mission_id=state.mission_id,
+                session_id=state.session_id,
+            )
+            # Pause execution for HITL
+            raise Interrupt(checkpoint_id)
+
+        return checkpoint_node
 
 
 # =============================================================================

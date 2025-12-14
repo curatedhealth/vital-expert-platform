@@ -20,9 +20,22 @@ import { SHADOWS, GRADIENT_TEXT_STYLE } from '../styles/design-tokens';
 interface CTASectionPremiumProps {
   onGetStarted?: () => void;
   onScheduleDemo?: () => void;
+  badgeText?: string;
+  headline?: string;
+  description?: string;
+  primaryText?: string;
+  secondaryText?: string;
 }
 
-export function CTASectionPremium({ onGetStarted, onScheduleDemo }: CTASectionPremiumProps) {
+export function CTASectionPremium({
+  onGetStarted,
+  onScheduleDemo,
+  badgeText = 'Beta Program Open',
+  headline = 'Ready to amplify your genius?',
+  description = 'Join innovative teams using VITAL to transform how they work. Early adopters receive priority onboarding and dedicated support.',
+  primaryText = BRAND_MESSAGING.cta.primary,
+  secondaryText = 'Schedule Demo',
+}: CTASectionPremiumProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.3 });
 
@@ -81,7 +94,7 @@ export function CTASectionPremium({ onGetStarted, onScheduleDemo }: CTASectionPr
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-8"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-sm font-medium text-white/90">Beta Program Open</span>
+              <span className="text-sm font-medium text-white/90">{badgeText}</span>
             </motion.div>
 
             {/* Headline */}
@@ -91,11 +104,7 @@ export function CTASectionPremium({ onGetStarted, onScheduleDemo }: CTASectionPr
               transition={{ duration: 0.5, delay: 0.3 }}
               className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white mb-6 leading-tight max-w-3xl mx-auto"
             >
-              Ready to amplify{' '}
-              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400 bg-clip-text text-transparent">
-                your genius
-              </span>
-              ?
+              {headline}
             </motion.h2>
 
             {/* Subheadline */}
@@ -105,8 +114,7 @@ export function CTASectionPremium({ onGetStarted, onScheduleDemo }: CTASectionPr
               transition={{ duration: 0.5, delay: 0.4 }}
               className="text-lg text-white/70 mb-10 max-w-xl mx-auto"
             >
-              Join innovative teams using VITAL to transform how they work.
-              Early adopters receive priority onboarding and dedicated support.
+              {description}
             </motion.p>
 
             {/* CTAs */}
@@ -121,7 +129,7 @@ export function CTASectionPremium({ onGetStarted, onScheduleDemo }: CTASectionPr
                 className="bg-white text-stone-800 hover:bg-white/90 px-8 py-6 text-lg rounded-xl font-medium transition-all duration-200 group"
                 style={{ boxShadow: '0 8px 32px rgba(255, 255, 255, 0.2)' }}
               >
-                {BRAND_MESSAGING.cta.primary}
+                {primaryText}
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button
@@ -130,7 +138,7 @@ export function CTASectionPremium({ onGetStarted, onScheduleDemo }: CTASectionPr
                 className="border-white/30 bg-white/5 text-white hover:bg-white/10 px-8 py-6 text-lg rounded-xl font-medium transition-all duration-200"
               >
                 <Calendar className="mr-2 w-5 h-5" />
-                Schedule Demo
+                {secondaryText}
               </Button>
             </motion.div>
 

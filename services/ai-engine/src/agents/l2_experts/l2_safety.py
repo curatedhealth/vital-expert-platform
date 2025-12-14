@@ -26,11 +26,18 @@ class L2SafetyExpert(L2DomainExpert):
     
     def __init__(
         self,
-        expert_id: str = "l2-safety-expert",
+        agent_id: str = "l2-safety-expert",
         **kwargs
     ):
+        # Create AgentConfig with the provided agent_id
+        from ..base_agent import AgentConfig
+        config = AgentConfig(
+            id=agent_id,
+            name="Safety Expert",
+            role="l2_expert"
+        )
         super().__init__(
-            expert_id=expert_id,
+            config=config,
             domain="safety",
             **kwargs
         )

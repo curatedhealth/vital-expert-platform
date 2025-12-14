@@ -6,3 +6,6 @@ export * from './validation';
 
 // Helper utilities
 export * from './helpers';
+
+// Logging
+export * from './logging/logger';

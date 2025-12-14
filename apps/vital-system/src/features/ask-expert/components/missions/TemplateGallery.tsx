@@ -32,7 +32,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TemplateCard, type TemplateCardData } from './TemplateCard';
+import { TemplateCard } from '@vital/ui/components/missions';
+import type { TemplateCardData } from '@vital/ui/components/missions';
 import {
   type MissionFamily,
   type MissionComplexity,

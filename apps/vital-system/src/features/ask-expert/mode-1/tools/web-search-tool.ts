@@ -180,9 +180,7 @@ export class WebSearchTool extends BaseTool<WebSearchToolInput, WebSearchToolRes
 
         case 'mock':
         default:
-          // Return mock results for development
-          results = this.generateMockResults(query, maxResults);
-          break;
+          throw new Error('Search provider not configured. Set a valid provider and API key.');
       }
 
       const duration_ms = Date.now() - startTime;
@@ -279,10 +277,6 @@ export class WebSearchTool extends BaseTool<WebSearchToolInput, WebSearchToolRes
     const data = (await response.json()) as BraveResponse;
     const results = data.web?.results ?? [];
 
-    if (results.length === 0) {
-      return this.generateMockResults(query, maxResults);
-    }
-
     return results.slice(0, maxResults).map((item, index) => ({
       title: item.title,
       url: item.url,
@@ -322,10 +316,6 @@ export class WebSearchTool extends BaseTool<WebSearchToolInput, WebSearchToolRes
     const data = (await response.json()) as GoogleResponse;
     const items = data.items ?? [];
 
-    if (items.length === 0) {
-      return this.generateMockResults(query, maxResults);
-    }
-
     return items.slice(0, maxResults).map((item, index) => ({
       title: item.title ?? `Result ${index + 1}`,
       url: item.link ?? '#',
@@ -336,13 +326,4 @@ export class WebSearchTool extends BaseTool<WebSearchToolInput, WebSearchToolRes
     }));
   }
 
-  private generateMockResults(query: string, maxResults: number): WebSearchResultItem[] {
-    return Array.from({ length: maxResults }, (_, i) => ({
-      title: `Search Result ${i + 1} for "${query}"`,
-      url: `https://example.com/result-${i + 1}`,
-      snippet: `This is a relevant result snippet for the query "${query}". In a real implementation, this would be actual content from the web.`,
-      relevance_score: 0.9 - i * 0.1,
-      timestamp: new Date().toISOString(),
-    }));
-  }
 }

@@ -1036,82 +1036,29 @@ async def execute_cypher_query(
 # ============================================================================
 
 def _generate_mock_ontology_data() -> KGResponse:
-    """Generate mock ontology data for testing."""
-    nodes = [
-        style_node("Function", "f1", "Medical Affairs", {"description": "Medical Affairs function"}),
-        style_node("Function", "f2", "R&D", {"description": "Research and Development"}),
-        style_node("Department", "d1", "Medical Information", {"function_id": "f1"}),
-        style_node("Department", "d2", "Medical Communications", {"function_id": "f1"}),
-        style_node("Department", "d3", "Clinical Development", {"function_id": "f2"}),
-        style_node("Role", "r1", "Medical Science Liaison", {"department_id": "d1"}),
-        style_node("Role", "r2", "Medical Writer", {"department_id": "d2"}),
-        style_node("JTBD", "j1", "Respond to HCP inquiries", {"code": "MA-01"}),
-        style_node("JTBD", "j2", "Develop scientific content", {"code": "MA-02"}),
-        style_node("ValueCategory", "vc1", "SMARTER", {"color": "#3B82F6"}),
-        style_node("ValueCategory", "vc2", "FASTER", {"color": "#10B981"}),
-    ]
-
-    edges = [
-        KGEdge(id="e1", source="f1", target="d1", type="HAS_DEPARTMENT"),
-        KGEdge(id="e2", source="f1", target="d2", type="HAS_DEPARTMENT"),
-        KGEdge(id="e3", source="f2", target="d3", type="HAS_DEPARTMENT"),
-        KGEdge(id="e4", source="d1", target="r1", type="HAS_ROLE"),
-        KGEdge(id="e5", source="d2", target="r2", type="HAS_ROLE"),
-        KGEdge(id="e6", source="r1", target="j1", type="PERFORMS"),
-        KGEdge(id="e7", source="r2", target="j2", type="PERFORMS"),
-        KGEdge(id="e8", source="j1", target="vc1", type="DELIVERS_VALUE"),
-        KGEdge(id="e9", source="j2", target="vc2", type="DELIVERS_VALUE"),
-    ]
-
+    """Fallback response when Neo4j is unavailable (no mock data)."""
     return KGResponse(
-        nodes=nodes,
-        edges=edges,
-        metadata={"mode": "mock", "message": "Neo4j unavailable - using mock data"}
+        nodes=[],
+        edges=[],
+        metadata={"mode": "error", "message": "Neo4j unavailable - data not loaded"}
     )
 
 
 def _generate_mock_agent_data() -> KGResponse:
-    """Generate mock agent network data."""
-    nodes = [
-        style_node("Agent", "a1", "Regulatory Expert", {"agent_level": 3, "status": "active"}),
-        style_node("Agent", "a2", "Clinical Trials Advisor", {"agent_level": 2, "status": "active"}),
-        style_node("Agent", "a3", "Medical Writer Agent", {"agent_level": 2, "status": "active"}),
-        style_node("Agent", "a4", "Query Router", {"agent_level": 1, "status": "active"}),
-    ]
-
-    edges = [
-        KGEdge(id="ae1", source="a4", target="a1", type="ESCALATES_TO"),
-        KGEdge(id="ae2", source="a4", target="a2", type="ESCALATES_TO"),
-        KGEdge(id="ae3", source="a1", target="a2", type="COLLABORATES_WITH"),
-        KGEdge(id="ae4", source="a2", target="a3", type="COLLABORATES_WITH"),
-    ]
-
+    """Fallback response when Neo4j agent data is unavailable."""
     return KGResponse(
-        nodes=nodes,
-        edges=edges,
-        metadata={"mode": "mock"}
+        nodes=[],
+        edges=[],
+        metadata={"mode": "error", "message": "Neo4j unavailable - agent data not loaded"}
     )
 
 
 def _generate_mock_neighbors(node_id: str) -> KGResponse:
-    """Generate mock neighbor data for a node."""
-    nodes = [
-        style_node("Role", node_id, f"Node {node_id}", {}),
-        style_node("JTBD", f"{node_id}_j1", "Related JTBD 1", {}),
-        style_node("JTBD", f"{node_id}_j2", "Related JTBD 2", {}),
-        style_node("Department", f"{node_id}_d1", "Parent Department", {}),
-    ]
-
-    edges = [
-        KGEdge(id="ne1", source=node_id, target=f"{node_id}_j1", type="PERFORMS"),
-        KGEdge(id="ne2", source=node_id, target=f"{node_id}_j2", type="PERFORMS"),
-        KGEdge(id="ne3", source=f"{node_id}_d1", target=node_id, type="HAS_ROLE"),
-    ]
-
+    """Fallback response when neighbor lookup fails."""
     return KGResponse(
-        nodes=nodes,
-        edges=edges,
-        metadata={"mode": "mock", "center_node": node_id}
+        nodes=[],
+        edges=[],
+        metadata={"mode": "error", "message": f"Neighbors unavailable for {node_id}"}
     )
 
 

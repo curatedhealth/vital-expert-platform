@@ -516,7 +516,7 @@ export function VitalPromptInput({
             placeholder={placeholder}
             disabled={disabled || isLoading}
             maxLength={maxLength}
-            className="min-h-[44px] max-h-[200px] resize-none border-0 focus-visible:ring-0 p-2"
+            className="min-h-[44px] max-h-[200px] leading-snug text-base resize-none border-0 focus-visible:ring-0 p-2"
             rows={1}
           />
           

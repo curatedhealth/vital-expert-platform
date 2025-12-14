@@ -5,8 +5,8 @@
 
 # Ask Expert Service - Unified Implementation Overview
 
-**Version:** 3.1 PRODUCTION AUDIT
-**Date:** December 13, 2025 (Updated: TypeScript P3 Fix + Production Tagging)
+**Version:** 3.2 PRODUCTION AUDIT
+**Date:** December 14, 2025 (Updated: Mission Templates & Family Runners Documentation)
 **Author:** Claude Code
 **Scope:** Full Stack - Frontend UI/UX + Backend API + Security + Production Readiness + File Inventory + Wiring Verification + Deep Audit
 
@@ -811,6 +811,406 @@ Mode 4 = Mode 3 + Auto Agent Selection + Dynamic Team Assembly
 - Dynamic team assembly (L2-L5)
 - Parallel task execution
 - Cost optimization
+
+### 2.1.5 L1 Master Orchestrator Workflow (Mode 3/4 Core Logic)
+
+> **IMPORTANT:** This section describes the core logical workflow that drives Modes 3 and 4.
+> The L1 Master Orchestrator is the highest-level intelligence that uses LLM-based reasoning
+> (not hardcoded logic) to translate user prompts into structured goals, plan workflows,
+> assemble teams, and orchestrate execution.
+
+#### Complete Workflow Flow (4 HITL Checkpoints)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                    MODE 3/4: L1 MASTER ORCHESTRATOR WORKFLOW                             │
+│                    (LLM-Driven Goal Translation + 4 HITL Checkpoints)                    │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+
+     USER PROMPT
+     "Analyze FDA accelerated approval pathways for oncology drugs"
+          │
+          ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│  ╔═══════════════════════════════════════════════════════════════════════════════════╗  │
+│  ║                     L1 MASTER ORCHESTRATOR (LLM-Driven)                            ║  │
+│  ║                                                                                    ║  │
+│  ║  The L1 uses LLM reasoning to translate natural language prompts into:            ║  │
+│  ║  • Structured research goals                                                       ║  │
+│  ║  • Success criteria                                                                ║  │
+│  ║  • Scope boundaries                                                                ║  │
+│  ║  • Expected deliverables                                                           ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════════════════╝  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+          │
+          │ LLM translates prompt → structured goals
+          ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                          STRUCTURED GOALS OUTPUT                                   │  │
+│  │                                                                                    │  │
+│  │  {                                                                                 │  │
+│  │    "primary_goal": "Comprehensive analysis of FDA accelerated approval",          │  │
+│  │    "sub_goals": [                                                                  │  │
+│  │      "1. Identify all accelerated approval pathways (Breakthrough, Fast Track)",  │  │
+│  │      "2. Analyze oncology-specific requirements and precedents",                  │  │
+│  │      "3. Review recent approvals and rejection patterns",                         │  │
+│  │      "4. Synthesize strategic recommendations"                                    │  │
+│  │    ],                                                                              │  │
+│  │    "success_criteria": {                                                           │  │
+│  │      "evidence_required": "PubMed citations, FDA guidance documents",             │  │
+│  │      "confidence_threshold": 0.85,                                                 │  │
+│  │      "max_iterations": 10                                                          │  │
+│  │    }                                                                               │  │
+│  │  }                                                                                 │  │
+│  └───────────────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+          │
+          ▼
+╔═════════════════════════════════════════════════════════════════════════════════════════╗
+║                     HITL CHECKPOINT 1: GOAL CONFIRMATION                                 ║
+║                                                                                          ║
+║  User reviews and approves the structured goals before planning begins.                 ║
+║                                                                                          ║
+║  Options:                                                                                ║
+║  • ✅ APPROVE - Proceed with these goals                                                ║
+║  • ✏️  EDIT - Modify goals, add constraints, adjust scope                                ║
+║  • ❌ REJECT - Cancel mission, refine prompt                                            ║
+║                                                                                          ║
+║  SSE Event: { type: "checkpoint", checkpoint_type: "goal_confirmation", ... }           ║
+╚═════════════════════════════════════════════════════════════════════════════════════════╝
+          │
+          │ User approves goals
+          ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│  ╔═══════════════════════════════════════════════════════════════════════════════════╗  │
+│  ║                     L1 ORCHESTRATOR: PLANNING PHASE                                ║  │
+│  ║                                                                                    ║  │
+│  ║  L1 creates detailed execution plan:                                              ║  │
+│  ║  • Decompose goals into discrete tasks                                            ║  │
+│  ║  • Determine task dependencies                                                     ║  │
+│  ║  • Estimate resource requirements                                                  ║  │
+│  ║  • Identify required agent capabilities                                            ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════════════════╝  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+          │
+          │ L1 generates execution plan
+          ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                          EXECUTION PLAN OUTPUT                                     │  │
+│  │                                                                                    │  │
+│  │  {                                                                                 │  │
+│  │    "plan_id": "plan-001",                                                          │  │
+│  │    "tasks": [                                                                      │  │
+│  │      { "id": "T1", "name": "Literature Search", "type": "research",               │  │
+│  │        "required_capabilities": ["pubmed_search", "citation_extraction"] },       │  │
+│  │      { "id": "T2", "name": "FDA Guidance Analysis", "type": "analysis",           │  │
+│  │        "depends_on": ["T1"], "required_capabilities": ["regulatory_expertise"] }, │  │
+│  │      { "id": "T3", "name": "Case Study Review", "type": "research",               │  │
+│  │        "depends_on": ["T1"], "parallel_with": ["T2"] },                           │  │
+│  │      { "id": "T4", "name": "Synthesis & Recommendations", "type": "synthesis",    │  │
+│  │        "depends_on": ["T2", "T3"] }                                               │  │
+│  │    ],                                                                              │  │
+│  │    "estimated_tokens": 45000,                                                      │  │
+│  │    "estimated_cost": "$3.50"                                                       │  │
+│  │  }                                                                                 │  │
+│  └───────────────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+          │
+          ▼
+╔═════════════════════════════════════════════════════════════════════════════════════════╗
+║                     HITL CHECKPOINT 2: PLAN APPROVAL                                     ║
+║                                                                                          ║
+║  User reviews the execution plan, task breakdown, and cost estimate.                    ║
+║                                                                                          ║
+║  Options:                                                                                ║
+║  • ✅ APPROVE - Proceed with this plan                                                  ║
+║  • ✏️  EDIT - Modify tasks, add/remove steps, adjust parallelization                     ║
+║  • 💰 BUDGET - Adjust budget limits before proceeding                                   ║
+║  • ❌ REJECT - Return to goal refinement                                                ║
+║                                                                                          ║
+║  SSE Event: { type: "checkpoint", checkpoint_type: "plan_approval", ... }               ║
+╚═════════════════════════════════════════════════════════════════════════════════════════╝
+          │
+          │ User approves plan
+          ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│  ╔═══════════════════════════════════════════════════════════════════════════════════╗  │
+│  ║                     L1 ORCHESTRATOR: TEAM ASSEMBLY                                 ║  │
+│  ║                                                                                    ║  │
+│  ║  L1 assembles the optimal team based on task requirements:                        ║  │
+│  ║                                                                                    ║  │
+│  ║  ┌──────────────────────────────────────────────────────────────────────────────┐ ║  │
+│  ║  │  L2 EXPERTS (Domain Leaders)                                                  │ ║  │
+│  ║  │  • FDA Regulatory Expert - Leads regulatory analysis                         │ ║  │
+│  ║  │  • Oncology Research Expert - Leads clinical evidence review                 │ ║  │
+│  ║  └──────────────────────────────────────────────────────────────────────────────┘ ║  │
+│  ║                           │                                                        ║  │
+│  ║                           ▼                                                        ║  │
+│  ║  ┌──────────────────────────────────────────────────────────────────────────────┐ ║  │
+│  ║  │  L3 SPECIALISTS (Domain Execution)                                            │ ║  │
+│  ║  │  • Literature Search Specialist - Executes PubMed searches                   │ ║  │
+│  ║  │  • Citation Analyst - Verifies and formats citations                         │ ║  │
+│  ║  │  • Regulatory Document Specialist - Parses FDA guidance                      │ ║  │
+│  ║  └──────────────────────────────────────────────────────────────────────────────┘ ║  │
+│  ║                           │                                                        ║  │
+│  ║                           ▼                                                        ║  │
+│  ║  ┌──────────────────────────────────────────────────────────────────────────────┐ ║  │
+│  ║  │  L4 WORKERS (Task Execution)                                                  │ ║  │
+│  ║  │  • Data Extraction Worker - Extracts structured data                         │ ║  │
+│  ║  │  • Summary Generator - Creates summaries                                      │ ║  │
+│  ║  │  • Report Compiler - Assembles final deliverable                             │ ║  │
+│  ║  └──────────────────────────────────────────────────────────────────────────────┘ ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════════════════╝  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+          │
+          ▼
+╔═════════════════════════════════════════════════════════════════════════════════════════╗
+║                     HITL CHECKPOINT 3: TEAM CONFIRMATION                                 ║
+║                                                                                          ║
+║  User reviews the assembled team and agent assignments.                                 ║
+║                                                                                          ║
+║  Options:                                                                                ║
+║  • ✅ APPROVE - Proceed with this team                                                  ║
+║  • 🔄 SWAP - Replace specific agents with alternatives                                  ║
+║  • ➕ ADD - Include additional specialists                                              ║
+║  • ➖ REMOVE - Exclude agents to reduce cost/complexity                                 ║
+║                                                                                          ║
+║  SSE Event: { type: "checkpoint", checkpoint_type: "team_confirmation", ... }           ║
+╚═════════════════════════════════════════════════════════════════════════════════════════╝
+          │
+          │ User approves team
+          ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│  ╔═══════════════════════════════════════════════════════════════════════════════════╗  │
+│  ║                     L1 ORCHESTRATOR: EXECUTION PHASE                               ║  │
+│  ║                                                                                    ║  │
+│  ║  L1 orchestrates team execution:                                                  ║  │
+│  ║                                                                                    ║  │
+│  ║  1. Dispatches tasks to assigned agents                                           ║  │
+│  ║  2. Monitors progress and quality gates                                           ║  │
+│  ║  3. Handles inter-agent communication                                             ║  │
+│  ║  4. Manages parallel task execution                                               ║  │
+│  ║  5. Aggregates results and validates confidence                                   ║  │
+│  ║  6. Triggers self-correction loops if needed                                      ║  │
+│  ║                                                                                    ║  │
+│  ║  ┌──────────────────────────────────────────────────────────────────────────────┐ ║  │
+│  ║  │  EXECUTION FLOW                                                               │ ║  │
+│  ║  │                                                                               │ ║  │
+│  ║  │  T1: Literature Search ──────────────────┐                                    │ ║  │
+│  ║  │       │                                   │                                    │ ║  │
+│  ║  │       ▼                                   ▼                                    │ ║  │
+│  ║  │  T2: FDA Guidance Analysis      T3: Case Study Review                         │ ║  │
+│  ║  │       │                                   │                                    │ ║  │
+│  ║  │       └───────────────────┬───────────────┘                                   │ ║  │
+│  ║  │                           ▼                                                    │ ║  │
+│  ║  │              T4: Synthesis & Recommendations                                   │ ║  │
+│  ║  └──────────────────────────────────────────────────────────────────────────────┘ ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════════════════╝  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+          │
+          │ Execution completes
+          ▼
+╔═════════════════════════════════════════════════════════════════════════════════════════╗
+║                     HITL CHECKPOINT 4: EXECUTION REVIEW                                  ║
+║                                                                                          ║
+║  User reviews final output, artifacts, and confidence scores.                           ║
+║                                                                                          ║
+║  Options:                                                                                ║
+║  • ✅ ACCEPT - Finalize and save results                                                ║
+║  • 🔄 REFINE - Request additional iterations on specific sections                       ║
+║  • 📝 ANNOTATE - Add user notes/corrections before accepting                            ║
+║  • 🔀 BRANCH - Start a new research thread from findings                                ║
+║                                                                                          ║
+║  SSE Event: { type: "checkpoint", checkpoint_type: "execution_review", ... }            ║
+╚═════════════════════════════════════════════════════════════════════════════════════════╝
+          │
+          │ User accepts results
+          ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                              FINAL OUTPUT                                                │
+│                                                                                          │
+│  • Research report with citations                                                        │
+│  • Structured data artifacts                                                             │
+│  • Confidence scores per section                                                         │
+│  • Execution trace for reproducibility                                                   │
+│  • Cost breakdown                                                                        │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### HITL Checkpoint Event Schema
+
+```typescript
+interface HITLCheckpointEvent {
+  type: "checkpoint";
+  checkpoint_type:
+    | "goal_confirmation"      // After L1 translates prompt to goals
+    | "plan_approval"          // After L1 creates execution plan
+    | "team_confirmation"      // After L1 assembles team
+    | "execution_review";      // After execution completes
+  checkpoint_id: string;
+  mission_id: string;
+  data: {
+    // Varies by checkpoint_type
+    goals?: StructuredGoals;        // goal_confirmation
+    plan?: ExecutionPlan;           // plan_approval
+    team?: AssembledTeam;           // team_confirmation
+    results?: ExecutionResults;     // execution_review
+  };
+  options: CheckpointOption[];
+  timeout_seconds?: number;         // Auto-approve after timeout (optional)
+}
+```
+
+#### L1 Master Key Responsibilities
+
+| Phase | L1 Responsibility | LLM Usage |
+|-------|------------------|-----------|
+| **Goal Translation** | Convert natural language to structured goals | ✅ LLM-driven reasoning |
+| **Planning** | Decompose goals into tasks with dependencies | ✅ LLM-driven planning |
+| **Team Assembly** | Match task requirements to agent capabilities | ✅ LLM + capability matching |
+| **Orchestration** | Dispatch tasks, monitor progress, aggregate results | ✅ LLM for decisions |
+| **Quality Control** | Evaluate confidence, trigger self-correction | ✅ LLM-driven evaluation |
+
+#### Implementation Files
+
+| File | Purpose |
+|------|---------|
+| `src/langgraph_workflows/modes34/l1_master.py` | L1 Master Orchestrator implementation |
+| `src/langgraph_workflows/modes34/unified_autonomous_workflow.py` | StateGraph with HITL nodes |
+| `src/modules/expert/schemas/mission_state.py` | Mission state schema |
+| `src/services/hitl_service.py` | HITL checkpoint handling |
+| `src/api/routes/ask_expert_autonomous.py` | API endpoints for checkpoint resolution |
+
+### 2.1.6 Mission Templates & Family Runners Implementation Status
+
+> **Updated:** December 14, 2025
+>
+> This section documents the implementation status of all 23 mission templates and 8 family runners
+> defined in the v6.0 architecture. Each family represents a distinct reasoning pattern.
+
+#### Family Types Overview (8 Logic Families)
+
+| Family | Reasoning Pattern | Runner Status | Runner File |
+|--------|------------------|---------------|-------------|
+| `DEEP_RESEARCH` | ToT → CoT → Reflection | ✅ **IMPLEMENTED** | `deep_research_runner.py` |
+| `MONITORING` | Polling → Delta Detection → Alert | ❌ **PENDING** | - |
+| `EVALUATION` | MCDA Scoring | ❌ **PENDING** | - |
+| `STRATEGY` | Scenario → SWOT → Roadmap | ❌ **PENDING** | - |
+| `INVESTIGATION` | RCA → Bayesian | ❌ **PENDING** | - |
+| `PROBLEM_SOLVING` | Hypothesis → Test → Iterate | ❌ **PENDING** | - |
+| `COMMUNICATION` | Audience → Format → Review | ❌ **PENDING** | - |
+| `GENERIC` | Standard Execution (uses base) | ✅ **IMPLEMENTED** | `base_family_runner.py` |
+| `PREPARATION` | Pre-work Assembly | ❌ **PENDING** | - |
+
+**Implementation Progress:** 2/9 runners implemented (22%)
+
+#### Mission Templates by Family (23 Total)
+
+##### DEEP_RESEARCH Family (3 templates - ✅ ACTIVE)
+
+| Template ID | Name | Complexity | Status | Description |
+|-------------|------|------------|--------|-------------|
+| `comprehensive_analysis` | Comprehensive Analysis | high | ✅ **ACTIVE** | Full multi-source research with citations |
+| `deep_dive` | Deep Dive | high | ✅ **ACTIVE** | Focused deep investigation on single topic |
+| `knowledge_harvest` | Knowledge Harvest | medium | ✅ **ACTIVE** | Extract and organize knowledge from sources |
+
+##### GENERIC Family (1 template - ✅ ACTIVE)
+
+| Template ID | Name | Complexity | Status | Description |
+|-------------|------|------------|--------|-------------|
+| `generic_query` | Generic Query | low | ✅ **ACTIVE** | Standard query handling with basic research |
+
+##### EVALUATION Family (4 templates - ❌ INACTIVE)
+
+| Template ID | Name | Complexity | Status | Description |
+|-------------|------|------------|--------|-------------|
+| `benchmark` | Benchmark | medium | ❌ INACTIVE | Compare against industry standards |
+| `critique` | Critique | medium | ❌ INACTIVE | Critical analysis and feedback |
+| `feasibility_study` | Feasibility Study | high | ❌ INACTIVE | Assess viability of proposed solutions |
+| `risk_assessment` | Risk Assessment | high | ❌ INACTIVE | Identify and evaluate risks |
+
+##### INVESTIGATION Family (3 templates - ❌ INACTIVE)
+
+| Template ID | Name | Complexity | Status | Description |
+|-------------|------|------------|--------|-------------|
+| `due_diligence` | Due Diligence | high | ❌ INACTIVE | Thorough investigation for decisions |
+| `failure_forensics` | Failure Forensics | high | ❌ INACTIVE | Root cause analysis of failures |
+| `signal_chasing` | Signal Chasing | medium | ❌ INACTIVE | Track and verify weak signals |
+
+##### MONITORING Family (3 templates - ❌ INACTIVE)
+
+| Template ID | Name | Complexity | Status | Description |
+|-------------|------|------------|--------|-------------|
+| `competitive_watch` | Competitive Watch | medium | ❌ INACTIVE | Monitor competitor activities |
+| `horizon_scan` | Horizon Scan | medium | ❌ INACTIVE | Identify emerging trends |
+| `trigger_monitoring` | Trigger Monitoring | low | ❌ INACTIVE | Monitor for specific trigger events |
+
+##### PREPARATION Family (3 templates - ❌ INACTIVE)
+
+| Template ID | Name | Complexity | Status | Description |
+|-------------|------|------------|--------|-------------|
+| `case_building` | Case Building | high | ❌ INACTIVE | Build comprehensive case with evidence |
+| `meeting_prep` | Meeting Prep | medium | ❌ INACTIVE | Prepare materials for meetings |
+| `prework_assembly` | Pre-work Assembly | medium | ❌ INACTIVE | Gather and organize pre-work materials |
+
+##### PROBLEM_SOLVING Family (3 templates - ❌ INACTIVE)
+
+| Template ID | Name | Complexity | Status | Description |
+|-------------|------|------------|--------|-------------|
+| `alternative_finding` | Alternative Finding | medium | ❌ INACTIVE | Find alternative solutions |
+| `get_unstuck` | Get Unstuck | medium | ❌ INACTIVE | Help overcome blockers |
+| `path_finding` | Path Finding | medium | ❌ INACTIVE | Navigate complex decision paths |
+
+##### STRATEGY Family (3 templates - ❌ INACTIVE)
+
+| Template ID | Name | Complexity | Status | Description |
+|-------------|------|------------|--------|-------------|
+| `decision_framing` | Decision Framing | medium | ❌ INACTIVE | Structure complex decisions |
+| `option_exploration` | Option Exploration | medium | ❌ INACTIVE | Explore and compare options |
+| `tradeoff_analysis` | Tradeoff Analysis | high | ❌ INACTIVE | Analyze tradeoffs between choices |
+
+#### Implementation Summary
+
+```
+Mission Templates:
+├── ACTIVE:    4/23 (17%)  ─ comprehensive_analysis, deep_dive, knowledge_harvest, generic_query
+└── INACTIVE: 19/23 (83%)  ─ Awaiting runner implementation
+
+Family Runners:
+├── IMPLEMENTED: 2/9 (22%) ─ DEEP_RESEARCH, GENERIC (via base)
+└── PENDING:     7/9 (78%) ─ MONITORING, EVALUATION, STRATEGY, INVESTIGATION,
+                             PROBLEM_SOLVING, COMMUNICATION, PREPARATION
+```
+
+#### Key Implementation Files
+
+| File | Purpose |
+|------|---------|
+| `src/langgraph_workflows/modes34/runners/registry.py` | Dynamic runner/template loading from Supabase |
+| `src/langgraph_workflows/modes34/runners/base_family_runner.py` | Abstract base class for all runners |
+| `src/langgraph_workflows/modes34/runners/deep_research_runner.py` | Reference implementation (ToT→CoT→Reflection) |
+| `database/mission_templates` | Supabase table with all 23 template definitions |
+
+#### BaseFamilyRunner Pattern
+
+All family runners extend `BaseFamilyRunner[StateT]` and must implement:
+
+```python
+class BaseFamilyRunner(ABC, Generic[StateT]):
+    @abstractmethod
+    def _create_nodes(self) -> Dict[str, Callable[[StateT], StateT]]:
+        """Define graph nodes for the family's reasoning pattern."""
+
+    @abstractmethod
+    def _define_edges(self, graph: StateGraph) -> StateGraph:
+        """Define conditional edges and routing logic."""
+
+    @abstractmethod
+    def _get_interrupt_nodes(self) -> List[str]:
+        """List nodes that pause for HITL checkpoints."""
+```
 
 ### 2.2 HITL Checkpoint System
 

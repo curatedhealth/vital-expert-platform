@@ -164,8 +164,6 @@ export type {
   MissionConfig,
   MissionEvent,
   RunnerEvent,
-  RunnerCard,
-  MissionCard,
   RunnerFilters,
   MissionFilters,
 } from './autonomous';

@@ -1,0 +1,52 @@
+template:
+  id: "critique"
+  name: "Critique"
+  slug: "critique"
+  family: "EVALUATION"
+  runner: "EvaluationRunner"
+  description: "Evaluate and critique an artifact using MCDA rubric"
+
+  required_agent_levels: [2, 3]
+  recommended_archetypes:
+    - "heor_director"
+    - "medical_director"
+
+  required_tool_ids: ["L5-RAG", "L5-PS"]
+  optional_tool_ids: ["L5-FDA", "L5-WEB"]
+
+  l4_workers: ["L4-QA", "L4-EV", "L4-GD"]
+
+  hitl_phases:
+    - phase_id: "criteria_review"
+      checkpoint_type: "approval"
+      title: "Review Evaluation Criteria"
+      is_blocking: true
+    - phase_id: "final_review"
+      checkpoint_type: "validation"
+      title: "Review Critique Results"
+      is_blocking: false
+
+  mode_4_constraints:
+    max_cost: 0.15
+    max_iterations: 5
+    max_wall_time_minutes: 15
+    allow_auto_continue: false
+
+  tasks:
+    - id: "define_criteria"
+      name: "Define Evaluation Criteria"
+      description: "Identify scoring criteria and rubric."
+    - id: "score_artifact"
+      name: "Score Artifact"
+      description: "Score artifact against rubric."
+    - id: "synthesize"
+      name: "Synthesize Findings"
+      description: "Summarize strengths, weaknesses, recommendations."
+
+  checkpoints:
+    - type: "plan"
+      description: "Review evaluation criteria"
+      is_blocking: true
+    - type: "final"
+      description: "Approve final critique"
+      is_blocking: false

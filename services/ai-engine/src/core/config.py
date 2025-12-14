@@ -417,8 +417,8 @@ class Settings:
     verify_protocol_enabled: bool = True
     pharma_protocol_enabled: bool = True
     
-    # Defaults
-    default_tenant_id: str = "c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244"
+    # Defaults - Canonical tenant for single-tenant deployment
+    default_tenant_id: str = "00000000-0000-0000-0000-000000000001"
     
     @classmethod
     def from_env(cls) -> "Settings":
@@ -464,8 +464,8 @@ class Settings:
             verify_protocol_enabled=os.getenv("VERIFY_PROTOCOL_ENABLED", "true").lower() == "true",
             pharma_protocol_enabled=os.getenv("PHARMA_PROTOCOL_ENABLED", "true").lower() == "true",
             
-            # Defaults
-            default_tenant_id=os.getenv("DEFAULT_TENANT_ID", os.getenv("PLATFORM_ORGANIZATION_ID", "c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244")),
+            # Defaults - Canonical tenant for single-tenant deployment
+            default_tenant_id=os.getenv("DEFAULT_TENANT_ID", os.getenv("PLATFORM_ORGANIZATION_ID", "00000000-0000-0000-0000-000000000001")),
         )
 
 

@@ -9,6 +9,8 @@ type Mode = 3 | 4;
 export interface UseAutonomousModeOptions {
   mode: Mode;
   missionId?: string;
+  agentId?: string;
+  /** @deprecated Use agentId instead */
   expertId?: string;
   tenantId?: string;
 }

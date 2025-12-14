@@ -379,7 +379,11 @@ Return structured findings with citations."""
                 "timestamp": datetime.utcnow().isoformat(),
             })
             branch.completed = True
-            branch.branch_confidence = 0.75  # Placeholder
+            branch.branch_confidence = self._calculate_branch_confidence(
+                evidence_quality=state.evidence_quality,
+                citation_count=len(state.citations),
+                source_reliability=state.source_reliability_scores,
+            )
 
             state.research_branches[state.current_branch_index] = branch
             state.current_branch_index += 1
@@ -604,6 +608,24 @@ If the synthesis is satisfactory, confirm it meets quality standards."""
             state.hitl_reason = f"Quality score {state.quality_score:.2f} below threshold {self.confidence_threshold}"
 
         return state
+
+    def _calculate_branch_confidence(
+        self,
+        evidence_quality: float,
+        citation_count: int,
+        source_reliability: list[float],
+    ) -> float:
+        """
+        Derive branch confidence from evidence and source reliability.
+        """
+        base_confidence = max(min(evidence_quality, 1.0), 0.0)
+        citation_bonus = min(citation_count * 0.05, 0.2)
+        reliability_bonus = (
+            sum(source_reliability) / len(source_reliability) * 0.1
+            if source_reliability
+            else 0.0
+        )
+        return min(base_confidence + citation_bonus + reliability_bonus, 1.0)
 
     # =========================================================================
     # Routing Functions

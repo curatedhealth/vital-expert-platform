@@ -55,7 +55,7 @@ class L2DomainExpert(BaseAgent, ABC):
         Initialize L2 Domain Expert.
 
         Args:
-            expert_id: Unique identifier for this expert
+            agent_id: Unique identifier for this expert
             domain: Domain of expertise
             llm: Pre-configured LLM (for DI)
             token_budget: Maximum tokens per operation (from env/db if None)
@@ -66,7 +66,7 @@ class L2DomainExpert(BaseAgent, ABC):
         Reference: HANDOVER_BACKEND_INTEGRATION.md
         """
         super().__init__(config)
-        self.expert_id = config.id
+        self.agent_id = config.id
         self.domain = domain
         # Use provided values or fall back to L2 env defaults
         self.token_budget = token_budget or _L2_DEFAULTS.max_tokens
@@ -95,13 +95,13 @@ class L2DomainExpert(BaseAgent, ABC):
             except ImportError:
                 logger.warning(
                     "l2_llm_not_available",
-                    expert_id=self.expert_id,
+                    agent_id=self.agent_id,
                 )
                 self.llm = None
 
         logger.info(
             "l2_expert_initialized",
-            expert_id=self.expert_id,
+            agent_id=self.agent_id,
             domain=self.domain,
             model=self.model,
             temperature=effective_temperature,
@@ -146,51 +146,51 @@ class L2DomainExpert(BaseAgent, ABC):
         """
         logger.info(
             "l2_process_started",
-            expert_id=self.expert_id,
+            agent_id=self.agent_id,
             domain=self.domain,
             tenant_id=tenant_id,
         )
-        
+
         try:
             if not self.llm:
                 return self._fallback_response(query)
-            
+
             from langchain_core.messages import SystemMessage, HumanMessage
-            
+
             # Build prompt with context and evidence
             analysis_prompt = self._build_analysis_prompt(query, context, evidence)
-            
+
             response = await self.llm.ainvoke([
                 SystemMessage(content=self.system_prompt),
                 HumanMessage(content=analysis_prompt),
             ])
-            
+
             result = {
-                'expert_id': self.expert_id,
+                'agent_id': self.agent_id,
                 'domain': self.domain,
                 'analysis': response.content,
                 'citations': self._extract_citations(response.content),
                 'confidence': self._assess_confidence(response.content, evidence),
                 'timestamp': datetime.utcnow().isoformat(),
             }
-            
+
             logger.info(
                 "l2_process_completed",
-                expert_id=self.expert_id,
+                agent_id=self.agent_id,
                 domain=self.domain,
                 response_length=len(response.content),
             )
-            
+
             return result
-            
+
         except Exception as e:
             logger.error(
                 "l2_process_failed",
-                expert_id=self.expert_id,
+                agent_id=self.agent_id,
                 error=str(e),
             )
             return {
-                'expert_id': self.expert_id,
+                'agent_id': self.agent_id,
                 'domain': self.domain,
                 'analysis': f"Error processing query: {str(e)}",
                 'error': str(e),
@@ -292,13 +292,13 @@ class L2DomainExpert(BaseAgent, ABC):
     def _fallback_response(self, query: str) -> Dict[str, Any]:
         """Fallback response when LLM unavailable."""
         return {
-            'expert_id': self.expert_id,
+            'agent_id': self.agent_id,
             'domain': self.domain,
             'analysis': f"Unable to process query in {self.domain} domain. LLM not available.",
             'confidence': 0.0,
             'error': 'LLM not available',
         }
-    
+
     async def spawn_specialist(
         self,
         task: str,
@@ -306,23 +306,23 @@ class L2DomainExpert(BaseAgent, ABC):
     ) -> "AskExpertL3TaskSpecialist":
         """
         Spawn L3 specialist for specific sub-task.
-        
+
         Args:
             task: Task description
             context: Context for the task
-            
+
         Returns:
             L3 Task Specialist instance
         """
         from modules.ask_expert.agents.l3_specialists import AskExpertL3TaskSpecialist
-        
+
         logger.info(
             "l2_spawn_specialist",
-            expert_id=self.expert_id,
+            agent_id=self.agent_id,
             task=task[:100],
         )
-        
+
         return AskExpertL3TaskSpecialist(
             task_type="analysis",
-            parent_expert_id=self.expert_id,
+            parent_agent_id=self.agent_id,
         )

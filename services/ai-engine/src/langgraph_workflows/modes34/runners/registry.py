@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import os
 import time
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING
 import structlog
 
@@ -42,6 +43,12 @@ def _get_default_graph_builder() -> Callable:
 
 CACHE_TTL_SECONDS = int(os.getenv("RUNNER_CACHE_TTL", "300"))  # 5 minutes
 DEFAULT_TEMPLATE_ID = "generic"
+DEFAULT_TEMPLATE_DIR = Path(
+    os.getenv(
+        "MISSION_TEMPLATE_DIR",
+        Path(__file__).resolve().parent.parent / "templates",
+    )
+)
 
 # =============================================================================
 # Template Cache
@@ -149,6 +156,48 @@ async def _load_templates_from_db() -> Dict[str, Dict[str, Any]]:
         )
 
 
+def _load_templates_from_fs(templates_dir: Path = DEFAULT_TEMPLATE_DIR) -> Dict[str, Dict[str, Any]]:
+    """
+    Load mission templates from YAML files as a filesystem fallback.
+
+    Args:
+        templates_dir: Directory containing *.yaml template files
+
+    Returns:
+        Dict mapping template slug to template configuration
+    """
+    from langgraph_workflows.modes34.templates.schema import TemplateConfig  # local import to avoid cycles
+
+    templates: Dict[str, Dict[str, Any]] = {}
+
+    if not templates_dir.exists():
+        return templates
+
+    for yaml_file in templates_dir.glob("*.yaml"):
+        try:
+            config = TemplateConfig.from_yaml(yaml_file)
+            cache_entry = config.to_cache_dict()
+            key = cache_entry.get("slug") or cache_entry.get("id") or yaml_file.stem
+            templates[key] = cache_entry
+        except Exception as exc:
+            logger.warning(
+                "fs_template_load_failed",
+                file=str(yaml_file),
+                error=str(exc)[:200],
+                error_type=type(exc).__name__,
+            )
+
+    if templates:
+        logger.info(
+            "mission_templates_loaded_from_fs",
+            count=len(templates),
+            directory=str(templates_dir),
+            sample_templates=list(templates.keys())[:5],
+        )
+
+    return templates
+
+
 async def refresh_template_cache(force: bool = False) -> int:
     """
     Refresh template cache from database.
@@ -163,7 +212,30 @@ async def refresh_template_cache(force: bool = False) -> int:
         if not force and not _template_cache.is_stale:
             return len(_template_cache.get_all())
 
-        templates = await _load_templates_from_db()
+        templates: Dict[str, Dict[str, Any]] = {}
+
+        # Load from database (primary source)
+        try:
+            templates.update(await _load_templates_from_db())
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.warning(
+                "mission_templates_db_load_failed_falling_back_to_fs",
+                error=str(exc)[:200],
+                error_type=type(exc).__name__,
+            )
+
+        # Load from filesystem (fallback / local templates)
+        try:
+            templates.update(_load_templates_from_fs())
+        except Exception as exc:
+            logger.warning(
+                "mission_templates_fs_load_failed",
+                error=str(exc)[:200],
+                error_type=type(exc).__name__,
+            )
+
         _template_cache.set(templates)
         return len(templates)
 

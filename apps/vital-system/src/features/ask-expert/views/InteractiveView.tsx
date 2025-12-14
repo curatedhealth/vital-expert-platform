@@ -238,6 +238,11 @@ export function InteractiveView({
   const [activePlan, setActivePlan] = useState<ExecutionPlan | null>(null);
   const [activeDelegations, setActiveDelegations] = useState<SubAgentDelegation[]>([]);
   const [toolExecutions, setToolExecutions] = useState<ToolExecution[]>([]);
+  // UI collapse controls
+  const [responsesCollapsed, setResponsesCollapsed] = useState(false);
+  const [inputCollapsed, setInputCollapsed] = useState(false);
+  const [collapsedMessages, setCollapsedMessages] = useState<Set<string>>(new Set());
+  const [collapsedStreaming, setCollapsedStreaming] = useState(false);
 
   // Prompt starters state
   const [promptStarters, setPromptStarters] = useState<Array<{
@@ -718,6 +723,33 @@ export function InteractiveView({
     // TODO: Send cancellation to backend
   }, []);
 
+  const toggleMessageCollapse = useCallback((messageId: string) => {
+    setCollapsedMessages(prev => {
+      const next = new Set(prev);
+      if (next.has(messageId)) {
+        next.delete(messageId);
+      } else {
+        next.add(messageId);
+      }
+      return next;
+    });
+  }, []);
+
+  const collapseAll = useCallback(() => {
+    const ids = new Set(messages.map(m => m.id));
+    setCollapsedMessages(ids);
+    setCollapsedStreaming(true);
+    setInputCollapsed(true);
+    setResponsesCollapsed(false);
+  }, [messages]);
+
+  const expandAll = useCallback(() => {
+    setCollapsedMessages(new Set());
+    setCollapsedStreaming(false);
+    setInputCollapsed(false);
+    setResponsesCollapsed(false);
+  }, []);
+
   // AI Prompt Enhancement handler for VitalPromptInput
   const handlePromptEnhance = useCallback(async (message: string): Promise<string> => {
     try {
@@ -868,246 +900,348 @@ export function InteractiveView({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col h-full"
+            className="flex flex-col h-full items-center"
           >
-            {/* Expert Header */}
-            {selectedExpert && (
-              <ExpertHeader
-                expert={selectedExpert}
-                mode={mode}
-                onSwitchExpert={messages.length === 0 ? handleBackToSelection : undefined}
-              />
-            )}
-
-            {/* Message List */}
-            <div
-              ref={messagesContainerRef}
-              className="flex-1 overflow-auto p-4 space-y-4"
-            >
-              {/* Empty state for Mode 1: Guide user to pick expert from sidebar */}
-              {mode === 'mode1' && !selectedExpert && messages.length === 0 && (
-                <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
-                    className="text-center max-w-md"
-                  >
-                    <div className="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-4">
-                      <ArrowLeft className="h-8 w-8 text-purple-500" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-slate-900 mb-2">
-                      Select an Expert
-                    </h2>
-                    <p className="text-muted-foreground mb-6">
-                      Browse and select an AI expert from the sidebar to start your conversation.
-                    </p>
-                    <div className="flex items-center justify-center gap-2 text-sm text-purple-600 bg-purple-50 rounded-lg px-4 py-2">
-                      <Users className="h-4 w-4" />
-                      <span>Experts are organized by specialty</span>
-                    </div>
-                  </motion.div>
-                </div>
+            <div className="flex flex-col h-full w-full max-w-5xl mx-auto">
+              {/* Expert Header */}
+              {selectedExpert && (
+                <ExpertHeader
+                  expert={selectedExpert}
+                  mode={mode}
+                  onSwitchExpert={messages.length === 0 ? handleBackToSelection : undefined}
+                />
               )}
 
-              {/* ═══════════════════════════════════════════════════════════════
-                  EMPTY STATE: Prompt Starters + Input at TOP
-                  (shown when expert selected but no messages yet)
-                  ═══════════════════════════════════════════════════════════════ */}
-              {messages.length === 0 && selectedExpert && (
-                <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
-                  {isLoadingPromptStarters ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-                      <p className="text-sm text-muted-foreground">Loading suggestions...</p>
-                    </div>
-                  ) : (
-                    <div className="w-full max-w-3xl space-y-6">
-                      {/* Welcome Header */}
-                      <div className="text-center mb-4">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 text-purple-700 text-sm font-medium mb-2">
-                          <Sparkles className="h-4 w-4" />
-                          {promptStarters.length > 0 ? 'Get Started' : 'Ready to Chat'}
-                        </div>
-                        <p className="text-muted-foreground text-sm">
-                          {promptStarters.length > 0
-                            ? 'Choose a topic or type your own question below'
-                            : `Ask ${selectedExpert.name} anything`
-                          }
-                        </p>
-                      </div>
+              {/* View controls */}
+              <div className="flex items-center justify-end gap-2 px-4 py-2 border-b bg-white/70 backdrop-blur">
+                <button
+                  className="text-xs px-3 py-1 rounded-full border border-slate-200 hover:border-purple-300 hover:text-purple-700 transition"
+                  onClick={() => setResponsesCollapsed((prev) => !prev)}
+                >
+                  {responsesCollapsed ? 'Expand responses' : 'Collapse responses'}
+                </button>
+                <button
+                  className="text-xs px-3 py-1 rounded-full border border-slate-200 hover:border-purple-300 hover:text-purple-700 transition"
+                  onClick={() => setInputCollapsed((prev) => !prev)}
+                >
+                  {inputCollapsed ? 'Expand input' : 'Collapse input'}
+                </button>
+                <button
+                  className="text-xs px-3 py-1 rounded-full border border-slate-200 hover:border-purple-300 hover:text-purple-700 transition"
+                  onClick={collapseAll}
+                >
+                  Collapse all
+                </button>
+                <button
+                  className="text-xs px-3 py-1 rounded-full border border-slate-200 hover:border-purple-300 hover:text-purple-700 transition"
+                  onClick={expandAll}
+                >
+                  Expand all
+                </button>
+              </div>
 
-                      {/* Prompt Starters Grid */}
-                      {promptStarters.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                          {promptStarters.slice(0, 4).map((starter, index) => (
-                            <motion.button
-                              key={index}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                              onClick={() => handleSend(starter.fullPrompt || starter.text)}
-                              className="group p-4 rounded-xl border border-slate-200 bg-white hover:border-purple-300 hover:shadow-md transition-all text-left"
-                            >
-                              <div className="flex items-start gap-3">
-                                {(() => {
-                                  const IconComponent = getPromptStarterIcon(starter.icon);
-                                  return <IconComponent className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" />;
-                                })()}
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-2">
-                                    {starter.text}
-                                  </p>
-                                  {starter.description && (
-                                    <p className="text-sm text-slate-500 mt-1 line-clamp-1">
-                                      {starter.description}
-                                    </p>
-                                  )}
-                                </div>
-                                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
-                              </div>
-                            </motion.button>
-                          ))}
+              {/* Message List */}
+              <div className="flex-1 flex flex-col">
+                <div
+                  ref={messagesContainerRef}
+                  className="flex-1 overflow-auto p-4 space-y-4"
+                >
+                  {responsesCollapsed && (
+                    <div className="flex justify-between items-center p-3 rounded-lg border border-dashed border-slate-200 text-sm text-slate-600">
+                      <span>Responses hidden to save space.</span>
+                      <button
+                        className="text-purple-600 font-medium hover:underline"
+                        onClick={() => setResponsesCollapsed(false)}
+                      >
+                        Show responses
+                      </button>
+                    </div>
+                  )}
+                  {!responsesCollapsed && (
+                    <>
+                      {/* Empty state for Mode 1: Guide user to pick expert from sidebar */}
+                      {mode === 'mode1' && !selectedExpert && messages.length === 0 && (
+                        <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                            className="text-center max-w-md"
+                          >
+                            <div className="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-4">
+                              <ArrowLeft className="h-8 w-8 text-purple-500" />
+                            </div>
+                            <h2 className="text-xl font-semibold text-slate-900 mb-2">
+                              Select an Expert
+                            </h2>
+                            <p className="text-muted-foreground mb-6">
+                              Browse and select an AI expert from the sidebar to start your conversation.
+                            </p>
+                            <div className="flex items-center justify-center gap-2 text-sm text-purple-600 bg-purple-50 rounded-lg px-4 py-2">
+                              <Users className="h-4 w-4" />
+                              <span>Experts are organized by specialty</span>
+                            </div>
+                          </motion.div>
                         </div>
                       )}
 
-                      {/* ═══════════════════════════════════════════════════════════
-                          PROMPT INPUT AT TOP - Centered under prompt starters
-                          ═══════════════════════════════════════════════════════════ */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2, duration: 0.3 }}
-                        className="w-full"
-                      >
-                        <VitalPromptInput
-                          onSubmit={handleSend}
-                          onEnhance={handlePromptEnhance}
-                          isLoading={isStreaming}
-                          onStop={() => disconnect()}
-                          placeholder={`Ask ${selectedExpert.name}...`}
-                          showAttachments={true}
-                          showEnhance={true}
-                          maxLength={4000}
+                      {/* ═══════════════════════════════════════════════════════════════
+                          EMPTY STATE: Prompt Starters + Input at TOP
+                          (shown when expert selected but no messages yet)
+                          ═══════════════════════════════════════════════════════════════ */}
+                      {messages.length === 0 && selectedExpert && (
+                        <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
+                          {isLoadingPromptStarters ? (
+                            <div className="flex flex-col items-center gap-3">
+                              <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+                              <p className="text-sm text-muted-foreground">Loading suggestions...</p>
+                            </div>
+                          ) : (
+                            <div className="w-full max-w-3xl space-y-6">
+                              {/* Welcome Header */}
+                              <div className="text-center mb-4">
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 text-purple-700 text-sm font-medium mb-2">
+                                  <Sparkles className="h-4 w-4" />
+                                  {promptStarters.length > 0 ? 'Get Started' : 'Ready to Chat'}
+                                </div>
+                                <p className="text-muted-foreground text-sm">
+                                  {promptStarters.length > 0
+                                    ? 'Choose a topic or type your own question below'
+                                    : `Ask ${selectedExpert.name} anything`
+                                  }
+                                </p>
+                              </div>
+
+                              {/* Prompt Starters Grid */}
+                              {promptStarters.length > 0 && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                                  {promptStarters.slice(0, 4).map((starter, index) => (
+                                    <motion.button
+                                      key={index}
+                                      initial={{ opacity: 0, y: 10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      transition={{ delay: index * 0.05 }}
+                                      onClick={() => handleSend(starter.fullPrompt || starter.text)}
+                                      className="group p-4 rounded-xl border border-slate-200 bg-white hover:border-purple-300 hover:shadow-md transition-all text-left"
+                                    >
+                                      <div className="flex items-start gap-3">
+                                        {(() => {
+                                          const IconComponent = getPromptStarterIcon(starter.icon);
+                                          return <IconComponent className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" />;
+                                        })()}
+                                        <div className="flex-1 min-w-0">
+                                          <p className="font-medium text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-2">
+                                            {starter.text}
+                                          </p>
+                                          {starter.description && (
+                                            <p className="text-sm text-slate-500 mt-1 line-clamp-1">
+                                              {starter.description}
+                                            </p>
+                                          )}
+                                        </div>
+                                        <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
+                                      </div>
+                                    </motion.button>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* ═══════════════════════════════════════════════════════════
+                                  PROMPT INPUT AT TOP - Centered under prompt starters
+                                  ═══════════════════════════════════════════════════════════ */}
+                              <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2, duration: 0.3 }}
+                                className="w-full"
+                              >
+                                <VitalPromptInput
+                                  onSubmit={handleSend}
+                                  onEnhance={handlePromptEnhance}
+                                  isLoading={isStreaming}
+                                  onStop={() => disconnect()}
+                                  placeholder={`Ask ${selectedExpert.name}...`}
+                                  showAttachments={true}
+                                  showEnhance={true}
+                                  maxLength={4000}
+                                  className="w-full"
+                                />
+                              </motion.div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {messages.map((message) => {
+                        const isCollapsed = collapsedMessages.has(message.id);
+                        return (
+                          <div key={message.id} className="relative">
+                            <button
+                              className="absolute -right-2 -top-2 z-10 text-xs px-2 py-1 rounded-full border border-slate-200 bg-white shadow-sm hover:border-purple-300 hover:text-purple-700 transition"
+                              onClick={() => toggleMessageCollapse(message.id)}
+                            >
+                              {isCollapsed ? 'Expand' : 'Collapse'}
+                            </button>
+                            {isCollapsed ? (
+                              <div className="w-full max-w-4xl mx-auto px-4 py-3 rounded-lg border border-dashed border-slate-200 text-sm text-slate-500 bg-white">
+                                Message collapsed. <button className="text-purple-600 font-medium hover:underline" onClick={() => toggleMessageCollapse(message.id)}>Expand</button>
+                              </div>
+                            ) : (
+                              <VitalMessage
+                                key={message.id}
+                                message={message}
+                                expert={selectedExpert}
+                                className="w-full"
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {/* Tool Execution Feedback (visible during streaming) */}
+                      {toolExecutions.length > 0 && (
+                        <ToolExecutionFeedback
+                          executions={toolExecutions}
+                          compact={false}
+                          maxVisible={5}
+                          allowCancel={true}
+                          onCancel={handleToolCancel}
+                          className="mb-4"
                         />
-                      </motion.div>
-                    </div>
+                      )}
+
+                      {/* Active Plan Approval Card */}
+                      {activePlan && (
+                        <PlanApprovalCard
+                          plan={activePlan}
+                          onApprove={handlePlanApprove}
+                          onReject={handlePlanReject}
+                          onModify={handlePlanModify}
+                          className="mb-4"
+                        />
+                      )}
+
+                      {/* Active Sub-Agent Delegations */}
+                      {activeDelegations.filter(d => d.status === 'pending_approval' || d.status === 'in_progress').map(delegation => (
+                        <SubAgentDelegationCard
+                          key={delegation.id}
+                          delegation={delegation}
+                          onApprove={handleDelegationApprove}
+                          onReject={handleDelegationReject}
+                          requiresApproval={delegation.status === 'pending_approval'}
+                          className="mb-4"
+                        />
+                      ))}
+
+                      {/* Streaming Message (while receiving) */}
+                      {isStreaming && (
+                        <div className="relative">
+                          <button
+                            className="absolute -right-2 -top-2 z-10 text-xs px-2 py-1 rounded-full border border-slate-200 bg-white shadow-sm hover:border-purple-300 hover:text-purple-700 transition"
+                            onClick={() => setCollapsedStreaming(prev => !prev)}
+                          >
+                            {collapsedStreaming ? 'Expand' : 'Collapse'}
+                          </button>
+                          {collapsedStreaming ? (
+                            <div className="w-full max-w-4xl mx-auto px-4 py-3 rounded-lg border border-dashed border-slate-200 text-sm text-slate-500 bg-white">
+                              Streaming response collapsed. <button className="text-purple-600 font-medium hover:underline" onClick={() => setCollapsedStreaming(false)}>Expand</button>
+                            </div>
+                          ) : (
+                            <StreamingMessage
+                              state={streamState}
+                              expert={selectedExpert}
+                              mode={mode}
+                              className="w-full"
+                            />
+                          )}
+                        </div>
+                      )}
+
+                      {/* Error State */}
+                      {streamState.error && (
+                        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                          <p className="font-medium">Error</p>
+                          <p className="text-sm">{streamState.error.message}</p>
+                          {streamState.error.recoverable && (
+                            <button
+                              onClick={() => dispatch(streamActions.reset())}
+                              className="mt-2 text-sm text-red-600 underline hover:no-underline"
+                            >
+                              Try again
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
+
+                  {/* Scroll anchor */}
+                  <div ref={messagesEndRef} />
                 </div>
-              )}
+              </div>
 
-              {messages.map((message) => (
-                <VitalMessage
-                  key={message.id}
-                  message={message}
-                  expert={selectedExpert}
-                />
-              ))}
-
-              {/* Tool Execution Feedback (visible during streaming) */}
-              {toolExecutions.length > 0 && (
-                <ToolExecutionFeedback
-                  executions={toolExecutions}
-                  compact={false}
-                  maxVisible={5}
-                  allowCancel={true}
-                  onCancel={handleToolCancel}
-                  className="mb-4"
+              {/* Suggestion Chips (after stream completes) */}
+              {!isStreaming && streamState.status === 'idle' && messages.length > 0 && streamState.suggestions && streamState.suggestions.length > 0 && (
+                <VitalSuggestionChips
+                  suggestions={streamState.suggestions}
+                  onSelect={handleSuggestionSelect}
+                  maxVisible={4}
+                  layout="wrap"
                 />
               )}
 
-              {/* Active Plan Approval Card */}
-              {activePlan && (
-                <PlanApprovalCard
-                  plan={activePlan}
-                  onApprove={handlePlanApprove}
-                  onReject={handlePlanReject}
-                  onModify={handlePlanModify}
-                  className="mb-4"
-                />
-              )}
-
-              {/* Active Sub-Agent Delegations */}
-              {activeDelegations.filter(d => d.status === 'pending_approval' || d.status === 'in_progress').map(delegation => (
-                <SubAgentDelegationCard
-                  key={delegation.id}
-                  delegation={delegation}
-                  onApprove={handleDelegationApprove}
-                  onReject={handleDelegationReject}
-                  requiresApproval={delegation.status === 'pending_approval'}
-                  className="mb-4"
-                />
-              ))}
-
-              {/* Streaming Message (while receiving) */}
-              {isStreaming && (
-                <StreamingMessage
-                  state={streamState}
-                  expert={selectedExpert}
-                  mode={mode}
-                />
-              )}
-
-              {/* Error State */}
-              {streamState.error && (
-                <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
-                  <p className="font-medium">Error</p>
-                  <p className="text-sm">{streamState.error.message}</p>
-                  {streamState.error.recoverable && (
+              {/* ═══════════════════════════════════════════════════════════════
+                  CHAT INPUT AT BOTTOM - Only shown after messages exist
+                  (Input starts at TOP under prompt starters, then moves here)
+                  ═══════════════════════════════════════════════════════════════ */}
+              {/* For Mode 1: Only show input when expert is selected (from sidebar) */}
+              {/* For Mode 2: Always show input once in conversation phase */}
+              {/* IMPORTANT: Only show at bottom when messages.length > 0 (input moves from top) */}
+              {messages.length > 0 && (mode === 'mode2' || selectedExpert) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="border-t bg-white/80 backdrop-blur-sm relative"
+                >
+                  {!inputCollapsed && (
                     <button
-                      onClick={() => dispatch(streamActions.reset())}
-                      className="mt-2 text-sm text-red-600 underline hover:no-underline"
+                      className="absolute right-3 top-2 text-xs px-3 py-1 rounded-full border border-slate-200 bg-white shadow-sm hover:border-purple-300 hover:text-purple-700 transition"
+                      onClick={() => setInputCollapsed(true)}
                     >
-                      Try again
+                      Collapse input
                     </button>
                   )}
-                </div>
+                  {!inputCollapsed ? (
+                    <VitalPromptInput
+                      onSubmit={handleSend}
+                      onEnhance={handlePromptEnhance}
+                      isLoading={isStreaming}
+                      onStop={() => disconnect()}
+                      placeholder={
+                        selectedExpert
+                          ? `Continue chatting with ${selectedExpert.name}...`
+                          : 'Type your question...'
+                      }
+                      showAttachments={true}
+                      showEnhance={!!selectedExpert}
+                      maxLength={4000}
+                      className="w-full"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-between px-4 py-3 text-sm text-slate-600">
+                      <span>Input collapsed.</span>
+                      <button
+                        className="text-purple-600 font-medium hover:underline"
+                        onClick={() => setInputCollapsed(false)}
+                      >
+                        Expand input
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
               )}
-
-              {/* Scroll anchor */}
-              <div ref={messagesEndRef} />
             </div>
-
-            {/* Suggestion Chips (after stream completes) */}
-            {!isStreaming && streamState.status === 'idle' && messages.length > 0 && streamState.suggestions && streamState.suggestions.length > 0 && (
-              <VitalSuggestionChips
-                suggestions={streamState.suggestions}
-                onSelect={handleSuggestionSelect}
-                maxVisible={4}
-                layout="wrap"
-              />
-            )}
-
-            {/* ═══════════════════════════════════════════════════════════════
-                CHAT INPUT AT BOTTOM - Only shown after messages exist
-                (Input starts at TOP under prompt starters, then moves here)
-                ═══════════════════════════════════════════════════════════════ */}
-            {/* For Mode 1: Only show input when expert is selected (from sidebar) */}
-            {/* For Mode 2: Always show input once in conversation phase */}
-            {/* IMPORTANT: Only show at bottom when messages.length > 0 (input moves from top) */}
-            {messages.length > 0 && (mode === 'mode2' || selectedExpert) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="border-t bg-white/80 backdrop-blur-sm"
-              >
-                <VitalPromptInput
-                  onSubmit={handleSend}
-                  onEnhance={handlePromptEnhance}
-                  isLoading={isStreaming}
-                  onStop={() => disconnect()}
-                  placeholder={
-                    selectedExpert
-                      ? `Continue chatting with ${selectedExpert.name}...`
-                      : 'Type your question...'
-                  }
-                  showAttachments={true}
-                  showEnhance={!!selectedExpert}
-                  maxLength={4000}
-                />
-              </motion.div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>

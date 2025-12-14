@@ -127,7 +127,7 @@ export function StreamingMessage({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={cn('flex gap-3', className)}
+      className={cn('flex gap-3 w-full items-start', className)}
     >
       {/* Avatar */}
       <div className="shrink-0">
@@ -149,7 +149,7 @@ export function StreamingMessage({
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 min-w-0 space-y-3">
+      <div className="flex-1 min-w-0 space-y-3 w-full">
         {/* Expert name */}
         {expert && (
           <div className="flex items-center gap-2">
@@ -198,7 +198,7 @@ export function StreamingMessage({
         {(hasContent || isStreaming) && (
           <div
             ref={contentRef}
-            className="py-2"
+            className="py-2 w-full flex justify-center"
           >
             <VitalStreamText
               content={state.content || '\u00A0'}
@@ -207,6 +207,7 @@ export function StreamingMessage({
               enableMermaid={true}
               showControls={true}
               citations={inlineCitations}
+              className="w-full max-w-4xl text-left text-base"
             />
           </div>
         )}

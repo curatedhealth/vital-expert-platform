@@ -3,7 +3,7 @@
 /**
  * VITAL Platform - VitalMessage Component
  *
- * Message bubble component for chat interface.
+ * Chat message component for the interactive Ask Expert view.
  * Handles both user and assistant messages with rich content.
  *
  * Features:
@@ -141,13 +141,13 @@ export function VitalMessage({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        'flex gap-3',
+        'flex gap-3 w-full items-start group',
         isUser ? 'flex-row-reverse' : 'flex-row',
         className
       )}
     >
       {/* Avatar */}
-      <div className="shrink-0">
+      <div className="shrink-0 mt-1">
         {isUser ? (
           <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
             <User className="h-4 w-4 text-slate-600" />
@@ -176,7 +176,7 @@ export function VitalMessage({
       {/* Message Content */}
       <div className={cn(
         'flex-1 min-w-0 space-y-2',
-        isUser ? 'items-end' : 'items-start'
+        'text-left'
       )}>
         {/* Expert name and level (assistant only) */}
         {!isUser && displayExpert && (
@@ -188,22 +188,20 @@ export function VitalMessage({
           </div>
         )}
 
-        {/* Main message container - flat for assistant, bubble for user */}
+        {/* Main message container - flat layout for both user and assistant (no filled bubbles) */}
         <div
           className={cn(
-            'relative',
-            isUser
-              ? 'rounded-2xl px-4 py-3 max-w-[85%] bg-purple-600 text-white ml-auto rounded-br-md'
-              : 'py-2 text-stone-800'
+            'relative min-w-0 pr-10 px-4 py-2 rounded-xl border border-slate-200/70 bg-transparent max-w-4xl mx-auto',
+            isUser ? 'text-slate-900' : 'text-stone-800'
           )}
         >
           {/* Message content - Using VitalStreamText for unified rendering */}
           {/* This ensures consistent formatting between streaming and completed messages */}
           {isUser ? (
             // User messages - simple text display
-            <div className="prose prose-sm prose-invert max-w-none">
-              <p className="whitespace-pre-wrap">{message.content}</p>
-            </div>
+            <p className="text-base leading-relaxed whitespace-pre-wrap">
+              {message.content}
+            </p>
           ) : (
             // Assistant messages - rich rendering with VitalStreamText
             // Provides: syntax highlighting, Mermaid diagrams, inline citation pills
@@ -216,6 +214,7 @@ export function VitalMessage({
               citations={citationsForStreamText}
               inlineCitations={true}
               className={cn(
+                'w-full text-left ml-auto text-base',
                 // Override prose colors for the slate background
                 '[&_.prose]:prose-slate',
                 '[&_a]:text-purple-600 [&_a:hover]:underline'
@@ -229,7 +228,7 @@ export function VitalMessage({
             size="icon"
             onClick={handleCopy}
             className={cn(
-              'absolute -right-10 top-1 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity',
+              'absolute top-0 right-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity',
               'hover:bg-slate-200'
             )}
           >

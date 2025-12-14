@@ -256,7 +256,6 @@ export function useAutonomousMode() {
         message: objective,
         goal: objective,
         agent_id: mode === 3 ? selectedAgents[0] : undefined,   // Primary field name
-        expert_id: mode === 3 ? selectedAgents[0] : undefined,  // Backwards compatibility
         budget_limit: budgetLimit,
         template_id: templateId || 'deep_research',
         user_id: id, // use mission id as a stable UUID for backend expectations

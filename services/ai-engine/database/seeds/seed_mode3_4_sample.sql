@@ -12,8 +12,8 @@ WITH mission_ins AS (
     tenant_id, user_id, mode, goal, expert_id, status, config, metadata, title, objective
   )
   VALUES (
-    '00000000-0000-0000-0000-000000000001'::uuid,
-    '00000000-0000-0000-0000-000000000001'::uuid,
+    coalesce(current_setting('app.tenant_id', true)::uuid, gen_random_uuid()),
+    coalesce(current_setting('app.user_id', true)::uuid, gen_random_uuid()),
     3,
     'Assess reimbursement strategy for oral TYK2 inhibitor in BE (psoriasis + UC)',
     NULL,
@@ -45,8 +45,8 @@ WITH mission_ins AS (
     tenant_id, user_id, mode, goal, expert_id, status, config, metadata, title, objective
   )
   VALUES (
-    '00000000-0000-0000-0000-000000000001'::uuid,
-    '00000000-0000-0000-0000-000000000001'::uuid,
+    coalesce(current_setting('app.tenant_id', true)::uuid, gen_random_uuid()),
+    coalesce(current_setting('app.user_id', true)::uuid, gen_random_uuid()),
     4,
     'Automate safety signal review for new label expansion (oncology)',
     NULL,

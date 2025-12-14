@@ -18,6 +18,7 @@
  */
 
 import { Suspense, useCallback } from 'react';
+import { useTenant } from '@/contexts/TenantContext';
 import { AutonomousView } from '@/features/ask-expert/views/AutonomousView';
 import { ErrorBoundary } from '@/features/ask-expert/components/errors';
 import { Loader2 } from 'lucide-react';
@@ -33,7 +34,7 @@ function LoadingState() {
   );
 }
 
-function Mode3Content() {
+function Mode3Content({ tenantId }: { tenantId: string }) {
   const handleMissionComplete = useCallback((missionId: string, artifacts: unknown[]) => {
     console.log('Mode 3 mission completed:', missionId, 'Artifacts:', artifacts.length);
   }, []);
@@ -46,7 +47,7 @@ function Mode3Content() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <AutonomousView
         mode="mode3"
-        tenantId="00000000-0000-0000-0000-000000000001"
+        tenantId={tenantId}
         onMissionComplete={handleMissionComplete}
         onMissionFail={handleMissionFail}
       />
@@ -55,10 +56,16 @@ function Mode3Content() {
 }
 
 export default function Mode3DeepResearchPage() {
+  const tenant = useTenant();
+
+  if (!tenant) {
+    return <LoadingState />;
+  }
+
   return (
     <ErrorBoundary componentName="Mode3DeepResearchPage">
       <Suspense fallback={<LoadingState />}>
-        <Mode3Content />
+        <Mode3Content tenantId={tenant.id} />
       </Suspense>
     </ErrorBoundary>
   );

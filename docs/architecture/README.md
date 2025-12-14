@@ -1,25 +1,76 @@
 # VITAL Platform Architecture Documentation
 
-**Last Updated:** December 12, 2025
-**Purpose:** Centralized architecture and deployment documentation for traceability and audit
+**Version:** 2.0  
+**Last Updated:** December 14, 2025  
+**Purpose:** Centralized architecture, deployment, and file organization documentation
 
 ---
 
-## Canonical Documents (Current)
+## 📚 Quick Navigation
 
-| Document | Purpose | Status |
-|----------|---------|--------|
-| [VITAL_WORLD_CLASS_STRUCTURE_FINAL.md](./VITAL_WORLD_CLASS_STRUCTURE_FINAL.md) | **Canonical v4.0 Architecture** - Single source of truth | Active |
-| [DEPLOYMENT_READY_STRUCTURE.md](./DEPLOYMENT_READY_STRUCTURE.md) | Cleanup plan to achieve deployment readiness | Active |
-| [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | General deployment procedures | Active |
-| [PRODUCTION_DEPLOYMENT_GUIDE.md](./PRODUCTION_DEPLOYMENT_GUIDE.md) | Production deployment specifics | Active |
-| [SERVICES_DEPLOYMENT_STATUS.md](./SERVICES_DEPLOYMENT_STATUS.md) | Current service deployment status | Active |
-| [BACKEND_REPOSITORY_STRUCTURE.md](./BACKEND_REPOSITORY_STRUCTURE.md) | Backend code organization | Active |
-| [overview.md](./overview.md) | Architecture overview | Active |
+| Category | Document | Purpose |
+|----------|----------|---------|
+| **🏗️ Architecture** | [VITAL_WORLD_CLASS_STRUCTURE_FINAL.md](./VITAL_WORLD_CLASS_STRUCTURE_FINAL.md) | Canonical v4.1 architecture (A+ grade) |
+| **📋 Deployment** | [DEPLOYMENT_CHECKLIST.md](../guides/DEPLOYMENT_CHECKLIST.md) | Production deployment checklist (Vercel + Railway) |
+| **📁 File Organization** | [FILE_ORGANIZATION_STANDARD.md](./FILE_ORGANIZATION_STANDARD.md) | Complete file organization, tagging, and naming standard |
+| **🏷️ Quick Reference** | [FILE_TAGGING_QUICK_REFERENCE.md](./FILE_TAGGING_QUICK_REFERENCE.md) | Quick reference for file tagging |
+| **📊 Registry** | [PRODUCTION_FILE_REGISTRY.md](./PRODUCTION_FILE_REGISTRY.md) | Production file registry with tags |
 
 ---
 
-## Architecture Version History
+## 📖 Canonical Documents
+
+### Core Architecture
+
+| Document | Version | Status | Purpose |
+|----------|---------|--------|---------|
+| [VITAL_WORLD_CLASS_STRUCTURE_FINAL.md](./VITAL_WORLD_CLASS_STRUCTURE_FINAL.md) | v4.1 | ✅ Active | **Single source of truth** - Complete architecture specification |
+| [overview.md](./overview.md) | 1.0 | ✅ Active | High-level architecture overview (public developer doc) |
+
+### File Organization & Standards
+
+| Document | Version | Status | Purpose |
+|----------|---------|--------|---------|
+| [FILE_ORGANIZATION_STANDARD.md](./FILE_ORGANIZATION_STANDARD.md) | 1.0 | ✅ Active | **Complete standard** - File location, naming, tagging, versioning |
+| [FILE_TAGGING_QUICK_REFERENCE.md](./FILE_TAGGING_QUICK_REFERENCE.md) | 1.0 | ✅ Active | Quick reference for file headers and tags |
+| [PRODUCTION_FILE_REGISTRY.md](./PRODUCTION_FILE_REGISTRY.md) | 2.1 | ✅ Active | Registry of all production-ready files with tags |
+
+### Deployment Documentation
+
+| Document | Version | Status | Purpose |
+|----------|---------|--------|---------|
+| [DEPLOYMENT_CHECKLIST.md](../guides/DEPLOYMENT_CHECKLIST.md) | 1.0 | ✅ Active | **Production deployment checklist** - Vercel + Railway |
+| [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | 1.0 | ✅ Active | General deployment procedures |
+| [PRODUCTION_DEPLOYMENT_GUIDE.md](./PRODUCTION_DEPLOYMENT_GUIDE.md) | 1.0 | ✅ Active | Production deployment specifics |
+| [SERVICES_DEPLOYMENT_STATUS.md](./SERVICES_DEPLOYMENT_STATUS.md) | 1.0 | ✅ Active | Current service deployment status |
+
+### Code Organization
+
+| Document | Version | Status | Purpose |
+|----------|---------|--------|---------|
+| [BACKEND_REPOSITORY_STRUCTURE.md](./BACKEND_REPOSITORY_STRUCTURE.md) | 1.1 | ✅ Active | Backend code organization (L0-L6 hierarchy) |
+| [CODEBASE_FILE_STATUS_REGISTRY.md](./CODEBASE_FILE_STATUS_REGISTRY.md) | 2.2 | ✅ Active | File status tracking (PROD, LEGACY, DEPRECATED) |
+
+### Platform Features
+
+| Document | Version | Status | Purpose |
+|----------|---------|--------|---------|
+| [KNOWLEDGE_SYSTEM_ARCHITECTURE.md](./KNOWLEDGE_SYSTEM_ARCHITECTURE.md) | 1.0 | ✅ Active | Knowledge system architecture |
+| [MISSION_FAMILIES_TEMPLATES_RUNNERS.md](./MISSION_FAMILIES_TEMPLATES_RUNNERS.md) | 1.0 | ✅ Active | Mission templates and runners documentation |
+| [FRONTEND_DEPLOYMENT_PRODUCTION_READINESS.md](./FRONTEND_DEPLOYMENT_PRODUCTION_READINESS.md) | 1.0 | ✅ Active | Frontend production readiness assessment |
+
+### Planning & Consolidation
+
+| Document | Version | Status | Purpose |
+|----------|---------|--------|---------|
+| [ARCHITECTURE_CONSOLIDATION_PLAN.md](./ARCHITECTURE_CONSOLIDATION_PLAN.md) | 1.0 | ✅ Active | Plan to consolidate architecture docs |
+| [CONSOLIDATION_SUMMARY.md](./CONSOLIDATION_SUMMARY.md) | 1.0 | ✅ Active | Quick reference for consolidation |
+| [DEPLOYMENT_AND_TAGGING_RECOMMENDATIONS.md](./DEPLOYMENT_AND_TAGGING_RECOMMENDATIONS.md) | 1.0 | ✅ Active | Recommendations for deployment and tagging |
+| [IMPLEMENTATION_COMPLETE.md](./IMPLEMENTATION_COMPLETE.md) | 1.0 | ✅ Active | Summary of completed implementations |
+
+---
+
+## 📜 Architecture Version History
 
 Located in `./versions/`:
 
@@ -28,30 +79,11 @@ Located in `./versions/`:
 | v1.0 | [WORLD_CLASS_PROJECT_STRUCTURE.md](./versions/WORLD_CLASS_PROJECT_STRUCTURE.md) | Nov 2025 | Initial enterprise structure |
 | v2.0 | [VITAL_WORLD_CLASS_STRUCTURE_V2.md](./versions/VITAL_WORLD_CLASS_STRUCTURE_V2.md) | Dec 2025 | **Modular Monolith** chosen over microservices |
 | Audit | [MONOREPO_STRUCTURE_AUDIT.md](./versions/MONOREPO_STRUCTURE_AUDIT.md) | Dec 2025 | Current state audit (4/10 health score) |
-| v4.0 | [VITAL_WORLD_CLASS_STRUCTURE_FINAL.md](./VITAL_WORLD_CLASS_STRUCTURE_FINAL.md) | Dec 5, 2025 | **FINAL** - A+ grade architecture |
+| **v4.1** | [VITAL_WORLD_CLASS_STRUCTURE_FINAL.md](./VITAL_WORLD_CLASS_STRUCTURE_FINAL.md) | Dec 5, 2025 | **FINAL** - A+ grade architecture |
 
 ---
 
-## Related Audit Reports
-
-Located in `../audits/`:
-
-| Report | Purpose |
-|--------|---------|
-| [DEPLOYMENT_READINESS_COMPREHENSIVE_AUDIT.md](../audits/DEPLOYMENT_READINESS_COMPREHENSIVE_AUDIT.md) | Full deployment readiness assessment |
-| [VERCEL_DEPLOYMENT_READINESS_REPORT.md](../audits/VERCEL_DEPLOYMENT_READINESS_REPORT.md) | Frontend Vercel deployment status |
-| [VERCEL_DEPLOYMENT_IMPLEMENTATION_PLAN.md](../audits/VERCEL_DEPLOYMENT_IMPLEMENTATION_PLAN.md) | Vercel deployment action items |
-| [WORLD_CLASS_PROJECT_STRUCTURE.md](../audits/WORLD_CLASS_PROJECT_STRUCTURE.md) | Project structure analysis |
-| [UNIFIED_FRONTEND_AUDIT_REPORT.md](../audits/UNIFIED_FRONTEND_AUDIT_REPORT.md) | Frontend codebase audit |
-| [COMPREHENSIVE_FRONTEND_AUDIT_DETAILED_REPORT.md](../audits/COMPREHENSIVE_FRONTEND_AUDIT_DETAILED_REPORT.md) | Detailed frontend analysis |
-| [BACKEND_AUDIT_REPORT_2025_Q4.md](../audits/BACKEND_AUDIT_REPORT_2025_Q4.md) | Backend Q4 2025 audit |
-| [FRONTEND_AUDIT_REPORT.md](../audits/FRONTEND_AUDIT_REPORT.md) | Frontend audit report |
-| [AGENTS_UNIFIED_AUDIT_REPORT.md](../audits/AGENTS_UNIFIED_AUDIT_REPORT.md) | Agent system audit |
-| [PHASE_5_BACKEND_INTEGRATION_PLAN.md](../audits/PHASE_5_BACKEND_INTEGRATION_PLAN.md) | Backend integration plan |
-
----
-
-## Key Architecture Decisions
+## 🎯 Key Architecture Decisions
 
 ### 1. Modular Monolith (v2.0 Decision)
 **Why:** For AI orchestration platforms, microservices create more problems:
@@ -76,46 +108,170 @@ Located in `../audits/`:
 - 8 RLS policy files
 - Tenant isolation without application-level checks
 
+### 5. File Organization Standard (v1.0 - Dec 2025)
+**What:** Comprehensive file organization, tagging, and naming system
+- 7 production tags (PRODUCTION_READY, PRODUCTION_CORE, etc.)
+- Standardized file headers with metadata
+- Consistent naming conventions
+- Dependency tracking
+
 ---
 
-## Directory Structure
+## 📁 Directory Structure
 
 ```
-docs/
-├── architecture/
-│   ├── README.md                              # This file
-│   ├── VITAL_WORLD_CLASS_STRUCTURE_FINAL.md   # Canonical v4.0
-│   ├── DEPLOYMENT_READY_STRUCTURE.md          # Cleanup plan
-│   ├── DEPLOYMENT_GUIDE.md                    # Deployment procedures
-│   ├── PRODUCTION_DEPLOYMENT_GUIDE.md         # Production specifics
-│   ├── SERVICES_DEPLOYMENT_STATUS.md          # Service status
-│   ├── BACKEND_REPOSITORY_STRUCTURE.md        # Backend organization
-│   ├── overview.md                            # Architecture overview
-│   └── versions/                              # Historical versions
-│       ├── WORLD_CLASS_PROJECT_STRUCTURE.md   # v1.0
-│       ├── VITAL_WORLD_CLASS_STRUCTURE_V2.md  # v2.0
-│       └── MONOREPO_STRUCTURE_AUDIT.md        # Current state audit
+docs/architecture/
+├── README.md                              # This file
 │
-├── audits/                                    # Audit reports
-│   ├── DEPLOYMENT_READINESS_*.md
-│   ├── VERCEL_DEPLOYMENT_*.md
-│   ├── *_AUDIT_REPORT.md
-│   └── ...
+├── Core Architecture
+│   ├── VITAL_WORLD_CLASS_STRUCTURE_FINAL.md   # Canonical v4.1 (A+ grade)
+│   └── overview.md                            # High-level overview
 │
-├── guides/                                    # Developer guides
-├── api/                                       # API documentation
-└── platform/                                  # Platform documentation
+├── File Organization & Standards
+│   ├── FILE_ORGANIZATION_STANDARD.md          # Complete standard
+│   ├── FILE_TAGGING_QUICK_REFERENCE.md        # Quick reference
+│   └── PRODUCTION_FILE_REGISTRY.md            # File registry
+│
+├── Deployment Documentation
+│   ├── DEPLOYMENT_GUIDE.md                    # General procedures
+│   ├── PRODUCTION_DEPLOYMENT_GUIDE.md          # Production specifics
+│   └── SERVICES_DEPLOYMENT_STATUS.md           # Service status
+│   └── [DEPLOYMENT_CHECKLIST.md](../guides/DEPLOYMENT_CHECKLIST.md)  # Production checklist
+│
+├── Code Organization
+│   ├── BACKEND_REPOSITORY_STRUCTURE.md        # Backend structure
+│   └── CODEBASE_FILE_STATUS_REGISTRY.md       # File status tracking
+│
+├── Platform Features
+│   ├── KNOWLEDGE_SYSTEM_ARCHITECTURE.md
+│   ├── MISSION_FAMILIES_TEMPLATES_RUNNERS.md
+│   └── FRONTEND_DEPLOYMENT_PRODUCTION_READINESS.md
+│
+├── Planning & Consolidation
+│   ├── ARCHITECTURE_CONSOLIDATION_PLAN.md
+│   ├── CONSOLIDATION_SUMMARY.md
+│   ├── DEPLOYMENT_AND_TAGGING_RECOMMENDATIONS.md
+│   └── IMPLEMENTATION_COMPLETE.md
+│
+└── versions/                                  # Historical versions
+    ├── WORLD_CLASS_PROJECT_STRUCTURE.md       # v1.0
+    ├── VITAL_WORLD_CLASS_STRUCTURE_V2.md      # v2.0
+    └── MONOREPO_STRUCTURE_AUDIT.md            # Audit
 ```
 
 ---
 
-## Quick Links
+## 🔗 Related Documentation
 
-- **Architecture Source of Truth:** [VITAL_WORLD_CLASS_STRUCTURE_FINAL.md](./VITAL_WORLD_CLASS_STRUCTURE_FINAL.md)
-- **Deployment Cleanup:** [DEPLOYMENT_READY_STRUCTURE.md](./DEPLOYMENT_READY_STRUCTURE.md)
-- **CLAUDE.md Reference:** References v4.0 as canonical (100% wired)
+### Audit Reports
+Located in `../audits/`:
+
+| Report | Purpose |
+|--------|---------|
+| [DEPLOYMENT_READINESS_COMPREHENSIVE_AUDIT.md](../audits/DEPLOYMENT_READINESS_COMPREHENSIVE_AUDIT.md) | Full deployment readiness assessment |
+| [VERCEL_DEPLOYMENT_READINESS_REPORT.md](../audits/VERCEL_DEPLOYMENT_READINESS_REPORT.md) | Frontend Vercel deployment status |
+| [VERCEL_DEPLOYMENT_IMPLEMENTATION_PLAN.md](../audits/VERCEL_DEPLOYMENT_IMPLEMENTATION_PLAN.md) | Vercel deployment action items |
+| [BACKEND_AUDIT_REPORT_2025_Q4.md](../audits/BACKEND_AUDIT_REPORT_2025_Q4.md) | Backend Q4 2025 audit |
+| [AGENTS_UNIFIED_AUDIT_REPORT.md](../audits/AGENTS_UNIFIED_AUDIT_REPORT.md) | Agent system audit |
+
+### Developer Guides
+Located in `../guides/`:
+
+| Guide | Purpose |
+|-------|---------|
+| [DEPLOYMENT_CHECKLIST.md](../guides/DEPLOYMENT_CHECKLIST.md) | Production deployment checklist |
+| [deployment.md](../guides/deployment.md) | General deployment guide |
+| [development.md](../guides/development.md) | Local development setup |
+| [getting-started.md](../guides/getting-started.md) | Quick start guide |
+
+### Internal Documentation
+Located in `../../.claude/docs/`:
+
+| Location | Purpose |
+|----------|---------|
+| `/.claude/docs/architecture/` | Internal architecture decisions |
+| `/.claude/docs/operations/deployment/` | Internal deployment operations |
+| `/.claude/docs/services/` | Service-specific documentation |
 
 ---
 
-*Generated: December 12, 2025*
-*For: VITAL Platform Deployment Preparation*
+## 🚀 Quick Start Guides
+
+### For New Developers
+1. Start with [overview.md](./overview.md) - High-level architecture
+2. Read [VITAL_WORLD_CLASS_STRUCTURE_FINAL.md](./VITAL_WORLD_CLASS_STRUCTURE_FINAL.md) - Complete architecture
+3. Review [FILE_ORGANIZATION_STANDARD.md](./FILE_ORGANIZATION_STANDARD.md) - File organization
+
+### For Deployment
+1. Use [DEPLOYMENT_CHECKLIST.md](../guides/DEPLOYMENT_CHECKLIST.md) - Step-by-step checklist
+2. Reference [PRODUCTION_DEPLOYMENT_GUIDE.md](./PRODUCTION_DEPLOYMENT_GUIDE.md) - Production specifics
+3. Check [SERVICES_DEPLOYMENT_STATUS.md](./SERVICES_DEPLOYMENT_STATUS.md) - Current status
+
+### For File Organization
+1. Read [FILE_ORGANIZATION_STANDARD.md](./FILE_ORGANIZATION_STANDARD.md) - Complete standard
+2. Use [FILE_TAGGING_QUICK_REFERENCE.md](./FILE_TAGGING_QUICK_REFERENCE.md) - Quick reference
+3. Update [PRODUCTION_FILE_REGISTRY.md](./PRODUCTION_FILE_REGISTRY.md) - File registry
+
+---
+
+## 📊 Document Status Summary
+
+| Category | Count | Status |
+|----------|-------|--------|
+| **Core Architecture** | 2 | ✅ Active |
+| **File Organization** | 3 | ✅ Active |
+| **Deployment** | 4 | ✅ Active |
+| **Code Organization** | 2 | ✅ Active |
+| **Platform Features** | 3 | ✅ Active |
+| **Planning** | 4 | ✅ Active |
+| **Version History** | 3 | 📦 Archived |
+| **TOTAL** | **21** | |
+
+---
+
+## 🔄 Recent Updates (December 14, 2025)
+
+### ✅ New Documents Created
+- `FILE_ORGANIZATION_STANDARD.md` - Comprehensive file organization standard
+- `FILE_TAGGING_QUICK_REFERENCE.md` - Quick reference guide
+- `DEPLOYMENT_CHECKLIST.md` - Production deployment checklist (in `/docs/guides/`)
+- `DEPLOYMENT_AND_TAGGING_RECOMMENDATIONS.md` - Recommendations document
+- `IMPLEMENTATION_COMPLETE.md` - Implementation summary
+
+### ✅ Documents Updated
+- `PRODUCTION_FILE_REGISTRY.md` - Updated to v2.1, aligned with new standard
+- `README.md` - This file, comprehensive update
+
+### 📦 Documents Archived
+- `DEPLOYMENT_READY_STRUCTURE.md` → Moved to `/.claude/docs/operations/deployment/cleanup-plan.md`
+
+---
+
+## 📝 Maintenance Notes
+
+### Regular Updates Required
+- **PRODUCTION_FILE_REGISTRY.md** - Update when files are tagged/untagged
+- **SERVICES_DEPLOYMENT_STATUS.md** - Update deployment status
+- **VITAL_WORLD_CLASS_STRUCTURE_FINAL.md** - Update when architecture changes
+
+### Version Control
+- All documents use semantic versioning (MAJOR.MINOR.PATCH)
+- Update `Last Updated` date when making changes
+- Document version history in document headers
+
+---
+
+## 🎯 Key Principles
+
+1. **Single Source of Truth** - VITAL_WORLD_CLASS_STRUCTURE_FINAL.md is canonical
+2. **Consistent Standards** - FILE_ORGANIZATION_STANDARD.md defines all standards
+3. **Production Ready** - All files must be tagged appropriately
+4. **Documentation First** - Document before implementing
+5. **Version Control** - Track all changes with versions and dates
+
+---
+
+**Document Version:** 2.0  
+**Last Updated:** December 14, 2025  
+**Maintained By:** Platform Team  
+**Status:** ✅ Active and Current

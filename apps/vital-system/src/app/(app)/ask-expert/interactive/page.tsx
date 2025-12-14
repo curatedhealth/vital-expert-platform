@@ -14,6 +14,7 @@
  */
 
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useTenant } from '@/contexts/TenantContext';
 import { InteractiveView, type InteractiveMode } from '@/features/ask-expert/views/InteractiveView';
 import { ErrorBoundary } from '@/features/ask-expert/components/errors';
 import { Suspense, useCallback, useEffect, useState } from 'react';
@@ -44,7 +45,7 @@ interface ConversationData {
   updated_at: string;
 }
 
-function InteractiveContent() {
+function InteractiveContent({ tenantId }: { tenantId: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const modeParam = searchParams.get('mode');
@@ -134,7 +135,7 @@ function InteractiveContent() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <InteractiveView
         mode={mode}
-        tenantId="00000000-0000-0000-0000-000000000001"
+        tenantId={tenantId}
         onModeChange={handleModeChange}
         initialConversation={loadedConversation || undefined}
         sessionId={conversationId || undefined}
@@ -156,10 +157,16 @@ function LoadingState() {
 }
 
 export default function InteractiveExpertPage() {
+  const tenant = useTenant();
+
+  if (!tenant) {
+    return <LoadingState />;
+  }
+
   return (
     <ErrorBoundary componentName="InteractiveExpertPage">
       <Suspense fallback={<LoadingState />}>
-        <InteractiveContent />
+        <InteractiveContent tenantId={tenant.id} />
       </Suspense>
     </ErrorBoundary>
   );

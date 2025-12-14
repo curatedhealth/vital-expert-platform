@@ -217,7 +217,7 @@ class TestMissionCreateRequest:
         request = MissionCreateRequest(
             template_id="550e8400-e29b-41d4-a716-446655440000",  # Valid UUID
             goal="Review latest immunotherapy approaches for melanoma treatment",
-            expert_id="550e8400-e29b-41d4-a716-446655440001",  # Required UUID
+            agent_id="550e8400-e29b-41d4-a716-446655440001",  # Required UUID
             tenant_id="550e8400-e29b-41d4-a716-446655440002",  # Required UUID
             mode=3,  # Required: 3 or 4
             inputs={"disease": "melanoma"},
@@ -240,7 +240,7 @@ class TestMissionCreateRequest:
         request = MissionCreateRequest(
             template_id="550e8400-e29b-41d4-a716-446655440000",  # Valid UUID
             goal="<script>alert('xss')</script> Research goal for sanitization test",
-            expert_id="550e8400-e29b-41d4-a716-446655440001",  # Required
+            agent_id="550e8400-e29b-41d4-a716-446655440001",  # Required
             tenant_id="550e8400-e29b-41d4-a716-446655440002",  # Required
             mode=3,  # Required
         )
@@ -280,7 +280,7 @@ class TestMissionCreateRequest:
         request = MissionCreateRequest(
             template_id="550e8400-e29b-41d4-a716-446655440000",  # Valid UUID
             goal="Research and analyze template validation patterns",  # 10+ chars required
-            expert_id="550e8400-e29b-41d4-a716-446655440001",  # Required
+            agent_id="550e8400-e29b-41d4-a716-446655440001",  # Required
             tenant_id="550e8400-e29b-41d4-a716-446655440002",  # Required
             mode=3,  # Required: 3 or 4
         )
@@ -291,7 +291,7 @@ class TestMissionCreateRequest:
             MissionCreateRequest(
                 template_id="invalid@template!",
                 goal="Research and analyze template validation patterns",
-                expert_id="550e8400-e29b-41d4-a716-446655440001",
+                agent_id="550e8400-e29b-41d4-a716-446655440001",
                 tenant_id="550e8400-e29b-41d4-a716-446655440002",
                 mode=3,
             )
@@ -368,7 +368,7 @@ class TestValidationIntegration:
         request = MissionCreateRequest(
             template_id="550e8400-e29b-41d4-a716-446655440000",  # Valid UUID format
             goal="Conduct systematic review of immunotherapy treatments for melanoma including pembrolizumab, nivolumab, and ipilimumab across 2023-2025 using PubMed, Embase, and Cochrane databases",  # 10+ chars with full context
-            expert_id="550e8400-e29b-41d4-a716-446655440001",  # Required UUID
+            agent_id="550e8400-e29b-41d4-a716-446655440001",  # Required UUID
             tenant_id="550e8400-e29b-41d4-a716-446655440002",  # Required UUID
             mode=3,  # Required: 3 or 4
             hitl_enabled=True,

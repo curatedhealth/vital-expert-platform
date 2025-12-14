@@ -26,11 +26,11 @@ class L2GenerationNode:
         self.llm_timeout_seconds = timeout_seconds * 6
 
     async def run(self, state: InteractiveState) -> Dict[str, Any]:
-        expert_id = state.get("expert_id")
-        if not expert_id:
+        agent_id = state.get("agent_id")
+        if not agent_id:
             return {
                 "ui_updates": [
-                    {"type": "VitalAgentCard", "payload": {"status": "unselected", "error": "expert_missing"}}
+                    {"type": "VitalAgentCard", "payload": {"status": "unselected", "error": "agent_missing"}}
                 ]
             }
 
@@ -49,7 +49,7 @@ class L2GenerationNode:
 
         try:
             agent = await asyncio.wait_for(
-                self.agent_factory.load_agent(expert_id),
+                self.agent_factory.load_agent(agent_id),
                 timeout=self.timeout_seconds,
             )
         except Exception as exc:

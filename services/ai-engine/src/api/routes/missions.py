@@ -68,7 +68,7 @@ class MissionStreamRequest(BaseModel):
     goal: str = Field(..., min_length=10, max_length=5000, description="Mission goal (10-5000 chars)")
     title: Optional[str] = Field(default=None, max_length=200, description="Mission title (max 200 chars)")
     template_id: Optional[str] = None  # optional to allow default templates
-    expert_id: Optional[str] = None  # required for mode 3
+    agent_id: Optional[str] = None  # required for mode 3
     budget_limit: Optional[float] = Field(default=None, ge=0, le=1000, description="Soft budget cap ($0-$1000)")
     user_context: Dict[str, Any] = Field(default_factory=dict)
 
@@ -84,9 +84,9 @@ class MissionStreamRequest(BaseModel):
             raise ValueError("goal cannot be empty or whitespace only")
         return v.strip()
 
-    @validator("expert_id")
-    def validate_expert_for_mode(cls, v, values):
-        # Mode 3 should have an expert_id, but allow fallback
+    @validator("agent_id")
+    def validate_agent_for_mode(cls, v, values):
+        # Mode 3 should have an agent_id, but allow fallback
         mode = values.get("mode")
         if mode == 3 and not v:
             # Log warning but allow - backend will use fallback agent

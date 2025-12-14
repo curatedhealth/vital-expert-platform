@@ -1,28 +1,42 @@
 <!-- PRODUCTION_TAG: PRODUCTION_READY -->
-<!-- LAST_VERIFIED: 2025-12-13 -->
+<!-- LAST_VERIFIED: 2025-12-14 -->
 <!-- CATEGORY: documentation -->
 <!-- DEPENDENCIES: none -->
+<!-- 
+@production PRODUCTION_READY
+@lastVerified 2025-12-14
+@version 2.1.0
+@category documentation
+@layer shared
+@author Platform Team
+@created 2025-12-13
+@updated 2025-12-14
+-->
 
 # Production File Registry - VITAL Platform
 
-> **Version**: 2.0.0
-> **Created**: December 13, 2025
-> **Updated**: December 13, 2025
-> **Purpose**: Tag all production-ready files across Frontend & Backend to enable codebase cleanup
+> **Version**: 2.1.0  
+> **Created**: December 13, 2025  
+> **Updated**: December 14, 2025  
+> **Purpose**: Tag all production-ready files across Frontend & Backend to enable codebase cleanup  
+> **Standard**: See [FILE_ORGANIZATION_STANDARD.md](./FILE_ORGANIZATION_STANDARD.md) for complete tagging system
 
 ---
 
 ## Tag Definitions
 
-| Tag | Meaning | Cleanup Action |
-|-----|---------|----------------|
-| `PRODUCTION_READY` | Fully tested, documented, and deployed | Keep as-is |
-| `PRODUCTION_CORE` | Critical infrastructure, must keep | Keep as-is |
-| `NEEDS_REVIEW` | Works but needs refactoring/cleanup | Review for optimization |
-| `EXPERIMENTAL` | Prototype or experimental code | Consider removal |
-| `DEPRECATED` | Old implementation, superseded | Safe to remove |
-| `ARCHIVE` | Kept for reference only | Move to archive |
-| `STUB` | Placeholder implementation | Complete or remove |
+> **Note:** This registry uses the tagging system defined in [FILE_ORGANIZATION_STANDARD.md](./FILE_ORGANIZATION_STANDARD.md).  
+> All files should include proper headers with these tags. See [FILE_TAGGING_QUICK_REFERENCE.md](./FILE_TAGGING_QUICK_REFERENCE.md) for quick reference.
+
+| Tag | Meaning | Use When | Cleanup Action |
+|-----|---------|----------|----------------|
+| `PRODUCTION_READY` | ✅ Fully tested, documented, deployed | File is production-ready | Keep as-is |
+| `PRODUCTION_CORE` | ✅ Critical infrastructure | File is essential for system | Keep as-is, never delete |
+| `NEEDS_REVIEW` | ⚠️ Works but needs improvement | File works but needs refactoring | Review for optimization |
+| `EXPERIMENTAL` | 🧪 Prototype/experimental | File is experimental | Consider removal before production |
+| `DEPRECATED` | ❌ Old implementation | File is superseded | Safe to remove after 30 days |
+| `ARCHIVE` | 📦 Reference only | File kept for reference | Move to archive, not deployed |
+| `STUB` | 🔨 Placeholder | File is incomplete | Complete or remove (14 days) |
 
 **Knowledge UI status (front-end)**  
 - `/app/(app)/knowledge` (marketplace) must be tagged `PRODUCTION_READY` only when backed by live domains/bases (no mock data).  
@@ -35,36 +49,41 @@
 
 ### Backend (Python - ai-engine)
 
-| Category | Production Ready | Needs Review | Deprecated | Total |
-|----------|-----------------|--------------|------------|-------|
-| API Routes | 15 | 8 | 3 | 26 |
-| LangGraph Workflows | 8 | 6 | 4 | 18 |
-| Streaming | 6 | 0 | 0 | 6 |
-| Services | 22 | 15 | 5 | 42 |
-| GraphRAG | 12 | 8 | 2 | 22 |
-| Core Infrastructure | 14 | 4 | 0 | 18 |
-| **Phase 2 Resilience** | **2** | **0** | **0** | **2** |
-| **Phase 2 Unit Tests** | **2** | **0** | **0** | **2** |
-| **Backend Total** | **81** | **41** | **14** | **136** |
+| Category | Production Ready | Production Core | Needs Review | Deprecated | Total |
+|----------|-----------------|-----------------|--------------|------------|-------|
+| API Routes | 15 | 0 | 8 | 3 | 26 |
+| LangGraph Workflows | 8 | 0 | 6 | 4 | 18 |
+| Streaming | 6 | 0 | 0 | 0 | 6 |
+| Services | 22 | 0 | 15 | 5 | 42 |
+| GraphRAG | 12 | 0 | 8 | 2 | 22 |
+| Core Infrastructure | 14 | 0 | 4 | 0 | 18 |
+| **Phase 2 Resilience** | **2** | **0** | **0** | **0** | **2** |
+| **Phase 2 Unit Tests** | **2** | **0** | **0** | **0** | **2** |
+| **Ask Expert Backend** | **14** | **8** | **14** | **3** | **39** |
+| **Backend Total** | **95** | **8** | **55** | **17** | **175** |
 
 ### Frontend (TypeScript/React - vital-system)
 
-| Category | Production Ready | Needs Review | Deprecated | Total |
-|----------|-----------------|--------------|------------|-------|
-| Sidebar Views | 17 | 0 | 0 | 17 |
-| Sidebar Shared | 3 | 0 | 0 | 3 |
-| Navigation | 2 | 0 | 0 | 2 |
-| Landing Components | 14 | 0 | 0 | 14 |
-| Page Routes | 25 | 5 | 0 | 30 |
-| @vital/ui Package | 81 | 0 | 0 | 81 |
-| @vital/vital-ai-ui Package | 171 | 0 | 0 | 171 |
-| **Frontend Total** | **313** | **5** | **0** | **318** |
+| Category | Production Ready | Production Core | Needs Review | Deprecated | Archive | Total |
+|----------|-----------------|-----------------|--------------|------------|---------|-------|
+| Sidebar Views | 17 | 0 | 0 | 0 | 0 | 17 |
+| Sidebar Shared | 3 | 0 | 0 | 0 | 0 | 3 |
+| Navigation | 2 | 0 | 0 | 0 | 0 | 2 |
+| Landing Components | 14 | 0 | 0 | 0 | 0 | 14 |
+| Page Routes | 25 | 0 | 5 | 0 | 0 | 30 |
+| @vital/ui Package | 81 | 0 | 0 | 0 | 0 | 81 |
+| @vital/vital-ai-ui Package | 171 | 0 | 0 | 0 | 0 | 171 |
+| **Ask Expert Frontend** | **16** | **2** | **8** | **0** | **17** | **43** |
+| **Frontend Total** | **329** | **2** | **13** | **0** | **17** | **361** |
 
 ### Grand Total
 
-| | Production Ready | Needs Review | Deprecated | Total |
-|---|-----------------|--------------|------------|-------|
-| **Platform Total** | **394** | **46** | **14** | **454** |
+| | Production Ready | Production Core | Needs Review | Deprecated | Archive | Total |
+|---|-----------------|----------------|--------------|------------|---------|-------|
+| **Backend (Python)** | **81** | **14** | **41** | **14** | **0** | **150** |
+| **Frontend (TypeScript)** | **313** | **0** | **5** | **0** | **0** | **318** |
+| **Ask Expert Service** | **34** | **10** | **25** | **3** | **17** | **89** |
+| **Platform Total** | **428** | **24** | **71** | **17** | **17** | **557** |
 
 ### Phase 2 Backend HIGH Priority Fixes (December 13, 2025)
 
@@ -694,11 +713,227 @@ Example:
 | 2.3.0 | Dec 13, 2025 | **P3 Fix**: TypeScript errors reduced 62% (5,609→2,158); framer-motion ^10→^12; @types/react ^18→^19 |
 | 2.3.1 | Dec 13, 2025 | Production tags added to: `hitl_service.py`, `hitl_websocket_service.py`, `langgraph_compilation/__init__.py` |
 | 2.4.0 | Dec 13, 2025 | **Phase 10 Complete**: Ask Expert Brand v6.0 migration - 0 blue violations, 4-Mode Color Matrix |
+| 2.5.0 | Jan 27, 2025 | **Ask Expert Tagging Complete**: Added comprehensive PART C section with 89 files tagged based on end-to-end audit |
+
+---
+
+---
+
+## PART C: ASK EXPERT SERVICE FILES (January 27, 2025)
+
+**Status:** ✅ Production Ready with Known Limitations
+**Audit Reference:** `ASK_EXPERT_END_TO_END_AUDIT_2025_01_27.md`
+**Overall Grade:** B+ (85/100)
+
+### Ask Expert Backend Files (Python - ai-engine)
+
+#### PRODUCTION_READY
+
+| File | Path | Mode | Grade | Status | Notes |
+|------|------|------|-------|--------|-------|
+| `ask_expert_interactive.py` | `api/routes/` | 1, 2 | A (95%) | ✅ Production Ready | Unified interactive endpoint |
+| `ask_expert_autonomous.py` | `api/routes/` | 3, 4 | A- (88%) | ✅ Production Ready* | Unified autonomous endpoint |
+| `unified_interactive_workflow.py` | `langgraph_workflows/ask_expert/` | 1, 2 | A (95%) | ✅ Production Ready | Mode 1 & 2 unified base |
+| `unified_agent_selector.py` | `langgraph_workflows/ask_expert/` | 2, 4 | A (92%) | ✅ Production Ready | Fusion Search selector |
+| `unified_autonomous_workflow.py` | `langgraph_workflows/modes34/` | 3, 4 | A- (88%) | ✅ Production Ready* | Mode 3 & 4 unified workflow |
+| `state.py` | `langgraph_workflows/modes34/` | 3, 4 | A- (88%) | ✅ Production Ready | State definitions |
+| `research_quality.py` | `langgraph_workflows/modes34/` | 3, 4 | A- (88%) | ✅ Production Ready | Quality assessment |
+| `mission_registry.py` | `modules/expert/registry/` | 3, 4 | A- (88%) | ✅ Production Ready | Template registry |
+| `mission_workflow.py` | `modules/expert/workflows/` | 3, 4 | A- (88%) | ✅ Production Ready | Mission builder |
+| `ask_expert_mode1_workflow.py` | `langgraph_workflows/ask_expert/` | 1 | A (95%) | ✅ Production Ready | Legacy Mode 1 (backward compat) |
+| `ask_expert_mode2_workflow.py` | `langgraph_workflows/ask_expert/` | 2 | A (92%) | ✅ Production Ready | Legacy Mode 2 (backward compat) |
+
+**Shared Workflow Components (PRODUCTION_READY):**
+
+| File | Path | Purpose | Status |
+|------|------|---------|--------|
+| `__init__.py` | `langgraph_workflows/ask_expert/` | Module exports | ✅ Production Ready |
+| `state_factory.py` | `langgraph_workflows/ask_expert/shared/` | State factory | ✅ Production Ready |
+| `streaming.py` | `langgraph_workflows/ask_expert/shared/mixins/` | Streaming mixin | ✅ Production Ready |
+| `input_processor.py` | `langgraph_workflows/ask_expert/shared/nodes/` | Input processing | ✅ Production Ready |
+| `error_handler.py` | `langgraph_workflows/ask_expert/shared/nodes/` | Error handling | ✅ Production Ready |
+| `response_formatter.py` | `langgraph_workflows/ask_expert/shared/nodes/` | Response formatting | ✅ Production Ready |
+| `rag_retriever.py` | `langgraph_workflows/ask_expert/shared/nodes/` | RAG retrieval | ✅ Production Ready |
+| `l3_context_engineer.py` | `langgraph_workflows/ask_expert/shared/nodes/` | L3 context engineering | ✅ Production Ready |
+| `parallel_tools_executor.py` | `langgraph_workflows/ask_expert/shared/nodes/` | Parallel tool execution | ✅ Production Ready |
+
+**Mode 3/4 Runners (PRODUCTION_READY):**
+
+| File | Path | Purpose | Status |
+|------|------|---------|--------|
+| `registry.py` | `langgraph_workflows/modes34/runners/` | Runner registry | ✅ Production Ready |
+| `base_family_runner.py` | `langgraph_workflows/modes34/runners/` | Base runner class | ✅ Production Ready |
+| `deep_research_runner.py` | `langgraph_workflows/modes34/runners/` | DEEP_RESEARCH family | ✅ Production Ready |
+
+**\* Production Ready with known limitations (template coverage, runner implementation)**
+
+#### PRODUCTION_CORE
+
+| File | Path | Purpose | Critical |
+|------|------|---------|----------|
+| `input_sanitizer.py` | `core/security/` | Input validation (H1 fix) | ✅ Yes |
+| `tenant_isolation.py` | `core/security/` | Tenant isolation | ✅ Yes |
+| `error_sanitizer.py` | `core/security/` | Error sanitization | ✅ Yes |
+| `resilience/__init__.py` | `langgraph_workflows/modes34/resilience/` | Resilience module | ✅ Yes |
+| `graceful_degradation.py` | `langgraph_workflows/modes34/resilience/` | Error handling (H7 fix) | ✅ Yes |
+| `research.py` | `api/schemas/` | ValidatedMissionRequest (H1 fix) | ✅ Yes |
+| `event_transformer.py` | `api/sse/` | SSE event transformation | ✅ Yes |
+| `mission_events.py` | `api/sse/` | Mission event helpers | ✅ Yes |
+
+#### NEEDS_REVIEW
+
+| File | Path | Issue | Priority | Action |
+|------|------|-------|----------|--------|
+| `mode1_manual_interactive.py` | `api/routes/` | Legacy endpoint | 🟡 HIGH | Consolidate with unified |
+| `mode2_auto_interactive.py` | `api/routes/` | Legacy endpoint | 🟡 HIGH | Consolidate with unified |
+| `mode3_deep_research.py` | `api/routes/` | Partial implementation | 🟡 HIGH | Complete or deprecate |
+| `agent_selector.py` | `langgraph_workflows/modes34/` | Duplicate with unified | 🟢 MEDIUM | Consolidate selectors |
+| `wrappers/*.py` | `langgraph_workflows/modes34/wrappers/` | Needs testing | 🟢 MEDIUM | Add comprehensive tests |
+| `runners/evaluation.py` | `langgraph_workflows/modes34/runners/` | Not implemented | 🟡 HIGH | Implement EVALUATION family |
+| `runners/strategy.py` | `langgraph_workflows/modes34/runners/` | Not implemented | 🟡 HIGH | Implement STRATEGY family |
+| `runners/investigation.py` | `langgraph_workflows/modes34/runners/` | Not implemented | 🟡 HIGH | Implement INVESTIGATION family |
+| `runners/monitoring.py` | `langgraph_workflows/modes34/runners/` | Not implemented | 🟡 HIGH | Implement MONITORING family |
+| `runners/problem_solving.py` | `langgraph_workflows/modes34/runners/` | Not implemented | 🟡 HIGH | Implement PROBLEM_SOLVING family |
+| `runners/communication.py` | `langgraph_workflows/modes34/runners/` | Not implemented | 🟡 HIGH | Implement COMMUNICATION family |
+
+#### DEPRECATED
+
+| File | Path | Replacement | Status |
+|------|------|-------------|--------|
+| `ask_expert_mode3_workflow.py` | `archive/ask_expert_workflows/` | `modes34/unified_autonomous_workflow.py` | ✅ Archived |
+| `ask_expert_mode4_workflow.py` | `archive/ask_expert_workflows/` | `modes34/unified_autonomous_workflow.py` | ✅ Archived |
+| `unified_autonomous_workflow_deprecated.py` | `archive/ask_expert_workflows/` | `modes34/unified_autonomous_workflow.py` | ✅ Archived |
+
+---
+
+### Ask Expert Frontend Files (TypeScript - vital-system)
+
+#### PRODUCTION_READY
+
+| File | Path | Mode | Grade | Status | Notes |
+|------|------|------|-------|--------|-------|
+| `page.tsx` | `app/(app)/ask-expert/` | All | A- (90%) | ✅ Production Ready | Mode selector |
+| `mode-1/page.tsx` | `app/(app)/ask-expert/mode-1/` | 1 | A- (90%) | ⚠️ NEEDS_REVIEW* | Hardcoded tenant ID (C2) |
+| `mode-2/page.tsx` | `app/(app)/ask-expert/mode-2/` | 2 | B+ (85%) | ⚠️ NEEDS_REVIEW* | Hardcoded tenant ID (C2) |
+| `autonomous/page.tsx` | `app/(app)/ask-expert/autonomous/` | 3, 4 | B (80%) | ⚠️ NEEDS_REVIEW* | Hardcoded tenant ID (C2) |
+| `InteractiveView.tsx` | `features/ask-expert/views/` | 1, 2 | A- (90%) | ✅ Production Ready | Main interactive view |
+| `useMode1Chat.ts` | `features/ask-expert/hooks/` | 1 | A- (90%) | ✅ Production Ready | Mode 1 hook |
+| `useMode2Chat.ts` | `features/ask-expert/hooks/` | 2 | B+ (85%) | ✅ Production Ready | Mode 2 hook |
+| `useBaseInteractive.ts` | `features/ask-expert/hooks/` | 1, 2 | A (92%) | ✅ Production Ready | Base interactive hook |
+| `useSSEStream.ts` | `features/ask-expert/hooks/` | All | A+ (95%) | ✅ Production Ready | SSE streaming hook |
+| `ChatInput.tsx` | `features/ask-expert/components/interactive/` | 1, 2 | A- (90%) | ✅ Production Ready | Chat input component |
+| `ExpertPicker.tsx` | `features/ask-expert/components/interactive/` | 1 | A- (90%) | ✅ Production Ready | Expert selection |
+| `VitalMessage.tsx` | `features/ask-expert/components/interactive/` | 1, 2 | A- (90%) | ✅ Production Ready | Message display |
+| `FusionSelector.tsx` | `features/ask-expert/components/interactive/` | 2 | B+ (85%) | ✅ Production Ready | Fusion selection UI |
+
+**\* Needs Review: Hardcoded tenant IDs (C2 critical issue)**
+
+#### NEEDS_REVIEW
+
+| File | Path | Issue | Priority | Action |
+|------|------|-------|----------|--------|
+| `AutonomousView.tsx` | `features/ask-expert/views/` | 6 TODOs (C3), console statements | 🔴 CRITICAL | Complete TODOs or remove |
+| `useMode3Mission.ts` | `features/ask-expert/hooks/` | Test coverage gap | 🟡 HIGH | Add comprehensive tests |
+| `useMode4Background.ts` | `features/ask-expert/hooks/` | Test coverage gap | 🟡 HIGH | Add comprehensive tests |
+| `useBaseAutonomous.ts` | `features/ask-expert/hooks/` | Test coverage gap | 🟡 HIGH | Add comprehensive tests |
+| `mode-1/page.tsx` | `app/(app)/ask-expert/mode-1/` | Hardcoded tenant ID | 🔴 CRITICAL | Use auth context (C2) |
+| `mode-2/page.tsx` | `app/(app)/ask-expert/mode-2/` | Hardcoded tenant ID | 🔴 CRITICAL | Use auth context (C2) |
+| `autonomous/page.tsx` | `app/(app)/ask-expert/autonomous/` | Hardcoded tenant ID | 🔴 CRITICAL | Use auth context (C2) |
+| All component files | `features/ask-expert/components/` | 94 console statements | 🟢 MEDIUM | Replace with structured logging |
+
+**TODOs in AutonomousView.tsx (C3 Critical):**
+- Line 1375: `// TODO: Implement artifact download`
+- Line 1379: `// TODO: Implement bulk download`
+- Line 1383: `// TODO: Implement share functionality`
+- Line 1391: `// TODO: Send feedback to backend`
+- Line 1396: `// TODO: Implement transcript viewer`
+
+#### PRODUCTION_CORE
+
+| File | Path | Purpose | Critical |
+|------|------|---------|----------|
+| `useSSEStream.ts` | `features/ask-expert/hooks/` | SSE connection management | ✅ Yes |
+| `ErrorBoundary.tsx` | `features/ask-expert/components/errors/` | Error boundary | ✅ Yes |
+| `index.ts` | `features/ask-expert/hooks/` | Hook exports | ✅ Yes |
+
+#### ARCHIVE
+
+| File | Path | Status | Notes |
+|------|------|--------|-------|
+| Test files | `archive/2025-12-12/tests/vital-system/features/ask-expert/` | ✅ Archived | 17 test files (should review for restoration) |
+
+---
+
+### Ask Expert API Routes (Frontend BFF)
+
+#### PRODUCTION_READY
+
+| File | Path | Mode | Status | Notes |
+|------|------|------|--------|-------|
+| `mode1/stream/route.ts` | `app/api/expert/` | 1 | ✅ Production Ready | BFF route for Mode 1 |
+| `mode2/stream/route.ts` | `app/api/expert/` | 2 | ✅ Production Ready | BFF route for Mode 2 |
+| `mode3/stream/route.ts` | `app/api/expert/` | 3 | ✅ Production Ready | BFF route for Mode 3 |
+| `mode4/stream/route.ts` | `app/api/expert/` | 4 | ✅ Production Ready | BFF route for Mode 4 |
+| `ask-expert/stream/route.ts` | `app/api/` | All | ✅ Production Ready | Unified stream route |
+| `ask-expert/hitl-response/route.ts` | `app/api/` | 3, 4 | ✅ Production Ready | HITL checkpoint response |
+
+#### NEEDS_REVIEW
+
+| File | Path | Issue | Priority | Action |
+|------|------|-------|----------|--------|
+| All BFF routes | `app/api/expert/` | Inconsistent endpoint naming | 🟡 HIGH | Standardize on `/api/ask-expert/` prefix |
+
+---
+
+### Ask Expert Test Files
+
+#### PRODUCTION_READY
+
+| File | Path | Coverage | Status |
+|------|------|----------|--------|
+| `test_resilience.py` | `tests/unit/` | 45 test functions | ✅ Production Ready |
+| `test_validation.py` | `tests/unit/` | 32 test functions | ✅ Production Ready |
+| `test_graceful_degradation.py` | `tests/unit/` | 50 test functions | ✅ Production Ready |
+| `test_ask_expert_api.py` | `tests/e2e/` | E2E tests | ✅ Production Ready |
+
+#### NEEDS_REVIEW
+
+| File | Path | Issue | Priority | Action |
+|------|------|-------|----------|--------|
+| Frontend tests | `archive/2025-12-12/tests/vital-system/features/ask-expert/` | Archived (17 files) | 🟡 HIGH | Review and restore if valid |
+| Integration tests | Missing | No comprehensive integration tests | 🟡 HIGH | Add integration test suite |
+
+---
+
+### Ask Expert Summary
+
+| Category | Production Ready | Production Core | Needs Review | Deprecated | Archive | Total |
+|----------|-----------------|-----------------|--------------|------------|---------|-------|
+| **Backend Workflows** | 12 | 0 | 11 | 3 | 0 | 26 |
+| **Backend API Routes** | 2 | 0 | 3 | 0 | 0 | 5 |
+| **Backend Services** | 0 | 8 | 0 | 0 | 0 | 8 |
+| **Frontend Pages** | 1 | 0 | 3 | 0 | 0 | 4 |
+| **Frontend Views** | 1 | 0 | 1 | 0 | 0 | 2 |
+| **Frontend Hooks** | 4 | 1 | 3 | 0 | 0 | 8 |
+| **Frontend Components** | 4 | 1 | 1 | 0 | 0 | 6 |
+| **Frontend API Routes** | 6 | 0 | 1 | 0 | 0 | 7 |
+| **Test Files** | 4 | 0 | 2 | 0 | 17 | 23 |
+| **Ask Expert Total** | **34** | **10** | **25** | **3** | **17** | **89** |
+
+**Critical Issues to Address:**
+1. 🔴 **C2**: Hardcoded tenant IDs in 3 page components (must fix)
+2. 🔴 **C3**: 6 TODOs in AutonomousView.tsx (must complete or remove)
+3. 🟡 **H1**: Mode visual differentiation (should fix)
+4. 🟡 **H2**: Backend integration test coverage (should fix)
+5. 🟡 **H3**: Runner family implementation (should verify)
 
 ---
 
 ## Related Documents
 
 - `ASK_EXPERT_UNIFIED_IMPLEMENTATION_OVERVIEW.md` - Implementation status
-- `ASK_EXPERT_UNIFIED_AUDIT_REPORT.md` - Quality audit
+- `ASK_EXPERT_UNIFIED_BACKEND_OVERVIEW.md` - Backend architecture
+- `ASK_EXPERT_UNIFIED_FRONTEND_OVERVIEW.md` - Frontend architecture
+- `ASK_EXPERT_UNIFIED_STRUCTURE.md` - Codebase structure
+- `ASK_EXPERT_END_TO_END_AUDIT_2025_01_27.md` - Comprehensive audit report
 - `VITAL_WORLD_CLASS_STRUCTURE_FINAL.md` - Architecture reference

@@ -42,6 +42,10 @@ export * from './components/tooltip';
 // Agent Components (action buttons, filters, cards)
 export * from './components/agents';
 
+// Missions & HITL Components
+export * from './components/missions';
+export * from './components/hitl';
+
 // AI Components
 export * from './components/ai/inline-citation';
 

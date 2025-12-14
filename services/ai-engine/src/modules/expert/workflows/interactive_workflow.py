@@ -62,7 +62,7 @@ class InteractiveWorkflowBuilder:
 
         graph.add_conditional_edges(
             "router",
-            lambda state: "select" if state.get("mode") == 2 and not state.get("expert_id") else "enrich",
+            lambda state: "select" if state.get("mode") == 2 and not state.get("agent_id") else "enrich",
             {"select": "auto_select", "enrich": "enrich_context"},
         )
 

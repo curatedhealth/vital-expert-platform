@@ -26,11 +26,18 @@ class L2RegulatoryExpert(L2DomainExpert):
     
     def __init__(
         self,
-        expert_id: str = "l2-regulatory-expert",
+        agent_id: str = "l2-regulatory-expert",
         **kwargs
     ):
+        # Create AgentConfig with the provided agent_id
+        from ..base_agent import AgentConfig
+        config = AgentConfig(
+            id=agent_id,
+            name="Regulatory Expert",
+            role="l2_expert"
+        )
         super().__init__(
-            expert_id=expert_id,
+            config=config,
             domain="regulatory",
             **kwargs
         )
@@ -104,21 +111,28 @@ Structure your response with:
 class L2ClinicalExpert(L2DomainExpert):
     """
     L2 Clinical Domain Expert.
-    
+
     Expertise:
     - Clinical trial design
     - Endpoints and outcomes
     - Biostatistics
     - Protocol development
     """
-    
+
     def __init__(
         self,
-        expert_id: str = "l2-clinical-expert",
+        agent_id: str = "l2-clinical-expert",
         **kwargs
     ):
+        # Create AgentConfig with the provided agent_id
+        from ..base_agent import AgentConfig
+        config = AgentConfig(
+            id=agent_id,
+            name="Clinical Expert",
+            role="l2_expert"
+        )
         super().__init__(
-            expert_id=expert_id,
+            config=config,
             domain="clinical",
             **kwargs
         )

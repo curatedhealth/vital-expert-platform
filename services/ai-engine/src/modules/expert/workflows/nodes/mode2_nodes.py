@@ -109,16 +109,16 @@ class Mode2SelectionNode:
                     ]
                 }
 
-            expert_id = selected_ids[0]
+            agent_id = selected_ids[0]
 
             return {
-                "expert_id": expert_id,
+                "agent_id": agent_id,
                 "selection_evidence": evidence.model_dump() if hasattr(evidence, 'model_dump') else {},
                 "ui_updates": [
                     {
                         "type": "VitalAgentCard",
                         "payload": {
-                            "agent": {"id": expert_id},
+                            "agent": {"id": agent_id},
                             "status": "active",
                             "variant": "compact",
                             "confidence": evidence.confidence if evidence else 0,

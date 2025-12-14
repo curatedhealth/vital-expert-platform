@@ -284,9 +284,6 @@ class MissionCreateRequest(BaseModel):
     - Input sanitization for goal/inputs
     - ID format validation
     - Range validation for budgets/timeouts
-
-    Field Aliases:
-    - agent_id → expert_id (frontend compatibility)
     """
     goal: str = Field(
         ...,
@@ -298,10 +295,9 @@ class MissionCreateRequest(BaseModel):
         None,
         description="Mission template ID (UUID format if provided)"
     )
-    # Accept both 'expert_id' and 'agent_id' from frontend (normalized in model_validator)
-    expert_id: str = Field(
+    agent_id: str = Field(
         ...,
-        description="Expert agent ID (required, UUID format). Alias: agent_id"
+        description="Agent ID (required, UUID format)"
     )
     tenant_id: str = Field(
         ...,
@@ -338,24 +334,12 @@ class MissionCreateRequest(BaseModel):
     @classmethod
     def normalize_field_aliases(cls, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Normalize field aliases for frontend compatibility.
-
-        Maps:
-        - agent_id → expert_id (frontend sends agent_id)
-
-        Validates that required fields are provided.
+        Normalize field aliases and validate required fields.
         """
         if isinstance(data, dict):
-            # Map agent_id → expert_id (frontend compatibility)
-            if "agent_id" in data and data.get("agent_id"):
-                if not data.get("expert_id"):
-                    data["expert_id"] = data["agent_id"]
-                # Remove agent_id to avoid duplicate field issues
-                del data["agent_id"]
-
-            # Validate required fields after normalization
-            if not data.get("expert_id"):
-                raise ValueError("Either expert_id or agent_id is required")
+            # Validate required fields
+            if not data.get("agent_id"):
+                raise ValueError("agent_id is required")
             if not data.get("tenant_id"):
                 raise ValueError("tenant_id is required")
             if data.get("mode") is None:
@@ -417,7 +401,7 @@ class MissionCreateRequest(BaseModel):
 
         raise ValueError(f"Invalid template_id format (must be UUID or valid slug): {v}")
 
-    @field_validator("expert_id", "tenant_id", mode="before")
+    @field_validator("agent_id", "tenant_id", mode="before")
     @classmethod
     def validate_uuid_fields(cls, v: str) -> str:
         """Validate UUID format using Pydantic's UUID validator."""
@@ -444,7 +428,7 @@ class MissionCreateRequest(BaseModel):
             "example": {
                 "goal": "Review latest immunotherapy approaches for melanoma treatment",
                 "template_id": "550e8400-e29b-41d4-a716-446655440001",
-                "expert_id": "660e8400-e29b-41d4-a716-446655440000",
+                "agent_id": "660e8400-e29b-41d4-a716-446655440000",
                 "tenant_id": "770e8400-e29b-41d4-a716-446655440000",
                 "mode": 4,
                 "hitl_enabled": True,
@@ -522,9 +506,9 @@ class RunnerExecuteRequest(BaseModel):
         ...,
         description="Mission ID (UUID format)"
     )
-    expert_id: str = Field(
+    agent_id: str = Field(
         ...,
-        description="Expert agent ID (UUID format)"
+        description="Agent ID (UUID format)"
     )
     tenant_id: str = Field(
         ...,
@@ -549,7 +533,7 @@ class RunnerExecuteRequest(BaseModel):
         description="Checkpoint ID to resume from"
     )
 
-    @field_validator("mission_id", "expert_id", "tenant_id", mode="before")
+    @field_validator("mission_id", "agent_id", "tenant_id", mode="before")
     @classmethod
     def validate_uuid_format(cls, v: str) -> str:
         """Validate UUID format for IDs."""
@@ -575,7 +559,7 @@ class RunnerExecuteRequest(BaseModel):
         json_schema_extra = {
             "example": {
                 "mission_id": "550e8400-e29b-41d4-a716-446655440000",
-                "expert_id": "660e8400-e29b-41d4-a716-446655440000",
+                "agent_id": "660e8400-e29b-41d4-a716-446655440000",
                 "tenant_id": "770e8400-e29b-41d4-a716-446655440000",
                 "mode": 4,
                 "hitl_enabled": True,

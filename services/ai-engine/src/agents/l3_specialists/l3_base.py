@@ -47,23 +47,23 @@ of the provided content. Preserve key information while reducing length.""",
     def __init__(
         self,
         task_type: str,
-        parent_expert_id: str,
+        parent_agent_id: str,
         llm=None,
         model: str = "claude-sonnet-4-20250514",
         token_budget: int = 2000,
     ):
         """
         Initialize L3 Task Specialist.
-        
+
         Args:
             task_type: Type of task (analysis, literature_review, comparison, summarization)
-            parent_expert_id: ID of the L2 expert that spawned this specialist
+            parent_agent_id: ID of the L2 expert that spawned this specialist
             llm: Pre-configured LLM
             model: Model to use
             token_budget: Maximum tokens
         """
         self.task_type = task_type
-        self.parent_expert_id = parent_expert_id
+        self.parent_agent_id = parent_agent_id
         self.token_budget = token_budget
         self.model = model
         
@@ -83,7 +83,7 @@ of the provided content. Preserve key information while reducing length.""",
         logger.info(
             "l3_specialist_initialized",
             task_type=task_type,
-            parent_expert_id=parent_expert_id,
+            parent_agent_id=parent_agent_id,
         )
     
     @property
@@ -111,9 +111,9 @@ of the provided content. Preserve key information while reducing length.""",
         logger.info(
             "l3_execute_started",
             task_type=self.task_type,
-            parent_expert_id=self.parent_expert_id,
+            parent_agent_id=self.parent_agent_id,
         )
-        
+
         try:
             if not self.llm:
                 return {
@@ -121,9 +121,9 @@ of the provided content. Preserve key information while reducing length.""",
                     'result': 'LLM not available',
                     'error': True,
                 }
-            
+
             from langchain_core.messages import SystemMessage, HumanMessage
-            
+
             task_prompt = f"""## Task
 {task}
 
@@ -131,27 +131,27 @@ of the provided content. Preserve key information while reducing length.""",
 {self._format_context(context)}
 
 Execute this task thoroughly and provide your output."""
-            
+
             response = await self.llm.ainvoke([
                 SystemMessage(content=self.system_prompt),
                 HumanMessage(content=task_prompt),
             ])
-            
+
             result = {
                 'task_type': self.task_type,
-                'parent_expert_id': self.parent_expert_id,
+                'parent_agent_id': self.parent_agent_id,
                 'result': response.content,
                 'timestamp': datetime.utcnow().isoformat(),
             }
-            
+
             logger.info(
                 "l3_execute_completed",
                 task_type=self.task_type,
                 result_length=len(response.content),
             )
-            
+
             return result
-            
+
         except Exception as e:
             logger.error(
                 "l3_execute_failed",

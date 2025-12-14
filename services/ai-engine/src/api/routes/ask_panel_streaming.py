@@ -579,9 +579,9 @@ async def list_available_agents(
                 detail="Database unavailable"
             )
 
-        # Default tenant ID if not provided
-        DEFAULT_TENANT_ID = "c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244"
-        effective_tenant_id = tenant_id or DEFAULT_TENANT_ID
+        # Use canonical tenant ID from middleware (single source of truth)
+        from middleware.tenant_context import CANONICAL_TENANT_ID
+        effective_tenant_id = tenant_id or CANONICAL_TENANT_ID
 
         # Set tenant context for RLS
         try:

@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import {
   SectionHeader,
   FeatureCard,
-  CTASection,
   TestimonialCard,
   Footer,
   FixedGrid,
@@ -19,6 +18,7 @@ import {
   CardContent,
   CardTitle,
 } from '@vital/ui';
+import { CTASectionPremium } from './components/CTASectionPremium';
 import { Features06 } from '@/components/landing/enhanced/Features06';
 import { Hero01 } from '@/components/landing/enhanced/Hero01';
 import {
@@ -362,16 +362,14 @@ export function LandingPagePremium() {
       {/* ================================================================== */}
       {/* CTA */}
       {/* ================================================================== */}
-      <CTASection
-        badge="Beta Program Open"
-        headline={
-          <>
-            Ready to change how your organization works?
-          </>
-        }
+      <CTASectionPremium
+        badgeText="Beta Program Open"
+        headline="Ready to change how your organization works?"
         description="VITAL isn’t something you deploy — it’s something you adopt. Join teams using VITAL to think better, move faster, and bring humanity back to complex work."
-        primaryCTA={{ text: 'Request a private walkthrough', onClick: handleGetStarted }}
-        secondaryCTA={{ text: 'Talk to an expert', onClick: handleScheduleDemo, icon: 'calendar' }}
+        primaryText="Request a private walkthrough"
+        secondaryText="Talk to an expert"
+        onGetStarted={handleGetStarted}
+        onScheduleDemo={handleScheduleDemo}
       />
 
       {/* ================================================================== */}

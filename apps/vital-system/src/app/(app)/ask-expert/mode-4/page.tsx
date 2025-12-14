@@ -18,6 +18,7 @@
  */
 
 import { Suspense, useCallback } from 'react';
+import { useTenant } from '@/contexts/TenantContext';
 import { AutonomousView } from '@/features/ask-expert/views/AutonomousView';
 import { ErrorBoundary } from '@/features/ask-expert/components/errors';
 import { Loader2 } from 'lucide-react';
@@ -33,7 +34,7 @@ function LoadingState() {
   );
 }
 
-function Mode4Content() {
+function Mode4Content({ tenantId }: { tenantId: string }) {
   const handleMissionComplete = useCallback((missionId: string, artifacts: unknown[]) => {
     console.log('Mode 4 mission completed:', missionId, 'Artifacts:', artifacts.length);
     // TODO: Show notification or update UI
@@ -48,7 +49,7 @@ function Mode4Content() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <AutonomousView
         mode="mode4"
-        tenantId="00000000-0000-0000-0000-000000000001"
+        tenantId={tenantId}
         onMissionComplete={handleMissionComplete}
         onMissionFail={handleMissionFail}
       />
@@ -57,10 +58,16 @@ function Mode4Content() {
 }
 
 export default function Mode4BackgroundAgentPage() {
+  const tenant = useTenant();
+
+  if (!tenant) {
+    return <LoadingState />;
+  }
+
   return (
     <ErrorBoundary componentName="Mode4BackgroundAgentPage">
       <Suspense fallback={<LoadingState />}>
-        <Mode4Content />
+        <Mode4Content tenantId={tenant.id} />
       </Suspense>
     </ErrorBoundary>
   );

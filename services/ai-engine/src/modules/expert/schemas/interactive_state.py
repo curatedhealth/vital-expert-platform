@@ -27,7 +27,7 @@ class InteractiveState(TypedDict, total=False):
     messages: Annotated[List[BaseMessage], add_messages]
 
     # Agent selection (Mode 1: provided, Mode 2: auto-selected)
-    expert_id: Optional[str]
+    agent_id: Optional[str]
 
     # Enriched context produced by L3/L4 (intent, expanded_terms, facts, citations, tools_used)
     enriched_context: Dict[str, Any]

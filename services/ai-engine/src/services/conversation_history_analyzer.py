@@ -109,8 +109,8 @@ class ConversationHistoryAnalyzer:
         agent_stats = await self.db_pool.fetch("""
             WITH agent_messages AS (
                 SELECT
-                    cm.expert_id AS agent_id,
-                    cm.expert_name AS agent_name,
+                    cm.agent_id AS agent_id,
+                    cm.agent_name AS agent_name,
                     cm.confidence_score,
                     cm.response_time_ms,
                     cm.content,
@@ -120,7 +120,7 @@ class ConversationHistoryAnalyzer:
                 JOIN chat_sessions cs ON cm.session_id = cs.id
                 WHERE
                     cm.role = 'assistant'
-                    AND cm.expert_id IS NOT NULL
+                    AND cm.agent_id IS NOT NULL
                     AND cm.created_at >= $1
             )
             SELECT
@@ -186,10 +186,10 @@ class ConversationHistoryAnalyzer:
         targets = await self.db_pool.fetch("""
             WITH agent_sequences AS (
                 SELECT
-                    cm1.expert_id AS from_agent,
-                    cm1.expert_name AS from_agent_name,
-                    cm2.expert_id AS to_agent,
-                    cm2.expert_name AS to_agent_name,
+                    cm1.agent_id AS from_agent,
+                    cm1.agent_name AS from_agent_name,
+                    cm2.agent_id AS to_agent,
+                    cm2.agent_name AS to_agent_name,
                     cm1.confidence_score AS confidence_before,
                     cm2.confidence_score AS confidence_after
                 FROM chat_messages cm1
@@ -199,11 +199,11 @@ class ConversationHistoryAnalyzer:
                     AND cm2.role = 'assistant'
                     AND cm1.role = 'assistant'
                 WHERE
-                    cm1.expert_id = $1
+                    cm1.agent_id = $1
                     AND cm1.created_at >= $2
                     AND cm1.confidence_score < $3  -- Low confidence suggests need for escalation
-                    AND cm2.expert_id IS NOT NULL
-                    AND cm2.expert_id != cm1.expert_id
+                    AND cm2.agent_id IS NOT NULL
+                    AND cm2.agent_id != cm1.agent_id
             )
             SELECT
                 to_agent_name,
@@ -228,17 +228,17 @@ class ConversationHistoryAnalyzer:
             WITH session_agents AS (
                 SELECT DISTINCT
                     cm1.session_id,
-                    cm1.expert_id AS agent1,
-                    cm1.expert_name AS agent1_name,
-                    cm2.expert_id AS agent2,
-                    cm2.expert_name AS agent2_name
+                    cm1.agent_id AS agent1,
+                    cm1.agent_name AS agent1_name,
+                    cm2.agent_id AS agent2,
+                    cm2.agent_name AS agent2_name
                 FROM chat_messages cm1
                 JOIN chat_messages cm2 ON
                     cm1.session_id = cm2.session_id
-                    AND cm2.expert_id IS NOT NULL
-                    AND cm2.expert_id != cm1.expert_id
+                    AND cm2.agent_id IS NOT NULL
+                    AND cm2.agent_id != cm1.agent_id
                 WHERE
-                    cm1.expert_id = $1
+                    cm1.agent_id = $1
                     AND cm1.created_at >= $2
                     AND cm1.role = 'assistant'
                     AND cm2.role = 'assistant'
@@ -275,9 +275,9 @@ class ConversationHistoryAnalyzer:
         escalations = await self.db_pool.fetch("""
             WITH agent_transitions AS (
                 SELECT
-                    cm1.expert_id AS from_agent_id,
+                    cm1.agent_id AS from_agent_id,
                     a1.name AS from_agent_name,
-                    cm2.expert_id AS to_agent_id,
+                    cm2.agent_id AS to_agent_id,
                     a2.name AS to_agent_name,
                     cm1.confidence_score AS confidence_before,
                     cm2.confidence_score AS confidence_after,
@@ -289,15 +289,15 @@ class ConversationHistoryAnalyzer:
                     AND cm2.created_at > cm1.created_at
                     AND cm2.role = 'assistant'
                     AND cm1.role = 'assistant'
-                LEFT JOIN agents a1 ON cm1.expert_id::UUID = a1.id
-                LEFT JOIN agents a2 ON cm2.expert_id::UUID = a2.id
+                LEFT JOIN agents a1 ON cm1.agent_id::UUID = a1.id
+                LEFT JOIN agents a2 ON cm2.agent_id::UUID = a2.id
                 WHERE
                     cm1.created_at >= $1
                     AND cm1.confidence_score < $2  -- Low confidence from first agent
                     AND cm2.confidence_score > cm1.confidence_score  -- Improvement
-                    AND cm1.expert_id IS NOT NULL
-                    AND cm2.expert_id IS NOT NULL
-                    AND cm1.expert_id != cm2.expert_id
+                    AND cm1.agent_id IS NOT NULL
+                    AND cm2.agent_id IS NOT NULL
+                    AND cm1.agent_id != cm2.agent_id
             ),
             escalation_groups AS (
                 SELECT
@@ -429,21 +429,21 @@ class ConversationHistoryAnalyzer:
             WITH session_agent_pairs AS (
                 SELECT DISTINCT
                     cm1.session_id,
-                    LEAST(cm1.expert_id::UUID, cm2.expert_id::UUID) AS agent1_id,
-                    GREATEST(cm1.expert_id::UUID, cm2.expert_id::UUID) AS agent2_id,
+                    LEAST(cm1.agent_id::UUID, cm2.agent_id::UUID) AS agent1_id,
+                    GREATEST(cm1.agent_id::UUID, cm2.agent_id::UUID) AS agent2_id,
                     AVG(cm1.confidence_score)::DECIMAL(4,3) AS avg_confidence1,
                     AVG(cm2.confidence_score)::DECIMAL(4,3) AS avg_confidence2
                 FROM chat_messages cm1
                 JOIN chat_messages cm2 ON
                     cm1.session_id = cm2.session_id
-                    AND cm2.expert_id IS NOT NULL
-                    AND cm1.expert_id IS NOT NULL
-                    AND cm2.expert_id::UUID != cm1.expert_id::UUID
+                    AND cm2.agent_id IS NOT NULL
+                    AND cm1.agent_id IS NOT NULL
+                    AND cm2.agent_id::UUID != cm1.agent_id::UUID
                 WHERE
                     cm1.created_at >= $1
                     AND cm1.role = 'assistant'
                     AND cm2.role = 'assistant'
-                GROUP BY cm1.session_id, cm1.expert_id, cm2.expert_id
+                GROUP BY cm1.session_id, cm1.agent_id, cm2.agent_id
             )
             SELECT
                 agent1_id,

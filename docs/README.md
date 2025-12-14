@@ -65,7 +65,8 @@ docs/
 
 Progressive asset-by-asset cleanup for Vercel (frontend) + Railway (backend) deployment.
 
-**Master Plan**: [architecture/DEPLOYMENT_READY_STRUCTURE.md](architecture/DEPLOYMENT_READY_STRUCTURE.md)
+**Deployment Checklist**: [guides/DEPLOYMENT_CHECKLIST.md](guides/DEPLOYMENT_CHECKLIST.md)  
+**File Organization Standard**: [architecture/FILE_ORGANIZATION_STANDARD.md](architecture/FILE_ORGANIZATION_STANDARD.md)
 
 ### Asset Cleanup Status
 

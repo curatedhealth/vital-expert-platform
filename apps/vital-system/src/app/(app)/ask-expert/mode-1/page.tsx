@@ -16,6 +16,7 @@
  */
 
 import { Suspense } from 'react';
+import { useTenant } from '@/contexts/TenantContext';
 import { InteractiveView } from '@/features/ask-expert/views/InteractiveView';
 import { ErrorBoundary } from '@/features/ask-expert/components/errors';
 import { Loader2 } from 'lucide-react';
@@ -32,13 +33,19 @@ function LoadingState() {
 }
 
 export default function Mode1ExpertChatPage() {
+  const tenant = useTenant();
+
+  if (!tenant) {
+    return <LoadingState />;
+  }
+
   return (
     <ErrorBoundary componentName="Mode1ExpertChatPage">
       <Suspense fallback={<LoadingState />}>
         <div className="flex flex-col h-[calc(100vh-4rem)]">
           <InteractiveView
             mode="mode1"
-            tenantId="00000000-0000-0000-0000-000000000001"
+            tenantId={tenant.id}
           />
         </div>
       </Suspense>

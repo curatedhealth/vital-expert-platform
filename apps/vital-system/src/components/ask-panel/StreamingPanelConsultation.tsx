@@ -27,10 +27,7 @@ interface Message {
 interface StreamingPanelConsultationProps {
   question: string;
   panelId: string;
-  /** Agent IDs for the panel consultation */
-  agentIds?: string[];
-  /** @deprecated Use agentIds instead */
-  expertIds?: string[];
+  expertIds: string[];
   tenantId: string;
   enableDebate?: boolean;
   maxRounds?: number;
@@ -41,16 +38,13 @@ interface StreamingPanelConsultationProps {
 export function StreamingPanelConsultation({
   question,
   panelId,
-  agentIds,
-  expertIds, // Deprecated - use agentIds
+  expertIds,
   tenantId,
   enableDebate = true,
   maxRounds = 3,
   onComplete,
   onError,
 }: StreamingPanelConsultationProps) {
-  // Resolve effective agent IDs (agentIds takes precedence over deprecated expertIds)
-  const effectiveAgentIds = agentIds || expertIds || [];
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +76,7 @@ export function StreamingPanelConsultation({
     setMessages([]);
 
     // Filter out any fallback IDs before sending to backend (safety check)
-    const validAgentIds = effectiveAgentIds.filter(id => {
+    const validAgentIds = expertIds.filter(id => {
       return id && !id.startsWith('fallback-') && !id.startsWith('agent-');
     });
 
@@ -94,9 +88,9 @@ export function StreamingPanelConsultation({
       return;
     }
 
-    if (validAgentIds.length !== effectiveAgentIds.length) {
+    if (validAgentIds.length !== expertIds.length) {
       console.warn(
-        `[StreamingPanelConsultation] Filtered out ${effectiveAgentIds.length - validAgentIds.length} fallback agent IDs. ` +
+        `[StreamingPanelConsultation] Filtered out ${expertIds.length - validAgentIds.length} fallback agent IDs. ` +
         `Sending ${validAgentIds.length} valid agent IDs to backend.`
       );
     }
@@ -253,7 +247,7 @@ export function StreamingPanelConsultation({
       case "summary":
         return <FileText className="w-5 h-5 text-green-500" />;
       case "system":
-        return <Sparkles className="w-5 h-5 text-stone-500" />;
+        return <Sparkles className="w-5 h-5 text-gray-500" />;
     }
   };
 
@@ -266,7 +260,7 @@ export function StreamingPanelConsultation({
       case "summary":
         return "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800";
       case "system":
-        return "bg-stone-50 dark:bg-stone-900 border-stone-200 dark:border-stone-700";
+        return "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700";
     }
   };
 
@@ -315,7 +309,7 @@ export function StreamingPanelConsultation({
           <strong>Question:</strong> {question}
         </p>
         <div className="flex gap-2 mt-2">
-          <Badge variant="secondary">{effectiveAgentIds.length} Agents</Badge>
+          <Badge variant="secondary">{expertIds.length} Experts</Badge>
           {enableDebate && <Badge variant="secondary">Multi-Round Debate</Badge>}
           <Badge variant="secondary">Max {maxRounds} Rounds</Badge>
         </div>

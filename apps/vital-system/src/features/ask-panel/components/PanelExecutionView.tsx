@@ -493,7 +493,7 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
             <StreamingPanelConsultation
               question={question}
               panelId={panel.id}
-              agentIds={activeAgents.map(a => a.id)}
+              expertIds={activeAgents.map(a => a.id)}
               tenantId={STARTUP_TENANT_ID}
               enableDebate={true}
               maxRounds={3}
@@ -810,7 +810,7 @@ export function PanelExecutionView({ panel, onBack }: PanelExecutionViewProps) {
                               {isPanelSuggested && (
                                 <Badge 
                                   variant="outline" 
-                                  className="absolute top-2 right-2 text-xs z-10 bg-white dark:bg-stone-800"
+                                  className="absolute top-2 right-2 text-xs z-10 bg-white dark:bg-gray-800"
                                 >
                                   Panel
                                 </Badge>

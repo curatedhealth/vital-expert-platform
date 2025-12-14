@@ -1,7 +1,3 @@
-# PRODUCTION_TAG: PRODUCTION_READY
-# LAST_VERIFIED: 2025-12-13
-# MODES_SUPPORTED: [Panel]
-# DEPENDENCIES: [langgraph_workflows.ask_panel_enhanced, services.supabase_client, services.agent_service, services.llm_service]
 """
 Ask Panel Enhanced - Streaming API Routes
 
@@ -20,7 +16,7 @@ import json
 import asyncio
 from typing import AsyncIterator, List, Optional, Union, Dict, Any
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, validator
 import structlog

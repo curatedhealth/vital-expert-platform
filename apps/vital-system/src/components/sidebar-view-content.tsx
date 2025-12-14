@@ -66,6 +66,8 @@ import { useSavedPanels } from "@/contexts/ask-panel-context"
 import { useDesigner } from "@/contexts/designer-context"
 import { PANEL_TEMPLATES } from "@/features/ask-panel/constants/panel-templates"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Input } from "@/components/ui/input"
+import { Loader2 } from "lucide-react"
 
 // Map category to icon
 const CATEGORY_ICONS: Record<string, any> = {
@@ -3397,7 +3399,168 @@ export function SidebarDesignerContent() {
           </CollapsibleContent>
         </SidebarGroup>
       </Collapsible>
+
+      {/* Agents */}
+      <SidebarAgentsSection />
     </>
+  )
+}
+
+// Agents Section Component
+function SidebarAgentsSection() {
+  const [agents, setAgents] = useState<Array<{
+    id: string;
+    name: string;
+    description?: string;
+    function_name?: string;
+    department_name?: string;
+    level?: number;
+    tier?: number;
+  }>>([]);
+  const [agentsLoading, setAgentsLoading] = useState(false);
+  const [agentSearchQuery, setAgentSearchQuery] = useState('');
+  const [agentsError, setAgentsError] = useState<string | null>(null);
+  const [agentsWarning, setAgentsWarning] = useState<string | null>(null);
+
+  // Fetch agents on mount
+  useEffect(() => {
+    const fetchAgents = async () => {
+      setAgentsLoading(true);
+      setAgentsError(null);
+      setAgentsWarning(null);
+      try {
+        const response = await fetch('/api/agents?status=active&limit=500');
+        const data = await response.json();
+        
+        if (data.warning) {
+          setAgentsWarning(data.warning);
+        }
+        
+        if (data.error) {
+          setAgentsError(data.error);
+          setAgentsLoading(false);
+          return;
+        }
+        
+        const activeAgents = data.agents || (Array.isArray(data) ? data : []);
+        
+        if (activeAgents.length === 0) {
+          try {
+            const allResponse = await fetch('/api/agents?status=all&limit=10');
+            const allData = await allResponse.json();
+            const allAgents = allData.agents || (Array.isArray(allData) ? allData : []);
+            
+            if (allAgents.length > 0) {
+              setAgentsWarning(
+                `Found ${allData.count || allAgents.length} agents, but none are active.`
+              );
+            } else {
+              setAgentsWarning('No agents found in database.');
+            }
+          } catch (checkError) {
+            console.warn('Could not check for all agents:', checkError);
+          }
+        }
+        
+        setAgents(activeAgents);
+      } catch (error) {
+        console.error('Failed to fetch agents:', error);
+        setAgentsError(
+          error instanceof Error 
+            ? `Failed to fetch agents: ${error.message}` 
+            : 'Failed to fetch agents.'
+        );
+      } finally {
+        setAgentsLoading(false);
+      }
+    };
+    fetchAgents();
+  }, []);
+
+  // Filter agents by search query
+  const filteredAgents = agents.filter(agent =>
+    !agentSearchQuery ||
+    agent.name?.toLowerCase().includes(agentSearchQuery.toLowerCase()) ||
+    agent.description?.toLowerCase().includes(agentSearchQuery.toLowerCase()) ||
+    agent.function_name?.toLowerCase().includes(agentSearchQuery.toLowerCase()) ||
+    agent.department_name?.toLowerCase().includes(agentSearchQuery.toLowerCase())
+  );
+
+  return (
+    <Collapsible defaultOpen className="group/collapsible">
+      <SidebarGroup>
+        <SidebarGroupLabel asChild>
+          <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span>Agents</span>
+            </div>
+            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+          </CollapsibleTrigger>
+        </SidebarGroupLabel>
+        <CollapsibleContent>
+          <SidebarGroupContent>
+            <div className="px-2 pb-2">
+              <Input
+                placeholder="Search agents..."
+                value={agentSearchQuery}
+                onChange={(e) => setAgentSearchQuery(e.target.value)}
+                className="h-8 text-xs"
+              />
+            </div>
+            <ScrollArea className="h-[400px]">
+              <SidebarMenu>
+                {agentsLoading ? (
+                  <SidebarMenuItem>
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  </SidebarMenuItem>
+                ) : agentsError ? (
+                  <SidebarMenuItem>
+                    <div className="p-2 text-xs text-center text-destructive">
+                      {agentsError}
+                    </div>
+                  </SidebarMenuItem>
+                ) : filteredAgents.length === 0 ? (
+                  <SidebarMenuItem>
+                    <div className="p-2 text-xs text-center text-muted-foreground">
+                      {agentSearchQuery ? 'No agents match your search' : 'No agents available'}
+                      {agentsWarning && (
+                        <div className="mt-1 text-[10px] text-yellow-600 dark:text-yellow-400">
+                          {agentsWarning}
+                        </div>
+                      )}
+                    </div>
+                  </SidebarMenuItem>
+                ) : (
+                  filteredAgents.slice(0, 50).map((agent) => (
+                    <SidebarMenuItem key={agent.id}>
+                      <SidebarMenuButton className="flex flex-col items-start gap-1 h-auto py-2">
+                        <div className="flex items-center gap-2 w-full">
+                          <Bot className="h-3 w-3 flex-shrink-0" />
+                          <span className="text-xs font-medium truncate flex-1">{agent.name}</span>
+                          {agent.tier && (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
+                              T{agent.tier}
+                            </Badge>
+                          )}
+                        </div>
+                        {agent.description && (
+                          <div className="text-[10px] text-muted-foreground line-clamp-2 pl-5">
+                            {agent.description}
+                          </div>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))
+                )}
+              </SidebarMenu>
+            </ScrollArea>
+          </SidebarGroupContent>
+        </CollapsibleContent>
+      </SidebarGroup>
+    </Collapsible>
   )
 }
 

@@ -5,6 +5,10 @@ import { createServerClient } from '@supabase/ssr';
 /**
  * GET /api/user-panels
  * Get all custom panels for the current user
+ *
+ * Uses the existing schema:
+ * - panels: stores panel definitions (id, slug, name, description, category, mode, framework, suggested_agents, default_settings, metadata)
+ * - user_panels: junction table linking users to panels (id, user_id, panel_id, role, tenant_id)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -20,10 +24,10 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized', message: 'Please sign in to view your panels' },
@@ -45,19 +49,16 @@ export async function GET(request: NextRequest) {
         fallback: true,
       });
     }
-    
-    // Fetch user's custom panels
-    const { data: panels, error } = await serviceSupabase
-      .from('user_panels')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('is_favorite', { ascending: false })
-      .order('last_used_at', { ascending: false, nullsFirst: false })
-      .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('[User Panels API] Error fetching panels:', error);
-      // Return empty array instead of error to prevent UI breakage
+    // Fetch user's custom panels via junction table
+    // Join user_panels with panels to get full panel data
+    const { data: userPanelLinks, error: linkError } = await serviceSupabase
+      .from('user_panels')
+      .select('panel_id, role')
+      .eq('user_id', user.id);
+
+    if (linkError) {
+      console.error('[User Panels API] Error fetching user panel links:', linkError);
       return NextResponse.json({
         success: true,
         panels: [],
@@ -66,10 +67,54 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    if (!userPanelLinks || userPanelLinks.length === 0) {
+      return NextResponse.json({
+        success: true,
+        panels: [],
+        count: 0,
+      });
+    }
+
+    // Get panel IDs
+    const panelIds = userPanelLinks.map(link => link.panel_id);
+
+    // Fetch actual panel data
+    const { data: panels, error } = await serviceSupabase
+      .from('panels')
+      .select('*')
+      .in('id', panelIds)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[User Panels API] Error fetching panels:', error);
+      return NextResponse.json({
+        success: true,
+        panels: [],
+        count: 0,
+        fallback: true,
+      });
+    }
+
+    // Merge panel data with user-specific info (role) and extract workflow from metadata
+    const enrichedPanels = (panels || []).map(panel => {
+      const link = userPanelLinks.find(l => l.panel_id === panel.id);
+      return {
+        ...panel,
+        user_id: user.id,
+        role: link?.role || 'owner',
+        // Extract workflow_definition from metadata if stored there
+        workflow_definition: panel.metadata?.workflow_definition || null,
+        selected_agents: panel.suggested_agents || [],
+        custom_settings: panel.default_settings || {},
+        is_favorite: panel.metadata?.is_favorite || false,
+        last_used_at: panel.metadata?.last_used_at || null,
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      panels: panels || [],
-      count: panels?.length || 0,
+      panels: enrichedPanels,
+      count: enrichedPanels.length,
     });
 
   } catch (error: any) {
@@ -84,6 +129,12 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/user-panels
  * Create a new custom panel for the current user
+ *
+ * Uses the existing schema:
+ * - panels: stores panel definitions (id, slug, name, description, category, mode, framework, suggested_agents, default_settings, metadata)
+ * - user_panels: junction table linking users to panels (id, user_id, panel_id, role, tenant_id)
+ *
+ * Workflow definition is stored in the metadata JSONB column of the panels table.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -99,10 +150,10 @@ export async function POST(request: NextRequest) {
         },
       }
     );
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized', message: 'Please sign in to create panels' },
@@ -174,104 +225,120 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get template panel data if based on template
-    let suggested_agents: string[] = [];
-    let default_settings: Record<string, any> = {};
-
-    if (base_panel_slug) {
-      const { data: templatePanel } = await serviceSupabase
-        .from('panels')
-        .select('suggested_agents, default_settings')
-        .eq('slug', base_panel_slug)
-        .single();
-
-      if (templatePanel) {
-        suggested_agents = templatePanel.suggested_agents || [];
-        default_settings = templatePanel.default_settings || {};
-      }
-    }
-
     // Use extracted agents if selected_agents is empty
     const finalAgents = (selected_agents && selected_agents.length > 0)
       ? selected_agents
       : extractedAgents;
 
-    // Create the custom panel
-    const { data: panel, error } = await serviceSupabase
-      .from('user_panels')
+    // Generate a unique slug for the panel
+    const slug = `custom-${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`;
+
+    // Create the panel in the panels table
+    // Store workflow_definition and user-specific data in the metadata JSONB column
+    const { data: panel, error: panelError } = await serviceSupabase
+      .from('panels')
       .insert({
-        user_id: user.id,
+        slug,
         name: name.trim(),
         description: description?.trim() || null,
-        category: category || 'panel',
-        base_panel_slug: base_panel_slug || null,
-        is_template_based: !!base_panel_slug,
-        mode,
-        framework,
-        selected_agents: finalAgents,
-        suggested_agents,
-        custom_settings: custom_settings || {},
-        default_settings,
+        category: category || 'custom',
+        mode: mode || 'sequential',
+        framework: framework || 'langgraph',
+        suggested_agents: finalAgents,
+        default_settings: custom_settings || {},
         metadata: {
           ...(metadata || {}),
+          workflow_definition: workflow_definition || null,
           created_via: 'workflow_designer',
+          created_by: user.id,
           node_count: workflow_definition?.nodes?.length || 0,
           edge_count: workflow_definition?.edges?.length || 0,
           expert_count: extractedAgents.length,
+          icon: icon || null,
+          tags: tags || [],
+          is_favorite: false,
+          last_used_at: null,
+          base_panel_slug: base_panel_slug || null,
+          is_template_based: !!base_panel_slug,
         },
-        icon: icon || null,
-        tags: tags || [],
-        workflow_definition: workflow_definition || null,
       })
       .select()
       .single();
 
-    if (error) {
+    if (panelError) {
       console.error('[User Panels API] Error creating panel:', {
-        error,
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
+        error: panelError,
+        code: panelError.code,
+        message: panelError.message,
+        details: panelError.details,
+        hint: panelError.hint,
       });
-      
-      // Check if it's a "table not found" error
-      if (error.message?.includes('Could not find the table') || 
-          error.message?.includes('does not exist') ||
-          error.code === '42P01') {
-        return NextResponse.json(
-          { 
-            error: 'Database schema not initialized', 
-            message: 'The user_panels table does not exist. You need to run a migration to create it.',
-            details: 'Get the migration SQL at /api/user-panels/migration or run scripts/create-user-panels-table.sql in Supabase SQL Editor',
-            code: error.code,
-            migration_required: true,
-            migration_url: '/api/user-panels/migration',
-            quick_fix: {
-              step1: 'Go to: https://supabase.com/dashboard → Your Project → SQL Editor',
-              step2: 'Click "New Query"',
-              step3: 'Copy the SQL from: scripts/create-user-panels-table.sql',
-              step4: 'Paste and click "Run"',
-            },
-          },
-          { status: 503 }
-        );
-      }
-      
+
       return NextResponse.json(
-        { 
-          error: 'Failed to create panel', 
-          message: error.message || 'Database error occurred',
-          details: error.details || error.message,
-          code: error.code,
+        {
+          error: 'Failed to create panel',
+          message: panelError.message || 'Database error occurred',
+          details: panelError.details || panelError.message,
+          code: panelError.code,
         },
         { status: 500 }
       );
     }
 
+    // Get user's tenant_id from user_tenants table
+    // Default to VITAL Platform tenant if not found
+    const PLATFORM_TENANT_ID = 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
+    let tenantId = PLATFORM_TENANT_ID;
+
+    const { data: userTenantData } = await serviceSupabase
+      .from('user_tenants')
+      .select('tenant_id')
+      .eq('user_id', user.id)
+      .limit(1)
+      .single();
+
+    if (userTenantData?.tenant_id) {
+      tenantId = userTenantData.tenant_id;
+    }
+
+    // Create the user-panel link in user_panels junction table
+    const { error: linkError } = await serviceSupabase
+      .from('user_panels')
+      .insert({
+        user_id: user.id,
+        panel_id: panel.id,
+        role: 'owner',
+        tenant_id: tenantId,
+      });
+
+    if (linkError) {
+      console.error('[User Panels API] Error creating user-panel link:', linkError);
+      // Panel was created, but link failed - try to clean up
+      await serviceSupabase.from('panels').delete().eq('id', panel.id);
+      return NextResponse.json(
+        {
+          error: 'Failed to link panel to user',
+          message: linkError.message || 'Database error occurred',
+        },
+        { status: 500 }
+      );
+    }
+
+    // Return enriched panel with user-specific fields
+    const enrichedPanel = {
+      ...panel,
+      user_id: user.id,
+      role: 'owner',
+      workflow_definition: panel.metadata?.workflow_definition || null,
+      selected_agents: panel.suggested_agents || [],
+      custom_settings: panel.default_settings || {},
+      is_favorite: panel.metadata?.is_favorite || false,
+      last_used_at: panel.metadata?.last_used_at || null,
+    };
+
     return NextResponse.json({
       success: true,
-      panel,
+      panel: enrichedPanel,
     }, { status: 201 });
 
   } catch (error: any) {

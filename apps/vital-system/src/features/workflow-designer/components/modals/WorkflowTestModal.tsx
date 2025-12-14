@@ -411,7 +411,10 @@ export function WorkflowTestModal({
 
       if (isPanelWorkflow) {
         // Execute as panel workflow
-        const panelExecuteUrl = `${apiBaseUrl}/panels/execute`;
+        const isDirectBackend = apiBaseUrl?.includes('localhost:8000');
+        const panelExecuteUrl = isDirectBackend
+          ? `${apiBaseUrl}/frameworks/panels/execute-simple`
+          : `${apiBaseUrl}/panels/execute`;
         console.log('[WorkflowTestModal] Executing panel workflow:', panelExecuteUrl);
 
         response = await fetch(panelExecuteUrl, {
@@ -433,8 +436,12 @@ export function WorkflowTestModal({
           signal: abortControllerRef.current.signal,
         });
       } else {
-        // Execute as regular workflow
-        const executeUrl = `${apiBaseUrl}/execute`;
+        // Execute as regular workflow using the panels/execute-simple endpoint
+        // This works for both panel and non-panel workflows with agents
+        const isDirectBackend = apiBaseUrl?.includes('localhost:8000');
+        const executeUrl = isDirectBackend
+          ? `${apiBaseUrl}/frameworks/panels/execute-simple`
+          : `${apiBaseUrl}/panels/execute`;
         console.log('[WorkflowTestModal] Executing regular workflow:', executeUrl);
 
         response = await fetch(executeUrl, {
@@ -443,6 +450,7 @@ export function WorkflowTestModal({
           body: JSON.stringify({
             query: userQuery || 'Workflow test execution',
             workflow: workflowDefinition,
+            panel_type: panelType || 'custom',
             openai_api_key: apiKeys.openai,
             pinecone_api_key: apiKeys.pinecone || '',
             provider: apiKeys.provider || 'openai',

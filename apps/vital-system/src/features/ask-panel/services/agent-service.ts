@@ -22,11 +22,11 @@ import type {
  */
 export async function getAgents(filters?: AgentFilters): Promise<Agent[]> {
   const supabase = createClient();
-  
+
   let query = supabase
     .from('agents')
     .select('*')
-    .eq('is_active', true);
+    .eq('status', 'active');
   
   // Apply filters
   if (filters?.category) {

@@ -16,7 +16,7 @@ import json
 import asyncio
 from typing import AsyncIterator, List, Optional, Union, Dict, Any
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, validator
 import structlog

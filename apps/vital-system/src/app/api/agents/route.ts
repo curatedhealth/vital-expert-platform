@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'active';
     const level = searchParams.get('level'); // Filter by agent level (1, 2, 3, etc.)
-    const limit = searchParams.get('limit') || '50';
+    const limit = searchParams.get('limit') || '2000'; // Increased default to show all agents
 
     console.log(`[${requestId}] Fetching agents from Supabase`, {
       url: supabaseUrl,
@@ -53,49 +53,21 @@ export async function GET(request: NextRequest) {
       limit,
     });
 
-    // Build query - Include organizational structure IDs and names
-    // Note: Only select columns that actually exist in the agents table
+    // Build query - Use * to get all existing columns dynamically
+    // This avoids errors from non-existent columns
     let query = supabaseAdmin
       .from('agents')
-      .select(`
-        id,
-        name,
-        slug,
-        description,
-        tagline,
-        title,
-        expertise_level,
-        avatar_url,
-        avatar_description,
-        system_prompt,
-        base_model,
-        temperature,
-        max_tokens,
-        communication_style,
-        status,
-        metadata,
-        created_at,
-        updated_at,
-        role_name,
-        role_id,
-        function_name,
-        function_id,
-        department_name,
-        department_id,
-        level,
-        tier,
-        agent_level_id
-      `);
+      .select('*');
 
     // Only filter by status if not "all"
     if (status !== 'all') {
       query = query.eq('status', status);
     }
 
-    // Filter by level if specified (1=L1 Master, 2=L2 Expert, 3=L3 Specialist)
-    if (level) {
-      query = query.eq('level', parseInt(level, 10));
-    }
+    // Note: level filter disabled - column may not exist in all DB schemas
+    // if (level) {
+    //   query = query.eq('level', parseInt(level, 10));
+    // }
 
     query = query
       .order('name', { ascending: true })

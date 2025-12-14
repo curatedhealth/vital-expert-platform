@@ -23,6 +23,21 @@ export async function POST(request: NextRequest) {
     // Parse request body
     const body = await request.json();
     
+    // Validate required fields
+    if (!body.question || !body.template_slug || !body.selected_agent_ids || !body.tenant_id) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: question, template_slug, selected_agent_ids, tenant_id' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Forward request to Python backend
+    const backendUrl = `${AI_ENGINE_URL}/api/ask-panel-enhanced/stream`;
+    console.log(`[Proxy] Forwarding streaming request to: ${backendUrl}`);
+
     // Get auth token from cookies or headers
     let authToken: string | null = null;
     
@@ -49,23 +64,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Validate required fields
-    if (!body.question || !body.template_slug || !body.selected_agent_ids || !body.tenant_id) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: question, template_slug, selected_agent_ids, tenant_id' }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    // Forward request to Python backend
-    const backendUrl = `${AI_ENGINE_URL}/api/ask-panel-enhanced/stream`;
-    console.log(`[Proxy] Forwarding streaming request to: ${backendUrl}`);
-
     // Forward authentication headers from the original request
-    const authHeader = request.headers.get('authorization');
     const tenantId = request.headers.get('x-tenant-id') || body.tenant_id;
     const userId = request.headers.get('x-user-id');
 

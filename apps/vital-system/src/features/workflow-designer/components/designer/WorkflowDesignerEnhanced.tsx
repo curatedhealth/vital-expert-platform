@@ -53,6 +53,9 @@ import {
   Box,
   Users,
   Workflow,
+  User,
+  Plus,
+  Loader2,
 } from 'lucide-react';
 import {
   Dialog,
@@ -235,11 +238,120 @@ export function WorkflowDesignerEnhanced({
   // v0 AI Generator state
   const [showV0Generator, setShowV0Generator] = useState(false);
 
+  // Agent Store state
+  const [agents, setAgents] = useState<Array<{
+    id: string;
+    name: string;
+    description?: string;
+    level?: number;
+    tier?: number;
+    function_name?: string;
+    department_name?: string;
+  }>>([]);
+  const [agentsLoading, setAgentsLoading] = useState(false);
+  const [agentSearchQuery, setAgentSearchQuery] = useState('');
+  const [agentsError, setAgentsError] = useState<string | null>(null);
+  const [agentsWarning, setAgentsWarning] = useState<string | null>(null);
+
+  // Fetch agents on mount
+  useEffect(() => {
+    const fetchAgents = async () => {
+      setAgentsLoading(true);
+      setAgentsError(null);
+      setAgentsWarning(null);
+      try {
+        // First try to fetch active agents
+        const response = await fetch('/api/agents?status=active&limit=500');
+        const data = await response.json();
+        
+        // Check for warnings from API
+        if (data.warning) {
+          setAgentsWarning(data.warning);
+        }
+        
+        if (data.error) {
+          setAgentsError(data.error);
+          setAgentsLoading(false);
+          return;
+        }
+        
+        const activeAgents = data.agents || (Array.isArray(data) ? data : []);
+        
+        if (activeAgents.length === 0) {
+          // If no active agents, try fetching all agents to see if any exist
+          try {
+            const allResponse = await fetch('/api/agents?status=all&limit=10');
+            const allData = await allResponse.json();
+            const allAgents = allData.agents || (Array.isArray(allData) ? allData : []);
+            
+            if (allAgents.length > 0) {
+              setAgentsWarning(
+                `Found ${allData.count || allAgents.length} agents in database, but none have status='active'. ` +
+                `Please update agent statuses to 'active' to see them here.`
+              );
+            } else {
+              setAgentsWarning(
+                'No agents found in database. Please seed the database with agents using migration scripts.'
+              );
+            }
+          } catch (checkError) {
+            // Ignore error from checking all agents
+            console.warn('Could not check for all agents:', checkError);
+          }
+        }
+        
+        setAgents(activeAgents);
+      } catch (error) {
+        console.error('Failed to fetch agents:', error);
+        setAgentsError(
+          error instanceof Error 
+            ? `Failed to fetch agents: ${error.message}` 
+            : 'Failed to fetch agents. Please check your Supabase configuration.'
+        );
+      } finally {
+        setAgentsLoading(false);
+      }
+    };
+    fetchAgents();
+  }, []);
+
+  // Filter agents by search query
+  const filteredAgents = agents.filter(agent =>
+    !agentSearchQuery ||
+    agent.name?.toLowerCase().includes(agentSearchQuery.toLowerCase()) ||
+    agent.description?.toLowerCase().includes(agentSearchQuery.toLowerCase()) ||
+    agent.function_name?.toLowerCase().includes(agentSearchQuery.toLowerCase()) ||
+    agent.department_name?.toLowerCase().includes(agentSearchQuery.toLowerCase())
+  );
+
   // Save current state to undo stack
   const saveToUndoStack = useCallback(() => {
     setUndoStack(prev => [...prev, { nodes, edges }]);
     setRedoStack([]); // Clear redo stack on new action
   }, [nodes, edges]);
+
+  // Add agent to workflow as an expert node
+  const handleAddAgentToWorkflow = useCallback((agent: typeof agents[0]) => {
+    const newNode: Node = {
+      id: `agent-${agent.id}-${Date.now()}`,
+      type: 'workflowNode',
+      position: { x: 250, y: nodes.length * 100 + 100 },
+      data: {
+        id: `agent-${agent.id}-${Date.now()}`,
+        type: 'expert',
+        label: agent.name,
+        config: {
+          agent_id: agent.id,
+          agent_name: agent.name,
+          system_prompt: '',
+          expertise: agent.function_name || 'General',
+        },
+      },
+    };
+    saveToUndoStack();
+    setNodes((nds) => [...nds, newNode]);
+    setIsDirty(true);
+  }, [nodes, saveToUndoStack, setNodes]);
 
   // Undo
   const handleUndo = useCallback(() => {
@@ -1252,18 +1364,14 @@ workflow = StateGraph(WorkflowState)
 
   return (
     <div className={`flex h-full w-full gap-2 ${className}`}>
-      {/* Left Sidebar - Component Palette, Agent Store, Panel Workflows */}
+      {/* Left Sidebar - Component Palette, Panel Workflows (Agents moved to main sidebar) */}
       <div className="w-64 flex flex-col">
         <Card className="flex-1 flex flex-col overflow-hidden">
           <Tabs defaultValue="components" className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 m-2">
+            <TabsList className="grid w-full grid-cols-2 m-2">
               <TabsTrigger value="components" className="text-xs">
                 <Box className="h-3 w-3 mr-1" />
                 Nodes
-              </TabsTrigger>
-              <TabsTrigger value="agents" className="text-xs">
-                <Users className="h-3 w-3 mr-1" />
-                Agents
               </TabsTrigger>
               <TabsTrigger value="panels" className="text-xs">
                 <Workflow className="h-3 w-3 mr-1" />
@@ -1317,21 +1425,6 @@ workflow = StateGraph(WorkflowState)
                       </div>
                     );
                   })}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-
-            {/* Agent Store Tab */}
-            <TabsContent value="agents" className="flex-1 overflow-hidden m-0">
-              <ScrollArea className="h-full">
-                <div className="p-3">
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Browse and select AI agents for your workflow
-                  </p>
-                  {/* Placeholder for agent store integration */}
-                  <div className="text-xs text-center text-muted-foreground py-8">
-                    Agent store coming soon
-                  </div>
                 </div>
               </ScrollArea>
             </TabsContent>

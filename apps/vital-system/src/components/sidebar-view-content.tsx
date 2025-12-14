@@ -5,9 +5,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
   Activity,
-  AlertTriangle,
   ArrowRight,
-  ArrowRightLeft,
   BarChart,
   BarChart3,
   BookOpen,
@@ -17,26 +15,19 @@ import {
   ChevronDown,
   Clock,
   Cloud,
-  Cpu,
-  Database,
   DollarSign,
   FileText,
   FolderOpen,
-  Heart,
   History,
   Home,
   Kanban,
-  Laptop,
   Layers,
   LayoutDashboard,
   LayoutGrid,
   LineChart,
   List,
-  Lock,
   MessageSquare,
-  Network,
   Pen,
-  Pill,
   Puzzle,
   SearchIcon,
   Server,
@@ -45,7 +36,6 @@ import {
   ShieldCheck,
   Star,
   Table,
-  Table as TableIcon,
   Target,
   TrendingUp,
   Upload,
@@ -76,6 +66,8 @@ import { useSavedPanels } from "@/contexts/ask-panel-context"
 import { useDesigner } from "@/contexts/designer-context"
 import { PANEL_TEMPLATES } from "@/features/ask-panel/constants/panel-templates"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Input } from "@/components/ui/input"
+import { Loader2 } from "lucide-react"
 
 // Map category to icon
 const CATEGORY_ICONS: Record<string, any> = {
@@ -359,9 +351,6 @@ export function SidebarAgentsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
-
-  // View state from URL
-  const currentView = searchParams.get("view") || "overview"
 
   // Filter state from URL
   const selectedFunction = searchParams.get("function") || ""
@@ -661,75 +650,8 @@ export function SidebarAgentsContent() {
     ...selectedResponsibilities,
   ].filter(Boolean).length
 
-  // Views for agents page
-  const AGENT_VIEWS = [
-    { id: "overview", label: "Overview", icon: BarChart3 },
-    { id: "grid", label: "Grid", icon: LayoutGrid },
-    { id: "list", label: "List", icon: List },
-    { id: "table", label: "Table", icon: TableIcon },
-    { id: "graph", label: "Knowledge Graph", icon: Network },
-    { id: "compare", label: "Compare", icon: ArrowRightLeft },
-  ] as const
-
-  // Build URL preserving existing params
-  const buildViewUrl = (view: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    if (view && view !== "overview") {
-      params.set("view", view)
-    } else {
-      params.delete("view")
-    }
-    const queryString = params.toString()
-    return `/agents${queryString ? `?${queryString}` : ""}`
-  }
-
   return (
     <>
-      {/* Title */}
-      <div className="px-4 py-3 border-b">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" />
-          Agents
-        </h2>
-        <p className="text-xs text-muted-foreground mt-1">AI expert agents</p>
-      </div>
-
-      {/* Views */}
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              Views
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {AGENT_VIEWS.map((view) => {
-                  const Icon = view.icon
-                  const isActive = currentView === view.id
-                  return (
-                    <SidebarMenuItem key={view.id}>
-                      <SidebarMenuButton
-                        asChild
-                        className={isActive ? "bg-primary/10 text-primary font-medium" : ""}
-                      >
-                        <Link href={buildViewUrl(view.id)}>
-                          <Icon className="h-4 w-4" />
-                          <span>{view.label}</span>
-                          {isActive && <CheckCircle2 className="ml-auto h-4 w-4 text-primary" />}
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
       {/* Quick Actions */}
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup>
@@ -1334,474 +1256,123 @@ export function SidebarAgentsContent() {
 }
 
 export function SidebarKnowledgeContent() {
-  const searchParams = useSearchParams()
+  const [categories, setCategories] = useState<Array<{ function_id: string; function_name: string; domains: Array<{ domain_id: string; domain_name: string }> }>>([])
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
 
-  // Get current filters from URL
-  const currentView = searchParams.get("view") || "overview"
-  const currentDomain = searchParams.get("domain") || ""
-  const currentCategory = searchParams.get("category") || ""
-  const currentStatus = searchParams.get("status") || ""
-  const currentAccess = searchParams.get("access") || ""
-  const currentTherapeutic = searchParams.get("therapeutic") || ""
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true)
+        // Fetch domains from new architecture
+        const { data: newData, error: newError } = await supabase
+          .from('knowledge_domains_new')
+          .select('domain_id, domain_name, function_id, function_name, tier')
+          .eq('is_active', true)
+          .order('function_id')
+          .order('tier')
+          .order('priority')
 
-  // Build URL with params (preserves existing params)
-  const buildUrl = (params: Record<string, string | null>) => {
-    const newParams = new URLSearchParams(searchParams.toString())
-    Object.entries(params).forEach(([key, value]) => {
-      if (value === null || value === "") {
-        newParams.delete(key)
-      } else {
-        newParams.set(key, value)
+        if (!newError && newData && newData.length > 0) {
+          // Group by function_id
+          const grouped = newData.reduce((acc: any, domain: any) => {
+            const funcId = domain.function_id || 'general'
+            const funcName = domain.function_name || 'General'
+            
+            if (!acc[funcId]) {
+              acc[funcId] = {
+                function_id: funcId,
+                function_name: funcName,
+                domains: []
+              }
+            }
+            
+            acc[funcId].domains.push({
+              domain_id: domain.domain_id,
+              domain_name: domain.domain_name || domain.domain_id
+            })
+            
+            return acc
+          }, {})
+
+          setCategories(Object.values(grouped))
+          setLoading(false)
+          return
+        }
+
+        // Fallback: try old table and group by common patterns
+        const { data: oldData, error: oldError } = await supabase
+          .from('knowledge_domains')
+          .select('slug, name, tier')
+          .eq('is_active', true)
+          .order('priority')
+
+        if (!oldError && oldData && oldData.length > 0) {
+          // Map old data to function-based groups
+          const functionMap: Record<string, string> = {
+            'regulatory': 'Regulatory & Compliance',
+            'clinical': 'Clinical Development',
+            'market': 'Market Access',
+            'research': 'Research & Development',
+          }
+
+          const grouped = oldData.reduce((acc: any, domain: any) => {
+            // Try to infer function from slug/name
+            const slug = domain.slug?.toLowerCase() || ''
+            const name = domain.name?.toLowerCase() || ''
+            
+            let funcId = 'general'
+            let funcName = 'General'
+            
+            for (const [key, value] of Object.entries(functionMap)) {
+              if (slug.includes(key) || name.includes(key)) {
+                funcId = key
+                funcName = value
+                break
+              }
+            }
+            
+            if (!acc[funcId]) {
+              acc[funcId] = {
+                function_id: funcId,
+                function_name: funcName,
+                domains: []
+              }
+            }
+            
+            acc[funcId].domains.push({
+              domain_id: domain.slug,
+              domain_name: domain.name || domain.slug
+            })
+            
+            return acc
+          }, {})
+
+          setCategories(Object.values(grouped))
+        }
+      } catch (err) {
+        console.error('Error fetching knowledge categories:', err)
+      } finally {
+        setLoading(false)
       }
-    })
-    const queryString = newParams.toString()
-    return `/knowledge${queryString ? '?' + queryString : ''}`
-  }
+    }
 
-  // Check if item is active
-  const isViewActive = (view: string) => currentView === view
-  const isDomainActive = (domain: string) => currentDomain === domain
-  const isCategoryActive = (category: string) => currentCategory === category
-  const isStatusActive = (status: string) => currentStatus === status
-  const isAccessActive = (access: string) => currentAccess === access
-  const isTherapeuticActive = (therapeutic: string) => currentTherapeutic === therapeutic
+    fetchCategories()
+  }, [])
 
-  // Knowledge domain categories with their domains
-  const KNOWLEDGE_DOMAIN_CATEGORIES = {
-    regulatory: {
-      label: 'Regulatory',
-      icon: Shield,
-      color: 'text-blue-500',
-      domains: [
-        { value: 'regulatory', label: 'Regulatory Affairs' },
-        { value: 'fda-guidance', label: 'FDA Guidance' },
-        { value: 'ema-guidance', label: 'EMA Guidance' },
-        { value: 'ich-guidelines', label: 'ICH Guidelines' },
-        { value: 'compliance', label: 'Compliance' },
-      ]
-    },
-    clinical: {
-      label: 'Clinical',
-      icon: Stethoscope,
-      color: 'text-green-500',
-      domains: [
-        { value: 'clinical-trials', label: 'Clinical Trials' },
-        { value: 'protocols', label: 'Protocols' },
-        { value: 'clinical-data', label: 'Clinical Data' },
-        { value: 'biostatistics', label: 'Biostatistics' },
-        { value: 'endpoints', label: 'Clinical Endpoints' },
-      ]
-    },
-    safety: {
-      label: 'Safety',
-      icon: AlertTriangle,
-      color: 'text-red-500',
-      domains: [
-        { value: 'pharmacovigilance', label: 'Pharmacovigilance' },
-        { value: 'adverse-events', label: 'Adverse Events' },
-        { value: 'safety-reporting', label: 'Safety Reporting' },
-        { value: 'risk-management', label: 'Risk Management' },
-      ]
-    },
-    scientific: {
-      label: 'Scientific',
-      icon: FlaskConical,
-      color: 'text-purple-500',
-      domains: [
-        { value: 'drug-development', label: 'Drug Development' },
-        { value: 'pharmacology', label: 'Pharmacology' },
-        { value: 'toxicology', label: 'Toxicology' },
-        { value: 'biomarkers', label: 'Biomarkers' },
-        { value: 'genomics', label: 'Genomics' },
-      ]
-    },
-    commercial: {
-      label: 'Commercial',
-      icon: BarChart,
-      color: 'text-orange-500',
-      domains: [
-        { value: 'market-access', label: 'Market Access' },
-        { value: 'health-economics', label: 'Health Economics' },
-        { value: 'pricing-reimbursement', label: 'Pricing & Reimbursement' },
-        { value: 'competitive-intelligence', label: 'Competitive Intelligence' },
-      ]
-    },
-    quality: {
-      label: 'Quality',
-      icon: CheckCircle2,
-      color: 'text-teal-500',
-      domains: [
-        { value: 'quality-assurance', label: 'Quality Assurance' },
-        { value: 'manufacturing', label: 'Manufacturing' },
-        { value: 'gmp', label: 'GMP' },
-        { value: 'labeling', label: 'Labeling' },
-      ]
-    },
-    devices: {
-      label: 'Medical Devices',
-      icon: Cpu,
-      color: 'text-cyan-500',
-      domains: [
-        { value: 'medical-devices', label: 'Medical Devices' },
-        { value: '510k', label: '510(k)' },
-        { value: 'pma', label: 'PMA' },
-        { value: 'companion-diagnostics', label: 'Companion Diagnostics' },
-      ]
-    },
-    digital: {
-      label: 'Digital Health',
-      icon: Laptop,
-      color: 'text-indigo-500',
-      domains: [
-        { value: 'digital-therapeutics', label: 'Digital Therapeutics' },
-        { value: 'real-world-evidence', label: 'Real-World Evidence' },
-        { value: 'ai-ml', label: 'AI/ML' },
-      ]
-    },
-  }
-
-  // Therapeutic areas for filtering
-  const THERAPEUTIC_AREAS = [
-    { value: 'oncology', label: 'Oncology' },
-    { value: 'cardiology', label: 'Cardiology' },
-    { value: 'neurology', label: 'Neurology' },
-    { value: 'immunology', label: 'Immunology' },
-    { value: 'infectious-disease', label: 'Infectious Disease' },
-    { value: 'endocrinology', label: 'Endocrinology' },
-    { value: 'respiratory', label: 'Respiratory' },
-    { value: 'gastroenterology', label: 'Gastroenterology' },
-    { value: 'psychiatry', label: 'Psychiatry' },
-    { value: 'rare-diseases', label: 'Rare Diseases' },
-  ]
-
-  // Lifecycle status options
-  const STATUS_OPTIONS = [
-    { value: 'draft', label: 'Draft', color: 'bg-stone-500' },
-    { value: 'active', label: 'Active', color: 'bg-green-500' },
-    { value: 'review', label: 'Under Review', color: 'bg-yellow-500' },
-    { value: 'deprecated', label: 'Deprecated', color: 'bg-orange-500' },
-    { value: 'archived', label: 'Archived', color: 'bg-red-500' },
-  ]
-
-  // Access level options
-  const ACCESS_OPTIONS = [
-    { value: 'public', label: 'Public' },
-    { value: 'organization', label: 'Organization' },
-    { value: 'private', label: 'Private' },
-    { value: 'confidential', label: 'Confidential' },
-  ]
+  // If we have categories from new architecture, show them grouped by function
+  // Otherwise show a simple list
+  const displayCategories = categories.length > 0 
+    ? categories 
+    : [{ function_id: 'general', function_name: 'Categories', domains: [] }]
 
   return (
     <>
-      {/* Title */}
-      <div className="px-2 py-3 mb-2">
-        <div className="flex items-center gap-2">
-          <Database className="h-5 w-5 text-primary" />
-          <span className="text-base font-semibold">Knowledge Bases</span>
-        </div>
-        <p className="text-xs text-muted-foreground mt-1 ml-7">RAG knowledge management</p>
-      </div>
-
-      {/* Views */}
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <LayoutDashboard className="h-3.5 w-3.5" />
-                Views
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("overview")}>
-                    <Link href={buildUrl({ view: "overview" })}>
-                      <BarChart3 className="h-4 w-4" />
-                      <span>Overview</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("grid")}>
-                    <Link href={buildUrl({ view: "grid" })}>
-                      <LayoutGrid className="h-4 w-4" />
-                      <span>Grid</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("list")}>
-                    <Link href={buildUrl({ view: "list" })}>
-                      <List className="h-4 w-4" />
-                      <span>List</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("table")}>
-                    <Link href={buildUrl({ view: "table" })}>
-                      <Table className="h-4 w-4" />
-                      <span>Table</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("kanban")}>
-                    <Link href={buildUrl({ view: "kanban" })}>
-                      <Kanban className="h-4 w-4" />
-                      <span>Kanban</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Browse */}
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <FolderOpen className="h-3.5 w-3.5" />
-                Browse
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={!currentDomain && !currentCategory && !currentStatus}>
-                    <Link href={buildUrl({ domain: null, category: null, status: null, access: null, therapeutic: null })}>
-                      <BookOpen className="h-4 w-4" />
-                      <span>All Knowledge Bases</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Filter by Domain Category */}
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <Layers className="h-3.5 w-3.5" />
-                Domain Categories
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={!currentCategory}>
-                    <Link href={buildUrl({ category: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
-                      <span>All Categories</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                {Object.entries(KNOWLEDGE_DOMAIN_CATEGORIES).map(([key, cat]) => {
-                  const Icon = cat.icon
-                  return (
-                    <SidebarMenuItem key={key}>
-                      <SidebarMenuButton asChild data-active={isCategoryActive(key)}>
-                        <Link href={buildUrl({ category: key })}>
-                          <Icon className={`h-4 w-4 ${cat.color}`} />
-                          <span>{cat.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Knowledge Domains (All 50+) */}
-      <Collapsible className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <Database className="h-3.5 w-3.5" />
-                Knowledge Domains
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <div className="max-h-[400px] overflow-y-auto">
-                {Object.entries(KNOWLEDGE_DOMAIN_CATEGORIES).map(([catKey, cat]) => (
-                  <div key={catKey} className="mb-3">
-                    <div className="px-3 py-1 text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                      <cat.icon className={`h-3 w-3 ${cat.color}`} />
-                      {cat.label}
-                    </div>
-                    <SidebarMenu>
-                      {cat.domains.map((domain) => (
-                        <SidebarMenuItem key={domain.value}>
-                          <SidebarMenuButton asChild data-active={isDomainActive(domain.value)} className="h-7 text-xs">
-                            <Link href={buildUrl({ domain: domain.value })}>
-                              <span className="truncate">{domain.label}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  </div>
-                ))}
-              </div>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Therapeutic Areas */}
-      <Collapsible className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <Heart className="h-3.5 w-3.5" />
-                Therapeutic Areas
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={!currentTherapeutic}>
-                    <Link href={buildUrl({ therapeutic: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
-                      <span>All Areas</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                {THERAPEUTIC_AREAS.map((area) => (
-                  <SidebarMenuItem key={area.value}>
-                    <SidebarMenuButton asChild data-active={isTherapeuticActive(area.value)}>
-                      <Link href={buildUrl({ therapeutic: area.value })}>
-                        <Pill className="h-4 w-4 text-pink-500" />
-                        <span>{area.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Lifecycle Status */}
-      <Collapsible className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <Activity className="h-3.5 w-3.5" />
-                Lifecycle Status
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={!currentStatus}>
-                    <Link href={buildUrl({ status: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
-                      <span>All Status</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                {STATUS_OPTIONS.map((status) => (
-                  <SidebarMenuItem key={status.value}>
-                    <SidebarMenuButton asChild data-active={isStatusActive(status.value)}>
-                      <Link href={buildUrl({ status: status.value })}>
-                        <div className="h-4 w-4 flex items-center justify-center">
-                          <div className={`h-2 w-2 rounded-full ${status.color}`} />
-                        </div>
-                        <span>{status.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Access Level */}
-      <Collapsible className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <Lock className="h-3.5 w-3.5" />
-                Access Level
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={!currentAccess}>
-                    <Link href={buildUrl({ access: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
-                      <span>All Levels</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                {ACCESS_OPTIONS.map((access) => (
-                  <SidebarMenuItem key={access.value}>
-                    <SidebarMenuButton asChild data-active={isAccessActive(access.value)}>
-                      <Link href={buildUrl({ access: access.value })}>
-                        <Lock className="h-4 w-4 text-amber-500" />
-                        <span>{access.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Quick Actions */}
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <Zap className="h-3.5 w-3.5" />
-                Quick Actions
-              </span>
+              Knowledge Actions
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
@@ -1817,14 +1388,88 @@ export function SidebarKnowledgeContent() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
+                  <SidebarMenuButton>
+                    <SearchIcon className="h-4 w-4" />
+                    <span>Search Library</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton>
+                    <FolderOpen className="h-4 w-4" />
+                    <span>Organize Collections</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <Link href="/knowledge?tab=search">
-                      <SearchIcon className="h-4 w-4" />
-                      <span>Search Library</span>
+                    <Link href="/knowledge?tab=library">
+                      <FileText className="h-4 w-4" />
+                      <span>Documents Library</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              Categories
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              {loading ? (
+                <div className="px-4 py-2 text-sm text-muted-foreground">Loading categories...</div>
+              ) : categories.length > 0 ? (
+                // Show function-based groups
+                <SidebarMenu>
+                  {categories.map((category) => (
+                    <SidebarMenuItem key={category.function_id}>
+                      <div className="px-3 py-1.5">
+                        <div className="text-xs font-semibold text-muted-foreground mb-1">
+                          {category.function_name}
+                        </div>
+                        <div className="space-y-0.5">
+                          {category.domains.slice(0, 5).map((domain) => (
+                            <SidebarMenuButton
+                              key={domain.domain_id}
+                              asChild
+                              className="h-7 text-xs pl-4"
+                            >
+                              <Link href={`/knowledge?domain=${domain.domain_id}`}>
+                                <FolderOpen className="h-3 w-3" />
+                                <span className="truncate">{domain.domain_name}</span>
+                              </Link>
+                            </SidebarMenuButton>
+                          ))}
+                          {category.domains.length > 5 && (
+                            <div className="text-xs text-muted-foreground pl-4">
+                              +{category.domains.length - 5} more
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              ) : (
+                // Fallback: show default categories
+                <SidebarMenu>
+                  {["Regulatory", "Clinical", "Market", "Research"].map((label) => (
+                    <SidebarMenuItem key={label}>
+                      <SidebarMenuButton>
+                        <FolderOpen className="h-4 w-4" />
+                        <span>{label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              )}
             </SidebarGroupContent>
           </CollapsibleContent>
         </SidebarGroup>
@@ -2145,7 +1790,7 @@ export function SidebarPromptPrismContent() {
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild data-active={!currentSuite}>
                       <Link href={buildUrl({ suite: null, subSuite: null })}>
-                        <CheckCircle2 className="h-4 w-4 text-stone-500" />
+                        <CheckCircle2 className="h-4 w-4 text-gray-500" />
                         <span>All Suites</span>
                       </Link>
                     </SidebarMenuButton>
@@ -2191,7 +1836,7 @@ export function SidebarPromptPrismContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentComplexity}>
                     <Link href={buildUrl({ complexity: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
                       <span>All Levels</span>
                     </Link>
                   </SidebarMenuButton>
@@ -2275,766 +1920,51 @@ export function SidebarPromptPrismContent() {
 }
 
 export function SidebarPersonasContent() {
-  const searchParams = useSearchParams()
+  // Dynamic import to avoid SSR issues
+  const [PersonaFiltersSidebar, setPersonaFiltersSidebar] = useState<React.ComponentType<any> | null>(null);
+  const [filters, setFilters] = useState({
+    searchQuery: '',
+    selectedRole: 'all',
+    selectedDepartment: 'all',
+    selectedFunction: 'all',
+    selectedSeniority: 'all',
+  });
+  const [filteredCount, setFilteredCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
-  // Get current filters from URL
-  const currentView = searchParams.get("view") || "grid"
-  const currentArchetype = searchParams.get("archetype") || ""
-  const currentSeniority = searchParams.get("seniority") || ""
-  const currentFunction = searchParams.get("function") || ""
+  useEffect(() => {
+    import('@/components/personas/PersonaFiltersSidebar').then((mod) => {
+      setPersonaFiltersSidebar(() => mod.PersonaFiltersSidebar);
+    });
+  }, []);
 
-  // Build URL with params (preserves existing params)
-  const buildUrl = (params: Record<string, string | null>) => {
-    const newParams = new URLSearchParams(searchParams.toString())
-    Object.entries(params).forEach(([key, value]) => {
-      if (value === null || value === "") {
-        newParams.delete(key)
-      } else {
-        newParams.set(key, value)
-      }
-    })
-    const queryString = newParams.toString()
-    return `/optimize/personas${queryString ? '?' + queryString : ''}`
-  }
+  // Listen for filter updates from the page
+  useEffect(() => {
+    const handleFilterUpdate = (e: CustomEvent) => {
+      setFilters(e.detail.filters);
+      setFilteredCount(e.detail.filteredCount);
+      setTotalCount(e.detail.totalCount);
+    };
 
-  // Check if item is active
-  const isViewActive = (view: string) => currentView === view
-  const isArchetypeActive = (archetype: string) => currentArchetype === archetype
-  const isSeniorityActive = (seniority: string) => currentSeniority === seniority
+    window.addEventListener('personas-filters-update' as any, handleFilterUpdate);
+    return () => {
+      window.removeEventListener('personas-filters-update' as any, handleFilterUpdate);
+    };
+  }, []);
 
-  return (
-    <>
-      {/* Title - VITAL Brand v6.0: Purple accent */}
-      <div className="px-2 py-3 mb-2">
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-purple-600" />
-          <span className="text-base font-semibold text-stone-800">Personas</span>
-        </div>
-        <p className="text-xs text-stone-500 mt-1 ml-7">MECE user archetypes</p>
-      </div>
-
-      {/* Views */}
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <LayoutDashboard className="h-3.5 w-3.5" />
-                Views
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("grid")}>
-                    <Link href={buildUrl({ view: "grid" })}>
-                      <LayoutGrid className="h-4 w-4" />
-                      <span>Grid</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("list")}>
-                    <Link href={buildUrl({ view: "list" })}>
-                      <List className="h-4 w-4" />
-                      <span>List</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("archetypes")}>
-                    <Link href={buildUrl({ view: "archetypes" })}>
-                      <LayersIcon className="h-4 w-4" />
-                      <span>By Archetype</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("departments")}>
-                    <Link href={buildUrl({ view: "departments" })}>
-                      <Building2 className="h-4 w-4" />
-                      <span>By Department</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("focus")}>
-                    <Link href={buildUrl({ view: "focus" })}>
-                      <Target className="h-4 w-4" />
-                      <span>Focus Mode</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Archetypes Filter */}
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <Zap className="h-3.5 w-3.5" />
-                Archetypes
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={!currentArchetype}>
-                    <Link href={buildUrl({ archetype: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
-                      <span>All Archetypes</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isArchetypeActive("AUTOMATOR")}>
-                    <Link href={buildUrl({ archetype: "AUTOMATOR" })}>
-                      <Zap className="h-4 w-4 text-blue-500" />
-                      <span>Automator</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isArchetypeActive("ORCHESTRATOR")}>
-                    <Link href={buildUrl({ archetype: "ORCHESTRATOR" })}>
-                      <Network className="h-4 w-4 text-purple-500" />
-                      <span>Orchestrator</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isArchetypeActive("LEARNER")}>
-                    <Link href={buildUrl({ archetype: "LEARNER" })}>
-                      <BookOpen className="h-4 w-4 text-green-500" />
-                      <span>Learner</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isArchetypeActive("SKEPTIC")}>
-                    <Link href={buildUrl({ archetype: "SKEPTIC" })}>
-                      <AlertTriangle className="h-4 w-4 text-orange-500" />
-                      <span>Skeptic</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Seniority Filter */}
-      <Collapsible className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <TrendingUp className="h-3.5 w-3.5" />
-                Seniority
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={!currentSeniority}>
-                    <Link href={buildUrl({ seniority: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
-                      <span>All Levels</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isSeniorityActive("executive")}>
-                    <Link href={buildUrl({ seniority: "executive" })}>
-                      <Star className="h-4 w-4 text-amber-500" />
-                      <span>Executive</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isSeniorityActive("director")}>
-                    <Link href={buildUrl({ seniority: "director" })}>
-                      <User className="h-4 w-4 text-blue-500" />
-                      <span>Director</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isSeniorityActive("senior")}>
-                    <Link href={buildUrl({ seniority: "senior" })}>
-                      <User className="h-4 w-4 text-green-500" />
-                      <span>Senior</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isSeniorityActive("mid")}>
-                    <Link href={buildUrl({ seniority: "mid" })}>
-                      <User className="h-4 w-4 text-purple-500" />
-                      <span>Mid-Level</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isSeniorityActive("entry")}>
-                    <Link href={buildUrl({ seniority: "entry" })}>
-                      <User className="h-4 w-4 text-stone-500" />
-                      <span>Entry</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-    </>
-  )
-}
-
-export function SidebarJTBDContent() {
-  const searchParams = useSearchParams()
-
-  // Get current filters from URL
-  const currentView = searchParams.get("view") || "grid"
-  const currentPriority = searchParams.get("priority") || ""
-  const currentCategory = searchParams.get("category") || ""
-  const currentStatus = searchParams.get("status") || ""
-
-  // Build URL with params (preserves existing params)
-  const buildUrl = (params: Record<string, string | null>) => {
-    const newParams = new URLSearchParams(searchParams.toString())
-    Object.entries(params).forEach(([key, value]) => {
-      if (value === null || value === "") {
-        newParams.delete(key)
-      } else {
-        newParams.set(key, value)
-      }
-    })
-    const queryString = newParams.toString()
-    return `/optimize/jobs-to-be-done${queryString ? '?' + queryString : ''}`
-  }
-
-  // Check if item is active
-  const isViewActive = (view: string) => currentView === view
-  const isPriorityActive = (priority: string) => currentPriority === priority
-  const isStatusActive = (status: string) => currentStatus === status
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters);
+    // Dispatch event to update the page
+    window.dispatchEvent(new CustomEvent('personas-filters-change', { detail: { filters: newFilters } }));
+  };
 
   return (
     <>
-      {/* Title - VITAL Brand v6.0: Purple accent */}
-      <div className="px-2 py-3 mb-2">
-        <div className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-purple-600" />
-          <span className="text-base font-semibold text-stone-800">Jobs-to-Be-Done</span>
-        </div>
-        <p className="text-xs text-stone-500 mt-1 ml-7">ODI-scored job statements</p>
-      </div>
-
-      {/* Views */}
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <LayoutDashboard className="h-3.5 w-3.5" />
-                Views
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("grid")}>
-                    <Link href={buildUrl({ view: "grid" })}>
-                      <LayoutGrid className="h-4 w-4" />
-                      <span>Grid</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("list")}>
-                    <Link href={buildUrl({ view: "list" })}>
-                      <List className="h-4 w-4" />
-                      <span>List</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isViewActive("categories")}>
-                    <Link href={buildUrl({ view: "categories" })}>
-                      <LayersIcon className="h-4 w-4" />
-                      <span>By Category</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* ODI Priority Filter */}
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <TrendingUp className="h-3.5 w-3.5" />
-                ODI Priority
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={!currentPriority}>
-                    <Link href={buildUrl({ priority: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
-                      <span>All Priorities</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isPriorityActive("extreme")}>
-                    <Link href={buildUrl({ priority: "extreme" })}>
-                      <AlertTriangle className="h-4 w-4 text-red-500" />
-                      <span>Extreme (≥15)</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isPriorityActive("high")}>
-                    <Link href={buildUrl({ priority: "high" })}>
-                      <TrendingUp className="h-4 w-4 text-orange-500" />
-                      <span>High (12-14.9)</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isPriorityActive("medium")}>
-                    <Link href={buildUrl({ priority: "medium" })}>
-                      <BarChart3 className="h-4 w-4 text-yellow-500" />
-                      <span>Medium (10-11.9)</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isPriorityActive("low")}>
-                    <Link href={buildUrl({ priority: "low" })}>
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      <span>Low (&lt;10)</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Status Filter */}
-      <Collapsible className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <Activity className="h-3.5 w-3.5" />
-                Status
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={!currentStatus}>
-                    <Link href={buildUrl({ status: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
-                      <span>All Statuses</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isStatusActive("active")}>
-                    <Link href={buildUrl({ status: "active" })}>
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      <span>Active</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isStatusActive("planned")}>
-                    <Link href={buildUrl({ status: "planned" })}>
-                      <Clock className="h-4 w-4 text-blue-500" />
-                      <span>Planned</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isStatusActive("completed")}>
-                    <Link href={buildUrl({ status: "completed" })}>
-                      <CheckCircle2 className="h-4 w-4 text-purple-500" />
-                      <span>Completed</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={isStatusActive("draft")}>
-                    <Link href={buildUrl({ status: "draft" })}>
-                      <FileText className="h-4 w-4 text-stone-500" />
-                      <span>Draft</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Job Type Filter */}
-      <Collapsible className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <Briefcase className="h-3.5 w-3.5" />
-                Job Type
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={!currentCategory}>
-                    <Link href={buildUrl({ category: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
-                      <span>All Types</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={currentCategory === "functional"}>
-                    <Link href={buildUrl({ category: "functional" })}>
-                      <Settings className="h-4 w-4 text-blue-500" />
-                      <span>Functional</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={currentCategory === "emotional"}>
-                    <Link href={buildUrl({ category: "emotional" })}>
-                      <Heart className="h-4 w-4 text-pink-500" />
-                      <span>Emotional</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={currentCategory === "social"}>
-                    <Link href={buildUrl({ category: "social" })}>
-                      <Users className="h-4 w-4 text-purple-500" />
-                      <span>Social</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={currentCategory === "consumption"}>
-                    <Link href={buildUrl({ category: "consumption" })}>
-                      <Zap className="h-4 w-4 text-orange-500" />
-                      <span>Consumption</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-    </>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// VALUE VIEW - VIEWS SECTION (URL-BASED)
-// ═══════════════════════════════════════════════════════════════════
-
-const VALUE_VIEW_MODES = [
-  { id: 'stack', label: 'Stack', icon: Layers, description: '8-Layer Ontology' },
-  { id: 'radar', label: 'Radar', icon: Target, description: 'ODI Opportunities' },
-  { id: 'heatmap', label: 'Heatmap', icon: LayoutGrid, description: 'Coverage Matrix' },
-  { id: 'flow', label: 'Flow', icon: Workflow, description: 'Workflow Flows' },
-  { id: 'metrics', label: 'Metrics', icon: BarChart3, description: 'KPI Dashboard' },
-  { id: 'list', label: 'List', icon: List, description: 'Table View' },
-] as const
-
-function SidebarValueViewsSection() {
-  const searchParams = useSearchParams()
-  const currentView = searchParams.get("view") || "stack"
-
-  const buildUrl = (view: string) => {
-    const newParams = new URLSearchParams(searchParams.toString())
-    if (view === "stack") {
-      newParams.delete("view")
-    } else {
-      newParams.set("view", view)
-    }
-    const queryString = newParams.toString()
-    return `/value${queryString ? '?' + queryString : ''}`
-  }
-
-  return (
-    <Collapsible defaultOpen className="group/collapsible">
-      <SidebarGroup>
-        <SidebarGroupLabel asChild>
-          <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-            <span className="flex items-center gap-2">
-              <LayoutGrid className="h-3.5 w-3.5" />
-              Views
-            </span>
-            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-          </CollapsibleTrigger>
-        </SidebarGroupLabel>
-        <CollapsibleContent>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {VALUE_VIEW_MODES.map((mode) => {
-                const Icon = mode.icon
-                return (
-                  <SidebarMenuItem key={mode.id}>
-                    <SidebarMenuButton asChild data-active={currentView === mode.id}>
-                      <Link href={buildUrl(mode.id)}>
-                        <Icon className="h-4 w-4" />
-                        <span className="flex flex-col">
-                          <span>{mode.label}</span>
-                          <span className="text-[10px] text-muted-foreground">{mode.description}</span>
-                        </span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </CollapsibleContent>
-      </SidebarGroup>
-    </Collapsible>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// ONTOLOGY EXPLORER SIDEBAR
-// ═══════════════════════════════════════════════════════════════════
-
-const ONTOLOGY_NODE_TYPES = [
-  { id: 'all', label: 'All Nodes', icon: Network, color: 'text-slate-500' },
-  { id: 'function', label: 'Functions', icon: Building2, color: 'text-violet-500' },
-  { id: 'department', label: 'Departments', icon: FolderOpen, color: 'text-blue-500' },
-  { id: 'role', label: 'Roles', icon: User, color: 'text-emerald-500' },
-  { id: 'jtbd', label: 'JTBDs', icon: Target, color: 'text-amber-500' },
-  { id: 'value', label: 'Value Categories', icon: TrendingUp, color: 'text-cyan-500' },
-  { id: 'agent', label: 'AI Agents', icon: Bot, color: 'text-yellow-500' },
-  { id: 'persona', label: 'Personas', icon: Users, color: 'text-stone-500' },
-  { id: 'workflow', label: 'Workflows', icon: Workflow, color: 'text-pink-500' },
-] as const
-
-const ONTOLOGY_LAYERS = [
-  { id: 'L0', label: 'L0: Domain', icon: Database },
-  { id: 'L1', label: 'L1: Strategy', icon: Target },
-  { id: 'L2', label: 'L2: Organization', icon: Building2 },
-  { id: 'L3', label: 'L3: Personas', icon: Users },
-  { id: 'L4', label: 'L4: JTBDs', icon: ClipboardList },
-  { id: 'L5', label: 'L5: Outcomes', icon: TrendingUp },
-  { id: 'L6', label: 'L6: Workflows', icon: Workflow },
-  { id: 'L7', label: 'L7: Agents', icon: Bot },
-] as const
-
-export function SidebarOntologyContent() {
-  const searchParams = useSearchParams()
-  const currentNodeType = searchParams.get("nodeType") || "all"
-  const currentLayer = searchParams.get("layer") || ""
-  const currentView = searchParams.get("view") || "graph"
-
-  const buildUrl = (params: Record<string, string | null>) => {
-    const newParams = new URLSearchParams(searchParams.toString())
-    Object.entries(params).forEach(([key, value]) => {
-      if (value === null || value === "" || value === "all") {
-        newParams.delete(key)
-      } else {
-        newParams.set(key, value)
-      }
-    })
-    const queryString = newParams.toString()
-    return `/optimize/ontology${queryString ? '?' + queryString : ''}`
-  }
-
-  return (
-    <>
-      {/* Title - VITAL Brand v6.0: Purple accent */}
-      <div className="px-2 py-3 mb-2">
-        <div className="flex items-center gap-2">
-          <Network className="h-5 w-5 text-purple-600" />
-          <span className="text-base font-semibold text-stone-800">Ontology Explorer</span>
-        </div>
-        <p className="text-xs text-stone-500 mt-1 ml-7">8-layer enterprise ontology</p>
-      </div>
-
-      {/* Views */}
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <LayoutGrid className="h-3.5 w-3.5" />
-                Views
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={currentView === "graph"}>
-                    <Link href={buildUrl({ view: null })}>
-                      <Network className="h-4 w-4" />
-                      <span>Graph View</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={currentView === "tree"}>
-                    <Link href={buildUrl({ view: "tree" })}>
-                      <GitBranch className="h-4 w-4" />
-                      <span>Tree View</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={currentView === "table"}>
-                    <Link href={buildUrl({ view: "table" })}>
-                      <TableIcon className="h-4 w-4" />
-                      <span>Table View</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Node Types */}
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <Puzzle className="h-3.5 w-3.5" />
-                Node Types
-                {currentNodeType !== "all" && <Badge variant="secondary" className="text-[10px] h-4 px-1">1</Badge>}
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <ScrollArea className="h-56">
-                <SidebarMenu>
-                  {ONTOLOGY_NODE_TYPES.map((type) => {
-                    const Icon = type.icon
-                    return (
-                      <SidebarMenuItem key={type.id}>
-                        <SidebarMenuButton asChild data-active={currentNodeType === type.id}>
-                          <Link href={buildUrl({ nodeType: type.id })}>
-                            <Icon className={`h-4 w-4 ${type.color}`} />
-                            <span>{type.label}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  })}
-                </SidebarMenu>
-              </ScrollArea>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Ontology Layers */}
-      <Collapsible defaultOpen={false} className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <Layers className="h-3.5 w-3.5" />
-                Ontology Layers
-                {currentLayer && <Badge variant="secondary" className="text-[10px] h-4 px-1">1</Badge>}
-              </span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={!currentLayer}>
-                    <Link href={buildUrl({ layer: null })}>
-                      <LayersIcon className="h-4 w-4" />
-                      <span>All Layers</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                {ONTOLOGY_LAYERS.map((layer) => {
-                  const Icon = layer.icon
-                  return (
-                    <SidebarMenuItem key={layer.id}>
-                      <SidebarMenuButton asChild data-active={currentLayer === layer.id}>
-                        <Link href={buildUrl({ layer: layer.id })}>
-                          <Icon className="h-4 w-4" />
-                          <span className="text-xs">{layer.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-
-      {/* Quick Actions */}
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              <span className="flex items-center gap-2">
-                <Zap className="h-3.5 w-3.5" />
-                Quick Actions
-              </span>
+              Overview
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
@@ -3043,33 +1973,9 @@ export function SidebarOntologyContent() {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <Link href="/value">
-                      <BarChart3 className="h-4 w-4" />
-                      <span>Value Dashboard</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link href="/optimize/personas">
+                    <Link href="/personas">
                       <Users className="h-4 w-4" />
-                      <span>View Personas</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link href="/optimize/jobs-to-be-done">
-                      <Target className="h-4 w-4" />
-                      <span>View JTBDs</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link href="/agents">
-                      <Bot className="h-4 w-4" />
-                      <span>View Agents</span>
+                      <span>All Personas</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -3078,6 +1984,17 @@ export function SidebarOntologyContent() {
           </CollapsibleContent>
         </SidebarGroup>
       </Collapsible>
+
+      {PersonaFiltersSidebar && (
+        <div className="mt-4">
+          <PersonaFiltersSidebar
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            filteredCount={filteredCount}
+            totalCount={totalCount}
+          />
+        </div>
+      )}
     </>
   )
 }
@@ -3457,9 +2374,6 @@ export function SidebarValueContent() {
           </CollapsibleContent>
         </SidebarGroup>
       </Collapsible>
-
-      {/* Views Section - URL-based navigation */}
-      <SidebarValueViewsSection />
 
       {/* Active Filters Badge */}
       {activeFilterCount > 0 && (
@@ -4485,7 +3399,168 @@ export function SidebarDesignerContent() {
           </CollapsibleContent>
         </SidebarGroup>
       </Collapsible>
+
+      {/* Agents */}
+      <SidebarAgentsSection />
     </>
+  )
+}
+
+// Agents Section Component
+function SidebarAgentsSection() {
+  const [agents, setAgents] = useState<Array<{
+    id: string;
+    name: string;
+    description?: string;
+    function_name?: string;
+    department_name?: string;
+    level?: number;
+    tier?: number;
+  }>>([]);
+  const [agentsLoading, setAgentsLoading] = useState(false);
+  const [agentSearchQuery, setAgentSearchQuery] = useState('');
+  const [agentsError, setAgentsError] = useState<string | null>(null);
+  const [agentsWarning, setAgentsWarning] = useState<string | null>(null);
+
+  // Fetch agents on mount
+  useEffect(() => {
+    const fetchAgents = async () => {
+      setAgentsLoading(true);
+      setAgentsError(null);
+      setAgentsWarning(null);
+      try {
+        const response = await fetch('/api/agents?status=active&limit=500');
+        const data = await response.json();
+        
+        if (data.warning) {
+          setAgentsWarning(data.warning);
+        }
+        
+        if (data.error) {
+          setAgentsError(data.error);
+          setAgentsLoading(false);
+          return;
+        }
+        
+        const activeAgents = data.agents || (Array.isArray(data) ? data : []);
+        
+        if (activeAgents.length === 0) {
+          try {
+            const allResponse = await fetch('/api/agents?status=all&limit=10');
+            const allData = await allResponse.json();
+            const allAgents = allData.agents || (Array.isArray(allData) ? allData : []);
+            
+            if (allAgents.length > 0) {
+              setAgentsWarning(
+                `Found ${allData.count || allAgents.length} agents, but none are active.`
+              );
+            } else {
+              setAgentsWarning('No agents found in database.');
+            }
+          } catch (checkError) {
+            console.warn('Could not check for all agents:', checkError);
+          }
+        }
+        
+        setAgents(activeAgents);
+      } catch (error) {
+        console.error('Failed to fetch agents:', error);
+        setAgentsError(
+          error instanceof Error 
+            ? `Failed to fetch agents: ${error.message}` 
+            : 'Failed to fetch agents.'
+        );
+      } finally {
+        setAgentsLoading(false);
+      }
+    };
+    fetchAgents();
+  }, []);
+
+  // Filter agents by search query
+  const filteredAgents = agents.filter(agent =>
+    !agentSearchQuery ||
+    agent.name?.toLowerCase().includes(agentSearchQuery.toLowerCase()) ||
+    agent.description?.toLowerCase().includes(agentSearchQuery.toLowerCase()) ||
+    agent.function_name?.toLowerCase().includes(agentSearchQuery.toLowerCase()) ||
+    agent.department_name?.toLowerCase().includes(agentSearchQuery.toLowerCase())
+  );
+
+  return (
+    <Collapsible defaultOpen className="group/collapsible">
+      <SidebarGroup>
+        <SidebarGroupLabel asChild>
+          <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span>Agents</span>
+            </div>
+            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+          </CollapsibleTrigger>
+        </SidebarGroupLabel>
+        <CollapsibleContent>
+          <SidebarGroupContent>
+            <div className="px-2 pb-2">
+              <Input
+                placeholder="Search agents..."
+                value={agentSearchQuery}
+                onChange={(e) => setAgentSearchQuery(e.target.value)}
+                className="h-8 text-xs"
+              />
+            </div>
+            <ScrollArea className="h-[400px]">
+              <SidebarMenu>
+                {agentsLoading ? (
+                  <SidebarMenuItem>
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  </SidebarMenuItem>
+                ) : agentsError ? (
+                  <SidebarMenuItem>
+                    <div className="p-2 text-xs text-center text-destructive">
+                      {agentsError}
+                    </div>
+                  </SidebarMenuItem>
+                ) : filteredAgents.length === 0 ? (
+                  <SidebarMenuItem>
+                    <div className="p-2 text-xs text-center text-muted-foreground">
+                      {agentSearchQuery ? 'No agents match your search' : 'No agents available'}
+                      {agentsWarning && (
+                        <div className="mt-1 text-[10px] text-yellow-600 dark:text-yellow-400">
+                          {agentsWarning}
+                        </div>
+                      )}
+                    </div>
+                  </SidebarMenuItem>
+                ) : (
+                  filteredAgents.slice(0, 50).map((agent) => (
+                    <SidebarMenuItem key={agent.id}>
+                      <SidebarMenuButton className="flex flex-col items-start gap-1 h-auto py-2">
+                        <div className="flex items-center gap-2 w-full">
+                          <Bot className="h-3 w-3 flex-shrink-0" />
+                          <span className="text-xs font-medium truncate flex-1">{agent.name}</span>
+                          {agent.tier && (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
+                              T{agent.tier}
+                            </Badge>
+                          )}
+                        </div>
+                        {agent.description && (
+                          <div className="text-[10px] text-muted-foreground line-clamp-2 pl-5">
+                            {agent.description}
+                          </div>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))
+                )}
+              </SidebarMenu>
+            </ScrollArea>
+          </SidebarGroupContent>
+        </CollapsibleContent>
+      </SidebarGroup>
+    </Collapsible>
   )
 }
 
@@ -4790,7 +3865,7 @@ export function SidebarToolsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentCategory}>
                     <Link href={buildUrl({ category: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
                       <span>All Categories</span>
                     </Link>
                   </SidebarMenuButton>
@@ -4859,7 +3934,7 @@ export function SidebarToolsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentStatus}>
                     <Link href={buildUrl({ status: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
                       <span>All Statuses</span>
                     </Link>
                   </SidebarMenuButton>
@@ -4883,7 +3958,7 @@ export function SidebarToolsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={isStatusActive("development")}>
                     <Link href={buildUrl({ status: "development" })}>
-                      <Settings className="h-4 w-4 text-stone-500" />
+                      <Settings className="h-4 w-4 text-gray-500" />
                       <span>Development</span>
                     </Link>
                   </SidebarMenuButton>
@@ -4912,7 +3987,7 @@ export function SidebarToolsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentType}>
                     <Link href={buildUrl({ type: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
                       <span>All Types</span>
                     </Link>
                   </SidebarMenuButton>
@@ -5176,7 +4251,7 @@ export function SidebarSkillsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentCategory}>
                     <Link href={buildUrl({ category: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
                       <span>All Categories</span>
                     </Link>
                   </SidebarMenuButton>
@@ -5245,7 +4320,7 @@ export function SidebarSkillsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentComplexity}>
                     <Link href={buildUrl({ complexity: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
                       <span>All Levels</span>
                     </Link>
                   </SidebarMenuButton>
@@ -5314,7 +4389,7 @@ export function SidebarSkillsContent() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild data-active={!currentType}>
                     <Link href={buildUrl({ type: null })}>
-                      <CheckCircle2 className="h-4 w-4 text-stone-500" />
+                      <CheckCircle2 className="h-4 w-4 text-gray-500" />
                       <span>All Types</span>
                     </Link>
                   </SidebarMenuButton>

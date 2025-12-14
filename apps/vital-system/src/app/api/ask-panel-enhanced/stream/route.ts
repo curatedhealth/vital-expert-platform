@@ -72,9 +72,11 @@ export async function POST(request: NextRequest) {
       'Content-Type': 'application/json',
     };
 
-    // Forward auth token if present
+    // Forward auth token if present (from header or session)
     if (authHeader) {
       backendHeaders['Authorization'] = authHeader;
+    } else if (authToken) {
+      backendHeaders['Authorization'] = `Bearer ${authToken}`;
     }
 
     // Forward tenant and user context headers

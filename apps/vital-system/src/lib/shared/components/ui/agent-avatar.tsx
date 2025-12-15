@@ -1,4 +1,4 @@
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 // Make the agent type flexible to support different agent interfaces
 type FlexibleAgent = {

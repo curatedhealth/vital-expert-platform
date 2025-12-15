@@ -4,7 +4,7 @@ import { useMemo, useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 
 import { useAuth, sanitizeDisplayName } from "@/lib/auth/supabase-auth-context"
-import { cn } from "@/lib/shared/services/utils"
+import { cn } from "@/lib/utils"
 import { NavUser } from "@/components/nav-user"
 import { SidebarAskExpert } from "@/components/sidebar-ask-expert"
 import {

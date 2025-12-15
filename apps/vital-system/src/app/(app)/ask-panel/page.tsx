@@ -1,407 +1,433 @@
-/**
- * Ask Panel Page
- * 
- * User-friendly journey for consulting with expert panels:
- * - Browse panel templates
- * - View panel details
- * - Add panels to sidebar
- * 
- * Aligned with Tools view design pattern
- */
-
 'use client';
 
-import React, { useState, useEffect } from 'react';
+/**
+ * VITAL Platform - Ask Panel Mode Selector
+ *
+ * THE 6 PANEL TYPE MATRIX
+ *
+ * Structured: Sequential moderated discussion - perfect for regulatory reviews
+ * Open: Free-form brainstorming (parallel) - great for innovation
+ * Socratic: Dialectical questioning - deep assumption testing
+ * Adversarial: Pro/con debate format - go/no-go decisions
+ * Delphi: Iterative consensus with voting - complex decisions
+ * Hybrid: Human-AI collaborative panels - high-stakes decisions
+ */
+
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Users,
-  Sparkles,
-  LayoutGrid,
-  Plus,
-  Bot,
-  Zap,
-  Search,
-  Filter,
-  ArrowRight,
-  Stethoscope,
-  FlaskConical,
-  UserCog,
-  HeartPulse,
-  Shield,
-  FileText,
-  ChevronRight,
-  X,
+  MessageSquare,
+  Swords,
   Target,
+  Vote,
+  Brain,
+  Sparkles,
+  ArrowRight,
+  Bookmark,
+  Loader2,
+  Trash2,
   Play,
+  Star,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { PageHeader } from '@/components/page-header';
-import { PanelCreationWizard } from '@/features/ask-panel/components/PanelCreationWizard';
-import { PanelConsultationView } from '@/features/ask-panel/components/PanelConsultationView';
-import { PanelExecutionView } from '@/features/ask-panel/components/PanelExecutionView';
-import { CreateCustomPanelDialog } from '@/features/ask-panel/components/CreateCustomPanelDialog';
-import { PANEL_TEMPLATES } from '@/features/ask-panel/constants/panel-templates';
-import type { PanelConfiguration } from '@/features/ask-panel/types/agent';
-import { useSavedPanels, type SavedPanel } from '@/contexts/ask-panel-context';
-import { useSearchParams, useRouter } from 'next/navigation';
 
-// Map emoji categories to lucide-react icons
-const CATEGORY_ICONS: Record<string, any> = {
-  'clinical-trials': Stethoscope,
-  'research': FlaskConical,
-  'regulatory': Shield,
-  'patient-care': HeartPulse,
-  'operations': UserCog,
-  'default': Users,
+// Custom User Panel type
+type UserPanel = {
+  id: string;
+  name: string;
+  description?: string;
+  category: string;
+  base_panel_slug?: string;
+  mode: string;
+  framework: string;
+  selected_agents: string[];
+  custom_settings?: Record<string, any>;
+  metadata?: Record<string, any>;
+  icon?: string;
+  tags?: string[];
+  is_favorite?: boolean;
+  created_at: string;
+  last_used_at?: string;
 };
 
-// Get icon component for category
-function getCategoryIcon(category: string) {
-  const key = category.toLowerCase().replace(/\s+/g, '-');
-  return CATEGORY_ICONS[key] || CATEGORY_ICONS['default'];
-}
+type PanelTypeConfig = {
+  type: 'structured' | 'open' | 'socratic' | 'adversarial' | 'delphi' | 'hybrid';
+  title: string;
+  nickname: string;
+  description: string;
+  icon: React.ReactNode;
+  features: string[];
+  bestFor: string;
+  color: string;
+  bgGradient: string;
+};
 
-// Panel Details Dialog Component
-interface PanelDetailsDialogProps {
-  panel: SavedPanel | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCustomize: (panel: SavedPanel) => void;
-  onRun: (panel: SavedPanel) => void;
-}
+const PANEL_TYPES: PanelTypeConfig[] = [
+  {
+    type: 'structured',
+    title: 'Structured Panel',
+    nickname: 'Moderated Discussion',
+    description: 'Sequential moderated discussion with cross-examination and synthesis phases.',
+    icon: <Users className="h-5 w-5" />,
+    features: [
+      'Sequential expert responses',
+      'Moderator-guided discussion',
+      'Cross-examination phase',
+    ],
+    bestFor: 'Regulatory reviews, compliance assessments',
+    color: 'purple',
+    bgGradient: 'from-purple-500/10 via-purple-400/5 to-transparent',
+  },
+  {
+    type: 'open',
+    title: 'Open Panel',
+    nickname: 'Brainstorming',
+    description: 'Free-form parallel brainstorming with theme identification and idea synthesis.',
+    icon: <Sparkles className="h-5 w-5" />,
+    features: [
+      'Parallel expert execution',
+      'Theme identification',
+      'Idea synthesis',
+    ],
+    bestFor: 'Innovation, creative problem solving',
+    color: 'violet',
+    bgGradient: 'from-violet-500/10 via-violet-400/5 to-transparent',
+  },
+  {
+    type: 'socratic',
+    title: 'Socratic Panel',
+    nickname: 'Deep Inquiry',
+    description: 'Dialectical questioning with probing questions, defense, and revision cycles.',
+    icon: <Brain className="h-5 w-5" />,
+    features: [
+      'Initial positions stated',
+      'Probing questions asked',
+      'Defense and revision cycles',
+    ],
+    bestFor: 'Assumption testing, deep analysis',
+    color: 'fuchsia',
+    bgGradient: 'from-fuchsia-500/10 via-fuchsia-400/5 to-transparent',
+  },
+  {
+    type: 'adversarial',
+    title: 'Adversarial Panel',
+    nickname: 'Pro/Con Debate',
+    description: 'Pro/con debate format with rebuttals and judge-synthesized conclusions.',
+    icon: <Swords className="h-5 w-5" />,
+    features: [
+      'Pro and con positions',
+      'Rebuttal rounds',
+      'Judge synthesis',
+    ],
+    bestFor: 'Go/no-go decisions, risk assessment',
+    color: 'pink',
+    bgGradient: 'from-pink-500/10 via-pink-400/5 to-transparent',
+  },
+  {
+    type: 'delphi',
+    title: 'Delphi Panel',
+    nickname: 'Consensus Building',
+    description: 'Iterative consensus building with anonymous voting and multi-round convergence.',
+    icon: <Vote className="h-5 w-5" />,
+    features: [
+      'Anonymous expert voting',
+      'Multi-round convergence',
+      'Statistical consensus',
+    ],
+    bestFor: 'Complex decisions requiring agreement',
+    color: 'indigo',
+    bgGradient: 'from-indigo-500/10 via-indigo-400/5 to-transparent',
+  },
+  {
+    type: 'hybrid',
+    title: 'Hybrid Panel',
+    nickname: 'Human-AI Collaboration',
+    description: 'Human-AI collaborative panels with feedback integration and checkpoint reviews.',
+    icon: <Target className="h-5 w-5" />,
+    features: [
+      'Human feedback integration',
+      'Checkpoint reviews',
+      'Collaborative refinement',
+    ],
+    bestFor: 'High-stakes decisions needing validation',
+    color: 'cyan',
+    bgGradient: 'from-cyan-500/10 via-cyan-400/5 to-transparent',
+  },
+];
 
-function PanelDetailsDialog({
-  panel,
-  open,
-  onOpenChange,
-  onCustomize,
-  onRun,
-}: PanelDetailsDialogProps) {
-  if (!panel) return null;
+const colorClasses = {
+  purple: {
+    icon: 'text-purple-600',
+    iconBg: 'bg-purple-500/10',
+    border: 'hover:border-purple-500/50',
+    badge: 'border-purple-500/30 text-purple-600',
+  },
+  violet: {
+    icon: 'text-violet-600',
+    iconBg: 'bg-violet-500/10',
+    border: 'hover:border-violet-500/50',
+    badge: 'border-violet-500/30 text-violet-600',
+  },
+  fuchsia: {
+    icon: 'text-fuchsia-600',
+    iconBg: 'bg-fuchsia-500/10',
+    border: 'hover:border-fuchsia-500/50',
+    badge: 'border-fuchsia-500/30 text-fuchsia-600',
+  },
+  pink: {
+    icon: 'text-pink-600',
+    iconBg: 'bg-pink-500/10',
+    border: 'hover:border-pink-500/50',
+    badge: 'border-pink-500/30 text-pink-600',
+  },
+  indigo: {
+    icon: 'text-indigo-600',
+    iconBg: 'bg-indigo-500/10',
+    border: 'hover:border-indigo-500/50',
+    badge: 'border-indigo-500/30 text-indigo-600',
+  },
+  cyan: {
+    icon: 'text-cyan-600',
+    iconBg: 'bg-cyan-500/10',
+    border: 'hover:border-cyan-500/50',
+    badge: 'border-cyan-500/30 text-cyan-600',
+  },
+};
 
-  const IconComponent = getCategoryIcon(panel.category);
+function PanelTypeCard({ config }: { config: PanelTypeConfig }) {
+  const router = useRouter();
+  const colors = colorClasses[config.color as keyof typeof colorClasses];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-              <IconComponent className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <DialogTitle className="text-2xl mb-2">{panel.name}</DialogTitle>
-              <DialogDescription className="text-base">
-                {panel.description}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+    <button
+      type="button"
+      onClick={() => router.push(`/ask-panel/interactive?type=${config.type}`)}
+      className={`
+        relative overflow-hidden p-5 rounded-2xl border bg-card text-left
+        transition-all duration-300 ease-out
+        hover:shadow-xl hover:scale-[1.02] ${colors.border}
+        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+        group cursor-pointer h-full
+      `}
+    >
+      {/* Background gradient */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${config.bgGradient} opacity-50 group-hover:opacity-100 transition-opacity`} />
 
-        <div className="space-y-6 py-4">
-          {/* Badges */}
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary" className="capitalize">
-              {panel.category}
-            </Badge>
-            <Badge variant="outline">
-              <Zap className="w-3 h-3 mr-1" />
-              {panel.mode}
-            </Badge>
-            <Badge variant="outline">
-              <Bot className="w-3 h-3 mr-1" />
-              {panel.suggestedAgents.length} experts
-            </Badge>
+      {/* Content */}
+      <div className="relative z-10 flex flex-col h-full">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className={`w-10 h-10 rounded-xl ${colors.iconBg} flex items-center justify-center ${colors.icon}`}>
+            {config.icon}
           </div>
-
-          {/* Purpose */}
-          {panel.purpose && (
-            <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <Target className="w-4 h-4" />
-                Purpose
-              </h3>
-              <p className="text-sm text-muted-foreground">{panel.purpose}</p>
-            </div>
-          )}
-
-          {/* Selected Agents */}
-          <div>
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Selected Agents ({panel.suggestedAgents.length})
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {panel.suggestedAgents.map((agent, index) => (
-                <Card key={index} className="p-3">
-                  <div className="flex items-center gap-2">
-                    <Bot className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm font-medium">{agent}</span>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Panel Configuration */}
-          <div>
-            <h3 className="font-semibold mb-2 flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Configuration
-            </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Mode:</span>
-                <span className="font-medium capitalize">{panel.mode}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Category:</span>
-                <span className="font-medium">{panel.category}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Experts:</span>
-                <span className="font-medium">{panel.suggestedAgents.length}</span>
-              </div>
-            </div>
-          </div>
+          <Badge variant="outline" className={`text-xs ${colors.badge}`}>
+            {config.type}
+          </Badge>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
-            Close
-          </Button>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              onClick={() => {
-                onCustomize(panel);
-                onOpenChange(false);
-              }}
-              className="flex-1 sm:flex-none"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Customize
-            </Button>
-            <Button
-              onClick={() => {
-                onRun(panel);
-                onOpenChange(false);
-              }}
-              className="flex-1 sm:flex-none bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-            >
-              <ChevronRight className="w-4 h-4 mr-2" />
-              Run Panel
-            </Button>
+        {/* Title & Nickname */}
+        <h3 className="text-lg font-semibold mb-0.5">{config.title}</h3>
+        <p className="text-sm font-medium text-muted-foreground mb-2">"{config.nickname}"</p>
+        <p className="text-sm text-muted-foreground/80 mb-3 flex-1">{config.description}</p>
+
+        {/* Features */}
+        <div className="space-y-1 mb-3">
+          {config.features.map((feature) => (
+            <div key={feature} className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className={colors.icon}>•</span>
+              <span>{feature}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Best For */}
+        <div className="pt-3 border-t border-border/50">
+          <p className="text-xs text-muted-foreground">
+            <span className="font-medium">Best for:</span> {config.bestFor}
+          </p>
+        </div>
+
+        {/* Hover indicator */}
+        <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+          <ArrowRight className={`h-5 w-5 ${colors.icon}`} />
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// Get panel type icon by slug
+function getPanelIcon(panelType?: string) {
+  const iconMap: Record<string, React.ReactNode> = {
+    structured: <Users className="h-4 w-4" />,
+    open: <Sparkles className="h-4 w-4" />,
+    socratic: <Brain className="h-4 w-4" />,
+    adversarial: <Swords className="h-4 w-4" />,
+    delphi: <Vote className="h-4 w-4" />,
+    hybrid: <Target className="h-4 w-4" />,
+  };
+  return iconMap[panelType || 'structured'] || <Users className="h-4 w-4" />;
+}
+
+// Custom Panel Card Component
+function CustomPanelCard({ panel, onDelete, onUse }: { panel: UserPanel; onDelete: (id: string) => void; onUse: (panel: UserPanel) => void }) {
+  const panelType = panel.metadata?.panel_type || panel.base_panel_slug?.replace('_panel', '') || 'structured';
+
+  return (
+    <Card className="group hover:shadow-lg transition-all duration-200 hover:border-primary/50">
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+              {getPanelIcon(panelType)}
+            </div>
+            <div>
+              <CardTitle className="text-sm font-medium">{panel.name}</CardTitle>
+              <CardDescription className="text-xs">
+                {panel.selected_agents?.length || 0} experts
+              </CardDescription>
+            </div>
           </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          {panel.is_favorite && (
+            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {panel.description && (
+          <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{panel.description}</p>
+        )}
+        <div className="flex flex-wrap gap-1 mb-3">
+          <Badge variant="outline" className="text-xs">{panelType}</Badge>
+          {panel.tags?.slice(0, 2).map((tag) => (
+            <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="default"
+            size="sm"
+            className="flex-1"
+            onClick={() => onUse(panel)}
+          >
+            <Play className="w-3 h-3 mr-1" />
+            Use
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDelete(panel.id)}
+            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="w-3 h-3" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
 export default function AskPanelPage() {
-  const [showWizard, setShowWizard] = useState(false);
-  const [initialQuery, setInitialQuery] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [templates, setTemplates] = useState<typeof PANEL_TEMPLATES>(PANEL_TEMPLATES);
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
-  const [templateError, setTemplateError] = useState<string | null>(null);
-  const [selectedPanel, setSelectedPanel] = useState<SavedPanel | null>(null);
-  const [showPanelDetails, setShowPanelDetails] = useState(false);
-  const [executingPanel, setExecutingPanel] = useState<SavedPanel | null>(null);
-
-  const { savedPanels, loading: loadingSavedPanels, createCustomPanel } = useSavedPanels();
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const initialPanelId = searchParams.get('panelId');
-  const [currentPanelId, setCurrentPanelId] = useState<string | null>(null);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [selectedTemplateForCustom, setSelectedTemplateForCustom] = useState<typeof PANEL_TEMPLATES[0] | null>(null);
+  const [customPanels, setCustomPanels] = useState<UserPanel[]>([]);
+  const [loadingPanels, setLoadingPanels] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // State for consultation view
-  const [showConsultation, setShowConsultation] = useState(false);
-  const [consultationConfig, setConsultationConfig] = useState<PanelConfiguration | null>(null);
-  const [consultationQuestion, setConsultationQuestion] = useState('');
-
-  // Load panel templates from Supabase-backed API
+  // Fetch panels from database (both user_panels and panels table)
   useEffect(() => {
-    const loadTemplates = async () => {
+    async function fetchAllPanels() {
       try {
-        setLoadingTemplates(true);
-        setTemplateError(null);
+        // Fetch from panels table (includes saved custom panels)
+        const panelsResponse = await fetch('/api/panels');
+        const panelsData = await panelsResponse.json();
 
-        const res = await fetch('/api/panels');
-        if (!res.ok) {
-          throw new Error(await res.text());
-        }
-        const json = await res.json();
+        // Also try user_panels for user-specific panels
+        const userPanelsResponse = await fetch('/api/user-panels');
+        const userPanelsData = await userPanelsResponse.json();
 
-        if (json.success && Array.isArray(json.data?.panels)) {
-          const mapped = json.data.panels.map((p: any) => {
-            // Find matching template to get the full suggestedAgents list (should be 10)
-            const templateMatch = PANEL_TEMPLATES.find(t => t.id === p.slug);
-            
-            return {
-              id: p.slug,
-              name: p.name,
-              description: p.description,
-              useCase: p.category,
-              // Always prefer template's suggestedAgents (10 agents) over Supabase data
-              suggestedAgents: templateMatch?.suggestedAgents || p.suggested_agents || [],
-              mode: p.mode || templateMatch?.mode || 'sequential',
-              framework: p.framework || templateMatch?.framework || 'langgraph',
-              defaultSettings: p.default_settings || templateMatch?.defaultSettings || {
-                userGuidance: 'medium',
-                allowDebate: true,
-                maxRounds: 3,
-                requireConsensus: false,
-              },
-              icon: p.metadata?.icon ?? templateMatch?.icon ?? '👥',
-              category: p.category || templateMatch?.category || 'panel',
-              tags: p.metadata?.tags ?? templateMatch?.tags ?? [],
-              popularity: p.metadata?.popularity ?? templateMatch?.popularity ?? 0,
-            };
+        const allPanels: UserPanel[] = [];
+
+        // Add panels from panels table (exclude the 6 base templates)
+        const baseTemplateSlugs = ['structured_panel', 'open_panel', 'socratic_panel', 'devils_advocate_panel', 'expert_panel', 'structured_ask_expert_panel'];
+        if (panelsData.success && panelsData.data?.panels) {
+          panelsData.data.panels.forEach((panel: any) => {
+            // Include panels that are custom (not base templates) OR have workflow_definition
+            const isCustom = !baseTemplateSlugs.includes(panel.slug) || panel.metadata?.workflow_definition;
+            if (isCustom) {
+              allPanels.push({
+                id: panel.id,
+                name: panel.name,
+                description: panel.description,
+                category: panel.category || 'panel',
+                base_panel_slug: panel.slug,
+                mode: panel.mode,
+                framework: panel.framework,
+                selected_agents: panel.metadata?.selected_agents || panel.suggested_agents || [],
+                custom_settings: panel.default_settings,
+                metadata: panel.metadata,
+                icon: panel.metadata?.icon,
+                tags: panel.metadata?.tags || [],
+                is_favorite: panel.metadata?.is_favorite,
+                created_at: panel.created_at,
+                last_used_at: panel.metadata?.last_used_at,
+              });
+            }
           });
-          setTemplates(mapped);
-        } else {
-          // Fallback to local templates
-          setTemplates(PANEL_TEMPLATES);
         }
-      } catch (e: any) {
-        console.error('[AskPanel] Failed to load templates from Supabase:', e);
-        setTemplateError('Failed to load panel templates from Supabase. Using local defaults.');
-        setTemplates(PANEL_TEMPLATES);
-      } finally {
-        setLoadingTemplates(false);
-      }
-    };
 
-    loadTemplates();
+        // Add user_panels
+        if (userPanelsData.success && userPanelsData.panels) {
+          userPanelsData.panels.forEach((panel: any) => {
+            // Avoid duplicates
+            if (!allPanels.find(p => p.id === panel.id)) {
+              allPanels.push(panel);
+            }
+          });
+        }
+
+        setCustomPanels(allPanels);
+      } catch (err) {
+        console.error('Failed to fetch panels:', err);
+      } finally {
+        setLoadingPanels(false);
+      }
+    }
+    fetchAllPanels();
   }, []);
 
-  // Handle panel creation
-  function handlePanelCreated(config: PanelConfiguration) {
-    console.log('Panel created:', config);
-    setShowWizard(false);
-    
-    // Navigate to consultation view
-    setConsultationConfig(config);
-    setConsultationQuestion(initialQuery);
-    setShowConsultation(true);
-  }
+  // Delete a custom panel
+  const handleDeletePanel = async (panelId: string) => {
+    if (!confirm('Are you sure you want to delete this panel?')) return;
 
-  // Handle back from consultation
-  function handleBackFromConsultation() {
-    setShowConsultation(false);
-    setConsultationConfig(null);
-    setConsultationQuestion('');
-  }
-
-  // Handle back from execution
-  function handleBackFromExecution() {
-    setExecutingPanel(null);
-  }
-
-  // Handle panel card click - navigate to detail page
-  const handleViewPanel = (template: typeof PANEL_TEMPLATES[0]) => {
-    // Navigate to detail page using template slug/id
-    router.push(`/ask-panel/${template.id}`);
-  };
-
-  // Handle customize panel - open create dialog with template pre-selected
-  const handleCustomizePanel = (panel: SavedPanel) => {
-    // Find the template this panel is based on
-    const template = templates.find((t) => t.id === panel.base_panel_slug || panel.id === t.id);
-    if (template) {
-      setSelectedTemplateForCustom(template);
-      setShowCreateDialog(true);
-    } else {
-      // Fallback: open wizard
-      setInitialQuery(panel.description);
-      setShowWizard(true);
+    setDeletingId(panelId);
+    try {
+      const response = await fetch(`/api/user-panels/${panelId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setCustomPanels((prev) => prev.filter((p) => p.id !== panelId));
+      }
+    } catch (err) {
+      console.error('Failed to delete panel:', err);
+    } finally {
+      setDeletingId(null);
     }
   };
 
-  // Handle run panel - open execution view
-  const handleRunPanel = (panel: SavedPanel) => {
-    // Open execution view directly (no need to save template panels)
-    setExecutingPanel(panel);
+  // Use a custom panel (navigate to interactive chat with preselected agents)
+  const handleUsePanel = (panel: UserPanel) => {
+    const panelType = panel.metadata?.panel_type || panel.base_panel_slug?.replace('_panel', '') || 'structured';
+    // Store selected agents in sessionStorage for the interactive page to pick up
+    sessionStorage.setItem('preselectedAgents', JSON.stringify(panel.selected_agents));
+    sessionStorage.setItem('preselectedPanelName', panel.name);
+    // Navigate to interactive chat experience (like Ask Expert)
+    router.push(`/ask-panel/interactive?type=${panelType}&panelId=${panel.id}`);
   };
-
-  // If navigated from sidebar with a specific panelId, auto-open execution view
-  useEffect(() => {
-    // No panel selected in URL
-    if (!initialPanelId) return;
-
-    // If we're already executing this panel, do nothing
-    if (executingPanel && currentPanelId === initialPanelId) return;
-
-    // If we've already auto-opened this panel and user went back, don't re-open
-    if (!executingPanel && currentPanelId === initialPanelId) return;
-
-    const template = templates.find((t) => t.id === initialPanelId);
-    if (!template) return;
-
-    const IconComponent = getCategoryIcon(template.category);
-    const panel: SavedPanel = {
-      ...template,
-      purpose: template.description,
-      IconComponent,
-    };
-
-    // Open execution view directly (no need to save template panels)
-    setExecutingPanel(panel);
-    setCurrentPanelId(initialPanelId);
-  }, [initialPanelId, executingPanel, currentPanelId, templates]);
-
-  // Filter templates
-  const filteredTemplates = templates.filter((template) => {
-    const matchesSearch =
-      searchQuery === '' ||
-      template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      template.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory =
-      selectedCategory === 'all' || template.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
-
-  // Get unique categories
-  const categories = ['all', ...Array.from(new Set(templates.map((t) => t.category)))];
-
-  // Show execution view if active
-  if (executingPanel) {
-    return (
-      <PanelExecutionView
-        panel={executingPanel}
-        onBack={handleBackFromExecution}
-      />
-    );
-  }
-
-  // Show consultation view if active
-  if (showConsultation && consultationConfig && consultationQuestion) {
-    return (
-      <PanelConsultationView
-        configuration={consultationConfig}
-        initialQuestion={consultationQuestion}
-        onBack={handleBackFromConsultation}
-      />
-    );
-  }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -409,424 +435,116 @@ export default function AskPanelPage() {
       <PageHeader
         icon={Users}
         title="Ask Panel"
-        description="Multi-expert advisory board consultations"
+        description="Multi-expert advisory board consultations with advanced consensus analysis"
       />
 
-      {/* Main Content Area */}
+      {/* Main Content - Scrollable */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto p-6 space-y-6">
-          {/* Header with count */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Showing {filteredTemplates.length} of {PANEL_TEMPLATES.length} panels
-              </p>
-            </div>
-          </div>
-
-      {/* My Custom Panels Section */}
-      {savedPanels.length > 0 && (
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Users className="w-6 h-6" />
-                My Custom Panels
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {savedPanels.length} custom panel{savedPanels.length !== 1 ? 's' : ''} saved to your account
-              </p>
-            </div>
-            <Button
-              onClick={() => {
-                setSelectedTemplateForCustom(null);
-                setShowCreateDialog(true);
-              }}
-              variant="outline"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create New
-            </Button>
-          </div>
+        <div className="max-w-6xl mx-auto p-6 space-y-6">
+          {/* Panel Types Grid - 2x3 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {savedPanels.map((panel) => {
-              const IconComponent = getCategoryIcon(panel.category);
-              return (
-                <Card
-                  key={panel.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer border-purple-200 dark:border-purple-800"
-                  onClick={() => {
-                    setExecutingPanel(panel);
-                  }}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                          <IconComponent className="w-5 h-5 text-white" />
-                        </div>
-                        <CardTitle className="text-lg">{panel.name}</CardTitle>
-                      </div>
-                      {panel.isBookmarked && (
-                        <Badge variant="secondary" className="text-xs">
-                          ⭐ Favorite
-                        </Badge>
-                      )}
-                    </div>
-                    <CardDescription className="text-sm mb-4 line-clamp-2">
-                      {panel.description || panel.purpose}
-                    </CardDescription>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary" className="capitalize text-xs">
-                        {panel.category}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {panel.mode}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        <Bot className="w-3 h-3 mr-1" />
-                        {panel.selectedAgents?.length || panel.suggestedAgents.length} experts
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {panel.last_used_at
-                          ? `Last used ${new Date(panel.last_used_at).toLocaleDateString()}`
-                          : `Created ${panel.created_at ? new Date(panel.created_at).toLocaleDateString() : 'recently'}`}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-purple-600 hover:text-purple-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExecutingPanel(panel);
-                        }}
-                      >
-                        Run
-                        <ArrowRight className="w-3 h-3 ml-1" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Template Panels Section */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Sparkles className="w-6 h-6" />
-              Panel Templates
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Choose a template to create your own custom panel
-            </p>
-          </div>
-        </div>
-
-      {/* Tabs Navigation */}
-      <Tabs defaultValue="grid" className="w-full">
-        <TabsList>
-          <TabsTrigger value="grid">Grid View</TabsTrigger>
-          <TabsTrigger value="list">List View</TabsTrigger>
-          <TabsTrigger value="category">By Category</TabsTrigger>
-        </TabsList>
-
-        {/* Grid View */}
-        <TabsContent value="grid" className="space-y-6 mt-6">
-          {/* Search and Filter Bar */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search panels..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="px-4 py-2 border rounded-md bg-background"
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat === 'all' ? 'All Categories' : cat}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    onClick={() => {
-                      setSelectedTemplateForCustom(null);
-                      setShowCreateDialog(true);
-                    }}
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Custom Panel
-                  </Button>
-                </div>
-              </div>
-              <div className="mt-4 text-sm text-muted-foreground">
-                Showing {filteredTemplates.length} of {PANEL_TEMPLATES.length} panels
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Panels Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTemplates.map((template) => {
-              const IconComponent = getCategoryIcon(template.category);
-              
-              return (
-                <Card
-                  key={template.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => handleViewPanel(template)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <IconComponent className="w-5 h-5 text-muted-foreground" />
-                        <CardTitle className="text-lg">
-                          {template.name}
-                        </CardTitle>
-                      </div>
-                    </div>
-                    <CardDescription className="text-sm mb-4">
-                      {template.description}
-                    </CardDescription>
-
-                    {/* Badges */}
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary" className="capitalize text-xs">
-                        {template.category}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {template.mode}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        <Bot className="w-3 h-3 mr-1" />
-                        {template.suggestedAgents.length} experts
-                      </Badge>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground text-xs">
-                        Click to view details
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const IconComponent = getCategoryIcon(template.category);
-                          handleRunPanel({
-                            ...template,
-                            purpose: template.description,
-                            IconComponent,
-                          });
-                        }}
-                      >
-                        Run Panel
-                        <ArrowRight className="w-3 h-3 ml-1" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            {PANEL_TYPES.map((config) => (
+              <PanelTypeCard key={config.type} config={config} />
+            ))}
           </div>
 
-          {filteredTemplates.length === 0 && (
+          {/* Custom Panels Section */}
+          {(customPanels.length > 0 || loadingPanels) && (
             <Card>
-              <CardContent className="py-12 text-center">
-                <Filter className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No panels found matching your filters.</p>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bookmark className="w-5 h-5 text-primary" />
+                    <div>
+                      <CardTitle className="text-lg">Your Custom Panels</CardTitle>
+                      <CardDescription>
+                        {customPanels.length} saved panel{customPanels.length !== 1 ? 's' : ''} with pre-configured experts
+                      </CardDescription>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loadingPanels ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-muted-foreground">Loading your panels...</span>
+                  </div>
+                ) : customPanels.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Bookmark className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>No custom panels yet</p>
+                    <p className="text-sm">Create one by selecting agents and clicking "Save Panel"</p>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-auto max-h-[300px]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pr-4">
+                      {customPanels.map((panel) => (
+                        <CustomPanelCard
+                          key={panel.id}
+                          panel={panel}
+                          onDelete={handleDeletePanel}
+                          onUse={handleUsePanel}
+                        />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
               </CardContent>
             </Card>
           )}
-        </TabsContent>
 
-        {/* List View */}
-        <TabsContent value="list" className="space-y-4 mt-6">
-          {filteredTemplates.map((template) => {
-            const IconComponent = getCategoryIcon(template.category);
-            
-            return (
-              <Card
-                key={template.id}
-                className="hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleViewPanel(template)}
+          {/* Quick Links */}
+          <div className="text-center pt-4">
+            <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Quick Links</p>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <button
+                type="button"
+                onClick={() => router.push('/ask-panel/history')}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                        <IconComponent className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">{template.name}</CardTitle>
-                        <CardDescription className="mt-1">
-                          {template.description}
-                        </CardDescription>
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          <Badge variant="secondary" className="capitalize text-xs">
-                            {template.category}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            <Zap className="w-3 h-3 mr-1" />
-                            {template.mode}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            <Bot className="w-3 h-3 mr-1" />
-                            {template.suggestedAgents.length} experts
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRunPanel({
-                          ...template,
-                          purpose: template.description,
-                          IconComponent,
-                        });
-                      }}
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Run Panel
-                    </Button>
-                  </div>
-                </CardHeader>
-              </Card>
-            );
-          })}
-        </TabsContent>
+                Panel History
+              </button>
+              <span className="text-muted-foreground/30">•</span>
+              <button
+                type="button"
+                onClick={() => router.push('/ask-panel/templates')}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Panel Templates
+              </button>
+              <span className="text-muted-foreground/30">•</span>
+              <button
+                type="button"
+                onClick={() => router.push('/agents')}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Browse Experts
+              </button>
+            </div>
+          </div>
 
-        {/* By Category View */}
-        <TabsContent value="category" className="space-y-8 mt-6">
-          {categories.filter(cat => cat !== 'all').map(category => {
-            const categoryTemplates = filteredTemplates.filter(t => t.category === category);
-            if (categoryTemplates.length === 0) return null;
-
-            const CategoryIcon = getCategoryIcon(category);
-
-            return (
-              <div key={category}>
-                <div className="flex items-center gap-3 mb-4">
-                  <CategoryIcon className="h-6 w-6" />
-                  <h2 className="text-2xl font-bold">{category}</h2>
-                  <Badge variant="secondary">{categoryTemplates.length}</Badge>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {categoryTemplates.map((template) => {
-                    const IconComponent = getCategoryIcon(template.category);
-                    
-                    return (
-                      <Card
-                        key={template.id}
-                        className="hover:shadow-lg transition-shadow cursor-pointer"
-                        onClick={() => handleViewPanel(template)}
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                              <IconComponent className="w-5 h-5 text-white" />
-                            </div>
-                          </div>
-                          <CardTitle className="text-base line-clamp-1">
-                            {template.name}
-                          </CardTitle>
-                          <CardDescription className="line-clamp-2 text-xs">
-                            {template.description}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="flex items-center justify-between">
-                            <div className="flex gap-1">
-                              <Badge variant="outline" className="text-xs">
-                                <Bot className="w-3 h-3 mr-1" />
-                                {template.suggestedAgents.length}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs capitalize">
-                                {template.mode}
-                              </Badge>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRunPanel({
-                                  ...template,
-                                  purpose: template.description,
-                                  IconComponent,
-                                });
-                              }}
-                            >
-                              Run
-                              <ArrowRight className="w-3 h-3 ml-1" />
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
+          {/* Info Card */}
+          <div className="bg-muted/50 rounded-xl p-6 border">
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              How Ask Panel Works
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
+              <div>
+                <p className="font-medium text-foreground mb-1">1. Choose Panel Type</p>
+                <p>Select the discussion format that best fits your decision-making needs.</p>
               </div>
-            );
-          })}
-        </TabsContent>
-      </Tabs>
-      </div>
-
-      {/* Panel Details Dialog */}
-      <PanelDetailsDialog
-        panel={selectedPanel}
-        open={showPanelDetails}
-        onOpenChange={setShowPanelDetails}
-        onCustomize={handleCustomizePanel}
-        onRun={handleRunPanel}
-      />
-
-      {/* Panel Creation Wizard */}
-      {showWizard && (
-        <PanelCreationWizard
-          initialQuery={initialQuery}
-          onComplete={handlePanelCreated}
-          onCancel={() => setShowWizard(false)}
-        />
-      )}
-
-      {/* Create Custom Panel Dialog */}
-      <CreateCustomPanelDialog
-        open={showCreateDialog}
-        onOpenChange={(open) => {
-          setShowCreateDialog(open);
-          if (!open) {
-            setSelectedTemplateForCustom(null);
-          }
-        }}
-        baseTemplate={selectedTemplateForCustom || undefined}
-      />
+              <div>
+                <p className="font-medium text-foreground mb-1">2. Select Experts</p>
+                <p>Pick from 200+ specialized AI agents to form your advisory board.</p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground mb-1">3. Get Consensus</p>
+                <p>Receive structured analysis with agreement points, divergences, and recommendations.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

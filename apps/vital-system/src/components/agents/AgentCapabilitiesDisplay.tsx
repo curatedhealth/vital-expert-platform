@@ -30,7 +30,7 @@ import {
   TooltipContent,
   TooltipTrigger
 } from '@/lib/shared/components/ui';
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 interface Capability {
   capability_id: string;

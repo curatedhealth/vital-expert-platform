@@ -31,7 +31,7 @@ import { Input } from '@/lib/shared/components/ui/input';
 import { Progress } from '@/lib/shared/components/ui/progress';
 import { ScrollArea } from '@/lib/shared/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/lib/shared/components/ui/tooltip';
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 // Interfaces
 interface Message {

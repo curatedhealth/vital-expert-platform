@@ -45,6 +45,7 @@ export const AgentNode: React.FC<AgentNodeProps> = ({
   onOpenConfig,
   onDelete,
 }) => {
+  const [avatarError, setAvatarError] = React.useState(false);
   const { agent, agentId, agentName, label, configured = false, enabled = false } = data;
 
   // Determine display values
@@ -161,10 +162,17 @@ export const AgentNode: React.FC<AgentNodeProps> = ({
             color: agentColor,
           }}
         >
-          {typeof agentAvatar === 'string' && agentAvatar.startsWith('http') ? (
-            <img src={agentAvatar} alt={displayName} className="w-full h-full rounded-lg object-cover" />
-          ) : (
+          {typeof agentAvatar === 'string' && agentAvatar.startsWith('http') && !avatarError ? (
+            <img
+              src={agentAvatar}
+              alt={displayName}
+              className="w-full h-full rounded-lg object-cover"
+              onError={() => setAvatarError(true)}
+            />
+          ) : typeof agentAvatar === 'string' && !agentAvatar.startsWith('http') ? (
             agentAvatar
+          ) : (
+            displayName.charAt(0).toUpperCase()
           )}
         </div>
 

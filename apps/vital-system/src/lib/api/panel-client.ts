@@ -111,6 +111,92 @@ export interface ListPanelsResponse {
   limit: number;
 }
 
+// ============================================================================
+// UNIFIED PANEL TYPES
+// ============================================================================
+
+export interface UnifiedPanelAgent {
+  id: string;
+  name: string;
+  model?: string;
+  system_prompt?: string;
+  role?: 'expert' | 'moderator' | 'advocate';
+}
+
+export interface UnifiedConsensusResult {
+  consensus_score: number;
+  consensus_level: 'high' | 'medium' | 'low';
+  semantic_similarity: number;
+  claim_overlap: number;
+  recommendation_alignment: number;
+  evidence_overlap: number;
+  agreement_points: string[];
+  divergent_points: string[];
+  key_themes: string[];
+  recommendation: string;
+  dissenting_opinions: Record<string, string>;
+  confidence: number;
+}
+
+export interface UnifiedComparisonMatrix {
+  question: string;
+  overall_consensus: number;
+  consensus_areas: string[];
+  divergence_areas: string[];
+  synthesis: string;
+}
+
+export interface UnifiedExpertResponse {
+  agent_id: string;
+  agent_name: string;
+  content: string;
+  confidence: number;
+  round_number: number;
+  response_type: string;
+  position?: string;
+  vote?: number;
+}
+
+export interface ExecuteUnifiedPanelRequest {
+  question: string;
+  panel_type: PanelType;
+  agents: UnifiedPanelAgent[];
+  context?: string;
+  tenant_id?: string;
+  user_id?: string;
+  save_to_db?: boolean;
+  generate_matrix?: boolean;
+  human_feedback?: string[];  // For hybrid panels
+}
+
+export interface ExecuteUnifiedPanelResponse {
+  panel_id: string;
+  panel_type: string;
+  question: string;
+  status: PanelStatus;
+  consensus?: UnifiedConsensusResult;
+  comparison_matrix?: UnifiedComparisonMatrix;
+  expert_responses: UnifiedExpertResponse[];
+  execution_time_ms: number;
+  created_at: string;
+  metadata: Record<string, any>;
+}
+
+export interface PanelTypeInfo {
+  type: PanelType;
+  name: string;
+  description: string;
+  best_for: string;
+  duration_estimate: string;
+}
+
+export interface StreamPanelEvent {
+  type: 'panel_started' | 'experts_loaded' | 'expert_thinking' | 'expert_response' |
+        'calculating_consensus' | 'consensus_complete' | 'building_matrix' |
+        'matrix_complete' | 'panel_complete' | 'error';
+  data: Record<string, any>;
+}
+
 export interface UsageAnalytics {
   total_panels: number;
   total_consultations: number;
@@ -337,7 +423,7 @@ export class PanelAPIClient {
 
   /**
    * Create an EventSource for streaming panel execution
-   * 
+   *
    * Note: EventSource doesn't support custom headers, so we pass auth via query params
    */
   createStreamingConnection(
@@ -352,6 +438,185 @@ export class PanelAPIClient {
 
     const url = `${this.baseUrl}/api/v1/panels/${panelId}/stream?${params.toString()}`;
     return new EventSource(url);
+  }
+
+  // ============================================================================
+  // UNIFIED PANEL OPERATIONS (All 6 Panel Types)
+  // ============================================================================
+
+  /**
+   * Get all supported panel types with descriptions
+   */
+  async getUnifiedPanelTypes(): Promise<PanelTypeInfo[]> {
+    return this.request<PanelTypeInfo[]>('GET', '/api/v1/unified-panel/types');
+  }
+
+  /**
+   * Execute a unified panel discussion (synchronous)
+   *
+   * Supports all 6 panel types:
+   * - structured: Sequential moderated discussion
+   * - open: Free-form brainstorming (parallel)
+   * - socratic: Dialectical questioning
+   * - adversarial: Pro/con debate format
+   * - delphi: Iterative consensus with voting
+   * - hybrid: Human-AI collaborative panels
+   */
+  async executeUnifiedPanel(
+    request: ExecuteUnifiedPanelRequest
+  ): Promise<ExecuteUnifiedPanelResponse> {
+    return this.request<ExecuteUnifiedPanelResponse>(
+      'POST',
+      '/api/v1/unified-panel/execute',
+      {
+        ...request,
+        tenant_id: request.tenant_id || this.tenantId,
+        user_id: request.user_id || this.userId,
+      }
+    );
+  }
+
+  /**
+   * Execute a unified panel with streaming via fetch + ReadableStream
+   *
+   * This method handles the SSE stream and calls the provided callbacks
+   * for each event type.
+   */
+  async executeUnifiedPanelStreaming(
+    request: Omit<ExecuteUnifiedPanelRequest, 'save_to_db' | 'generate_matrix'>,
+    callbacks: {
+      onPanelStarted?: (data: any) => void;
+      onExpertsLoaded?: (data: any) => void;
+      onExpertThinking?: (data: any) => void;
+      onExpertResponse?: (data: any) => void;
+      onCalculatingConsensus?: (data: any) => void;
+      onConsensusComplete?: (data: any) => void;
+      onBuildingMatrix?: (data: any) => void;
+      onMatrixComplete?: (data: any) => void;
+      onPanelComplete?: (data: any) => void;
+      onError?: (error: any) => void;
+    }
+  ): Promise<void> {
+    const accessToken = await this.getAccessToken();
+
+    const response = await fetch(`${this.baseUrl}/api/v1/unified-panel/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-ID': this.tenantId,
+        'X-User-ID': this.userId,
+        ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
+      },
+      body: JSON.stringify({
+        ...request,
+        tenant_id: request.tenant_id || this.tenantId,
+        user_id: request.user_id || this.userId,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: response.statusText }));
+      throw new PanelAPIError(error.detail || error.message || 'Stream request failed', response.status);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new PanelAPIError('No response body');
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let currentEventType = ''; // Track the current SSE event type
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('event:')) {
+            // Capture the event type for the next data line
+            currentEventType = line.replace('event:', '').trim();
+            continue;
+          }
+
+          if (line.startsWith('data:')) {
+            try {
+              const jsonStr = line.replace('data:', '').trim();
+              if (!jsonStr) continue;
+
+              const data = JSON.parse(jsonStr);
+              // Use the captured SSE event type, or fall back to type in data
+              const eventType = currentEventType || data.type || 'unknown';
+              // Reset for next event
+              currentEventType = '';
+
+              // Debug logging
+              console.debug('[PanelStreaming] Event:', eventType, 'Data:', data);
+
+              // Route to appropriate callback
+              switch (eventType) {
+                case 'panel_started':
+                  callbacks.onPanelStarted?.(data);
+                  break;
+                case 'experts_loaded':
+                  callbacks.onExpertsLoaded?.(data);
+                  break;
+                case 'expert_thinking':
+                  callbacks.onExpertThinking?.(data);
+                  break;
+                case 'expert_response':
+                  callbacks.onExpertResponse?.(data);
+                  break;
+                case 'calculating_consensus':
+                  callbacks.onCalculatingConsensus?.(data);
+                  break;
+                case 'consensus_complete':
+                  callbacks.onConsensusComplete?.(data);
+                  break;
+                case 'building_matrix':
+                  callbacks.onBuildingMatrix?.(data);
+                  break;
+                case 'matrix_complete':
+                  callbacks.onMatrixComplete?.(data);
+                  break;
+                case 'panel_complete':
+                  callbacks.onPanelComplete?.(data);
+                  break;
+                case 'error':
+                  callbacks.onError?.(data);
+                  break;
+              }
+            } catch (parseError) {
+              console.warn('Failed to parse SSE event:', line, parseError);
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
+  /**
+   * Check unified panel service health
+   */
+  async checkUnifiedPanelHealth(): Promise<{
+    status: string;
+    service: string;
+    panel_types: string[];
+    streaming_enabled: boolean;
+  }> {
+    return this.request<{
+      status: string;
+      service: string;
+      panel_types: string[];
+      streaming_enabled: boolean;
+    }>('GET', '/api/v1/unified-panel/health');
   }
 }
 

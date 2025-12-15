@@ -78,6 +78,7 @@ export function VitalMessage({
   className,
 }: VitalMessageProps) {
   const [copied, setCopied] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   const isUser = message.role === 'user';
   const displayExpert = message.expert || expert;
@@ -150,11 +151,12 @@ export function VitalMessage({
           </div>
         ) : displayExpert ? (
           <div className="relative">
-            {displayExpert.avatar ? (
+            {displayExpert.avatar && !avatarError ? (
               <img
                 src={displayExpert.avatar}
                 alt={displayExpert.name}
                 className="w-8 h-8 rounded-full object-cover"
+                onError={() => setAvatarError(true)}
               />
             ) : (
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-medium text-sm">

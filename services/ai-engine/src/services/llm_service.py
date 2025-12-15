@@ -74,3 +74,23 @@ class LLMService:
                 error=str(e)
             )
             raise
+
+
+# Singleton instance
+_llm_service: Optional[LLMService] = None
+
+
+def get_llm_service() -> LLMService:
+    """Get or create the singleton LLM service instance."""
+    global _llm_service
+    if _llm_service is None:
+        _llm_service = LLMService()
+    return _llm_service
+
+
+def initialize_llm_service() -> LLMService:
+    """Initialize and return the LLM service."""
+    global _llm_service
+    _llm_service = LLMService()
+    logger.info("LLM Service initialized")
+    return _llm_service

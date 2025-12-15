@@ -38,7 +38,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 export interface BreadcrumbItemConfig {
   /** Display label for the breadcrumb item */

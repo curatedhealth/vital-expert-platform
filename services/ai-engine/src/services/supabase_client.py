@@ -8,7 +8,10 @@ import asyncio
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
 from supabase import create_client, Client
-import vecs
+try:
+    import vecs
+except ImportError:
+    vecs = None  # Optional: vector operations won't be available
 from sqlalchemy import create_engine, text
 import structlog
 from datetime import datetime, timezone

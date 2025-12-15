@@ -114,6 +114,14 @@ def _register_panel_routes(app: FastAPI) -> None:
     except ImportError as e:
         logger.warning("ask_panel_enhanced_routes_import_failed", error=str(e))
 
+    # Register Unified Panel routes (all 6 panel types with consensus & matrix)
+    try:
+        from api.routes.unified_panel import router as unified_panel_router
+        app.include_router(unified_panel_router, prefix="", tags=["unified-panel"])
+        logger.info("✅ Unified Panel routes registered")
+    except ImportError as e:
+        logger.warning("unified_panel_routes_import_failed", error=str(e))
+
 
 def _register_expert_routes(app: FastAPI) -> None:
     """Register Ask Expert routes (4-Mode System)."""

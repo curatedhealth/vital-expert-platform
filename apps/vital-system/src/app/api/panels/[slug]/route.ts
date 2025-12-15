@@ -13,7 +13,21 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
-    const supabase = getServiceSupabaseClient();
+
+    let supabase;
+    try {
+      supabase = getServiceSupabaseClient();
+    } catch (serviceError: any) {
+      console.error('[API] Failed to get service client:', serviceError.message);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Database configuration error',
+          details: serviceError.message || 'SUPABASE_SERVICE_ROLE_KEY may not be configured',
+        },
+        { status: 503 }
+      );
+    }
 
     console.log(`[API] Fetching panel data for: ${slug}`);
     const startTime = Date.now();

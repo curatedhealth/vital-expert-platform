@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 import type { HTMLAttributes } from 'react';
 

@@ -669,9 +669,224 @@ class PanelOrchestrator:
         self,
         panel: Dict[str, Any]
     ) -> AsyncGenerator[str, None]:
-        """Execute panel with streaming responses"""
-        # TODO: Implement streaming version
-        raise NotImplementedError("Streaming not yet implemented")
+        """
+        Execute panel with streaming responses.
+
+        Yields SSE-formatted events as execution progresses:
+        - panel_started: Initial panel info
+        - round_started: Beginning of each round
+        - expert_thinking: Expert is generating response
+        - expert_response: Expert response received
+        - consensus_update: Consensus calculation progress
+        - panel_complete: Final results
+        """
+        panel_id = panel["id"]
+        query = panel["agenda"][0]["topic"] if panel.get("agenda") else panel["name"]
+        mode = panel.get("mode", "parallel")
+        max_rounds = panel.get("agenda", [{}])[0].get("max_rounds", self.max_rounds)
+
+        try:
+            # Emit panel started event
+            yield self._sse_event("panel_started", {
+                "panel_id": panel_id,
+                "query": query[:200],
+                "mode": mode,
+                "max_rounds": max_rounds,
+                "expert_count": len(panel.get("members", []))
+            })
+
+            # Get RAG context if available
+            rag_context = None
+            if panel.get("evidence_pack"):
+                rag_context = await self._get_rag_context(query, panel["evidence_pack"])
+
+            all_responses = []
+
+            for round_num in range(1, max_rounds + 1):
+                # Emit round started
+                yield self._sse_event("round_started", {
+                    "round_number": round_num,
+                    "max_rounds": max_rounds
+                })
+
+                # Execute experts based on mode
+                if mode == "parallel":
+                    async for event in self._stream_parallel_round(
+                        panel, round_num, query, rag_context, all_responses
+                    ):
+                        yield event
+                        # Collect responses from events
+                        if "expert_response" in event:
+                            import json
+                            data = json.loads(event.split("data: ")[1].split("\n")[0])
+                            all_responses.append(data)
+                else:
+                    async for event in self._stream_sequential_round(
+                        panel, round_num, query, rag_context, all_responses
+                    ):
+                        yield event
+                        if "expert_response" in event:
+                            import json
+                            data = json.loads(event.split("data: ")[1].split("\n")[0])
+                            all_responses.append(data)
+
+                # Calculate and emit consensus update
+                yield self._sse_event("consensus_update", {
+                    "round_number": round_num,
+                    "calculating": True
+                })
+
+                consensus = await self.build_consensus(panel_id, all_responses, round_num)
+
+                yield self._sse_event("consensus_update", {
+                    "round_number": round_num,
+                    "consensus_level": consensus.get("consensus_level", 0),
+                    "calculating": False
+                })
+
+                # Check for early termination
+                if consensus.get("consensus_level", 0) >= self.min_consensus:
+                    yield self._sse_event("consensus_reached", {
+                        "round_number": round_num,
+                        "consensus_level": consensus["consensus_level"]
+                    })
+                    break
+
+            # Generate final report
+            final_consensus = await self.build_consensus(panel_id, all_responses, round_num)
+            report = await self._generate_report(panel, final_consensus, all_responses)
+
+            # Update panel status
+            self.supabase.table("board_session").update({
+                "status": "completed",
+                "completed_at": datetime.now(timezone.utc).isoformat()
+            }).eq("id", panel_id).execute()
+
+            # Emit completion
+            yield self._sse_event("panel_complete", {
+                "panel_id": panel_id,
+                "status": "completed",
+                "rounds": round_num,
+                "consensus_level": final_consensus.get("consensus_level", 0),
+                "recommendation": final_consensus.get("consensus", "")[:500],
+                "report_preview": report[:1000]
+            })
+
+        except Exception as e:
+            logger.error("Streaming panel execution failed", panel_id=panel_id, error=str(e))
+            yield self._sse_event("error", {
+                "panel_id": panel_id,
+                "error": str(e)
+            })
+
+    async def _stream_parallel_round(
+        self,
+        panel: Dict[str, Any],
+        round_num: int,
+        query: str,
+        rag_context: Optional[Dict[str, Any]],
+        previous_responses: List[Dict[str, Any]]
+    ) -> AsyncGenerator[str, None]:
+        """Stream responses from parallel expert execution"""
+        members = panel.get("members", [])
+
+        # Emit thinking events for all experts
+        for member in members:
+            agent = member.get("agents", member)
+            yield self._sse_event("expert_thinking", {
+                "agent_id": agent.get("id"),
+                "agent_name": agent.get("name", "Expert"),
+                "round_number": round_num
+            })
+
+        # Execute all in parallel
+        tasks = []
+        for member in members:
+            agent = member.get("agents", member)
+            task = self._get_expert_response(
+                agent=agent,
+                query=query,
+                round_num=round_num,
+                rag_context=rag_context,
+                previous_responses=previous_responses
+            )
+            tasks.append((agent, task))
+
+        # Gather results
+        results = await asyncio.gather(*[t[1] for t in tasks], return_exceptions=True)
+
+        # Emit responses as they complete
+        for i, (agent_task, result) in enumerate(zip(tasks, results)):
+            agent = agent_task[0]
+            if isinstance(result, Exception):
+                yield self._sse_event("expert_error", {
+                    "agent_id": agent.get("id"),
+                    "agent_name": agent.get("name", "Expert"),
+                    "error": str(result)
+                })
+            else:
+                yield self._sse_event("expert_response", {
+                    "agent_id": result.get("agent_id"),
+                    "agent_name": result.get("agent_name"),
+                    "content": result.get("answer", "")[:1000],
+                    "confidence": result.get("confidence", 0.5),
+                    "round_number": round_num
+                })
+
+    async def _stream_sequential_round(
+        self,
+        panel: Dict[str, Any],
+        round_num: int,
+        query: str,
+        rag_context: Optional[Dict[str, Any]],
+        previous_responses: List[Dict[str, Any]]
+    ) -> AsyncGenerator[str, None]:
+        """Stream responses from sequential expert execution"""
+        members = panel.get("members", [])
+        round_responses = []
+
+        for member in members:
+            agent = member.get("agents", member)
+
+            # Emit thinking
+            yield self._sse_event("expert_thinking", {
+                "agent_id": agent.get("id"),
+                "agent_name": agent.get("name", "Expert"),
+                "round_number": round_num
+            })
+
+            try:
+                # Get response (with context from this round's previous responses)
+                result = await self._get_expert_response(
+                    agent=agent,
+                    query=query,
+                    round_num=round_num,
+                    rag_context=rag_context,
+                    previous_responses=previous_responses + round_responses
+                )
+
+                round_responses.append(result)
+
+                # Emit response
+                yield self._sse_event("expert_response", {
+                    "agent_id": result.get("agent_id"),
+                    "agent_name": result.get("agent_name"),
+                    "content": result.get("answer", "")[:1000],
+                    "confidence": result.get("confidence", 0.5),
+                    "round_number": round_num
+                })
+
+            except Exception as e:
+                yield self._sse_event("expert_error", {
+                    "agent_id": agent.get("id"),
+                    "agent_name": agent.get("name", "Expert"),
+                    "error": str(e)
+                })
+
+    def _sse_event(self, event_type: str, data: Dict[str, Any]) -> str:
+        """Format data as SSE event"""
+        import json
+        return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
     
     def _map_panel_type_to_board_config(self, panel_type: str) -> tuple[str, str]:
         """Map Ask Panel types to board_session archetype and mode"""

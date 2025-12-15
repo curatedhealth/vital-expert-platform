@@ -344,7 +344,7 @@ function SkillsPageContent() {
               onRefresh={loadSkills}
               isAdmin={isAdmin}
               cardVariant="rich"
-              gridColumns={{ sm: 1, md: 2, lg: 3, xl: 4 }}
+              gridColumns={{ sm: 1, md: 2, lg: 3 }}
               kanbanDraggable={isAdmin}
               onAssetClick={handleSkillClick}
               onEdit={onEditSkill}

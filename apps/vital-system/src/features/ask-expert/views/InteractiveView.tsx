@@ -37,6 +37,8 @@ import {
   MessageSquare,
   Users,
   ArrowLeft,
+  Bot,
+  Circle,
   type LucideIcon
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
@@ -322,26 +324,27 @@ export function InteractiveView({
   useEffect(() => {
     if (selectedExpert && phase === 'conversation') {
       setHeaderActions(
-        <div className="flex items-center gap-3">
-          {/* Avatar with status */}
-          <div className="relative">
+        <div className="flex items-center gap-2">
+          {/* Avatar with Lucide icon fallback */}
+          <div className="relative flex items-center justify-center">
             {selectedExpert.avatar || (selectedExpert as Expert & { avatarUrl?: string }).avatarUrl ? (
               <img
                 src={selectedExpert.avatar || (selectedExpert as Expert & { avatarUrl?: string }).avatarUrl}
                 alt={selectedExpert.name}
-                className="w-8 h-8 rounded-full object-cover border border-border"
+                className="w-7 h-7 rounded-full object-cover border border-border"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
-                {selectedExpert.name.charAt(0)}
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-white" />
               </div>
             )}
-            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white bg-green-500" />
+            {/* Online status indicator using Lucide Circle */}
+            <Circle className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 text-green-500 fill-green-500 stroke-white stroke-[3]" />
           </div>
-          {/* Name and level */}
+          {/* Name and level badge */}
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm text-foreground">{selectedExpert.name}</span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
               {selectedExpert.level}
             </span>
           </div>

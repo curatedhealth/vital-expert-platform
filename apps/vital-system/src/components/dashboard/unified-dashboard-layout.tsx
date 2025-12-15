@@ -154,32 +154,32 @@ export function UnifiedDashboardLayout({ children }: { children: React.ReactNode
                   {/* Breadcrumb Navigation */}
                   {breadcrumbItems.length > 0 && (
                     <Breadcrumb>
-                      <BreadcrumbList className="flex-wrap items-center">
+                      <BreadcrumbList className="flex-nowrap items-center gap-1.5 sm:gap-2">
                         {/* Home link */}
-                        <BreadcrumbItem className="flex items-center">
+                        <BreadcrumbItem>
                           <BreadcrumbLink asChild>
-                            <Link href="/dashboard" className="flex items-center">
+                            <Link href="/dashboard" className="flex items-center hover:text-foreground">
                               <Home className="h-4 w-4" />
                             </Link>
                           </BreadcrumbLink>
                         </BreadcrumbItem>
-                        <BreadcrumbSeparator />
+                        <BreadcrumbSeparator className="[&>svg]:size-3.5" />
 
                         {/* Path segments */}
                         {breadcrumbItems.map((item, index) => {
                           const isLast = index === breadcrumbItems.length - 1
                           return (
                             <React.Fragment key={item.label + index}>
-                              <BreadcrumbItem className="flex items-center">
+                              <BreadcrumbItem>
                                 {isLast || !item.href ? (
-                                  <BreadcrumbPage className="leading-none">{item.label}</BreadcrumbPage>
+                                  <BreadcrumbPage className="text-sm font-medium">{item.label}</BreadcrumbPage>
                                 ) : (
                                   <BreadcrumbLink asChild>
-                                    <Link href={item.href} className="leading-none">{item.label}</Link>
+                                    <Link href={item.href} className="text-sm text-muted-foreground hover:text-foreground">{item.label}</Link>
                                   </BreadcrumbLink>
                                 )}
                               </BreadcrumbItem>
-                              {!isLast && item.href && <BreadcrumbSeparator />}
+                              {!isLast && item.href && <BreadcrumbSeparator className="[&>svg]:size-3.5" />}
                             </React.Fragment>
                           )
                         })}

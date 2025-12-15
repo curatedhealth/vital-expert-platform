@@ -10,10 +10,11 @@
 
 import { Network, ArrowRightLeft, Plus, Shield } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, Suspense, useMemo } from 'react';
+import { useEffect, Suspense, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { Button } from '@vital/ui';
+import { VitalAssetView, type VitalAsset } from '@vital/ai-ui';
 import { useAgentsFilter } from '@/contexts/agents-filter-context';
 import { AgentsBoard } from '@/features/agents/components/agents-board';
 import { AgentsOverview } from '@/features/agents/components/agents-overview';
@@ -23,7 +24,7 @@ import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { AgentEditFormEnhanced } from '@/features/agents/components/agent-edit-form-enhanced';
 import { useAgentActions } from '@/features/agents/hooks';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
-import { useAgentsStore } from '@/lib/stores/agents-store';
+import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
 import { ActiveFiltersBar } from '@/components/shared/ActiveFiltersBar';
 
 // Comparison components
@@ -37,6 +38,27 @@ import { AgentComparison } from '@/features/agents/components/agent-comparison';
 // Valid view types
 const VALID_VIEWS = ['overview', 'grid', 'list', 'table', 'graph', 'compare'] as const;
 type ViewType = typeof VALID_VIEWS[number];
+
+// Helper to convert Agent to VitalAsset format
+function agentToAsset(agent: Agent): VitalAsset {
+  return {
+    id: agent.id,
+    name: agent.display_name || agent.name || 'Unknown Agent',
+    slug: agent.slug,
+    description: agent.description,
+    category: agent.business_function || agent.department,
+    is_active: agent.status === 'active',
+    lifecycle_stage: agent.status === 'active' ? 'production' : 'development',
+    tags: agent.capabilities || [],
+    metadata: {
+      tier: agent.tier,
+      model: agent.model,
+      avatar: agent.avatar,
+      role: agent.role,
+    },
+    asset_type: 'agent',
+  } as VitalAsset;
+}
 
 function AgentsPageContent() {
   const router = useRouter();
@@ -143,6 +165,26 @@ function AgentsPageContent() {
     });
   }, [agents, debouncedSearchQuery, multiFilters]);
 
+  // Convert agents to VitalAsset format for grid view
+  const agentAssets = useMemo(() => filteredAgents.map(agentToAsset), [filteredAgents]);
+
+  // Handler for asset click (converts back to agent)
+  const handleAssetClick = useCallback((asset: VitalAsset) => {
+    const agent = filteredAgents.find((a: Agent) => a.id === asset.id);
+    if (agent) {
+      handleAgentSelect(agent);
+    }
+  }, [filteredAgents, handleAgentSelect]);
+
+  // Handler for asset edit
+  const handleAssetEdit = useCallback((asset: VitalAsset) => {
+    const agent = filteredAgents.find((a: Agent) => a.id === asset.id);
+    if (agent) {
+      setEditingAgent(agent);
+      setShowEnhancedEditModal(true);
+    }
+  }, [filteredAgents, setEditingAgent, setShowEnhancedEditModal]);
+
   // Build active filters for display
   const activeFiltersForBar = useMemo(() => {
     const filtersList: { key: string; value: string; label: string }[] = [];
@@ -222,17 +264,18 @@ function AgentsPageContent() {
           {activeTab === 'overview' && <AgentsOverview />}
 
           {activeTab === 'grid' && (
-            <AgentsBoard
-              onAgentSelect={handleAgentSelect}
-              onAddToChat={(agent) => handleAddAgentToChat(agent, user?.id)}
-              showCreateButton={false}
-              hiddenControls={true}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              filters={filters}
-              onFilterChange={setFilters}
+            <VitalAssetView
+              assets={agentAssets}
               viewMode="grid"
-              onViewModeChange={setViewMode}
+              showViewToggle={false}
+              showSearch={false}
+              showCategoryFilter={false}
+              showSort={false}
+              cardVariant="rich"
+              gridColumns={{ sm: 1, md: 2, lg: 3 }}
+              isAdmin={isAdmin}
+              onAssetClick={handleAssetClick}
+              onEdit={isAdmin ? handleAssetEdit : undefined}
             />
           )}
 

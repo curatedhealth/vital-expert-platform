@@ -98,7 +98,7 @@ def format_token_event(
     """
     data = {
         "content": content,
-        "tokens": token_count,
+        "tokenIndex": token_count,  # Match frontend TokenEvent interface
     }
     if metadata:
         data["metadata"] = metadata
@@ -278,7 +278,8 @@ class SSEFormatter:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Format token event with ID."""
-        data = {"content": content, "tokens": token_count}
+        # Use tokenIndex to match frontend TokenEvent interface
+        data = {"content": content, "tokenIndex": token_count}
         if metadata:
             data["metadata"] = metadata
         return format_sse_event(

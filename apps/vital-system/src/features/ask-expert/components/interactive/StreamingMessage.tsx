@@ -40,7 +40,6 @@ import type { StreamState } from '../../hooks/streamReducer';
 import type { InteractiveMode } from '../../views/InteractiveView';
 import { AgentSelectionCard } from './AgentSelectionCard';
 import { VitalThinking } from './VitalThinking';
-import { VitalCitation } from '@vital/ai-ui/reasoning';
 import { ToolCallList, ToolCall } from './ToolCallList';
 import { VitalLevelBadge } from './AgentSelectionCard';
 
@@ -77,11 +76,13 @@ export function StreamingMessage({
   }, [state.content]);
 
   const isThinking = state.isThinking || state.status === 'thinking';
-  const isStreaming = state.status === 'streaming';
+  // CRITICAL: isStreaming should be true for ALL active states (thinking OR streaming)
+  // This enables VitalStreamText's parseIncompleteMarkdown during the entire response
+  const isStreaming = state.status === 'streaming' || state.status === 'thinking';
   const isComplete = state.status === 'complete';
   const hasContent = state.content.length > 0;
 
-  // Debug: trace StreamingMessage render state
+  // Debug: trace StreamingMessage render state (first 5 tokens only)
   if (process.env.NODE_ENV !== 'production' && state.contentTokens <= 5) {
     // eslint-disable-next-line no-console
     console.debug('[StreamingMessage] render:', {
@@ -140,7 +141,7 @@ export function StreamingMessage({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={cn('flex gap-3 w-full items-start', className)}
+      className={cn('flex gap-3', className)}
     >
       {/* Avatar */}
       <div className="shrink-0">
@@ -162,33 +163,27 @@ export function StreamingMessage({
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 min-w-0 space-y-3 w-full">
-        {/* Expert name */}
+      <div className="flex-1 min-w-0 space-y-3">
+        {/* Expert name - no inline spinner (VitalThinking box is the primary indicator) */}
         {expert && (
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-slate-700">
               {expert.name}
             </span>
             <VitalLevelBadge level={expert.level} size="sm" showLabel={false} />
-            {isThinking && (
-              <span className="text-xs text-slate-500 flex items-center gap-1">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                thinking...
-              </span>
-            )}
           </div>
         )}
 
         {/* Glass Box Thinking (Claude.ai style) - Auto-expands during streaming */}
-        {state.reasoning.length > 0 && (
-          <div className="sticky top-0 z-10 bg-[var(--canvas-primary)]/80 backdrop-blur-sm">
+        <AnimatePresence>
+          {state.reasoning.length > 0 && (
             <VitalThinking
               steps={state.reasoning}
-              isExpanded={true}
-              isActive={isThinking || isStreaming}
+              isExpanded={isStreaming || isThinking}
+              isActive={isThinking}
             />
-          </div>
-        )}
+          )}
+        </AnimatePresence>
 
         {/* Agent Selection Card (Mode 2 - AI selected expert) */}
         <AnimatePresence>
@@ -211,7 +206,7 @@ export function StreamingMessage({
         {(hasContent || isStreaming) && (
           <div
             ref={contentRef}
-            className="py-2 w-full flex justify-center"
+            className="py-2"
           >
             <VitalStreamText
               content={state.content || '\u00A0'}
@@ -220,13 +215,12 @@ export function StreamingMessage({
               enableMermaid={true}
               showControls={true}
               citations={inlineCitations}
-              className="w-full max-w-4xl text-left text-base"
             />
           </div>
         )}
 
-        {/* Loading state when no content yet */}
-        {!hasContent && isStreaming && (
+        {/* Loading state when no content AND no thinking steps yet (fallback only) */}
+        {!hasContent && isStreaming && state.reasoning.length === 0 && (
           <div className="py-2">
             <div className="flex items-center gap-2 text-slate-500">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -242,21 +236,20 @@ export function StreamingMessage({
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
-              className="mt-3 space-y-2"
+              className="mt-3"
             >
-              <div className="text-sm font-semibold text-stone-700">References</div>
-              <ol className="space-y-2 list-decimal list-inside">
-                {allSources.map((source, idx) => (
-                  <li key={source.id}>
-                    <VitalCitation
+              <Sources>
+                <SourcesTrigger count={allSources.length} />
+                <SourcesContent>
+                  {allSources.map((source) => (
+                    <Source
+                      key={source.id}
+                      href={source.url}
                       title={source.title}
-                      url={source.url}
-                      index={idx}
-                      source={source.type}
                     />
-                  </li>
-                ))}
-              </ol>
+                  ))}
+                </SourcesContent>
+              </Sources>
             </motion.div>
           )}
         </AnimatePresence>

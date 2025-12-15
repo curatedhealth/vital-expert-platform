@@ -1133,3 +1133,148 @@ async def auto_query_stream(
         sanitized_error, ref_id = ErrorSanitizer.sanitize_error(e, 'internal')
         logger.error("auto_query_error", error=str(e), correlation_id=correlation_id, reference_id=ref_id)
         raise HTTPException(status_code=500, detail=sanitized_error)
+
+
+# ============================================================================
+# Response Quality Evaluation Endpoint
+# ============================================================================
+
+class EvaluateQualityRequest(BaseModel):
+    """Request to evaluate response quality"""
+    response: str = Field(..., description="The LLM response to evaluate")
+    context: List[str] = Field(..., description="Retrieved context used for generation")
+    query: Optional[str] = Field(None, description="Original user query")
+
+
+class QualityEvaluationResponse(BaseModel):
+    """Response quality evaluation result"""
+    overall_score: float = Field(..., description="Overall quality score (0-1)")
+    quality_grade: str = Field(..., description="Letter grade (A, B, C, D, F)")
+    faithfulness: Dict[str, Any] = Field(..., description="Faithfulness metrics")
+    evidence: Optional[Dict[str, Any]] = Field(None, description="Evidence quality metrics")
+    requires_review: bool = Field(..., description="Whether human review is recommended")
+    warnings: List[str] = Field(default_factory=list, description="Quality warnings")
+
+
+@router.post("/quality/evaluate", response_model=QualityEvaluationResponse)
+async def evaluate_response_quality(
+    request: EvaluateQualityRequest,
+    x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-ID"),
+):
+    """
+    Evaluate the quality of a RAG response.
+
+    This endpoint assesses:
+    - **Faithfulness**: Are claims in the response supported by the context?
+    - **Hallucination Risk**: Low/Medium/High risk of unsupported claims
+    - **Evidence Quality**: If sources provided, evaluates source reliability
+
+    Use after streaming completes to verify response quality.
+
+    Returns:
+    - overall_score: 0.0-1.0 quality score
+    - quality_grade: A (>0.85), B (>0.70), C (>0.55), D (>0.40), F (<0.40)
+    - requires_review: True if human review recommended
+    """
+    try:
+        # Import quality service
+        from services.response_quality import get_response_quality_service
+
+        # Get quality service
+        quality_service = await get_response_quality_service()
+
+        # Evaluate response
+        result = await quality_service.evaluate(
+            response=request.response,
+            context=request.context,
+            query=request.query,
+        )
+
+        logger.info(
+            "quality_evaluation_complete",
+            overall_score=result.overall_score,
+            grade=result.quality_grade,
+            hallucination_risk=result.hallucination_risk,
+            tenant_id=x_tenant_id
+        )
+
+        return QualityEvaluationResponse(
+            overall_score=result.overall_score,
+            quality_grade=result.quality_grade,
+            faithfulness={
+                "score": result.faithfulness_score,
+                "hallucination_risk": result.hallucination_risk,
+                "supported_claims": result.supported_claims,
+                "unsupported_claims": result.unsupported_claims,
+            },
+            evidence={
+                "score": result.evidence_score,
+                "high_confidence": result.high_confidence_sources,
+                "low_confidence": result.low_confidence_sources,
+            } if result.evidence_score is not None else None,
+            requires_review=result.requires_review,
+            warnings=result.warnings,
+        )
+
+    except Exception as e:
+        sanitized_error, ref_id = ErrorSanitizer.sanitize_error(e, 'internal')
+        logger.error("quality_evaluation_error", error=str(e), reference_id=ref_id)
+        raise HTTPException(status_code=500, detail=sanitized_error)
+
+
+# ============================================================================
+# GraphRAG Diagnostics (NEW - January 2025)
+# ============================================================================
+
+class GraphRAGDiagnosticsResponse(BaseModel):
+    """GraphRAG diagnostics report."""
+    overall_status: str = Field(..., description="Overall health: healthy, degraded, unhealthy")
+    components: List[Dict[str, Any]] = Field(default_factory=list, description="Component-level results")
+    recommendations: List[str] = Field(default_factory=list, description="Remediation recommendations")
+    timestamp: str = Field(..., description="Report generation timestamp")
+
+
+@router.get("/graphrag/diagnostics", response_model=GraphRAGDiagnosticsResponse)
+async def get_graphrag_diagnostics(
+    x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-ID"),
+):
+    """
+    Run GraphRAG diagnostics to verify agent selection health.
+
+    Checks all 3 methods used in GraphRAG fusion:
+    - **PostgreSQL Fulltext (30%)**: RPC function availability and search results
+    - **Pinecone Vector (50%)**: Connectivity, namespace, and vector count
+    - **Neo4j Graph (20%)**: Connection status
+
+    Also verifies:
+    - Embedding service configuration and dimension
+    - Overall GraphRAG selector functionality
+
+    Returns health status and remediation recommendations.
+    """
+    try:
+        from services.graphrag_diagnostics import run_graphrag_diagnostics
+
+        tenant_id = x_tenant_id or "00000000-0000-0000-0000-000000000001"
+
+        logger.info("graphrag_diagnostics_requested", tenant_id=tenant_id)
+
+        report = await run_graphrag_diagnostics(tenant_id=tenant_id)
+
+        return GraphRAGDiagnosticsResponse(
+            overall_status=report["overall_status"],
+            components=report["components"],
+            recommendations=report["recommendations"],
+            timestamp=report["timestamp"]
+        )
+
+    except ImportError as e:
+        logger.error("graphrag_diagnostics_import_error", error=str(e))
+        raise HTTPException(
+            status_code=503,
+            detail="GraphRAG diagnostics service not available"
+        )
+    except Exception as e:
+        sanitized_error, ref_id = ErrorSanitizer.sanitize_error(e, 'internal')
+        logger.error("graphrag_diagnostics_error", error=str(e), reference_id=ref_id)
+        raise HTTPException(status_code=500, detail=sanitized_error)

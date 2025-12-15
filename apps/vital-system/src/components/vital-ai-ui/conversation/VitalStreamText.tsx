@@ -270,6 +270,17 @@ export function VitalStreamText({
   const [copied, setCopied] = useState(false);
   const contentRef = useRef<string>('');
 
+  // Debug: trace VitalStreamText re-renders during streaming (first 20 characters only)
+  if (process.env.NODE_ENV !== 'production' && content.length <= 20) {
+    // eslint-disable-next-line no-console
+    console.debug('[VitalStreamText] render:', {
+      contentLength: content.length,
+      isStreaming,
+      contentPreview: content.slice(0, 30),
+      timestamp: Date.now(),
+    });
+  }
+
   // Build citation index map for quick lookup
   const citationMap = useMemo(() => {
     const map = new Map<number, CitationData>();
@@ -340,8 +351,14 @@ export function VitalStreamText({
         )}
       >
         <Streamdown
+          // Key forces React to recognize content changes when Streamdown
+          // internal memoization might miss text node updates
+          key={isStreaming ? 'streaming' : 'complete'}
           parseIncompleteMarkdown={isStreaming}
-          isAnimating={isStreaming}
+          // CRITICAL: isAnimating=false during streaming to prevent buffering
+          // isAnimating causes Streamdown to buffer tokens for smooth animation
+          // which conflicts with real-time SSE streaming. We want immediate render.
+          isAnimating={false}
           shikiTheme={['github-light', 'github-dark']}
           controls={showControls ? { code: true, table: true, mermaid: enableMermaid } : false}
           mermaidConfig={{

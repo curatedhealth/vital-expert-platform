@@ -622,6 +622,154 @@ const codeContent = `\`\`\`${language || ''}\n${content}\n\`\`\``;
 6. **Accessibility:** Proper semantic HTML output
 7. **Security:** No raw HTML injection - all content safely rendered through Streamdown
 
+### 4.5 SSE Token Streaming Fix (CRITICAL - December 15, 2025)
+
+**Issue:** Real-time token-by-token streaming was not working. Tokens accumulated correctly in state (verified via console logs) but text appeared only after stream completion.
+
+**Root Causes Identified:**
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| SSE field name mismatch | Backend `sse_formatter.py` | Tokens silently ignored by frontend |
+| React 18 batching | Frontend callbacks | Rapid updates batched, preventing real-time render |
+| Streamdown animation buffering | `VitalStreamText.tsx` | Animation mode buffered tokens |
+| `isStreaming` boolean too narrow | `StreamingMessage.tsx` | False during 'thinking' status |
+| Duplicate reasoning components | `VitalMessage.tsx` | Confusing UX with multiple indicators |
+
+**Fixes Applied:**
+
+#### 1. SSE Field Name Contract (CRITICAL)
+
+**Backend was sending:**
+```json
+{"event": "token", "content": "Hello", "tokens": 1}
+```
+
+**Frontend expected:**
+```json
+{"event": "token", "content": "Hello", "tokenIndex": 1}
+```
+
+**Files Fixed:**
+| File | Line | Change |
+|------|------|--------|
+| `services/ai-engine/src/streaming/sse_formatter.py` | 101, 282 | `"tokens"` → `"tokenIndex"` |
+| `services/ai-engine/src/streaming/stream_manager.py` | 277 | `"tokens"` → `"tokenIndex"` |
+
+#### 2. React 18 Batching Bypass
+
+**Problem:** React 18 automatically batches rapid state updates, preventing real-time re-renders.
+
+**Solution:** Wrap dispatch calls with `flushSync` to force synchronous updates.
+
+```typescript
+// apps/vital-system/src/features/ask-expert/views/InteractiveView.tsx
+import { flushSync } from 'react-dom';
+
+// Token streaming - flushSync bypasses React 18 batching
+onToken: useCallback((event: TokenEvent) => {
+  flushSync(() => {
+    dispatch(streamActions.appendContent(event));
+  });
+}, []),
+```
+
+#### 3. Force React State Change Detection
+
+**Problem:** React may not detect state changes if object references don't change.
+
+**Solution:** Add `_updateTrigger` timestamp to force re-renders.
+
+```typescript
+// apps/vital-system/src/features/ask-expert/hooks/streamReducer.ts
+export interface StreamState {
+  // ... existing fields ...
+  _updateTrigger: number;  // Force React re-render
+}
+
+case 'CONTENT_APPEND':
+  return {
+    ...state,
+    content: state.content + action.payload.content,
+    _updateTrigger: Date.now(),  // Unique value forces re-render
+  };
+```
+
+#### 4. Streamdown Animation Buffering
+
+**Problem:** `isAnimating={isStreaming}` caused Streamdown to buffer tokens for smooth animation.
+
+**Solution:** Disable animation during real streaming.
+
+```typescript
+// apps/vital-system/src/components/vital-ai-ui/conversation/VitalStreamText.tsx
+<Streamdown
+  parseIncompleteMarkdown={isStreaming}
+  isAnimating={false}  // CRITICAL: Disable buffering for real-time render
+  ...
+/>
+```
+
+#### 5. isStreaming Boolean Fix
+
+**Problem:** `isStreaming` was only `true` when `status === 'streaming'`, but SSE streams start with `status: 'thinking'`.
+
+**Solution:** Include 'thinking' status in isStreaming check.
+
+```typescript
+// apps/vital-system/src/features/ask-expert/components/interactive/StreamingMessage.tsx
+// BEFORE (bug):
+const isStreaming = state.status === 'streaming';
+
+// AFTER (fixed):
+const isStreaming = state.status === 'streaming' || state.status === 'thinking';
+```
+
+#### 6. Unified VitalThinking Component
+
+**Problem:** Two separate reasoning components caused confusing UX:
+- `VitalThinking` during streaming (then disappeared)
+- Inline reasoning section in `VitalMessage` after completion
+
+**Solution:** Use single `VitalThinking` component for both states.
+
+```typescript
+// apps/vital-system/src/features/ask-expert/components/interactive/VitalMessage.tsx
+// Replaced inline reasoning section with:
+{!isUser && message.reasoning && message.reasoning.length > 0 && (
+  <VitalThinking
+    steps={message.reasoning}
+    isExpanded={false}
+    isActive={false}
+  />
+)}
+```
+
+#### SSE Token Event Contract (MUST FOLLOW)
+
+**Frontend Interface:**
+```typescript
+// apps/vital-system/src/features/ask-expert/hooks/useSSEStream.ts
+export interface TokenEvent {
+  content: string;      // Token text
+  tokenIndex: number;   // Sequential token number (1, 2, 3...)
+  nodeId?: string;      // Optional node identifier
+}
+```
+
+**Backend Must Send:**
+```python
+# services/ai-engine/src/streaming/sse_formatter.py
+def token(self, content: str, token_count: int) -> str:
+    data = {"content": content, "tokenIndex": token_count}  # NOT "tokens"
+    return format_sse_event("token", data)
+```
+
+**⚠️ REGRESSION PREVENTION:**
+- NEVER use `"tokens"` field in SSE token events
+- ALWAYS use `"tokenIndex"` to match frontend interface
+- Add this to code review checklist for any SSE changes
+
 ---
 
 ## Part 5: UX Enhancement Recommendations
@@ -963,7 +1111,7 @@ components/vital-ai-ui/
 |-----------|--------------|-------|
 | `token` | VitalStreamText | All |
 | `reasoning` | VitalReasoningChain | 3, 4 |
-| `thinking` | VitalThinkingIndicator | All |
+| `thinking` | VitalThinking | All |
 | `plan` | VitalPlanViewer | 3, 4 |
 | `step_progress` | VitalProgressTimeline | 3, 4 |
 | `sources` | VitalSourceList | All |
@@ -974,6 +1122,67 @@ components/vital-ai-ui/
 | `checkpoint` | VitalCheckpointModal | 3, 4 |
 | `fusion` | VitalFusionVisualizer | 2, 4 |
 | `cost` | VitalCostTracker | All |
+
+### SSE Event Data Contracts (CRITICAL)
+
+**⚠️ These field names MUST match exactly between backend and frontend.**
+
+#### Token Event (Real-time streaming)
+```json
+{
+  "event": "token",
+  "content": "Hello",
+  "tokenIndex": 1
+}
+```
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `content` | string | ✅ | Token text to append |
+| `tokenIndex` | number | ✅ | Sequential token count (1, 2, 3...) |
+| `nodeId` | string | ❌ | Optional workflow node identifier |
+
+**⚠️ DO NOT use `"tokens"` - frontend expects `"tokenIndex"`**
+
+#### Thinking Event (Workflow progress)
+```json
+{
+  "event": "thinking",
+  "step": "rag_retrieval",
+  "status": "completed",
+  "message": "Searching knowledge base",
+  "detail": "Found 12 documents"
+}
+```
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `step` | string | ✅ | Node/step identifier |
+| `status` | string | ✅ | `"running"` \| `"completed"` \| `"error"` |
+| `message` | string | ✅ | Human-readable step description |
+| `detail` | string | ❌ | Additional context |
+
+#### Sources Event (RAG results)
+```json
+{
+  "event": "sources",
+  "sources": [
+    {"id": "src_1", "title": "FDA Guidance", "url": "https://...", "relevance_score": 0.92}
+  ]
+}
+```
+
+#### Done Event (Stream completion)
+```json
+{
+  "event": "done",
+  "agent_id": "uuid",
+  "agent_name": "Expert Name",
+  "content": "Full response text",
+  "confidence": 0.85,
+  "sources": [...],
+  "reasoning": [...],
+  "metrics": {"processing_time_ms": 1234, "tokens_generated": 500}
+}
+```
 
 ---
 

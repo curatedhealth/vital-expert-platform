@@ -274,7 +274,7 @@ class StreamManager:
                     event_type="token",
                     data={
                         "content": content,
-                        "tokens": self.tokens_count,
+                        "tokenIndex": self.tokens_count,  # Match frontend TokenEvent
                     },
                     metadata=metadata if isinstance(metadata, dict) else {},
                 )

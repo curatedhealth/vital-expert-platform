@@ -580,7 +580,19 @@ POST /api/panel/orchestrate
 
 ### RAG & Knowledge Management
 
-#### Semantic Search
+#### Semantic Search (Auto-Strategy)
+
+The RAG system supports automatic strategy selection based on query intent. When using `strategy: "auto"`, the query classifier analyzes the query and selects the optimal strategy.
+
+**Strategy Selection (Auto Mode):**
+| Intent | Auto-Selected Strategy | Example Query |
+|--------|----------------------|---------------|
+| Regulatory | `keyword` | "FDA 510(k) submission requirements" |
+| Clinical | `true_hybrid` | "Compare efficacy of metformin vs sitagliptin" |
+| Research | `true_hybrid` | "Recent publications on CRISPR gene therapy" |
+| Entity Lookup | `graph` | "Tell me about Pfizer's oncology pipeline" |
+| Technical | `semantic` | "Structure of aspirin molecule" |
+| General | `hybrid` | "What is pharmaceutical manufacturing?" |
 
 ```http
 POST /api/rag/search
@@ -591,6 +603,7 @@ POST /api/rag/search
 {
   "query": "latest clinical guidelines for hypertension management",
   "domain": "clinical_guidelines",
+  "strategy": "auto",
   "filters": {
     "publication_year": {
       "min": 2020
@@ -685,6 +698,161 @@ GET /api/knowledge/documents/:id/status
   }
 }
 ```
+
+---
+
+### Response Quality Evaluation (NEW - January 2025)
+
+Evaluate the quality of RAG responses using RAGAS-style faithfulness scoring combined with evidence quality assessment.
+
+#### Evaluate Response Quality
+
+```http
+POST /api/ask-expert/quality/evaluate
+```
+
+**Request:**
+```json
+{
+  "response": "Metformin is the first-line medication for type 2 diabetes. It works by reducing hepatic glucose production.",
+  "context": [
+    "Metformin is a first-line medication for the treatment of type 2 diabetes.",
+    "Metformin decreases hepatic glucose production and improves insulin sensitivity."
+  ],
+  "query": "What is metformin used for?"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "overall_score": 0.92,
+    "quality_grade": "A",
+    "faithfulness": {
+      "score": 0.95,
+      "hallucination_risk": "low",
+      "supported_claims": 2,
+      "unsupported_claims": 0
+    },
+    "evidence": {
+      "score": 0.88,
+      "high_confidence": 2,
+      "low_confidence": 0
+    },
+    "requires_review": false,
+    "warnings": []
+  }
+}
+```
+
+**Quality Grades:**
+| Grade | Score Range | Description |
+|-------|-------------|-------------|
+| A | 0.85 - 1.0 | Excellent - highly reliable |
+| B | 0.70 - 0.84 | Good - generally reliable |
+| C | 0.55 - 0.69 | Fair - use with caution |
+| D | 0.40 - 0.54 | Poor - significant concerns |
+| F | 0.0 - 0.39 | Failing - do not use |
+
+**Hallucination Risk Levels:**
+- `low`: All claims are well-supported by context
+- `medium`: Some claims need verification
+- `high`: Significant unsupported or contradicted claims
+
+---
+
+### GraphRAG Diagnostics (NEW - January 2025)
+
+Run health checks on the GraphRAG agent selection system used by Mode 2 and Mode 4.
+
+#### Get GraphRAG Diagnostics
+
+```http
+GET /api/ask-expert/graphrag/diagnostics
+```
+
+**Headers:**
+```
+X-Tenant-ID: 00000000-0000-0000-0000-000000000001 (optional)
+```
+
+**Response:**
+```json
+{
+  "overall_status": "healthy",
+  "components": [
+    {
+      "component": "embedding_service",
+      "status": "ok",
+      "message": "Embedding service operational (openai)",
+      "latency_ms": 245.3,
+      "details": {
+        "provider": "openai",
+        "model": "text-embedding-3-large",
+        "dimension": 3072
+      }
+    },
+    {
+      "component": "postgresql_fulltext",
+      "status": "ok",
+      "message": "PostgreSQL fulltext search operational (15 agents found)",
+      "latency_ms": 89.2,
+      "details": {
+        "agents_found": 15,
+        "sample_agents": ["Clinical Advisor", "Regulatory Expert", "Pharmacist"]
+      }
+    },
+    {
+      "component": "pinecone_vector",
+      "status": "ok",
+      "message": "Pinecone operational (2547 agent vectors in 'ont-agents')",
+      "latency_ms": 156.8,
+      "details": {
+        "index": "vital-knowledge",
+        "namespace": "ont-agents",
+        "vector_count": 2547
+      }
+    },
+    {
+      "component": "neo4j_graph",
+      "status": "warning",
+      "message": "Neo4j not configured (using mock client)",
+      "latency_ms": 1.2,
+      "details": {
+        "impact": "Graph search disabled (20% weight lost)"
+      }
+    },
+    {
+      "component": "graphrag_selector",
+      "status": "ok",
+      "message": "GraphRAG selector operational (3 agents found)",
+      "latency_ms": 412.5,
+      "details": {
+        "agents_found": 3,
+        "top_agent": "Medical Affairs Assistant",
+        "top_score": 0.0156,
+        "methods_used": ["postgres", "pinecone"]
+      }
+    }
+  ],
+  "recommendations": [],
+  "timestamp": "2025-01-27T14:30:00.000Z"
+}
+```
+
+**Overall Status Values:**
+| Status | Description |
+|--------|-------------|
+| `healthy` | All components operational |
+| `degraded` | 1-2 components have warnings but system functional |
+| `unhealthy` | Critical components failing, system may not work correctly |
+
+**Component Status Values:**
+- `ok` - Component is fully operational
+- `warning` - Component has issues but fallback available
+- `error` - Component is failing
 
 ---
 
@@ -1006,6 +1174,19 @@ def verify_webhook(payload, signature, secret):
 
 ---
 
-**Last Updated:** 2025-11-12
-**API Version:** v1.0.0
-**Collection Version:** 1.0.0
+**Last Updated:** 2025-01-27
+**API Version:** v1.1.0
+**Collection Version:** 1.1.0
+
+### Changelog
+
+#### v1.2.0 (January 27, 2025)
+- Added GraphRAG Diagnostics API (`GET /api/ask-expert/graphrag/diagnostics`)
+- Verified Mode 4 GraphRAG agent selection is fully implemented
+- Added diagnostic service for 5-component health checks
+
+#### v1.1.0 (January 27, 2025)
+- Added Response Quality Evaluation API (`POST /api/ask-expert/quality/evaluate`)
+- Added auto-strategy selection for RAG search (query classification)
+- Added Elasticsearch semantic search integration
+- Added search_logs analytics infrastructure

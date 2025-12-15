@@ -17,6 +17,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { HeaderActionsProvider, HeaderActionsSlot } from '@/contexts/header-actions-context'
 
 // Routes that should NOT show the global AppSidebar (they have their own navigation)
 // Note: /value now uses the standard sidebar for consistency
@@ -124,72 +125,82 @@ export function UnifiedDashboardLayout({ children }: { children: React.ReactNode
 
   // Standard layout with global sidebar
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full flex-col">
-        {/* Main Navbar - Above Everything */}
-        <MainNavbar />
+    <HeaderActionsProvider>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full flex-col">
+          {/* Main Navbar - Above Everything */}
+          <MainNavbar />
 
-        {/* Sidebar and Content */}
-        <div className="flex flex-1">
-          <AppSidebar className="!top-16 !h-[calc(100vh-4rem)]" />
+          {/* Sidebar and Content */}
+          <div className="flex flex-1">
+            <AppSidebar className="!top-16 !h-[calc(100vh-4rem)]" />
 
-          {/* Main Content Area */}
-          <SidebarInset className="flex flex-1 flex-col">
-            {/* Sidebar Toggle Header with Breadcrumb */}
-            <header className="flex h-10 shrink-0 items-center gap-2 border-b px-4">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SidebarTrigger className="-ml-1" />
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  Toggle sidebar (⌘B)
-                </TooltipContent>
-              </Tooltip>
-              <Separator orientation="vertical" className="mr-2 h-4" />
+            {/* Main Content Area */}
+            <SidebarInset className="flex flex-1 flex-col">
+              {/* Sidebar Toggle Header with Breadcrumb */}
+              <header className="flex h-10 shrink-0 items-center gap-2 border-b px-4">
+                {/* Left side: Sidebar trigger + Breadcrumb */}
+                <div className="flex items-center gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarTrigger className="-ml-1" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      Toggle sidebar (⌘B)
+                    </TooltipContent>
+                  </Tooltip>
+                  <Separator orientation="vertical" className="mr-2 h-4" />
 
-              {/* Breadcrumb Navigation */}
-              {breadcrumbItems.length > 0 && (
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    {/* Home link */}
-                    <BreadcrumbItem>
-                      <BreadcrumbLink asChild>
-                        <Link href="/dashboard" className="flex items-center">
-                          <Home className="h-4 w-4" />
-                        </Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
+                  {/* Breadcrumb Navigation */}
+                  {breadcrumbItems.length > 0 && (
+                    <Breadcrumb>
+                      <BreadcrumbList className="flex-wrap items-center">
+                        {/* Home link */}
+                        <BreadcrumbItem className="flex items-center">
+                          <BreadcrumbLink asChild>
+                            <Link href="/dashboard" className="flex items-center">
+                              <Home className="h-4 w-4" />
+                            </Link>
+                          </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
 
-                    {/* Path segments */}
-                    {breadcrumbItems.map((item, index) => {
-                      const isLast = index === breadcrumbItems.length - 1
-                      return (
-                        <React.Fragment key={item.label + index}>
-                          <BreadcrumbItem>
-                            {isLast || !item.href ? (
-                              <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                            ) : (
-                              <BreadcrumbLink asChild>
-                                <Link href={item.href}>{item.label}</Link>
-                              </BreadcrumbLink>
-                            )}
-                          </BreadcrumbItem>
-                          {!isLast && item.href && <BreadcrumbSeparator />}
-                        </React.Fragment>
-                      )
-                    })}
-                  </BreadcrumbList>
-                </Breadcrumb>
-              )}
-            </header>
-            {/* Main Content */}
-            <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-              {children}
-            </main>
-          </SidebarInset>
+                        {/* Path segments */}
+                        {breadcrumbItems.map((item, index) => {
+                          const isLast = index === breadcrumbItems.length - 1
+                          return (
+                            <React.Fragment key={item.label + index}>
+                              <BreadcrumbItem className="flex items-center">
+                                {isLast || !item.href ? (
+                                  <BreadcrumbPage className="leading-none">{item.label}</BreadcrumbPage>
+                                ) : (
+                                  <BreadcrumbLink asChild>
+                                    <Link href={item.href} className="leading-none">{item.label}</Link>
+                                  </BreadcrumbLink>
+                                )}
+                              </BreadcrumbItem>
+                              {!isLast && item.href && <BreadcrumbSeparator />}
+                            </React.Fragment>
+                          )
+                        })}
+                      </BreadcrumbList>
+                    </Breadcrumb>
+                  )}
+                </div>
+
+                {/* Right side: Dynamic actions slot - pages can inject content here */}
+                <div className="flex-1 flex items-center justify-end">
+                  <HeaderActionsSlot />
+                </div>
+              </header>
+              {/* Main Content */}
+              <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+                {children}
+              </main>
+            </SidebarInset>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </HeaderActionsProvider>
   )
 }

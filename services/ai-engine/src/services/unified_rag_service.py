@@ -46,6 +46,16 @@ except ImportError:
     EVIDENCE_DETECTOR_AVAILABLE = False
     get_evidence_detector = None
     EvidenceDetector = None
+
+# Query Classification for auto-strategy selection
+try:
+    from services.query_classifier import get_query_classifier, QueryClassification
+    QUERY_CLASSIFIER_AVAILABLE = True
+except ImportError:
+    QUERY_CLASSIFIER_AVAILABLE = False
+    get_query_classifier = None
+    QueryClassification = None
+
 from core.config import get_settings
 
 logger = structlog.get_logger()
@@ -65,10 +75,26 @@ class UnifiedRAGService:
         self.default_kd_namespaces = ["KD-general", "KD-best-practices"]  # Fallback namespaces
         self.neo4j_client: Optional[Neo4jClient] = None  # Neo4j client for graph search
         self.evidence_detector: Optional[EvidenceDetector] = None  # SciBERT evidence detector
+        self.query_classifier = None  # Query classifier for auto-strategy selection
 
         # Cache statistics
         self._cache_hits = 0
         self._cache_misses = 0
+
+        # Strategy mapping: classifier recommendations → supported strategies
+        self._strategy_mapping = {
+            "regulatory_precision": "keyword",      # High precision keyword search
+            "clinical_evidence": "true_hybrid",     # Balanced hybrid for clinical
+            "research_comprehensive": "true_hybrid", # Full hybrid for research
+            "agent_optimized": "agent-optimized",   # Agent-specific namespaces
+            "graphrag_entity": "graph",             # Graph traversal for entities
+            "hybrid_enhanced": "hybrid",            # Standard hybrid
+            "semantic_standard": "semantic",        # Pure vector search
+            "keyword_dominant": "keyword",          # Keyword-heavy search
+            "graph_centric": "graph",               # Graph-heavy search
+            "balanced_trimodal": "true_hybrid",     # Equal weights
+            "startup_advisory": "hybrid",           # General startup queries
+        }
 
     async def initialize(self):
         """Initialize RAG service components"""
@@ -120,6 +146,17 @@ class UnifiedRAGService:
                     self.evidence_detector = None
             else:
                 logger.info("ℹ️ Evidence detector not available (missing dependencies)")
+
+            # Initialize Query Classifier for auto-strategy selection
+            if QUERY_CLASSIFIER_AVAILABLE:
+                try:
+                    self.query_classifier = get_query_classifier()
+                    logger.info("✅ Query Classifier initialized (auto-strategy enabled)")
+                except Exception as e:
+                    logger.warning("⚠️ Query classifier initialization failed (optional)", error=str(e))
+                    self.query_classifier = None
+            else:
+                logger.info("ℹ️ Query classifier not available")
 
             logger.info("✅ Unified RAG service initialized", caching_enabled=self.cache_manager is not None and self.cache_manager.enabled)
 
@@ -251,9 +288,28 @@ class UnifiedRAGService:
             )
 
             # Validate strategy
-            valid_strategies = ["semantic", "hybrid", "agent-optimized", "keyword", "supabase_only", "graph", "true_hybrid"]
+            valid_strategies = ["semantic", "hybrid", "agent-optimized", "keyword", "supabase_only", "graph", "true_hybrid", "auto"]
             if strategy not in valid_strategies:
                 raise ValueError(f"Invalid RAG strategy: {strategy}. Must be one of {valid_strategies}")
+
+            # Auto-strategy selection using query classifier
+            classification = None
+            if strategy == "auto" and self.query_classifier:
+                classification = self.query_classifier.classify(query_text)
+                recommended = classification.recommended_strategy
+                strategy = self._strategy_mapping.get(recommended, "hybrid")
+                logger.info(
+                    "🎯 Auto-strategy selected",
+                    query=query_text[:50],
+                    intent=classification.primary_intent.value,
+                    recommended=recommended,
+                    mapped_to=strategy,
+                    confidence=classification.confidence
+                )
+            elif strategy == "auto":
+                # Fallback if classifier not available
+                strategy = "hybrid"
+                logger.info("Auto-strategy fallback to hybrid (classifier unavailable)")
 
             # Route to appropriate strategy
             if strategy == "semantic":
@@ -376,6 +432,17 @@ class UnifiedRAGService:
                 except Exception as e:
                     logger.warning("evidence_detection_failed", error=str(e))
 
+            # Add query classification info if available
+            classification_info = None
+            if classification:
+                classification_info = {
+                    "primary_intent": classification.primary_intent.value,
+                    "complexity": classification.complexity.value,
+                    "recommended_strategy": classification.recommended_strategy,
+                    "confidence": round(classification.confidence, 3),
+                    "detected_entities": classification.detected_entities[:5],
+                }
+
             # Add metadata
             final_result = {
                 **result,
@@ -387,6 +454,7 @@ class UnifiedRAGService:
                     "cacheHit": False,
                     "evidence_analytics": evidence_analytics,
                     "evidence_detection": evidence_detection,
+                    "query_classification": classification_info,
                 }
             }
 

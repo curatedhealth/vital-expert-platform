@@ -34,14 +34,14 @@ import json
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Try to load .env.local first, then fall back to .env
-env_local = Path(__file__).parent.parent / '.env.local'
-if env_local.exists():
-    load_dotenv(env_local)
-    print(f"✅ Loaded environment from .env.local")
+# Load from services/ai-engine/.env
+env_path = Path(__file__).parent.parent.parent / 'services' / 'ai-engine' / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
+    print(f"✅ Loaded environment from {env_path}")
 else:
     load_dotenv()
-    print(f"⚠️ Using .env (no .env.local found)")
+    print(f"⚠️ Using default .env (no services/ai-engine/.env found)")
 
 # Supabase
 from supabase import create_client, Client

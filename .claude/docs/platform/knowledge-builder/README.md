@@ -79,12 +79,28 @@ The Knowledge Builder is VITAL's comprehensive platform for managing the knowled
 
 | Strategy | Description | Best For |
 |----------|-------------|----------|
+| **Auto** ✅ NEW | AI-selected optimal strategy | Let system decide |
 | **Hybrid** | Combines all three strategies | General queries |
+| **True Hybrid** | Vector + Graph + Keyword | Complex research |
 | **Vector** | Pure semantic similarity (OpenAI embeddings) | Conceptual searches |
-| **Keyword** | PostgreSQL full-text search | Exact term matching |
+| **Keyword** | Elasticsearch BM25 + semantic_text | Exact term matching |
 | **Entity** | Medical entity matching | Drug names, diagnoses, procedures |
+| **Graph** | Neo4j relationship traversal | Entity connections |
 
-**Fusion Weights**: Vector (40%) + Keyword (30%) + Entity (30%)
+**Fusion Weights (True Hybrid)**: Vector (50%) + Graph (30%) + Keyword (20%)
+
+### 2.1 Auto-Strategy Selection (NEW - January 2025)
+
+The Query Classifier automatically selects optimal strategy based on query intent:
+
+| Intent | Auto-Selected Strategy | Example Query |
+|--------|----------------------|---------------|
+| Regulatory | `keyword` | "FDA 510(k) submission requirements" |
+| Clinical | `true_hybrid` | "Compare efficacy of metformin vs sitagliptin" |
+| Research | `true_hybrid` | "Recent publications on CRISPR gene therapy" |
+| Entity Lookup | `graph` | "Tell me about Pfizer's oncology pipeline" |
+| Technical | `semantic` | "Structure of aspirin molecule" |
+| General | `hybrid` | "What is pharmaceutical manufacturing?" |
 
 **Entity Types Detected**:
 - Medications (aspirin, metformin, insulin, etc.)

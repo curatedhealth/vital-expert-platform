@@ -95,6 +95,10 @@ export interface StreamState {
 
   // Follow-up suggestions (generated after response)
   suggestions: SuggestionItem[];
+
+  // Force React re-render trigger - updated on every streaming action
+  // React's shallow comparison may miss rapid state updates - this ensures detection
+  _updateTrigger: number;
 }
 
 // Suggestion type for VitalSuggestionChips
@@ -247,6 +251,9 @@ export const initialStreamState: StreamState = {
 
   // Suggestions
   suggestions: [],
+
+  // Update trigger (forces React to detect changes)
+  _updateTrigger: 0,
 };
 
 // =============================================================================
@@ -259,13 +266,14 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
     // CONTENT EVENTS
     // =========================================================================
     case 'CONTENT_APPEND':
-      // Debug: trace content accumulation
+      // Debug: trace content accumulation (first 5 tokens only)
       if (process.env.NODE_ENV !== 'production' && state.contentTokens < 5) {
         // eslint-disable-next-line no-console
         console.debug('[streamReducer] CONTENT_APPEND:', {
           incoming: action.payload.content,
           currentLength: state.content.length,
           newLength: state.content.length + (action.payload.content?.length || 0),
+          tokenCount: state.contentTokens + 1,
         });
       }
       return {
@@ -273,6 +281,8 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
         content: state.content + action.payload.content,
         contentTokens: state.contentTokens + 1,
         status: 'streaming',
+        // CRITICAL: Force React to detect state change with unique timestamp
+        _updateTrigger: Date.now(),
       };
 
     case 'CONTENT_RESET':
@@ -318,6 +328,8 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
           action.payload.status !== 'complete' && action.payload.status !== 'error'
             ? 'thinking'
             : state.status,
+        // Force React to detect state change for real-time thinking updates
+        _updateTrigger: Date.now(),
       };
 
     // =========================================================================
@@ -591,74 +603,6 @@ export const streamSelectors = {
   /** Get artifacts by type */
   getArtifactsByType: (state: StreamState, artifactType: string): ArtifactEvent[] =>
     state.artifacts.filter((a) => a.artifactType === artifactType),
-
-  /** Glass-box timeline for transparency components (reasoning, tools, delegation, checkpoints) */
-  getTransparencyTimeline: (state: StreamState) => {
-    const reasoning = state.reasoning.map((r) => ({
-      type: 'reasoning' as const,
-      id: r.id,
-      label: r.step,
-      status: r.status,
-      agentName: r.agentName,
-      level: r.agentLevel,
-    }));
-
-    const tools = state.toolCalls.map((t) => ({
-      type: 'tool' as const,
-      id: t.id,
-      label: t.toolName,
-      status: t.status,
-    }));
-
-    const delegations = state.delegations.map((d, idx) => ({
-      type: 'delegation' as const,
-      id: `${d.fromAgentId}-${idx}`,
-      label: d.task,
-      status: 'delegated',
-      from: d.fromAgentName,
-      to: d.toAgentName,
-    }));
-
-    const checkpoints = state.checkpoint
-      ? [
-          {
-            type: 'checkpoint' as const,
-            id: state.checkpoint.id,
-            label: state.checkpoint.title,
-            status: 'pending',
-          },
-        ]
-      : [];
-
-    return [...reasoning, ...tools, ...delegations, ...checkpoints];
-  },
-
-  /** Agent cards (fusion selection or manual selection fallback) */
-  getAgentCards: (state: StreamState) => {
-    if (state.fusion?.selectedExperts?.length) {
-      return state.fusion.selectedExperts.map((agent) => ({
-        id: agent.id,
-        name: agent.name,
-        role: agent.role,
-        level: agent.level,
-        confidence: agent.confidence,
-      }));
-    }
-
-    if (state.selectedAgent) {
-      return [
-        {
-          id: state.selectedAgent.agentId,
-          name: state.selectedAgent.agentName,
-          role: state.selectedAgent.domain,
-          level: state.selectedAgent.level,
-          confidence: state.selectedAgent.confidence,
-        },
-      ];
-    }
-
-    return [];
-  },
 };
 
 // =============================================================================

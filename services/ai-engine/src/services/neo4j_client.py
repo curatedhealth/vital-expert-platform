@@ -404,6 +404,142 @@ class Neo4jClient:
 
         return agents
 
+    async def text_based_graph_search(
+        self,
+        query: str,
+        tenant_id: str,
+        max_depth: int = 2,
+        limit: int = 10
+    ) -> List[Dict]:
+        """
+        Text-based graph search for agent discovery (no embeddings required).
+
+        Uses keyword matching on agent name/description and traverses relationships
+        to find related agents based on graph structure.
+
+        Algorithm:
+        1. Find seed agents matching query keywords in name/description
+        2. Traverse relationships (PERFORMS, IN_DEPARTMENT, IN_FUNCTION, etc.)
+        3. Calculate graph-based scores combining:
+           - Text match quality (40%)
+           - Relationship weight (30%)
+           - Distance from seed (20%)
+           - Connection count (10%)
+
+        Args:
+            query: Search query text
+            tenant_id: Tenant ID for multi-tenant isolation
+            max_depth: Maximum traversal depth (default: 2)
+            limit: Maximum number of results (default: 10)
+
+        Returns:
+            List of agent dictionaries with graph scores
+        """
+        start_time = time.time()
+
+        # Extract keywords from query
+        keywords = [w.lower() for w in query.split() if len(w) > 2]
+        keyword_pattern = "|".join(keywords) if keywords else query.lower()
+
+        # Validate max_depth
+        safe_depth = max(1, min(3, int(max_depth)))
+
+        async with self.driver.session(database="neo4j") as session:
+            # Text-based search query
+            query_cypher = f"""
+                // Find seed agents matching query keywords
+                MATCH (seed:Agent)
+                WHERE seed.tenant_id = $tenant_id
+                  AND seed.is_active = true
+                  AND (
+                    toLower(seed.name) CONTAINS $keyword_pattern
+                    OR toLower(seed.display_name) CONTAINS $keyword_pattern
+                    OR toLower(coalesce(seed.description, '')) CONTAINS $keyword_pattern
+                  )
+
+                // Calculate text match score
+                WITH seed,
+                     CASE
+                         WHEN toLower(seed.name) CONTAINS $keyword_pattern THEN 0.9
+                         WHEN toLower(seed.display_name) CONTAINS $keyword_pattern THEN 0.8
+                         ELSE 0.6
+                     END as text_score
+                ORDER BY text_score DESC
+                LIMIT 10
+
+                // Also get related agents via relationships
+                OPTIONAL MATCH path = (seed)-[r*1..{safe_depth}]-(related:Agent)
+                WHERE related.tenant_id = $tenant_id
+                  AND related.is_active = true
+                  AND related <> seed
+
+                WITH seed, text_score, related, path,
+                     CASE WHEN path IS NOT NULL THEN length(path) ELSE 0 END as distance
+
+                // Combine seed and related agents
+                WITH collect(DISTINCT {{
+                    agent: seed,
+                    score: text_score,
+                    distance: 0,
+                    is_seed: true
+                }}) + collect(DISTINCT {{
+                    agent: related,
+                    score: text_score * (1.0 / (1 + coalesce(distance, 1))),
+                    distance: coalesce(distance, 1),
+                    is_seed: false
+                }}) as all_results
+
+                UNWIND all_results as result
+                WITH result.agent as agent,
+                     max(result.score) as graph_score,
+                     min(result.distance) as distance,
+                     max(CASE WHEN result.is_seed THEN 1 ELSE 0 END) as is_seed
+                WHERE agent IS NOT NULL
+
+                RETURN DISTINCT
+                    agent.id as agent_id,
+                    agent.name as name,
+                    agent.display_name as display_name,
+                    agent.description as description,
+                    coalesce(agent.level, 2) as agent_level,
+                    graph_score,
+                    distance,
+                    is_seed
+                ORDER BY graph_score DESC, distance ASC
+                LIMIT $limit
+            """
+
+            result = await session.run(
+                query_cypher,
+                tenant_id=tenant_id,
+                keyword_pattern=keywords[0] if keywords else query.lower(),
+                limit=limit
+            )
+
+            agents = []
+            async for record in result:
+                agents.append({
+                    "agent_id": record["agent_id"],
+                    "name": record["name"] or record["display_name"],
+                    "description": record.get("description", ""),
+                    "agent_level": record["agent_level"],
+                    "graph_score": float(record["graph_score"]),
+                    "distance": int(record["distance"]),
+                    "is_seed": bool(record["is_seed"])
+                })
+
+        latency_ms = int((time.time() - start_time) * 1000)
+
+        logger.info(
+            "Text-based graph search completed",
+            latency_ms=latency_ms,
+            agents_found=len(agents),
+            tenant_id=tenant_id,
+            query_keywords=keywords[:3]
+        )
+
+        return agents
+
     # ==================== Performance Tracking ====================
 
     async def update_agent_performance(

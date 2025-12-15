@@ -216,6 +216,7 @@ export function VitalThinking({
   const isExpanded = propExpanded ?? internalExpanded;
 
   // Auto-expand when new steps arrive during active thinking
+  // CRITICAL: Watch entire steps array, not just length - steps may update in-place
   useEffect(() => {
     if (isActive && steps.length > 0) {
       if (propExpanded === undefined) {
@@ -224,7 +225,7 @@ export function VitalThinking({
       // Scroll to latest step
       lastStepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-  }, [steps.length, isActive, propExpanded]);
+  }, [steps, isActive, propExpanded]);
 
   // Auto-collapse after thinking completes (with delay)
   useEffect(() => {
@@ -234,7 +235,7 @@ export function VitalThinking({
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isActive, steps.length, propExpanded]);
+  }, [isActive, steps, propExpanded]);
 
   const handleToggle = useCallback(() => {
     const newExpanded = !isExpanded;

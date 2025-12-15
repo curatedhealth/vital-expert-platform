@@ -925,27 +925,7 @@ export function SidebarAskExpert() {
         </Collapsible>
       )}
 
-      {/* Mode Header (shown when in a specific mode) */}
-      {currentMode && (
-        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-          <div className={cn(
-            "mx-2 p-3 rounded-lg border",
-            modeColorClasses[currentMode.color as keyof typeof modeColorClasses]?.bg,
-            modeColorClasses[currentMode.color as keyof typeof modeColorClasses]?.border
-          )}>
-            <div className="flex items-center gap-2">
-              <currentMode.icon className={cn("h-5 w-5", modeColorClasses[currentMode.color as keyof typeof modeColorClasses]?.icon)} />
-              <div className="flex-1">
-                <h3 className="font-semibold text-sm">{currentMode.title}</h3>
-                <p className="text-xs text-muted-foreground">"{currentMode.nickname}"</p>
-              </div>
-              <Badge variant="outline" className="text-xs">
-                Mode {currentMode.mode}
-              </Badge>
-            </div>
-          </div>
-        </SidebarGroup>
-      )}
+      {/* Mode Header removed - mode info moved to breadcrumb area for cleaner sidebar */}
 
       {/* Agent Selection for Manual Modes (Mode 1 & 3) */}
       {currentMode && (currentMode.mode === 1 || currentMode.mode === 3) && (

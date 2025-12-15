@@ -28,7 +28,6 @@ import {
   Copy,
   Check,
   User,
-  ChevronDown,
   Brain,
 } from 'lucide-react';
 import { logger } from '@vital/utils';
@@ -39,6 +38,7 @@ import { CitationList } from './CitationList';
 import { ToolCallList } from './ToolCallList';
 import { VitalLevelBadge } from './AgentSelectionCard';
 import { VitalStreamText, type CitationData } from '@/components/vital-ai-ui/conversation/VitalStreamText';
+import { VitalThinking } from './VitalThinking';
 
 // =============================================================================
 // TYPES
@@ -78,7 +78,6 @@ export function VitalMessage({
   className,
 }: VitalMessageProps) {
   const [copied, setCopied] = useState(false);
-  const [showReasoning, setShowReasoning] = useState(false);
 
   const isUser = message.role === 'user';
   const displayExpert = message.expert || expert;
@@ -96,10 +95,6 @@ export function VitalMessage({
       logger.error('Failed to copy message content', { error: err });
     }
   }, [message.content]);
-
-  const toggleReasoning = useCallback(() => {
-    setShowReasoning(prev => !prev);
-  }, []);
 
   // =========================================================================
   // CITATIONS CONVERSION FOR VITASTREAMTEXT
@@ -189,6 +184,16 @@ export function VitalMessage({
           </div>
         )}
 
+        {/* Reasoning section ABOVE content (assistant only) - Uses unified VitalThinking component */}
+        {/* Positioned at TOP like Claude/ChatGPT thinking indicators */}
+        {/* Note: NOT passing isExpanded so component uses internal state and user can toggle */}
+        {!isUser && message.reasoning && message.reasoning.length > 0 && (
+          <VitalThinking
+            steps={message.reasoning}
+            isActive={false}
+          />
+        )}
+
         {/* Main message container - flat layout for both user and assistant (no filled bubbles) */}
         <div
           className={cn(
@@ -240,42 +245,6 @@ export function VitalMessage({
             )}
           </Button>
         </div>
-
-        {/* Reasoning section (assistant only) */}
-        {!isUser && message.reasoning && message.reasoning.length > 0 && (
-          <div>
-            <button
-              onClick={toggleReasoning}
-              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
-            >
-              <Brain className="h-3 w-3" />
-              <span>{message.reasoning.length} reasoning step{message.reasoning.length > 1 ? 's' : ''}</span>
-              <ChevronDown className={cn(
-                'h-3 w-3 transition-transform',
-                showReasoning && 'rotate-180'
-              )} />
-            </button>
-
-            {showReasoning && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                className="mt-2 p-3 rounded-lg bg-purple-50 border border-purple-100"
-              >
-                <div className="space-y-2">
-                  {message.reasoning.map((step, idx) => (
-                    <div key={step.id || idx} className="flex items-start gap-2 text-sm">
-                      <span className="shrink-0 w-5 h-5 rounded-full bg-purple-200 text-purple-700 text-xs flex items-center justify-center">
-                        {idx + 1}
-                      </span>
-                      <span className="text-stone-700">{step.step}</span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </div>
-        )}
 
         {/* Citations list (assistant only) - Shows as footer when there are many citations */}
         {/* Note: Inline citations are handled by VitalStreamText above */}

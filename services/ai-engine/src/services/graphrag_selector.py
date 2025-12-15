@@ -159,10 +159,11 @@ class GraphRAGSelector:
             return [stub_agent]
 
         # Parallel execution of all 3 methods
+        # Note: Neo4j uses text-based search (not embedding) since agents don't have embeddings in graph
         results = await asyncio.gather(
             self._postgres_fulltext_search(query, tenant_id),
             self._pinecone_vector_search(query_embedding, tenant_id),
-            self._neo4j_graph_search(query_embedding, tenant_id),
+            self._neo4j_graph_search(query, tenant_id),  # Pass query text, not embedding
             return_exceptions=True
         )
 
@@ -515,17 +516,19 @@ class GraphRAGSelector:
 
     async def _neo4j_graph_search(
         self,
-        query_embedding: List[float],
+        query: str,
         tenant_id: str,
         limit: int = 20
     ) -> List[Dict]:
         """
         Neo4j graph traversal search (20% weight).
 
-        Uses graph relationships to find:
-        - Directly related agents
-        - Frequently co-occurring agents
-        - Complementary agents
+        Uses text-based keyword matching and graph relationships to find:
+        - Directly matching agents by name/description
+        - Related agents via graph relationships
+        - Complementary agents in same department/function
+
+        Note: Uses text-based search since agent nodes don't have embeddings stored.
 
         Returns:
             List of agents with graph scores
@@ -533,10 +536,11 @@ class GraphRAGSelector:
         try:
             neo4j = self._get_neo4j()
 
-            results = await neo4j.graph_traversal_search(
-                query_embedding=query_embedding,
+            # Use text-based search instead of embedding-based
+            results = await neo4j.text_based_graph_search(
+                query=query,
                 tenant_id=tenant_id,
-                max_depth=3,
+                max_depth=2,
                 limit=limit
             )
 
@@ -545,7 +549,9 @@ class GraphRAGSelector:
                     "agent_id": r["agent_id"],
                     "agent_name": r["name"],
                     "neo4j_score": float(r["graph_score"]),
-                    "source": "neo4j"
+                    "source": "neo4j",
+                    "is_seed": r.get("is_seed", False),
+                    "distance": r.get("distance", 0)
                 }
                 for r in results
             ]
@@ -553,7 +559,8 @@ class GraphRAGSelector:
             logger.info(
                 "Neo4j graph search completed",
                 agents_found=len(agents),
-                sample_agents=[a["agent_name"] for a in agents[:3]] if agents else []
+                sample_agents=[a["agent_name"] for a in agents[:3]] if agents else [],
+                search_type="text_based"
             )
 
             return agents

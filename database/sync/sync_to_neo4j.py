@@ -10,6 +10,14 @@ Usage:
     python3 sync_to_neo4j.py
 """
 
+import os
+import ssl
+import certifi
+
+# Fix SSL certificate verification on macOS Python 3.13
+os.environ['SSL_CERT_FILE'] = certifi.where()
+os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
+
 import requests
 from neo4j import GraphDatabase
 from datetime import datetime
@@ -23,9 +31,9 @@ import json
 SUPABASE_URL = "https://bomltkhixeatxuoxmolq.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvbWx0a2hpeGVhdHh1b3htb2xxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Mjc4MzkxNSwiZXhwIjoyMDc4MzU5OTE1fQ.dhhJIMib1DMTuIvacv4VnDYjXAgVFRZ5Zrrl_LkpD6Q"
 
-NEO4J_URI = "neo4j+s://13067bdb.databases.neo4j.io"
+NEO4J_URI = "neo4j+s://cf50719f.databases.neo4j.io"
 NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "kkCxQgpcanSUDv-dKzOzDPcYIhvJHRQRa4tuiNa2Mek"
+NEO4J_PASSWORD = "QDFok7q8WFKidalVF-kprG3DCC8lQDIxTuKhbfMwMAM"
 
 HEADERS = {
     "apikey": SUPABASE_KEY,

@@ -14,7 +14,6 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { logger } from '@vital/utils';
 
 // =============================================================================
 // SSE EVENT TYPES
@@ -292,27 +291,7 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
     (event: SSEEvent) => {
       switch (event.type) {
         case 'token':
-        case 'content': // Backend sometimes emits 'content' instead of 'token'
-        case 'message': // Fallback alias
-          {
-            // Normalize token event data - backend may send 'text' or 'content'
-            const tokenData = event.data as Record<string, unknown>;
-            const normalizedToken: TokenEvent = {
-              // Handle both 'content' and 'text' field names from backend
-              content: (tokenData.content as string) || (tokenData.text as string) || '',
-              tokenIndex: (tokenData.tokenIndex as number) ?? (tokenData.tokens as number) ?? 0,
-              nodeId: tokenData.nodeId as string | undefined,
-            };
-            // Only call onToken if we have actual content
-            if (normalizedToken.content) {
-              // Debug: trace onToken dispatch
-              if (process.env.NODE_ENV !== 'production' && normalizedToken.tokenIndex <= 5) {
-                // eslint-disable-next-line no-console
-                console.debug('[useSSEStream] dispatching onToken:', normalizedToken.content);
-              }
-              onToken?.(normalizedToken);
-            }
-          }
+          onToken?.(event.data as TokenEvent);
           break;
         case 'reasoning':
         case 'thinking':  // Backend sends 'thinking', frontend expects 'reasoning'
@@ -422,7 +401,7 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
     async (body: Record<string, unknown>) => {
       // Guard against race conditions from rapid connect() calls
       if (isConnectingRef.current) {
-        logger.warn('useSSEStream connect already in progress, ignoring duplicate call');
+        console.warn('[useSSEStream] Connection already in progress, ignoring duplicate connect()');
         return;
       }
       isConnectingRef.current = true;
@@ -484,15 +463,7 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
 
             const event = parseSSEEvent(eventText);
             if (event) {
-              // Debug trace for difficult streaming cases
-              if (process.env.NODE_ENV !== 'production') {
-                // eslint-disable-next-line no-console
-                console.debug('[useSSEStream] event', event.type, event.data);
-              }
               handleEvent(event);
-            } else if (process.env.NODE_ENV !== 'production') {
-              // eslint-disable-next-line no-console
-              console.warn('[useSSEStream] unparsed SSE chunk', eventText);
             }
           }
         }
@@ -567,31 +538,28 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
 function parseSSEEvent(text: string): SSEEvent | null {
   const lines = text.split('\n');
   let eventType: SSEEventType | null = null;
-  const dataLines: string[] = [];
+  let data = '';
 
   for (const line of lines) {
     if (line.startsWith('event:')) {
       eventType = line.slice(6).trim() as SSEEventType;
     } else if (line.startsWith('data:')) {
-      dataLines.push(line.slice(5).trim());
+      data = line.slice(5).trim();
     }
   }
 
-  const data = dataLines.join('\n');
-  const resolvedEvent: SSEEventType | null = eventType || (data ? 'token' : null);
-
-  if (resolvedEvent && data) {
+  if (eventType && data) {
     try {
       return {
-        type: resolvedEvent,
+        type: eventType,
         data: JSON.parse(data),
         timestamp: Date.now(),
       };
     } catch {
-      // Fallback: if JSON.parse fails, pass through raw string
+      // If data is not JSON, return as string
       return {
-        type: resolvedEvent,
-        data,
+        type: eventType,
+        data: data,
         timestamp: Date.now(),
       };
     }

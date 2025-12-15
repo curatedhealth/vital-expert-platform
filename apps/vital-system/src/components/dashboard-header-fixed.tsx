@@ -18,6 +18,7 @@ import { UserCircle, LogOut, Settings as SettingsIcon } from 'lucide-react'
 import { useAuth } from '@/lib/auth/supabase-auth-context'
 import { Separator } from '@/components/ui/separator'
 import { VitalBreadcrumb } from '@/components/shared/VitalBreadcrumb'
+import { HeaderActionsSlot } from '@/contexts/header-actions-context'
 
 // Type for route breadcrumb configuration
 type RouteBreadcrumb = { label: string; parent?: string }
@@ -105,7 +106,7 @@ export function DashboardHeader({ breadcrumb }: DashboardHeaderProps) {
 
   return (
     <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
-      <div className="flex items-center gap-2 flex-1">
+      <div className="flex items-center gap-2">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         {/* Use custom breadcrumb if provided, otherwise auto-generate from route */}
@@ -116,6 +117,11 @@ export function DashboardHeader({ breadcrumb }: DashboardHeaderProps) {
             className="mb-0"
           />
         ))}
+      </div>
+
+      {/* Dynamic actions slot - pages can inject content here */}
+      <div className="flex-1 flex items-center justify-end">
+        <HeaderActionsSlot />
       </div>
 
       <div className="flex items-center gap-2">

@@ -22,11 +22,13 @@
  * Phase 2 Implementation - December 12, 2025
  */
 
-import { useState, useReducer, useCallback, useEffect, useRef } from 'react';
+import { useState, useReducer, useCallback, useEffect, useRef, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
+import { useHeaderActions } from '@/contexts/header-actions-context';
 import {
   Sparkles,
   ChevronRight,
@@ -38,7 +40,6 @@ import {
   type LucideIcon
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
-import { logger } from '@vital/utils';
 
 // Streaming infrastructure
 import { streamReducer, initialStreamState, streamActions, type StreamState } from '../hooks/streamReducer';
@@ -47,7 +48,7 @@ import { useSSEStream, type TokenEvent, type ReasoningEvent, type CitationEvent,
 // Components
 import { type Expert } from '../components/interactive/ExpertPicker';
 import { FusionSelector } from '../components/interactive/FusionSelector';
-import { ExpertHeader } from '../components/interactive/ExpertHeader';
+// ExpertHeader no longer used - expert info now injected into global header via HeaderActionsContext
 import { VitalMessage, type Message } from '../components/interactive/VitalMessage';
 import { StreamingMessage } from '../components/interactive/StreamingMessage';
 import { VitalSuggestionChips, type Suggestion } from '../components/interactive/VitalSuggestionChips';
@@ -182,6 +183,9 @@ export function InteractiveView({
   // Auth context for user ID (needed for message persistence)
   const { user } = useAuth();
 
+  // Header actions context - allows injecting expert info into global header
+  const { setActions: setHeaderActions } = useHeaderActions();
+
   // =========================================================================
   // STATE
   // =========================================================================
@@ -239,11 +243,6 @@ export function InteractiveView({
   const [activePlan, setActivePlan] = useState<ExecutionPlan | null>(null);
   const [activeDelegations, setActiveDelegations] = useState<SubAgentDelegation[]>([]);
   const [toolExecutions, setToolExecutions] = useState<ToolExecution[]>([]);
-  // UI collapse controls
-  const [responsesCollapsed, setResponsesCollapsed] = useState(false);
-  const [inputCollapsed, setInputCollapsed] = useState(false);
-  const [collapsedMessages, setCollapsedMessages] = useState<Set<string>>(new Set());
-  // Streaming is always visible during an active response (no collapse toggle)
 
   // Prompt starters state
   const [promptStarters, setPromptStarters] = useState<Array<{
@@ -270,19 +269,18 @@ export function InteractiveView({
       ? '/api/expert/mode1/stream'
       : '/api/expert/mode2/stream',
 
-    // Token streaming
+    // Token streaming - flushSync bypasses React 18 batching for real-time updates
     onToken: useCallback((event: TokenEvent) => {
-      // Debug: trace token dispatch to reducer
-      if (process.env.NODE_ENV !== 'production' && event.tokenIndex <= 5) {
-        // eslint-disable-next-line no-console
-        console.debug('[InteractiveView] onToken received, dispatching CONTENT_APPEND:', event.content);
-      }
-      dispatch(streamActions.appendContent(event));
+      flushSync(() => {
+        dispatch(streamActions.appendContent(event));
+      });
     }, []),
 
-    // Reasoning/thinking updates
+    // Reasoning/thinking updates - flushSync for real-time thinking display
     onReasoning: useCallback((event: ReasoningEvent) => {
-      dispatch(streamActions.addReasoning(event));
+      flushSync(() => {
+        dispatch(streamActions.addReasoning(event));
+      });
     }, []),
 
     // Citations
@@ -318,6 +316,46 @@ export function InteractiveView({
   // =========================================================================
   // EFFECTS
   // =========================================================================
+
+  // Set header actions with selected expert info
+  // This injects expert info into the global header row
+  useEffect(() => {
+    if (selectedExpert && phase === 'conversation') {
+      setHeaderActions(
+        <div className="flex items-center gap-3">
+          {/* Avatar with status */}
+          <div className="relative">
+            {selectedExpert.avatar || (selectedExpert as Expert & { avatarUrl?: string }).avatarUrl ? (
+              <img
+                src={selectedExpert.avatar || (selectedExpert as Expert & { avatarUrl?: string }).avatarUrl}
+                alt={selectedExpert.name}
+                className="w-8 h-8 rounded-full object-cover border border-border"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
+                {selectedExpert.name.charAt(0)}
+              </div>
+            )}
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white bg-green-500" />
+          </div>
+          {/* Name and level */}
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-sm text-foreground">{selectedExpert.name}</span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+              {selectedExpert.level}
+            </span>
+          </div>
+        </div>
+      );
+    } else {
+      setHeaderActions(null);
+    }
+
+    // Cleanup on unmount
+    return () => {
+      setHeaderActions(null);
+    };
+  }, [selectedExpert, phase, setHeaderActions]);
 
   // Load initial conversation messages and metadata when provided
   useEffect(() => {
@@ -407,7 +445,7 @@ export function InteractiveView({
           setPromptStarters([]);
         }
       } catch (error) {
-        logger.error('Error fetching prompt starters', { error, selectedExpertId: selectedExpert?.id });
+        console.error('Error fetching prompt starters:', error);
         setPromptStarters([]);
       } finally {
         setIsLoadingPromptStarters(false);
@@ -485,10 +523,7 @@ export function InteractiveView({
   const persistMessages = useCallback(async (updatedMessages: Message[]) => {
     // Need user ID and session ID to persist
     if (!user?.id || !sessionId) {
-      logger.warn('InteractiveView cannot persist messages: missing user or session ID', {
-        hasUser: !!user?.id,
-        hasSessionId: !!sessionId,
-      });
+      console.warn('[InteractiveView] Cannot persist messages: missing user or session ID');
       return;
     }
 
@@ -540,11 +575,11 @@ export function InteractiveView({
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error('InteractiveView failed to persist messages', { method, errorText, status: response.status });
+        console.error(`[InteractiveView] Failed to ${method} messages:`, errorText);
 
         // If PUT fails because conversation doesn't exist, try POST
         if (method === 'PUT' && response.status === 404) {
-          logger.info('InteractiveView conversation not found, creating new one');
+          console.log('[InteractiveView] Conversation not found, creating new one...');
           const createResponse = await fetch('/api/conversations', {
             method: 'POST',
             headers: {
@@ -562,10 +597,7 @@ export function InteractiveView({
           if (createResponse.ok) {
             setConversationCreated(true);
           } else {
-            logger.error('InteractiveView failed to create conversation', {
-              errorText: await createResponse.text(),
-              status: createResponse.status,
-            });
+            console.error('[InteractiveView] Failed to create conversation:', await createResponse.text());
           }
         }
       } else {
@@ -575,7 +607,7 @@ export function InteractiveView({
         }
       }
     } catch (error) {
-      logger.error('InteractiveView error persisting messages', { error });
+      console.error('[InteractiveView] Error persisting messages:', error);
     }
   }, [user?.id, sessionId, initialConversation, conversationCreated, selectedExpert?.id, mode]);
 
@@ -594,6 +626,8 @@ export function InteractiveView({
         setTimeout(() => persistMessages(updatedMessages), 100);
         return updatedMessages;
       });
+      // Reset stream state for next message
+      dispatch(streamActions.reset());
     }
   }, [streamState.status, streamState.content, selectedExpert, persistMessages]);
 
@@ -672,36 +706,36 @@ export function InteractiveView({
     data?: unknown
   ) => {
     // Send decision to backend
-    logger.info('Checkpoint decision', { checkpointId, decision, data });
+    console.log('Checkpoint decision:', checkpointId, decision, data);
     // Close the modal
     setActiveCheckpoint(null);
     // TODO: Send to backend via API or SSE response
   }, []);
 
   const handleCheckpointTimeout = useCallback((checkpointId: string) => {
-    logger.warn('Checkpoint timed out', { checkpointId });
+    console.log('Checkpoint timed out:', checkpointId);
     setActiveCheckpoint(null);
   }, []);
 
   const handleCheckpointExtend = useCallback((checkpointId: string, additionalSeconds: number) => {
-    logger.info('Extending checkpoint', { checkpointId, additionalSeconds });
+    console.log('Extending checkpoint:', checkpointId, 'by', additionalSeconds, 'seconds');
     // TODO: Notify backend of extension
   }, []);
 
   const handlePlanApprove = useCallback((planId: string) => {
-    logger.info('Plan approved', { planId });
+    console.log('Plan approved:', planId);
     setActivePlan(null);
     // TODO: Send approval to backend
   }, []);
 
   const handlePlanReject = useCallback((planId: string, reason?: string) => {
-    logger.warn('Plan rejected', { planId, reason });
+    console.log('Plan rejected:', planId, reason);
     setActivePlan(null);
     // TODO: Send rejection to backend
   }, []);
 
   const handlePlanModify = useCallback((planId: string, modifications: string) => {
-    logger.info('Plan modified', { planId, modifications });
+    console.log('Plan modified:', planId, modifications);
     setActivePlan(null);
     // TODO: Send modifications to backend
   }, []);
@@ -733,33 +767,6 @@ export function InteractiveView({
     // TODO: Send cancellation to backend
   }, []);
 
-  const toggleMessageCollapse = useCallback((messageId: string) => {
-    setCollapsedMessages(prev => {
-      const next = new Set(prev);
-      if (next.has(messageId)) {
-        next.delete(messageId);
-      } else {
-        next.add(messageId);
-      }
-      return next;
-    });
-  }, []);
-
-  const collapseAll = useCallback(() => {
-    const ids = new Set(messages.map(m => m.id));
-    setCollapsedMessages(ids);
-    setCollapsedStreaming(true);
-    setInputCollapsed(true);
-    setResponsesCollapsed(false);
-  }, [messages]);
-
-  const expandAll = useCallback(() => {
-    setCollapsedMessages(new Set());
-    setCollapsedStreaming(false);
-    setInputCollapsed(false);
-    setResponsesCollapsed(false);
-  }, []);
-
   // AI Prompt Enhancement handler for VitalPromptInput
   const handlePromptEnhance = useCallback(async (message: string): Promise<string> => {
     try {
@@ -783,7 +790,7 @@ export function InteractiveView({
       const data = await response.json();
       return data.enhanced || message;
     } catch (error) {
-      logger.error('Prompt enhancement failed', { error });
+      console.error('Prompt enhancement failed:', error);
       return message; // Return original on error
     }
   }, [selectedExpert]);
@@ -828,8 +835,8 @@ export function InteractiveView({
 
       {/* Conversation Metadata Header (shown when loading existing conversation) */}
       {conversationMeta && (
-        <div className="px-4 pb-3 border-b bg-muted/30">
-          <div className="flex items-center justify-between">
+        <div className="border-b bg-muted/30">
+          <div className="max-w-4xl mx-auto px-4 pb-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {selectedExpert && (
                 <div className="flex items-center gap-2">
@@ -910,336 +917,246 @@ export function InteractiveView({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col h-full items-center"
+            className="flex flex-col h-full"
           >
-            <div className="flex flex-col h-full w-full max-w-5xl mx-auto">
-              {/* Expert Header */}
-              {selectedExpert && (
-                <ExpertHeader
+            {/* Expert Header removed - now injected into global header via HeaderActionsContext */}
+
+            {/* Message List - Centered container like Claude/ChatGPT */}
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 overflow-auto"
+            >
+              {/* Centered content wrapper for narrower, focused chat experience */}
+              <div className="max-w-4xl mx-auto p-4 space-y-4">
+              {/* Empty state for Mode 1: Guide user to pick expert from sidebar */}
+              {mode === 'mode1' && !selectedExpert && messages.length === 0 && (
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="text-center max-w-md"
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-4">
+                      <ArrowLeft className="h-8 w-8 text-purple-500" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-slate-900 mb-2">
+                      Select an Expert
+                    </h2>
+                    <p className="text-muted-foreground mb-6">
+                      Browse and select an AI expert from the sidebar to start your conversation.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-sm text-purple-600 bg-purple-50 rounded-lg px-4 py-2">
+                      <Users className="h-4 w-4" />
+                      <span>Experts are organized by specialty</span>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+
+              {/* ═══════════════════════════════════════════════════════════════
+                  EMPTY STATE: Prompt Starters + Input at TOP
+                  (shown when expert selected but no messages yet)
+                  ═══════════════════════════════════════════════════════════════ */}
+              {messages.length === 0 && selectedExpert && (
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
+                  {isLoadingPromptStarters ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+                      <p className="text-sm text-muted-foreground">Loading suggestions...</p>
+                    </div>
+                  ) : (
+                    <div className="w-full max-w-3xl space-y-6">
+                      {/* Welcome Header */}
+                      <div className="text-center mb-4">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 text-purple-700 text-sm font-medium mb-2">
+                          <Sparkles className="h-4 w-4" />
+                          {promptStarters.length > 0 ? 'Get Started' : 'Ready to Chat'}
+                        </div>
+                        <p className="text-muted-foreground text-sm">
+                          {promptStarters.length > 0
+                            ? 'Choose a topic or type your own question below'
+                            : `Ask ${selectedExpert.name} anything`
+                          }
+                        </p>
+                      </div>
+
+                      {/* Prompt Starters Grid */}
+                      {promptStarters.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                          {promptStarters.slice(0, 4).map((starter, index) => (
+                            <motion.button
+                              key={index}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.05 }}
+                              onClick={() => handleSend(starter.fullPrompt || starter.text)}
+                              className="group p-4 rounded-xl border border-slate-200 bg-white hover:border-purple-300 hover:shadow-md transition-all text-left"
+                            >
+                              <div className="flex items-start gap-3">
+                                {(() => {
+                                  const IconComponent = getPromptStarterIcon(starter.icon);
+                                  return <IconComponent className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" />;
+                                })()}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-2">
+                                    {starter.text}
+                                  </p>
+                                  {starter.description && (
+                                    <p className="text-sm text-slate-500 mt-1 line-clamp-1">
+                                      {starter.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
+                              </div>
+                            </motion.button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* ═══════════════════════════════════════════════════════════
+                          PROMPT INPUT AT TOP - Centered under prompt starters
+                          ═══════════════════════════════════════════════════════════ */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2, duration: 0.3 }}
+                        className="w-full"
+                      >
+                        <VitalPromptInput
+                          onSubmit={handleSend}
+                          onEnhance={handlePromptEnhance}
+                          isLoading={isStreaming}
+                          onStop={() => disconnect()}
+                          placeholder={`Ask ${selectedExpert.name}...`}
+                          showAttachments={true}
+                          showEnhance={true}
+                          maxLength={4000}
+                        />
+                      </motion.div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {messages.map((message) => (
+                <VitalMessage
+                  key={message.id}
+                  message={message}
                   expert={selectedExpert}
-                  mode={mode}
-                  onSwitchExpert={messages.length === 0 ? handleBackToSelection : undefined}
+                />
+              ))}
+
+              {/* Tool Execution Feedback (visible during streaming) */}
+              {toolExecutions.length > 0 && (
+                <ToolExecutionFeedback
+                  executions={toolExecutions}
+                  compact={false}
+                  maxVisible={5}
+                  allowCancel={true}
+                  onCancel={handleToolCancel}
+                  className="mb-4"
                 />
               )}
 
-              {/* View controls */}
-              <div className="flex items-center justify-end gap-2 px-4 py-2 border-b bg-white/70 backdrop-blur">
-                <button
-                  className="text-xs px-3 py-1 rounded-full border border-slate-200 hover:border-purple-300 hover:text-purple-700 transition"
-                  onClick={() => setResponsesCollapsed((prev) => !prev)}
-                >
-                  {responsesCollapsed ? 'Expand responses' : 'Collapse responses'}
-                </button>
-                <button
-                  className="text-xs px-3 py-1 rounded-full border border-slate-200 hover:border-purple-300 hover:text-purple-700 transition"
-                  onClick={() => setInputCollapsed((prev) => !prev)}
-                >
-                  {inputCollapsed ? 'Expand input' : 'Collapse input'}
-                </button>
-                <button
-                  className="text-xs px-3 py-1 rounded-full border border-slate-200 hover:border-purple-300 hover:text-purple-700 transition"
-                  onClick={collapseAll}
-                >
-                  Collapse all
-                </button>
-                <button
-                  className="text-xs px-3 py-1 rounded-full border border-slate-200 hover:border-purple-300 hover:text-purple-700 transition"
-                  onClick={expandAll}
-                >
-                  Expand all
-                </button>
-              </div>
+              {/* Active Plan Approval Card */}
+              {activePlan && (
+                <PlanApprovalCard
+                  plan={activePlan}
+                  onApprove={handlePlanApprove}
+                  onReject={handlePlanReject}
+                  onModify={handlePlanModify}
+                  className="mb-4"
+                />
+              )}
 
-              {/* Message List */}
-              <div className="flex-1 flex flex-col">
-                <div
-                  ref={messagesContainerRef}
-                  className="flex-1 overflow-auto p-4 space-y-4"
-                >
-                  {responsesCollapsed && (
-                    <div className="flex justify-between items-center p-3 rounded-lg border border-dashed border-slate-200 text-sm text-slate-600">
-                      <span>Responses hidden to save space.</span>
-                      <button
-                        className="text-purple-600 font-medium hover:underline"
-                        onClick={() => setResponsesCollapsed(false)}
-                      >
-                        Show responses
-                      </button>
-                    </div>
+              {/* Active Sub-Agent Delegations */}
+              {activeDelegations.filter(d => d.status === 'pending_approval' || d.status === 'in_progress').map(delegation => (
+                <SubAgentDelegationCard
+                  key={delegation.id}
+                  delegation={delegation}
+                  onApprove={handleDelegationApprove}
+                  onReject={handleDelegationReject}
+                  requiresApproval={delegation.status === 'pending_approval'}
+                  className="mb-4"
+                />
+              ))}
+
+              {/* Streaming Message (while receiving) */}
+              {isStreaming && (
+                <StreamingMessage
+                  state={streamState}
+                  expert={selectedExpert}
+                  mode={mode}
+                />
+              )}
+
+              {/* Error State */}
+              {streamState.error && (
+                <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                  <p className="font-medium">Error</p>
+                  <p className="text-sm">{streamState.error.message}</p>
+                  {streamState.error.recoverable && (
+                    <button
+                      onClick={() => dispatch(streamActions.reset())}
+                      className="mt-2 text-sm text-red-600 underline hover:no-underline"
+                    >
+                      Try again
+                    </button>
                   )}
-                  {!responsesCollapsed && (
-                    <>
-                      {/* Empty state for Mode 1: Guide user to pick expert from sidebar */}
-                      {mode === 'mode1' && !selectedExpert && messages.length === 0 && (
-                        <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
-                          <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4 }}
-                            className="text-center max-w-md"
-                          >
-                            <div className="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-4">
-                              <ArrowLeft className="h-8 w-8 text-purple-500" />
-                            </div>
-                            <h2 className="text-xl font-semibold text-slate-900 mb-2">
-                              Select an Expert
-                            </h2>
-                            <p className="text-muted-foreground mb-6">
-                              Browse and select an AI expert from the sidebar to start your conversation.
-                            </p>
-                            <div className="flex items-center justify-center gap-2 text-sm text-purple-600 bg-purple-50 rounded-lg px-4 py-2">
-                              <Users className="h-4 w-4" />
-                              <span>Experts are organized by specialty</span>
-                            </div>
-                          </motion.div>
-                        </div>
-                      )}
-
-                      {/* ═══════════════════════════════════════════════════════════════
-                          EMPTY STATE: Prompt Starters + Input at TOP
-                          (shown when expert selected but no messages yet)
-                          ═══════════════════════════════════════════════════════════════ */}
-                      {messages.length === 0 && selectedExpert && (
-                        <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
-                          {isLoadingPromptStarters ? (
-                            <div className="flex flex-col items-center gap-3">
-                              <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-                              <p className="text-sm text-muted-foreground">Loading suggestions...</p>
-                            </div>
-                          ) : (
-                            <div className="w-full max-w-3xl space-y-6">
-                              {/* Welcome Header */}
-                              <div className="text-center mb-4">
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 text-purple-700 text-sm font-medium mb-2">
-                                  <Sparkles className="h-4 w-4" />
-                                  {promptStarters.length > 0 ? 'Get Started' : 'Ready to Chat'}
-                                </div>
-                                <p className="text-muted-foreground text-sm">
-                                  {promptStarters.length > 0
-                                    ? 'Choose a topic or type your own question below'
-                                    : `Ask ${selectedExpert.name} anything`
-                                  }
-                                </p>
-                              </div>
-
-                              {/* Prompt Starters Grid */}
-                              {promptStarters.length > 0 && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                                  {promptStarters.slice(0, 4).map((starter, index) => (
-                                    <motion.button
-                                      key={index}
-                                      initial={{ opacity: 0, y: 10 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      transition={{ delay: index * 0.05 }}
-                                      onClick={() => handleSend(starter.fullPrompt || starter.text)}
-                                      className="group p-4 rounded-xl border border-slate-200 bg-white hover:border-purple-300 hover:shadow-md transition-all text-left"
-                                    >
-                                      <div className="flex items-start gap-3">
-                                        {(() => {
-                                          const IconComponent = getPromptStarterIcon(starter.icon);
-                                          return <IconComponent className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" />;
-                                        })()}
-                                        <div className="flex-1 min-w-0">
-                                          <p className="font-medium text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-2">
-                                            {starter.text}
-                                          </p>
-                                          {starter.description && (
-                                            <p className="text-sm text-slate-500 mt-1 line-clamp-1">
-                                              {starter.description}
-                                            </p>
-                                          )}
-                                        </div>
-                                        <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
-                                      </div>
-                                    </motion.button>
-                                  ))}
-                                </div>
-                              )}
-
-                              {/* ═══════════════════════════════════════════════════════════
-                                  PROMPT INPUT AT TOP - Centered under prompt starters
-                                  ═══════════════════════════════════════════════════════════ */}
-                              <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2, duration: 0.3 }}
-                                className="w-full"
-                              >
-                                <VitalPromptInput
-                                  onSubmit={handleSend}
-                                  onEnhance={handlePromptEnhance}
-                                  isLoading={isStreaming}
-                                  onStop={() => disconnect()}
-                                  placeholder={`Ask ${selectedExpert.name}...`}
-                                  showAttachments={true}
-                                  showEnhance={true}
-                                  maxLength={4000}
-                                  className="w-full"
-                                />
-                              </motion.div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {messages.map((message) => {
-                        const isCollapsed = collapsedMessages.has(message.id);
-                        return (
-                          <div key={message.id} className="relative">
-                            <button
-                              className="absolute -right-2 -top-2 z-10 text-xs px-2 py-1 rounded-full border border-slate-200 bg-white shadow-sm hover:border-purple-300 hover:text-purple-700 transition"
-                              onClick={() => toggleMessageCollapse(message.id)}
-                            >
-                              {isCollapsed ? 'Expand' : 'Collapse'}
-                            </button>
-                            {isCollapsed ? (
-                              <div className="w-full max-w-4xl mx-auto px-4 py-3 rounded-lg border border-dashed border-slate-200 text-sm text-slate-500 bg-white">
-                                Message collapsed. <button className="text-purple-600 font-medium hover:underline" onClick={() => toggleMessageCollapse(message.id)}>Expand</button>
-                              </div>
-                            ) : (
-                              <VitalMessage
-                                key={message.id}
-                                message={message}
-                                expert={selectedExpert}
-                                className="w-full"
-                              />
-                            )}
-                          </div>
-                        );
-                      })}
-
-                      {/* Tool Execution Feedback (visible during streaming) */}
-                      {toolExecutions.length > 0 && (
-                        <ToolExecutionFeedback
-                          executions={toolExecutions}
-                          compact={false}
-                          maxVisible={5}
-                          allowCancel={true}
-                          onCancel={handleToolCancel}
-                          className="mb-4"
-                        />
-                      )}
-
-                      {/* Active Plan Approval Card */}
-                      {activePlan && (
-                        <PlanApprovalCard
-                          plan={activePlan}
-                          onApprove={handlePlanApprove}
-                          onReject={handlePlanReject}
-                          onModify={handlePlanModify}
-                          className="mb-4"
-                        />
-                      )}
-
-                      {/* Active Sub-Agent Delegations */}
-                      {activeDelegations.filter(d => d.status === 'pending_approval' || d.status === 'in_progress').map(delegation => (
-                        <SubAgentDelegationCard
-                          key={delegation.id}
-                          delegation={delegation}
-                          onApprove={handleDelegationApprove}
-                          onReject={handleDelegationReject}
-                          requiresApproval={delegation.status === 'pending_approval'}
-                          className="mb-4"
-                        />
-                      ))}
-
-                      {/* Streaming Message (visible during streaming and after completion until next prompt) */}
-                      {(isStreaming || streamState.status === 'complete' || streamState.status === 'thinking' || streamState.status === 'streaming') && (
-                        <div className="relative">
-                          <StreamingMessage
-                            state={streamState}
-                            expert={selectedExpert}
-                            mode={mode}
-                            className="w-full"
-                          />
-                        </div>
-                      )}
-
-                      {/* Error State */}
-                      {streamState.error && (
-                        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
-                          <p className="font-medium">Error</p>
-                          <p className="text-sm">{streamState.error.message}</p>
-                          {streamState.error.recoverable && (
-                            <button
-                              onClick={() => dispatch(streamActions.reset())}
-                              className="mt-2 text-sm text-red-600 underline hover:no-underline"
-                            >
-                              Try again
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {/* Scroll anchor */}
-                  <div ref={messagesEndRef} />
                 </div>
-              </div>
+              )}
 
-              {/* Suggestion Chips (after stream completes) */}
-              {!isStreaming && streamState.status === 'idle' && messages.length > 0 && streamState.suggestions && streamState.suggestions.length > 0 && (
+              {/* Scroll anchor */}
+              <div ref={messagesEndRef} />
+              </div>
+            </div>
+
+            {/* Suggestion Chips (after stream completes) */}
+            {!isStreaming && streamState.status === 'idle' && messages.length > 0 && streamState.suggestions && streamState.suggestions.length > 0 && (
+              <div className="max-w-4xl mx-auto px-4">
                 <VitalSuggestionChips
                   suggestions={streamState.suggestions}
                   onSelect={handleSuggestionSelect}
                   maxVisible={4}
                   layout="wrap"
                 />
-              )}
+              </div>
+            )}
 
-              {/* ═══════════════════════════════════════════════════════════════
-                  CHAT INPUT AT BOTTOM - Only shown after messages exist
-                  (Input starts at TOP under prompt starters, then moves here)
-                  ═══════════════════════════════════════════════════════════════ */}
-              {/* For Mode 1: Only show input when expert is selected (from sidebar) */}
-              {/* For Mode 2: Always show input once in conversation phase */}
-              {/* IMPORTANT: Only show at bottom when messages.length > 0 (input moves from top) */}
-              {messages.length > 0 && (mode === 'mode2' || selectedExpert) && (
+            {/* ═══════════════════════════════════════════════════════════════
+                CHAT INPUT AT BOTTOM - Only shown after messages exist
+                (Input starts at TOP under prompt starters, then moves here)
+                ═══════════════════════════════════════════════════════════════ */}
+            {/* For Mode 1: Only show input when expert is selected (from sidebar) */}
+            {/* For Mode 2: Always show input once in conversation phase */}
+            {/* IMPORTANT: Only show at bottom when messages.length > 0 (input moves from top) */}
+            {messages.length > 0 && (mode === 'mode2' || selectedExpert) && (
+              <div className="border-t bg-white/80 backdrop-blur-sm">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="border-t bg-white/80 backdrop-blur-sm relative"
+                  className="max-w-4xl mx-auto"
                 >
-                  {!inputCollapsed && (
-                    <button
-                      className="absolute right-3 top-2 text-xs px-3 py-1 rounded-full border border-slate-200 bg-white shadow-sm hover:border-purple-300 hover:text-purple-700 transition"
-                      onClick={() => setInputCollapsed(true)}
-                    >
-                      Collapse input
-                    </button>
-                  )}
-                  {!inputCollapsed ? (
-                    <VitalPromptInput
-                      onSubmit={handleSend}
-                      onEnhance={handlePromptEnhance}
-                      isLoading={isStreaming}
-                      onStop={() => disconnect()}
-                      placeholder={
-                        selectedExpert
-                          ? `Continue chatting with ${selectedExpert.name}...`
-                          : 'Type your question...'
-                      }
-                      showAttachments={true}
-                      showEnhance={!!selectedExpert}
-                      maxLength={4000}
-                      className="w-full"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-between px-4 py-3 text-sm text-slate-600">
-                      <span>Input collapsed.</span>
-                      <button
-                        className="text-purple-600 font-medium hover:underline"
-                        onClick={() => setInputCollapsed(false)}
-                      >
-                        Expand input
-                      </button>
-                    </div>
-                  )}
+                  <VitalPromptInput
+                  onSubmit={handleSend}
+                  onEnhance={handlePromptEnhance}
+                  isLoading={isStreaming}
+                  onStop={() => disconnect()}
+                  placeholder={
+                    selectedExpert
+                      ? `Continue chatting with ${selectedExpert.name}...`
+                      : 'Type your question...'
+                  }
+                  showAttachments={true}
+                  showEnhance={!!selectedExpert}
+                  maxLength={4000}
+                />
                 </motion.div>
-              )}
-            </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

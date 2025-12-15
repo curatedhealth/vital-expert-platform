@@ -56,15 +56,16 @@ class MissionRepository:
                 "status": state.get("status") or "pending",
                 "metadata": state,
             }
-            # Required NOT NULL fields
-            if state.get("tenant_id"):
-                row["tenant_id"] = state["tenant_id"]
+            # Required NOT NULL fields with defaults
+            # tenant_id is NOT NULL - use platform default if not provided
+            PLATFORM_TENANT_UUID = "00000000-0000-0000-0000-000000000001"
+            row["tenant_id"] = state.get("tenant_id") or PLATFORM_TENANT_UUID
             # user_id is NOT NULL - use system user UUID if not provided
             # This allows API-initiated missions without auth context
             SYSTEM_USER_UUID = "00000000-0000-0000-0000-000000000000"
             row["user_id"] = state.get("user_id") or SYSTEM_USER_UUID
-            if state.get("mode"):
-                row["mode"] = state["mode"]
+            # mode is NOT NULL - default to 3 (autonomous) if not provided
+            row["mode"] = state.get("mode") or 3
             if state.get("goal"):
                 row["goal"] = state["goal"]
             if state.get("template_id"):
@@ -110,22 +111,28 @@ class MissionRepository:
         agent_task: str | None = None,
         runner_code: str | None = None,
         duration_ms: int | None = None,
+        tenant_id: str | None = None,
     ) -> None:
         if not self.client:
             return
         try:
-            self.client.table("mission_events").insert(
-                {
-                    "mission_id": mission_id,
-                    "event_type": event_type,
-                    "event_data": event_data,
-                    "agent_name": agent_name,
-                    "agent_level": agent_level,
-                    "agent_task": agent_task,
-                    "runner_code": runner_code,
-                    "duration_ms": duration_ms,
-                }
-            ).execute()
+            # Include extra metadata in event_data JSONB field
+            # These columns don't exist in the base schema but are useful context
+            enriched_event_data = {
+                **event_data,
+                "agent_level": agent_level,
+                "runner_code": runner_code,
+                "duration_ms": duration_ms,
+                "tenant_id": tenant_id,
+            }
+            row = {
+                "mission_id": mission_id,
+                "event_type": event_type,
+                "event_data": enriched_event_data,
+                "agent_name": agent_name,
+                "agent_task": agent_task,
+            }
+            self.client.table("mission_events").insert(row).execute()
         except Exception as exc:
             logger.error(
                 "mission_event_persist_failed",

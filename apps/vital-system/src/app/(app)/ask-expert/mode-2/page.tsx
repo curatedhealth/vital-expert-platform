@@ -1,28 +1,31 @@
 'use client';
 
 /**
- * VITAL Platform - Mode 2: Smart Copilot (Interactive Auto)
+ * VITAL Platform - Mode 2: Smart Copilot
  *
- * User types a query first, then Fusion Intelligence
- * automatically selects the best expert for the conversation.
+ * Redirects to /ask-expert/interactive?mode=auto
  *
- * Features:
- * - FusionSelector for AI-powered expert selection
- * - Query-first flow (user describes need, AI picks expert)
- * - ChatInput with file attachments
- * - Full SSE streaming with 12 event types
- * - HITL components for human oversight
+ * Mode 2 = Mode 1 + Automatic Agent Selection
+ * - Same UI as Mode 1 (InteractiveView)
+ * - Backend uses FusionSelector/GraphRAG to auto-select best expert
+ * - User types first message → Backend auto-selects → Conversation starts
  *
- * Updated: December 12, 2025 - Wired to InteractiveView with ChatInput
+ * Updated: December 15, 2025 - Unified with Mode 1 via shared interactive route
  */
 
-import { Suspense } from 'react';
-import { useTenant } from '@/contexts/TenantContext';
-import { InteractiveView } from '@/features/ask-expert/views/InteractiveView';
-import { ErrorBoundary } from '@/features/ask-expert/components/errors';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
-function LoadingState() {
+export default function Mode2SmartChatPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect to unified interactive route with auto mode
+    router.replace('/ask-expert/interactive?mode=auto');
+  }, [router]);
+
+  // Show loading while redirecting
   return (
     <div className="flex-1 flex items-center justify-center h-[calc(100vh-4rem)]">
       <div className="flex flex-col items-center gap-3">
@@ -30,26 +33,5 @@ function LoadingState() {
         <p className="text-sm text-stone-500">Loading Smart Copilot...</p>
       </div>
     </div>
-  );
-}
-
-export default function Mode2SmartChatPage() {
-  const tenant = useTenant();
-
-  if (!tenant) {
-    return <LoadingState />;
-  }
-
-  return (
-    <ErrorBoundary componentName="Mode2SmartChatPage">
-      <Suspense fallback={<LoadingState />}>
-        <div className="flex flex-col h-[calc(100vh-4rem)]">
-          <InteractiveView
-            mode="mode2"
-            tenantId={tenant.id}
-          />
-        </div>
-      </Suspense>
-    </ErrorBoundary>
   );
 }

@@ -4,22 +4,23 @@
  * VITAL Platform - InteractiveView Component
  *
  * Master view for Modes 1 & 2 (Interactive Chat modes):
- * - Mode 1 (Expert Chat): User selects an expert via the sidebar, then chats
- * - Mode 2 (Smart Copilot): User types query → FusionSelector AI picks expert
+ * - Mode 1 (Expert Chat): User manually selects an expert via the sidebar, then chats
+ * - Mode 2 (Smart Copilot): User types query → Backend FusionSelector auto-selects best expert
  *
  * Architecture:
- * - Mode 1: Skips to conversation phase; sidebar triggers expert selection via custom event
- * - Mode 2: Selection phase with FusionSelector → Conversation phase
+ * - Mode 1: User picks expert from sidebar → conversation starts
+ * - Mode 2: User types first message → Backend uses FusionSelector/GraphRAG to auto-select → conversation starts
+ * - BOTH modes share identical conversation UI (same view, same components)
  * - Uses streamReducer for centralized SSE state management
  * - Purple theme for VITAL brand consistency
  *
- * Note: FusionSelector is SHARED between Mode 2 and Mode 4:
- * - Mode 2: FusionSelector → Interactive conversation
- * - Mode 4: FusionSelector → Autonomous background execution
- * The difference is what happens AFTER expert selection.
+ * Backend Agent Selection (Mode 2):
+ * - FusionSelector runs on backend via /api/expert/mode2/stream
+ * - Uses 3-method GraphRAG fusion: PostgreSQL (30%) + Pinecone (50%) + Neo4j (20%)
+ * - Selected agent is returned in stream metadata
  *
  * Design System: VITAL Brand v6.0 (#9055E0)
- * Phase 2 Implementation - December 12, 2025
+ * Updated: December 15, 2025 - Unified Mode 1 & 2 to identical UI
  */
 
 import { useState, useReducer, useCallback, useEffect, useRef, useMemo } from 'react';
@@ -49,7 +50,10 @@ import { useSSEStream, type TokenEvent, type ReasoningEvent, type CitationEvent,
 
 // Components
 import { type Expert } from '../components/interactive/ExpertPicker';
-import { FusionSelector } from '../components/interactive/FusionSelector';
+// FusionSelector UI component removed from frontend - Mode 2 uses backend FusionSelector for auto-selection
+// Mode 1: User manually selects agent from sidebar
+// Mode 2: Backend uses FusionSelector/GraphRAG to auto-select best agent
+// Both modes share identical conversation UI
 // ExpertHeader no longer used - expert info now injected into global header via HeaderActionsContext
 import { VitalMessage, type Message } from '../components/interactive/VitalMessage';
 import { StreamingMessage } from '../components/interactive/StreamingMessage';
@@ -204,14 +208,16 @@ export function InteractiveView({
   } | null>(null);
 
   // Phase management
+  // BOTH Mode 1 and Mode 2 now start in conversation phase
+  // Mode 1: User picks expert from sidebar → Chats
+  // Mode 2: User types message → Backend auto-selects expert → Chats (same UI as Mode 1)
   const [phase, setPhase] = useState<ViewPhase>(() => {
     // Skip selection if we have a loaded conversation or initial agent ID
     if (initialConversation || effectiveInitialAgentId) return 'conversation';
-    // Mode 1: Skip to conversation - user picks expert from sidebar
-    // The sidebar will emit 'ask-expert:expert-selected' event when user picks
-    if (mode === 'mode1') return 'conversation';
-    // Mode 2 starts with selection (for query input via FusionSelector)
-    return 'selection';
+    // Both modes now start directly in conversation phase
+    // Mode 1: User picks expert from sidebar
+    // Mode 2: User types first message, backend auto-selects
+    return 'conversation';
   });
 
   // Expert state
@@ -884,35 +890,9 @@ export function InteractiveView({
 
       <AnimatePresence mode="wait">
         {/* ═══════════════════════════════════════════════════════════════
-            SELECTION PHASE (Mode 2 only)
-            Mode 1: Skips to conversation - user picks expert from sidebar
-            Mode 2: FusionSelector (query-first, AI selects)
-            ═══════════════════════════════════════════════════════════════ */}
-        {phase === 'selection' && mode === 'mode2' && (
-          <motion.div
-            key="selection"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="flex-1 overflow-auto"
-          >
-            <FusionSelector
-              tenantId={tenantId}
-              onQuerySubmit={(query) => {
-                // In Mode 2, submitting a query starts the fusion process
-                // The expert will be auto-selected based on the query
-                handleSend(query);
-                setPhase('conversation');
-              }}
-              onExpertSelected={handleExpertSelect}
-              onModeSwitch={handleModeSwitch}
-            />
-          </motion.div>
-        )}
-
-        {/* ═══════════════════════════════════════════════════════════════
             CONVERSATION PHASE (Identical UI for Mode 1 & 2)
+            Mode 1: User picks expert from sidebar → Chats
+            Mode 2: User types question → Backend auto-selects → Chats
             ═══════════════════════════════════════════════════════════════ */}
         {phase === 'conversation' && (
           <motion.div
@@ -931,7 +911,7 @@ export function InteractiveView({
             >
               {/* Centered content wrapper for narrower, focused chat experience */}
               <div className="max-w-4xl mx-auto p-4 space-y-4">
-              {/* Empty state for Mode 1: Guide user to pick expert from sidebar */}
+              {/* Empty state for Mode 1 (no expert): Guide user to pick expert from sidebar */}
               {mode === 'mode1' && !selectedExpert && messages.length === 0 && (
                 <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
                   <motion.div
@@ -954,6 +934,55 @@ export function InteractiveView({
                       <span>Experts are organized by specialty</span>
                     </div>
                   </motion.div>
+                </div>
+              )}
+
+              {/* ═══════════════════════════════════════════════════════════════
+                  EMPTY STATE: Mode 2 (Auto-Select) - Prompt Input at TOP
+                  User types question, backend auto-selects best expert
+                  Same UI as Mode 1 with expert, but shows Fusion Intelligence branding
+                  ═══════════════════════════════════════════════════════════════ */}
+              {mode === 'mode2' && !selectedExpert && messages.length === 0 && (
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
+                  <div className="w-full max-w-3xl space-y-6">
+                    {/* Welcome Header - Fusion Intelligence branding */}
+                    <div className="text-center mb-4">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <Sparkles className="h-8 w-8 text-white" />
+                      </div>
+                      <h2 className="text-xl font-semibold text-slate-900 mb-2">
+                        Ask Anything
+                      </h2>
+                      <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                        Describe your question and our Fusion Intelligence will automatically connect you with the best expert.
+                      </p>
+                    </div>
+
+                    {/* Prompt Input for Mode 2 Auto-Select */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2, duration: 0.3 }}
+                      className="w-full"
+                    >
+                      <VitalPromptInput
+                        onSubmit={handleSend}
+                        onEnhance={handlePromptEnhance}
+                        isLoading={isStreaming}
+                        onStop={() => disconnect()}
+                        placeholder="What would you like help with today?"
+                        showAttachments={true}
+                        showEnhance={false}
+                        maxLength={4000}
+                      />
+                    </motion.div>
+
+                    {/* Mode indicator */}
+                    <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      <span>Fusion Intelligence • Auto Expert Selection</span>
+                    </div>
+                  </div>
                 </div>
               )}
 

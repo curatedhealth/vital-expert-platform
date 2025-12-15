@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
     const {
       conversation_id,
       message,
+      session_id,    // Accept session_id from frontend (same as Mode 1)
+      tenant_id,     // Accept tenant_id from frontend (same as Mode 1)
       options = {},
     } = body;
 
@@ -68,7 +70,9 @@ export async function POST(request: NextRequest) {
         mode: 2, // Mode 2 = Automatic Interactive (Fusion auto-selection)
         // expert_id: undefined,  // Explicitly omitted for Mode 2
         message,
-        session_id: conversation_id || crypto.randomUUID(),
+        // Use session_id from body, fallback to conversation_id, then generate new
+        session_id: session_id || conversation_id || crypto.randomUUID(),
+        tenant_id: tenant_id || tenantId, // Pass tenant_id to backend
         enable_rag: options.enable_rag ?? true,
         enable_web_search: options.enable_web_search ?? true,
         response_depth: options.response_depth || 'standard',

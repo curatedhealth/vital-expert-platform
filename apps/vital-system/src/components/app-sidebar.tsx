@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/sidebar"
 import {
   SidebarDashboardContent,
-  SidebarAgentsContent,
   SidebarAskPanelContent,
   SidebarKnowledgeContent,
   SidebarPromptPrismContent,
@@ -31,6 +30,7 @@ import {
   SidebarToolsContent,
   SidebarSkillsContent,
 } from "@/components/sidebar-view-content"
+import { SidebarAgentsContent } from "@/components/sidebar/views/SidebarAgentsContent"
 
 export function AppSidebar({
   className,

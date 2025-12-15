@@ -23,7 +23,7 @@ Features:
 from __future__ import annotations
 
 import asyncio
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -39,7 +39,7 @@ except ImportError:
     ToolRegistry = None  # type: ignore
     TOOL_REGISTRY_AVAILABLE = False
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 # ============================================================================

@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import asyncio
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -25,7 +25,7 @@ from langgraph_workflows.modes34.resilience import (
     L4_WORKER_MAX_RETRIES,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 _fs = VirtualFilesystem()
 
 
@@ -63,7 +63,7 @@ async def delegate_to_l4(
     """
     Wrapper for L4 workers with real L5 tool execution and cost rollup.
     """
-    logger.info("modes34_delegate_to_l4 worker=%s task=%s", worker_code, task)
+    logger.info("modes34_delegate_to_l4", worker=worker_code, task=task)
     context = context or {}
     runner = _pick_runner(worker_code, stage=context.get("stage"))
     runner_codes = [runner.get("run_code")] if runner else []
@@ -77,7 +77,7 @@ async def delegate_to_l4(
 
     if agent_id:
         # Database-driven: use agent_tool_assignments table
-        logger.info("l4_using_agent_tools agent_id=%s worker=%s", agent_id[:8], worker_code)
+        logger.info("l4_using_agent_tools", agent_id=agent_id[:8], worker=worker_code)
         l5_summary = await l5_exec.execute_for_agent(
             agent_id=agent_id,
             query=task,
@@ -127,23 +127,23 @@ async def delegate_to_l4(
     except asyncio.CancelledError:
         # CRITICAL C5: NEVER swallow CancelledError
         logger.warning(
-            "l4_worker_execution_cancelled worker=%s task_preview=%s",
-            worker_code,
-            task[:120],
+            "l4_worker_execution_cancelled",
+            worker=worker_code,
+            task_preview=task[:120],
         )
         raise
     except (LLMTimeoutError, LLMRetryExhaustedError) as exc:
         logger.error(
-            "l4_worker_timeout_or_retry_exhausted worker=%s error=%s",
-            worker_code,
-            str(exc),
+            "l4_worker_timeout_or_retry_exhausted",
+            worker=worker_code,
+            error=str(exc),
         )
         raise
     except Exception as exc:
         logger.error(
-            "l4_worker_execution_failed worker=%s error=%s",
-            worker_code,
-            str(exc),
+            "l4_worker_execution_failed",
+            worker=worker_code,
+            error=str(exc),
             exc_info=True,
         )
         raise

@@ -452,7 +452,7 @@ function SuitePageContent() {
                   onRefresh={loadData}
                   isAdmin={isAdmin}
                   cardVariant="rich"
-                  gridColumns={{ sm: 1, md: 2, lg: 3, xl: 4 }}
+                  gridColumns={{ sm: 1, md: 2, lg: 3 }}
                   onAssetClick={handlePromptClick}
                   onEdit={handleEditPrompt}
                   onDelete={handleDeleteConfirm}

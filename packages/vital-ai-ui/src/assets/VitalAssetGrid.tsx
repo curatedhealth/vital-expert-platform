@@ -31,14 +31,13 @@ const DEFAULT_COLUMNS = {
   sm: 1,
   md: 2,
   lg: 3,
-  xl: 4,
 };
 
 /**
  * Generate responsive grid column classes
  */
 function getGridClasses(columns: VitalAssetGridProps['columns'] = DEFAULT_COLUMNS): string {
-  const { sm = 1, md = 2, lg = 3, xl = 4 } = columns;
+  const { sm = 1, md = 2, lg = 3, xl } = columns;
 
   return cn(
     'grid gap-4',

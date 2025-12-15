@@ -620,25 +620,49 @@ export function InteractiveView({
     }
   }, [user?.id, sessionId, initialConversation, conversationCreated, selectedExpert?.id, mode]);
 
-  // Finalize assistant message when stream completes
+  // Finalize assistant message when stream completes (with or without content)
   useEffect(() => {
-    if (streamState.status === 'complete' && streamState.content) {
-      const assistantMessage = createAssistantMessage(
-        streamState.content,
-        selectedExpert,
-        streamState
-      );
-      setMessages(prev => {
-        const updatedMessages = [...prev, assistantMessage];
-        // Persist messages to database for sidebar history
-        // Using setTimeout to ensure state update completes first
-        setTimeout(() => persistMessages(updatedMessages), 100);
-        return updatedMessages;
-      });
+    if (streamState.status === 'complete') {
+      // Only create message if we have content OR reasoning (shows partial response)
+      if (streamState.content || streamState.reasoning.length > 0) {
+        const assistantMessage = createAssistantMessage(
+          streamState.content || '(Response generation completed without content)',
+          selectedExpert,
+          streamState
+        );
+        setMessages(prev => {
+          const updatedMessages = [...prev, assistantMessage];
+          // Persist messages to database for sidebar history
+          // Using setTimeout to ensure state update completes first
+          setTimeout(() => persistMessages(updatedMessages), 100);
+          return updatedMessages;
+        });
+      }
       // Reset stream state for next message
       dispatch(streamActions.reset());
     }
-  }, [streamState.status, streamState.content, selectedExpert, persistMessages]);
+  }, [streamState.status, streamState.content, streamState.reasoning.length, selectedExpert, persistMessages]);
+
+  // Handle stream errors - add error message to conversation
+  useEffect(() => {
+    if (streamState.status === 'error' && streamState.error) {
+      console.error('[InteractiveView] Stream error:', streamState.error);
+
+      // Create error message for the conversation
+      const errorContent = `**Error:** ${streamState.error.message || 'An unexpected error occurred'}${
+        streamState.error.recoverable ? '\n\n*You can try sending your message again.*' : ''
+      }`;
+
+      const errorMessage = createAssistantMessage(
+        errorContent,
+        selectedExpert,
+        streamState
+      );
+
+      setMessages(prev => [...prev, errorMessage]);
+      dispatch(streamActions.reset());
+    }
+  }, [streamState.status, streamState.error, selectedExpert]);
 
   // =========================================================================
   // HANDLERS

@@ -198,10 +198,9 @@ export default function PanelHistoryPage() {
                 return (
                   <Card
                     key={session.sessionId}
-                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    className="hover:shadow-md transition-shadow cursor-pointer group"
                     onClick={() => {
-                      // Navigate to view the panel details (could be a detail page)
-                      console.log('View panel:', session.sessionId);
+                      router.push(`/ask-panel/history/${session.conversationId}`);
                     }}
                   >
                     <CardHeader className="pb-2">

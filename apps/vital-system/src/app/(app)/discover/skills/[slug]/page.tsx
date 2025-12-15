@@ -44,9 +44,6 @@ import {
   Zap,
   Shield,
   Loader2,
-  ExternalLink,
-  Copy,
-  Check,
   Bot,
   TrendingUp,
   Star,
@@ -254,7 +251,6 @@ function SkillDetailContent({ slug }: { slug: string }) {
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Skill>>({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   // Related agents state
   const [relatedAgents, setRelatedAgents] = useState<RelatedAgent[]>([]);
@@ -391,14 +387,6 @@ function SkillDetailContent({ slug }: { slug: string }) {
     }
   };
 
-  const handleCopySlug = () => {
-    if (skill?.slug) {
-      navigator.clipboard.writeText(skill.slug);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   const handleCancel = () => {
     setEditForm(skill || {});
     setIsEditing(false);
@@ -457,34 +445,20 @@ function SkillDetailContent({ slug }: { slug: string }) {
         />
       </div>
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => router.push('/discover/skills')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div className="flex items-center gap-3">
-            <CategoryIcon className="h-8 w-8 text-stone-600" />
-            <div>
-              <h1 className="text-2xl font-bold">{skill.name}</h1>
-              <div className="flex items-center gap-2 text-sm text-stone-500">
-                <span>{skill.slug}</span>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={handleCopySlug}>
-                  {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Action Bar */}
+      <div className="flex items-center justify-between px-6 py-2 border-b border-stone-200 bg-white">
+        <Button variant="ghost" size="sm" onClick={() => router.push('/discover/skills')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
 
         {isAdmin && !isEditing && (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsEditing(true)}>
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
               <Pencil className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)}>
+            <Button variant="destructive" size="sm" onClick={() => setShowDeleteConfirm(true)}>
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </Button>
@@ -493,11 +467,11 @@ function SkillDetailContent({ slug }: { slug: string }) {
 
         {isEditing && (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleCancel} disabled={saving}>
+            <Button variant="outline" size="sm" onClick={handleCancel} disabled={saving}>
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button size="sm" onClick={handleSave} disabled={saving}>
               {saving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (

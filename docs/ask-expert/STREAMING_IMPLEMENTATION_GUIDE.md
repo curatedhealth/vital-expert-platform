@@ -10,12 +10,14 @@
 ## Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
-2. [Critical Files - DO NOT MODIFY WITHOUT TESTING](#critical-files)
-3. [Token Streaming Flow](#token-streaming-flow)
-4. [Real-Time Reasoning Flow](#real-time-reasoning-flow)
-5. [Key Implementation Details](#key-implementation-details)
-6. [Common Regression Causes](#common-regression-causes)
-7. [Testing Checklist](#testing-checklist)
+2. [Frontend Components](#frontend-components)
+3. [Backend Components](#backend-components)
+4. [Critical Files - DO NOT MODIFY WITHOUT TESTING](#critical-files)
+5. [Token Streaming Flow](#token-streaming-flow)
+6. [Real-Time Reasoning Flow](#real-time-reasoning-flow)
+7. [Key Implementation Details](#key-implementation-details)
+8. [Common Regression Causes](#common-regression-causes)
+9. [Testing Checklist](#testing-checklist)
 
 ---
 
@@ -63,6 +65,167 @@
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Frontend Components
+
+### Base Path: `apps/vital-system/src/`
+
+### Views
+
+| Component | Path | Description |
+|-----------|------|-------------|
+| `InteractiveView` | `features/ask-expert/views/InteractiveView.tsx` | Main orchestrator for Modes 1 & 2. Manages streaming state, SSE connection, and renders conversation UI. |
+
+### Hooks (State Management)
+
+| Hook | Path | Description |
+|------|------|-------------|
+| `useSSEStream` | `features/ask-expert/hooks/useSSEStream.ts` | Creates EventSource connection, parses SSE events, provides callbacks for token/reasoning/citation/done/error events. |
+| `streamReducer` | `features/ask-expert/hooks/streamReducer.ts` | Reducer for streaming state. Handles CONTENT_APPEND, REASONING_ADD, CITATION_ADD, COMPLETE, ERROR actions. Contains `_updateTrigger` for React re-render detection. |
+| `streamActions` | `features/ask-expert/hooks/streamReducer.ts` | Action creators for stream reducer (appendContent, addReasoning, addCitation, complete, error, reset). |
+
+### Interactive Components
+
+| Component | Path | Description |
+|-----------|------|-------------|
+| `StreamingMessage` | `features/ask-expert/components/interactive/StreamingMessage.tsx` | Renders the AI response during streaming. Shows VitalThinking, VitalStreamText, citations, and loading states. |
+| `VitalMessage` | `features/ask-expert/components/interactive/VitalMessage.tsx` | Renders completed messages (both user and assistant). Uses VitalThinking for reasoning display. |
+| `VitalThinking` | `features/ask-expert/components/interactive/VitalThinking.tsx` | Expandable reasoning/thinking display. Shows step-by-step thinking process with animations. |
+| `VitalThinkingCompact` | `features/ask-expert/components/interactive/VitalThinking.tsx` | Compact version of thinking display for inline use. |
+| `ExpertPicker` | `features/ask-expert/components/interactive/ExpertPicker.tsx` | Expert selection UI. Exports `Expert` type used throughout streaming. |
+| `FusionSelector` | `features/ask-expert/components/interactive/FusionSelector.tsx` | Mode 2 auto-selection UI with Fusion Intelligence. |
+| `CitationList` | `features/ask-expert/components/interactive/CitationList.tsx` | Renders list of citations/references from AI response. |
+| `ToolCallList` | `features/ask-expert/components/interactive/ToolCallList.tsx` | Renders tool calls made by the AI during response generation. |
+| `VitalSuggestionChips` | `features/ask-expert/components/interactive/VitalSuggestionChips.tsx` | Follow-up suggestion chips shown after response completion. |
+| `ChatInput` | `features/ask-expert/components/interactive/ChatInput.tsx` | Legacy chat input component. |
+| `AgentSelectionCard` | `features/ask-expert/components/interactive/AgentSelectionCard.tsx` | Card UI for expert selection. Exports `VitalLevelBadge`. |
+| `ConversationHistorySidebar` | `features/ask-expert/components/interactive/ConversationHistorySidebar.tsx` | Sidebar showing conversation history. |
+
+### HITL Components (Human-in-the-Loop)
+
+| Component | Path | Description |
+|-----------|------|-------------|
+| `HITLCheckpointModal` | `features/ask-expert/components/interactive/HITLCheckpointModal.tsx` | Modal for human checkpoints during AI execution. |
+| `PlanApprovalCard` | `features/ask-expert/components/interactive/PlanApprovalCard.tsx` | Card UI for approving AI execution plans. |
+| `SubAgentDelegationCard` | `features/ask-expert/components/interactive/SubAgentDelegationCard.tsx` | Card UI for sub-agent delegation decisions. |
+| `ToolExecutionFeedback` | `features/ask-expert/components/interactive/ToolExecutionFeedback.tsx` | Feedback UI for tool execution results. |
+
+### Shared UI Components (vital-ai-ui)
+
+| Component | Path | Description |
+|-----------|------|-------------|
+| `VitalStreamText` | `components/vital-ai-ui/conversation/VitalStreamText.tsx` | Renders streaming text with markdown parsing. Handles incomplete markdown during streaming. Supports inline citations. |
+| `VitalPromptInput` | `components/vital-ai-ui/conversation/VitalPromptInput.tsx` | Enhanced prompt input with AI enhance, drag-drop, character counter. |
+| `VitalThinking` (shared) | `packages/vital-ai-ui/src/reasoning/VitalThinking.tsx` | Shared version of thinking component in package. |
+| `VitalSourceList` | `packages/vital-ai-ui/src/reasoning/VitalSourceList.tsx` | Renders source/reference lists. |
+| `VitalCitation` | `packages/vital-ai-ui/src/reasoning/VitalCitation.tsx` | Single citation component. |
+| `VitalInlineCitation` | `packages/vital-ai-ui/src/reasoning/VitalInlineCitation.tsx` | Inline citation pill component. |
+| `VitalSources` | `packages/vital-ai-ui/src/reasoning/VitalSources.tsx` | Sources container component. |
+
+### Context Providers
+
+| Context | Path | Description |
+|---------|------|-------------|
+| `HeaderActionsContext` | `contexts/header-actions-context.tsx` | Allows pages to inject content into global header. Used by InteractiveView to show expert info in header. |
+| `AskExpertContext` | `contexts/ask-expert-context.tsx` | Global state for Ask Expert feature. |
+
+### Layout Components
+
+| Component | Path | Description |
+|-----------|------|-------------|
+| `UnifiedDashboardLayout` | `components/dashboard/unified-dashboard-layout.tsx` | Main layout with sidebar, breadcrumb, header. Wraps with `HeaderActionsProvider`. |
+| `SidebarAskExpert` | `components/sidebar-ask-expert.tsx` | Sidebar content for Ask Expert section. |
+| `AppSidebar` | `components/app-sidebar.tsx` | Main application sidebar. |
+
+### UI Primitives (shadcn/ui)
+
+| Component | Path | Description |
+|-----------|------|-------------|
+| `Breadcrumb` | `components/ui/breadcrumb.tsx` | Breadcrumb navigation components (BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator). |
+| `Button` | `components/ui/button.tsx` | Button component. |
+| `Card` | `components/ui/card.tsx` | Card container components. |
+| `Tooltip` | `components/ui/tooltip.tsx` | Tooltip components. |
+| `Separator` | `components/ui/separator.tsx` | Visual separator. |
+
+---
+
+## Backend Components
+
+### Base Path: `services/ai-engine/src/`
+
+### API Routes
+
+| Route | Path | Description |
+|-------|------|-------------|
+| `ask_expert_interactive` | `api/routes/ask_expert_interactive.py` | Main SSE streaming endpoint for Mode 1 & 2. Handles `/api/expert/mode1/stream` and `/api/expert/mode2/stream`. |
+| `ask_expert` | `api/routes/ask_expert.py` | Non-streaming Ask Expert endpoints. |
+| `core` | `api/routes/core.py` | Health check and core endpoints. |
+
+### Streaming Infrastructure
+
+| Module | Path | Description |
+|--------|------|-------------|
+| `sse_formatter` | `streaming/sse_formatter.py` | Formats events for SSE protocol. Creates `token`, `reasoning`, `citation`, `done`, `error` event types. |
+| `stream_manager` | `streaming/stream_manager.py` | Manages stream lifecycle, buffering, and delivery. |
+
+### LangGraph Workflows
+
+| Workflow | Path | Description |
+|----------|------|-------------|
+| `ask_expert_mode1_workflow` | `langgraph_workflows/ask_expert/ask_expert_mode1_workflow.py` | Mode 1 (Manual Selection) workflow. Orchestrates agent execution with streaming support. |
+| `ask_expert_mode2_workflow` | `langgraph_workflows/ask_expert/ask_expert_mode2_workflow.py` | Mode 2 (Auto Selection) workflow. Includes Fusion Intelligence for agent selection. |
+
+### LangGraph Nodes
+
+| Node | Path | Description |
+|------|------|-------------|
+| `input_processor` | `langgraph_workflows/ask_expert/shared/nodes/input_processor.py` | Processes and validates input for workflows. |
+| `execute_expert` | `langgraph_workflows/ask_expert/ask_expert_mode1_workflow.py` | Executes the expert agent with OpenAI streaming. |
+| `format_output` | `langgraph_workflows/ask_expert/shared/nodes/format_output.py` | Formats final output with citations and metadata. |
+| `rag_retriever` | `langgraph_workflows/ask_expert/shared/nodes/rag_retriever.py` | Retrieves relevant documents for context. |
+| `l3_context_engineer` | `langgraph_workflows/ask_expert/shared/nodes/l3_context_engineer.py` | L3 context engineering for advanced queries. |
+
+### Services
+
+| Service | Path | Description |
+|---------|------|-------------|
+| `agent_instantiation_service` | `services/agent_instantiation_service.py` | Instantiates agents with proper configuration, personalities, and tools. |
+| `unified_rag_service` | `services/unified_rag_service.py` | Unified RAG service for document retrieval. |
+| `graphrag_selector` | `services/graphrag_selector.py` | GraphRAG-based agent selection (Pinecone + Neo4j + PostgreSQL fusion). |
+| `supabase_client` | `services/supabase_client.py` | Supabase database client. |
+| `cache_manager` | `services/cache_manager.py` | Redis/memory caching for performance. |
+
+### LLM Infrastructure
+
+| Module | Path | Description |
+|--------|------|-------------|
+| `llm_factory` | `infrastructure/llm/llm_factory.py` | Creates LLM clients (OpenAI, Anthropic, etc.). |
+| `openai_client` | `infrastructure/llm/openai_client.py` | OpenAI API client with streaming support. |
+
+### Domain Models
+
+| Model | Path | Description |
+|-------|------|-------------|
+| `Agent` | `domain/entities/agent.py` | Agent entity with configuration. |
+| `Conversation` | `domain/entities/conversation.py` | Conversation entity. |
+| `Message` | `domain/entities/message.py` | Message entity (user/assistant). |
+
+### API Schemas
+
+| Schema | Path | Description |
+|--------|------|-------------|
+| `StreamEvent` | `api/schemas/streaming.py` | SSE event schemas (TokenEvent, ReasoningEvent, CitationEvent, etc.). |
+| `AskExpertRequest` | `api/schemas/ask_expert.py` | Request schema for Ask Expert endpoints. |
+| `AskExpertResponse` | `api/schemas/ask_expert.py` | Response schema for Ask Expert endpoints. |
+
+### Middleware
+
+| Middleware | Path | Description |
+|------------|------|-------------|
+| `request_context` | `api/middleware/request_context.py` | Request context middleware for logging and tracing. |
+| `error_handler` | `api/middleware/error_handler.py` | Global error handling middleware. |
 
 ---
 

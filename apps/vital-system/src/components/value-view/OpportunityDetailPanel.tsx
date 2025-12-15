@@ -439,12 +439,19 @@ interface RelatedAgentCardProps {
 }
 
 function RelatedAgentCard({ agent }: RelatedAgentCardProps) {
+  const [avatarError, setAvatarError] = React.useState(false);
+
   return (
     <Card className="p-3">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-          {agent.avatar_url ? (
-            <img src={agent.avatar_url} alt={agent.name} className="w-8 h-8 rounded" />
+          {agent.avatar_url && !avatarError ? (
+            <img
+              src={agent.avatar_url}
+              alt={agent.name}
+              className="w-8 h-8 rounded"
+              onError={() => setAvatarError(true)}
+            />
           ) : (
             <Bot className="h-5 w-5 text-purple-600" />
           )}

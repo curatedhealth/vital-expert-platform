@@ -10,7 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from "@/lib/shared/components/ui/popover"
-import { cn } from "@/lib/shared/services/utils"
+import { cn } from "@/lib/utils"
 
 interface DatePickerWithRangeProps {
   className?: string

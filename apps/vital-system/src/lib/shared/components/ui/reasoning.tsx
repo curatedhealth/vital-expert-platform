@@ -10,7 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from '@vital/ui';
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 // 🧠 Reasoning Component Interface
 interface ReasoningProps {

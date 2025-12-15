@@ -112,6 +112,9 @@ export const AgentCard = React.forwardRef<HTMLDivElement, AgentCardProps>(
     },
     ref
   ) => {
+    // Track if avatar image has errored
+    const [avatarError, setAvatarError] = React.useState(false);
+
     // Get card size configuration
     const sizeConfig = CARD_SIZES[size || 'comfortable'];
 
@@ -177,18 +180,19 @@ export const AgentCard = React.forwardRef<HTMLDivElement, AgentCardProps>(
                 borderColor: levelConfig?.base || 'transparent'
               }}
             >
-              {agent.avatar_url ? (
+              {agent.avatar_url && !avatarError ? (
                 <Image
                   src={agent.avatar_url}
                   alt={agent.avatar_description || agent.name}
                   fill
                   className="object-cover"
                   sizes={`${sizeConfig.avatarSize}px`}
+                  onError={() => setAvatarError(true)}
                 />
               ) : (
                 <div
                   className="w-full h-full flex items-center justify-center text-white font-bold"
-                  style={{ backgroundColor: levelConfig?.base }}
+                  style={{ backgroundColor: levelConfig?.base || '#6366f1' }}
                 >
                   {agent.name.substring(0, 2).toUpperCase()}
                 </div>

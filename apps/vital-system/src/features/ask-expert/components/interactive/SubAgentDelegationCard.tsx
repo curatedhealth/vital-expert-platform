@@ -168,6 +168,7 @@ interface AgentBadgeProps {
 
 function AgentBadge({ agent, side }: AgentBadgeProps) {
   const tierInfo = getTierInfo(agent.tier);
+  const [avatarError, setAvatarError] = useState(false);
 
   return (
     <div className={cn(
@@ -179,8 +180,13 @@ function AgentBadge({ agent, side }: AgentBadgeProps) {
         'w-10 h-10 rounded-lg flex items-center justify-center text-lg font-semibold',
         side === 'to' ? 'bg-purple-100 text-purple-700' : 'bg-stone-100 text-stone-700'
       )}>
-        {agent.avatar ? (
-          <img src={agent.avatar} alt={agent.displayName} className="w-full h-full rounded-lg object-cover" />
+        {agent.avatar && !avatarError ? (
+          <img
+            src={agent.avatar}
+            alt={agent.displayName}
+            className="w-full h-full rounded-lg object-cover"
+            onError={() => setAvatarError(true)}
+          />
         ) : (
           agent.displayName.charAt(0)
         )}

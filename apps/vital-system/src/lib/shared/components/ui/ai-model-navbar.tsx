@@ -42,7 +42,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@/lib/shared/components/ui/popover';
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 // 🎯 AI Model Navbar Props
 interface AIModelNavbarProps {

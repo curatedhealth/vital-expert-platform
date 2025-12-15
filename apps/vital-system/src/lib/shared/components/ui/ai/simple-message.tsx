@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 
-import { cn } from "@/lib/shared/services/utils";
+import { cn } from "@/lib/utils";
 
 export interface SimpleMessageProps extends React.HTMLAttributes<HTMLDivElement> {
   role: "user" | "assistant" | "system";

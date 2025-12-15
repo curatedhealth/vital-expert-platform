@@ -33,7 +33,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@vital/ui';
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 // import { useAuth } from '@vital/sdk/lib/supabase/auth-context';
 

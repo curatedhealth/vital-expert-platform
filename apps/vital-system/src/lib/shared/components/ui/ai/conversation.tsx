@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useRef } from "react";
 
-import { cn } from "@/lib/shared/services/utils";
+import { cn } from "@/lib/utils";
 
 import { Message, MessageProps } from "./message";
 

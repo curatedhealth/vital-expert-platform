@@ -9,7 +9,7 @@
 import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
-import { useTenantContext } from '@/contexts/TenantContext';
+import { useTenant } from '@/contexts/tenant-context';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -26,6 +26,14 @@ import {
   PanelStatus,
   PanelType,
   PanelAPIError,
+  // Unified Panel types
+  UnifiedPanelAgent,
+  UnifiedConsensusResult,
+  UnifiedComparisonMatrix,
+  UnifiedExpertResponse,
+  ExecuteUnifiedPanelRequest,
+  ExecuteUnifiedPanelResponse,
+  PanelTypeInfo,
 } from '@/lib/api/panel-client';
 
 // ============================================================================
@@ -41,6 +49,9 @@ export const panelKeys = {
   responses: (id: string) => [...panelKeys.detail(id), 'responses'] as const,
   consensus: (id: string) => [...panelKeys.detail(id), 'consensus'] as const,
   analytics: () => ['analytics', 'usage'] as const,
+  // Unified Panel keys
+  unifiedTypes: () => ['unified-panel', 'types'] as const,
+  unifiedHealth: () => ['unified-panel', 'health'] as const,
 };
 
 // ============================================================================
@@ -51,7 +62,7 @@ export const panelKeys = {
  * Get an authenticated Panel API client instance
  */
 export function usePanelAPIClient(): PanelAPIClient | null {
-  const { currentTenant } = useTenantContext();
+  const { tenant } = useTenant();
   const { user } = useAuth();
 
   const getAccessToken = useCallback(async () => {
@@ -61,16 +72,16 @@ export function usePanelAPIClient(): PanelAPIClient | null {
   }, []);
 
   return useMemo(() => {
-    if (!currentTenant?.id || !user?.id) {
+    if (!tenant?.id || !user?.id) {
       return null;
     }
 
     return createPanelAPIClient(
-      currentTenant.id,
+      tenant.id,
       user.id,
       getAccessToken
     );
-  }, [currentTenant?.id, user?.id, getAccessToken]);
+  }, [tenant?.id, user?.id, getAccessToken]);
 }
 
 // ============================================================================
@@ -421,4 +432,159 @@ export function usePrefetchPanel() {
     [client, queryClient]
   );
 }
+
+// ============================================================================
+// UNIFIED PANEL HOOKS (All 6 Panel Types)
+// ============================================================================
+
+/**
+ * Get all supported panel types with descriptions
+ */
+export function useUnifiedPanelTypes(
+  options?: Omit<UseQueryOptions<PanelTypeInfo[], PanelAPIError>, 'queryKey' | 'queryFn'>
+) {
+  const client = usePanelAPIClient();
+
+  return useQuery<PanelTypeInfo[], PanelAPIError>({
+    queryKey: panelKeys.unifiedTypes(),
+    queryFn: async () => {
+      if (!client) {
+        throw new PanelAPIError('Panel API client not initialized');
+      }
+      return client.getUnifiedPanelTypes();
+    },
+    enabled: !!client,
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes - types don't change often
+    ...options,
+  });
+}
+
+/**
+ * Check unified panel service health
+ */
+export function useUnifiedPanelHealth(
+  options?: Omit<UseQueryOptions<{
+    status: string;
+    service: string;
+    panel_types: string[];
+    streaming_enabled: boolean;
+  }, PanelAPIError>, 'queryKey' | 'queryFn'>
+) {
+  const client = usePanelAPIClient();
+
+  return useQuery({
+    queryKey: panelKeys.unifiedHealth(),
+    queryFn: async () => {
+      if (!client) {
+        throw new PanelAPIError('Panel API client not initialized');
+      }
+      return client.checkUnifiedPanelHealth();
+    },
+    enabled: !!client,
+    staleTime: 30 * 1000, // Cache for 30 seconds
+    ...options,
+  });
+}
+
+/**
+ * Execute a unified panel discussion (synchronous)
+ *
+ * Supports all 6 panel types:
+ * - structured: Sequential moderated discussion
+ * - open: Free-form brainstorming (parallel)
+ * - socratic: Dialectical questioning
+ * - adversarial: Pro/con debate format
+ * - delphi: Iterative consensus with voting
+ * - hybrid: Human-AI collaborative panels
+ */
+export function useExecuteUnifiedPanel(
+  options?: UseMutationOptions<ExecuteUnifiedPanelResponse, PanelAPIError, ExecuteUnifiedPanelRequest>
+) {
+  const client = usePanelAPIClient();
+  const queryClient = useQueryClient();
+
+  return useMutation<ExecuteUnifiedPanelResponse, PanelAPIError, ExecuteUnifiedPanelRequest>({
+    mutationFn: async (request) => {
+      if (!client) {
+        throw new PanelAPIError('Panel API client not initialized');
+      }
+      return client.executeUnifiedPanel(request);
+    },
+    onSuccess: (data) => {
+      // Invalidate panel lists
+      queryClient.invalidateQueries({ queryKey: panelKeys.lists() });
+
+      // Cache the result
+      queryClient.setQueryData(
+        panelKeys.detail(data.panel_id),
+        data
+      );
+    },
+    ...options,
+  });
+}
+
+/**
+ * Streaming callbacks for unified panel execution
+ */
+export interface UnifiedStreamingCallbacks {
+  onPanelStarted?: (data: { panel_id: string; panel_type: string; question: string; agent_count: number }) => void;
+  onExpertsLoaded?: (data: { experts: Array<{ id: string; name: string }> }) => void;
+  onExpertThinking?: (data: { expert_id: string; expert_name: string; position: number; total: number }) => void;
+  onExpertResponse?: (data: { expert_id: string; expert_name: string; content: string; confidence: number }) => void;
+  onCalculatingConsensus?: (data: { response_count: number }) => void;
+  onConsensusComplete?: (data: Partial<UnifiedConsensusResult>) => void;
+  onBuildingMatrix?: (data: Record<string, any>) => void;
+  onMatrixComplete?: (data: { aspects: number; overall_consensus: number; synthesis: string }) => void;
+  onPanelComplete?: (data: { panel_id: string; status: string; execution_time_ms: number; consensus_score: number; recommendation: string }) => void;
+  onError?: (error: { error: string }) => void;
+}
+
+/**
+ * Execute a unified panel with streaming
+ *
+ * Returns a mutation that triggers streaming execution with real-time callbacks.
+ */
+export function useExecuteUnifiedPanelStreaming(
+  callbacks: UnifiedStreamingCallbacks = {}
+) {
+  const client = usePanelAPIClient();
+  const queryClient = useQueryClient();
+
+  return useMutation<void, PanelAPIError, Omit<ExecuteUnifiedPanelRequest, 'save_to_db' | 'generate_matrix'>>({
+    mutationFn: async (request) => {
+      if (!client) {
+        throw new PanelAPIError('Panel API client not initialized');
+      }
+
+      await client.executeUnifiedPanelStreaming(request, {
+        onPanelStarted: callbacks.onPanelStarted,
+        onExpertsLoaded: callbacks.onExpertsLoaded,
+        onExpertThinking: callbacks.onExpertThinking,
+        onExpertResponse: callbacks.onExpertResponse,
+        onCalculatingConsensus: callbacks.onCalculatingConsensus,
+        onConsensusComplete: callbacks.onConsensusComplete,
+        onBuildingMatrix: callbacks.onBuildingMatrix,
+        onMatrixComplete: callbacks.onMatrixComplete,
+        onPanelComplete: (data) => {
+          callbacks.onPanelComplete?.(data);
+          // Invalidate panel lists after completion
+          queryClient.invalidateQueries({ queryKey: panelKeys.lists() });
+        },
+        onError: callbacks.onError,
+      });
+    },
+  });
+}
+
+// Re-export types for convenience
+export type {
+  UnifiedPanelAgent,
+  UnifiedConsensusResult,
+  UnifiedComparisonMatrix,
+  UnifiedExpertResponse,
+  ExecuteUnifiedPanelRequest,
+  ExecuteUnifiedPanelResponse,
+  PanelTypeInfo,
+};
 

@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { AgentAvatar } from '@/lib/shared/components/ui/agent-avatar';
 import { Button } from '@/lib/shared/components/ui/button';
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 // 📜 Auto-Scrolling Chat Container Interface
 interface ConversationProps {

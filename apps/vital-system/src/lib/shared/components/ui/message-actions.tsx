@@ -19,7 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/lib/shared/components/ui/tooltip';
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 // 🎯 Action Component Interfaces
 interface ActionsProps {

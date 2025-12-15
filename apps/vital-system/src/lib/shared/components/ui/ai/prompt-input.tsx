@@ -4,7 +4,7 @@ import { forwardRef, useRef, useImperativeHandle } from "react";
 import { Button } from "@/lib/shared/components/ui/button";
 import { Textarea } from "@/lib/shared/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/lib/shared/components/ui/tooltip";
-import { cn } from "@/lib/shared/services/utils";
+import { cn } from "@/lib/utils";
 
 export interface PromptInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange' | 'onSubmit'> {
   value?: string;

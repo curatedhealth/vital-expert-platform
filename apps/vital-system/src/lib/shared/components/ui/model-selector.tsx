@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/lib/shared/components/ui/select';
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 // 🤖 Model Configuration Types
 export interface ModelConfig {

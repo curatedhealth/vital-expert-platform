@@ -184,10 +184,12 @@ interface MessageAvatarProps {
 
 const MessageAvatar = React.forwardRef<HTMLDivElement, MessageAvatarProps>(
   ({ from, avatar, name, icon, color: customColor, ...props }, ref) => {
+    const [avatarError, setAvatarError] = React.useState(false);
+
     if (from === "log") return null
 
     const displayName = name || (from === "expert" ? "Expert" : from === "moderator" ? "Moderator" : from);
-    
+
     // Get color for this participant (use custom color if provided)
     const color = customColor || getParticipantColor(displayName, from);
     const IconComponent = icon;
@@ -204,8 +206,13 @@ const MessageAvatar = React.forwardRef<HTMLDivElement, MessageAvatarProps>(
         title={displayName}
         {...props}
       >
-        {avatar ? (
-          <img src={avatar} alt={displayName} className="w-full h-full rounded-full object-cover" />
+        {avatar && !avatarError ? (
+          <img
+            src={avatar}
+            alt={displayName}
+            className="w-full h-full rounded-full object-cover"
+            onError={() => setAvatarError(true)}
+          />
         ) : IconComponent ? (
           <IconComponent className="h-4 w-4" />
         ) : from === "user" ? (

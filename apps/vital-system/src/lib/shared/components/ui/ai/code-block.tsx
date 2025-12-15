@@ -5,7 +5,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight, oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import { Button } from "@/lib/shared/components/ui/button";
-import { cn } from "@/lib/shared/services/utils";
+import { cn } from "@/lib/utils";
 
 export interface CodeBlockProps extends React.HTMLAttributes<HTMLDivElement> {
   code: string;

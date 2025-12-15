@@ -5,7 +5,7 @@ import React from 'react';
 
 import { Badge } from '@/lib/shared/components/ui/badge';
 import { Button } from '@/lib/shared/components/ui/button';
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 // 🎯 Suggestion Component Types
 interface SuggestionProps {

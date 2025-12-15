@@ -121,12 +121,13 @@ export async function GET(
     startDate.setDate(startDate.getDate() - days);
 
     // Query agent_metrics table for this agent
+    // Use created_at if recorded_at doesn't exist
     const { data: metrics, error } = await supabase
       .from('agent_metrics')
       .select('*')
       .eq('agent_id', agentId)
-      .gte('recorded_at', startDate.toISOString())
-      .order('recorded_at', { ascending: false });
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('[Agent Stats] Supabase query error:', error);

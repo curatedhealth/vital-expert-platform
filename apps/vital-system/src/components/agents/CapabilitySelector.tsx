@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/lib/shared/components/ui';
-import { cn } from '@/lib/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 interface AvailableCapability {
   id: string;

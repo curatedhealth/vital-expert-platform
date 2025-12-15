@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 
 /**
  * GET /api/user-panels
- * Get all custom panels for the current user
+ * Get all panels for the current user (from panels table)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -20,10 +20,10 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized', message: 'Please sign in to view your panels' },
@@ -45,14 +45,12 @@ export async function GET(request: NextRequest) {
         fallback: true,
       });
     }
-    
-    // Fetch user's custom panels
+
+    // Fetch user's panels from panels table (filter by metadata.created_by)
     const { data: panels, error } = await serviceSupabase
-      .from('user_panels')
+      .from('panels')
       .select('*')
-      .eq('user_id', user.id)
-      .order('is_favorite', { ascending: false })
-      .order('last_used_at', { ascending: false, nullsFirst: false })
+      .eq('metadata->>created_by', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -83,7 +81,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/user-panels
- * Create a new custom panel for the current user
+ * Create a new panel directly in the panels table
  */
 export async function POST(request: NextRequest) {
   try {
@@ -99,10 +97,10 @@ export async function POST(request: NextRequest) {
         },
       }
     );
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized', message: 'Please sign in to create panels' },
@@ -174,55 +172,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get template panel data if based on template
-    let suggested_agents: string[] = [];
-    let default_settings: Record<string, any> = {};
-
-    if (base_panel_slug) {
-      const { data: templatePanel } = await serviceSupabase
-        .from('panels')
-        .select('suggested_agents, default_settings')
-        .eq('slug', base_panel_slug)
-        .single();
-
-      if (templatePanel) {
-        suggested_agents = templatePanel.suggested_agents || [];
-        default_settings = templatePanel.default_settings || {};
-      }
-    }
-
     // Use extracted agents if selected_agents is empty
     const finalAgents = (selected_agents && selected_agents.length > 0)
       ? selected_agents
       : extractedAgents;
 
-    // Create the custom panel
-    const { data: panel, error } = await serviceSupabase
-      .from('user_panels')
-      .insert({
-        user_id: user.id,
-        name: name.trim(),
-        description: description?.trim() || null,
-        category: category || 'panel',
+    // Generate a unique slug from name
+    const baseSlug = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_|_$/g, '');
+    const timestamp = Date.now().toString(36);
+    const slug = `${baseSlug}_${timestamp}`;
+
+    // Build insert object for panels table
+    // Panels table schema: id, slug, name, description, category, mode, framework, suggested_agents, default_settings, metadata
+    const insertData: Record<string, any> = {
+      slug,
+      name: name.trim(),
+      description: description?.trim() || null,
+      category: category || 'custom',
+      mode,
+      framework,
+      suggested_agents: finalAgents,
+      default_settings: custom_settings || {},
+      metadata: {
+        ...(metadata || {}),
+        created_by: user.id,
+        created_via: 'workflow_designer',
+        is_user_created: true,
         base_panel_slug: base_panel_slug || null,
-        is_template_based: !!base_panel_slug,
-        mode,
-        framework,
-        selected_agents: finalAgents,
-        suggested_agents,
-        custom_settings: custom_settings || {},
-        default_settings,
-        metadata: {
-          ...(metadata || {}),
-          created_via: 'workflow_designer',
-          node_count: workflow_definition?.nodes?.length || 0,
-          edge_count: workflow_definition?.edges?.length || 0,
-          expert_count: extractedAgents.length,
-        },
         icon: icon || null,
         tags: tags || [],
         workflow_definition: workflow_definition || null,
-      })
+        node_count: workflow_definition?.nodes?.length || 0,
+        edge_count: workflow_definition?.edges?.length || 0,
+        expert_count: finalAgents.length,
+      },
+    };
+
+    // Create the panel in panels table
+    const { data: panel, error } = await serviceSupabase
+      .from('panels')
+      .insert(insertData)
       .select()
       .single();
 
@@ -234,33 +227,33 @@ export async function POST(request: NextRequest) {
         details: error.details,
         hint: error.hint,
       });
-      
-      // Check if it's a "table not found" error
-      if (error.message?.includes('Could not find the table') || 
-          error.message?.includes('does not exist') ||
-          error.code === '42P01') {
-        return NextResponse.json(
-          { 
-            error: 'Database schema not initialized', 
-            message: 'The user_panels table does not exist. You need to run a migration to create it.',
-            details: 'Get the migration SQL at /api/user-panels/migration or run scripts/create-user-panels-table.sql in Supabase SQL Editor',
-            code: error.code,
-            migration_required: true,
-            migration_url: '/api/user-panels/migration',
-            quick_fix: {
-              step1: 'Go to: https://supabase.com/dashboard → Your Project → SQL Editor',
-              step2: 'Click "New Query"',
-              step3: 'Copy the SQL from: scripts/create-user-panels-table.sql',
-              step4: 'Paste and click "Run"',
-            },
-          },
-          { status: 503 }
-        );
+
+      // Check for duplicate slug
+      if (error.code === '23505' || error.message?.includes('duplicate')) {
+        // Try with a more unique slug
+        const retrySlug = `${baseSlug}_${user.id.slice(0, 8)}_${timestamp}`;
+        insertData.slug = retrySlug;
+
+        const { data: retryPanel, error: retryError } = await serviceSupabase
+          .from('panels')
+          .insert(insertData)
+          .select()
+          .single();
+
+        if (!retryError) {
+          console.log('[User Panels API] Retry with unique slug successful');
+          return NextResponse.json({
+            success: true,
+            panel: retryPanel,
+          }, { status: 201 });
+        }
+
+        console.error('[User Panels API] Retry also failed:', retryError);
       }
-      
+
       return NextResponse.json(
-        { 
-          error: 'Failed to create panel', 
+        {
+          error: 'Failed to create panel',
           message: error.message || 'Database error occurred',
           details: error.details || error.message,
           code: error.code,
@@ -298,10 +291,10 @@ function extractExpertAgentsFromWorkflow(workflowDefinition: any): string[] {
     const nodeType = node.data?.type || node.type;
     if (nodeType === 'expertAgent' || nodeType === 'agent') {
       // Extract agent ID from node config
-      const agentId = node.data?.config?.agentId || 
-                     node.config?.agentId || 
-                     node.data?.expertConfig?.id || 
-                     node.expertConfig?.id || 
+      const agentId = node.data?.config?.agentId ||
+                     node.config?.agentId ||
+                     node.data?.expertConfig?.id ||
+                     node.expertConfig?.id ||
                      node.id;
       if (agentId && !expertAgents.includes(agentId)) {
         expertAgents.push(agentId);
@@ -311,4 +304,3 @@ function extractExpertAgentsFromWorkflow(workflowDefinition: any): string[] {
 
   return expertAgents;
 }
-

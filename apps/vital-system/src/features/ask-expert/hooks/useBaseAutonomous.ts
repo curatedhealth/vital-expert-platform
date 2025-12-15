@@ -17,6 +17,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { logger } from '@vital/utils';
 import {
   useSSEStream,
   TokenEvent,
@@ -309,7 +310,7 @@ export function useBaseAutonomous(
         }
       }
     } catch (error) {
-      console.error('Status polling error:', error);
+      logger.error('Status polling error', { error });
     }
   }, [missionBaseUrl, mode]);
 

@@ -284,7 +284,7 @@ export const AgentGrid: React.FC<AgentGridProps> = ({
                     onAddToChat={onAddToChat}
                     showMetadata={showMetadata}
                     showSpawning={showSpawning}
-                    featured={featuredAgentIds.includes(agent.id)}
+                    featured={agent.id ? featuredAgentIds.includes(agent.id) : false}
                   />
                 ))}
               </div>

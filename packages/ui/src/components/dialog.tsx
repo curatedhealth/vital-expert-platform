@@ -56,7 +56,7 @@ const DialogTrigger = React.forwardRef<HTMLButtonElement, DialogTriggerProps>(
     if (asChild && React.isValidElement(children)) {
       return React.cloneElement(children, {
         ...props,
-        ...children.props,
+        ...(children.props as Record<string, any>),
         onClick: handleClick,
         ref,
       } as any)
@@ -128,7 +128,7 @@ const DialogClose = React.forwardRef<HTMLButtonElement, DialogCloseProps>(
     if (asChild && React.isValidElement(children)) {
       return React.cloneElement(children, {
         ...props,
-        ...children.props,
+        ...(children.props as Record<string, any>),
         onClick: handleClick,
         ref,
       } as any)

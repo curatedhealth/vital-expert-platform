@@ -7,7 +7,7 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { Button } from '@/shared/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 export function SimpleNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

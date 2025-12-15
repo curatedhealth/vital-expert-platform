@@ -8,8 +8,8 @@
 import { Database, Brain, Settings, BarChart3, Plus } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle, Button, Tabs, TabsContent, TabsList, TabsTrigger, Badge } from '@/shared/components/ui';
-import type { RagKnowledgeBase } from './index';
+import { Card, CardContent, CardHeader, CardTitle, Button, Tabs, TabsContent, TabsList, TabsTrigger, Badge } from '@/lib/shared/components/ui';
+import type { RagKnowledgeBase } from './types';
 
 import { AgentRagAssignments } from './AgentRagAssignments';
 import { CreateRagModal } from './CreateRagModal';
@@ -60,7 +60,6 @@ export const RagManagement: React.FC<RagManagementProps> = ({
     const mockGlobalRag: RagKnowledgeBase[] = [
       {
         id: '1',
-        name: 'fda-guidance-library',
         display_name: 'FDA Guidance Library',
         description: 'Comprehensive collection of FDA guidance documents, regulations, and compliance materials',
         purpose_description: 'Use for regulatory compliance questions, FDA guidance interpretation, and submission requirements',
@@ -72,7 +71,6 @@ export const RagManagement: React.FC<RagManagementProps> = ({
       },
       {
         id: '2',
-        name: 'clinical-trial-protocols',
         display_name: 'Clinical Trial Protocols Database',
         description: 'Curated database of successful clinical trial protocols and methodologies',
         purpose_description: 'Use for clinical trial design, protocol development, and methodology guidance',
@@ -103,7 +101,6 @@ export const RagManagement: React.FC<RagManagementProps> = ({
     const mockAgentRag: RagKnowledgeBase[] = [
       {
         id: '4',
-        name: 'fda-regulatory-specialist-knowledge',
         display_name: 'FDA Regulatory Specialist Knowledge',
         description: 'Specialized knowledge base for FDA regulatory strategy and submission optimization',
         purpose_description: 'Use for complex regulatory strategy decisions, submission planning, and FDA interaction guidance',
@@ -125,7 +122,6 @@ export const RagManagement: React.FC<RagManagementProps> = ({
       ...globalRagDatabases,
       {
         id: '5',
-        name: 'medical-device-regulations',
         display_name: 'Medical Device Regulations',
         description: 'Comprehensive medical device regulatory framework and classification guides',
         purpose_description: 'Use for medical device classification, 510(k) guidance, and device-specific regulations',
@@ -264,7 +260,22 @@ export const RagManagement: React.FC<RagManagementProps> = ({
           <AgentRagAssignments
             agentName={agentName}
             agentDisplayName={agentDisplayName}
-            assignedRagDatabases={agentRagDatabases}
+            assignedRagDatabases={agentRagDatabases.map(rag => ({
+              id: rag.id,
+              name: rag.name || rag.display_name.toLowerCase().replace(/\s+/g, '-'),
+              display_name: rag.display_name,
+              description: rag.description,
+              purpose_description: rag.purpose_description,
+              rag_type: rag.rag_type,
+              knowledge_domains: rag.knowledge_domains,
+              document_count: rag.document_count,
+              is_assigned: true,
+              assignment_priority: rag.assignment_priority,
+              usage_context: rag.usage_context,
+              is_primary: rag.is_primary,
+              last_used_at: rag.last_used_at,
+              custom_prompt_instructions: rag.custom_prompt_instructions,
+            }))}
             onUnassignRag={handleUnassignRag}
             onUpdatePriority={(ragId, priority) => {
               setAgentRagDatabases(prev =>
@@ -312,7 +323,7 @@ export const RagManagement: React.FC<RagManagementProps> = ({
                     )}
                   </div>
                   <div className="mt-3 flex flex-wrap gap-1">
-                    {rag.knowledge_domains.slice(0, 3).map((domain) => (
+                    {rag.knowledge_domains.slice(0, 3).map((domain: string) => (
                       <Badge key={domain} variant="outline" className="text-xs">
                         {domain}
                       </Badge>
@@ -332,7 +343,19 @@ export const RagManagement: React.FC<RagManagementProps> = ({
         {/* RAG Assignment */}
         <TabsContent value="assign-rag">
           <RagKnowledgeBaseSelector
-            availableRagDatabases={availableRagDatabases}
+            availableRagDatabases={availableRagDatabases.map(rag => ({
+              id: rag.id,
+              name: rag.name || rag.display_name.toLowerCase().replace(/\s+/g, '-'),
+              display_name: rag.display_name,
+              description: rag.description,
+              purpose_description: rag.purpose_description,
+              rag_type: rag.rag_type,
+              knowledge_domains: rag.knowledge_domains,
+              document_count: rag.document_count,
+              total_chunks: rag.total_chunks,
+              quality_score: rag.quality_score,
+              is_assigned: rag.is_assigned,
+            }))}
             onAssignRag={handleAssignRag}
             agentName={agentName}
           />
@@ -342,7 +365,22 @@ export const RagManagement: React.FC<RagManagementProps> = ({
         <TabsContent value="analytics">
           <RagAnalytics
             agentName={agentName}
-            assignedRagDatabases={agentRagDatabases}
+            assignedRagDatabases={agentRagDatabases.map(rag => ({
+              id: rag.id,
+              name: rag.name || rag.display_name.toLowerCase().replace(/\s+/g, '-'),
+              display_name: rag.display_name,
+              description: rag.description,
+              purpose_description: rag.purpose_description,
+              rag_type: rag.rag_type,
+              knowledge_domains: rag.knowledge_domains,
+              document_count: rag.document_count,
+              is_assigned: true,
+              assignment_priority: rag.assignment_priority,
+              usage_context: rag.usage_context,
+              is_primary: rag.is_primary,
+              last_used_at: rag.last_used_at,
+              custom_prompt_instructions: rag.custom_prompt_instructions,
+            }))}
           />
         </TabsContent>
       </Tabs>
@@ -351,7 +389,7 @@ export const RagManagement: React.FC<RagManagementProps> = ({
       <CreateRagModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onRagCreated={handleRagCreated}
+        onRagCreated={handleSaveNewRag}
         ragType={createModalType}
         agentId={agentId}
         agentName={agentName}

@@ -102,6 +102,12 @@ You have 20+ years of experience in regulatory affairs with expertise in:
             logger.error("❌ Failed to initialize Regulatory Expert Agent", error=str(e))
             raise
 
+
+# Backwards-compatible alias expected by legacy tests
+class RegulatoryExpert(RegulatoryExpertAgent):
+    """Alias for RegulatoryExpertAgent for legacy imports"""
+    pass
+
     async def process_query(self, query: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """Process a regulatory query with expert guidance"""
         try:

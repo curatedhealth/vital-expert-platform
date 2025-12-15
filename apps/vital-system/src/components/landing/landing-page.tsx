@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { VitalLogo } from '@/shared/components/vital-logo';
+import { VitalLogo } from '@/lib/shared/components/vital-logo';
 
 export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

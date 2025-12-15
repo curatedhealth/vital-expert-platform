@@ -1,7 +1,7 @@
 # VITAL Platform Documentation Catalogue
 
-**Version**: 3.0.0
-**Last Updated**: December 5, 2025
+**Version**: 3.1.0
+**Last Updated**: December 14, 2025
 **Maintained By**: Librarian (Implementation Compliance & QA Agent)
 **Purpose**: Master navigation system - find any documentation in under 30 seconds
 **Status**: ✅ Active - World-Class Architecture Complete
@@ -14,8 +14,8 @@
 |-----------|----------|-------------|
 | **Core Rules** (How to operate) | [CLAUDE.md](CLAUDE.md), [VITAL.md](VITAL.md) | Documentation QA Lead |
 | **Evidence Requirements** | [EVIDENCE_BASED_RULES.md](EVIDENCE_BASED_RULES.md) | Documentation QA Lead |
-| **Naming Standards** | [NAMING_CONVENTION.md](NAMING_CONVENTION.md) | Documentation QA Lead |
-| **Governance Framework** | [DOCUMENTATION_GOVERNANCE_PLAN.md](DOCUMENTATION_GOVERNANCE_PLAN.md) | Documentation QA Lead |
+| **Naming Standards** | [docs/coordination/NAMING_CONVENTION.md](docs/coordination/NAMING_CONVENTION.md) | Documentation QA Lead |
+| **Governance Framework** | [docs/coordination/DOCUMENTATION_GOVERNANCE_PLAN.md](docs/coordination/DOCUMENTATION_GOVERNANCE_PLAN.md) | Documentation QA Lead |
 | **Agent Onboarding** | [AGENT_QUICK_START.md](AGENT_QUICK_START.md) | Documentation QA Lead |
 | **Production Agents** (14 agents) | [agents/](agents/) | Multiple owners |
 | **Documentation Home** | [docs/README.md](docs/README.md) | Documentation QA Lead |
@@ -43,11 +43,8 @@
 .claude/
 │
 ├── 📖 README.md                               Command Center Overview
-├── 📋 STRUCTURE.md                            Directory Structure
+├── 📋 STRUCTURE.md                            Reference to root STRUCTURE.md
 ├── 📚 CATALOGUE.md                            This File (Master Catalogue)
-├── 🔍 INDEX.md                                Deprecated (use docs/INDEX.md)
-├── 📖 MASTER_DOCUMENTATION_INDEX.md           Deprecated (use docs/INDEX.md)
-├── ✅ CONSOLIDATION_COMPLETE.md              Migration History
 │
 ├── 📜 GOVERNANCE DOCUMENTS                    Documentation Governance
 │   ├── NAMING_CONVENTION.md                  File naming & versioning (v1.0.0)
@@ -242,12 +239,12 @@
 
 **Primary Sections**:
 - [docs/architecture/](docs/architecture/) - Technical architecture
-- [docs/architecture/data-schema/](docs/architecture/data-schema/) - Database schemas
+- [database/postgres/schemas/](../../database/postgres/schemas/) - Database schema documentation
 - [docs/architecture/api/](docs/architecture/api/) - API documentation
 - [docs/services/](docs/services/) - Service implementation guides
 
 **Key Documents**:
-- Database schema documentation in `docs/architecture/data-schema/`
+- Database schema documentation in `database/postgres/schemas/`
 - PRD for what we're building: `docs/strategy/prd/`
 - ARD for how we're building it: `docs/strategy/ard/`
 
@@ -326,7 +323,7 @@
 
 **Workflow**:
 1. **Read Rules** → CLAUDE.md (Database Safety Rules section)
-2. **Check Schema** → `docs/architecture/data-schema/`
+2. **Check Schema** → `database/postgres/schemas/`
 3. **Follow Guide** → `docs/coordination/SQL_SUPABASE_SPECIALIST_GUIDE.md`
 4. **Create Migration** → Follow naming conventions
 5. **Provide Evidence** → Test results, verification output
@@ -579,7 +576,7 @@
 
 | ARD Section | Technical Docs Location | Status |
 |-------------|------------------------|--------|
-| **Database Schema** | docs/architecture/data-schema/ | ✅ Complete |
+| **Database Schema** | database/postgres/schemas/ | ✅ Complete |
 | **API Design** | docs/architecture/api/ | ⏳ In Progress |
 | **Frontend Architecture** | docs/architecture/frontend/ | ⏳ In Progress |
 | **Backend Architecture** | docs/architecture/backend/ | ⏳ In Progress |
@@ -592,7 +589,7 @@
 **Answer**: 
 - **Agent Schema**: `docs/platform/agents/` (489 agents, AgentOS 3.0)
 - **User Schema**: `docs/platform/users/schema/` (14 user tables)
-- **General Schema**: `docs/architecture/data-schema/`
+- **General Schema**: `database/postgres/schemas/`
 
 ---
 

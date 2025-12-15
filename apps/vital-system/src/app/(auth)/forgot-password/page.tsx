@@ -16,7 +16,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@vital/ui';
-import { useAuth } from '@/lib/auth/supabase-auth-context';
+import { createClient } from '@/lib/supabase/client';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -25,10 +25,10 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
-  const { resetPassword } = useAuth() as { resetPassword: (email: string) => Promise<void> };
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const supabase = createClient();
 
   const {
     register,
@@ -43,7 +43,14 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     try {
-      await resetPassword(data.email);
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (resetError) {
+        throw resetError;
+      }
+      
       setSuccess(true);
     } catch (err: unknown) {
       setError((err as Error).message || 'Failed to send reset email');

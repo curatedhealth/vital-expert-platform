@@ -51,7 +51,7 @@ const HoverCardTrigger = React.forwardRef<HTMLDivElement, HoverCardTriggerProps>
     if (asChild && React.isValidElement(children)) {
       return React.cloneElement(children, {
         ...props,
-        ...children.props,
+        ...(children.props as Record<string, any>),
         onMouseEnter: handleMouseEnter,
         onMouseLeave: handleMouseLeave,
         ref,

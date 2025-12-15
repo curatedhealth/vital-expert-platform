@@ -242,11 +242,11 @@ export function MissionBriefing({
               {template.requiredInputs.map((field) => {
                 const fieldKey = getFieldKey(field);
                 return (
-                  <InputFieldComponent
+                  <InputFieldRenderer
                     key={fieldKey}
                     field={field}
                     value={inputs[fieldKey]}
-                    onChange={(value) => handleInputChange(fieldKey, value)}
+                    onChange={(value: any) => handleInputChange(fieldKey, value)}
                     error={isValidating ? validationErrors[fieldKey] : undefined}
                   />
                 );

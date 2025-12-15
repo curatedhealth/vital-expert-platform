@@ -88,7 +88,7 @@ export function VitalCostTracker({
               )}
             </div>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-xs">
+          <TooltipContent className="max-w-xs">
             <div className="space-y-2">
               <div className="font-medium">Cost Breakdown</div>
               {breakdown && (

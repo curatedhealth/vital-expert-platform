@@ -153,5 +153,9 @@ export * from './hooks';
 // ============================================================================
 // Shared Types (Phase 2 ↔ Phase 3 Alignment)
 // Central types for cross-component consistency
+// Explicitly re-export to avoid conflicts
 // ============================================================================
-export * from './types';
+export type {
+  // Re-export types explicitly to avoid conflicts
+} from './types';
+// Note: Individual type exports are handled by domain-specific exports above

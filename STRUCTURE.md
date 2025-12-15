@@ -1,7 +1,7 @@
 # VITAL Platform - Project Structure
 
-**Version**: 4.1  
-**Last Updated**: December 6, 2025
+**Version**: 4.2  
+**Last Updated**: December 14, 2025
 
 ---
 
@@ -34,22 +34,61 @@ vital-platform/
 │   └── vital-system/           # Main Next.js application
 │
 ├── 📦 packages/                # Shared packages
-│   └── protocol/               # Type definitions (Zod → JSON Schema → Pydantic)
+│   ├── config/                 # Shared configuration (ESLint, TypeScript, Tailwind)
+│   ├── protocol/               # Type definitions (Zod → JSON Schema → Pydantic)
+│   ├── sdk/                    # VITAL SDK (Supabase client, backend integration)
+│   ├── shared/                 # Shared utilities (mission context, tenant context)
+│   ├── types/                  # Shared TypeScript types
+│   ├── ui/                     # Shared UI components (shadcn/ui)
+│   ├── utils/                  # Utility functions (formatting, validation, logging)
+│   └── vital-ai-ui/           # VITAL AI UI Component Library
 │
 ├── 🔧 services/                # Backend services
 │   └── ai-engine/              # Python FastAPI backend
 │
-├── 🗄️ database/                # Database assets
-│   ├── migrations/             # SQL migrations
-│   └── policies/               # RLS policies
+├── 🗄️ database/                # Database assets (Multi-Database)
+│   ├── postgres/               # PostgreSQL/Supabase
+│   │   ├── migrations/         # SQL migrations
+│   │   ├── seeds/              # Seed data
+│   │   ├── policies/           # RLS policies
+│   │   ├── functions/           # Postgres functions
+│   │   ├── triggers/           # Database triggers
+│   │   ├── views/               # Materialized views
+│   │   ├── schemas/            # Schema documentation
+│   │   └── queries/             # SQL queries
+│   │       └── diagnostics/    # Diagnostic queries
+│   ├── neo4j/                   # Neo4j Graph Database
+│   │   ├── schemas/             # Cypher schemas
+│   │   └── queries/             # Common queries
+│   ├── pinecone/                # Pinecone Vector Database
+│   │   ├── indexes/            # Index configs
+│   │   └── schemas/             # Vector schemas
+│   └── sync/                    # Cross-database sync scripts
 │
 ├── 🏗️ infrastructure/          # Deployment infrastructure
 │   ├── docker/                 # Docker Compose + Dockerfiles
+│   │   ├── docker-compose.yml  # Full production stack (273 lines)
+│   │   ├── Dockerfile          # API server
+│   │   ├── Dockerfile.frontend # Frontend
+│   │   ├── Dockerfile.worker   # Celery workers
+│   │   └── env.example         # Environment template
 │   └── terraform/              # AWS Terraform modules
+│       ├── environments/
+│       │   ├── dev/
+│       │   │   ├── main.tf
+│       │   │   └── terraform.tfvars.example
+│       │   └── prod/
+│       │       ├── main.tf
+│       │       └── terraform.tfvars.example
+│       └── modules/            # Reusable modules (8 modules)
 │
 ├── 🧪 tests/                   # Test suites
+│   ├── unit/                   # Unit tests
+│   ├── integration/            # Integration tests
 │   ├── e2e/                    # Playwright E2E tests
-│   └── performance/            # k6 load tests
+│   ├── performance/            # k6 load tests
+│   ├── scripts/                # Test runner scripts
+│   └── docs/                   # Test documentation
 │
 ├── 📚 docs/                    # ⚠️ PUBLIC documentation ONLY
 │   ├── architecture/           # System architecture overview
@@ -61,13 +100,22 @@ vital-platform/
 │   └── build/                 # Build scripts
 │
 ├── 🤖 .claude/                 # AI assistant configuration + INTERNAL docs
-│   ├── VITAL.md               # Master reference
-│   ├── CLAUDE.md              # Claude guidelines
+│   ├── README.md              # Command center overview
+│   ├── CLAUDE.md              # Claude operational rules
+│   ├── VITAL.md               # VITAL Platform standards
+│   ├── EVIDENCE_BASED_RULES.md # Evidence requirements
+│   ├── AGENT_QUICK_START.md   # Agent onboarding
+│   ├── CATALOGUE.md           # Master catalog
+│   ├── STRUCTURE.md           # Reference to root STRUCTURE.md
+│   ├── settings.local.json    # Claude Code settings
 │   └── docs/                   # ⭐ ALL internal documentation here
 │       ├── architecture/      # Architecture decisions
 │       ├── services/          # Service PRDs/ARDs
 │       ├── platform/          # Platform features
-│       └── operations/        # Deployment & security
+│       ├── operations/        # Deployment & security
+│       ├── coordination/      # Agent coordination & governance
+│       └── _historical/       # Historical records
+│           └── consolidation/ # Consolidation history
 │
 ├── 📁 archive/                 # Archived files
 │
@@ -142,9 +190,6 @@ src/
 │   ├── context.py             # Request context
 │   └── logging.py             # Structured logging
 │
-├── monitoring/                 # Observability
-│   └── prometheus_metrics.py  # Metrics
-│
 └── main.py                     # Application entry
 ```
 
@@ -173,9 +218,20 @@ src/
 ├── lib/                        # Utilities
 │   ├── api/                   # API client
 │   ├── hooks/                 # React hooks
-│   └── stores/                # State stores
+│   ├── stores/                # State stores
+│   ├── config/                # Configuration utilities
+│   ├── deployment/            # Deployment utilities
+│   ├── optimization/          # Optimization utilities
+│   ├── providers/             # React providers
+│   ├── security/              # Security utilities
+│   ├── services/              # Service layer
+│   └── shared/                # Shared utilities
 │
-└── styles/                     # Global styles
+├── middleware/                 # Next.js middleware
+├── types/                      # TypeScript types
+├── contexts/                   # React contexts
+├── hooks/                      # React hooks
+└── stores/                     # State stores
 ```
 
 ---

@@ -1,12 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: '../../tests/e2e/playwright',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: [
+    ['html', { outputFolder: '../../tests/e2e/playwright-report' }],
+    ['json', { outputFile: '../../tests/e2e/playwright-report/results.json' }],
+  ],
+  outputDir: '../../tests/e2e/test-results',
   
   use: {
     baseURL: 'http://vital-system.localhost:3000',

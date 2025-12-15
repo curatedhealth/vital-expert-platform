@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
 import { withAgentAuth, type AgentPermissionContext } from '@/middleware/agent-auth';
-import { env } from '@/config/environment';
+import { env } from '@/lib/config/environment';
 import { createLogger } from '@/lib/services/observability/structured-logger';
 import { z } from 'zod';
 

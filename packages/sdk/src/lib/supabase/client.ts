@@ -39,6 +39,7 @@ export const supabase = new Proxy({} as any, {
   get(target, prop) {
     const client = _supabase ?? createClient();
     _supabase = client;
+    // eslint-disable-next-line security/detect-object-injection
     return (client as any)[prop];
   }
 });

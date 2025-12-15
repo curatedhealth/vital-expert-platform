@@ -12,6 +12,8 @@ from functools import lru_cache
 
 class RAGSettings(BaseSettings):
     """RAG-specific configuration with environment variable support"""
+    class Config:
+        extra = "allow"  # tolerate extra env/inputs for tests
 
     # === Similarity Thresholds ===
     similarity_threshold_default: float = Field(

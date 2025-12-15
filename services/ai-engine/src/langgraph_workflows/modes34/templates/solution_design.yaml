@@ -1,0 +1,42 @@
+id: "problem_solving_solution_design_v1"
+name: "Problem Solving: Solution Design"
+slug: "solution_design"
+family: "PROBLEM_SOLVING"
+runner: "ProblemSolvingRunner"
+description: "Generate and score solution options, then build an action plan."
+required_agent_levels:
+  - "L3"
+  - "L4"
+recommended_archetypes:
+  - "ProductLead"
+  - "OpsLead"
+  - "Engineer"
+required_tool_ids:
+  - "search"
+optional_tool_ids:
+  - "browser"
+  - "notebook"
+l4_workers:
+  - "option-strategist"
+  - "analyst"
+  - "planner"
+hitl_phases:
+  plan_approval:
+    blocking: true
+    description: "Review solution options before scoring."
+  final_review:
+    blocking: false
+    description: "Validate action plan and owners."
+mode_4_constraints:
+  - "Limit plan duration to <= 12 weeks unless approved."
+  - "Require owner and success metric per step."
+tasks:
+  - id: "options"
+    title: "Generate options"
+    instructions: "List 3-5 solution options with rationale, risks, and effort."
+  - id: "scoring"
+    title: "Score options"
+    instructions: "Score options across impact, effort, risk, and confidence (0-1)."
+  - id: "plan"
+    title: "Action plan"
+    instructions: "Build sequenced steps with owners, durations, dependencies, and success criteria."

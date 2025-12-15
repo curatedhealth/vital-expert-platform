@@ -5,6 +5,9 @@
  */
 
 import { z } from 'zod';
+
+import { JOB_STATUS_VALUES } from '../constants/events';
+
 import {
   UUIDSchema,
   TenantIdSchema,
@@ -12,7 +15,6 @@ import {
   DateTimeSchema,
   MetadataSchema,
 } from './common.schema';
-import { JOB_STATUS, JOB_STATUS_VALUES } from '../constants/events';
 
 // ============================================================================
 // JOB SCHEMAS

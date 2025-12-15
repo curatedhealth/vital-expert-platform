@@ -83,7 +83,7 @@ UPDATED: 2025-12-14
 apps/vital-system/src/        → Frontend code
 services/ai-engine/src/        → Backend code
 packages/                      → Shared code
-database/migrations/           → SQL migrations
+database/postgres/migrations/  → SQL migrations
 docs/                          → Public docs
 .claude/docs/                  → Internal docs
 ```

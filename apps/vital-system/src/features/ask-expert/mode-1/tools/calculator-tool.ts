@@ -6,6 +6,7 @@
  */
 
 import { BaseTool, ToolContext, ToolExecutionResult } from './base-tool';
+import { logger } from '@vital/utils';
 
 type CalculationType = 'dosing' | 'statistics' | 'cost' | 'general';
 
@@ -70,7 +71,7 @@ export class CalculatorTool extends BaseTool<CalculatorToolInput, CalculatorTool
       const formula = input.formula;
       const params = input.parameters ?? {};
 
-      console.log(`🧮 [Calculator] Executing ${calcType} calculation: ${formula}`);
+      logger.info('Calculator executing', { calcType, formula, parameters: params });
 
       // Safe evaluation of mathematical expressions
       let result: number;
@@ -97,7 +98,7 @@ export class CalculatorTool extends BaseTool<CalculatorToolInput, CalculatorTool
       };
     } catch (error) {
       const duration_ms = Date.now() - startTime;
-      console.error(`❌ [Calculator] Calculation failed:`, error);
+      logger.error('Calculator calculation failed', { error });
 
       return {
         success: false,

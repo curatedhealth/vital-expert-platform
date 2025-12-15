@@ -56,7 +56,8 @@ next-env.d.ts
 Thumbs.db
 
 # logs
-logs
+logs/
+infrastructure/logs/
 *.log
 
 # Runtime data
@@ -240,6 +241,8 @@ services/ai-engine/.env.backup
 # Railway environment variables (contain secrets)
 railway-environment-variables.json
 railway-env-*.txt
+.railway.env.*
+!.railway.env.template
 
 # Environment backup files (contain secrets)
 .env.bak

@@ -20,6 +20,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw, Home, Bug } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logger } from '@vital/utils';
 
 // =============================================================================
 // TYPES
@@ -191,7 +192,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     const classifiedError = classifyError(error);
 
     // Log error to console (in production, send to telemetry)
-    console.error('[ErrorBoundary] Caught error:', {
+    logger.error('ErrorBoundary caught error', {
       component: this.props.componentName,
       type: classifiedError.type,
       severity: classifiedError.severity,

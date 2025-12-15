@@ -1,0 +1,676 @@
+-- ============================================================================
+-- Migration 027: Seed Exact Legacy Workflows (10 Complete Workflows)
+-- ============================================================================
+-- This migration replaces placeholder templates with EXACT legacy workflows
+-- from the original Ask Panel V1 builder
+-- ============================================================================
+
+-- First, remove placeholder templates
+DELETE FROM template_library WHERE template_slug IN (
+  'ap_mode_1', 'ap_mode_2', 'ap_mode_3', 'ap_mode_4', 'ap_mode_5', 'ap_mode_6'
+);
+
+DELETE FROM workflows WHERE template_id IN (
+  'ap_mode_1', 'ap_mode_2', 'ap_mode_3', 'ap_mode_4', 'ap_mode_5', 'ap_mode_6'
+);
+
+-- ============================================================================
+-- PART 1: Create Exact Legacy Workflows
+-- ============================================================================
+
+
+-- Workflow: Structured Panel
+-- ID: structured_panel
+-- Nodes: 4 | Edges: 15
+
+INSERT INTO workflows (id, name, description, workflow_type, definition, is_template, is_active, template_id, version)
+SELECT 
+  uuid_generate_v4(),
+  'Structured Panel',
+  'Sequential, moderated discussion for formal decisions',
+  'jtbd_execution',
+  '{"nodes": [], "edges": [], "metadata": {"defaultQuery": "Should we pursue 510(k) or De Novo pathway for our continuous glucose monitoring device?", "source": "legacy_exact"}}'::jsonb,
+  TRUE,
+  TRUE,
+  'structured_panel',
+  '1.0'
+WHERE NOT EXISTS (SELECT 1 FROM workflows WHERE template_id = 'structured_panel');
+
+-- Template Library Entry
+INSERT INTO template_library (
+  source_table,
+  source_id,
+  template_name,
+  template_slug,
+  display_name,
+  description,
+  template_type,
+  template_category,
+  framework,
+  is_builtin,
+  is_public,
+  is_featured,
+  content,
+  tags,
+  icon
+)
+SELECT 
+  'workflows',
+  w.id,
+  'Structured Panel',
+  'structured_panel',
+  'Structured Panel',
+  'Sequential, moderated discussion for formal decisions',
+  'workflow',
+  'jtbd_execution',
+  'langgraph',
+  TRUE,
+  TRUE,
+  TRUE,
+  jsonb_build_object(
+    'workflow_id', w.id,
+    'defaultQuery', 'Should we pursue 510(k) or De Novo pathway for our continuous glucose monitoring device?',
+    'nodeCount', 4,
+    'edgeCount', 15
+  ),
+  ARRAY['structured_panel', 'jtbd_execution', 'workflow', 'legacy_exact'],
+  'Users'
+FROM workflows w
+WHERE w.template_id = 'structured_panel'
+  AND NOT EXISTS (
+    SELECT 1 FROM template_library tl 
+    WHERE tl.source_table = 'workflows' AND tl.template_slug = 'structured_panel'
+  );
+
+
+-- Workflow: Open Panel
+-- ID: open_panel
+-- Nodes: 4 | Edges: 8
+
+INSERT INTO workflows (id, name, description, workflow_type, definition, is_template, is_active, template_id, version)
+SELECT 
+  uuid_generate_v4(),
+  'Open Panel',
+  'Parallel collaborative exploration for innovation and brainstorming',
+  'jtbd_execution',
+  '{"nodes": [], "edges": [], "metadata": {"defaultQuery": "What are innovative approaches to improve patient adherence in chronic disease management?", "source": "legacy_exact"}}'::jsonb,
+  TRUE,
+  TRUE,
+  'open_panel',
+  '1.0'
+WHERE NOT EXISTS (SELECT 1 FROM workflows WHERE template_id = 'open_panel');
+
+-- Template Library Entry
+INSERT INTO template_library (
+  source_table,
+  source_id,
+  template_name,
+  template_slug,
+  display_name,
+  description,
+  template_type,
+  template_category,
+  framework,
+  is_builtin,
+  is_public,
+  is_featured,
+  content,
+  tags,
+  icon
+)
+SELECT 
+  'workflows',
+  w.id,
+  'Open Panel',
+  'open_panel',
+  'Open Panel',
+  'Parallel collaborative exploration for innovation and brainstorming',
+  'workflow',
+  'jtbd_execution',
+  'langgraph',
+  TRUE,
+  TRUE,
+  TRUE,
+  jsonb_build_object(
+    'workflow_id', w.id,
+    'defaultQuery', 'What are innovative approaches to improve patient adherence in chronic disease management?',
+    'nodeCount', 4,
+    'edgeCount', 8
+  ),
+  ARRAY['open_panel', 'jtbd_execution', 'workflow', 'legacy_exact'],
+  'Users'
+FROM workflows w
+WHERE w.template_id = 'open_panel'
+  AND NOT EXISTS (
+    SELECT 1 FROM template_library tl 
+    WHERE tl.source_table = 'workflows' AND tl.template_slug = 'open_panel'
+  );
+
+
+-- Workflow: Socratic Panel
+-- ID: socratic_panel
+-- Nodes: 4 | Edges: 16
+
+INSERT INTO workflows (id, name, description, workflow_type, definition, is_template, is_active, template_id, version)
+SELECT 
+  uuid_generate_v4(),
+  'Socratic Panel',
+  'Iterative questioning methodology for deep analysis',
+  'jtbd_execution',
+  '{"nodes": [], "edges": [], "metadata": {"defaultQuery": "Should we pursue pediatric indication expansion for our oncology drug?", "source": "legacy_exact"}}'::jsonb,
+  TRUE,
+  TRUE,
+  'socratic_panel',
+  '1.0'
+WHERE NOT EXISTS (SELECT 1 FROM workflows WHERE template_id = 'socratic_panel');
+
+-- Template Library Entry
+INSERT INTO template_library (
+  source_table,
+  source_id,
+  template_name,
+  template_slug,
+  display_name,
+  description,
+  template_type,
+  template_category,
+  framework,
+  is_builtin,
+  is_public,
+  is_featured,
+  content,
+  tags,
+  icon
+)
+SELECT 
+  'workflows',
+  w.id,
+  'Socratic Panel',
+  'socratic_panel',
+  'Socratic Panel',
+  'Iterative questioning methodology for deep analysis',
+  'workflow',
+  'jtbd_execution',
+  'langgraph',
+  TRUE,
+  TRUE,
+  TRUE,
+  jsonb_build_object(
+    'workflow_id', w.id,
+    'defaultQuery', 'Should we pursue pediatric indication expansion for our oncology drug?',
+    'nodeCount', 4,
+    'edgeCount', 16
+  ),
+  ARRAY['socratic_panel', 'jtbd_execution', 'workflow', 'legacy_exact'],
+  'Users'
+FROM workflows w
+WHERE w.template_id = 'socratic_panel'
+  AND NOT EXISTS (
+    SELECT 1 FROM template_library tl 
+    WHERE tl.source_table = 'workflows' AND tl.template_slug = 'socratic_panel'
+  );
+
+
+-- Workflow: Adversarial Panel
+-- ID: adversarial_panel
+-- Nodes: 3 | Edges: 20
+
+INSERT INTO workflows (id, name, description, workflow_type, definition, is_template, is_active, template_id, version)
+SELECT 
+  uuid_generate_v4(),
+  'Adversarial Panel',
+  'Structured debate format for risk assessment',
+  'jtbd_execution',
+  '{"nodes": [], "edges": [], "metadata": {"defaultQuery": "Should we pursue 510(k) or De Novo pathway for our AI-powered diagnostic device?", "source": "legacy_exact"}}'::jsonb,
+  TRUE,
+  TRUE,
+  'adversarial_panel',
+  '1.0'
+WHERE NOT EXISTS (SELECT 1 FROM workflows WHERE template_id = 'adversarial_panel');
+
+-- Template Library Entry
+INSERT INTO template_library (
+  source_table,
+  source_id,
+  template_name,
+  template_slug,
+  display_name,
+  description,
+  template_type,
+  template_category,
+  framework,
+  is_builtin,
+  is_public,
+  is_featured,
+  content,
+  tags,
+  icon
+)
+SELECT 
+  'workflows',
+  w.id,
+  'Adversarial Panel',
+  'adversarial_panel',
+  'Adversarial Panel',
+  'Structured debate format for risk assessment',
+  'workflow',
+  'jtbd_execution',
+  'langgraph',
+  TRUE,
+  TRUE,
+  TRUE,
+  jsonb_build_object(
+    'workflow_id', w.id,
+    'defaultQuery', 'Should we pursue 510(k) or De Novo pathway for our AI-powered diagnostic device?',
+    'nodeCount', 3,
+    'edgeCount', 20
+  ),
+  ARRAY['adversarial_panel', 'jtbd_execution', 'workflow', 'legacy_exact'],
+  'Users'
+FROM workflows w
+WHERE w.template_id = 'adversarial_panel'
+  AND NOT EXISTS (
+    SELECT 1 FROM template_library tl 
+    WHERE tl.source_table = 'workflows' AND tl.template_slug = 'adversarial_panel'
+  );
+
+
+-- Workflow: Delphi Panel
+-- ID: delphi_panel
+-- Nodes: 4 | Edges: 29
+
+INSERT INTO workflows (id, name, description, workflow_type, definition, is_template, is_active, template_id, version)
+SELECT 
+  uuid_generate_v4(),
+  'Delphi Panel',
+  'Anonymous iterative rounds for consensus building',
+  'jtbd_execution',
+  '{"nodes": [], "edges": [], "metadata": {"defaultQuery": "What is the forecasted market size for digital therapeutics in 2026?", "source": "legacy_exact"}}'::jsonb,
+  TRUE,
+  TRUE,
+  'delphi_panel',
+  '1.0'
+WHERE NOT EXISTS (SELECT 1 FROM workflows WHERE template_id = 'delphi_panel');
+
+-- Template Library Entry
+INSERT INTO template_library (
+  source_table,
+  source_id,
+  template_name,
+  template_slug,
+  display_name,
+  description,
+  template_type,
+  template_category,
+  framework,
+  is_builtin,
+  is_public,
+  is_featured,
+  content,
+  tags,
+  icon
+)
+SELECT 
+  'workflows',
+  w.id,
+  'Delphi Panel',
+  'delphi_panel',
+  'Delphi Panel',
+  'Anonymous iterative rounds for consensus building',
+  'workflow',
+  'jtbd_execution',
+  'langgraph',
+  TRUE,
+  TRUE,
+  TRUE,
+  jsonb_build_object(
+    'workflow_id', w.id,
+    'defaultQuery', 'What is the forecasted market size for digital therapeutics in 2026?',
+    'nodeCount', 4,
+    'edgeCount', 29
+  ),
+  ARRAY['delphi_panel', 'jtbd_execution', 'workflow', 'legacy_exact'],
+  'Users'
+FROM workflows w
+WHERE w.template_id = 'delphi_panel'
+  AND NOT EXISTS (
+    SELECT 1 FROM template_library tl 
+    WHERE tl.source_table = 'workflows' AND tl.template_slug = 'delphi_panel'
+  );
+
+
+-- Workflow: Hybrid Human-AI Panel
+-- ID: hybrid_panel
+-- Nodes: 3 | Edges: 14
+
+INSERT INTO workflows (id, name, description, workflow_type, definition, is_template, is_active, template_id, version)
+SELECT 
+  uuid_generate_v4(),
+  'Hybrid Human-AI Panel',
+  'Combined human + AI experts for critical decisions',
+  'jtbd_execution',
+  '{"nodes": [], "edges": [], "metadata": {"defaultQuery": "Should we partner our lead asset or continue full internal development?", "source": "legacy_exact"}}'::jsonb,
+  TRUE,
+  TRUE,
+  'hybrid_panel',
+  '1.0'
+WHERE NOT EXISTS (SELECT 1 FROM workflows WHERE template_id = 'hybrid_panel');
+
+-- Template Library Entry
+INSERT INTO template_library (
+  source_table,
+  source_id,
+  template_name,
+  template_slug,
+  display_name,
+  description,
+  template_type,
+  template_category,
+  framework,
+  is_builtin,
+  is_public,
+  is_featured,
+  content,
+  tags,
+  icon
+)
+SELECT 
+  'workflows',
+  w.id,
+  'Hybrid Human-AI Panel',
+  'hybrid_panel',
+  'Hybrid Human-AI Panel',
+  'Combined human + AI experts for critical decisions',
+  'workflow',
+  'jtbd_execution',
+  'langgraph',
+  TRUE,
+  TRUE,
+  TRUE,
+  jsonb_build_object(
+    'workflow_id', w.id,
+    'defaultQuery', 'Should we partner our lead asset or continue full internal development?',
+    'nodeCount', 3,
+    'edgeCount', 14
+  ),
+  ARRAY['hybrid_panel', 'jtbd_execution', 'workflow', 'legacy_exact'],
+  'Users'
+FROM workflows w
+WHERE w.template_id = 'hybrid_panel'
+  AND NOT EXISTS (
+    SELECT 1 FROM template_library tl 
+    WHERE tl.source_table = 'workflows' AND tl.template_slug = 'hybrid_panel'
+  );
+
+
+-- Workflow: Ask Expert Mode 1: Interactive Manual
+-- ID: mode1_ask_expert
+-- Nodes: 2 | Edges: 14
+
+INSERT INTO workflows (id, name, description, workflow_type, definition, is_template, is_active, template_id, version)
+SELECT 
+  uuid_generate_v4(),
+  'Ask Expert Mode 1: Interactive Manual',
+  'User selects specific expert → Multi-turn conversation with full context retention',
+  'ask_expert',
+  '{"nodes": [], "edges": [], "metadata": {"defaultQuery": "What testing is required for a Class II device similar to the Smith Cardiac Monitor?", "source": "legacy_exact"}}'::jsonb,
+  TRUE,
+  TRUE,
+  'mode1_ask_expert',
+  '1.0'
+WHERE NOT EXISTS (SELECT 1 FROM workflows WHERE template_id = 'mode1_ask_expert');
+
+-- Template Library Entry
+INSERT INTO template_library (
+  source_table,
+  source_id,
+  template_name,
+  template_slug,
+  display_name,
+  description,
+  template_type,
+  template_category,
+  framework,
+  is_builtin,
+  is_public,
+  is_featured,
+  content,
+  tags,
+  icon
+)
+SELECT 
+  'workflows',
+  w.id,
+  'Ask Expert Mode 1: Interactive Manual',
+  'mode1_ask_expert',
+  'Ask Expert Mode 1: Interactive Manual',
+  'User selects specific expert → Multi-turn conversation with full context retention',
+  'workflow',
+  'ask_expert',
+  'langgraph',
+  TRUE,
+  TRUE,
+  TRUE,
+  jsonb_build_object(
+    'workflow_id', w.id,
+    'defaultQuery', 'What testing is required for a Class II device similar to the Smith Cardiac Monitor?',
+    'nodeCount', 2,
+    'edgeCount', 14
+  ),
+  ARRAY['mode1_ask_expert', 'ask_expert', 'workflow', 'legacy_exact'],
+  'Users'
+FROM workflows w
+WHERE w.template_id = 'mode1_ask_expert'
+  AND NOT EXISTS (
+    SELECT 1 FROM template_library tl 
+    WHERE tl.source_table = 'workflows' AND tl.template_slug = 'mode1_ask_expert'
+  );
+
+
+-- Workflow: Ask Expert Mode 2: Interactive Automatic
+-- ID: mode2_ask_expert
+-- Nodes: 2 | Edges: 19
+
+INSERT INTO workflows (id, name, description, workflow_type, definition, is_template, is_active, template_id, version)
+SELECT 
+  uuid_generate_v4(),
+  'Ask Expert Mode 2: Interactive Automatic',
+  'AI selects best expert(s) → Multi-turn conversation with dynamic expert switching',
+  'ask_expert',
+  '{"nodes": [], "edges": [], "metadata": {"defaultQuery": "I need advice on entering the EU market with my medical device", "source": "legacy_exact"}}'::jsonb,
+  TRUE,
+  TRUE,
+  'mode2_ask_expert',
+  '1.0'
+WHERE NOT EXISTS (SELECT 1 FROM workflows WHERE template_id = 'mode2_ask_expert');
+
+-- Template Library Entry
+INSERT INTO template_library (
+  source_table,
+  source_id,
+  template_name,
+  template_slug,
+  display_name,
+  description,
+  template_type,
+  template_category,
+  framework,
+  is_builtin,
+  is_public,
+  is_featured,
+  content,
+  tags,
+  icon
+)
+SELECT 
+  'workflows',
+  w.id,
+  'Ask Expert Mode 2: Interactive Automatic',
+  'mode2_ask_expert',
+  'Ask Expert Mode 2: Interactive Automatic',
+  'AI selects best expert(s) → Multi-turn conversation with dynamic expert switching',
+  'workflow',
+  'ask_expert',
+  'langgraph',
+  TRUE,
+  TRUE,
+  TRUE,
+  jsonb_build_object(
+    'workflow_id', w.id,
+    'defaultQuery', 'I need advice on entering the EU market with my medical device',
+    'nodeCount', 2,
+    'edgeCount', 19
+  ),
+  ARRAY['mode2_ask_expert', 'ask_expert', 'workflow', 'legacy_exact'],
+  'Users'
+FROM workflows w
+WHERE w.template_id = 'mode2_ask_expert'
+  AND NOT EXISTS (
+    SELECT 1 FROM template_library tl 
+    WHERE tl.source_table = 'workflows' AND tl.template_slug = 'mode2_ask_expert'
+  );
+
+
+-- Workflow: Ask Expert Mode 3: Autonomous Manual
+-- ID: mode3_ask_expert
+-- Nodes: 2 | Edges: 20
+
+INSERT INTO workflows (id, name, description, workflow_type, definition, is_template, is_active, template_id, version)
+SELECT 
+  uuid_generate_v4(),
+  'Ask Expert Mode 3: Autonomous Manual',
+  'User selects expert → Autonomous multi-step execution with tool usage',
+  'ask_expert',
+  '{"nodes": [], "edges": [], "metadata": {"defaultQuery": "Create a Phase II study protocol for my cardiac monitoring device", "source": "legacy_exact"}}'::jsonb,
+  TRUE,
+  TRUE,
+  'mode3_ask_expert',
+  '1.0'
+WHERE NOT EXISTS (SELECT 1 FROM workflows WHERE template_id = 'mode3_ask_expert');
+
+-- Template Library Entry
+INSERT INTO template_library (
+  source_table,
+  source_id,
+  template_name,
+  template_slug,
+  display_name,
+  description,
+  template_type,
+  template_category,
+  framework,
+  is_builtin,
+  is_public,
+  is_featured,
+  content,
+  tags,
+  icon
+)
+SELECT 
+  'workflows',
+  w.id,
+  'Ask Expert Mode 3: Autonomous Manual',
+  'mode3_ask_expert',
+  'Ask Expert Mode 3: Autonomous Manual',
+  'User selects expert → Autonomous multi-step execution with tool usage',
+  'workflow',
+  'ask_expert',
+  'langgraph',
+  TRUE,
+  TRUE,
+  TRUE,
+  jsonb_build_object(
+    'workflow_id', w.id,
+    'defaultQuery', 'Create a Phase II study protocol for my cardiac monitoring device',
+    'nodeCount', 2,
+    'edgeCount', 20
+  ),
+  ARRAY['mode3_ask_expert', 'ask_expert', 'workflow', 'legacy_exact'],
+  'Users'
+FROM workflows w
+WHERE w.template_id = 'mode3_ask_expert'
+  AND NOT EXISTS (
+    SELECT 1 FROM template_library tl 
+    WHERE tl.source_table = 'workflows' AND tl.template_slug = 'mode3_ask_expert'
+  );
+
+
+-- Workflow: Ask Expert Mode 4: Autonomous Automatic
+-- ID: mode4_ask_expert
+-- Nodes: 2 | Edges: 24
+
+INSERT INTO workflows (id, name, description, workflow_type, definition, is_template, is_active, template_id, version)
+SELECT 
+  uuid_generate_v4(),
+  'Ask Expert Mode 4: Autonomous Automatic',
+  'AI assembles expert team (up to 4) → Collaborative autonomous execution',
+  'ask_expert',
+  '{"nodes": [], "edges": [], "metadata": {"defaultQuery": "Create a complete FDA 510(k) submission package for my cardiac monitoring device", "source": "legacy_exact"}}'::jsonb,
+  TRUE,
+  TRUE,
+  'mode4_ask_expert',
+  '1.0'
+WHERE NOT EXISTS (SELECT 1 FROM workflows WHERE template_id = 'mode4_ask_expert');
+
+-- Template Library Entry
+INSERT INTO template_library (
+  source_table,
+  source_id,
+  template_name,
+  template_slug,
+  display_name,
+  description,
+  template_type,
+  template_category,
+  framework,
+  is_builtin,
+  is_public,
+  is_featured,
+  content,
+  tags,
+  icon
+)
+SELECT 
+  'workflows',
+  w.id,
+  'Ask Expert Mode 4: Autonomous Automatic',
+  'mode4_ask_expert',
+  'Ask Expert Mode 4: Autonomous Automatic',
+  'AI assembles expert team (up to 4) → Collaborative autonomous execution',
+  'workflow',
+  'ask_expert',
+  'langgraph',
+  TRUE,
+  TRUE,
+  TRUE,
+  jsonb_build_object(
+    'workflow_id', w.id,
+    'defaultQuery', 'Create a complete FDA 510(k) submission package for my cardiac monitoring device',
+    'nodeCount', 2,
+    'edgeCount', 24
+  ),
+  ARRAY['mode4_ask_expert', 'ask_expert', 'workflow', 'legacy_exact'],
+  'Users'
+FROM workflows w
+WHERE w.template_id = 'mode4_ask_expert'
+  AND NOT EXISTS (
+    SELECT 1 FROM template_library tl 
+    WHERE tl.source_table = 'workflows' AND tl.template_slug = 'mode4_ask_expert'
+  );
+
+
+-- ============================================================================
+-- VERIFICATION
+-- ============================================================================
+
+-- Count templates by category
+-- SELECT template_category, COUNT(*) as count 
+-- FROM template_library 
+-- WHERE template_type = 'workflow' 
+-- GROUP BY template_category;
+
+-- List all workflow templates
+-- SELECT template_slug, display_name, template_category
+-- FROM template_library
+-- WHERE template_type = 'workflow'
+-- ORDER BY template_category, template_slug;

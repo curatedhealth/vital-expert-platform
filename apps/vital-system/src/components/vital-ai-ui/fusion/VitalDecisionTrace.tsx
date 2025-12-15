@@ -18,7 +18,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger
-} from '@/components/ui/accordion';
+} from '@vital/ui';
 import { formatDistanceToNow } from 'date-fns';
 
 type DecisionType = 'selection' | 'delegation' | 'tool_call' | 'checkpoint' | 'output';

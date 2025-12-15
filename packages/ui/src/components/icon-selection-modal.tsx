@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { type Icon } from '@/shared/services/icon-service';
+import { type Icon } from '@/lib/services/icon-service';
 
 interface IconSelectionModalProps {
   isOpen: boolean;
@@ -85,7 +85,7 @@ export function IconSelectionModal({
   const getIconUrl = (icon: Icon) => {
     // For avatars, use the icon field which contains Supabase Storage URL
     // For other icons, use file_url if available
-    return icon.icon || icon.file_url;
+    return (icon as any).icon || icon.file_url;
   };
 
   const renderIcon = (icon: Icon) => {
@@ -177,7 +177,7 @@ export function IconSelectionModal({
                   className={`
                     w-12 h-12 rounded-lg border-2 flex items-center justify-center overflow-hidden
                     transition-all duration-200 hover:scale-105 hover:shadow-md
-                    ${selectedIcon === (icon.icon || icon.file_url)
+                    ${selectedIcon === ((icon as any).icon || icon.file_url)
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-stone-200 hover:border-stone-300'
                     }

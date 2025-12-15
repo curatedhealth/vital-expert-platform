@@ -14,6 +14,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '@vital/utils';
 
 export interface MediaFile {
   id: string;
@@ -173,7 +174,7 @@ class RichMediaService {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Image analysis error:', error);
+      logger.error('Image analysis error', { error });
       throw error;
     }
   }
@@ -196,7 +197,7 @@ class RichMediaService {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('PDF parsing error:', error);
+      logger.error('PDF parsing error', { error });
       throw error;
     }
   }
@@ -229,7 +230,7 @@ class RichMediaService {
         uploadedAt: new Date(),
       };
     } catch (error) {
-      console.error('Chart generation error:', error);
+      logger.error('Chart generation error', { error });
       throw error;
     }
   }

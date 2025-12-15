@@ -78,19 +78,29 @@ class GraphRelationshipBuilder:
         """Connect to PostgreSQL database"""
         database_url = os.getenv("DATABASE_URL")
 
-        self.db_pool = await asyncpg.create_pool(
-            database_url,
-            min_size=2,
-            max_size=10,
-            command_timeout=60
-        )
-        logger.info("Connected to PostgreSQL")
+        if not database_url:
+            logger.warning("DATABASE_URL not configured; graph relationship builder will operate without DB")
+            self.db_pool = None
+            return
+
+        try:
+            self.db_pool = await asyncpg.create_pool(
+                database_url,
+                min_size=2,
+                max_size=10,
+                command_timeout=60
+            )
+            logger.info("Connected to PostgreSQL")
+        except Exception as exc:
+            logger.warning("Graph relationship builder DB connection failed; continuing without DB", exc_info=exc)
+            self.db_pool = None
 
     async def close_db(self):
         """Close database connection"""
         if self.db_pool:
             await self.db_pool.close()
             logger.info("Closed PostgreSQL connection")
+            self.db_pool = None
 
     async def generate_agent_embeddings(self, agent_id: str, batch_size: int = 10) -> int:
         """
@@ -364,6 +374,28 @@ class GraphRelationshipBuilder:
                 scores[capability_name] = min(base_score + bonus, 1.0)
 
         return scores
+
+    # ------------------------------------------------------------------
+    # Lightweight helpers for compatibility with legacy callers/tests
+    # ------------------------------------------------------------------
+    def _extract_keywords(self, text: str) -> List[str]:
+        """Extract simple keywords from text (lowercased split)."""
+        if not text:
+            return []
+        return [token.strip().lower() for token in text.split() if token.strip()]
+
+    def _calculate_domain_similarity(self, domains_a: List[str], domains_b: List[str]) -> float:
+        """Return Jaccard similarity between two domain lists."""
+        set_a = set(d.lower() for d in domains_a or [])
+        set_b = set(d.lower() for d in domains_b or [])
+        if not set_a or not set_b:
+            return 0.0
+        return len(set_a & set_b) / len(set_a | set_b)
+
+    def _calculate_escalation_priority(self, agent_level: int, issue_severity: str = "medium") -> float:
+        """Compute a simple escalation priority score."""
+        severity_weight = {"low": 0.2, "medium": 0.5, "high": 0.8}.get(issue_severity, 0.5)
+        return float(min(1.0, severity_weight + (agent_level or 2) * 0.1))
 
     async def build_escalation_paths(self) -> int:
         """

@@ -1,0 +1,48 @@
+# =============================================================================
+# VITAL Platform - Development Environment Variables
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to version control (contains secrets)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# AWS Configuration
+# -----------------------------------------------------------------------------
+aws_region = "us-east-1"
+
+# -----------------------------------------------------------------------------
+# API Keys (Sensitive - Use environment variables or AWS Secrets Manager)
+# -----------------------------------------------------------------------------
+# These should be set via environment variables or AWS Secrets Manager
+# Example: export TF_VAR_openai_api_key="sk-..."
+# Or use: terraform apply -var="openai_api_key=sk-..."
+
+# openai_api_key       = "sk-your-openai-key"
+# anthropic_api_key    = "sk-ant-your-anthropic-key"
+# pinecone_api_key     = "your-pinecone-key"
+
+# -----------------------------------------------------------------------------
+# Supabase Configuration
+# -----------------------------------------------------------------------------
+supabase_url         = "https://your-project.supabase.co"
+# supabase_anon_key    = "your-anon-key"
+# supabase_service_key = "your-service-key"
+
+# -----------------------------------------------------------------------------
+# Authentication
+# -----------------------------------------------------------------------------
+# jwt_secret = "your-super-secret-jwt-key-at-least-32-chars"
+
+# -----------------------------------------------------------------------------
+# Monitoring
+# -----------------------------------------------------------------------------
+alert_email = "dev-alerts@yourcompany.com"
+
+# -----------------------------------------------------------------------------
+# Notes
+# -----------------------------------------------------------------------------
+# For sensitive values, prefer:
+# 1. Environment variables: export TF_VAR_variable_name="value"
+# 2. AWS Secrets Manager (configured in Terraform)
+# 3. CI/CD secrets (GitHub Actions, etc.)
+#
+# Never commit actual secrets to version control!

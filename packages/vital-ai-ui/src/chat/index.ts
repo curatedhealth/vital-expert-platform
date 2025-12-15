@@ -11,10 +11,17 @@
  * - VitalAdvancedStreamingWindow: Streaming output with controls
  */
 
-export { default as VitalAdvancedChatInput } from './VitalAdvancedChatInput';
-export { default as VitalNextGenChatInput } from './VitalNextGenChatInput';
-export { default as VitalEnhancedMessageDisplay } from './VitalEnhancedMessageDisplay';
-export { default as VitalAdvancedStreamingWindow } from './VitalAdvancedStreamingWindow';
+// Re-export with Vital prefix for consistency
+export { AdvancedChatInput } from './VitalAdvancedChatInput';
+export { NextGenChatInput } from './VitalNextGenChatInput';
+export { EnhancedMessageDisplay } from './VitalEnhancedMessageDisplay';
+export { AdvancedStreamingWindow } from './VitalAdvancedStreamingWindow';
+
+// Alias exports for backward compatibility
+export { AdvancedChatInput as VitalAdvancedChatInput } from './VitalAdvancedChatInput';
+export { NextGenChatInput as VitalNextGenChatInput } from './VitalNextGenChatInput';
+export { EnhancedMessageDisplay as VitalEnhancedMessageDisplay } from './VitalEnhancedMessageDisplay';
+export { AdvancedStreamingWindow as VitalAdvancedStreamingWindow } from './VitalAdvancedStreamingWindow';
 
 // Re-export types
 export type {

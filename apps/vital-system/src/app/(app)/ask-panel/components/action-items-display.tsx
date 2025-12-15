@@ -17,9 +17,9 @@ import type {
   ActionItemSummary,
   RACIMatrix
 } from '@/lib/services/action-item-extractor';
-import { Badge } from '@/shared/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { Badge } from '@/lib/shared/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/lib/shared/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/lib/shared/components/ui/tabs';
 
 interface ActionItemsDisplayProps {
   actionItems: ActionItem[];

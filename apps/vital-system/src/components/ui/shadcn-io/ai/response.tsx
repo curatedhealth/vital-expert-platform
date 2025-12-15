@@ -288,7 +288,7 @@ const components: Options['components'] = {
       {children}
     </blockquote>
   ),
-  code: ({ node, className, inline, ...props }) => {
+  code: ({ node, className, inline, ...props }: any) => {
     if (!inline) {
       return <code className={className} {...props} />;
     }
@@ -315,9 +315,9 @@ const components: Options['components'] = {
     if (
       isValidElement(children) &&
       children.props &&
-      typeof (children.props as unknown).children === 'string'
+      typeof (children as React.ReactElement<any>).props.children === 'string'
     ) {
-      code = (children.props as unknown).children;
+      code = (children as React.ReactElement<any>).props.children;
     } else if (typeof children === 'string') {
       code = children;
     }

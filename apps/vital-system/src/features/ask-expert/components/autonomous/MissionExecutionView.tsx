@@ -414,7 +414,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
               )}
               {output && status === 'complete' && (
                 <div className="mt-2 p-2 bg-green-500/10 rounded text-xs text-green-300">
-                  Task completed successfully
+                  {typeof output === 'string' ? output : 'Task completed successfully'}
                 </div>
               )}
             </div>
@@ -453,7 +453,7 @@ export const MissionExecutionView: React.FC<MissionExecutionViewProps> = ({
       name: task.name,
       description: task.description,
       estimatedDuration: `${task.estimatedMinutes}m`,
-      tools: task.tools,
+      tools: task.tools || [],
       status: getTaskStatus(task.id, state.currentTaskId, state.completedTasks, state.failedTasks),
     })),
     expectedOutputs: template.outputs?.map(o => ({

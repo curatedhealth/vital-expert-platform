@@ -9,9 +9,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/lib/shared/components/ui/avatar';
+import { Badge } from '@/lib/shared/components/ui/badge';
+import { Button } from '@/lib/shared/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,8 +19,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/shared/components/ui/dropdown-menu';
-import { cn } from '@/shared/utils';
+} from '@/lib/shared/components/ui/dropdown-menu';
+import { cn } from '@/lib/shared/utils';
 
 interface PanelNavbarProps {
   user?: {

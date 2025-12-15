@@ -14,6 +14,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { logger } from '@vital/utils';
 
 // =============================================================================
 // SSE EVENT TYPES
@@ -401,7 +402,7 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
     async (body: Record<string, unknown>) => {
       // Guard against race conditions from rapid connect() calls
       if (isConnectingRef.current) {
-        console.warn('[useSSEStream] Connection already in progress, ignoring duplicate connect()');
+        logger.warn('useSSEStream connect already in progress, ignoring duplicate call');
         return;
       }
       isConnectingRef.current = true;

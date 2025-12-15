@@ -10,12 +10,12 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { ChatMessages } from '@/shared/components/chat/chat-messages';
-import { EnhancedChatInput } from '@/shared/components/chat/enhanced-chat-input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { ChatMessages } from '@/lib/shared/components/chat/chat-messages';
+import { EnhancedChatInput } from '@/lib/shared/components/chat/enhanced-chat-input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/lib/shared/components/ui/avatar';
+import { Badge } from '@/lib/shared/components/ui/badge';
+import { Button } from '@/lib/shared/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/lib/shared/components/ui/card';
 
 import { __usePanelStore as usePanelStore } from '../services/panel-store';
 

@@ -8,6 +8,37 @@ import asyncio
 from typing import Dict, Any, List
 from unittest.mock import Mock, AsyncMock, MagicMock
 import numpy as np
+import httpx
+from httpx import ASGITransport
+
+# Ensure main app has a supabase_client stub for integration tests
+import main as main_app  # type: ignore
+
+
+class _StubSupabase:
+    """Minimal Supabase stub for tests expecting supabase_client on app."""
+
+    def table(self, *args, **kwargs):
+        return self
+
+    def select(self, *args, **kwargs):
+        return self
+
+    def eq(self, *args, **kwargs):
+        return self
+
+    async def insert(self, *args, **kwargs):
+        return {"data": [], "error": None}
+
+    async def update(self, *args, **kwargs):
+        return {"data": [], "error": None}
+
+    async def execute(self, *args, **kwargs):
+        return {"data": [], "error": None}
+
+
+if not getattr(main_app, "supabase_client", None):
+    main_app.supabase_client = _StubSupabase()
 
 # Set test environment variables
 os.environ['OPENAI_API_KEY'] = 'test-key-12345'
@@ -178,6 +209,18 @@ def tier3_agent_metadata() -> Dict[str, Any]:
         "agent_level": 3,
         "specialties": ["general_medicine"]
     }
+
+
+# ============================================================================
+# HTTPX ASGI Client for integration tests
+# ============================================================================
+
+@pytest.fixture
+async def http_client():
+    """ASGI-aware httpx client pointing at FastAPI app."""
+    transport = ASGITransport(app=main_app.app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        yield client
 
 
 # ============================================================================

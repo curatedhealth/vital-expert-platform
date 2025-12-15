@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+
 import {
   UUIDSchema,
   TenantIdSchema,
@@ -16,8 +17,8 @@ import {
   VersionSchema,
   MetadataSchema,
 } from './common.schema';
-import { NodeSchema } from './nodes.schema';
 import { EdgeSchema } from './edges.schema';
+import { NodeSchema } from './nodes.schema';
 
 // ============================================================================
 // WORKFLOW STATUS

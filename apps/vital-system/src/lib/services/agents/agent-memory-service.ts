@@ -9,7 +9,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { env } from '@/config/environment';
+import { env } from '@/lib/config/environment';
 import { StructuredLogger, LogLevel } from '@/lib/services/observability/structured-logger';
 
 export interface AgentMemoryRecord {

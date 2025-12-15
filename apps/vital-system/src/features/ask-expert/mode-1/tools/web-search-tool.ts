@@ -6,6 +6,7 @@
  */
 
 import { BaseTool, ToolContext, ToolExecutionResult } from './base-tool';
+import { logger } from '@vital/utils';
 
 export type WebSearchProvider = 'tavily' | 'brave' | 'google' | 'mock';
 export type WebSearchType = 'general' | 'academic' | 'news' | 'regulatory';
@@ -157,7 +158,12 @@ export class WebSearchTool extends BaseTool<WebSearchToolInput, WebSearchToolRes
         throw new Error('Search query cannot be empty');
       }
 
-      console.log(`🔍 [Web Search] Provider=${this.searchProvider} Query="${query}" (${searchType}, max ${maxResults})`);
+      logger.info('Web Search execution started', {
+        provider: this.searchProvider,
+        query,
+        searchType,
+        maxResults,
+      });
 
       let results: WebSearchResultItem[];
       let directAnswer: string | undefined;
@@ -202,7 +208,7 @@ export class WebSearchTool extends BaseTool<WebSearchToolInput, WebSearchToolRes
       };
     } catch (error) {
       const duration_ms = Date.now() - startTime;
-      console.error(`❌ [Web Search] Search failed:`, error);
+      logger.error('Web Search failed', { error, provider: this.searchProvider, query, searchType });
 
       return {
         success: false,

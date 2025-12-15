@@ -148,6 +148,12 @@ export const discoverItems: NavigationItem[] = [
     icon: Zap,
   },
   {
+    label: 'Missions',
+    href: '/missions',
+    description: 'Mission templates and runners',
+    icon: Workflow,
+  },
+  {
     label: 'Tools',
     href: '/discover/tools',
     description: 'Browse available tools and integrations',

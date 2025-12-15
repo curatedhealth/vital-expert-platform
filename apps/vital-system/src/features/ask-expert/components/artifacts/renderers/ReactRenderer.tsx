@@ -51,6 +51,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { logger } from '@vital/utils';
 
 // =============================================================================
 // TYPES
@@ -328,7 +329,7 @@ export const ReactRenderer = memo(function ReactRenderer({
         copyTimeoutRef.current = null;
       }, 2000);
     } catch (err) {
-      console.error('Failed to copy code:', err);
+      logger.error('Failed to copy ReactRenderer content', { error: err });
     }
   }, [content, onCopy]);
 

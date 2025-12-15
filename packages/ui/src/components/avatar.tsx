@@ -35,7 +35,7 @@ const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
       setImageStatus("loading")
 
       const img = new Image()
-      img.src = src
+      img.src = typeof src === 'string' ? src : URL.createObjectURL(src)
 
       img.onload = (e) => {
         setImageStatus("loaded")

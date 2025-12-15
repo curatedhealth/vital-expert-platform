@@ -207,19 +207,19 @@ const sectionVariants = {
     height: 0,
     opacity: 0,
     transition: {
-      height: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
-      opacity: { duration: 0.2, ease: 'easeOut' },
+      height: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const },
+      opacity: { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const },
     },
   },
   expanded: {
     height: 'auto',
     opacity: 1,
     transition: {
-      height: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
-      opacity: { duration: 0.2, delay: 0.1, ease: 'easeIn' },
+      height: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const },
+      opacity: { duration: 0.2, delay: 0.1, ease: [0.4, 0, 0.2, 1] as const },
     },
   },
-};
+} as const;
 
 // =============================================================================
 // SECTION HEADER COMPONENT
@@ -350,7 +350,7 @@ export function MissionConfigPanel({
   initialPrompt,
   recommendations,
   availableAgents,
-  templates = DEFAULT_MISSION_TEMPLATES,
+  templates = DEFAULT_MISSION_TEMPLATES as MissionTemplate[],
   onLaunch,
   onSaveTemplate,
   onCancel,

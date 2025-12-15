@@ -690,6 +690,34 @@ class BaseFamilyRunner(ABC, Generic[StateT]):
             session_id=session_id,
         )
 
+    def _emit_phase_event(
+        self,
+        event_type: SSEEventType,
+        state: StateT,
+        phase: str,
+        cost_usd: Optional[float] = None,
+    ) -> SSEEvent:
+        """
+        Emit a phase event with timing/cost metadata (lightweight telemetry).
+        """
+        elapsed_ms = None
+        if state.started_at:
+            elapsed_ms = int((datetime.utcnow() - state.started_at).total_seconds() * 1000)
+
+        payload = {
+            "phase": phase,
+            "elapsed_ms": elapsed_ms,
+        }
+        if cost_usd is not None:
+            payload["cost_usd"] = cost_usd
+
+        return self._emit_sse_event(
+            event_type,
+            payload,
+            mission_id=state.mission_id,
+            session_id=state.session_id,
+        )
+
     def _create_hitl_checkpoint_node(
         self,
         checkpoint_id: str,

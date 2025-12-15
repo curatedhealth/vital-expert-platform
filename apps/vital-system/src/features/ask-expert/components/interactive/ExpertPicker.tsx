@@ -30,6 +30,7 @@ import {
   BookOpen,
   Lightbulb,
 } from 'lucide-react';
+import { logger } from '@vital/utils';
 
 // =============================================================================
 // TYPES
@@ -142,7 +143,7 @@ export function ExpertPicker({
           setExperts(transformedExperts);
         }
       } catch (err) {
-        console.error('[ExpertPicker] Fetch error:', err);
+        logger.error('ExpertPicker fetch error', { error: err });
         setExperts([]);
         setError('Failed to load experts');
       } finally {

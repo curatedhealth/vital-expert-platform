@@ -37,6 +37,7 @@ import {
   MessageSquare,
   RefreshCw,
 } from 'lucide-react';
+import { logger } from '@vital/utils';
 
 import type { CheckpointType } from '../../types/mission-runners';
 
@@ -302,7 +303,7 @@ export const VitalCheckpoint: React.FC<VitalCheckpointProps> = ({
         feedback: feedback.trim() || undefined,
       });
     } catch (error) {
-      console.error('Failed to submit checkpoint decision:', error);
+      logger.error('Failed to submit checkpoint decision', { error });
     } finally {
       setIsSubmitting(false);
     }

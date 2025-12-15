@@ -1,6 +1,6 @@
 # VITAL Platform Architecture Documentation
 
-**Version:** 2.0  
+**Version:** 2.4  
 **Last Updated:** December 14, 2025  
 **Purpose:** Centralized architecture, deployment, and file organization documentation
 
@@ -13,6 +13,7 @@
 | **🏗️ Architecture** | [VITAL_WORLD_CLASS_STRUCTURE_FINAL.md](./VITAL_WORLD_CLASS_STRUCTURE_FINAL.md) | Canonical v4.1 architecture (A+ grade) |
 | **📋 Deployment** | [DEPLOYMENT_CHECKLIST.md](../guides/DEPLOYMENT_CHECKLIST.md) | Production deployment checklist (Vercel + Railway) |
 | **📁 File Organization** | [FILE_ORGANIZATION_STANDARD.md](./FILE_ORGANIZATION_STANDARD.md) | Complete file organization, tagging, and naming standard |
+| **🗄️ Multi-Database** | [MULTI_DATABASE_ORGANIZATION_STANDARD.md](./MULTI_DATABASE_ORGANIZATION_STANDARD.md) | ⭐ **NEW** - Multi-database organization standard (Postgres/Neo4j/Pinecone) |
 | **🏷️ Quick Reference** | [FILE_TAGGING_QUICK_REFERENCE.md](./FILE_TAGGING_QUICK_REFERENCE.md) | Quick reference for file tagging |
 | **📊 Registry** | [PRODUCTION_FILE_REGISTRY.md](./PRODUCTION_FILE_REGISTRY.md) | Production file registry with tags |
 
@@ -25,6 +26,8 @@
 | Document | Version | Status | Purpose |
 |----------|---------|--------|---------|
 | [VITAL_WORLD_CLASS_STRUCTURE_FINAL.md](./VITAL_WORLD_CLASS_STRUCTURE_FINAL.md) | v4.1 | ✅ Active | **Single source of truth** - Complete architecture specification |
+| [PRODUCTION_STRUCTURE_AUDIT.md](./PRODUCTION_STRUCTURE_AUDIT.md) | 1.0 | ✅ Active | **NEW** - Comprehensive audit for production deployment readiness |
+| [REORGANIZATION_ACTION_PLAN.md](./REORGANIZATION_ACTION_PLAN.md) | 1.0 | ✅ Active | **NEW** - Quick action plan for reorganization |
 | [overview.md](./overview.md) | 1.0 | ✅ Active | High-level architecture overview (public developer doc) |
 
 ### File Organization & Standards
@@ -82,6 +85,24 @@ Located in `./versions/`:
 | **v4.1** | [VITAL_WORLD_CLASS_STRUCTURE_FINAL.md](./VITAL_WORLD_CLASS_STRUCTURE_FINAL.md) | Dec 5, 2025 | **FINAL** - A+ grade architecture |
 
 ---
+
+## 📋 Recent Updates
+
+### December 14, 2025 - Infrastructure & Root Cleanup
+- ✅ Removed `infrastructure/monitoring/` (monitoring in Terraform)
+- ✅ Created `terraform.tfvars.example` files for dev/prod
+- ✅ Fixed infrastructure docker-compose.yml database path
+- ✅ Fixed Makefile references (`apps/web` → `apps/vital-system`)
+- ✅ Reviewed all root-level files (all necessary)
+- See: [INFRASTRUCTURE_CLEANUP_COMPLETE.md](./INFRASTRUCTURE_CLEANUP_COMPLETE.md) and [ROOT_LEVEL_CLEANUP_COMPLETE.md](./ROOT_LEVEL_CLEANUP_COMPLETE.md)
+
+### December 14, 2025 - .claude/ Reorganization
+- ✅ Schema files moved to `database/postgres/schemas/`
+- ✅ Historical files archived to `.claude/docs/_historical/`
+- ✅ Governance files moved to `.claude/docs/coordination/`
+- ✅ `.claude/` root cleaned (16 → 7 files)
+- ✅ SQL files reorganized (388 files categorized and moved)
+- See: [CLAUDE_DOCS_REORGANIZATION_COMPLETE.md](./CLAUDE_DOCS_REORGANIZATION_COMPLETE.md)
 
 ## 🎯 Key Architecture Decisions
 

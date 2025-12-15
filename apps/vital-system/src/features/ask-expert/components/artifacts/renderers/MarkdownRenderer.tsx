@@ -33,6 +33,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { logger } from '@vital/utils';
 
 // =============================================================================
 // TYPES
@@ -95,7 +96,7 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
       onCopy?.();
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy content:', err);
+      logger.error('Failed to copy markdown content', { error: err });
     }
   }, [content, onCopy]);
 

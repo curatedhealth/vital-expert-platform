@@ -44,6 +44,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import DOMPurify from 'dompurify';
+import { logger } from '@vital/utils';
 
 // =============================================================================
 // TYPES
@@ -359,7 +360,7 @@ export const HtmlRenderer = memo(function HtmlRenderer({
         copyTimeoutRef.current = null;
       }, 2000);
     } catch (err) {
-      console.error('Failed to copy HTML:', err);
+      logger.error('Failed to copy HTML', { error: err });
     }
   }, [content, onCopy]);
 

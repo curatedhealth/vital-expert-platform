@@ -5,7 +5,7 @@
 
 'use client';
 
-import { Brain, Activity, Clock, Database } from 'lucide-react';
+import { Brain, Activity, Clock, Database, AlertTriangle } from 'lucide-react';
 import React from 'react';
 
 interface RAGPerformanceSummaryProps {

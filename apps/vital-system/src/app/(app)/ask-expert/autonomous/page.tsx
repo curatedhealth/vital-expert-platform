@@ -15,7 +15,7 @@
 
 import { Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTenant } from '@/contexts/TenantContext';
+import { useTenant } from '@/contexts/tenant-context';
 import { AutonomousView, type AutonomousMode } from '@/features/ask-expert/views/AutonomousView';
 import { ErrorBoundary } from '@/features/ask-expert/components/errors';
 import { Loader2 } from 'lucide-react';
@@ -62,16 +62,16 @@ function LoadingState() {
 }
 
 export default function AutonomousPage() {
-  const tenant = useTenant();
+  const tenantContext = useTenant();
 
-  if (!tenant) {
+  if (!tenantContext?.tenant) {
     return <LoadingState />;
   }
 
   return (
     <ErrorBoundary componentName="AutonomousPage">
       <Suspense fallback={<LoadingState />}>
-        <AutonomousPageContent tenantId={tenant.id} />
+        <AutonomousPageContent tenantId={tenantContext.tenant.id} />
       </Suspense>
     </ErrorBoundary>
   );

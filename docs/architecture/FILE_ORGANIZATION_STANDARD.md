@@ -1,6 +1,6 @@
 # VITAL Platform - File Organization Standard
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** December 14, 2025  
 **Last Updated:** December 14, 2025  
 **Status:** Production Standard  
@@ -35,11 +35,21 @@ vital-path/
 │   └── vital-system/             # Frontend (Next.js)
 │       ├── src/
 │       │   ├── app/              # Routes (Next.js App Router)
-│       │   ├── components/       # Shared UI components
-│       │   ├── features/         # Feature modules
-│       │   ├── lib/              # Utilities & services
-│       │   ├── types/            # TypeScript types
-│       │   └── config/           # Configuration
+│       │   ├── components/     # Shared UI components
+│       │   ├── features/        # Feature modules
+│       │   ├── lib/             # Utilities & services
+│       │   │   ├── config/      # Configuration utilities
+│       │   │   ├── deployment/  # Deployment utilities
+│       │   │   ├── optimization/# Optimization utilities
+│       │   │   ├── providers/   # React providers
+│       │   │   ├── security/    # Security utilities
+│       │   │   ├── services/    # Service layer
+│       │   │   └── shared/      # Shared utilities
+│       │   ├── middleware/      # Next.js middleware
+│       │   ├── types/           # TypeScript types
+│       │   ├── contexts/        # React contexts
+│       │   ├── hooks/           # React hooks
+│       │   └── stores/         # State stores
 │       └── public/               # Static assets
 │
 ├── services/                      # Backend services
@@ -56,19 +66,35 @@ vital-path/
 │   └── sdk/                      # Client SDK
 │
 ├── database/                      # Database management
-│   ├── migrations/               # SQL migrations
-│   ├── policies/                 # RLS policies
-│   └── seeds/                   # Seed data
+│   ├── postgres/                 # PostgreSQL/Supabase
+│   │   ├── migrations/           # SQL migrations
+│   │   ├── seeds/                # Seed data
+│   │   ├── policies/              # RLS policies
+│   │   ├── functions/            # Postgres functions
+│   │   ├── schemas/              # Schema documentation
+│   │   └── queries/              # SQL queries
+│   ├── neo4j/                    # Neo4j Graph Database
+│   └── pinecone/                 # Pinecone Vector Database
 │
 ├── docs/                          # Public documentation
 │   ├── guides/                   # Developer guides
 │   ├── api/                      # API documentation
 │   └── architecture/             # Architecture docs
 │
-└── .claude/docs/                  # Internal documentation
-    ├── services/                 # Service-specific docs
-    ├── platform/                 # Platform features
-    └── operations/               # Operations docs
+└── .claude/                       # AI Assistant Configuration
+    ├── README.md                 # Command center overview
+    ├── CLAUDE.md                 # Claude operational rules
+    ├── VITAL.md                  # VITAL Platform standards
+    ├── EVIDENCE_BASED_RULES.md   # Evidence requirements
+    ├── AGENT_QUICK_START.md      # Agent onboarding
+    ├── CATALOGUE.md              # Master catalog
+    ├── STRUCTURE.md              # Reference to root STRUCTURE.md
+    └── docs/                      # Internal documentation
+        ├── services/             # Service-specific docs
+        ├── platform/             # Platform features
+        ├── operations/           # Operations docs
+        ├── coordination/         # Agent coordination & governance
+        └── _historical/          # Historical records
 ```
 
 ### 1.2 File Location Decision Tree

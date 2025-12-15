@@ -58,6 +58,16 @@ make docker-up
 vital-platform/
 ├── apps/                           # Frontend (Next.js 14)
 │   └── vital-system/               # Main application
+│       └── src/
+│           ├── app/                # Next.js App Router
+│           ├── features/           # Feature modules
+│           ├── components/        # Shared components
+│           ├── lib/                # Utilities (consolidated)
+│           ├── middleware/         # Next.js middleware
+│           ├── types/              # TypeScript types
+│           ├── contexts/           # React contexts
+│           ├── hooks/              # React hooks
+│           └── stores/             # State stores
 │
 ├── packages/                       # Shared packages
 │   └── protocol/                   # Type definitions (Zod schemas)

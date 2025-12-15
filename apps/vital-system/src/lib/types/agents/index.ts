@@ -5,7 +5,7 @@
  * Import from here: `import type { Agent } from '@/lib/types/agents'`
  * 
  * Migration Guide:
- * - Replace imports from `@/shared/types/agent.types` → `@/lib/types/agents`
+ * - Replace imports from `@/lib/shared/types/agent.types` → `@/lib/types/agents`
  * - Replace imports from `@/types/agent.types` → `@/lib/types/agents`
  * - Replace imports from `@/features/agents/types/agent.types` → `@/lib/types/agents`
  */
@@ -43,7 +43,7 @@ export type {
   ImportMetadata,
   AgentSearchResult,
   UserAgent,
-} from '@/shared/types/agent.types';
+} from '@/lib/shared/types/agent.types';
 
 export {
   AgentStatus,
@@ -53,7 +53,7 @@ export {
   RiskLevel,
   ClinicalValidationStatus,
   FDASaMDClass,
-} from '@/shared/types/agent.types';
+} from '@/lib/shared/types/agent.types';
 
 /**
  * Unified Agent Search Result

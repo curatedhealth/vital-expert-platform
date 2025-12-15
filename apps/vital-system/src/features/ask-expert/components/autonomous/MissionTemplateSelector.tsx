@@ -21,9 +21,9 @@
 import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Button } from '@vital/ui/components/button';
+import { Badge } from '@vital/ui/components/badge';
+import { Input } from '@vital/ui/components/input';
 import {
   Search,
   Clock,
@@ -41,6 +41,7 @@ import {
 import type { Expert } from '../interactive/ExpertPicker';
 import type { MissionTemplate, MissionTask, MissionComplexity } from '../../types/mission-runners';
 import { DEFAULT_MISSION_TEMPLATES } from '../../types/mission-runners';
+import { MissionCard } from '@vital/ui/components/missions';
 
 // =============================================================================
 // HELPERS - Bridge between canonical and display schemas
@@ -341,125 +342,34 @@ export function MissionTemplateSelector({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTemplates.map((template) => (
-              <TemplateCard
+              <MissionCard
                 key={template.id}
-                template={template}
-                isHovered={hoveredTemplate === template.id}
-                onHover={() => setHoveredTemplate(template.id)}
-                onLeave={() => setHoveredTemplate(null)}
-                onClick={() => handleTemplateClick(template)}
+                mission={{
+                  id: template.id!,
+                  name: template.name!,
+                  description: template.description || '',
+                  family: template.family,
+                  status: 'pending',
+                  category: template.category,
+                }}
+                showStatus={false}
+                showProgress={false}
+                onSelect={() => handleTemplateClick(template)}
+                className={cn(
+                  'border-2',
+                  hoveredTemplate === template.id ? 'border-purple-400 shadow-lg shadow-purple-500/10' : 'border-slate-200'
+                )}
+                actions={
+                  <Button size="sm" variant="secondary" onClick={() => handleTemplateClick(template)}>
+                    Select
+                  </Button>
+                }
               />
             ))}
           </div>
         )}
       </div>
     </div>
-  );
-}
-
-// =============================================================================
-// SUB-COMPONENTS
-// =============================================================================
-
-interface TemplateCardProps {
-  template: MissionTemplate;
-  isHovered: boolean;
-  onHover: () => void;
-  onLeave: () => void;
-  onClick: () => void;
-}
-
-function TemplateCard({ template, isHovered, onHover, onLeave, onClick }: TemplateCardProps) {
-  // Map canonical complexity to display type, then get config
-  const displayComplexity = mapComplexityToDisplay(template.complexity);
-  const complexityConfig = COMPLEXITY_CONFIG[displayComplexity];
-  const categoryConfig = CATEGORY_CONFIG[template.category];
-  const CategoryIcon = categoryConfig.icon;
-
-  // Get tasks using helper (canonical uses 'tasks' not 'steps')
-  const tasks = getTemplateTasks(template);
-
-  return (
-    <motion.button
-      onClick={onClick}
-      onMouseEnter={onHover}
-      onMouseLeave={onLeave}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
-      className={cn(
-        'p-4 rounded-xl border-2 text-left transition-all w-full',
-        'hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/10',
-        'border-slate-200 bg-white',
-        'focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2'
-      )}
-    >
-      {/* Header */}
-      <div className="flex items-start gap-3">
-        <span className="text-2xl">{template.icon}</span>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-slate-900 truncate">{template.name}</h3>
-          <p className="text-sm text-slate-600 mt-1 line-clamp-2">{template.description}</p>
-        </div>
-      </div>
-
-      {/* Meta */}
-      <div className="flex items-center gap-2 mt-3 flex-wrap">
-        <Badge variant="outline" className="text-xs gap-1">
-          <Clock className="w-3 h-3" />
-          {formatDuration(template)}
-        </Badge>
-        <Badge className={cn('text-xs', complexityConfig.bgColor, complexityConfig.color)}>
-          {complexityConfig.label}
-        </Badge>
-        <Badge variant="outline" className={cn('text-xs gap-1', categoryConfig.color)}>
-          <CategoryIcon className="w-3 h-3" />
-          {categoryConfig.label}
-        </Badge>
-      </div>
-
-      {/* Tasks Preview (on hover) */}
-      <AnimatePresence>
-        {isHovered && tasks.length > 0 && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="mt-3 pt-3 border-t border-slate-100">
-              <p className="text-xs font-medium text-slate-500 mb-2">
-                {tasks.length} {tasks.length === 1 ? 'Task' : 'Tasks'}:
-              </p>
-              <div className="space-y-1">
-                {tasks.slice(0, 3).map((task, index) => (
-                  <div key={task.id || index} className="flex items-center gap-2 text-xs text-slate-600">
-                    <span className="w-4 h-4 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-[10px] font-medium">
-                      {index + 1}
-                    </span>
-                    <span className="truncate">{task.name}</span>
-                  </div>
-                ))}
-                {tasks.length > 3 && (
-                  <div className="text-xs text-slate-400 pl-6">
-                    +{tasks.length - 3} more {tasks.length - 3 === 1 ? 'task' : 'tasks'}
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Select Arrow */}
-      <div className="flex items-center justify-end mt-3 text-purple-600">
-        <span className="text-sm font-medium">Select</span>
-        <ChevronRight className={cn(
-          'w-4 h-4 transition-transform',
-          isHovered && 'translate-x-1'
-        )} />
-      </div>
-    </motion.button>
   );
 }
 

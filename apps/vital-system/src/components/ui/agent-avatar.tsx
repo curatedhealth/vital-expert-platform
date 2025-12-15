@@ -27,7 +27,7 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
   
   // Support both old and new interfaces
   const avatar = agent?.avatar || avatarProp || 'avatar_0001';
-  const name = agent?.name || agent?.display_name || nameProp || 'Agent';
+  const name = agent?.name || (agent as any)?.display_name || nameProp || 'Agent';
 
   // Function to get the proper icon URL with simplified PNG naming
   const getIconUrl = (iconUrl: string): string => {

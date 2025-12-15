@@ -25,7 +25,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { createLogger } from './structured-logger';
 import { getTracingService } from './tracing';
-import { env } from '@/config/environment';
+import { env } from '@/lib/config/environment';
 import { withRetry } from '../resilience/retry';
 import { z } from 'zod';
 

@@ -8,26 +8,10 @@
 import { Settings, Star, Database, FileText, Calendar, Trash2, Edit } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle, Button, Badge, Slider } from '@/shared/components/ui';
+import { Card, CardContent, CardHeader, CardTitle, Button, Badge, Slider } from '@/lib/shared/components/ui';
 
 import { RagContextModal } from './RagContextModal';
-
-interface AgentRagAssignment {
-  id: string;
-  name: string;
-  display_name: string;
-  description: string;
-  purpose_description: string;
-  rag_type: 'global' | 'agent_specific';
-  knowledge_domains: string[];
-  document_count: number;
-  is_assigned?: boolean;
-  assignment_priority?: number;
-  usage_context?: string;
-  is_primary?: boolean;
-  last_used_at?: string;
-  custom_prompt_instructions?: string;
-}
+import type { AgentRagAssignment } from './types';
 
 interface AgentRagAssignmentsProps {
   agentName: string;
@@ -52,7 +36,7 @@ export const AgentRagAssignments: React.FC<AgentRagAssignmentsProps> = ({
     setShowContextModal(true);
   };
 
-  const handleSaveContext = (context: {
+  const handleSaveContext = (ragId: string, context: {
     usage_context: string;
     custom_prompt_instructions: string;
     is_primary: boolean;
@@ -130,6 +114,7 @@ export const AgentRagAssignments: React.FC<AgentRagAssignmentsProps> = ({
       {/* Assigned RAG Databases */}
       <div className="grid gap-4 lg:grid-cols-2">
         {assignedRagDatabases.map((rag) => {
+          const priorityInfo = getPriorityBadge(rag.assignment_priority || 50);
 
           return (
             <Card key={rag.id} className="hover:shadow-md transition-shadow">
@@ -148,7 +133,7 @@ export const AgentRagAssignments: React.FC<AgentRagAssignmentsProps> = ({
                     >
                       {rag.rag_type === 'global' ? 'Global' : 'Agent-Specific'}
                     </Badge>
-                    <Badge variant={priorityInfo.color as unknown} className="text-xs">
+                    <Badge variant={priorityInfo.color} className="text-xs">
                       {priorityInfo.label} Priority
                     </Badge>
                   </div>
@@ -240,7 +225,7 @@ export const AgentRagAssignments: React.FC<AgentRagAssignmentsProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleConfigureRag(rag)}
+                    onClick={() => handleViewContext(rag)}
                     className="flex items-center gap-1"
                   >
                     <Edit className="h-3 w-3" />

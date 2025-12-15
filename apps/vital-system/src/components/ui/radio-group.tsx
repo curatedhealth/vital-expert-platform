@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '@/shared/services/utils';
+import { cn } from '@/lib/shared/services/utils';
 
 interface RadioGroupContextValue {
   value: string | undefined;

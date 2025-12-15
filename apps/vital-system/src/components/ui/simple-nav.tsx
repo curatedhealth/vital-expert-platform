@@ -5,11 +5,13 @@ import {
   X
 } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
-import { Button } from '@/shared/components/ui/button';
+import { Button } from '@/lib/shared/components/ui/button';
 
 export function SimpleNav() {
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Don't show navigation on authenticated app pages - they have their own layout

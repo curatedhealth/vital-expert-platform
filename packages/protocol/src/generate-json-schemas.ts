@@ -1,26 +1,29 @@
 #!/usr/bin/env tsx
+/* eslint-disable no-console */
+/* eslint-disable security/detect-non-literal-fs-filename */
 /**
  * VITAL Protocol - JSON Schema Generator
- * 
+ *
  * Exports Zod schemas to JSON Schema format for:
  * 1. Python Pydantic model generation
  * 2. Documentation
  * 3. Runtime validation in other languages
- * 
+ *
  * Usage: pnpm run generate:json-schemas
  */
 
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 
+import { zodToJsonSchema } from 'zod-to-json-schema';
+
 // Schemas to export
-import { WorkflowSchema, CreateWorkflowSchema } from './schemas/workflow.schema';
-import { NodeSchema } from './schemas/nodes.schema';
 import { EdgeSchema } from './schemas/edges.schema';
 import { ExpertRequestSchema, ExpertSyncResponseSchema, ExpertAsyncResponseSchema, ConversationSchema, MessageSchema } from './schemas/expert.schema';
-import { JobSchema, JobStatusResponseSchema, JobResultResponseSchema } from './schemas/job.schema';
+import { JobSchema, JobResultResponseSchema, JobStatusResponseSchema } from './schemas/job.schema';
+import { NodeSchema } from './schemas/nodes.schema';
+import { WorkflowSchema, CreateWorkflowSchema } from './schemas/workflow.schema';
 
 // Get directory path
 const __filename = fileURLToPath(import.meta.url);

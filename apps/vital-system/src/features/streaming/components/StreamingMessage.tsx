@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { AgentAvatar } from '@/shared/components/agent-avatar';
+import { AgentAvatar } from '@/lib/shared/components/agent-avatar';
 
 import { StreamingMessage as StreamingMessageType } from '@/hooks/useStreamingResponse';
 

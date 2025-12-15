@@ -124,7 +124,7 @@ For AI orchestration platforms like VITAL, **microservices create more problems 
 vital-path/
 │
 ├── 📁 apps/                          # Deployable Applications
-│   └── web/                          # Next.js 14+ Frontend
+│   └── vital-system/                 # Next.js 14+ Frontend
 │
 ├── 📁 services/                      # Backend Services
 │   └── ai-engine/                    # 🔥 MODULAR MONOLITH (Single Python Runtime)
@@ -538,10 +538,10 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
 ## Frontend Architecture
 
-### apps/web/ - Next.js 14+ Frontend
+### apps/vital-system/ - Next.js 14+ Frontend
 
 ```
-apps/web/
+apps/vital-system/
 │
 ├── 📁 public/                        # Static Assets
 │   ├── images/
@@ -1070,7 +1070,7 @@ database/
 ### Example: RLS Policy
 
 ```sql
--- database/policies/workflows.policy.sql
+-- database/postgres/policies/workflows.policy.sql
 
 -- Enable RLS
 ALTER TABLE workflows ENABLE ROW LEVEL SECURITY;

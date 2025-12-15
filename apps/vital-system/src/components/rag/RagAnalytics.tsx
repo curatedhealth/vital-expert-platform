@@ -8,14 +8,14 @@
 import { BarChart3, TrendingUp, Clock, Target, Database, Users } from 'lucide-react';
 import React from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle, Badge } from '@/shared/components/ui';
+import { Card, CardContent, CardHeader, CardTitle, Badge } from '@/lib/shared/components/ui';
 
 interface RagAnalyticsProps {
   agentName: string;
   assignedRagDatabases: Array<{
     id: string;
     display_name: string;
-    rag_type: string;
+    rag_type: 'global' | 'agent_specific';
     document_count: number;
     assignment_priority?: number;
     last_used_at?: string;
@@ -27,7 +27,7 @@ export const RagAnalytics: React.FC<RagAnalyticsProps> = ({
   assignedRagDatabases
 }) => {
   // Mock analytics data - in real implementation, this would come from the database
-  const mockAnalytics = {
+  const analyticsData = {
     totalQueries: 1247,
     avgResponseTime: 340,
     avgRelevanceScore: 0.87,
@@ -51,6 +51,8 @@ export const RagAnalytics: React.FC<RagAnalyticsProps> = ({
   const formatScore = (score: number): string => {
     return `${Math.round(score * 100)}%`;
   };
+
+  const formatRelevanceScore = formatScore;
 
   return (
     <div className="space-y-6">

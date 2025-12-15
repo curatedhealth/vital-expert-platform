@@ -19,11 +19,23 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { type Workspace, type WorkspaceType } from '@/hooks/useWorkspaceManager';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent } from '@/shared/components/ui/card';
-import { Separator } from '@/shared/components/ui/separator';
+// Workspace types - define locally if hook doesn't exist
+type WorkspaceType = 'personal' | 'team' | 'organization' | 'pharma' | 'payer' | 'provider' | 'dtx-startup' | 'general';
+interface Workspace {
+  id: string;
+  name: string;
+  type: WorkspaceType;
+  description?: string;
+  metadata?: {
+    totalConversations?: number;
+    [key: string]: unknown;
+  };
+  defaultAgents?: unknown[];
+}
+import { Badge } from '@/lib/shared/components/ui/badge';
+import { Button } from '@/lib/shared/components/ui/button';
+import { Card, CardContent } from '@/lib/shared/components/ui/card';
+import { Separator } from '@/lib/shared/components/ui/separator';
 
 interface WorkspaceSelectorProps {
   workspaces: Workspace[];
@@ -38,6 +50,9 @@ interface WorkspaceSelectorProps {
 }
 
 const workspaceIcons: Record<WorkspaceType, string> = {
+  'personal': '👤',
+  'team': '👥',
+  'organization': '🏢',
   'pharma': '💊',
   'payer': '💰',
   'provider': '🏥',
@@ -46,6 +61,9 @@ const workspaceIcons: Record<WorkspaceType, string> = {
 };
 
 const workspaceColors: Record<WorkspaceType, string> = {
+  'personal': 'bg-gray-500',
+  'team': 'bg-purple-500',
+  'organization': 'bg-indigo-500',
   'pharma': 'bg-blue-500',
   'payer': 'bg-green-500',
   'provider': 'bg-purple-500',
@@ -143,7 +161,7 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({
             {conversations.length === 0 ? (
               <div className="text-xs text-muted-foreground py-2">No conversations yet</div>
             ) : (
-              conversations.slice(0, 5).map((conv: unknown) => (
+              conversations.slice(0, 5).map((conv: any) => (
                 <Button
                   key={conv.id}
                   variant="ghost"
@@ -203,7 +221,7 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({
                         key={workspace.id}
                         whileHover={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
                         className={`p-3 cursor-pointer transition-colors ${
-                          isActive ? 'bg-primary/5 border-r-2 border-r-primary' : ''
+                          currentWorkspace?.id === workspace.id ? 'bg-primary/5 border-r-2 border-r-primary' : ''
                         }`}
                         onClick={() => {
                           onWorkspaceSelect(workspace.id);
@@ -240,11 +258,11 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({
                               </div>
                               <div className="flex items-center gap-1">
                                 <Users className="h-3 w-3" />
-                                <span>{workspace.defaultAgents.length}</span>
+                                <span>{(workspace.defaultAgents || []).length}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <TrendingUp className="h-3 w-3" />
-                                <span>{workspace.metadata?.avgResponseTime || 0}ms</span>
+                                <span>{typeof workspace.metadata?.avgResponseTime === 'number' ? workspace.metadata.avgResponseTime : 0}ms</span>
                               </div>
                             </div>
 
@@ -258,7 +276,7 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({
                         </div>
 
                         {/* Primary Topics */}
-                        {workspace.metadata?.primaryTopics && workspace.metadata.primaryTopics.length > 0 && (
+                        {(workspace.metadata?.primaryTopics && Array.isArray(workspace.metadata.primaryTopics) && workspace.metadata.primaryTopics.length > 0) ? (
                           <div className="mt-2 pl-13">
                             <div className="flex flex-wrap gap-1">
                               {workspace.metadata.primaryTopics.slice(0, 3).map((topic: string, index: number) => (
@@ -280,7 +298,7 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({
                               )}
                             </div>
                           </div>
-                        )}
+                        ) : null}
                       </motion.div>
                     );
                   })}

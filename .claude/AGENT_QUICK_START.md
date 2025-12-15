@@ -223,7 +223,7 @@ System Architecture Architect: Technical architecture
 
 ### Scenario 2: "I need to update the database schema"
 1. Read: `CLAUDE.md` (database safety rules)
-2. Read: `docs/architecture/data-schema/`
+2. Read: `database/postgres/schemas/` (schema documentation)
 3. Read: `docs/coordination/SQL_SUPABASE_SPECIALIST_GUIDE.md`
 4. Create migration following conventions
 5. Provide evidence of testing

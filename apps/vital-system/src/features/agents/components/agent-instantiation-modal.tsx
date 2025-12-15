@@ -39,7 +39,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
+} from '@vital/ui';
 import {
   MessageSquare,
   Globe,
@@ -190,6 +190,9 @@ export const AgentInstantiationModal: React.FC<AgentInstantiationModalProps> = (
     setError(null);
 
     try {
+      if (!agent.id) {
+        throw new Error('Agent ID is required');
+      }
       const instantiated = await instantiateAgent({
         agentId: agent.id,
         userId,

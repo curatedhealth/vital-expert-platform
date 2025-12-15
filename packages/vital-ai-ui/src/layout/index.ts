@@ -88,4 +88,4 @@ export type {
 } from './VitalShimmer';
 
 // Intelligent Sidebar
-export { default as VitalIntelligentSidebar } from './VitalIntelligentSidebar';
+export { VitalIntelligentSidebar } from './VitalIntelligentSidebar';

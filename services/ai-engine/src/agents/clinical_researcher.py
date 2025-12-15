@@ -110,6 +110,12 @@ You have 15+ years of experience in clinical research with expertise in:
             logger.error("❌ Failed to initialize Clinical Researcher Agent", error=str(e))
             raise
 
+
+# Backwards-compatible alias expected by legacy tests
+class ClinicalResearcher(ClinicalResearcherAgent):
+    """Alias for ClinicalResearcherAgent for legacy imports"""
+    pass
+
     async def process_query(self, query: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """Process a clinical research query with expert guidance"""
         try:

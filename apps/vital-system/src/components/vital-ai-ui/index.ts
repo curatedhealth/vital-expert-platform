@@ -22,7 +22,7 @@ export {
   VitalSuggestionChips,
   VitalQuickActions,
 } from './conversation';
-export type { CitationData } from './conversation';
+export type { CitationData } from './conversation/VitalStreamText';
 
 // Reasoning components (AgentLevel type from here takes precedence)
 export {
@@ -115,7 +115,7 @@ export {
   VitalContextPanel,
   VitalChatLayout,
   VitalDashboardLayout,
-  VitalLoadingStates,
+  LoadingStates as VitalLoadingStates,
 } from './layout';
 
 // Fusion components

@@ -7,6 +7,7 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { BaseTool, ToolContext, ToolExecutionResult } from './base-tool';
+import { logger } from '@vital/utils';
 
 export type DatabaseQueryType =
   | 'clinical_trials'
@@ -116,7 +117,7 @@ export class DatabaseQueryTool extends BaseTool<DatabaseQueryToolInput, { query_
       const limit = input.limit ?? 10;
       const tenantId = typeof context.tenant_id === 'string' ? context.tenant_id : undefined;
 
-      console.log(`🗄️  [Database Query] Executing ${queryType} query`);
+      logger.info('Database query executing', { queryType, filters, tenantId, limit });
 
       let results: DatabaseQueryResult;
 
@@ -166,7 +167,7 @@ export class DatabaseQueryTool extends BaseTool<DatabaseQueryToolInput, { query_
       };
     } catch (error) {
       const duration_ms = Date.now() - startTime;
-      console.error(`❌ [Database Query] Query failed:`, error);
+      logger.error('Database query failed', { error, queryType, filters, tenantId });
 
       return {
         success: false,

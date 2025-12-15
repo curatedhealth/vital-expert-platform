@@ -153,6 +153,12 @@ You have 15+ years of experience in medical device and pharmaceutical developmen
             logger.error("❌ Medical Specialist query failed", error=str(e))
             raise
 
+
+# Backwards-compatible alias expected by legacy tests
+class MedicalSpecialist(MedicalSpecialistAgent):
+    """Alias for MedicalSpecialistAgent for legacy imports"""
+    pass
+
     async def generate_clinical_protocol(self, requirements: Dict[str, Any]) -> Dict[str, Any]:
         """Generate clinical protocol based on requirements"""
         try:

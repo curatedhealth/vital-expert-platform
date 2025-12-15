@@ -126,7 +126,7 @@ export function VitalCircuitBreaker({
           </div>
         </div>
         
-        {onRetry && state !== 'closed' && (
+        {onRetry && (state === 'open' || state === 'half-open') && (
           <Button
             variant="outline"
             size="sm"

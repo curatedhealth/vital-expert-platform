@@ -42,7 +42,7 @@ dev: ## Start all development servers
 
 dev-web: ## Start frontend development server
 	@echo "🌐 Starting frontend..."
-	cd apps/web && pnpm run dev
+	cd apps/vital-system && pnpm run dev
 
 dev-api: ## Start backend API server
 	@echo "🐍 Starting backend API..."
@@ -75,7 +75,7 @@ test: ## Run all tests
 
 test-web: ## Run frontend tests
 	@echo "🧪 Running frontend tests..."
-	cd apps/web && pnpm run test
+	cd apps/vital-system && pnpm run test
 
 test-api: ## Run backend tests
 	@echo "🧪 Running backend tests..."
@@ -151,7 +151,7 @@ db-reset: ## Reset database (DANGEROUS)
 
 db-policies: ## Apply RLS policies
 	@echo "🔒 Applying RLS policies..."
-	for f in database/policies/*.sql; do \
+	for f in database/postgres/policies/*.sql; do \
 		echo "  Applying $$(basename $$f)..."; \
 		supabase db execute --file "$$f"; \
 	done
@@ -223,8 +223,8 @@ docker-health: ## Check service health
 clean: ## Clean build artifacts
 	@echo "🧹 Cleaning..."
 	rm -rf node_modules
-	rm -rf apps/web/.next
-	rm -rf apps/web/node_modules
+	rm -rf apps/vital-system/.next
+	rm -rf apps/vital-system/node_modules
 	rm -rf packages/*/dist
 	rm -rf packages/*/node_modules
 	rm -rf services/ai-engine/.venv

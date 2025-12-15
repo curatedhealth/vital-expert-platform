@@ -6,6 +6,7 @@
  */
 
 import { CIRCUIT_BREAKER_CONFIG } from './circuit-breaker-config';
+import { logger } from '@vital/utils';
 
 export interface CircuitBreakerOptions {
   failureThreshold?: number;
@@ -88,7 +89,7 @@ export class CircuitBreaker {
       try {
         callback(event);
       } catch (error) {
-        console.error(`[Circuit Breaker: ${this.name}] Error in state change callback:`, error);
+        logger.error(`[Circuit Breaker: ${this.name}] Error in state change callback`, { error });
       }
     });
   }
@@ -106,10 +107,10 @@ export class CircuitBreaker {
         const previousState = this.state;
         this.state = CircuitState.HALF_OPEN;
         this.successCount = 0;
-        console.log(`🔄 [Circuit Breaker: ${this.name}] Attempting reset (HALF_OPEN)`);
+        logger.info('Circuit breaker attempting reset (HALF_OPEN)', { circuitName: this.name });
         this.emitStateChange(previousState, CircuitState.HALF_OPEN, 'Reset timeout reached, attempting recovery');
       } else {
-        console.warn(`⚠️  [Circuit Breaker: ${this.name}] Circuit OPEN - using fallback`);
+        logger.warn('Circuit breaker OPEN - using fallback', { circuitName: this.name });
         if (fallback) {
           return fallback();
         }
@@ -126,7 +127,7 @@ export class CircuitBreaker {
       
       // Use fallback if available
       if (fallback) {
-        console.warn(`⚠️  [Circuit Breaker: ${this.name}] Operation failed, using fallback`);
+        logger.warn('Circuit breaker operation failed, using fallback', { circuitName: this.name, error });
         return fallback();
       }
       
@@ -150,7 +151,10 @@ export class CircuitBreaker {
         const successCountAtTransition = this.successCount;
         this.state = CircuitState.CLOSED;
         this.successCount = 0;
-        console.log(`✅ [Circuit Breaker: ${this.name}] Circuit CLOSED - service recovered`);
+        logger.info('Circuit breaker CLOSED - service recovered', {
+          circuitName: this.name,
+          successCount: successCountAtTransition,
+        });
         this.emitStateChange(previousState, CircuitState.CLOSED, `Recovered after ${successCountAtTransition} successful attempts`);
       }
     }
@@ -170,9 +174,7 @@ export class CircuitBreaker {
     ) {
       const previousState = this.state;
       this.state = CircuitState.OPEN;
-      console.error(
-        `🚨 [Circuit Breaker: ${this.name}] Circuit OPENED after ${this.failureCount} failures`
-      );
+      logger.error('Circuit breaker OPENED', { circuitName: this.name, failureCount: this.failureCount });
       this.emitStateChange(previousState, CircuitState.OPEN, `Threshold exceeded: ${this.failureCount} failures`);
     }
   }
@@ -202,7 +204,7 @@ export class CircuitBreaker {
     this.failureCount = 0;
     this.successCount = 0;
     this.lastFailureTime = undefined;
-    console.log(`🔄 [Circuit Breaker: ${this.name}] Manually reset`);
+    logger.info('Circuit breaker manually reset', { circuitName: this.name });
   }
 
   /**

@@ -93,7 +93,7 @@ Fast feedback loops, clear patterns, excellent documentation.
 vital-path/
 │
 ├── 📁 apps/                          # Deployable applications
-│   ├── web/                          # Main web application (Next.js 14+)
+│   ├── vital-system/                 # Main web application (Next.js 14+)
 │   ├── admin/                        # Admin dashboard (optional)
 │   └── docs/                         # Documentation site (optional)
 │
@@ -179,10 +179,10 @@ vital-path/
 
 ## Frontend Architecture
 
-### apps/web/ Structure
+### apps/vital-system/ Structure
 
 ```
-apps/web/
+apps/vital-system/
 ├── 📁 public/                        # Static assets
 │   ├── images/                       # Image assets
 │   ├── icons/                        # Icon files

@@ -43,6 +43,8 @@ from langgraph_workflows.modes34.resilience import (
     graceful_degradation,
     invoke_llm_with_timeout,
 )
+from langgraph_workflows.modes34.resilience.exceptions import ValidationError
+from .output_validation import validate_deep_research_outputs
 
 from .base_family_runner import (
     BaseFamilyRunner,
@@ -238,6 +240,7 @@ class DeepResearchRunner(BaseFamilyRunner[DeepResearchState]):
         state.num_branches = self.num_branches
         state.max_reflection_iterations = self.max_reflection_iterations
         state.total_steps = state.num_branches + 4  # branches + decompose + synth + verify + reflect
+        self._emit_phase_event(SSEEventType.PHASE_START, state, phase="initialize")
 
         return state
 
@@ -589,11 +592,27 @@ If the synthesis is satisfactory, confirm it meets quality standards."""
         state.phase = ExecutionPhase.COMPLETE
         state.completed_at = datetime.utcnow()
 
+        try:
+            validated = validate_deep_research_outputs(
+                state.research_branches,
+                state.citations,
+                state.final_output,
+            )
+            state.research_branches = validated["branches"]
+            state.citations = validated["citations"]
+        except ValidationError as exc:
+            state.error = f"validation_failed: {exc}"
+            self._emit_sse_event(
+                SSEEventType.MISSION_FAILED,
+                {"mission_id": state.mission_id, "error": state.error},
+                mission_id=state.mission_id,
+            )
+            raise
+
         # Calculate final scores
-        branch_confidences = [b.branch_confidence for b in state.research_branches if b.completed]
+        branch_confidences = [b.get("branch_confidence", 0.0) for b in state.research_branches if b.get("completed")]
         state.confidence_score = sum(branch_confidences) / len(branch_confidences) if branch_confidences else 0.0
 
-        # Quality score based on multiple factors
         quality_factors = [
             state.confidence_score,
             min(len(state.citations) / 5, 1.0),  # Citation count factor
@@ -602,7 +621,6 @@ If the synthesis is satisfactory, confirm it meets quality standards."""
         ]
         state.quality_score = sum(quality_factors) / len(quality_factors)
 
-        # Determine if HITL is needed
         if state.quality_score < self.confidence_threshold:
             state.requires_hitl = True
             state.hitl_reason = f"Quality score {state.quality_score:.2f} below threshold {self.confidence_threshold}"

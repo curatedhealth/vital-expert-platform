@@ -4,9 +4,9 @@ dockerfilePath = "services/ai-engine/Dockerfile"
 watchPatterns = ["services/ai-engine/**"]
 
 [deploy]
-startCommand = "cd services/ai-engine && python start.py"
+startCommand = "python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT --app-dir services/ai-engine/src --workers 2"
 healthcheckPath = "/health"
-healthcheckTimeout = 60
+healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 

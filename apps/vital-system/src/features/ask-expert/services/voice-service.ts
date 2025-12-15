@@ -12,6 +12,7 @@
  * - Wake word detection
  * - Voice activity detection (VAD)
  */
+import { logger } from '@vital/utils';
 
 export interface VoiceConfig {
   language?: string;
@@ -112,7 +113,7 @@ class VoiceService {
     }
 
     if (this.isListening) {
-      console.warn('Already listening');
+      logger.warn('VoiceService already listening');
       return;
     }
 

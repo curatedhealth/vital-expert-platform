@@ -268,7 +268,9 @@ function FilterLayerRow({
           className="p-2 rounded-lg"
           style={{ backgroundColor: `${config.color}20` }}
         >
-          <Icon className="h-4 w-4" style={{ color: config.color }} />
+          <span style={{ color: config.color }}>
+            <Icon className="h-4 w-4" />
+          </span>
         </div>
 
         {/* Layer Info */}

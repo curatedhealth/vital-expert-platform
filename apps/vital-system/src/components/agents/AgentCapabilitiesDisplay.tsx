@@ -29,8 +29,8 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger
-} from '@/shared/components/ui';
-import { cn } from '@/shared/services/utils';
+} from '@/lib/shared/components/ui';
+import { cn } from '@/lib/shared/services/utils';
 
 interface Capability {
   capability_id: string;

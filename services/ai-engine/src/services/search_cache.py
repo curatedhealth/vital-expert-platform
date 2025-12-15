@@ -87,8 +87,9 @@ class SearchCache:
             logger.info(f"Connected to Redis at {self.redis_url}")
             self.enabled = True
         except Exception as e:
-            logger.error(f"Failed to connect to Redis: {e}")
+            logger.warning(f"Failed to connect to Redis: {e}. Caching disabled.")
             self.enabled = False
+            self.redis_client = None
 
     async def close(self):
         """Close Redis connection"""

@@ -39,6 +39,7 @@ import {
   Code,
   Eye,
 } from 'lucide-react';
+import { logger } from '@vital/utils';
 import {
   Tooltip,
   TooltipContent,
@@ -251,7 +252,7 @@ export const MermaidRenderer = memo(function MermaidRenderer({
         }
       } catch (err) {
         if (isMounted) {
-          console.error('Mermaid rendering error:', err);
+          logger.error('Mermaid rendering error', { error: err });
           setError(err instanceof Error ? err.message : 'Failed to render diagram');
         }
       } finally {
@@ -292,7 +293,7 @@ export const MermaidRenderer = memo(function MermaidRenderer({
         copyTimeoutRef.current = null;
       }, 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      logger.error('Failed to copy mermaid diagram', { error: err });
     }
   }, [content, onCopy]);
 
@@ -348,7 +349,7 @@ export const MermaidRenderer = memo(function MermaidRenderer({
 
       img.src = url;
     } catch (err) {
-      console.error('Failed to export PNG:', err);
+      logger.error('Failed to export Mermaid PNG', { error: err });
     }
   }, [renderedSvg, title, theme, onExport]);
 

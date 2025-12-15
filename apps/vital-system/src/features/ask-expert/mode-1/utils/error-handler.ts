@@ -1,9 +1,10 @@
 /**
  * Mode 1 Error Handler
- * 
+ *
  * Provides structured error handling with error codes, retry logic,
  * and user-friendly error messages
  */
+import { logger } from '@vital/utils';
 
 export enum Mode1ErrorCode {
   // Agent Errors
@@ -239,8 +240,8 @@ export class Mode1ErrorHandler {
         metadata: { ...error.metadata, ...context },
       }, new Error(error.message));
     }).catch(() => {
-      // Fallback to console if StructuredLogger not available
-      console.error('❌ [Mode 1 Error]', {
+      // Fallback to shared logger if StructuredLogger not available
+      logger.error('Mode 1 error fallback', {
         code: error.code,
         message: error.message,
         userMessage: error.userMessage,

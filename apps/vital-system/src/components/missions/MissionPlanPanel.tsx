@@ -24,7 +24,7 @@ export function MissionPlanPanel({
   const steps = (plan || []).map((step: any, index: number) => ({
     id: step.id || `step-${index}`,
     name: step.name || step.title || `Step ${index + 1}`,
-    status: index < currentStep ? 'complete' : index === currentStep ? 'active' : 'pending',
+    status: (index < currentStep ? 'complete' : index === currentStep ? 'active' : 'pending') as 'pending' | 'active' | 'complete' | 'error' | 'skipped',
     description: step.description,
     duration: step.duration,
   }));
@@ -47,7 +47,7 @@ export function MissionPlanPanel({
                 <CardDescription>Safety gate (Mode 4)</CardDescription>
               </CardHeader>
               <CardContent>
-                <VitalPreFlightCheck checks={preflight.checks} passed={preflight.passed} />
+                <VitalPreFlightCheck checks={preflight.checks} />
               </CardContent>
             </Card>
           )}

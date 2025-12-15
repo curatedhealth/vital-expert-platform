@@ -143,7 +143,7 @@ export function VitalToolInvocation({
         <CollapsibleContent>
           <div className="px-3 pb-3 space-y-3">
             {/* Input */}
-            {showInput && invocation.input && (
+            {(showInput && invocation.input) ? (
               <div className="space-y-1">
                 <span className="text-xs font-medium text-muted-foreground">
                   Input
@@ -152,10 +152,10 @@ export function VitalToolInvocation({
                   {JSON.stringify(invocation.input, null, 2)}
                 </pre>
               </div>
-            )}
+            ) : null}
             
             {/* Output */}
-            {showOutput && invocation.output && (
+            {(showOutput && invocation.output) ? (
               <div className="space-y-1">
                 <span className="text-xs font-medium text-muted-foreground">
                   Output
@@ -167,7 +167,7 @@ export function VitalToolInvocation({
                   }
                 </pre>
               </div>
-            )}
+            ) : null}
             
             {/* Error */}
             {invocation.error && (

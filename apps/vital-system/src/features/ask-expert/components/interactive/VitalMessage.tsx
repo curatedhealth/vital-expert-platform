@@ -31,6 +31,7 @@ import {
   ChevronDown,
   Brain,
 } from 'lucide-react';
+import { logger } from '@vital/utils';
 
 import type { Expert } from './ExpertPicker';
 import type { CitationEvent, ReasoningEvent, ToolCallEvent, ArtifactEvent } from '../../hooks/useSSEStream';
@@ -92,7 +93,7 @@ export function VitalMessage({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      logger.error('Failed to copy message content', { error: err });
     }
   }, [message.content]);
 

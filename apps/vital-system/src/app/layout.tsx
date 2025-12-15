@@ -9,7 +9,7 @@ import './globals.css'
 import { SupabaseAuthProvider } from '@/lib/auth/supabase-auth-context'
 import { TenantProvider } from '@/contexts/tenant-context'
 import { Toaster } from '@/components/toaster-wrapper'
-import { ThemeProvider } from '@/providers/theme-provider'
+import { ThemeProvider } from '@/lib/providers/theme-provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 const inter = Inter({ subsets: ['latin'] })

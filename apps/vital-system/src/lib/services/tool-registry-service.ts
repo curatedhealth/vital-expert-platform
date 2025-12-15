@@ -4,7 +4,7 @@
  * Manages tools and their assignments to agents via Supabase database
  */
 
-import { createClient } from '@/shared/services/supabase/client';
+import { createClient } from '@/lib/shared/services/supabase/client';
 
 import { getAllExpertTools } from './expert-tools';
 

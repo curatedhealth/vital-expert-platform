@@ -8,7 +8,7 @@
 
 import { NextRequest } from 'next/server';
 import OpenAI from 'openai';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
 
 const AI_ENGINE_URL = process.env.AI_ENGINE_URL || 'http://localhost:8000';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -49,10 +49,16 @@ export async function POST(request: NextRequest) {
       // Try to get from Supabase session cookie
       if (SUPABASE_URL && SUPABASE_ANON_KEY) {
         try {
-          const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             cookies: {
               get(name: string) {
                 return request.cookies.get(name)?.value;
+              },
+              set() {
+                // No-op for read-only access
+              },
+              remove() {
+                // No-op for read-only access
               },
             },
           });

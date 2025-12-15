@@ -14,7 +14,7 @@
  */
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useTenant } from '@/contexts/TenantContext';
+import { useTenant } from '@/contexts/tenant-context';
 import { InteractiveView, type InteractiveMode } from '@/features/ask-expert/views/InteractiveView';
 import { ErrorBoundary } from '@/features/ask-expert/components/errors';
 import { Suspense, useCallback, useEffect, useState } from 'react';
@@ -157,16 +157,16 @@ function LoadingState() {
 }
 
 export default function InteractiveExpertPage() {
-  const tenant = useTenant();
+  const tenantContext = useTenant();
 
-  if (!tenant) {
+  if (!tenantContext?.tenant) {
     return <LoadingState />;
   }
 
   return (
     <ErrorBoundary componentName="InteractiveExpertPage">
       <Suspense fallback={<LoadingState />}>
-        <InteractiveContent tenantId={tenant.id} />
+        <InteractiveContent tenantId={tenantContext.tenant.id} />
       </Suspense>
     </ErrorBoundary>
   );

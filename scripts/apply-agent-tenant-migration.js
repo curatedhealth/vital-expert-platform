@@ -2,7 +2,7 @@
 
 /**
  * Apply Many-to-Many Agent-Tenant Migration
- * Executes: supabase/migrations/20241124110000_map_agents_to_tenants_many_to_many.sql
+ * Executes: database/postgres/migrations/20241124110000_map_agents_to_tenants_many_to_many.sql
  */
 
 const { createClient } = require('@supabase/supabase-js');

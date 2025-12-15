@@ -10,7 +10,7 @@
  * December 11, 2025
  */
 
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Clock,

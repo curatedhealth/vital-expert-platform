@@ -21,6 +21,7 @@
 import { memo, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { logger } from '@vital/utils';
 import {
   ChevronRight,
   ChevronDown,
@@ -364,7 +365,7 @@ export const JsonRenderer = memo(function JsonRenderer({
         copyTimeoutRef.current = null;
       }, 2000);
     } catch (err) {
-      console.error('Failed to copy JSON:', err);
+      logger.error('Failed to copy JSON', { error: err });
     }
   }, [content, onCopy]);
 
@@ -372,7 +373,7 @@ export const JsonRenderer = memo(function JsonRenderer({
     try {
       await navigator.clipboard.writeText(path);
     } catch (err) {
-      console.error('Failed to copy path:', err);
+      logger.error('Failed to copy path', { error: err });
     }
   }, []);
 
@@ -381,7 +382,7 @@ export const JsonRenderer = memo(function JsonRenderer({
     try {
       await navigator.clipboard.writeText(text);
     } catch (err) {
-      console.error('Failed to copy value:', err);
+      logger.error('Failed to copy value', { error: err });
     }
   }, []);
 

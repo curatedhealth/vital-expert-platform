@@ -39,7 +39,7 @@ import {
   TableRow
 } from '@vital/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
-import { _llmProviderService as llmProviderService } from '@/services/llm-provider.service';
+import { _llmProviderService as llmProviderService } from '@/lib/services/llm-provider.service';
 import {
   LLMProvider,
   ProviderStatus,

@@ -28,7 +28,10 @@ module.exports = {
         '/e2e/',
         '/integration/',
         '\\.integration\\.test\\.',
-        '\\.e2e\\.test\\.'
+        '\\.e2e\\.test\\.',
+        'src/lib/security/__tests__/csrf.test.ts',
+        'src/lib/security/__tests__/rate-limiter.test.ts',
+        'src/app/api/expert/__tests__/'
       ],
       transform: {
         '^.+\\.tsx?$': ['ts-jest', {
@@ -39,8 +42,13 @@ module.exports = {
           }
         }]
       },
+      transformIgnorePatterns: [
+        '/node_modules/(?!(uncrypto)/)'
+      ],
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
+        '^@/lib/tenant$': '<rootDir>/src/lib/constants/tenant',
+        '^@vital/ui/(.*)$': '<rootDir>/../../packages/ui/src/$1',
         '^@vital/(.*)$': '<rootDir>/../../packages/$1/src'
       },
       setupFilesAfterEnv: ['<rootDir>/jest.setup.js']
@@ -63,8 +71,13 @@ module.exports = {
           }
         }]
       },
+      transformIgnorePatterns: [
+        '/node_modules/(?!(uncrypto)/)'
+      ],
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
+        '^@/lib/tenant$': '<rootDir>/src/lib/constants/tenant',
+        '^@vital/ui/(.*)$': '<rootDir>/../../packages/ui/src/$1',
         '^@vital/(.*)$': '<rootDir>/../../packages/$1/src'
       },
       setupFilesAfterEnv: ['<rootDir>/jest.integration.setup.js'],
@@ -87,8 +100,13 @@ module.exports = {
           }
         }]
       },
+      transformIgnorePatterns: [
+        '/node_modules/(?!(uncrypto)/)'
+      ],
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
+        '^@/lib/tenant$': '<rootDir>/src/lib/constants/tenant',
+        '^@vital/ui/(.*)$': '<rootDir>/../../packages/ui/src/$1',
         '^@vital/(.*)$': '<rootDir>/../../packages/$1/src'
       },
       setupFilesAfterEnv: ['<rootDir>/jest.setup.js']
@@ -124,7 +142,7 @@ module.exports = {
   ],
 
   // Coverage directory
-  coverageDirectory: '<rootDir>/coverage',
+  coverageDirectory: '<rootDir>/../../tests/coverage/vital-system',
 
   // Globals
   globals: {

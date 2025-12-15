@@ -67,7 +67,7 @@ export const TooltipTrigger = React.forwardRef<HTMLButtonElement, TooltipTrigger
     if (asChild && React.isValidElement(children)) {
       return React.cloneElement(children, {
         ...props,
-        ...children.props,
+        ...(children.props as Record<string, any>),
         onMouseEnter: handleMouseEnter,
         onMouseLeave: handleMouseLeave,
         onFocus: handleFocus,

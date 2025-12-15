@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { EnhancedAgentCard } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
-import { DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
+import { DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/lib/config/organizational-structure';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { AgentEditFormEnhanced } from './agent-edit-form-enhanced';
 import { AgentListItem } from './AgentListItem';
@@ -673,7 +673,6 @@ export function AgentsBoard({
                           canDelete={agentCanDelete}
                           isBookmarked={savedAgents.has(agent.id)}
                           isInComparison={isInComparison?.(agent.id) ?? false}
-                          showReasoning={false}
                           showTier={true}
                           showLevelName={true}
                           size="md"

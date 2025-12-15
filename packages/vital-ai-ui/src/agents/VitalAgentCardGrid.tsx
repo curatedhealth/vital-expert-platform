@@ -137,14 +137,14 @@ export function VitalAgentCardGrid({
   const [focusedIndex, setFocusedIndex] = React.useState<number>(-1);
   
   // Calculate grid columns based on container width
-  const [columns, setColumns] = React.useState(GRID_CONFIG.columns.lg);
+  const [columns, setColumns] = React.useState<number>(GRID_CONFIG.columns.lg);
   
   React.useEffect(() => {
     const updateColumns = () => {
       if (!gridRef.current) return;
       const width = gridRef.current.offsetWidth;
       const cols = Math.max(1, Math.floor(width / minCardWidth));
-      setColumns(Math.min(cols, GRID_CONFIG.columns.xl));
+      setColumns(Math.min(cols, GRID_CONFIG.columns.xl) as number);
     };
     
     updateColumns();
@@ -257,7 +257,7 @@ export function VitalAgentCardGrid({
           onFocus={() => setFocusedIndex(index)}
         >
           <VitalAgentCard
-            agent={agent}
+            agent={agent as any}
             responsiveVariants={responsiveVariants}
             expandable={expandable}
             expandTo="rich"
@@ -267,7 +267,7 @@ export function VitalAgentCardGrid({
             showActions
             showCapabilities
             animationDelay={index * 50}
-            onSelect={onAgentSelect}
+            onSelect={onAgentSelect as any}
             onAddToChat={onAgentAddToChat}
             onBookmark={onAgentBookmark}
             onEdit={onAgentEdit}
@@ -385,13 +385,13 @@ export function VitalAgentCardList({
       {agents.map((agent, index) => (
         <VitalAgentCard
           key={agent.id}
-          agent={agent}
-          variant={useMinimalVariant ? 'minimal' : 'compact'}
+          agent={agent as any}
+          variant={(useMinimalVariant ? 'minimal' : 'compact') as 'default' | 'detailed' | 'compact' | undefined}
           isSelected={selectedIds.includes(agent.id)}
           isBookmarked={bookmarkedIds.includes(agent.id)}
           showActions={!!onAgentAddToChat}
           animationDelay={index * 30}
-          onSelect={onAgentSelect}
+          onSelect={onAgentSelect as any}
           onAddToChat={onAgentAddToChat}
           onBookmark={onAgentBookmark}
         />

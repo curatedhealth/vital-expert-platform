@@ -1,0 +1,42 @@
+id: "evaluation_rubric_v1"
+name: "Evaluation: Rubric Scoring"
+slug: "evaluation_rubric"
+family: "EVALUATION"
+runner: "EvaluationRunner"
+description: "Score alternatives against a rubric and synthesize recommendations."
+required_agent_levels:
+  - "L3"
+  - "L4"
+recommended_archetypes:
+  - "Evaluator"
+  - "QA"
+  - "RiskAnalyst"
+required_tool_ids:
+  - "search"
+optional_tool_ids:
+  - "browser"
+  - "notebook"
+l4_workers:
+  - "criteria-designer"
+  - "scorer"
+  - "synthesizer"
+hitl_phases:
+  plan_approval:
+    blocking: true
+    description: "Review rubric criteria before scoring."
+  final_review:
+    blocking: false
+    description: "Validate findings and recommendations."
+mode_4_constraints:
+  - "Enforce source citation for all claims."
+  - "Block completion if data freshness < 30d."
+tasks:
+  - id: "criteria"
+    title: "Define rubric"
+    instructions: "Create 4-6 weighted criteria with scoring guidance and evidence requirements."
+  - id: "scoring"
+    title: "Score alternatives"
+    instructions: "Score each alternative 0-1 per criterion with rationale and risks."
+  - id: "synthesis"
+    title: "Synthesize findings"
+    instructions: "Summarize strengths, gaps, overall score, and prioritized recommendations."

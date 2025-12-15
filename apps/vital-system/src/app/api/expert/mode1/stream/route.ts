@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
 
     // Forward to Python backend - Unified Interactive endpoint
     // Mode 1 = agent_id provided → backend uses manual selection
+    // Mode 1/2 backend unified streaming endpoint
     const backendResponse = await fetch(`${AI_ENGINE_URL}/api/expert/interactive`, {
       method: 'POST',
       headers: {

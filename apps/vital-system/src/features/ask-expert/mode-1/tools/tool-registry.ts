@@ -9,6 +9,7 @@ import { BaseTool, ToolContext, ToolExecutionResult } from './base-tool';
 import { CalculatorTool } from './calculator-tool';
 import { DatabaseQueryTool } from './database-query-tool';
 import { WebSearchTool, WebSearchToolConfig } from './web-search-tool';
+import { logger } from '@vital/utils';
 
 export interface ToolRegistryOptions {
   webSearch?: WebSearchToolConfig;
@@ -84,7 +85,7 @@ export class ToolRegistry {
    */
   registerTool(tool: BaseTool): void {
     this.tools.set(tool.name, tool);
-    console.log(`✅ [Tool Registry] Registered tool: ${tool.name}`);
+    logger.info('Tool registered', { tool: tool.name });
   }
 
   /**
@@ -130,7 +131,7 @@ export class ToolRegistry {
     const tool = this.getTool(toolName);
 
     if (!tool) {
-      console.error(`❌ [Tool Registry] Tool not found: ${toolName}`);
+      logger.error('Tool not found in registry', { toolName });
       return {
         success: false,
         error: `Tool '${toolName}' not found`,
@@ -139,18 +140,18 @@ export class ToolRegistry {
     }
 
     try {
-      console.log(`🛠️  [Tool Registry] Executing tool: ${toolName}`);
+      logger.info('Tool execution started', { toolName, input });
       const result = await tool.execute(input, context);
 
       if (result.success) {
-        console.log(`✅ [Tool Registry] Tool execution successful: ${toolName} (${result.duration_ms}ms)`);
+        logger.info('Tool execution successful', { toolName, duration_ms: result.duration_ms });
       } else {
-        console.error(`❌ [Tool Registry] Tool execution failed: ${toolName} - ${result.error}`);
+        logger.error('Tool execution failed', { toolName, error: result.error });
       }
 
       return result;
     } catch (error) {
-      console.error(`❌ [Tool Registry] Tool execution error: ${toolName}`, error);
+      logger.error('Tool execution error', { toolName, error });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown tool execution error',

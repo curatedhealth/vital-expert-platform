@@ -45,11 +45,11 @@ echo "Copying migration SQL to clipboard..."
 
 # Copy migration file to clipboard
 if command -v pbcopy &> /dev/null; then
-    cat scripts/apply-all-user-panels-migrations.sql | pbcopy
+    cat database/postgres/migrations/apply-all-user-panels-migrations.sql | pbcopy
     echo "✅ Migration SQL copied to clipboard!"
 else
     echo "⚠️  Could not copy to clipboard automatically"
-    echo "   Please manually copy: scripts/apply-all-user-panels-migrations.sql"
+    echo "   Please manually copy: database/postgres/migrations/apply-all-user-panels-migrations.sql"
 fi
 
 echo ""
@@ -73,7 +73,7 @@ echo "  • Restart your dev server: npm run dev"
 echo "  • Test saving a panel in the Workflow Designer"
 echo ""
 echo "The migration SQL is also available at:"
-echo "  scripts/apply-all-user-panels-migrations.sql"
+echo "  database/postgres/migrations/apply-all-user-panels-migrations.sql"
 echo ""
 echo "Press ENTER when you've run the SQL in Supabase..."
 read
@@ -88,14 +88,14 @@ read -r verify
 
 if [ "$verify" = "y" ] || [ "$verify" = "Y" ]; then
     if command -v pbcopy &> /dev/null; then
-        cat scripts/verify-user-panels-schema.sql | pbcopy
+        cat database/postgres/queries/verify-user-panels-schema.sql | pbcopy
         echo "✅ Verification SQL copied to clipboard!"
         echo ""
         echo "Paste this into a new SQL Editor query to verify."
         echo "You should see 'workflow_definition' column listed."
     else
         echo "Run this SQL to verify:"
-        echo "  scripts/verify-user-panels-schema.sql"
+        echo "  database/postgres/queries/verify-user-panels-schema.sql"
     fi
 fi
 

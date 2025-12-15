@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-import { _llmProviderService as llmProviderService } from '@/services/llm-provider.service';
+import { _llmProviderService as llmProviderService } from '@/lib/services/llm-provider.service';
 import {
   LLMProvider,
   ProviderFilters,

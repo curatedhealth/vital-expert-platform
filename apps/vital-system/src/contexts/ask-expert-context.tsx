@@ -303,7 +303,7 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
           
           return null;
         })
-        .filter((agent): agent is Agent => agent !== null);
+        .filter((agent: any): agent is Agent => agent !== null);
 
       // Update the global userAddedAgentIds set
       setUserAddedAgentIds(userAddedIds);

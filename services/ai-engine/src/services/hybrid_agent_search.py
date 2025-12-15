@@ -78,13 +78,20 @@ class HybridAgentSearch:
     async def connect(self):
         """Connect to database"""
         if not self.db_pool:
-            self.db_pool = await asyncpg.create_pool(
-                self.database_url,
-                min_size=2,
-                max_size=20,
-                command_timeout=60
-            )
-            logger.info("Connected to PostgreSQL")
+            try:
+                if not self.database_url:
+                    logger.warning("DATABASE_URL not configured; hybrid search will return empty results")
+                    return
+                self.db_pool = await asyncpg.create_pool(
+                    self.database_url,
+                    min_size=2,
+                    max_size=20,
+                    command_timeout=60
+                )
+                logger.info("Connected to PostgreSQL")
+            except Exception as exc:
+                logger.warning("Hybrid search DB connection failed; returning empty results", exc_info=exc)
+                self.db_pool = None
 
     async def close(self):
         """Close database connection"""
@@ -122,6 +129,11 @@ class HybridAgentSearch:
         if not self.db_pool:
             await self.connect()
 
+        if not self.db_pool:
+            # No DB available; return empty results instead of raising
+            logger.warning("Hybrid search skipped: no DB pool available")
+            return []
+
         # Step 1: Generate query embedding (target: <200ms)
         query_embedding = await self.embeddings.aembed_query(query)
 
@@ -149,6 +161,24 @@ class HybridAgentSearch:
         logger.info(f"Hybrid search completed in {total_latency_ms:.2f}ms, found {len(enriched_results)} agents")
 
         return enriched_results
+
+    def _calculate_overall_score(
+        self,
+        vector_score: float,
+        domain_score: float,
+        capability_score: float,
+        graph_score: float,
+    ) -> float:
+        """
+        Compute overall hybrid score using current weights.
+        Ensures compatibility with legacy callers/tests.
+        """
+        return float(
+            self.weights["vector"] * vector_score
+            + self.weights["domain"] * domain_score
+            + self.weights["capability"] * capability_score
+            + self.weights["graph"] * graph_score
+        )
 
     async def _execute_hybrid_search(
         self,

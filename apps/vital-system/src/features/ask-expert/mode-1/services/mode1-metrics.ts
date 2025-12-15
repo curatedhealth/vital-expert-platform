@@ -8,6 +8,7 @@
  * - RAG performance per agent
  * - Cost tracking per request
  */
+import { logger } from '@vital/utils';
 
 export interface Mode1Metrics {
   requestId: string;
@@ -157,8 +158,8 @@ export class Mode1MetricsService {
         failureCount: event.failureCount,
       });
     }).catch(() => {
-      // Fallback to console if StructuredLogger not available
-      console.log(`🔌 [Circuit Breaker Metrics] ${JSON.stringify(logData)}`);
+      // Fallback to shared logger if StructuredLogger not available
+      logger.info('Circuit breaker state change', logData);
     });
 
     // In a production system, this could also:
@@ -351,9 +352,9 @@ export class Mode1MetricsService {
     };
 
     if (metrics.success) {
-      console.log(`📊 [Mode 1 Metrics] ${JSON.stringify(logData)}`);
+      logger.info('Mode 1 metrics', logData);
     } else {
-      console.error(`❌ [Mode 1 Metrics] ${JSON.stringify(logData)}`);
+      logger.error('Mode 1 metrics failure', logData);
     }
   }
 

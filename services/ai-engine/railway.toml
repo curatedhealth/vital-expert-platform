@@ -1,15 +1,14 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "services/ai-engine/Dockerfile"
-watchPatterns = ["services/ai-engine/**"]
+dockerfilePath = "Dockerfile"
+watchPatterns = ["src/**", "requirements.txt"]
 
 [deploy]
-startCommand = "python start.py"
+startCommand = "python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT --app-dir /app/src --workers 2"
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
-# Note: This file should be in services/ai-engine/
-# Railway will use this directory as the build context
-
+[[deploy.envs]]
+PORT = "$PORT"

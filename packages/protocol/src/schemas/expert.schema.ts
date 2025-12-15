@@ -5,6 +5,9 @@
  */
 
 import { z } from 'zod';
+
+import { EXPERT_MODE_VALUES } from '../constants/modes';
+
 import {
   UUIDSchema,
   TenantIdSchema,
@@ -12,7 +15,6 @@ import {
   DateTimeSchema,
   MetadataSchema,
 } from './common.schema';
-import { EXPERT_MODE_VALUES } from '../constants/modes';
 
 // ============================================================================
 // MESSAGE SCHEMAS

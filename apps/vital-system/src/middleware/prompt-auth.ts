@@ -17,7 +17,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createLogger } from '@/lib/services/observability/structured-logger';
-import { env } from '@/config/environment';
+import { env } from '@/lib/config/environment';
 
 /**
  * Prompt Permission Context

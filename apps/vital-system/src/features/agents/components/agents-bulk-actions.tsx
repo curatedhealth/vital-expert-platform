@@ -24,15 +24,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  Dialog as AlertDialog,
+  DialogContent as AlertDialogContent,
+  DialogDescription as AlertDialogDescription,
+  DialogFooter as AlertDialogFooter,
+  DialogHeader as AlertDialogHeader,
+  DialogTitle as AlertDialogTitle,
+} from '@vital/ui';
+import { Button as AlertDialogAction, Button as AlertDialogCancel } from '@vital/ui';
 import { toast } from 'sonner';
 import type { ClientAgent } from '../types/agent-schema';
 import { cn } from '@/lib/utils';

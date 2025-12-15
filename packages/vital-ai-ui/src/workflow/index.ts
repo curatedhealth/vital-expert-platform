@@ -58,7 +58,7 @@ export { VitalProgressTimeline, default as ProgressTimeline } from './VitalProgr
 export { VitalCircuitBreaker, default as CircuitBreaker } from './VitalCircuitBreaker';
 export { VitalApprovalCard } from './VitalApprovalCard';
 export { VitalTimeoutWarning, VitalTimeoutBadge } from './VitalTimeoutWarning';
-export { default as VitalStatusIndicators } from './VitalStatusIndicators';
+export { TierBadge, StatusIndicator, SafetyBadge, PatternBadge } from './VitalStatusIndicators';
 export { default as VitalProgressTracker } from './VitalProgressTracker';
 
 // Plan and confirmation

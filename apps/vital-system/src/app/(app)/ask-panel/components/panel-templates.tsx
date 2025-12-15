@@ -11,11 +11,11 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Input } from '@/shared/components/ui/input';
-import { cn } from '@/shared/utils';
+import { Badge } from '@/lib/shared/components/ui/badge';
+import { Button } from '@/lib/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/lib/shared/components/ui/card';
+import { Input } from '@/lib/shared/components/ui/input';
+import { cn } from '@/lib/shared/utils';
 
 import { __usePanelStore as usePanelStore } from '../services/panel-store';
 

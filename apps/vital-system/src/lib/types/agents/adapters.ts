@@ -10,7 +10,7 @@ import type {
   Agent as SharedAgent,
   AgentSearchResult as SharedAgentSearchResult,
   UserAgent as SharedUserAgent,
-} from '@/shared/types/agent.types';
+} from '@/lib/shared/types/agent.types';
 import type { Agent as EnhancedAgent } from '@/types/enhanced-agent-types';
 import type { UnifiedAgentSearchResult } from './index';
 

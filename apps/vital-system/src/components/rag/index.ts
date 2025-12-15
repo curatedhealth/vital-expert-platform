@@ -10,23 +10,18 @@ export { CreateRagModal } from './CreateRagModal';
 export { RagContextModal } from './RagContextModal';
 export { RagAnalytics } from './RagAnalytics';
 
-// Re-export types from supabase-rag-service
+// Export unified RAG component types
 export type {
-  KnowledgeSource as RagKnowledgeBase,
+  RagKnowledgeBase,
+  AgentRagAssignment,
+} from './types';
+
+// Re-export database types (for when we need the actual database types)
+export type {
+  KnowledgeSource,
   DocumentChunk as RagDocument,
   SearchResult,
 } from '@/lib/rag/supabase-rag-service';
-
-// Local type definitions for missing types
-export interface AgentRagAssignment {
-  agent_id: string;
-  rag_id: string;
-  priority: number;
-  is_enabled: boolean;
-  usage_context?: string;
-  custom_prompt_instructions?: string;
-  is_primary?: boolean;
-}
 
 export interface RagUsageAnalytics {
   rag_id: string;

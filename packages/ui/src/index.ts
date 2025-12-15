@@ -32,15 +32,22 @@ export * from './components/switch';
 export * from './components/table';
 export * from './components/tabs';
 export * from './components/textarea';
-export * from './components/toast';
+// Toast exports - avoid duplicate Toast type
 export * from './components/toaster';
 export * from './components/toggle';
-export * from './components/use-toast';
+export { useToast } from './components/use-toast';
+export type { ToastActionElement, ToastProps } from './components/toast';
 export * from './components/toggle-group';
 export * from './components/tooltip';
 
 // Agent Components (action buttons, filters, cards)
+// Export components but avoid type conflicts
 export * from './components/agents';
+export type {
+  AgentStatus,
+  AgentLevelNumber,
+  AgentCardData,
+} from './components/agents';
 
 // Missions & HITL Components
 export * from './components/missions';
@@ -52,8 +59,8 @@ export * from './components/ai/inline-citation';
 // Marketing Components (landing pages)
 export * from './components/marketing';
 
-// Types (canonical)
-export * from './types';
+// Types (canonical) - export explicitly to avoid conflicts
+export type * from './types';
 
 // Utilities
 export * from './lib/utils';

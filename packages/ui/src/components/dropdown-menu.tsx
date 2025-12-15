@@ -48,7 +48,7 @@ const DropdownMenuTrigger = React.forwardRef<HTMLButtonElement, DropdownMenuTrig
     if (asChild && React.isValidElement(children)) {
       return React.cloneElement(children, {
         ...props,
-        ...children.props,
+        ...(children.props as Record<string, any>),
         onClick: handleClick,
         ref,
       } as any)

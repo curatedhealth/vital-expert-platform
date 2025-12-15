@@ -363,6 +363,13 @@
 | `core.py` | All | Core route registration | Dec 13, 2025 |
 | `register.py` | All | Route registration | Dec 13, 2025 |
 
+### Migrations (database/postgres/migrations/)
+
+| File | Description | Last Verified |
+|------|-------------|---------------|
+| `20251215_normalize_missions_phase1.sql` | Mission selected_agents + plan_steps tables with backfill | Dec 16, 2025 |
+| `20251216_normalize_missions_phase2.sql` | Mission checkpoints options/responses and todo associations with backfill | Dec 16, 2025 |
+
 ### NEEDS_REVIEW
 
 | File | Issue | Action Needed |

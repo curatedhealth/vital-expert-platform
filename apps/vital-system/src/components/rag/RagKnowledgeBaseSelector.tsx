@@ -8,22 +8,8 @@
 import { Search, Database, Brain, FileText, Layers, CheckCircle, Circle } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle, Button, Badge, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui';
-
-interface RagKnowledgeBase {
-  id: string;
-  name: string;
-  display_name: string;
-  description: string;
-  purpose_description: string;
-  rag_type: 'global' | 'agent_specific';
-  knowledge_domains: string[];
-  document_count: number;
-  total_chunks?: number;
-  quality_score?: number;
-  is_assigned?: boolean;
-  assignment_priority?: number;
-}
+import { Card, CardContent, CardHeader, CardTitle, Button, Badge, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/lib/shared/components/ui';
+import type { RagKnowledgeBase } from './types';
 
 interface RagKnowledgeBaseSelectorProps {
   availableRagDatabases: RagKnowledgeBase[];
@@ -50,8 +36,9 @@ export const RagKnowledgeBaseSelector: React.FC<RagKnowledgeBaseSelectorProps> =
   ).sort();
 
   // Filter RAG databases based on search and filters
-  const filteredRag = availableRagDatabases.filter(rag => {
-    const matchesSearch = rag.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredRagDatabases = availableRagDatabases.filter(rag => {
+    const searchableName = rag.name || rag.display_name;
+    const matchesSearch = searchableName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          rag.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          rag.purpose_description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || rag.rag_type === filterType;
@@ -119,7 +106,7 @@ export const RagKnowledgeBaseSelector: React.FC<RagKnowledgeBaseSelectorProps> =
               />
             </div>
 
-            <Select value={filterType} onValueChange={(value: unknown) => setFilterType(value)}>
+            <Select value={filterType} onValueChange={(value: string) => setFilterType(value as "all" | "global" | "agent_specific")}>
               <SelectTrigger>
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
@@ -136,7 +123,7 @@ export const RagKnowledgeBaseSelector: React.FC<RagKnowledgeBaseSelectorProps> =
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Domains</SelectItem>
-                {allDomains.map((domain: any) => (
+                {uniqueDomains.map((domain: any) => (
                   <SelectItem key={domain} value={domain}>
                     {domain.replace('_', ' ')}
                   </SelectItem>
@@ -199,7 +186,7 @@ export const RagKnowledgeBaseSelector: React.FC<RagKnowledgeBaseSelectorProps> =
                 ? 'opacity-60 bg-muted/30'
                 : ''
             }`}
-            onClick={() => !rag.is_assigned && handleToggleSelection(rag.id)}
+            onClick={() => !rag.is_assigned && handleToggleSelect(rag.id)}
           >
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -257,7 +244,7 @@ export const RagKnowledgeBaseSelector: React.FC<RagKnowledgeBaseSelectorProps> =
               {/* Quality Score */}
               {rag.quality_score && (
                 <div className="mb-3">
-                  {getQualityBadge(rag.quality_score)}
+                  {renderQualityBadge(rag.quality_score)}
                 </div>
               )}
 

@@ -226,6 +226,50 @@ class TemplateValidationError(WorkflowResilienceError):
 
 
 # =============================================================================
+# Validation Error (exported for tests)
+# =============================================================================
+
+
+class ValidationError(WorkflowResilienceError):
+    """
+    Raised when runtime validation fails in runner nodes.
+
+    This maintains backwards compatibility for tests that expect
+    ValidationError to be exported from resilience.exceptions.
+    """
+
+    def __init__(
+        self,
+        message: str = "Validation failed",
+        field_errors: Optional[Dict[str, Any]] = None,
+    ):
+        self.field_errors = field_errors or {}
+        super().__init__(
+            message=message,
+            error_code="VALIDATION_ERROR",
+            context={"field_errors": list(self.field_errors.keys())},
+            recoverable=False,
+            retry_suggested=False,
+        )
+
+
+# Explicit exports for downstream imports/tests
+__all__ = [
+    "WorkflowResilienceError",
+    "DatabaseConnectionError",
+    "DatabaseQueryError",
+    "TemplateLoadError",
+    "TemplateValidationError",
+    "AgentSelectionError",
+    "AgentValidationError",
+    "CheckpointError",
+    "HITLTimeoutError",
+    "ResilienceConfigurationError",
+    "ValidationError",
+]
+
+
+# =============================================================================
 # Agent Selection Errors
 # =============================================================================
 

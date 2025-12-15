@@ -8,9 +8,11 @@
  */
 
 import { z } from 'zod';
-import { NODE_TYPES, NODE_TYPE_VALUES, type NodeType } from '../constants/node-types';
+
 import { EXPERT_MODE_VALUES } from '../constants/modes';
-import { UUIDSchema, PositionSchema, MetadataSchema } from './common.schema';
+import { NODE_TYPES, NODE_TYPE_VALUES } from '../constants/node-types';
+
+import { PositionSchema, UUIDSchema } from './common.schema';
 
 // ============================================================================
 // BASE NODE SCHEMA

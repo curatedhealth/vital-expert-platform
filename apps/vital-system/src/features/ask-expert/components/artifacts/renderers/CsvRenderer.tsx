@@ -23,6 +23,7 @@
 import { memo, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { logger } from '@vital/utils';
 import {
   ArrowUp,
   ArrowDown,
@@ -261,7 +262,7 @@ export const CsvRenderer = memo(function CsvRenderer({
         copyTimeoutRef.current = null;
       }, 2000);
     } catch (err) {
-      console.error('Failed to copy CSV:', err);
+      logger.error('Failed to copy CSV', { error: err });
     }
   }, [content, onCopy]);
 

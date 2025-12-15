@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@vital/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
-import { AgentService } from '@/services/agent.service';
+import { AgentService } from '@/lib/services/agent.service';
 import { AgentBulkImport, DomainExpertise, ValidationStatus, AgentStatus, RiskLevel } from '@/types/agent.types';
 
 interface ImportError {

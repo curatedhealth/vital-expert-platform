@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { logger } from '@vital/utils';
 
 export interface GeneratedDocument {
   id: string;
@@ -120,7 +121,7 @@ export function useDocumentGeneration() {
    */
   const downloadDocument = useCallback((document: GeneratedDocument) => {
     if (!document.content) {
-      console.error('No document content available');
+      logger.error('Document generation: no content available');
       return;
     }
 
@@ -128,7 +129,7 @@ export function useDocumentGeneration() {
     const blob = new Blob([document.content], { type: document.mimeType });
     const url = URL.createObjectURL(blob);
     if (typeof window === 'undefined' || typeof window.document === 'undefined') {
-      console.warn('Document download is only available in the browser environment.');
+      logger.warn('Document download only available in browser environment');
       return;
     }
     const a = window.document.createElement('a');

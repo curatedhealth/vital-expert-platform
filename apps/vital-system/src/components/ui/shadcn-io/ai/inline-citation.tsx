@@ -247,7 +247,7 @@ export const InlineCitationSource = ({
 
 InlineCitationSource.displayName = 'InlineCitationSource';
 
-export type InlineCitationQuoteProps = HTMLAttributes<HTMLBlockquoteElement>;
+export type InlineCitationQuoteProps = React.HTMLAttributes<HTMLElement>;
 
 export const InlineCitationQuote = ({
   children,

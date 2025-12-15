@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 import structlog
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 logger = structlog.get_logger()
 
@@ -79,6 +79,9 @@ class MissionRepository:
                 row.setdefault("config", {}).update({"budget_limit": state["budget_limit"]})
 
             self.client.table("missions").upsert(row, on_conflict="id").execute()
+            # Dual-write normalized tables (non-destructive)
+            self._upsert_selected_agents(mission_id, state)
+            self._upsert_plan_steps(mission_id, state.get("plan"))
         except Exception as exc:
             logger.error("mission_state_persist_failed", mission_id=mission_id, error=str(exc))
 
@@ -130,6 +133,68 @@ class MissionRepository:
                 event_type=event_type,
                 error=str(exc),
             )
+
+    # ------------------------------------------------------------------ helpers
+    def _upsert_selected_agents(self, mission_id: str, state: Dict[str, Any]) -> None:
+        if not self.client:
+            return
+        try:
+            agents: List[Dict[str, Any]] = []
+            if state.get("selected_agent"):
+                agents.append(
+                    {
+                        "mission_id": mission_id,
+                        "agent_id": state.get("selected_agent"),
+                        "agent_name": state.get("selected_agent_name"),
+                        "role": "primary",
+                        "selection_order": 1,
+                    }
+                )
+            team = state.get("selected_team") or []
+            for idx, agent_id in enumerate(team, start=len(agents) + 1):
+                agents.append(
+                    {
+                        "mission_id": mission_id,
+                        "agent_id": agent_id,
+                        "agent_name": None,
+                        "role": "team",
+                        "selection_order": idx,
+                    }
+                )
+
+            if not agents:
+                return
+
+            # replace existing rows for this mission
+            self.client.table("mission_selected_agents").delete().eq("mission_id", mission_id).execute()
+            self.client.table("mission_selected_agents").insert(agents).execute()
+        except Exception as exc:
+            logger.error("mission_selected_agents_persist_failed", mission_id=mission_id, error=str(exc))
+
+    def _upsert_plan_steps(self, mission_id: str, plan: Any) -> None:
+        if not self.client or not plan or not isinstance(plan, list):
+            return
+        try:
+            rows: List[Dict[str, Any]] = []
+            for idx, step in enumerate(plan, start=1):
+                rows.append(
+                    {
+                        "mission_id": mission_id,
+                        "step_order": idx,
+                        "title": step.get("name") or step.get("title"),
+                        "details": step.get("description"),
+                        "status": step.get("status") or "pending",
+                        "owner_agent": step.get("agent"),
+                        "owner_runner": step.get("runner"),
+                        "estimated_minutes": step.get("estimated_minutes"),
+                    }
+                )
+            if not rows:
+                return
+            self.client.table("mission_plan_steps").delete().eq("mission_id", mission_id).execute()
+            self.client.table("mission_plan_steps").insert(rows).execute()
+        except Exception as exc:
+            logger.error("mission_plan_steps_persist_failed", mission_id=mission_id, error=str(exc))
 
 
 mission_repo = MissionRepository()

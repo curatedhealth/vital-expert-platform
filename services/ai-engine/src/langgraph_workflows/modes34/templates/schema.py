@@ -35,6 +35,7 @@ class TemplateConfig(BaseModel):
 
     id: Optional[str] = None
     name: str
+    family: Optional[str] = None
     slug: Optional[str] = None
     description: Optional[str] = None
     category: Optional[str] = None
@@ -74,6 +75,7 @@ class TemplateConfig(BaseModel):
             "id": self.id or key,
             "name": self.name,
             "slug": self.slug or self.id,
+            "family": self.family,
             "description": self.description,
             "category": self.category,
             "tasks": [task.model_dump() for task in self.tasks],

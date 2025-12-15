@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 
-import { performanceMetricsService, PerformanceSnapshot } from '@/shared/services/monitoring/performance-metrics.service';
+import { performanceMetricsService, PerformanceSnapshot } from '@/lib/shared/services/monitoring/performance-metrics.service';
 
 interface PerformanceDashboardProps {
   refreshInterval?: number;

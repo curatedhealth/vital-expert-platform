@@ -8,6 +8,7 @@
 
 import { get, set, createKey, TTL } from '../../../../lib/cache/redis';
 import * as crypto from 'crypto';
+import { logger } from '@vital/utils';
 
 export interface TokenCountResult {
   promptTokens: number;
@@ -98,7 +99,7 @@ export class TokenCounter {
         tokenCount = this.estimateTokens(text);
       }
     } catch (error) {
-      console.warn(`[TokenCounter] Failed to use accurate tokenizer, falling back to estimation:`, error);
+      logger.warn('TokenCounter accurate tokenizer failed, using estimation', { error });
       // Fallback to estimation
       tokenCount = this.estimateTokens(text);
     }
@@ -106,7 +107,7 @@ export class TokenCounter {
     // Cache result for 24 hours (token counts don't change)
     // Note: Cache failures are non-blocking - we still return the result
     set(cacheKey, tokenCount, TTL.DAY).catch((error) => {
-      console.warn(`[TokenCounter] Failed to cache token count:`, error);
+      logger.warn('TokenCounter failed to cache token count', { error });
     });
 
     return tokenCount;

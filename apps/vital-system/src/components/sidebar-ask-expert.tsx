@@ -801,10 +801,10 @@ export function SidebarAskExpert() {
             expert: {
               id: selectedAgent.id,
               name: selectedAgent.displayName,
-              slug: selectedAgent.slug || selectedAgent.id, // Required by Expert type
+              slug: (selectedAgent as any).slug || selectedAgent.id, // Required by Expert type
               level: getAgentLevelDisplay(selectedAgent.tier),
               specialty: selectedAgent.description?.slice(0, 50) || '',
-              domain: selectedAgent.department || selectedAgent.function || ''
+              domain: (selectedAgent as any).department || (selectedAgent as any).function || ''
             }
           }
         }))

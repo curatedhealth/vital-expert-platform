@@ -433,7 +433,7 @@ export const AgentStoreHeader: React.FC<AgentStoreHeaderProps> = ({
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500/10 text-purple-600">
               <Zap className="w-4 h-4" />
               <span className="text-sm font-medium">
-                {agents.filter(a => a.agent_levels?.can_spawn_lower_levels).length} Can Spawn
+                {agents.filter(a => (a.agent_levels as any)?.can_spawn_lower_levels).length} Can Spawn
               </span>
             </div>
           </motion.div>

@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 /**
  * VITAL Platform - Mission Template Gallery
  *
@@ -32,8 +34,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TemplateCard } from '@vital/ui/components/missions';
-import type { TemplateCardData } from '@vital/ui/components/missions';
+import { TemplateCard } from './TemplateCard';
+import type { TemplateCardData } from './TemplateCard';
 import {
   type MissionFamily,
   type MissionComplexity,

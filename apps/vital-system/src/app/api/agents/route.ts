@@ -101,8 +101,8 @@ export async function GET(request: NextRequest) {
           .select('id')
           .eq('level_number', maybeNumber)
           .single();
-        if (!levelErr && levelRow?.id) {
-          query = query.eq('agent_level_id', levelRow.id);
+        if (!levelErr && levelRow && typeof levelRow === 'object' && levelRow !== null && 'id' in levelRow) {
+          query = query.eq('agent_level_id', (levelRow as { id: string }).id);
         } else {
           // If no match, return empty quickly
           return NextResponse.json(

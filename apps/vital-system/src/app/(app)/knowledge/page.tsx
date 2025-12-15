@@ -149,7 +149,7 @@ function RagCard({ rag, isSelected, isSelectionMode, onToggleSelect, onClick, on
     ? rag.knowledge_domains.slice(0, 2)
     : ['unassigned'];
   const extraDomainCount = Math.max(0, (rag.knowledge_domains?.length || 0) - domainBadges.length);
-  const sourceLabel = rag.purpose_description || rag.metadata?.source || 'Pinecone';
+  const sourceLabel = rag.purpose_description || (rag as any).metadata?.source || 'Pinecone';
 
   if (viewMode === 'list') {
     return (
@@ -246,8 +246,8 @@ function RagCard({ rag, isSelected, isSelectionMode, onToggleSelect, onClick, on
                 <Eye className="h-4 w-4 mr-2" />
                 View
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/designer/knowledge?base=${rag.id}`}>
+              <DropdownMenuItem>
+                <Link href={`/designer/knowledge?base=${rag.id}`} className="flex items-center">
                   <Edit className="h-4 w-4 mr-2" />
                   Manage in Designer
                 </Link>
@@ -364,7 +364,7 @@ function KnowledgePageContent() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [batchDeleteConfirmOpen, setBatchDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [domainOptions, setDomainOptions] = useState<{ value: string; label: string; category?: string }[]>(KNOWLEDGE_DOMAINS);
+  const [domainOptions, setDomainOptions] = useState<{ value: string; label: string; category?: string }[]>([...KNOWLEDGE_DOMAINS]);
 
   // Get current filters from URL
   const currentDomain = getFilterParam('domain');

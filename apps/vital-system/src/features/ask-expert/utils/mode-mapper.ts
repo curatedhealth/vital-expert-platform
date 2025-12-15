@@ -6,6 +6,7 @@
  */
 
 import type { OrchestrationMode } from '@/features/chat/services/unified-langgraph-orchestrator';
+import { logger } from '@vital/utils';
 
 // ============================================================================
 // Frontend to Backend Mode Mapping
@@ -86,7 +87,7 @@ export const MODE_CONFIG_MAP: Record<string, ModeConfig> = {
 export function mapModeIdToEnum(frontendModeId: string): OrchestrationMode {
   const mapped = MODE_ID_MAP[frontendModeId];
   if (!mapped) {
-    console.warn(`Unknown mode ID: ${frontendModeId}, defaulting to query_automatic`);
+    logger.warn('Unknown mode ID, defaulting to query_automatic', { frontendModeId });
     return 'query_automatic';
   }
   return mapped;
@@ -98,7 +99,7 @@ export function mapModeIdToEnum(frontendModeId: string): OrchestrationMode {
 export function getModeConfig(frontendModeId: string): ModeConfig {
   const config = MODE_CONFIG_MAP[frontendModeId];
   if (!config) {
-    console.warn(`No config for mode: ${frontendModeId}, using default`);
+    logger.warn('No config for mode, using default', { frontendModeId });
     return MODE_CONFIG_MAP['mode-1-query-automatic'];
   }
   return config;

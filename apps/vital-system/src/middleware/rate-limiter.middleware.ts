@@ -20,15 +20,24 @@ interface RateLimitResult {
   retryAfter?: number;
 }
 
+interface RateLimitStoreEntry {
+  count: number;
+  resetTime: number;
+}
+
 // In-memory store for development - replace with Redis in production
+const rateLimitStore = new Map<string, RateLimitStoreEntry>();
 
 export async function rateLimit(config: RateLimitConfig): Promise<RateLimitResult> {
+  const { key } = config;
+  const now = Date.now();
+  const newResetTime = now + config.window;
 
   // Get current rate limit data
+  const current = rateLimitStore.get(key);
 
   // Reset if window has expired
   if (!current || now > current.resetTime) {
-
     rateLimitStore.set(key, { count: 1, resetTime: newResetTime });
 
     return {
@@ -66,7 +75,7 @@ export async function rateLimit(config: RateLimitConfig): Promise<RateLimitResul
 }
 
 // Healthcare-specific rate limiting patterns
-export const __HEALTHCARE_PATTERNS = {
+export const HEALTHCARE_PATTERNS = {
   // Burst protection for critical medical queries
   MEDICAL_EMERGENCY: { requests: 3, window: 300000 }, // 3 per 5 minutes
 
@@ -81,16 +90,16 @@ export const __HEALTHCARE_PATTERNS = {
 
   // WebSocket connections
   WEBSOCKET_CONNECTIONS: { requests: 10, window: 60000 }, // 10 connections per minute
-};
+} as const;
 
 export async function getHealthcareRateLimit(
   identifier: string,
   pattern: keyof typeof HEALTHCARE_PATTERNS
 ): Promise<RateLimitResult> {
-  // eslint-disable-next-line security/detect-object-injection
-
+  const config = HEALTHCARE_PATTERNS[pattern];
+  
   return await rateLimit({
-    key: `healthcare:${pattern}:${identifier}`,
+    key: `healthcare:${String(pattern)}:${identifier}`,
     limit: config.requests,
     window: config.window
   });
@@ -98,7 +107,7 @@ export async function getHealthcareRateLimit(
 
 // Cleanup expired entries periodically
 setInterval(() => {
-
+  const now = Date.now();
   for (const [key, data] of rateLimitStore.entries()) {
     if (now > data.resetTime) {
       rateLimitStore.delete(key);

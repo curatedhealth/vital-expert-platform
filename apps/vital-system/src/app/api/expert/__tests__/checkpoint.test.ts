@@ -72,7 +72,7 @@ describe('Checkpoint API Routes', () => {
           { id: 'checkpoint-001' }
         );
 
-        const response = await POST(request, { params: { id: 'checkpoint-001' } });
+        const response = await POST(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
         expect(response.status).toBe(200);
         const body = await response.json();
@@ -91,7 +91,7 @@ describe('Checkpoint API Routes', () => {
           { id: 'checkpoint-001' }
         );
 
-        await POST(request, { params: { id: 'checkpoint-001' } });
+        await POST(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
         const fetchCall = mockFetch.mock.calls[0];
         const body = JSON.parse(fetchCall[1].body);
@@ -110,7 +110,7 @@ describe('Checkpoint API Routes', () => {
           { id: 'checkpoint-001' }
         );
 
-        await POST(request, { params: { id: 'checkpoint-001' } });
+        await POST(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
         expect(mockFetch).toHaveBeenCalledWith(
           expect.stringContaining('/checkpoint/checkpoint-001'),
@@ -132,7 +132,7 @@ describe('Checkpoint API Routes', () => {
           { id: 'checkpoint-001' }
         );
 
-        const response = await POST(request, { params: { id: 'checkpoint-001' } });
+        const response = await POST(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
         expect(response.status).toBe(200);
         
@@ -154,7 +154,7 @@ describe('Checkpoint API Routes', () => {
           { id: 'checkpoint-001' }
         );
 
-        const response = await POST(request, { params: { id: 'checkpoint-001' } });
+        const response = await POST(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
         expect(response.status).toBe(200);
       });
@@ -177,7 +177,7 @@ describe('Checkpoint API Routes', () => {
           { id: 'checkpoint-001' }
         );
 
-        const response = await POST(request, { params: { id: 'checkpoint-001' } });
+        const response = await POST(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
         expect(response.status).toBe(200);
         
@@ -196,7 +196,7 @@ describe('Checkpoint API Routes', () => {
           { id: 'checkpoint-001' }
         );
 
-        const response = await POST(request, { params: { id: 'checkpoint-001' } });
+        const response = await POST(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
         expect(response.status).toBe(400);
         const body = await response.json();
@@ -206,7 +206,7 @@ describe('Checkpoint API Routes', () => {
       it('should reject missing action', async () => {
         const request = createRequest('POST', {}, { id: 'checkpoint-001' });
 
-        const response = await POST(request, { params: { id: 'checkpoint-001' } });
+        const response = await POST(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
         expect(response.status).toBe(400);
       });
@@ -225,7 +225,7 @@ describe('Checkpoint API Routes', () => {
           { id: 'checkpoint-001' }
         );
 
-        await POST(request, { params: { id: 'checkpoint-001' } });
+        await POST(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
         const fetchCall = mockFetch.mock.calls[0];
         const body = JSON.parse(fetchCall[1].body);
@@ -244,7 +244,7 @@ describe('Checkpoint API Routes', () => {
           { id: 'checkpoint-001' }
         );
 
-        await POST(request, { params: { id: 'checkpoint-001' } });
+        await POST(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
         const fetchCall = mockFetch.mock.calls[0];
         expect(fetchCall[1].headers['x-tenant-id']).toBeDefined();
@@ -265,7 +265,7 @@ describe('Checkpoint API Routes', () => {
           { id: 'checkpoint-001' }
         );
 
-        const response = await POST(request, { params: { id: 'checkpoint-001' } });
+        const response = await POST(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
         expect(response.status).toBe(500);
       });
@@ -283,7 +283,7 @@ describe('Checkpoint API Routes', () => {
           { id: 'nonexistent' }
         );
 
-        const response = await POST(request, { params: { id: 'nonexistent' } });
+        const response = await POST(request, { params: Promise.resolve({ id: 'nonexistent' }) });
 
         expect(response.status).toBe(404);
       });
@@ -301,7 +301,7 @@ describe('Checkpoint API Routes', () => {
           { id: 'expired-checkpoint' }
         );
 
-        const response = await POST(request, { params: { id: 'expired-checkpoint' } });
+        const response = await POST(request, { params: Promise.resolve({ id: 'expired-checkpoint' }) });
 
         expect(response.status).toBe(410);
       });
@@ -336,7 +336,7 @@ describe('Checkpoint API Routes', () => {
 
       const request = createRequest('GET', undefined, { id: 'checkpoint-001' });
 
-      const response = await GET(request, { params: { id: 'checkpoint-001' } });
+      const response = await GET(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
       expect(response.status).toBe(200);
       const body = await response.json();
@@ -359,7 +359,7 @@ describe('Checkpoint API Routes', () => {
 
       const request = createRequest('GET', undefined, { id: 'checkpoint-001' });
 
-      const response = await GET(request, { params: { id: 'checkpoint-001' } });
+      const response = await GET(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
       expect(response.status).toBe(200);
       const body = await response.json();
@@ -376,7 +376,7 @@ describe('Checkpoint API Routes', () => {
 
       const request = createRequest('GET', undefined, { id: 'nonexistent' });
 
-      const response = await GET(request, { params: { id: 'nonexistent' } });
+      const response = await GET(request, { params: Promise.resolve({ id: 'nonexistent' }) });
 
       expect(response.status).toBe(404);
     });
@@ -395,7 +395,7 @@ describe('Checkpoint API Routes', () => {
 
       const request = createRequest('DELETE', undefined, { id: 'checkpoint-001' });
 
-      const response = await DELETE(request, { params: { id: 'checkpoint-001' } });
+      const response = await DELETE(request, { params: Promise.resolve({ id: 'checkpoint-001' }) });
 
       expect(response.status).toBe(200);
       const body = await response.json();
@@ -412,7 +412,7 @@ describe('Checkpoint API Routes', () => {
 
       const request = createRequest('DELETE', undefined, { id: 'resolved-checkpoint' });
 
-      const response = await DELETE(request, { params: { id: 'resolved-checkpoint' } });
+      const response = await DELETE(request, { params: Promise.resolve({ id: 'resolved-checkpoint' }) });
 
       expect(response.status).toBe(409);
     });

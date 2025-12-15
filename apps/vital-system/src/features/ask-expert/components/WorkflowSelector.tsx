@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { logger } from '@vital/utils';
 
 interface Workflow {
   id: string;
@@ -74,7 +75,7 @@ export function WorkflowSelector({
         const data = await response.json();
         setWorkflows(data.workflows || []);
       } catch (err: any) {
-        console.error('[WorkflowSelector] Error fetching workflows:', err);
+        logger.error('WorkflowSelector error fetching workflows', { error: err });
         setError(err.message || 'Failed to load workflows');
         // Set empty array on error so UI doesn't break
         setWorkflows([]);

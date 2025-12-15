@@ -4,6 +4,8 @@
  * Global test setup and mocks
  */
 
+require('@testing-library/jest-dom');
+
 // Setup environment variables for tests
 process.env.NODE_ENV = 'test';
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';

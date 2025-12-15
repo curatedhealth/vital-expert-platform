@@ -3,8 +3,8 @@
 import { AlertTriangle, CheckCircle, Info, TrendingUp } from 'lucide-react';
 import React from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Badge } from '@/lib/shared/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/lib/shared/components/ui/card';
 
 export interface Risk {
   id: string;

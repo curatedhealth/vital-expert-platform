@@ -17,11 +17,11 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Progress } from '@/shared/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { Badge } from '@/lib/shared/components/ui/badge';
+import { Button } from '@/lib/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/lib/shared/components/ui/card';
+import { Progress } from '@/lib/shared/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/lib/shared/components/ui/tabs';
 import { RAGPerformanceSummary } from '@/components/rag/RAGPerformanceSummary';
 
 interface KPIMetric {

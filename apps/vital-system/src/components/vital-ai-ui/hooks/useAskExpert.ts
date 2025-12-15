@@ -66,24 +66,16 @@ export function useAskExpert(options: AskExpertOptions) {
   const [fusionEvidence, setFusionEvidence] = useState<FusionEvidence | null>(null);
 
   // Use Vercel AI SDK's useChat for conversation management
-  const {
-    messages,
-    input,
-    setInput,
-    append,
-    reload,
-    stop,
-    isLoading,
-    error,
-    setMessages,
-  } = useChat({
-    api: MODE_ENDPOINTS[mode],
-    id: sessionId,
-    body: {
-      tenant_id: tenantId,
-      mode,
-    },
-    onResponse: (response) => {
+  const chatHelpers = useChat({
+    ...({
+      api: MODE_ENDPOINTS[mode],
+      id: sessionId,
+      body: {
+        tenant_id: tenantId,
+        mode,
+      },
+    } as any),
+    onResponse: (response: Response) => {
       // Parse streaming headers for agent updates
       const agentHeader = response.headers.get('X-Agent-Info');
       if (agentHeader) {
@@ -96,7 +88,7 @@ export function useAskExpert(options: AskExpertOptions) {
         }
       }
     },
-    onFinish: (message) => {
+    onFinish: (message: any) => {
       // Extract fusion evidence from final message
       if (message.annotations) {
         const fusion = message.annotations.find(
@@ -113,6 +105,17 @@ export function useAskExpert(options: AskExpertOptions) {
       onError?.(error);
     },
   });
+
+  // Extract properties from chatHelpers (with type safety)
+  const messages = chatHelpers.messages;
+  const input = (chatHelpers as any).input || '';
+  const setInput = (chatHelpers as any).setInput || (() => {});
+  const append = (chatHelpers as any).append;
+  const reload = (chatHelpers as any).reload;
+  const stop = (chatHelpers as any).stop;
+  const isLoading = (chatHelpers as any).isLoading;
+  const error = (chatHelpers as any).error;
+  const setMessages = (chatHelpers as any).setMessages;
 
   // Submit a question to the expert
   const askExpert = useCallback(
@@ -189,7 +192,7 @@ export function useExpertCompletion(options: Pick<AskExpertOptions, 'tenantId' |
     body: {
       tenant_id: tenantId,
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Expert completion error:', error);
       onError?.(error);
     },
@@ -214,4 +217,3 @@ export function useExpertCompletion(options: Pick<AskExpertOptions, 'tenantId' |
   };
 }
 
-export type { AskExpertOptions };

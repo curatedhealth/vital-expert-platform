@@ -22,6 +22,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { logger } from '@vital/utils';
 import {
   CheckCircle2,
   Download,
@@ -375,8 +376,8 @@ export const MissionCompleteView: React.FC<MissionCompleteViewProps> = ({
                 <ArtifactCard
                   key={artifact.id}
                   artifact={artifact}
-                  onDownload={() => console.log('Download:', artifact.id)}
-                  onView={() => console.log('View:', artifact.id)}
+                  onDownload={() => logger.info('Artifact download selected', { artifactId: artifact.id })}
+                  onView={() => logger.info('Artifact view selected', { artifactId: artifact.id })}
                 />
               ))}
               {artifacts.length === 0 && (
@@ -536,7 +537,7 @@ export const MissionCompleteView: React.FC<MissionCompleteViewProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => console.log('Share')}
+              onClick={() => logger.info('Share clicked')}
               className="border-neutral-700 text-neutral-300 hover:bg-neutral-800"
             >
               <Share2 className="w-4 h-4 mr-2" />
@@ -545,7 +546,7 @@ export const MissionCompleteView: React.FC<MissionCompleteViewProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => console.log('Export')}
+              onClick={() => logger.info('Export clicked')}
               className="border-neutral-700 text-neutral-300 hover:bg-neutral-800"
             >
               <Download className="w-4 h-4 mr-2" />

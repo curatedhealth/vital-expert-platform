@@ -22,16 +22,16 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
-import { Alert, AlertDescription } from '@/shared/components/ui/alert';
-import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent } from '@/shared/components/ui/card';
-import { Input } from '@/shared/components/ui/input';
-import { Progress } from '@/shared/components/ui/progress';
-import { ScrollArea } from '@/shared/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip';
-import { cn } from '@/shared/services/utils';
+import { Alert, AlertDescription } from '@/lib/shared/components/ui/alert';
+import { Avatar, AvatarFallback } from '@/lib/shared/components/ui/avatar';
+import { Badge } from '@/lib/shared/components/ui/badge';
+import { Button } from '@/lib/shared/components/ui/button';
+import { Card, CardContent } from '@/lib/shared/components/ui/card';
+import { Input } from '@/lib/shared/components/ui/input';
+import { Progress } from '@/lib/shared/components/ui/progress';
+import { ScrollArea } from '@/lib/shared/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/lib/shared/components/ui/tooltip';
+import { cn } from '@/lib/shared/services/utils';
 
 // Interfaces
 interface Message {

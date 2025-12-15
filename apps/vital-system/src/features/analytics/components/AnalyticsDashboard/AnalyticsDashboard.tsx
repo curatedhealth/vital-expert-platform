@@ -9,6 +9,31 @@ interface Props {
   dashboardId?: string;
 }
 
+// Format number utility function
+function formatNumber(
+  value: number,
+  format: 'number' | 'currency' | 'percentage' = 'number'
+): string {
+  if (format === 'currency') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
+  
+  if (format === 'percentage') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'percent',
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 2,
+    }).format(value / 100);
+  }
+  
+  return new Intl.NumberFormat('en-US').format(value);
+}
+
 const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'dashboards' | 'reports' | 'insights' | 'usage' | 'exports'>('overview');
   const [dashboard, setDashboard] = useState<DashboardType | null>(null);
@@ -349,7 +374,7 @@ const AnalyticsDashboard: React.FC<Props> = ({ organizationId, dashboardId }) =>
             {tabs.map(tab => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key as unknown)}
+                onClick={() => setActiveTab(tab.key as 'overview' | 'dashboards' | 'reports' | 'insights' | 'usage' | 'exports')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.key
                     ? 'border-blue-500 text-blue-600'

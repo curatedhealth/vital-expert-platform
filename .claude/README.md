@@ -1,7 +1,7 @@
 # Claude Code Command Center
 
-**Version**: 2.1.0
-**Last Updated**: December 5, 2025
+**Version**: 2.2.0
+**Last Updated**: December 14, 2025
 **Status**: ✅ ARCHITECTURE WIRED UP - Ready for Production
 **Purpose**: Central hub for all Claude Code configuration, agents, and VITAL Platform documentation
 
@@ -16,7 +16,10 @@ This directory contains everything Claude Code needs to assist with the VITAL Pl
 - **Rules** (`CLAUDE.md`, `VITAL.md`) - Operational rules and standards
 - **Configuration** (`settings.local.json`) - Claude Code settings
 
-**Start Here**: Read `STRUCTURE.md` for complete directory structure or `docs/INDEX.md` for documentation navigation
+**Start Here**: 
+- **Project Structure**: Read root `/STRUCTURE.md` (canonical)
+- **Claude Code Structure**: Read `STRUCTURE.md` (reference)
+- **Documentation**: Read `docs/DOCUMENTATION_INDEX.md` for navigation
 
 ---
 
@@ -24,17 +27,10 @@ This directory contains everything Claude Code needs to assist with the VITAL Pl
 
 ```
 .claude/
-├── README.md                     ← This file (v2.0.0)
-├── STRUCTURE.md                  ← Directory structure (v4.0)
-├── NAMING_CONVENTION.md          ← Naming & versioning guide (v1.0.0)
-├── DOCUMENTATION_GOVERNANCE_PLAN.md ← Governance & quality system (v1.0.0)
+├── README.md                     ← This file (v2.1.0)
+├── STRUCTURE.md                  ← Reference to root STRUCTURE.md (v6.1)
 ├── AGENT_QUICK_START.md          ← Agent onboarding checklist (v1.0.0)
 ├── CATALOGUE.md                  ← Complete catalog
-├── INDEX.md                      ← Master navigation index
-├── MASTER_DOCUMENTATION_INDEX.md ← Complete documentation map
-├── CONSOLIDATION_COMPLETE.md     ← Migration history
-├── STANDARDIZATION_COMPLETE.md   ← Standardization summary
-├── GOVERNANCE_IMPLEMENTATION_SUMMARY.md ← Governance setup
 │
 ├── CLAUDE.md                     ← Claude operational rules
 ├── VITAL.md                      ← VITAL Platform standards

@@ -13,6 +13,7 @@ export { VitalApprovalCard } from './VitalApprovalCard';
 export { VitalTimeoutWarning, VitalTimeoutBadge } from './VitalTimeoutWarning';
 export { VitalWorkflowProgress, type WorkflowStep } from './VitalWorkflowProgress';
 export { VitalHITLCheckpoint } from './VitalHITLCheckpoint';
+export { VitalPreFlightCheck } from './VitalPreFlightCheck';
 
 // Re-export types
 export type {

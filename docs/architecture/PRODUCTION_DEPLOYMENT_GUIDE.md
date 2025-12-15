@@ -277,23 +277,23 @@ npx supabase db push
 
 ```bash
 # Apply agent policies
-psql $SUPABASE_URL < database/policies/agents.policy.sql
+psql $SUPABASE_URL < database/postgres/policies/agents.policy.sql
 
 # Apply junction policies
-psql $SUPABASE_URL < database/policies/agents-junction.policy.sql
+psql $SUPABASE_URL < database/postgres/policies/agents-junction.policy.sql
 ```
 
 ### Step 3: Seed Essential Data
 
 ```bash
 # Seed tenants
-psql $SUPABASE_URL < database/seeds/tenants.sql
+psql $SUPABASE_URL < database/postgres/seeds/tenants.sql
 
 # Seed agents
-psql $SUPABASE_URL < database/seeds/agents.sql
+psql $SUPABASE_URL < database/postgres/seeds/agents.sql
 
 # Seed skills
-psql $SUPABASE_URL < database/seeds/skills.sql
+psql $SUPABASE_URL < database/postgres/seeds/skills.sql
 ```
 
 ### Step 4: Verify Database

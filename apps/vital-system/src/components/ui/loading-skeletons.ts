@@ -3,4 +3,4 @@
  * Re-exports all skeleton components for easy importing
  */
 
-export * from './loading-skeletons.tsx';
+export * from './loading-skeletons';

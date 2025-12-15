@@ -33,7 +33,7 @@
 ### Data Schema
 | File | Description |
 |------|-------------|
-| `architecture/data-schema/` | Database schema documentation |
+| `database/postgres/schemas/` | Database schema documentation |
 
 ---
 

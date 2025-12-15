@@ -1,8 +1,8 @@
 # VITAL Path - World-Class Project Structure (FINAL)
 
-**Version:** 4.1 (WORLD-CLASS COMPLETE + Production Registry)
+**Version:** 4.4 (WORLD-CLASS COMPLETE + Production Registry + Reorganization + Infrastructure Cleanup + Source Cleanup)
 **Date:** December 5, 2025
-**Updated:** December 13, 2025
+**Updated:** December 14, 2025
 **Status:** ✅ ALL WORLD-CLASS COMPONENTS COMPLETE
 **Type:** AI Healthcare Platform - Modular Monolith Architecture
 
@@ -160,7 +160,7 @@ For AI orchestration platforms, **microservices create more problems than they s
 vital-path/
 │
 ├── 📁 apps/                          # Deployable Applications
-│   └── web/                          # Next.js 14+ Frontend
+│   └── vital-system/                 # Next.js 14+ Frontend
 │
 ├── 📁 services/                      # Backend Services
 │   └── ai-engine/                    # 🔥 MODULAR MONOLITH
@@ -171,11 +171,30 @@ vital-path/
 │   ├── sdk/                          # TypeScript Client SDK
 │   └── config/                       # Shared ESLint/TS/Prettier
 │
-├── 📁 database/                      # Database Management
-│   ├── migrations/                   # SQL migrations
-│   ├── policies/                     # 🔥 RLS Policies (Critical!)
-│   ├── functions/                    # Postgres functions
-│   └── seeds/                        # Seed data
+├── 📁 database/                      # Database Management (Multi-Database)
+│   ├── postgres/                     # PostgreSQL/Supabase assets
+│   │   ├── migrations/               # SQL migrations (311+ files)
+│   │   ├── seeds/                     # Seed data
+│   │   ├── schemas/                   # Schema documentation (NEW)
+│   │   └── queries/                   # SQL queries (NEW)
+│   │   ├── policies/                 # 🔥 RLS Policies (Critical!)
+│   │   ├── functions/                 # Postgres functions
+│   │   ├── triggers/                  # Database triggers
+│   │   ├── views/                     # Materialized views
+│   │   ├── queries/                   # Diagnostic queries
+│   │   └── scripts/                   # Database population scripts
+│   ├── neo4j/                         # Neo4j Graph Database
+│   │   ├── schemas/                   # Cypher schema definitions
+│   │   ├── queries/                   # Common Cypher queries
+│   │   └── migrations/                # Graph migrations
+│   ├── pinecone/                      # Pinecone Vector Database
+│   │   ├── indexes/                   # Index configurations
+│   │   └── schemas/                   # Vector schema definitions
+│   ├── shared/                        # Shared database utilities
+│   │   └── scripts/                   # Migration & generation scripts
+│   │       ├── migrations/            # Migration execution scripts
+│   │       └── generation/           # Migration generation scripts
+│   └── sync/                          # Cross-database sync scripts
 │
 ├── 📁 scripts/                       # Build & Utility Scripts
 │   ├── codegen/                      # 🔥 Type synchronization scripts
@@ -190,12 +209,33 @@ vital-path/
 │
 ├── 📁 infrastructure/                # Infrastructure as Code
 │   ├── docker/                       # Docker configurations
+│   │   ├── docker-compose.yml        # Full production stack (273 lines)
+│   │   ├── Dockerfile                # API server
+│   │   ├── Dockerfile.frontend       # Frontend
+│   │   ├── Dockerfile.worker          # Celery workers
+│   │   └── env.example               # Environment template
 │   └── terraform/                    # Cloud infrastructure
+│       ├── environments/
+│       │   ├── dev/
+│       │   │   ├── main.tf
+│       │   │   └── terraform.tfvars.example
+│       │   └── prod/
+│       │       ├── main.tf
+│       │       └── terraform.tfvars.example
+│       └── modules/                  # Reusable modules (8 modules)
 │
 ├── 📁 tests/                         # Cross-Cutting Tests
-│   ├── e2e/                          # End-to-end (Playwright)
+│   ├── unit/                         # Unit tests
 │   ├── integration/                  # Integration tests
-│   └── performance/                  # Load tests
+│   ├── e2e/                          # End-to-end (Playwright)
+│   ├── performance/                  # Load tests (k6)
+│   ├── scripts/                      # Test runner scripts
+│   └── docs/                         # Test documentation
+│
+├── 📁 supabase/                      # Supabase CLI Tooling (Keep at Root)
+│   ├── config.toml                   # Supabase CLI configuration
+│   ├── .branches/                    # Supabase branching feature
+│   └── .temp/                        # Supabase temporary files
 │
 ├── 📁 .github/                       # GitHub Configuration
 │   ├── workflows/                    # CI/CD (includes codegen step)
@@ -208,8 +248,24 @@ vital-path/
 │   ├── Makefile                      # Common commands
 │   └── README.md
 │
-└── 📁 .claude/                       # AI Assistant Context
-    └── docs/
+└── 📁 .claude/                       # AI Assistant Configuration
+    ├── README.md                     # Command center overview
+    ├── CLAUDE.md                     # Claude operational rules
+    ├── VITAL.md                      # VITAL Platform standards
+    ├── EVIDENCE_BASED_RULES.md       # Evidence requirements
+    ├── AGENT_QUICK_START.md          # Agent onboarding
+    ├── CATALOGUE.md                  # Master catalog
+    ├── STRUCTURE.md                  # Reference to root STRUCTURE.md
+    ├── settings.local.json           # Claude Code settings
+    ├── agents/                       # 38 Specialized Agents
+    └── docs/                          # Internal Documentation (3,117 files)
+        ├── architecture/              # Architecture decisions
+        ├── services/                  # Service PRDs/ARDs
+        ├── platform/                  # Platform features
+        ├── operations/                # Deployment & security
+        ├── coordination/              # Agent coordination & governance
+        └── _historical/               # Historical records
+            └── consolidation/         # Consolidation history
 ```
 
 ---
@@ -661,17 +717,32 @@ apps/vital-system/
 │   │   ├── feedback/
 │   │   └── ai/                       # Shared AI components
 │   │
-│   ├── 📁 hooks/                     # Global Hooks
-│   ├── 📁 lib/                       # Core Libraries
+│   ├── 📁 components/                # Shared Components
+│   │   ├── ui/                       # shadcn/ui
+│   │   ├── layout/
+│   │   ├── forms/
+│   │   ├── data-display/
+│   │   ├── feedback/
+│   │   └── ai/                       # Shared AI components
+│   │
+│   ├── 📁 lib/                       # Core Libraries (Consolidated)
 │   │   ├── api/
 │   │   ├── auth/
 │   │   ├── supabase/
-│   │   └── utils/
+│   │   ├── utils/
+│   │   ├── config/                   # Configuration utilities
+│   │   ├── deployment/               # Deployment utilities
+│   │   ├── optimization/             # Optimization utilities
+│   │   ├── providers/                # React providers
+│   │   ├── security/                 # Security utilities
+│   │   ├── services/                 # Service layer
+│   │   └── shared/                   # Shared utilities
 │   │
-│   ├── 📁 stores/                    # Global Stores
-│   ├── 📁 types/                     # Global Types
-│   ├── 📁 styles/                    # Global Styles
-│   └── 📁 config/                    # Configuration
+│   ├── 📁 middleware/                # Next.js Middleware
+│   ├── 📁 types/                     # TypeScript Types
+│   ├── 📁 contexts/                  # React Contexts
+│   ├── 📁 hooks/                     # React Hooks
+│   └── 📁 stores/                    # State Stores
 │
 └── 📄 Configuration Files
 ```
@@ -772,51 +843,69 @@ for (const [name, schema] of Object.entries(schemas)) {
 ```
 database/
 │
-├── 📁 migrations/
-│   ├── 00001_initial_schema.sql
-│   ├── 00002_create_tenants.sql
-│   ├── 00003_create_users.sql
-│   ├── 00004_create_agents.sql
-│   ├── 00005_create_workflows.sql
-│   ├── 00006_create_conversations.sql
-│   ├── 00007_create_knowledge.sql
-│   ├── 00008_create_solutions.sql
-│   ├── 00009_create_jobs.sql         # 🔥 Async job tracking
-│   └── 00010_create_token_usage.sql  # 🔥 Token tracking
+├── 📁 postgres/                      # PostgreSQL/Supabase
+│   ├── migrations/                   # SQL migrations (311+ files)
+│   │   ├── 00001_initial_schema.sql
+│   │   ├── 00002_create_tenants.sql
+│   │   ├── 00003_create_users.sql
+│   │   ├── 00004_create_agents.sql
+│   │   ├── 00005_create_workflows.sql
+│   │   ├── 00006_create_conversations.sql
+│   │   ├── 00007_create_knowledge.sql
+│   │   ├── 00008_create_solutions.sql
+│   │   ├── 00009_create_jobs.sql         # 🔥 Async job tracking
+│   │   └── 00010_create_token_usage.sql  # 🔥 Token tracking
+│   │
+│   ├── policies/                      # 🔥 RLS POLICIES (Critical!)
+│   │   ├── tenants.policy.sql
+│   │   ├── users.policy.sql
+│   │   ├── agents.policy.sql
+│   │   ├── workflows.policy.sql
+│   │   ├── conversations.policy.sql
+│   │   ├── knowledge.policy.sql
+│   │   ├── vectors.policy.sql
+│   │   ├── jobs.policy.sql
+│   │   └── token_usage.policy.sql
+│   │
+│   ├── functions/
+│   │   ├── auth_functions.sql
+│   │   ├── tenant_functions.sql
+│   │   ├── match_vectors.sql             # Tenant-filtered vector search
+│   │   └── token_budget.sql              # 🔥 Budget checking functions
+│   │
+│   ├── triggers/
+│   │   ├── updated_at.sql
+│   │   └── audit_log.sql
+│   │
+│   ├── seeds/                          # Seed data
+│   │   ├── dev/
+│   │   └── prod/
+│   │
+│   ├── schemas/                        # Schema documentation (NEW)
+│   │   ├── GOLD_STANDARD_SCHEMA_VISION.md
+│   │   ├── GOLD_STANDARD_SCHEMA_ARD.md
+│   │   ├── GOLD_STANDARD_COMPLETE.md
+│   │   └── DATABASE_SCHEMA_COMPREHENSIVE_GUIDE.md
+│   │
+│   └── queries/                        # SQL queries (NEW)
+│       └── diagnostics/                 # Diagnostic queries
 │
-├── 📁 policies/                      # 🔥 RLS POLICIES (Critical!)
-│   ├── tenants.policy.sql
-│   ├── users.policy.sql
-│   ├── agents.policy.sql
-│   ├── workflows.policy.sql
-│   ├── conversations.policy.sql
-│   ├── knowledge.policy.sql
-│   ├── vectors.policy.sql
-│   ├── jobs.policy.sql
-│   └── token_usage.policy.sql
+├── 📁 neo4j/                          # Neo4j Graph Database
+│   ├── schemas/                        # Cypher schema definitions
+│   ├── queries/                        # Common Cypher queries
+│   ├── migrations/                     # Graph migrations
+│   └── seeds/                          # Graph seed data
 │
-├── 📁 functions/
-│   ├── auth_functions.sql
-│   ├── tenant_functions.sql
-│   ├── match_vectors.sql             # Tenant-filtered vector search
-│   └── token_budget.sql              # 🔥 Budget checking functions
-│
-├── 📁 triggers/
-│   ├── updated_at.sql
-│   └── audit_log.sql
-│
-├── 📁 seeds/
-│   ├── dev/
-│   └── prod/
-│
-└── 📁 schemas/
-    └── erd.md
+└── 📁 pinecone/                        # Pinecone Vector Database
+    ├── indexes/                        # Index configurations
+    ├── schemas/                        # Vector schema definitions
+    └── seeds/                          # Vector seed data
 ```
 
 ### Token Usage Table
 
 ```sql
--- database/migrations/00010_create_token_usage.sql
+-- database/postgres/migrations/00010_create_token_usage.sql
 
 CREATE TABLE token_usage (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -846,7 +935,7 @@ ON token_usage(tenant_id, created_at DESC);
 ### Token Budget Function
 
 ```sql
--- database/functions/token_budget.sql
+-- database/postgres/functions/token_budget.sql
 
 CREATE OR REPLACE FUNCTION check_token_budget(
     p_tenant_id UUID,
@@ -1516,11 +1605,12 @@ services:
       - POSTGRES_DB=vital
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ../../database/postgres/migrations:/docker-entrypoint-initdb.d:ro
 
   # Frontend
   web:
     build:
-      context: ../../apps/web
+      context: ../../apps/vital-system
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
@@ -1570,7 +1660,7 @@ volumes:
 | 1 | Set up `packages/protocol` | P0 | 4h | ✅ **DONE** |
 | 2 | Define Zod schemas (workflow, nodes, expert) | P0 | 6h | ✅ **DONE** |
 | 2 | Add JSON Schema export script | P0 | 2h | ✅ **DONE** |
-| 3 | Create `database/policies/*.policy.sql` | P0 | 4h | ✅ **DONE** |
+| 3 | Create `database/postgres/policies/*.policy.sql` | P0 | 4h | ✅ **DONE** |
 | 3 | Add tenant-filtered vector search function | P0 | 2h | ✅ **DONE** |
 | 4 | Set up codegen pipeline | P1 | 4h | ✅ **DONE** |
 | 5 | Test Protocol → Pydantic generation | P1 | 4h | ⏳ Needs `pnpm install` |
@@ -2015,9 +2105,9 @@ packages/protocol/src/schemas/nodes.schema.ts
 packages/protocol/src/generate-json-schemas.ts
 
 # 2. RLS Policies
-database/policies/workflows.policy.sql
-database/policies/vectors.policy.sql
-database/functions/match_vectors.sql
+database/postgres/policies/workflows.policy.sql
+database/postgres/policies/vectors.policy.sql
+database/postgres/functions/match_vectors.sql
 
 # 3. Codegen Pipeline  
 scripts/codegen/sync_types.sh
@@ -2180,7 +2270,7 @@ packages/protocol/
     └── types/
         └── index.ts ✅
 
-database/policies/
+database/postgres/policies/
 ├── tenants.policy.sql ✅
 ├── workflows.policy.sql ✅
 ├── agents.policy.sql ✅
@@ -2388,6 +2478,7 @@ After Phase 5 completion, the architecture has been wired up:
 - **500+ existing policies** already in production
 - Uses `organization_id` for isolation (not `tenant_id`)
 - Documentation: `.claude/docs/platform/rls/README.md`
+- Schema Documentation: `database/postgres/schemas/`
 - Optional budget functions: `.claude/docs/platform/rls/migrations/ADD_BUDGET_FUNCTIONS.sql`
 - Key functions: `set_organization_context()`, `get_current_organization_context()`, `is_superadmin()`
 
@@ -2475,7 +2566,7 @@ Manual test page created: `services/ai-engine/tests/manual/test_streaming.html`
 find packages/protocol -type f -name "*.ts" | wc -l  # Should be 14
 
 # Verify RLS policies (Phase 1)
-find database/policies -type f -name "*.sql" | wc -l  # Should be 8
+find database/postgres/policies -type f -name "*.sql" | wc -l  # Should be 8
 
 # Verify Translator module (Phase 1)
 find services/ai-engine/src/modules/translator -type f -name "*.py" | wc -l  # Should be 6
@@ -2623,9 +2714,12 @@ infrastructure/terraform/
 ├── variables.tf                     # Input variables
 ├── README.md                        # Terraform documentation
 ├── environments/
-│   ├── dev/main.tf                  # Development environment
-│   ├── staging/                     # Staging (placeholder)
-│   └── prod/main.tf                 # Production environment
+│   ├── dev/
+│   │   ├── main.tf                  # Development environment
+│   │   └── terraform.tfvars.example # Example variables (NEW)
+│   └── prod/
+│       ├── main.tf                  # Production environment
+│       └── terraform.tfvars.example # Example variables (NEW)
 └── modules/
     ├── vpc/main.tf                  # VPC, subnets, NAT, security groups
     ├── eks/main.tf                  # EKS cluster, node groups, IAM
@@ -2782,17 +2876,18 @@ The Agent OS extends the World-Class Architecture with a comprehensive 5-Level A
 
 | Component | Files | Location | Status |
 |-----------|-------|----------|--------|
-| Agent Hierarchy (L1-L5) | 61 | `src/agents/` | ✅ |
-| Agent OS Services | 4 | `src/services/` | ✅ |
+| Agent Hierarchy (L1-L5) | 61 | `archive/src-code/agents/` (archived) | ⚠️ Archived |
+| Agent OS Services | 4 | `src/lib/services/` | ✅ |
 | Agent OS API Routes | 2 | `src/api/routes/` | ✅ |
 | Synergy Tasks | 1 | `src/workers/tasks/` | ✅ |
-| Agent OS Tests | 8 | `src/tests/agent_os/` | ✅ |
-| SQL Migrations | 7 | `.claude/docs/.../sql-seeds/` | ✅ |
+| Agent OS Tests | 8 | `tests/unit/agent_os/` | ✅ |
+| SQL Migrations | 7 | `database/postgres/migrations/` | ✅ |
+| Schema Documentation | 4 | `database/postgres/schemas/` | ✅ |
 
 ### Agent Hierarchy Structure
 
 ```
-services/ai-engine/src/agents/
+archive/src-code/agents/ (archived - see services/ai-engine/src/agents/ for backend agents)
 ├── l1_orchestrators/        # L1 Master Orchestrator
 │   └── l1_master.py
 ├── l2_experts/              # L2 Domain Experts (PRIMARY user interaction)
@@ -2832,7 +2927,7 @@ services/ai-engine/src/agents/
 - **113 tests passing** in dedicated `tests/agent_os/` suite
 - Unit tests for all Agent OS services
 - Integration tests for end-to-end flows
-- Run with: `pytest src/tests/agent_os/ -v`
+- Run with: `pytest tests/unit/agent_os/ -v`
 
 ### Documentation
 
@@ -2843,6 +2938,77 @@ services/ai-engine/src/agents/
 
 ---
 
-**Version**: 4.1 (WITH AGENT OS)  
+**Version**: 4.2 (WITH AGENT OS + Reorganization)  
 **Completed**: December 7, 2025  
+**Updated**: December 14, 2025  
 **Next Steps**: Production deployment with Agent OS integration
+
+---
+
+## Infrastructure Cleanup (December 14, 2025)
+
+### Changes Made:
+- ✅ Removed `infrastructure/monitoring/` directory (monitoring handled by Terraform module)
+- ✅ Created `terraform.tfvars.example` files for dev/prod environments
+- ✅ Fixed `infrastructure/docker/docker-compose.yml` database path (`database/postgres/migrations/`)
+- ✅ Analyzed root `docker-compose.yml` vs infrastructure version (both kept - different purposes)
+
+### Infrastructure Structure:
+```
+infrastructure/
+├── docker/
+│   ├── docker-compose.yml          # Full production stack (273 lines)
+│   ├── Dockerfile                   # API server
+│   ├── Dockerfile.frontend          # Frontend
+│   ├── Dockerfile.worker            # Celery workers
+│   └── env.example                 # Environment template
+│
+└── terraform/
+    ├── environments/
+    │   ├── dev/
+    │   │   ├── main.tf
+    │   │   └── terraform.tfvars.example  # NEW ✅
+    │   └── prod/
+    │       ├── main.tf
+    │       └── terraform.tfvars.example  # NEW ✅
+    └── modules/                     # 8 reusable modules
+```
+
+### Root-Level Files:
+- ✅ Root `docker-compose.yml` (72 lines) - Simple local dev setup
+- ✅ `Makefile` - Updated references (`apps/web` → `apps/vital-system`)
+- ✅ All root configuration files verified as necessary
+
+See: `docs/architecture/INFRASTRUCTURE_CLEANUP_COMPLETE.md` and `docs/architecture/ROOT_LEVEL_CLEANUP_COMPLETE.md` for full details.
+
+---
+
+## .claude/ Directory Reorganization (December 14, 2025)
+
+The `.claude/` directory has been reorganized to separate AI assistant configuration from project documentation:
+
+### Changes Made:
+- ✅ Schema files moved to `database/postgres/schemas/` (4 files)
+- ✅ Historical files archived to `.claude/docs/_historical/consolidation/` (3 files)
+- ✅ Governance files moved to `.claude/docs/coordination/` (2 files)
+- ✅ SQL files reorganized (388 files categorized and moved)
+- ✅ `.claude/` root cleaned (16 → 7 files)
+- ✅ Root `STRUCTURE.md` is now canonical (224 lines)
+
+### New Structure:
+```
+.claude/ (7 files - clean)
+├── README.md, CLAUDE.md, VITAL.md
+├── EVIDENCE_BASED_RULES.md
+├── AGENT_QUICK_START.md, CATALOGUE.md
+├── STRUCTURE.md (references root STRUCTURE.md)
+└── docs/
+    ├── coordination/ (governance files)
+    └── _historical/consolidation/ (historical records)
+
+database/postgres/
+├── schemas/ (NEW - 4 schema documentation files)
+└── queries/ (NEW - SQL queries and diagnostics)
+```
+
+See: `docs/architecture/CLAUDE_DOCS_REORGANIZATION_COMPLETE.md` for full details.

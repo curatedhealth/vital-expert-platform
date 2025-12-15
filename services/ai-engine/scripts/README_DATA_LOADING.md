@@ -265,7 +265,7 @@ After data loading is complete:
 
 For issues or questions:
 1. Check the verification script output
-2. Review logs in `../../logs/` directory
+2. Review logs in `../../infrastructure/logs/` directory
 3. Consult the comprehensive documentation
 4. Check environment variables are set correctly
 

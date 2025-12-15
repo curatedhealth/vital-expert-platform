@@ -47,8 +47,8 @@ export function InlineCitationText({
 interface CardContextValue {
   open: boolean;
   toggle: (value?: boolean) => void;
-  triggerRef: React.RefObject<HTMLButtonElement>;
-  cardRef: React.RefObject<HTMLDivElement>;
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
+  cardRef: React.RefObject<HTMLDivElement | null>;
   scheduleClose: (delayMs?: number) => void;
   cancelClose: () => void;
 }
@@ -136,7 +136,7 @@ export function InlineCitationCard({
       toggle: (value?: boolean) => {
         setOpen((previous) => (typeof value === 'boolean' ? value : !previous));
       },
-      triggerRef,
+      triggerRef: triggerRef as React.RefObject<HTMLButtonElement>,
       cardRef,
       scheduleClose,
       cancelClose,

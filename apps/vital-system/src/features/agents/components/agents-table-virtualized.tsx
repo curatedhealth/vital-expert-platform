@@ -521,15 +521,24 @@ export function AgentsTableVirtualized({
             {({ height, width }: { height: number; width: number }) => (
               <div style={{ height, width }}>
                 <List
-                  listRef={listRef}
-                  defaultHeight={height}
-                  rowCount={agents.length}
-                  rowHeight={ROW_HEIGHT}
-                  rowProps={rowData}
-                  overscanCount={5}
-                  rowComponent={VirtualizedRow}
-                  style={{ width: '100%' }}
-                />
+                  height={height}
+                  itemCount={agents.length}
+                  itemSize={ROW_HEIGHT}
+                  width={width}
+                  {...({ ref: listRef } as any)}
+                >
+                  {({ index, style }) => (
+                    <VirtualizedRow
+                      index={index}
+                      style={style}
+                      agents={rowData.agents}
+                      selectedAgents={rowData.selectedAgents}
+                      onRowClick={rowData.onRowClick}
+                      onCheckboxClick={rowData.onCheckboxClick}
+                      onActionClick={rowData.onActionClick}
+                    />
+                  )}
+                </List>
               </div>
             )}
           </AutoSizer>

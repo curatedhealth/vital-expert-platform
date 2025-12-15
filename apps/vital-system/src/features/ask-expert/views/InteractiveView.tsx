@@ -38,6 +38,7 @@ import {
   type LucideIcon
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
+import { logger } from '@vital/utils';
 
 // Streaming infrastructure
 import { streamReducer, initialStreamState, streamActions, type StreamState } from '../hooks/streamReducer';
@@ -401,7 +402,7 @@ export function InteractiveView({
           setPromptStarters([]);
         }
       } catch (error) {
-        console.error('Error fetching prompt starters:', error);
+        logger.error('Error fetching prompt starters', { error, selectedExpertId: selectedExpert?.id });
         setPromptStarters([]);
       } finally {
         setIsLoadingPromptStarters(false);
@@ -479,7 +480,10 @@ export function InteractiveView({
   const persistMessages = useCallback(async (updatedMessages: Message[]) => {
     // Need user ID and session ID to persist
     if (!user?.id || !sessionId) {
-      console.warn('[InteractiveView] Cannot persist messages: missing user or session ID');
+      logger.warn('InteractiveView cannot persist messages: missing user or session ID', {
+        hasUser: !!user?.id,
+        hasSessionId: !!sessionId,
+      });
       return;
     }
 
@@ -531,11 +535,11 @@ export function InteractiveView({
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[InteractiveView] Failed to ${method} messages:`, errorText);
+        logger.error('InteractiveView failed to persist messages', { method, errorText, status: response.status });
 
         // If PUT fails because conversation doesn't exist, try POST
         if (method === 'PUT' && response.status === 404) {
-          console.log('[InteractiveView] Conversation not found, creating new one...');
+          logger.info('InteractiveView conversation not found, creating new one');
           const createResponse = await fetch('/api/conversations', {
             method: 'POST',
             headers: {
@@ -553,7 +557,10 @@ export function InteractiveView({
           if (createResponse.ok) {
             setConversationCreated(true);
           } else {
-            console.error('[InteractiveView] Failed to create conversation:', await createResponse.text());
+            logger.error('InteractiveView failed to create conversation', {
+              errorText: await createResponse.text(),
+              status: createResponse.status,
+            });
           }
         }
       } else {
@@ -563,7 +570,7 @@ export function InteractiveView({
         }
       }
     } catch (error) {
-      console.error('[InteractiveView] Error persisting messages:', error);
+      logger.error('InteractiveView error persisting messages', { error });
     }
   }, [user?.id, sessionId, initialConversation, conversationCreated, selectedExpert?.id, mode]);
 
@@ -662,36 +669,36 @@ export function InteractiveView({
     data?: unknown
   ) => {
     // Send decision to backend
-    console.log('Checkpoint decision:', checkpointId, decision, data);
+    logger.info('Checkpoint decision', { checkpointId, decision, data });
     // Close the modal
     setActiveCheckpoint(null);
     // TODO: Send to backend via API or SSE response
   }, []);
 
   const handleCheckpointTimeout = useCallback((checkpointId: string) => {
-    console.log('Checkpoint timed out:', checkpointId);
+    logger.warn('Checkpoint timed out', { checkpointId });
     setActiveCheckpoint(null);
   }, []);
 
   const handleCheckpointExtend = useCallback((checkpointId: string, additionalSeconds: number) => {
-    console.log('Extending checkpoint:', checkpointId, 'by', additionalSeconds, 'seconds');
+    logger.info('Extending checkpoint', { checkpointId, additionalSeconds });
     // TODO: Notify backend of extension
   }, []);
 
   const handlePlanApprove = useCallback((planId: string) => {
-    console.log('Plan approved:', planId);
+    logger.info('Plan approved', { planId });
     setActivePlan(null);
     // TODO: Send approval to backend
   }, []);
 
   const handlePlanReject = useCallback((planId: string, reason?: string) => {
-    console.log('Plan rejected:', planId, reason);
+    logger.warn('Plan rejected', { planId, reason });
     setActivePlan(null);
     // TODO: Send rejection to backend
   }, []);
 
   const handlePlanModify = useCallback((planId: string, modifications: string) => {
-    console.log('Plan modified:', planId, modifications);
+    logger.info('Plan modified', { planId, modifications });
     setActivePlan(null);
     // TODO: Send modifications to backend
   }, []);
@@ -773,7 +780,7 @@ export function InteractiveView({
       const data = await response.json();
       return data.enhanced || message;
     } catch (error) {
-      console.error('Prompt enhancement failed:', error);
+      logger.error('Prompt enhancement failed', { error });
       return message; // Return original on error
     }
   }, [selectedExpert]);

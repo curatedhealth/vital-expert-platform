@@ -815,7 +815,7 @@ function ArtifactRenderer({ artifact }: ArtifactRendererProps) {
           content={artifact.content}
           title={artifact.title}
           version={artifact.metadata?.version}
-          lastModified={artifact.metadata?.createdAt}
+          lastModified={artifact.metadata?.createdAt ? new Date(artifact.metadata.createdAt) : undefined}
           showToolbar={false} // Panel has its own toolbar
           maxHeight="none"
         />

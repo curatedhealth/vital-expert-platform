@@ -79,11 +79,12 @@ function processCitations(
   }
   
   if (React.isValidElement(content)) {
-    if (content.props?.children) {
+    const element = content as React.ReactElement<any>;
+    if (element.props?.children) {
       return React.cloneElement(
-        content,
-        { ...content.props },
-        processCitations(content.props.children, citationMap)
+        element,
+        { ...element.props },
+        processCitations(element.props.children, citationMap)
       );
     }
   }

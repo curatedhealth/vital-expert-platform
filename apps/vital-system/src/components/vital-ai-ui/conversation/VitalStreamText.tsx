@@ -165,11 +165,12 @@ function processCitationsInText(
 
   // Handle React elements - recursively process their children
   if (React.isValidElement(content)) {
-    if (content.props?.children) {
+    const element = content as React.ReactElement<any>;
+    if (element.props?.children) {
       return React.cloneElement(
-        content,
-        { ...content.props },
-        processCitationsInText(content.props.children, citationMap)
+        element,
+        { ...element.props },
+        processCitationsInText(element.props.children, citationMap)
       );
     }
   }

@@ -38,6 +38,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+import { logger } from '@vital/utils';
 
 // ============================================================================
 // SHARED COMPONENTS FROM @vital/ai-ui
@@ -289,7 +290,7 @@ export function AutonomousView({
           }
         }
       } catch (error) {
-        console.error('[AutonomousView] Failed to load templates', error);
+        logger.error('[AutonomousView] Failed to load templates', error);
         if (isMounted) {
           setTemplates([]);
           setSelectedTemplate(null);
@@ -316,7 +317,7 @@ export function AutonomousView({
     const handleExpertSelected = (event: CustomEvent) => {
       const { expert } = event.detail || {};
       if (expert) {
-        console.log('[AutonomousView] Expert selected from sidebar:', expert.name);
+        logger.info('[AutonomousView] Expert selected from sidebar', { expert: expert.name });
         setSelectedExpert({
           id: expert.id,
           name: expert.name,
@@ -331,7 +332,7 @@ export function AutonomousView({
 
     // On mount, request current selection in case user already selected an agent
     window.dispatchEvent(new CustomEvent('ask-expert:request-selection'));
-    console.log('[AutonomousView] Mode 3 mounted - requesting current expert selection');
+    logger.debug('[AutonomousView] Mode 3 mounted - requesting current expert selection');
 
     return () => {
       window.removeEventListener('ask-expert:expert-selected', handleExpertSelected as EventListener);
@@ -618,14 +619,14 @@ export function AutonomousView({
   // =========================================================================
 
   const handleExpertSelect = useCallback((expert: Expert) => {
-    console.log('[AutonomousView] Expert selected:', expert.name, '- transitioning to goal phase');
+    logger.info('[AutonomousView] Expert selected', { expert: expert.name, nextPhase: 'goal' });
     setSelectedExpert(expert);
     setPhase('goal');  // Go to mission goal input phase
   }, []);
 
   // Mode 3: Handle mission family selection (mission-first flow)
   const handleFamilySelect = useCallback((family: MissionFamily) => {
-    console.log('[AutonomousView] Mission family selected:', family, '- transitioning to goal phase');
+    logger.info('[AutonomousView] Mission family selected', { family: family.family, nextPhase: 'goal' });
     setSelectedFamily(family);
     setPhase('goal');  // Go to goal input, then filtered template selection
   }, []);
@@ -644,7 +645,7 @@ export function AutonomousView({
   // Handle goal submission from VitalMissionGoalInput (new shared component)
   // Now goes to recommendation phase for AI-powered template suggestions
   const handleGoalSubmit = useCallback(async (goal: string) => {
-    console.log('[AutonomousView] Goal submitted:', goal.substring(0, 50) + '...');
+    logger.info('[AutonomousView] Goal submitted', { goalPreview: goal.substring(0, 50) });
     setMissionGoal(goal);
     setIsAnalyzing(true);
     setPhase('recommendation');  // Go to AI recommendation phase instead of full template library
@@ -707,7 +708,7 @@ export function AutonomousView({
         }
 
         // Add to matches if score is reasonable
-        if (score >= 55) {
+      if (score >= 55) {
           matchedTemplates.push({
             templateId: template.id,
             templateName: template.name,
@@ -722,13 +723,21 @@ export function AutonomousView({
         }
       });
 
-      // Sort by score and take top 3
+      // Sort by score and take top 3, deduping by templateId to avoid duplicate keys
       matchedTemplates.sort((a, b) => b.matchScore - a.matchScore);
-      setRecommendations(matchedTemplates.slice(0, 3));
+      const uniqueByTemplate: TemplateRecommendationType[] = [];
+      const seen = new Set<string>();
+      for (const rec of matchedTemplates) {
+        if (rec.templateId && !seen.has(rec.templateId)) {
+          seen.add(rec.templateId);
+          uniqueByTemplate.push(rec);
+        }
+      }
+      setRecommendations(uniqueByTemplate.slice(0, 3));
 
-      console.log('[AutonomousView] AI recommendations:', matchedTemplates.slice(0, 3).map(r => r.templateName));
+      logger.debug('[AutonomousView] AI recommendations', { recommendations: matchedTemplates.slice(0, 3).map(r => r.templateName) });
     } catch (error) {
-      console.error('[AutonomousView] Error analyzing goal:', error);
+      logger.error('[AutonomousView] Error analyzing goal', error);
       // Fallback to showing all templates if analysis fails
       setPhase('template');
     } finally {
@@ -765,7 +774,7 @@ export function AutonomousView({
   // Handle launch from VitalMissionBriefing component
   // MissionBriefingConfig uses: inputs, autonomyBand, checkpointOverrides, maxBudget, deadline
   const handleBriefingLaunch = useCallback((config: MissionBriefingConfig) => {
-    console.log('[AutonomousView] Briefing launch with config:', config);
+    logger.info('[AutonomousView] Briefing launch', { config });
     handleLaunch({
       inputs: config.inputs,
       autonomyBand: config.autonomyBand,
@@ -791,7 +800,7 @@ export function AutonomousView({
         body: JSON.stringify({ decision, data }),
       });
     } catch (error) {
-      console.error('Failed to respond to checkpoint:', error);
+      logger.error('[AutonomousView] Failed to respond to checkpoint', error);
       // The stream will handle reconnection
     }
   }, [missionId]);
@@ -925,11 +934,11 @@ export function AutonomousView({
       })();
 
     if (!template) {
-      console.error('[AutonomousView] No templates available for recommendation');
+      logger.error('[AutonomousView] No templates available for recommendation');
       return;
     }
 
-    console.log('[AutonomousView] Selected recommended template:', template.name);
+    logger.info('[AutonomousView] Selected recommended template', { template: template.name });
     setSelectedTemplate(template);
     setShowAllTemplates(false);
     setPhase('briefing');  // Skip full library, go directly to briefing
@@ -937,13 +946,13 @@ export function AutonomousView({
 
   // Handle dismissing a recommendation (user wants something else)
   const handleRecommendationDismiss = useCallback(() => {
-    console.log('[AutonomousView] Recommendation dismissed, showing all templates');
+    logger.info('[AutonomousView] Recommendation dismissed, showing all templates');
     setShowAllTemplates(true);
   }, []);
 
   // Handle browsing the full template library
   const handleBrowseAllTemplates = useCallback(() => {
-    console.log('[AutonomousView] User wants to browse all templates');
+    logger.info('[AutonomousView] User wants to browse all templates');
     setShowAllTemplates(true);
     setPhase('template');  // Go to full template library
   }, []);
@@ -1318,10 +1327,10 @@ export function AutonomousView({
               metrics={executionMetrics}
               onApproveCheckpoint={(id, feedback) => handleCheckpointResponse(id, 'approve', { feedback })}
               onRejectCheckpoint={(id, reason) => handleCheckpointResponse(id, 'reject', { reason })}
-              onPause={() => console.log('[AutonomousView] Pause requested')}
-              onResume={() => console.log('[AutonomousView] Resume requested')}
+              onPause={() => logger.info('[AutonomousView] Pause requested')}
+              onResume={() => logger.info('[AutonomousView] Resume requested')}
               onCancel={handleAbortMission}
-              onDownloadArtifact={(id) => console.log('[AutonomousView] Download artifact:', id)}
+              onDownloadArtifact={(id) => logger.info('[AutonomousView] Download artifact', { id })}
               mode={mode}
             />
           </motion.div>
@@ -1353,28 +1362,28 @@ export function AutonomousView({
                 role: selectedExpert.domain || 'Expert',
               }] : []}
               onDownloadArtifact={(artifactId) => {
-                console.log('[AutonomousView] Download artifact:', artifactId);
+                logger.info('[AutonomousView] Download artifact', { artifactId });
                 // TODO: Implement artifact download
               }}
               onDownloadAll={() => {
-                console.log('[AutonomousView] Download all artifacts');
+                logger.info('[AutonomousView] Download all artifacts');
                 // TODO: Implement bulk download
               }}
               onShare={() => {
-                console.log('[AutonomousView] Share mission results');
+                logger.info('[AutonomousView] Share mission results');
                 // TODO: Implement share functionality
               }}
               onCopy={() => {
                 navigator.clipboard.writeText(missionResult.executiveSummary);
-                console.log('[AutonomousView] Copied to clipboard');
+                logger.info('[AutonomousView] Copied to clipboard');
               }}
               onFeedback={(rating, comment) => {
-                console.log('[AutonomousView] Feedback:', rating, comment);
+                logger.info('[AutonomousView] Feedback submitted', { rating, comment });
                 // TODO: Send feedback to backend
               }}
               onNewMission={handleNewMission}
               onViewTranscript={() => {
-                console.log('[AutonomousView] View transcript');
+                logger.info('[AutonomousView] View transcript');
                 // TODO: Implement transcript viewer
               }}
               mode={mode}

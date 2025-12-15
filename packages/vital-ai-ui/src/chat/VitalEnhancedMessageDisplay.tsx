@@ -55,8 +55,13 @@ import {
   InlineCitationQuote,
   InlineCitationSource,
 } from '@/components/ai/inline-citation';
-import type { Components } from 'react-markdown';
-import type { PluggableList } from 'unified';
+import { Streamdown } from 'streamdown';
+import type { ComponentProps } from 'react';
+
+// Type aliases for compatibility with StreamingResponse component
+// StreamingResponse accepts remark/rehype plugins and custom components
+type PluggableList = any[];
+type Components = Record<string, any>;
 
 interface Source {
   id: string;
@@ -621,7 +626,7 @@ export function EnhancedMessageDisplay({
   }, [citationNumberMap]);
 
   const citationComponents = useMemo<Partial<Components>>(() => ({
-    citation({ node }) {
+    citation({ node }: { node: any }) {
       const data = (node as any)?.data ?? {};
       const props = data.hProperties ?? data;
       const number = props.citationNumber as string | undefined;

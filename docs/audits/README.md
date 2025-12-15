@@ -1,15 +1,16 @@
 # Audit Reports Directory
 
-**Status:** ⚠️ All files should be archived to `/.claude/docs/audits/`  
-**Date:** December 14, 2025
+**Status:** ✅ All audit files archived to `/archive/audits/`  
+**Date:** December 14, 2025  
+**Archive Location:** `/archive/audits/`
 
 ---
 
-## ⚠️ Important Notice
+## ✅ Archive Complete
 
-**All audit reports in this directory are internal assessments and should be archived to `/.claude/docs/audits/`.**
+**All 17 audit reports have been archived to `/archive/audits/` organized by category.**
 
-This directory should be **empty** or contain only review/planning documents.
+This directory now contains only review and planning documents.
 
 ---
 

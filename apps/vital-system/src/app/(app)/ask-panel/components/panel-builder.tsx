@@ -9,13 +9,13 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Input } from '@/shared/components/ui/input';
-import { Textarea } from '@/shared/components/ui/textarea';
-import { cn } from '@/shared/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/lib/shared/components/ui/avatar';
+import { Badge } from '@/lib/shared/components/ui/badge';
+import { Button } from '@/lib/shared/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/lib/shared/components/ui/card';
+import { Input } from '@/lib/shared/components/ui/input';
+import { Textarea } from '@/lib/shared/components/ui/textarea';
+import { cn } from '@/lib/shared/utils';
 
 import { __usePanelStore as usePanelStore } from '../services/panel-store';
 

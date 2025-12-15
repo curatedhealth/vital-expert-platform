@@ -104,7 +104,7 @@ export function QuickSettings() {
       case 'select':
         return (
           <select
-            value={setting.value}
+            value={String(setting.value || '')}
             onChange={(e) => updateSetting(setting.id, e.target.value)}
             className="text-xs bg-muted border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50"
           >
@@ -124,12 +124,12 @@ export function QuickSettings() {
               min={setting.min}
               max={setting.max}
               step={0.1}
-              value={setting.value}
+              value={typeof setting.value === 'number' ? setting.value : 0}
               onChange={(e) => updateSetting(setting.id, parseFloat(e.target.value))}
               className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer"
             />
             <span className="text-xs text-muted-foreground w-8 text-right">
-              {setting.value}
+              {typeof setting.value === 'number' ? setting.value.toFixed(1) : String(setting.value || '')}
             </span>
           </div>
         );

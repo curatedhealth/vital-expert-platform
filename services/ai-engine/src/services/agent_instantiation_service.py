@@ -99,7 +99,7 @@ class PersonalityConfig:
     top_p: float = 0.9
     frequency_penalty: float = 0.0
     presence_penalty: float = 0.0
-    max_tokens: Optional[int] = None  # Falls back to _DEFAULT_MAX_TOKENS at runtime
+    max_tokens: Optional[int] = _DEFAULT_MAX_TOKENS  # default to L2 config
     verbosity_level: int = 50
     formality_level: int = 50
     directness_level: int = 50

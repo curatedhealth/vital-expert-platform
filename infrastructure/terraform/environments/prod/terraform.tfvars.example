@@ -1,0 +1,51 @@
+# =============================================================================
+# VITAL Platform - Production Environment Variables
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to version control (contains secrets)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# AWS Configuration
+# -----------------------------------------------------------------------------
+aws_region = "us-east-1"
+
+# -----------------------------------------------------------------------------
+# API Keys (Sensitive - MUST use AWS Secrets Manager in production)
+# -----------------------------------------------------------------------------
+# Production should ALWAYS use AWS Secrets Manager
+# Configure secrets in infrastructure/terraform/modules/secrets/main.tf
+# Then reference via: secret_key = data.aws_secretsmanager_secret_version.openai_api_key.secret_string
+
+# DO NOT put production keys in this file or environment variables
+# Use AWS Secrets Manager for all production secrets
+
+# -----------------------------------------------------------------------------
+# Supabase Configuration
+# -----------------------------------------------------------------------------
+supabase_url = "https://your-production-project.supabase.co"
+# supabase_anon_key and supabase_service_key should come from AWS Secrets Manager
+
+# -----------------------------------------------------------------------------
+# Authentication
+# -----------------------------------------------------------------------------
+# jwt_secret should come from AWS Secrets Manager
+
+# -----------------------------------------------------------------------------
+# Monitoring
+# -----------------------------------------------------------------------------
+alert_email = "prod-alerts@yourcompany.com"
+
+# -----------------------------------------------------------------------------
+# Production Security Notes
+# -----------------------------------------------------------------------------
+# ⚠️  PRODUCTION SECURITY REQUIREMENTS:
+#
+# 1. All secrets MUST be stored in AWS Secrets Manager
+# 2. Use IAM roles for service authentication (not API keys in code)
+# 3. Enable encryption at rest for all data
+# 4. Use VPC endpoints for AWS service communication
+# 5. Enable CloudTrail for audit logging
+# 6. Use separate AWS accounts for dev/staging/prod
+# 7. Rotate secrets regularly (automated via Secrets Manager)
+#
+# See: infrastructure/terraform/modules/secrets/main.tf for configuration

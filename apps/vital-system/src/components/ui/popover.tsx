@@ -62,9 +62,9 @@ export const __PopoverTrigger = ({ children, asChild = false, onClick }: Popover
   }
 
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children, {
+    return React.cloneElement(children as React.ReactElement<any>, {
       onClick: handleClick,
-    } as unknown)
+    })
   }
 
   return (

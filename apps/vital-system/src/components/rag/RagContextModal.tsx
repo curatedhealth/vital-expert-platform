@@ -8,7 +8,7 @@
 import { Settings } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Button, Label, Textarea, Checkbox , Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/shared/components/ui';
+import { Button, Label, Textarea, Checkbox , Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/lib/shared/components/ui';
 
 interface RagContextModalProps {
   isOpen: boolean;

@@ -1,0 +1,687 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Medical Affairs Roles Enrichment Template",
+  "description": "Specialized template for Medical Affairs roles with pre-populated pharma-specific options",
+  "version": "1.0.0",
+  "focus": "Medical Affairs Function",
+  "last_updated": "2025-11-22",
+
+  "instructions": {
+    "purpose": "Fill this template for each Medical Affairs role in your organization",
+    "pre_populated": "Common Medical Affairs options are pre-filled - adjust to match your organization",
+    "recommended_order": [
+      "1. Field Medical (MSL, Senior MSL, MSL Manager)",
+      "2. Medical Information (MI Specialist, MI Manager)",
+      "3. Leadership (Medical Director, VP Medical Affairs)",
+      "4. Specialists (Medical Writer, HEOR)"
+    ],
+    "time_per_role": "30-45 minutes (faster than generic template due to pre-populated options)"
+  },
+
+  "reference_data_medical_affairs": {
+    "comment": "Pre-populated reference data specific to Medical Affairs. Review and adjust for your organization.",
+
+    "therapeutic_areas": [
+      "Oncology",
+      "Immunology",
+      "Cardiovascular",
+      "Neuroscience",
+      "Rare Diseases",
+      "Metabolic Disorders",
+      "Infectious Diseases",
+      "Respiratory",
+      "Dermatology",
+      "Gastroenterology"
+    ],
+
+    "clinical_competencies": [
+      "Clinical Trial Design & Methodology",
+      "Data Interpretation (Efficacy & Safety)",
+      "Pharmacovigilance & AE Reporting",
+      "Biostatistics Fundamentals",
+      "Evidence-Based Medicine",
+      "Medical Writing",
+      "Scientific Communication",
+      "KOL Relationship Management",
+      "Literature Review & Analysis",
+      "Clinical Pharmacology",
+      "Regulatory Science",
+      "Publication Ethics",
+      "Health Economics Principles",
+      "Real-World Evidence",
+      "Patient-Reported Outcomes"
+    ],
+
+    "regulatory_frameworks": [
+      "FDA 21 CFR Part 312 (Clinical Trials)",
+      "ICH GCP E6",
+      "PhRMA Code on HCP Interactions",
+      "EFPIA Code (EU)",
+      "FDA Promotional Guidelines",
+      "Sunshine Act (Open Payments)",
+      "HIPAA",
+      "GVP Module VI (Pharmacovigilance)",
+      "FDA Guidance on Medical vs. Promotional",
+      "SOX (if public company)"
+    ],
+
+    "medical_affairs_systems": [
+      "Veeva CRM",
+      "Medical Insights Platform",
+      "Safety Database (Argus, Oracle AE)",
+      "Veeva Vault (Document Management)",
+      "Congress Planning Tool",
+      "PubMed / Literature Database",
+      "Slide Library / Asset Repository",
+      "Medical Information Response System",
+      "Advisory Board Management Platform",
+      "Publication Planning Tool"
+    ],
+
+    "stakeholder_types": [
+      "Key Opinion Leaders (KOLs)",
+      "Healthcare Providers (HCPs)",
+      "Academic Medical Centers",
+      "Payers / Health Economists",
+      "Patient Advocacy Groups",
+      "IRB / Ethics Committees",
+      "Regulatory Authorities",
+      "Clinical Development (Internal)",
+      "Commercial / Marketing (Firewall)",
+      "Regulatory Affairs (Internal)"
+    ]
+  },
+
+  "medical_affairs_roles": [
+    {
+      "role_template_name": "Medical Science Liaison (MSL)",
+      "comment": "COMPLETE EXAMPLE - Use as reference for other roles",
+
+      "basic_info": {
+        "unique_id": "ROLE-MA-MSL-001",
+        "role_name": "Medical Science Liaison",
+        "role_title": "Medical Science Liaison (MSL)",
+        "seniority_level": "Senior",
+        "function_area": "Medical Affairs",
+        "department_name": "Field Medical",
+        "is_active": true,
+        "description": "Serves as a scientific expert and trusted advisor to key opinion leaders, providing balanced, evidence-based information on therapeutic areas and clinical data."
+      },
+
+      "hierarchy": {
+        "reports_to_unique_id": "ROLE-MA-MSLMGR-001",
+        "reports_to_role_name": "MSL Manager",
+        "typical_direct_reports": 0,
+        "typical_dotted_line_reports": 0
+      },
+
+      "experience": {
+        "years_experience_min": 3,
+        "years_experience_max": 8,
+        "required_education": "PharmD, PhD, or MD required",
+        "required_skills": [
+          "Scientific communication",
+          "Clinical data interpretation",
+          "KOL relationship management",
+          "Presentation skills",
+          "Medical writing",
+          "Literature review and synthesis"
+        ],
+        "required_certifications": [
+          "Advanced degree (PharmD/PhD/MD)",
+          "State license (if applicable)",
+          "MAPS MSL Certification (preferred)"
+        ]
+      },
+
+      "pharmaceutical_context": {
+        "role_type": "Field-based Medical",
+        "gxp_critical": true,
+        "gxp_types": ["GCP", "GVP"],
+        "patient_facing": false,
+        "hcp_facing": true,
+        "safety_critical": true,
+        "clinical_trial_phases": ["Phase 2", "Phase 3", "Phase 4"],
+        "drug_lifecycle_stages": ["Clinical Development", "Commercialization", "Post-Marketing"],
+        "therapeutic_areas": ["Oncology", "Immunology"],
+        "regulatory_frameworks_apply": [
+          "ICH GCP E6",
+          "PhRMA Code on HCP Interactions",
+          "Sunshine Act",
+          "GVP Module VI"
+        ]
+      },
+
+      "work_environment": {
+        "travel_requirement_pct": 60,
+        "remote_eligible": true,
+        "oncall_required": false,
+        "typical_work_schedule": "Flexible (HCP availability)",
+        "work_location_type": "Field-based (home office + travel)"
+      },
+
+      "kpis": [
+        {
+          "kpi_name": "Tier 1 KOL interactions",
+          "target_value": "100-120 per year",
+          "measurement_frequency": "Monthly",
+          "data_source": "Veeva CRM"
+        },
+        {
+          "kpi_name": "Field insights submitted",
+          "target_value": "24 per year (2/month)",
+          "measurement_frequency": "Monthly",
+          "data_source": "Medical Insights Platform"
+        },
+        {
+          "kpi_name": "Scientific presentation quality score",
+          "target_value": "4.5/5.0",
+          "measurement_frequency": "Quarterly",
+          "data_source": "Peer evaluations"
+        },
+        {
+          "kpi_name": "Congress attendance",
+          "target_value": "4-6 major congresses/year",
+          "measurement_frequency": "Annually",
+          "data_source": "Travel records"
+        }
+      ],
+
+      "career_progression": {
+        "typical_time_in_role_months": 24,
+        "advancement_potential": "High",
+        "next_roles": ["Senior MSL", "MSL Manager", "Medical Director"],
+        "prior_roles": ["Clinical Research Associate", "Pharmacy Resident", "Clinical Fellow"]
+      },
+
+      "top_responsibilities": [
+        "Build and maintain relationships with key opinion leaders",
+        "Provide scientific and clinical information in response to unsolicited requests",
+        "Identify and report insights from the field",
+        "Support investigator-initiated trials",
+        "Deliver scientific presentations at medical congresses",
+        "Report adverse events within 24 hours"
+      ],
+
+      "systems_used": [
+        "Veeva CRM (Daily, Advanced proficiency)",
+        "Medical Insights Platform (Weekly, Intermediate)",
+        "Safety Database (As needed, Basic)",
+        "Slide Library (Daily, Intermediate)"
+      ],
+
+      "gxp_training_required": [
+        "GCP Fundamentals (Annual)",
+        "Pharmacovigilance & AE Reporting (Annual)",
+        "PhRMA Code Training (Annual)",
+        "Sunshine Act Compliance (Annual)"
+      ]
+    },
+
+    {
+      "role_template_name": "Senior Medical Science Liaison",
+      "comment": "Fill in below - similar to MSL but with mentoring and leadership responsibilities",
+
+      "basic_info": {
+        "unique_id": "ROLE-MA-SMSL-001",
+        "role_name": "Senior Medical Science Liaison",
+        "role_title": "Senior Medical Science Liaison (Senior MSL)",
+        "seniority_level": "Senior",
+        "function_area": "Medical Affairs",
+        "department_name": "Field Medical",
+        "is_active": true,
+        "description": "Expert Medical Science Liaison with advanced therapeutic area knowledge and peer mentoring responsibilities"
+      },
+
+      "hierarchy": {
+        "reports_to_unique_id": "ROLE-MA-MSLMGR-001",
+        "reports_to_role_name": "MSL Manager",
+        "typical_direct_reports": 0,
+        "typical_dotted_line_reports": "1-2 (informal mentoring)"
+      },
+
+      "experience": {
+        "years_experience_min": 5,
+        "years_experience_max": 12,
+        "required_education": "PharmD, PhD, or MD required",
+        "required_skills": [
+          "Advanced scientific communication",
+          "Clinical data interpretation",
+          "KOL relationship management",
+          "Presentation skills",
+          "Medical writing",
+          "Mentoring and coaching",
+          "Strategic thinking"
+        ],
+        "required_certifications": [
+          "Advanced degree (PharmD/PhD/MD)",
+          "MAPS MSL Certification (preferred)"
+        ]
+      },
+
+      "pharmaceutical_context": {
+        "role_type": "Field-based Medical",
+        "gxp_critical": true,
+        "gxp_types": ["GCP", "GVP"],
+        "patient_facing": false,
+        "hcp_facing": true,
+        "safety_critical": true,
+        "clinical_trial_phases": ["Phase 2", "Phase 3", "Phase 4"],
+        "drug_lifecycle_stages": ["Clinical Development", "Commercialization", "Post-Marketing"],
+        "therapeutic_areas": ["Oncology"],
+        "regulatory_frameworks_apply": [
+          "ICH GCP E6",
+          "PhRMA Code on HCP Interactions",
+          "Sunshine Act",
+          "GVP Module VI"
+        ]
+      },
+
+      "work_environment": {
+        "travel_requirement_pct": 65,
+        "remote_eligible": true,
+        "oncall_required": false,
+        "typical_work_schedule": "Flexible",
+        "work_location_type": "Field-based (home office + travel)"
+      },
+
+      "kpis": [
+        {
+          "kpi_name": "Tier 1 KOL interactions",
+          "target_value": "120-140 per year",
+          "measurement_frequency": "Monthly",
+          "data_source": "Veeva CRM"
+        },
+        {
+          "kpi_name": "High-value insights submitted",
+          "target_value": "30 per year",
+          "measurement_frequency": "Monthly",
+          "data_source": "Medical Insights Platform"
+        },
+        {
+          "kpi_name": "Mentoring effectiveness",
+          "target_value": "Mentees meet performance targets",
+          "measurement_frequency": "Quarterly",
+          "data_source": "Manager assessment"
+        }
+      ],
+
+      "career_progression": {
+        "typical_time_in_role_months": 36,
+        "advancement_potential": "High",
+        "next_roles": ["MSL Manager", "Medical Director", "Global Medical Lead"],
+        "prior_roles": ["MSL", "Clinical Research"]
+      }
+    },
+
+    {
+      "role_template_name": "MSL Manager",
+      "comment": "First-line manager for Field Medical team",
+
+      "basic_info": {
+        "unique_id": "ROLE-MA-MSLMGR-001",
+        "role_name": "MSL Manager",
+        "role_title": "MSL Manager",
+        "seniority_level": "Senior",
+        "function_area": "Medical Affairs",
+        "department_name": "Field Medical",
+        "is_active": true,
+        "description": "Manages a team of MSLs, responsible for territory strategy, team development, and KOL engagement planning"
+      },
+
+      "hierarchy": {
+        "reports_to_unique_id": "ROLE-MA-RMD-001",
+        "reports_to_role_name": "Regional Medical Director",
+        "typical_direct_reports": 5,
+        "typical_dotted_line_reports": 0
+      },
+
+      "experience": {
+        "years_experience_min": 7,
+        "years_experience_max": 12,
+        "required_education": "PharmD, PhD, or MD required",
+        "required_skills": [
+          "People management",
+          "Performance management",
+          "Strategic planning",
+          "Budget management",
+          "Scientific communication",
+          "Coaching and development"
+        ],
+        "required_certifications": [
+          "Advanced degree (PharmD/PhD/MD)",
+          "Management training"
+        ]
+      },
+
+      "pharmaceutical_context": {
+        "role_type": "Field-based Medical (Management)",
+        "gxp_critical": true,
+        "gxp_types": ["GCP", "GVP"],
+        "patient_facing": false,
+        "hcp_facing": true,
+        "safety_critical": true,
+        "clinical_trial_phases": ["Phase 2", "Phase 3", "Phase 4"],
+        "drug_lifecycle_stages": ["Clinical Development", "Commercialization", "Post-Marketing"],
+        "therapeutic_areas": ["Oncology", "Immunology"],
+        "regulatory_frameworks_apply": [
+          "ICH GCP E6",
+          "PhRMA Code on HCP Interactions",
+          "Sunshine Act"
+        ]
+      },
+
+      "work_environment": {
+        "travel_requirement_pct": 40,
+        "remote_eligible": true,
+        "oncall_required": false,
+        "typical_work_schedule": "Standard + flexibility for team needs",
+        "work_location_type": "Remote (home office) with field visits"
+      },
+
+      "kpis": [
+        {
+          "kpi_name": "Team performance (interactions target)",
+          "target_value": "95% of team meets targets",
+          "measurement_frequency": "Monthly",
+          "data_source": "Veeva CRM"
+        },
+        {
+          "kpi_name": "Budget utilization",
+          "target_value": "95-100%",
+          "measurement_frequency": "Quarterly",
+          "data_source": "Finance system"
+        },
+        {
+          "kpi_name": "Team engagement score",
+          "target_value": ">80%",
+          "measurement_frequency": "Annually",
+          "data_source": "Employee survey"
+        }
+      ],
+
+      "career_progression": {
+        "typical_time_in_role_months": 36,
+        "advancement_potential": "High",
+        "next_roles": ["Regional Medical Director", "Medical Director"],
+        "prior_roles": ["Senior MSL", "MSL"]
+      }
+    },
+
+    {
+      "role_template_name": "Medical Information Specialist",
+      "comment": "Responds to unsolicited medical inquiries from HCPs",
+
+      "basic_info": {
+        "unique_id": "ROLE-MA-MIS-001",
+        "role_name": "Medical Information Specialist",
+        "role_title": "Medical Information Specialist",
+        "seniority_level": "Mid",
+        "function_area": "Medical Affairs",
+        "department_name": "Medical Information",
+        "is_active": true,
+        "description": "Provides accurate, balanced scientific and medical information in response to unsolicited inquiries from healthcare professionals"
+      },
+
+      "hierarchy": {
+        "reports_to_unique_id": "ROLE-MA-MIMGR-001",
+        "reports_to_role_name": "Medical Information Manager",
+        "typical_direct_reports": 0,
+        "typical_dotted_line_reports": 0
+      },
+
+      "experience": {
+        "years_experience_min": 2,
+        "years_experience_max": 5,
+        "required_education": "PharmD or PhD preferred",
+        "required_skills": [
+          "Medical writing",
+          "Literature review",
+          "Scientific communication",
+          "Pharmacovigilance",
+          "Time management",
+          "Attention to detail"
+        ],
+        "required_certifications": [
+          "PharmD or related degree"
+        ]
+      },
+
+      "pharmaceutical_context": {
+        "role_type": "Office-based Medical",
+        "gxp_critical": true,
+        "gxp_types": ["GVP"],
+        "patient_facing": false,
+        "hcp_facing": true,
+        "safety_critical": true,
+        "clinical_trial_phases": ["All phases"],
+        "drug_lifecycle_stages": ["All stages"],
+        "therapeutic_areas": ["Varies by inquiry"],
+        "regulatory_frameworks_apply": [
+          "FDA Promotional Guidelines",
+          "GVP Module VI",
+          "HIPAA"
+        ]
+      },
+
+      "work_environment": {
+        "travel_requirement_pct": 5,
+        "remote_eligible": true,
+        "oncall_required": false,
+        "typical_work_schedule": "Standard business hours + inbox monitoring",
+        "work_location_type": "Office or remote"
+      },
+
+      "kpis": [
+        {
+          "kpi_name": "Response time (standard inquiries)",
+          "target_value": "24-48 hours",
+          "measurement_frequency": "Daily",
+          "data_source": "MI tracking system"
+        },
+        {
+          "kpi_name": "Response quality score",
+          "target_value": "4.5/5.0",
+          "measurement_frequency": "Monthly",
+          "data_source": "Peer review"
+        },
+        {
+          "kpi_name": "Inquiry volume handled",
+          "target_value": "200-300 per year",
+          "measurement_frequency": "Monthly",
+          "data_source": "MI tracking system"
+        },
+        {
+          "kpi_name": "Accuracy rate",
+          "target_value": ">98%",
+          "measurement_frequency": "Quarterly",
+          "data_source": "Quality review"
+        }
+      ],
+
+      "career_progression": {
+        "typical_time_in_role_months": 24,
+        "advancement_potential": "Medium-High",
+        "next_roles": ["Senior MI Specialist", "MI Manager", "Medical Writer"],
+        "prior_roles": ["Pharmacy Resident", "Clinical Pharmacist"]
+      }
+    },
+
+    {
+      "role_template_name": "Medical Director (Therapeutic Area)",
+      "comment": "Leadership role for therapeutic area medical strategy",
+
+      "basic_info": {
+        "unique_id": "ROLE-MA-MD-001",
+        "role_name": "Medical Director",
+        "role_title": "Medical Director, [Therapeutic Area]",
+        "seniority_level": "Executive",
+        "function_area": "Medical Affairs",
+        "department_name": "Medical Affairs Leadership",
+        "is_active": true,
+        "description": "Provides medical leadership and strategic direction for therapeutic area, including medical strategy, publication planning, and cross-functional collaboration"
+      },
+
+      "hierarchy": {
+        "reports_to_unique_id": "ROLE-MA-VP-001",
+        "reports_to_role_name": "VP Medical Affairs",
+        "typical_direct_reports": 3,
+        "typical_dotted_line_reports": 2
+      },
+
+      "experience": {
+        "years_experience_min": 10,
+        "years_experience_max": 20,
+        "required_education": "MD or PhD required",
+        "required_skills": [
+          "Strategic planning",
+          "Medical strategy development",
+          "Publication planning",
+          "Cross-functional leadership",
+          "Budget management",
+          "Regulatory interactions"
+        ],
+        "required_certifications": [
+          "MD or PhD",
+          "Board certification (if MD)"
+        ]
+      },
+
+      "pharmaceutical_context": {
+        "role_type": "Corporate Medical",
+        "gxp_critical": true,
+        "gxp_types": ["GCP", "GVP"],
+        "patient_facing": false,
+        "hcp_facing": true,
+        "safety_critical": true,
+        "clinical_trial_phases": ["All phases"],
+        "drug_lifecycle_stages": ["All stages"],
+        "therapeutic_areas": ["Oncology"],
+        "regulatory_frameworks_apply": [
+          "All FDA regulations",
+          "ICH guidelines",
+          "PhRMA Code"
+        ]
+      },
+
+      "work_environment": {
+        "travel_requirement_pct": 30,
+        "remote_eligible": true,
+        "oncall_required": false,
+        "typical_work_schedule": "Standard + flexibility for global collaboration",
+        "work_location_type": "Office or remote"
+      },
+
+      "kpis": [
+        {
+          "kpi_name": "Medical strategy execution",
+          "target_value": "90% milestones met",
+          "measurement_frequency": "Quarterly",
+          "data_source": "Strategic plan tracker"
+        },
+        {
+          "kpi_name": "Publication plan delivery",
+          "target_value": "8-12 publications/year",
+          "measurement_frequency": "Quarterly",
+          "data_source": "Publication tracker"
+        },
+        {
+          "kpi_name": "Budget management",
+          "target_value": "Variance <5%",
+          "measurement_frequency": "Quarterly",
+          "data_source": "Finance system"
+        }
+      ],
+
+      "career_progression": {
+        "typical_time_in_role_months": 48,
+        "advancement_potential": "High",
+        "next_roles": ["Senior Medical Director", "VP Medical Affairs", "Chief Medical Officer"],
+        "prior_roles": ["Associate Medical Director", "MSL Manager", "Clinical Development"]
+      }
+    },
+
+    {
+      "role_template_name": "YOUR ROLE - Template",
+      "comment": "Copy one of the above templates and customize for your specific role",
+
+      "basic_info": {
+        "unique_id": "",
+        "role_name": "",
+        "role_title": "",
+        "seniority_level": "",
+        "function_area": "Medical Affairs",
+        "department_name": "",
+        "is_active": true,
+        "description": ""
+      },
+
+      "hierarchy": {
+        "reports_to_unique_id": "",
+        "reports_to_role_name": "",
+        "typical_direct_reports": 0,
+        "typical_dotted_line_reports": 0
+      },
+
+      "experience": {
+        "years_experience_min": null,
+        "years_experience_max": null,
+        "required_education": "",
+        "required_skills": [],
+        "required_certifications": []
+      },
+
+      "pharmaceutical_context": {
+        "role_type": "",
+        "gxp_critical": false,
+        "gxp_types": [],
+        "patient_facing": false,
+        "hcp_facing": false,
+        "safety_critical": false,
+        "clinical_trial_phases": [],
+        "drug_lifecycle_stages": [],
+        "therapeutic_areas": [],
+        "regulatory_frameworks_apply": []
+      },
+
+      "work_environment": {
+        "travel_requirement_pct": 0,
+        "remote_eligible": false,
+        "oncall_required": false,
+        "typical_work_schedule": "",
+        "work_location_type": ""
+      },
+
+      "kpis": [],
+
+      "career_progression": {
+        "typical_time_in_role_months": null,
+        "advancement_potential": "",
+        "next_roles": [],
+        "prior_roles": []
+      }
+    }
+  ],
+
+  "field_definitions": {
+    "seniority_levels": ["Executive", "Senior", "Mid", "Junior", "Entry"],
+    "role_types": [
+      "Field-based Medical",
+      "Office-based Medical",
+      "Corporate Medical",
+      "Remote Medical",
+      "Hybrid"
+    ],
+    "gxp_types": ["GCP", "GLP", "GMP", "GVP", "GDP"],
+    "clinical_trial_phases": ["Phase 1", "Phase 2", "Phase 3", "Phase 4"],
+    "drug_lifecycle_stages": [
+      "Discovery",
+      "Preclinical",
+      "Clinical Development",
+      "Regulatory Submission",
+      "Commercialization",
+      "Post-Marketing",
+      "Lifecycle Management"
+    ]
+  }
+}

@@ -3,7 +3,7 @@
  * Provides TypeScript-friendly access to PRISM prompt library
  */
 
-import { PRISMPromptService, PRISMSuite, KnowledgeDomain, type PRISMPrompt } from '@/shared/services/prism/prism-prompt-service';
+import { PRISMPromptService, PRISMSuite, KnowledgeDomain, type PRISMPrompt } from '@/lib/shared/services/prism/prism-prompt-service';
 
 export interface AdvisoryBoardPromptConfig {
   mode: 'PARALLEL' | 'SEQUENTIAL' | 'SCRIPTED' | 'DEBATE' | 'FUNNEL' | 'SCENARIO';

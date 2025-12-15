@@ -158,7 +158,9 @@ function ODIGauge({ score, importance, satisfaction, gap, tier }: ODIGaugeProps)
           style={{ backgroundColor: config.bgColor, border: `3px solid ${config.color}` }}
         >
           <div className="text-center">
-            <TierIcon className="h-6 w-6 mx-auto mb-1" style={{ color: config.color }} />
+            <span style={{ color: config.color }}>
+              <TierIcon className="h-6 w-6 mx-auto mb-1" />
+            </span>
             <span className="text-3xl font-bold" style={{ color: config.color }}>
               {score.toFixed(1)}
             </span>

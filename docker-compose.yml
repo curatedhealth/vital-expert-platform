@@ -50,7 +50,7 @@ services:
       - vital-backend-network
     restart: unless-stopped
     volumes:
-      - ./logs/python:/app/logs
+      - ./infrastructure/logs/python:/app/logs
       - ./services/ai-engine/workflows:/app/workflows:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

@@ -8,20 +8,9 @@
 import { X, Plus, Database, Brain } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox, Badge , Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/shared/components/ui';
+import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox, Badge , Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/lib/shared/components/ui';
 
-interface RagKnowledgeBase {
-  id: string;
-  name: string;
-  display_name: string;
-  description: string;
-  purpose_description: string;
-  rag_type: 'global' | 'agent_specific';
-  knowledge_domains: string[];
-  document_count: number;
-  total_chunks?: number;
-  quality_score?: number;
-}
+import type { RagKnowledgeBase } from './types';
 
 interface CreateRagModalProps {
   isOpen: boolean;
@@ -276,12 +265,12 @@ export const CreateRagModal: React.FC<CreateRagModalProps> = ({
           <div className="space-y-3">
             <Label>Knowledge Domains *</Label>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-40 overflow-y-auto p-2 border rounded">
-              {HEALTHCARE_DOMAINS.map((domain: any) => (
+              {(KNOWLEDGE_DOMAINS || []).map((domain: any) => (
                 <div key={domain} className="flex items-center space-x-2">
                   <Checkbox
                     id={domain}
                     checked={formData.knowledge_domains.includes(domain)}
-                    onCheckedChange={() => handleDomainToggle(domain)}
+                    onCheckedChange={() => handleToggleDomain(domain)}
                   />
                   <Label htmlFor={domain} className="text-sm">
                     {domain.replace('_', ' ')}

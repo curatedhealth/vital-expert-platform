@@ -6,6 +6,7 @@
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { logger } from '@vital/utils';
 import type {
   AskExpertSession,
   CreateSessionParams,
@@ -234,7 +235,7 @@ export class SessionManager {
       .select();
 
     if (error) {
-      console.error('Failed to expire idle sessions:', error);
+      logger.error('Failed to expire idle sessions', { error });
       return 0;
     }
 

@@ -26,6 +26,7 @@ const useReasoningContext = () => {
 export type ReasoningProps = ComponentProps<typeof Collapsible> & {
   isStreaming?: boolean;
   duration?: number;
+  className?: string;
 };
 
 export const Reasoning = ({
@@ -123,15 +124,16 @@ export const Reasoning = ({
 
   return (
     <ReasoningContext.Provider value={{ duration: displayDuration }}>
-      <Collapsible
-        open={open}
-        onOpenChange={handleOpenChange}
-        defaultOpen={defaultOpen}
-        className={cn('w-full', className)}
-        {...props}
-      >
-        {children}
-      </Collapsible>
+      <div className={cn('w-full', className)}>
+        <Collapsible
+          open={open}
+          onOpenChange={handleOpenChange}
+          defaultOpen={defaultOpen}
+          {...props}
+        >
+          {children}
+        </Collapsible>
+      </div>
     </ReasoningContext.Provider>
   );
 };

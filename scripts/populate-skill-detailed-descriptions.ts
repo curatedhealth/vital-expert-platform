@@ -126,6 +126,53 @@ function readSkillMd(basePath: string, folderName: string): string | null {
 }
 
 /**
+ * Parse YAML frontmatter from SKILL.md
+ */
+function parseSkillMdWithMeta(basePath: string, folderName: string): { content: string; name: string; description: string } | null {
+  const skillMdPath = path.join(basePath, folderName, 'SKILL.md');
+
+  if (!fs.existsSync(skillMdPath)) {
+    return null;
+  }
+
+  const rawContent = fs.readFileSync(skillMdPath, 'utf-8');
+
+  // Parse YAML frontmatter
+  const frontmatterMatch = rawContent.match(/^---\s*\n([\s\S]*?)\n---\s*\n/);
+  let name = '';
+  let description = '';
+  let content = rawContent;
+
+  if (frontmatterMatch) {
+    const frontmatter = frontmatterMatch[1];
+    const nameMatch = frontmatter.match(/^name:\s*(.+)$/m);
+    const descMatch = frontmatter.match(/^description:\s*(.+)$/m);
+
+    if (nameMatch) name = nameMatch[1].trim();
+    if (descMatch) description = descMatch[1].trim();
+
+    content = rawContent.replace(/^---[\s\S]*?---\s*\n/, '').trim();
+  }
+
+  return { content, name, description };
+}
+
+/**
+ * Get category from folder path
+ */
+function getCategoryFromPath(folderPath: string): string {
+  if (folderPath.startsWith('document-skills')) return 'Document Processing';
+  if (['algorithmic-art', 'brand-guidelines', 'canvas-design', 'theme-factory', 'slack-gif-creator'].some(p => folderPath.includes(p))) {
+    return 'Creative & Design';
+  }
+  if (['frontend-design', 'mcp-builder', 'skill-creator', 'web-artifacts-builder', 'webapp-testing'].some(p => folderPath.includes(p))) {
+    return 'Development & Code';
+  }
+  if (folderPath.includes('internal-comms')) return 'Communication';
+  return 'Utility';
+}
+
+/**
  * Main function to populate skill descriptions
  */
 async function populateSkillDescriptions() {
@@ -141,8 +188,26 @@ async function populateSkillDescriptions() {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   let updatedCount = 0;
+  let createdCount = 0;
   let skippedCount = 0;
   let errorCount = 0;
+
+  // First, get all existing skills
+  console.log('📥 Fetching existing skills from database...\n');
+  const { data: existingSkills, error: fetchError } = await supabase
+    .from('skills')
+    .select('id, slug, name');
+
+  if (fetchError) {
+    console.error('❌ Failed to fetch existing skills:', fetchError.message);
+    process.exit(1);
+  }
+
+  // Create lookup maps
+  const skillsBySlug = new Map(existingSkills?.map(s => [s.slug, s]) || []);
+  const skillsByName = new Map(existingSkills?.map(s => [s.name.toLowerCase(), s]) || []);
+
+  console.log(`📊 Found ${existingSkills?.length || 0} existing skills\n`);
 
   // Process skills-main mappings
   console.log('📁 Processing skills-main directory...\n');
@@ -150,27 +215,105 @@ async function populateSkillDescriptions() {
   for (const mapping of skillMappings) {
     if (!mapping.folderName) continue;
 
-    const content = readSkillMd(SKILLS_MAIN_PATH, mapping.folderName);
+    const skillData = parseSkillMdWithMeta(SKILLS_MAIN_PATH, mapping.folderName);
 
-    if (content) {
+    if (!skillData) {
+      console.log(`  ⏭️  ${mapping.slug}: No SKILL.md found in ${mapping.folderName}`);
+      skippedCount++;
+      continue;
+    }
+
+    // Try to find existing skill by slug, alternative slugs, or name
+    let matchedSkill = skillsBySlug.get(mapping.slug);
+    let matchedSlug = mapping.slug;
+
+    // Try alternative slug patterns
+    if (!matchedSkill) {
+      const alternativeSlugs = [
+        skillData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        mapping.folderName.split('/').pop() || '',
+        mapping.folderName.replace('/', '-'),
+      ];
+
+      for (const altSlug of alternativeSlugs) {
+        if (skillsBySlug.has(altSlug)) {
+          matchedSkill = skillsBySlug.get(altSlug);
+          matchedSlug = altSlug;
+          break;
+        }
+      }
+    }
+
+    // Try by name
+    if (!matchedSkill && skillData.name) {
+      matchedSkill = skillsByName.get(skillData.name.toLowerCase());
+      if (matchedSkill) matchedSlug = matchedSkill.slug;
+    }
+
+    if (matchedSkill) {
+      // Update existing skill
       const { error } = await supabase
         .from('skills')
         .update({
-          detailed_description: content,
+          detailed_description: skillData.content,
           github_url: `https://github.com/anthropics/skills/tree/main/${mapping.folderName}`,
         })
-        .eq('slug', mapping.slug);
+        .eq('id', matchedSkill.id);
 
       if (error) {
-        console.log(`  ❌ ${mapping.slug}: ${error.message}`);
+        console.log(`  ❌ ${matchedSlug}: ${error.message}`);
         errorCount++;
       } else {
-        console.log(`  ✅ ${mapping.slug}: Updated with ${content.length} chars`);
+        console.log(`  ✅ ${matchedSlug}: Updated with ${skillData.content.length} chars`);
         updatedCount++;
       }
     } else {
-      console.log(`  ⏭️  ${mapping.slug}: No SKILL.md found in ${mapping.folderName}`);
-      skippedCount++;
+      // Create new skill
+      const newSlug = skillData.name
+        ? skillData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+        : mapping.slug;
+
+      const { error } = await supabase
+        .from('skills')
+        .insert({
+          name: skillData.name || mapping.folderName.split('/').pop() || mapping.slug,
+          slug: newSlug,
+          description: skillData.description || `Skill for ${mapping.folderName}`,
+          detailed_description: skillData.content,
+          github_url: `https://github.com/anthropics/skills/tree/main/${mapping.folderName}`,
+          category: getCategoryFromPath(mapping.folderName),
+          implementation_type: 'tool',
+          complexity_score: 5,
+          is_active: true,
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          console.log(`  ⚠️  ${newSlug}: Slug conflict, trying update...`);
+          // Try update instead
+          const { error: updateError } = await supabase
+            .from('skills')
+            .update({
+              detailed_description: skillData.content,
+              github_url: `https://github.com/anthropics/skills/tree/main/${mapping.folderName}`,
+            })
+            .eq('slug', newSlug);
+
+          if (updateError) {
+            console.log(`  ❌ ${newSlug}: ${updateError.message}`);
+            errorCount++;
+          } else {
+            console.log(`  ✅ ${newSlug}: Updated existing`);
+            updatedCount++;
+          }
+        } else {
+          console.log(`  ❌ ${newSlug}: ${error.message}`);
+          errorCount++;
+        }
+      } else {
+        console.log(`  🆕 ${newSlug}: Created new skill`);
+        createdCount++;
+      }
     }
   }
 
@@ -235,7 +378,8 @@ async function populateSkillDescriptions() {
   // Summary
   console.log('\n' + '='.repeat(50));
   console.log('📊 Summary:');
-  console.log(`   ✅ Updated/Created: ${updatedCount}`);
+  console.log(`   ✅ Updated: ${updatedCount}`);
+  console.log(`   🆕 Created: ${createdCount}`);
   console.log(`   ⏭️  Skipped: ${skippedCount}`);
   console.log(`   ❌ Errors: ${errorCount}`);
   console.log('='.repeat(50));

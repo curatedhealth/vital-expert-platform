@@ -9,7 +9,7 @@
  */
 
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import {
   ArrowLeft,
   Brain,
@@ -51,11 +51,24 @@ import {
   AgentComparisonProvider,
   useAgentComparison,
 } from '@/features/agents/components/agent-comparison-sidebar';
+import { AgentNetworkGraph } from '@/components/agents/AgentNetworkGraph';
 
 // Hooks
 import { useAgentDetail } from '@/features/agents/hooks';
 import { agentLevelConfig } from '@/features/agents/hooks/useAgentHierarchy';
 import { useAgentsStore } from '@/lib/stores/agents-store';
+
+// Helper to convert tier number to L1-L5 level format for Cytoscape
+const tierToLevel = (tier: number | undefined): 'L1' | 'L2' | 'L3' | 'L4' | 'L5' => {
+  switch (tier) {
+    case 1: return 'L1';
+    case 2: return 'L2';
+    case 3: return 'L3';
+    case 4: return 'L4';
+    case 5: return 'L5';
+    default: return 'L2'; // Default to Expert level
+  }
+};
 
 /**
  * Main content component (inside comparison provider)
@@ -69,6 +82,26 @@ function AgentDetailContent() {
   const { agent, relatedAgents, loading, error } = useAgentDetail(slug);
   const { agents } = useAgentsStore();
   const { addToComparison, comparisonAgents } = useAgentComparison();
+
+  // Hierarchy view mode: 'tree' (React Flow) or 'network' (Cytoscape)
+  const [hierarchyViewMode, setHierarchyViewMode] = useState<'tree' | 'network'>('network');
+
+  // Transform agents for Cytoscape network graph
+  const networkAgents = useMemo(() => {
+    return agents.map((a: any) => ({
+      id: a.id,
+      name: a.display_name || a.name || 'Unknown Agent',
+      slug: a.slug || a.id,
+      level: tierToLevel(a.tier),
+      tier: a.tier,
+      function_name: a.business_function || a.function_name,
+      department_name: a.department || a.department_name,
+      parent_agent_id: a.parent_agent_id || null,
+      can_delegate_to: a.can_delegate_to || [],
+      can_escalate_to: a.can_escalate_to || [],
+      status: a.status || 'active',
+    }));
+  }, [agents]);
 
   // Handle adding to comparison
   const handleAddToCompare = useCallback(() => {
@@ -452,20 +485,54 @@ function AgentDetailContent() {
           <TabsContent value="hierarchy" className="space-y-6">
             <Card className="border-stone-200">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-stone-900">
-                  <GitBranch className="w-5 h-5 text-purple-600" />
-                  Agent Hierarchy
-                </CardTitle>
-                <CardDescription>
-                  Visual representation of agent relationships and delegation chains
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-stone-900">
+                      <GitBranch className="w-5 h-5 text-purple-600" />
+                      Agent Hierarchy
+                    </CardTitle>
+                    <CardDescription>
+                      Visual representation of agent relationships and delegation chains
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={hierarchyViewMode === 'tree' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setHierarchyViewMode('tree')}
+                      className={hierarchyViewMode === 'tree' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                    >
+                      <GitBranch className="w-4 h-4 mr-1" />
+                      Tree View
+                    </Button>
+                    <Button
+                      variant={hierarchyViewMode === 'network' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setHierarchyViewMode('network')}
+                      className={hierarchyViewMode === 'network' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                    >
+                      <Network className="w-4 h-4 mr-1" />
+                      Network View
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <AgentHierarchyView
-                  agent={agent}
-                  allAgents={agents}
-                  onAgentClick={(agentId) => router.push(`/agents/${agentId}`)}
-                />
+                {hierarchyViewMode === 'tree' ? (
+                  <AgentHierarchyView
+                    agent={agent}
+                    allAgents={agents}
+                    onAgentClick={(agentId) => router.push(`/agents/${agentId}`)}
+                  />
+                ) : (
+                  <AgentNetworkGraph
+                    agents={networkAgents}
+                    onNodeClick={(clickedAgent) => router.push(`/agents/${clickedAgent.slug}`)}
+                    layout="hierarchical"
+                    height={600}
+                    showLegend={true}
+                  />
+                )}
               </CardContent>
             </Card>
           </TabsContent>

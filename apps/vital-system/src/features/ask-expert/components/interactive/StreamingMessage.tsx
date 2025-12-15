@@ -40,6 +40,7 @@ import type { StreamState } from '../../hooks/streamReducer';
 import type { InteractiveMode } from '../../views/InteractiveView';
 import { AgentSelectionCard } from './AgentSelectionCard';
 import { VitalThinking } from './VitalThinking';
+import { VitalCitation } from '@vital/ai-ui/reasoning';
 import { ToolCallList, ToolCall } from './ToolCallList';
 import { VitalLevelBadge } from './AgentSelectionCard';
 
@@ -79,6 +80,18 @@ export function StreamingMessage({
   const isStreaming = state.status === 'streaming';
   const isComplete = state.status === 'complete';
   const hasContent = state.content.length > 0;
+
+  // Debug: trace StreamingMessage render state
+  if (process.env.NODE_ENV !== 'production' && state.contentTokens <= 5) {
+    // eslint-disable-next-line no-console
+    console.debug('[StreamingMessage] render:', {
+      status: state.status,
+      contentLength: state.content.length,
+      hasContent,
+      isStreaming,
+      contentPreview: state.content.slice(0, 50),
+    });
+  }
 
   // Convert CitationEvents to CitationData for VitalStreamText inline pills
   const inlineCitations = useMemo(() => {
@@ -167,15 +180,15 @@ export function StreamingMessage({
         )}
 
         {/* Glass Box Thinking (Claude.ai style) - Auto-expands during streaming */}
-        <AnimatePresence>
-          {state.reasoning.length > 0 && (
+        {state.reasoning.length > 0 && (
+          <div className="sticky top-0 z-10 bg-[var(--canvas-primary)]/80 backdrop-blur-sm">
             <VitalThinking
               steps={state.reasoning}
-              isExpanded={isStreaming || isThinking}
-              isActive={isThinking}
+              isExpanded={true}
+              isActive={isThinking || isStreaming}
             />
-          )}
-        </AnimatePresence>
+          </div>
+        )}
 
         {/* Agent Selection Card (Mode 2 - AI selected expert) */}
         <AnimatePresence>
@@ -229,20 +242,21 @@ export function StreamingMessage({
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
-              className="mt-3"
+              className="mt-3 space-y-2"
             >
-              <Sources>
-                <SourcesTrigger count={allSources.length} />
-                <SourcesContent>
-                  {allSources.map((source) => (
-                    <Source
-                      key={source.id}
-                      href={source.url}
+              <div className="text-sm font-semibold text-stone-700">References</div>
+              <ol className="space-y-2 list-decimal list-inside">
+                {allSources.map((source, idx) => (
+                  <li key={source.id}>
+                    <VitalCitation
                       title={source.title}
+                      url={source.url}
+                      index={idx}
+                      source={source.type}
                     />
-                  ))}
-                </SourcesContent>
-              </Sources>
+                  </li>
+                ))}
+              </ol>
             </motion.div>
           )}
         </AnimatePresence>

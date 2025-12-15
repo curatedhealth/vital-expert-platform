@@ -677,12 +677,12 @@ async def stream_consultation_message(
                                         error=str(stream_err),
                                         consultation_id=sanitized_consultation_id,
                                     )
-                                    # Fallback: emit partial response as single chunk
-                                    if full_response:
-                                        sse_text = transform_and_format("token", {
-                                            "text": "[Streaming interrupted]",
-                                        }, transformer)
-                                        yield sse_text
+                                    # Fallback: emit error message as single chunk
+                                    sse_text = transform_and_format("token", {
+                                        "content": "[Streaming interrupted]",
+                                        "tokenIndex": len(full_response) + 1,
+                                    }, transformer)
+                                    yield sse_text
 
                                 # Emit thinking_end event
                                 sse_text = transform_and_format("thinking_end", {
@@ -712,8 +712,10 @@ async def stream_consultation_message(
                                 content = node_output.get("response") or node_output.get("content", "")
                                 if content:
                                     full_response += content
+                                    # Use 'content' field to match frontend TokenEvent interface
                                     sse_text = transform_and_format("token", {
-                                        "text": content,
+                                        "content": content,
+                                        "tokenIndex": len(full_response),
                                     }, transformer)
                                     yield sse_text
 
@@ -1051,7 +1053,11 @@ async def auto_query_stream(
                                 content = node_output.get("response") or node_output.get("content", "")
                                 if content:
                                     full_response += content
-                                    sse_text = transform_and_format("token", {"text": content}, transformer)
+                                    # Use 'content' field to match frontend TokenEvent interface
+                                    sse_text = transform_and_format("token", {
+                                        "content": content,
+                                        "tokenIndex": len(full_response),
+                                    }, transformer)
                                     yield sse_text
 
                 # Done

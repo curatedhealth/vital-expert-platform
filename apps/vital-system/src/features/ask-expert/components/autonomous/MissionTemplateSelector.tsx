@@ -148,6 +148,11 @@ export function MissionTemplateSelector({
 
   const filteredTemplates = useMemo(() => {
     return templates.filter((template) => {
+      // Only show active templates
+      if (template.is_active === false) {
+        return false;
+      }
+
       // Category filter
       if (selectedCategory !== 'all' && template.category !== selectedCategory) {
         return false;

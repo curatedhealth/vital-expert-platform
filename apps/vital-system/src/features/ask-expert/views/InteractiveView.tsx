@@ -243,7 +243,7 @@ export function InteractiveView({
   const [responsesCollapsed, setResponsesCollapsed] = useState(false);
   const [inputCollapsed, setInputCollapsed] = useState(false);
   const [collapsedMessages, setCollapsedMessages] = useState<Set<string>>(new Set());
-  const [collapsedStreaming, setCollapsedStreaming] = useState(false);
+  // Streaming is always visible during an active response (no collapse toggle)
 
   // Prompt starters state
   const [promptStarters, setPromptStarters] = useState<Array<{
@@ -272,6 +272,11 @@ export function InteractiveView({
 
     // Token streaming
     onToken: useCallback((event: TokenEvent) => {
+      // Debug: trace token dispatch to reducer
+      if (process.env.NODE_ENV !== 'production' && event.tokenIndex <= 5) {
+        // eslint-disable-next-line no-console
+        console.debug('[InteractiveView] onToken received, dispatching CONTENT_APPEND:', event.content);
+      }
       dispatch(streamActions.appendContent(event));
     }, []),
 
@@ -589,8 +594,6 @@ export function InteractiveView({
         setTimeout(() => persistMessages(updatedMessages), 100);
         return updatedMessages;
       });
-      // Reset stream state for next message
-      dispatch(streamActions.reset());
     }
   }, [streamState.status, streamState.content, selectedExpert, persistMessages]);
 
@@ -1140,27 +1143,15 @@ export function InteractiveView({
                         />
                       ))}
 
-                      {/* Streaming Message (while receiving) */}
-                      {isStreaming && (
+                      {/* Streaming Message (visible during streaming and after completion until next prompt) */}
+                      {(isStreaming || streamState.status === 'complete' || streamState.status === 'thinking' || streamState.status === 'streaming') && (
                         <div className="relative">
-                          <button
-                            className="absolute -right-2 -top-2 z-10 text-xs px-2 py-1 rounded-full border border-slate-200 bg-white shadow-sm hover:border-purple-300 hover:text-purple-700 transition"
-                            onClick={() => setCollapsedStreaming(prev => !prev)}
-                          >
-                            {collapsedStreaming ? 'Expand' : 'Collapse'}
-                          </button>
-                          {collapsedStreaming ? (
-                            <div className="w-full max-w-4xl mx-auto px-4 py-3 rounded-lg border border-dashed border-slate-200 text-sm text-slate-500 bg-white">
-                              Streaming response collapsed. <button className="text-purple-600 font-medium hover:underline" onClick={() => setCollapsedStreaming(false)}>Expand</button>
-                            </div>
-                          ) : (
-                            <StreamingMessage
-                              state={streamState}
-                              expert={selectedExpert}
-                              mode={mode}
-                              className="w-full"
-                            />
-                          )}
+                          <StreamingMessage
+                            state={streamState}
+                            expert={selectedExpert}
+                            mode={mode}
+                            className="w-full"
+                          />
                         </div>
                       )}
 

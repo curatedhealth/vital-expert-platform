@@ -7,6 +7,11 @@ const PRIMARY_API_BASE =
   process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
   process.env.API_GATEWAY_URL;
 
+const DEFAULT_TENANT =
+  process.env.NEXT_PUBLIC_PLATFORM_TENANT_ID ||
+  process.env.PLATFORM_TENANT_ID ||
+  process.env.DEFAULT_TENANT_ID;
+
 // Local fallback for dev if primary base fails or is unset
 const FALLBACK_API_BASE = 'http://localhost:8000';
 
@@ -16,7 +21,7 @@ async function fetchTemplates(baseUrl: string, request: NextRequest) {
   const url = `${baseUrl}/ask-expert/missions/templates${qs ? `?${qs}` : ''}`;
 
   const headers: Record<string, string> = {};
-  const tenant = request.headers.get('x-tenant-id');
+  const tenant = request.headers.get('x-tenant-id') || DEFAULT_TENANT;
   if (tenant) headers['x-tenant-id'] = tenant;
 
   const resp = await fetch(url, {
@@ -48,8 +53,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ error: 'Failed to fetch templates', detail: String(lastError) }, { status: 502 });
+    // Graceful degrade: return empty list to avoid frontend crash
+    return NextResponse.json(
+      { templates: [], error: 'Failed to fetch templates', detail: String(lastError) },
+      { status: 200 }
+    );
   } catch (error: any) {
-    return NextResponse.json({ error: 'Failed to fetch templates' }, { status: 500 });
+    // Last-resort degrade
+    return NextResponse.json({ templates: [], error: 'Failed to fetch templates' }, { status: 200 });
   }
 }

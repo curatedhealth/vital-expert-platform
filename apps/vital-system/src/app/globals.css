@@ -44,17 +44,17 @@
     --vital-accent-mint: #00FFDE;    /* Accent mint */
     --vital-accent-violet: #4300FF;  /* Accent violet */
 
-    /* Cool Neutral Scale (aligned with Snow/Ghost White) */
-    --neutral-50: #FAFAFA;           /* Lightest gray - subtle backgrounds */
-    --neutral-100: #F5F5F5;          /* Light gray - surface */
-    --neutral-200: #EEEEEE;          /* UI surfaces, borders, dividers */
-    --neutral-300: #E0E0E0;          /* Input borders */
-    --neutral-400: #BDBDBD;          /* Secondary strokes, disabled */
-    --neutral-500: #9E9E9E;          /* Placeholder text */
-    --neutral-600: #757575;          /* Secondary text, icons */
-    --neutral-700: #616161;          /* Body text */
-    --neutral-800: #424242;          /* Headings */
-    --neutral-900: #212121;          /* Primary text, structure */
+    /* Warm Neutral Scale (aligned to Warm Stone for brand v6) */
+    --neutral-50: var(--stone-50);
+    --neutral-100: var(--stone-100);
+    --neutral-200: var(--stone-200);
+    --neutral-300: var(--stone-300);
+    --neutral-400: var(--stone-400);
+    --neutral-500: var(--stone-500);
+    --neutral-600: var(--stone-600);
+    --neutral-700: var(--stone-700);
+    --neutral-800: var(--stone-800);
+    --neutral-900: var(--stone-900);
 
     /* Legacy Slate Colors (for backwards compatibility) */
     --vital-slate-50: #F8FAFC;
@@ -188,10 +188,14 @@
     --radius-2xl: 16px;
     --radius-full: 9999px;
 
-    /* Animation Timing */
+    /* Animation Timing (VITAL v6) */
     --ease-in: cubic-bezier(0.4, 0, 1, 1);
     --ease-out: cubic-bezier(0, 0, 0.2, 1);
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --duration-fast: 100ms;
+    --duration-normal: 150ms;
+    --duration-slow: 200ms;
+    --focus-ring: 0 0 0 3px rgba(144, 85, 224, 0.15); /* Warm purple focus */
     /* ═══════════════════════════════════════════════════════════════════
        ASK EXPERT: Mode-Specific Design Tokens (Brand v6.0)
        Interactive (Modes 1&2): Blue accent on warm neutral base
@@ -658,5 +662,18 @@
   /* Smooth transitions for interactive elements */
   button, a, input, textarea, select {
     transition: all 150ms ease-in-out;
+  }
+
+  /* Accessibility defaults */
+  :focus-visible {
+    outline: 2px solid var(--vital-primary-600);
+    box-shadow: var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  button,
+  [role='button'],
+  a {
+    min-height: 44px;
   }
 }

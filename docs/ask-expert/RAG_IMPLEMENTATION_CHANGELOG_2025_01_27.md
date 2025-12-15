@@ -288,6 +288,47 @@ CREATE TABLE public.search_logs (
 
 ---
 
+## Neo4j GraphRAG Integration (December 15, 2025)
+
+### Summary
+
+Full 3-method GraphRAG fusion is now operational for Mode 2 and Mode 4 agent auto-selection.
+
+### Changes
+
+| File | Change Type | Description |
+|------|-------------|-------------|
+| `services/neo4j_client.py` | MODIFIED | Added `text_based_graph_search()` method for keyword-based graph traversal |
+| `services/graphrag_selector.py` | MODIFIED | Updated `_neo4j_graph_search()` to use text-based search instead of embedding-based |
+| `services/graphrag_diagnostics.py` | MODIFIED | Fixed PostgreSQL and Neo4j diagnostic checks |
+
+### Neo4j Sync Status
+
+| Metric | Count |
+|--------|-------|
+| Agents synced | 1,000 |
+| Concepts synced | 46 |
+| Relationships | 9,938 |
+
+### GraphRAG 3-Method Fusion
+
+| Method | Weight | Implementation |
+|--------|--------|----------------|
+| PostgreSQL Fulltext | 30% | `search_agents_fulltext` RPC function |
+| Pinecone Vector | 50% | `ont-agents` namespace (2,547 vectors) |
+| Neo4j Graph | 20% | `text_based_graph_search()` with keyword matching |
+
+### Diagnostics Endpoint
+
+```
+GET /ask-expert/graphrag/diagnostics
+X-Tenant-ID: {tenant-id}
+```
+
+Returns health status for all 5 components: embedding_service, postgresql_fulltext, pinecone_vector, neo4j_graph, graphrag_selector.
+
+---
+
 ## Next Steps
 
 1. **Run integration tests** for new services
@@ -295,6 +336,7 @@ CREATE TABLE public.search_logs (
 3. **Tune query classifier** patterns based on real query data
 4. **Set up Elasticsearch index** with `python setup_elasticsearch_index.py`
 5. **Configure alerting** for low faithfulness scores
+6. **Sync agent embeddings to Neo4j** for embedding-based graph traversal (optional enhancement)
 
 ---
 

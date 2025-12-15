@@ -505,7 +505,20 @@ def build_master_graph() -> CompiledStateGraph:
         plan = state.get("plan") or []
         artifacts = state.get("artifacts") or []
         idx = state.get("current_step", 0)
+        total_steps = state.get("total_steps") or len(plan)
+
+        # DEBUG: Log step entry
+        logger.info(
+            "execute_step_entry",
+            step_index=idx,
+            total_steps=total_steps,
+            plan_length=len(plan),
+            artifacts_count=len(artifacts),
+            mission_id=state.get("mission_id"),
+        )
+
         if idx >= len(plan):
+            logger.warning("execute_step_idx_exceeds_plan", idx=idx, plan_length=len(plan))
             return {"status": "running"}
 
         step = plan[idx]
@@ -597,6 +610,18 @@ def build_master_graph() -> CompiledStateGraph:
             }
             quality_checks = 0
             status = "awaiting_checkpoint"
+
+        # DEBUG: Log step completion
+        logger.info(
+            "execute_step_completed",
+            completed_step=idx,
+            next_step=idx + 1,
+            total_steps=state.get("total_steps") or len(plan),
+            quality_checks=quality_checks,
+            checkpoint_pending=bool(checkpoint_pending),
+            status=status,
+            artifact_count=len(artifacts),
+        )
 
         return {
             "artifacts": artifacts,
@@ -803,6 +828,17 @@ def build_master_graph() -> CompiledStateGraph:
         goal = state.get("goal", "")
         current_iteration = state.get("refinement_iteration", 0)
         max_iterations = state.get("max_refinement_iterations", MAX_REFINEMENT_ITERATIONS)
+
+        # DEBUG: Log confidence gate entry
+        logger.info(
+            "confidence_gate_entry",
+            current_step=state.get("current_step", 0),
+            total_steps=state.get("total_steps", 0),
+            artifact_count=len(artifacts),
+            current_iteration=current_iteration,
+            max_iterations=max_iterations,
+            mission_id=state.get("mission_id"),
+        )
 
         # Check confidence gate
         refinement_result = await check_confidence_gate(
@@ -1031,37 +1067,68 @@ def build_master_graph() -> CompiledStateGraph:
     def _route_after_execute(state: MissionState) -> str:
         """Route based on whether there are more steps to execute."""
         current_step = state.get("current_step", 0)
-        total_steps = state.get("total_steps", 0)
+        plan = state.get("plan") or []
+        # FIX: Use plan length as fallback if total_steps not set
+        total_steps = state.get("total_steps") or len(plan)
         checkpoint_pending = state.get("checkpoint_pending")
+
+        # DEBUG: Log routing decision
+        logger.info(
+            "route_after_execute_decision",
+            current_step=current_step,
+            total_steps=total_steps,
+            plan_length=len(plan),
+            checkpoint_pending=bool(checkpoint_pending),
+            quality_checks=state.get("quality_checks", 0),
+            status=state.get("status"),
+        )
 
         # If checkpoint is pending, go to checkpoint node
         if checkpoint_pending:
+            logger.info("route_after_execute_to_checkpoint", checkpoint_id=checkpoint_pending.get("id"))
             return "checkpoint"
 
         # If more steps remain, go to confidence gate first (Enhancement 1 & 3)
         if current_step < total_steps:
+            logger.info("route_after_execute_to_confidence_gate", step=current_step, total=total_steps)
             return "confidence_gate"
 
         # All steps done, go to synthesis
+        logger.info("route_after_execute_to_synthesize", completed_steps=current_step)
         return "synthesize"
 
     # Conditional routing function for confidence gate (Enhancement 1)
     def _route_after_confidence_gate(state: MissionState) -> str:
         """Route based on confidence level - may trigger refinement loop."""
         status = state.get("status")
+        current_step = state.get("current_step", 0)
+        plan = state.get("plan") or []
+        # FIX: Use plan length as fallback if total_steps not set
+        total_steps = state.get("total_steps") or len(plan)
+
+        # DEBUG: Log routing decision
+        logger.info(
+            "route_after_confidence_gate_decision",
+            status=status,
+            current_step=current_step,
+            total_steps=total_steps,
+            plan_length=len(plan),
+            refinement_iteration=state.get("refinement_iteration", 0),
+            overall_confidence=state.get("overall_confidence"),
+        )
 
         # If refinement is needed, re-execute evidence step
         if status == "refining":
+            logger.info("route_after_confidence_gate_refining", iteration=state.get("refinement_iteration", 0))
             return "execute_step"
 
         # Confidence passed, check if more steps remain
-        current_step = state.get("current_step", 0)
-        total_steps = state.get("total_steps", 0)
-
         if current_step < total_steps:
+            logger.info("route_after_confidence_gate_next_step", next_step=current_step)
             return "execute_step"
 
         # All steps done with good confidence, go to synthesis
+        logger.info("route_after_confidence_gate_to_synthesize")
         return "synthesize"
 
     # Conditional routing function for checkpoint

@@ -60,12 +60,69 @@ def checkpoint_event(cp: Dict[str, Any]) -> bytes:
     return sse_event("checkpoint", cp)
 
 
+# Step-to-artifact-type mapping for frontend compatibility
+STEP_TO_ARTIFACT_TYPE = {
+    'scope_definition': 'document',
+    'research': 'raw_data',
+    'literature_search': 'raw_data',
+    'evidence_synthesis': 'summary',
+    'competitive_analysis': 'raw_data',
+    'synthesis': 'summary',
+    'synthesis_report': 'document',
+    'panel_review': 'summary',
+    'final_synthesis': 'document',
+    'query_decomposition': 'document',
+}
+
+
+def artifact_event(
+    artifact_id: str,
+    summary: str,
+    artifact_path: str | None = None,
+    citations: list | None = None,
+    step: str | None = None,
+    status: str = "completed",
+    **extra_data,
+) -> bytes:
+    """
+    Emit artifact event with proper type mapping for frontend.
+
+    Maps workflow step names to frontend-expected artifact types.
+    Falls back to 'other' for unknown steps.
+    """
+    # Map step to artifact type for frontend compatibility
+    artifact_type = STEP_TO_ARTIFACT_TYPE.get(step or '', 'other')
+
+    data = {
+        "id": artifact_id,
+        "type": artifact_type,  # Required by frontend
+        "summary": summary,
+        "artifactPath": artifact_path,
+        "citations": citations or [],
+        "step": step,  # Keep for debugging
+        "status": status,
+        **extra_data,
+    }
+    return sse_event("artifact", data)
+
+
 def done_event(final: Dict[str, Any], artifacts: list) -> bytes:
+    # Ensure all artifacts in done event have type field
+    typed_artifacts = []
+    for artifact in artifacts:
+        if isinstance(artifact, dict):
+            if 'type' not in artifact:
+                step = artifact.get('step', '')
+                artifact['type'] = STEP_TO_ARTIFACT_TYPE.get(step, 'other')
+            typed_artifacts.append(artifact)
+        else:
+            typed_artifacts.append(artifact)
+
     return sse_event(
         "done",
         {
             "final": final,
-            "artifacts": artifacts,
+            "artifacts": typed_artifacts,
             "status": "completed",
             "message": "Mission completed",
         },

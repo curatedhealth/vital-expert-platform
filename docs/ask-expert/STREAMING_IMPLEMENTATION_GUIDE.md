@@ -72,6 +72,73 @@
 
 ### Base Path: `apps/vital-system/src/`
 
+### Directory Tree
+
+```
+apps/vital-system/src/
+├── features/ask-expert/
+│   ├── views/
+│   │   └── InteractiveView.tsx          # Main orchestrator (Modes 1 & 2)
+│   │
+│   ├── hooks/
+│   │   ├── streamReducer.ts             # 🔴 CRITICAL: Streaming state management
+│   │   ├── useSSEStream.ts              # 🔴 CRITICAL: SSE connection & events
+│   │   └── index.ts                     # Hook exports
+│   │
+│   └── components/
+│       ├── interactive/
+│       │   ├── StreamingMessage.tsx     # 🔴 CRITICAL: Renders streaming content
+│       │   ├── VitalMessage.tsx         # Completed message display
+│       │   ├── VitalThinking.tsx        # 🟡 HIGH: Reasoning display
+│       │   ├── ExpertPicker.tsx         # Expert selection UI
+│       │   ├── FusionSelector.tsx       # Mode 2 auto-selection
+│       │   ├── CitationList.tsx         # Citation rendering
+│       │   ├── ToolCallList.tsx         # Tool call display
+│       │   ├── VitalSuggestionChips.tsx # Follow-up suggestions
+│       │   ├── AgentSelectionCard.tsx   # Expert card UI
+│       │   ├── ChatInput.tsx            # Legacy input
+│       │   ├── ConversationHistorySidebar.tsx
+│       │   ├── HITLCheckpointModal.tsx  # Human-in-the-loop
+│       │   ├── PlanApprovalCard.tsx     # Plan approval UI
+│       │   ├── SubAgentDelegationCard.tsx
+│       │   ├── ToolExecutionFeedback.tsx
+│       │   └── index.ts
+│       │
+│       └── errors/
+│           └── ErrorBoundary.tsx        # Error handling
+│
+├── components/
+│   ├── vital-ai-ui/
+│   │   └── conversation/
+│   │       ├── VitalStreamText.tsx      # 🟡 HIGH: Token rendering
+│   │       └── VitalPromptInput.tsx     # Enhanced input
+│   │
+│   ├── dashboard/
+│   │   └── unified-dashboard-layout.tsx # Main layout
+│   │
+│   ├── ui/
+│   │   ├── breadcrumb.tsx               # Breadcrumb components
+│   │   ├── button.tsx
+│   │   ├── card.tsx
+│   │   ├── tooltip.tsx
+│   │   └── separator.tsx
+│   │
+│   ├── app-sidebar.tsx                  # Main sidebar
+│   └── sidebar-ask-expert.tsx           # Ask Expert sidebar
+│
+├── contexts/
+│   ├── header-actions-context.tsx       # Header injection context
+│   └── ask-expert-context.tsx           # Ask Expert state
+│
+└── packages/vital-ai-ui/src/
+    └── reasoning/
+        ├── VitalThinking.tsx            # Shared thinking component
+        ├── VitalSourceList.tsx          # Source list
+        ├── VitalCitation.tsx            # Citation component
+        ├── VitalInlineCitation.tsx      # Inline citation
+        └── VitalSources.tsx             # Sources container
+```
+
 ### Views
 
 | Component | Path | Description |
@@ -154,6 +221,67 @@
 ## Backend Components
 
 ### Base Path: `services/ai-engine/src/`
+
+### Directory Tree
+
+```
+services/ai-engine/src/
+├── api/
+│   ├── routes/
+│   │   ├── ask_expert_interactive.py    # 🔴 CRITICAL: SSE streaming endpoint
+│   │   ├── ask_expert.py                # Non-streaming endpoints
+│   │   ├── core.py                      # Health check
+│   │   └── __init__.py
+│   │
+│   ├── schemas/
+│   │   ├── streaming.py                 # SSE event schemas
+│   │   ├── ask_expert.py                # Request/response schemas
+│   │   └── __init__.py
+│   │
+│   └── middleware/
+│       ├── request_context.py           # Request tracing
+│       ├── error_handler.py             # Error handling
+│       └── __init__.py
+│
+├── streaming/
+│   ├── sse_formatter.py                 # 🔴 CRITICAL: Event formatting
+│   ├── stream_manager.py                # 🔴 CRITICAL: Stream lifecycle
+│   └── __init__.py
+│
+├── langgraph_workflows/
+│   └── ask_expert/
+│       ├── ask_expert_mode1_workflow.py # Mode 1 workflow + execute_expert
+│       ├── ask_expert_mode2_workflow.py # Mode 2 workflow (Fusion)
+│       ├── shared/
+│       │   └── nodes/
+│       │       ├── input_processor.py   # Input validation
+│       │       ├── format_output.py     # Output formatting
+│       │       ├── rag_retriever.py     # RAG retrieval
+│       │       ├── l3_context_engineer.py
+│       │       └── __init__.py
+│       └── __init__.py
+│
+├── services/
+│   ├── agent_instantiation_service.py   # Agent creation
+│   ├── unified_rag_service.py           # RAG service
+│   ├── graphrag_selector.py             # Agent selection (GraphRAG)
+│   ├── supabase_client.py               # Database client
+│   ├── cache_manager.py                 # Caching
+│   └── __init__.py
+│
+├── infrastructure/
+│   └── llm/
+│       ├── llm_factory.py               # LLM client factory
+│       ├── openai_client.py             # OpenAI streaming
+│       └── __init__.py
+│
+└── domain/
+    └── entities/
+        ├── agent.py                     # Agent entity
+        ├── conversation.py              # Conversation entity
+        ├── message.py                   # Message entity
+        └── __init__.py
+```
 
 ### API Routes
 

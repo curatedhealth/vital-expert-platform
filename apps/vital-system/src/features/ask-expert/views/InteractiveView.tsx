@@ -315,23 +315,53 @@ export function InteractiveView({
       dispatch(streamActions.error(event));
     }, []),
 
-    // Mode 2: Fusion auto-selected agent
-    // Sets selectedExpert state when backend selects an agent via Fusion Search
-    onAgentSelected: useCallback((event: { agent: { id: string; name: string; avatar_url?: string; department?: string; score?: number }; timestamp: number }) => {
-      if (mode === 'mode2' && event.agent) {
+    // Mode 2: Fusion event - Primary handler for Mode 2 expert auto-selection
+    // The backend sends a 'fusion' event with selectedExperts array
+    onFusion: useCallback((event: { selectedExperts: Array<{ id: string; name: string; role: string; confidence: number; level: string }>; evidence?: unknown }) => {
+      if (mode === 'mode2' && event.selectedExperts && event.selectedExperts.length > 0) {
+        // Take the first (highest confidence) expert from the selected team
+        const primaryExpert = event.selectedExperts[0];
         const fusionSelectedExpert: Expert = {
-          id: event.agent.id,
-          name: event.agent.name,
-          slug: event.agent.id,
-          domain: event.agent.department || '',
+          id: primaryExpert.id,
+          name: primaryExpert.name,
+          slug: primaryExpert.id,
+          domain: primaryExpert.role || '',
+          level: (primaryExpert.level as 'L1' | 'L2' | 'L3' | 'L4' | 'L5') || 'L2',
+          tier: parseInt(primaryExpert.level?.replace('L', '') || '2', 10),
+          status: 'active',
+          expertise: [primaryExpert.role],
+        };
+        console.log('[InteractiveView] Mode 2 Fusion selected expert:', fusionSelectedExpert);
+        setSelectedExpert(fusionSelectedExpert);
+        setPhase('conversation');
+      }
+    }, [mode]),
+
+    // Mode 2: agent_selected event handler - PRIMARY handler for /api/expert/stream Mode 2
+    // Backend sends: event: agent_selected, data: {event: ..., agent: {...}, timestamp: ...}
+    onAgentSelected: useCallback((eventData: { event?: string; agent?: { id: string; name: string; avatar_url?: string; department?: string; score?: number }; timestamp?: number }) => {
+      console.log('[InteractiveView] 🔔 onAgentSelected received:', { mode, eventData });
+
+      // Extract agent from event data (handles both nested and direct formats)
+      const agent = eventData?.agent;
+
+      if (mode === 'mode2' && agent) {
+        const fusionSelectedExpert: Expert = {
+          id: agent.id,
+          name: agent.name,
+          slug: agent.id,
+          domain: agent.department || '',
           level: 'L2', // Default level for Fusion-selected experts
           tier: 2,
           status: 'active',
           expertise: [],
-          avatar: event.agent.avatar_url,
+          avatar: agent.avatar_url,
         };
+        console.log('[InteractiveView] ✅ Mode 2 setting expert from agent_selected:', fusionSelectedExpert);
         setSelectedExpert(fusionSelectedExpert);
-        setPhase('conversation');
+        // Note: Don't change phase here - already in conversation phase
+      } else {
+        console.log('[InteractiveView] ⚠️ agent_selected ignored:', { mode, hasAgent: !!agent });
       }
     }, [mode]),
 

@@ -561,7 +561,50 @@ ${consensusData.key_themes?.length ? `**Key Themes:** ${consensusData.key_themes
                     </div>
                   </div>
                 </div>
-                <Badge variant="secondary">{selectedAgentIds.size} experts selected</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant={selectedAgentIds.size >= 2 ? "default" : "secondary"}
+                    className={selectedAgentIds.size >= 2 ? "bg-green-600" : ""}
+                  >
+                    {selectedAgentIds.size >= 2
+                      ? `${selectedAgentIds.size} experts ready`
+                      : `${selectedAgentIds.size}/2 experts (select ${2 - selectedAgentIds.size} more)`
+                    }
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAgentSelector(false)}
+                  >
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                    Collapse
+                  </Button>
+                </div>
+              </div>
+
+              {/* Selection Progress Indicator */}
+              <div className="mb-4 p-3 rounded-lg bg-purple-50 border border-purple-200">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    {[0, 1].map((i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "w-3 h-3 rounded-full transition-colors",
+                          i < selectedAgentIds.size ? "bg-purple-600" : "bg-purple-200"
+                        )}
+                      />
+                    ))}
+                    {selectedAgentIds.size > 2 && (
+                      <div className="w-3 h-3 rounded-full bg-purple-600" />
+                    )}
+                  </div>
+                  <p className="text-sm text-purple-700">
+                    {selectedAgentIds.size === 0 && "Click on experts below to add them to your panel"}
+                    {selectedAgentIds.size === 1 && "Great! Select one more expert to start"}
+                    {selectedAgentIds.size >= 2 && `Panel ready with ${selectedAgentIds.size} experts. Type your question below!`}
+                  </p>
+                </div>
               </div>
 
               {/* Agent Grid */}
@@ -571,9 +614,9 @@ ${consensusData.key_themes?.length ? `**Key Themes:** ${consensusData.key_themes
                   <span className="ml-2 text-muted-foreground">Loading experts...</span>
                 </div>
               ) : (
-                <ScrollArea className="h-[300px]">
+                <ScrollArea className="h-[400px]">
                   <AgentCardGrid columns={3} className="gap-3 pr-4">
-                    {validAgents.slice(0, 12).map((agent) => {
+                    {validAgents.map((agent) => {
                       const isSelected = selectedAgentIds.has(agent.id);
                       return (
                         <div key={agent.id} className="relative">
@@ -611,38 +654,43 @@ ${consensusData.key_themes?.length ? `**Key Themes:** ${consensusData.key_themes
       </AnimatePresence>
 
       {/* Selected Experts Bar (when collapsed) */}
-      {!showAgentSelector && selectedAgentIds.size > 0 && (
+      {!showAgentSelector && messages.length === 0 && (
         <div className="border-b px-4 py-2 bg-muted/30">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => router.push('/ask-panel')}>
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-              <span className="text-sm font-medium">{meta.title}</span>
-              <div className="flex -space-x-2 ml-2">
-                {selectedAgents.slice(0, 4).map((agent) => (
-                  <Avatar key={agent.id} className="w-6 h-6 border-2 border-background">
-                    <AvatarImage src={agent.avatar_url} alt={agent.name} />
-                    <AvatarFallback className="text-xs bg-purple-100 text-purple-700">
-                      {agent.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
-                {selectedAgents.length > 4 && (
-                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs border-2 border-background">
-                    +{selectedAgents.length - 4}
-                  </div>
-                )}
+              <div className={`w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600`}>
+                {meta.icon}
               </div>
+              <span className="text-sm font-medium">{meta.title}</span>
+              {selectedAgents.length > 0 && (
+                <div className="flex -space-x-2 ml-2">
+                  {selectedAgents.slice(0, 4).map((agent) => (
+                    <Avatar key={agent.id} className="w-6 h-6 border-2 border-background">
+                      <AvatarImage src={agent.avatar_url} alt={agent.name} />
+                      <AvatarFallback className="text-xs bg-purple-100 text-purple-700">
+                        {agent.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                  {selectedAgents.length > 4 && (
+                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs border-2 border-background">
+                      +{selectedAgents.length - 4}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              onClick={() => setShowAgentSelector(!showAgentSelector)}
+              onClick={() => setShowAgentSelector(true)}
               disabled={isExecuting}
             >
-              {showAgentSelector ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              <span className="ml-1">{selectedAgentIds.size} experts</span>
+              <ChevronDown className="w-4 h-4 mr-1" />
+              {selectedAgentIds.size > 0 ? `${selectedAgentIds.size} experts` : 'Select Experts'}
             </Button>
           </div>
         </div>
@@ -692,10 +740,31 @@ ${consensusData.key_themes?.length ? `**Key Themes:** ${consensusData.key_themes
         </div>
       </div>
 
-      {/* Input Area */}
-      {selectedAgentIds.size >= 2 && (
-        <div className="border-t bg-background/80 backdrop-blur-sm">
-          <div className="max-w-4xl mx-auto p-4">
+      {/* Input Area - Always visible */}
+      <div className="border-t bg-background/80 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto p-4">
+          {selectedAgentIds.size < 2 ? (
+            <div className="relative">
+              {/* Disabled input overlay */}
+              <div className="opacity-50 pointer-events-none">
+                <VitalPromptInput
+                  onSubmit={() => {}}
+                  isLoading={false}
+                  placeholder="Select at least 2 experts to ask a question..."
+                  showAttachments={false}
+                  showEnhance={false}
+                  maxLength={4000}
+                />
+              </div>
+              {/* Helper text below */}
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                {selectedAgentIds.size === 0
+                  ? "Select 2 or more experts above to begin"
+                  : `Select ${2 - selectedAgentIds.size} more expert to start the panel`
+                }
+              </p>
+            </div>
+          ) : (
             <VitalPromptInput
               onSubmit={handleSend}
               isLoading={isExecuting}
@@ -709,24 +778,9 @@ ${consensusData.key_themes?.length ? `**Key Themes:** ${consensusData.key_themes
               showEnhance={false}
               maxLength={4000}
             />
-          </div>
+          )}
         </div>
-      )}
-
-      {/* Selection Prompt */}
-      {selectedAgentIds.size < 2 && !showAgentSelector && (
-        <div className="border-t bg-muted/50 p-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <p className="text-sm text-muted-foreground mb-2">
-              Select at least 2 experts to start a panel discussion
-            </p>
-            <Button onClick={() => setShowAgentSelector(true)}>
-              <Users className="w-4 h-4 mr-2" />
-              Select Experts
-            </Button>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

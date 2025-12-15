@@ -49,14 +49,15 @@ from langgraph_workflows.observability import (
     trace_node
 )
 
-# Workflow implementations - Ask Expert Modes 1-4
-from langgraph_workflows.ask_expert.ask_expert_mode1_workflow import AskExpertMode1Workflow
-from langgraph_workflows.ask_expert.ask_expert_mode2_workflow import AskExpertMode2Workflow
-# Mode 3 & 4 now use the unified autonomous workflow from modes34
-from langgraph_workflows.modes34.unified_autonomous_workflow import (
-    build_master_graph as AskExpertMode3Workflow,  # Mode 3 = manual selection + autonomous
-)
-AskExpertMode4Workflow = AskExpertMode3Workflow  # Mode 4 = auto selection + autonomous (same workflow)
+# Workflow implementations - All modes use unified workflows now
+from langgraph_workflows.ask_expert.unified_interactive_workflow import UnifiedInteractiveWorkflow
+from langgraph_workflows.modes34.unified_autonomous_workflow import build_master_graph as UnifiedAutonomousWorkflow
+
+# Backward compatibility aliases
+AskExpertMode1Workflow = UnifiedInteractiveWorkflow
+AskExpertMode2Workflow = UnifiedInteractiveWorkflow
+AskExpertMode3Workflow = UnifiedAutonomousWorkflow
+AskExpertMode4Workflow = UnifiedAutonomousWorkflow
 
 __all__ = [
     # State schemas

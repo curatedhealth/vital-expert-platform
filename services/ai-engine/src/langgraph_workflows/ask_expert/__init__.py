@@ -33,10 +33,6 @@ UNIFIED ARCHITECTURE:
 - unified_autonomous_workflow.py: Mode 3 & 4 (Autonomous pair)
 """
 
-# Legacy imports (Mode 1 & 2 - still separate files for now)
-from .ask_expert_mode1_workflow import AskExpertMode1Workflow
-from .ask_expert_mode2_workflow import AskExpertMode2Workflow
-
 # Unified workflows (Mode 1 & 2 - Interactive)
 from .unified_interactive_workflow import (
     UnifiedInteractiveWorkflow,
@@ -86,17 +82,18 @@ from .shared import (
     AskExpertStreamingMixin,
 )
 
-# DEPRECATED: These are aliased for backward compatibility
-# Use create_mode3_workflow() and create_mode4_workflow() instead
-AskExpertMode3Workflow = UnifiedAutonomousWorkflow  # Alias for compatibility
-AskExpertMode4Workflow = UnifiedAutonomousWorkflow  # Alias for compatibility
+# Backward compatibility aliases - all use unified workflows
+AskExpertMode1Workflow = UnifiedInteractiveWorkflow
+AskExpertMode2Workflow = UnifiedInteractiveWorkflow
+AskExpertMode3Workflow = UnifiedAutonomousWorkflow
+AskExpertMode4Workflow = UnifiedAutonomousWorkflow
 
 __all__ = [
-    # Legacy mode workflows (for backward compatibility)
+    # Backward compatibility aliases
     "AskExpertMode1Workflow",
     "AskExpertMode2Workflow",
-    "AskExpertMode3Workflow",  # DEPRECATED - use create_mode3_workflow()
-    "AskExpertMode4Workflow",  # DEPRECATED - use create_mode4_workflow()
+    "AskExpertMode3Workflow",
+    "AskExpertMode4Workflow",
     # Unified workflows (RECOMMENDED)
     "UnifiedInteractiveWorkflow",
     "UnifiedAutonomousWorkflow",
@@ -126,19 +123,18 @@ __all__ = [
     "AskExpertStreamingMixin",
 ]
 
-# Mode registry for dynamic lookup
-# Note: Mode 3 & 4 now use UnifiedAutonomousWorkflow
+# Mode registry for dynamic lookup - all use unified workflows
 ASK_EXPERT_MODE_REGISTRY = {
-    1: AskExpertMode1Workflow,
-    2: AskExpertMode2Workflow,
-    3: UnifiedAutonomousWorkflow,  # Use unified workflow
-    4: UnifiedAutonomousWorkflow,  # Use unified workflow
-    "mode1": AskExpertMode1Workflow,
-    "mode2": AskExpertMode2Workflow,
+    1: UnifiedInteractiveWorkflow,
+    2: UnifiedInteractiveWorkflow,
+    3: UnifiedAutonomousWorkflow,
+    4: UnifiedAutonomousWorkflow,
+    "mode1": UnifiedInteractiveWorkflow,
+    "mode2": UnifiedInteractiveWorkflow,
     "mode3": UnifiedAutonomousWorkflow,
     "mode4": UnifiedAutonomousWorkflow,
-    "manual_interactive": AskExpertMode1Workflow,
-    "automatic_interactive": AskExpertMode2Workflow,
+    "manual_interactive": UnifiedInteractiveWorkflow,
+    "automatic_interactive": UnifiedInteractiveWorkflow,
     "manual_autonomous": UnifiedAutonomousWorkflow,
     "automatic_autonomous": UnifiedAutonomousWorkflow,
 }

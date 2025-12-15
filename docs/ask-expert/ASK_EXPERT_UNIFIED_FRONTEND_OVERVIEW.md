@@ -1,13 +1,13 @@
 <!-- PRODUCTION_TAG: PRODUCTION_READY -->
-<!-- LAST_VERIFIED: 2025-01-27 -->
+<!-- LAST_VERIFIED: 2025-12-15 -->
 <!-- CATEGORY: documentation -->
 <!-- DEPENDENCIES: [apps/vital-system, packages/vital-ai-ui] -->
-<!-- VERSION: 3.2.1 -->
+<!-- VERSION: 3.3.0 -->
 
 # Ask Expert Service - Frontend Implementation Overview
 
-**Version:** 3.2.1 FRONTEND REFACTORED
-**Date:** January 27, 2025
+**Version:** 3.3.0 STREAMING FIX
+**Date:** December 15, 2025
 **Author:** Claude Code
 **Scope:** Frontend UI/UX + Components + Hooks + Accessibility + Frontend File Inventory
 
@@ -633,6 +633,7 @@ const codeContent = `\`\`\`${language || ''}\n${content}\n\`\`\``;
 | SSE field name mismatch | Backend `sse_formatter.py` | Tokens silently ignored by frontend |
 | React 18 batching | Frontend callbacks | Rapid updates batched, preventing real-time render |
 | Streamdown animation buffering | `VitalStreamText.tsx` | Animation mode buffered tokens |
+| Streamdown static key | `VitalStreamText.tsx` | Memoization prevented visual updates |
 | `isStreaming` boolean too narrow | `StreamingMessage.tsx` | False during 'thinking' status |
 | Duplicate reasoning components | `VitalMessage.tsx` | Confusing UX with multiple indicators |
 
@@ -709,6 +710,28 @@ case 'CONTENT_APPEND':
   ...
 />
 ```
+
+#### 4b. Streamdown Static Key Fix (December 15, 2025)
+
+**Problem:** The static key `key={isStreaming ? 'streaming' : 'complete'}` never changed DURING streaming - it stayed `'streaming'` the entire time. Streamdown internally memoizes its output, so React couldn't trigger visual updates when content changed despite state updating correctly.
+
+**Solution:** Use a dynamic key that changes with content length to force React to remount Streamdown on each token.
+
+```typescript
+// apps/vital-system/src/components/vital-ai-ui/conversation/VitalStreamText.tsx
+
+// BEFORE (broken - static key):
+key={isStreaming ? 'streaming' : 'complete'}
+
+// AFTER (fixed - dynamic key):
+key={isStreaming ? `streaming-${content.length}` : 'complete'}
+```
+
+**Why This Works:**
+- The dynamic key changes with every token (`streaming-1`, `streaming-2`, `streaming-3`...)
+- This forces React to remount the Streamdown component on each content update
+- Remounting guarantees the new content is visually rendered immediately
+- When streaming completes, key becomes `'complete'` for final stable render
 
 #### 5. isStreaming Boolean Fix
 
@@ -1186,8 +1209,8 @@ components/vital-ai-ui/
 
 ---
 
-**Report Generated:** January 27, 2025
-**Document Version:** 3.2.1 FRONTEND REFACTORED
+**Report Generated:** December 15, 2025
+**Document Version:** 3.3.0 STREAMING FIX
 **Status:** PRODUCTION READY
 
 *This document focuses exclusively on frontend architecture, components, hooks, UX, and accessibility. For backend details, see `ASK_EXPERT_UNIFIED_BACKEND_OVERVIEW.md`. For complete codebase structure, see `ASK_EXPERT_UNIFIED_STRUCTURE.md`.*

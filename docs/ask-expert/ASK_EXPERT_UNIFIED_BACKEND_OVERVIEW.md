@@ -1,13 +1,13 @@
 <!-- PRODUCTION_TAG: PRODUCTION_READY -->
-<!-- LAST_VERIFIED: 2025-01-27 -->
+<!-- LAST_VERIFIED: 2025-12-15 -->
 <!-- CATEGORY: documentation -->
 <!-- DEPENDENCIES: [services/ai-engine] -->
-<!-- VERSION: 3.2.1 -->
+<!-- VERSION: 3.3.0 -->
 
 # Ask Expert Service - Backend Implementation Overview
 
-**Version:** 3.2.1 BACKEND REFACTORED
-**Date:** January 27, 2025
+**Version:** 3.3.0 UNIFIED WORKFLOW CLEANUP
+**Date:** December 15, 2025
 **Author:** Claude Code
 **Scope:** Backend API + Security + Production Readiness + Backend File Inventory
 
@@ -829,14 +829,17 @@ CIRCUIT_BREAKER_HALF_OPEN_CALLS=3
 
 ### 5.2 Ask Expert Service Files
 
-**Backend (Python) - Unified Architecture (December 12, 2025):**
+**Backend (Python) - Unified Architecture (December 15, 2025):**
+
+> **NOTE:** As of December 15, 2025, the legacy workflow files (`ask_expert_mode1_workflow.py`,
+> `ask_expert_mode2_workflow.py`) have been removed. All Mode 1 & 2 traffic now uses the
+> `UnifiedInteractiveWorkflow` exclusively. The `__init__.py` exports backward-compatible aliases.
+
 ```
 langgraph_workflows/ask_expert/
 ├── __init__.py                           # Module exports, mode registry, factory functions
-├── unified_interactive_workflow.py       # Mode 1 & 2 unified base (AgentSelectionStrategy)
+├── unified_interactive_workflow.py       # Mode 1 & 2 unified base (AgentSelectionStrategy) ⭐ PRODUCTION
 ├── unified_agent_selector.py             # FusionSearchSelector for Mode 2/4 auto-selection
-├── ask_expert_mode1_workflow.py          # Legacy Mode 1 (backward compatibility)
-├── ask_expert_mode2_workflow.py          # Legacy Mode 2 (backward compatibility)
 ├── archive/                              # 📦 Deprecated files
 │   ├── __init__.py
 │   ├── README.md                         # Migration guide
@@ -996,12 +999,16 @@ services/
 | `langgraph_workflows/modes34/unified_autonomous_workflow.py` | **Mode 3 & 4** - Production autonomous workflow |
 | `langgraph_workflows/ask_expert/unified_agent_selector.py` | **FusionSearchSelector** - Mode 2/4 auto-selection |
 
-### Legacy Files (Backward Compatibility)
+### Legacy Files (REMOVED - December 15, 2025)
 
-| File | Purpose |
-|------|---------|
-| `langgraph_workflows/ask_expert/ask_expert_mode1_workflow.py` | Mode 1 legacy (use `create_mode1_workflow()`) |
-| `langgraph_workflows/ask_expert/ask_expert_mode2_workflow.py` | Mode 2 legacy (use `create_mode2_workflow()`) |
+| File | Status |
+|------|--------|
+| `langgraph_workflows/ask_expert/ask_expert_mode1_workflow.py` | **REMOVED** - Use `UnifiedInteractiveWorkflow` via `create_mode1_workflow()` |
+| `langgraph_workflows/ask_expert/ask_expert_mode2_workflow.py` | **REMOVED** - Use `UnifiedInteractiveWorkflow` via `create_mode2_workflow()` |
+
+> **Migration Note:** All imports have been updated to use `UnifiedInteractiveWorkflow` with
+> backward-compatible aliases (`AskExpertMode1Workflow`, `AskExpertMode2Workflow`) exported
+> from the `__init__.py` for code that still references the old class names.
 
 ### Mission/Runner System (Mode 3 & 4 ONLY)
 
@@ -1033,8 +1040,8 @@ services/
 
 ---
 
-**Report Generated:** January 27, 2025
-**Document Version:** 3.2.1 BACKEND REFACTORED
+**Report Generated:** December 15, 2025
+**Document Version:** 3.3.0 UNIFIED WORKFLOW CLEANUP
 **Status:** PRODUCTION READY
 
 *This document focuses exclusively on backend architecture, API, security, and production readiness. For frontend details, see `ASK_EXPERT_UNIFIED_FRONTEND_OVERVIEW.md`. For complete codebase structure, see `ASK_EXPERT_UNIFIED_STRUCTURE.md`.*

@@ -351,9 +351,11 @@ export function VitalStreamText({
         )}
       >
         <Streamdown
-          // Key forces React to recognize content changes when Streamdown
-          // internal memoization might miss text node updates
-          key={isStreaming ? 'streaming' : 'complete'}
+          // CRITICAL FIX: Dynamic key forces React to remount Streamdown on each token
+          // Static key 'streaming' doesn't change during streaming, so Streamdown's
+          // internal memoization prevents visual updates. Including content.length
+          // forces a remount on each content change for true real-time rendering.
+          key={isStreaming ? `streaming-${content.length}` : 'complete'}
           parseIncompleteMarkdown={isStreaming}
           // CRITICAL: isAnimating=false during streaming to prevent buffering
           // isAnimating causes Streamdown to buffer tokens for smooth animation

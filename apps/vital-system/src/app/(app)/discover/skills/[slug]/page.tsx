@@ -49,8 +49,12 @@ import {
   Star,
   Layers,
   Activity,
-  PieChart
+  PieChart,
+  ExternalLink,
+  FileText,
+  Github
 } from 'lucide-react';
+import { MarkdownRenderer } from '@/features/ask-expert/components/artifacts/renderers/MarkdownRenderer';
 
 // Skill categories with icons and colors
 const SKILL_CATEGORIES: Record<string, { icon: React.ElementType; color: string; description: string }> = {
@@ -161,6 +165,10 @@ interface Skill {
   metadata?: Record<string, unknown>;
   created_at?: string;
   updated_at?: string;
+  // Detailed documentation fields
+  detailed_description?: string;
+  github_url?: string;
+  source_url?: string;
 }
 
 interface RelatedAgent {
@@ -641,21 +649,25 @@ function SkillDetailContent({ slug }: { slug: string }) {
           ) : (
             // View Mode with Tabs
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overview" className="gap-2">
                   <BarChart3 className="h-4 w-4" />
                   Overview
                 </TabsTrigger>
+                <TabsTrigger value="documentation" className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Documentation
+                </TabsTrigger>
                 <TabsTrigger value="agents" className="gap-2">
                   <Bot className="h-4 w-4" />
-                  Related Agents
+                  Agents
                   {skillStats && skillStats.total_agents > 0 && (
                     <Badge variant="secondary" className="ml-1">{skillStats.total_agents}</Badge>
                   )}
                 </TabsTrigger>
                 <TabsTrigger value="stats" className="gap-2">
                   <PieChart className="h-4 w-4" />
-                  Statistics
+                  Stats
                 </TabsTrigger>
               </TabsList>
 
@@ -777,6 +789,76 @@ function SkillDetailContent({ slug }: { slug: string }) {
                     </div>
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* Documentation Tab */}
+              <TabsContent value="documentation" className="space-y-6">
+                {skill.detailed_description ? (
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <FileText className="h-5 w-5" />
+                          Skill Documentation
+                        </CardTitle>
+                        {skill.github_url && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                          >
+                            <a
+                              href={skill.github_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2"
+                            >
+                              <Github className="h-4 w-4" />
+                              View on GitHub
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                      <CardDescription>
+                        Detailed usage instructions, workflows, and examples
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="prose prose-stone dark:prose-invert max-w-none">
+                        <MarkdownRenderer
+                          content={skill.detailed_description}
+                          showToolbar={false}
+                          className="text-sm"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <FileText className="h-12 w-12 mx-auto text-stone-300 mb-4" />
+                      <h3 className="text-lg font-medium text-stone-700 mb-2">No Documentation Available</h3>
+                      <p className="text-stone-500 mb-4">
+                        Detailed documentation for this skill hasn&apos;t been added yet.
+                      </p>
+                      {skill.github_url && (
+                        <Button variant="outline" asChild>
+                          <a
+                            href={skill.github_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2"
+                          >
+                            <Github className="h-4 w-4" />
+                            View on GitHub
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               {/* Related Agents Tab */}

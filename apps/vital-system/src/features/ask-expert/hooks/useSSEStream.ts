@@ -40,7 +40,8 @@ export type SSEEventType =
   | 'cost'            // Cost tracking update
   | 'error'           // Error event
   | 'done'            // Stream complete
-  | 'heartbeat';      // Keep-alive
+  | 'heartbeat'       // Keep-alive
+  | 'agent_selected'; // Mode 2: Fusion auto-selected agent
 
 export interface SSEEvent<T = unknown> {
   type: SSEEventType;
@@ -190,6 +191,17 @@ export interface CostEvent {
   estimatedTotal: number;
 }
 
+export interface AgentSelectedEvent {
+  agent: {
+    id: string;
+    name: string;
+    avatar_url?: string;
+    department?: string;
+    score?: number;
+  };
+  timestamp: number;
+}
+
 export interface ErrorEvent {
   code: string;
   message: string;
@@ -231,6 +243,7 @@ export interface UseSSEStreamOptions {
   onArtifact?: (event: ArtifactEvent) => void;
   onFusion?: (event: FusionEvent) => void;
   onCost?: (event: CostEvent) => void;
+  onAgentSelected?: (event: AgentSelectedEvent) => void;  // Mode 2: Fusion auto-selected agent
   onError?: (event: ErrorEvent) => void;
   onDone?: (event: DoneEvent) => void;
   onConnectionChange?: (connected: boolean) => void;
@@ -268,6 +281,7 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
     onArtifact,
     onFusion,
     onCost,
+    onAgentSelected,
     onError,
     onDone,
     onConnectionChange,
@@ -381,6 +395,9 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
         case 'cost':
           onCost?.(event.data as CostEvent);
           break;
+        case 'agent_selected':
+          onAgentSelected?.(event.data as AgentSelectedEvent);
+          break;
         case 'error':
           onError?.(event.data as ErrorEvent);
           break;
@@ -393,7 +410,7 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
           break;
       }
     },
-    [onToken, onReasoning, onCitation, onToolCall, onDelegation, onCheckpoint, onProgress, onFusion, onCost, onError, onDone]
+    [onToken, onReasoning, onCitation, onToolCall, onDelegation, onCheckpoint, onProgress, onFusion, onCost, onAgentSelected, onError, onDone]
   );
 
   // Connect and start streaming

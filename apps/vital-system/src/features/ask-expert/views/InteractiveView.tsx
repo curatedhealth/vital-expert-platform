@@ -315,6 +315,26 @@ export function InteractiveView({
       dispatch(streamActions.error(event));
     }, []),
 
+    // Mode 2: Fusion auto-selected agent
+    // Sets selectedExpert state when backend selects an agent via Fusion Search
+    onAgentSelected: useCallback((event: { agent: { id: string; name: string; avatar_url?: string; department?: string; score?: number }; timestamp: number }) => {
+      if (mode === 'mode2' && event.agent) {
+        const fusionSelectedExpert: Expert = {
+          id: event.agent.id,
+          name: event.agent.name,
+          slug: event.agent.id,
+          domain: event.agent.department || '',
+          level: 'L2', // Default level for Fusion-selected experts
+          tier: 2,
+          status: 'active',
+          expertise: [],
+          avatar: event.agent.avatar_url,
+        };
+        setSelectedExpert(fusionSelectedExpert);
+        setPhase('conversation');
+      }
+    }, [mode]),
+
     // Auto-reconnect for robustness
     autoReconnect: true,
     maxReconnectAttempts: 3,
@@ -934,7 +954,8 @@ export function InteractiveView({
               className="flex-1 overflow-auto"
             >
               {/* Centered content wrapper for narrower, focused chat experience */}
-              <div className="max-w-4xl mx-auto p-4 space-y-4">
+              {/* flex-1 flex flex-col enables child empty states to expand with flex-1 */}
+              <div className="max-w-4xl mx-auto p-4 space-y-4 min-h-full flex flex-col">
               {/* Empty state for Mode 1 (no expert): Guide user to pick expert from sidebar */}
               {mode === 'mode1' && !selectedExpert && messages.length === 0 && (
                 <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">

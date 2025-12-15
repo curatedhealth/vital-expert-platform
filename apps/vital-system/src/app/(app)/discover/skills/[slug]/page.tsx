@@ -1,8 +1,9 @@
-// Skill Detail Page with CRUD capability
+// Skill Detail Page with CRUD capability and Related Agents
 'use client';
 
-import React, { useState, useEffect, use, Suspense } from 'react';
+import React, { useState, useEffect, use, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -42,7 +46,13 @@ import {
   Loader2,
   ExternalLink,
   Copy,
-  Check
+  Check,
+  Bot,
+  TrendingUp,
+  Star,
+  Layers,
+  Activity,
+  PieChart
 } from 'lucide-react';
 
 // Skill categories with icons and colors
@@ -156,6 +166,64 @@ interface Skill {
   updated_at?: string;
 }
 
+interface RelatedAgent {
+  id: string;
+  name: string;
+  display_name?: string;
+  slug: string;
+  tier?: string;
+  status?: string;
+  avatar_url?: string;
+  description?: string;
+  knowledge_domains?: string[];
+  is_active?: boolean;
+  proficiency_level?: string;
+  is_primary?: boolean;
+  usage_frequency?: string;
+  is_required?: boolean;
+  assigned_at?: string;
+}
+
+interface SkillStats {
+  total_agents: number;
+  primary_agents: number;
+  required_by: number;
+  active_agents: number;
+  proficiency_distribution: Record<string, number>;
+  usage_frequency_distribution: Record<string, number>;
+  tier_distribution: Record<string, number>;
+}
+
+// Proficiency level colors
+const PROFICIENCY_COLORS: Record<string, string> = {
+  beginner: 'bg-slate-100 text-slate-800',
+  basic: 'bg-slate-100 text-slate-800',
+  intermediate: 'bg-blue-100 text-blue-800',
+  advanced: 'bg-purple-100 text-purple-800',
+  expert: 'bg-amber-100 text-amber-800',
+  unspecified: 'bg-stone-100 text-stone-600',
+};
+
+// Usage frequency colors
+const USAGE_COLORS: Record<string, string> = {
+  always: 'bg-green-100 text-green-800',
+  frequent: 'bg-blue-100 text-blue-800',
+  occasional: 'bg-amber-100 text-amber-800',
+  rare: 'bg-orange-100 text-orange-800',
+  on_demand: 'bg-purple-100 text-purple-800',
+  unspecified: 'bg-stone-100 text-stone-600',
+};
+
+// Tier badge colors
+const TIER_COLORS: Record<string, string> = {
+  tier_1: 'bg-emerald-100 text-emerald-800',
+  tier_2: 'bg-blue-100 text-blue-800',
+  tier_3: 'bg-purple-100 text-purple-800',
+  tier_4: 'bg-amber-100 text-amber-800',
+  tier_5: 'bg-rose-100 text-rose-800',
+  unspecified: 'bg-stone-100 text-stone-600',
+};
+
 // Helper to convert complexity score to level
 const getComplexityLevel = (score: number): 'basic' | 'intermediate' | 'advanced' | 'expert' => {
   if (score <= 3) return 'basic';
@@ -188,9 +256,22 @@ function SkillDetailContent({ slug }: { slug: string }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Related agents state
+  const [relatedAgents, setRelatedAgents] = useState<RelatedAgent[]>([]);
+  const [skillStats, setSkillStats] = useState<SkillStats | null>(null);
+  const [loadingAgents, setLoadingAgents] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+
   useEffect(() => {
     loadSkill();
   }, [slug]);
+
+  // Load related agents when skill is loaded
+  useEffect(() => {
+    if (skill?.id) {
+      loadRelatedAgents();
+    }
+  }, [skill?.id]);
 
   // Enter edit mode after skill is loaded if query param is set
   useEffect(() => {
@@ -224,6 +305,27 @@ function SkillDetailContent({ slug }: { slug: string }) {
       setError('Failed to load skill');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRelatedAgents = async () => {
+    try {
+      setLoadingAgents(true);
+
+      const response = await fetch(`/api/skills/${slug}/agents`);
+
+      if (!response.ok) {
+        console.error('Failed to load related agents');
+        return;
+      }
+
+      const data = await response.json();
+      setRelatedAgents(data.agents || []);
+      setSkillStats(data.stats || null);
+    } catch (err) {
+      console.error('Error loading related agents:', err);
+    } finally {
+      setLoadingAgents(false);
     }
   };
 
@@ -563,93 +665,338 @@ function SkillDetailContent({ slug }: { slug: string }) {
               </CardContent>
             </Card>
           ) : (
-            // View Mode
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Description</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-stone-700 dark:text-stone-300 whitespace-pre-wrap">
-                    {skill.description || 'No description provided.'}
-                  </p>
-                </CardContent>
-              </Card>
+            // View Mode with Tabs
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="overview" className="gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="agents" className="gap-2">
+                  <Bot className="h-4 w-4" />
+                  Related Agents
+                  {skillStats && skillStats.total_agents > 0 && (
+                    <Badge variant="secondary" className="ml-1">{skillStats.total_agents}</Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="stats" className="gap-2">
+                  <PieChart className="h-4 w-4" />
+                  Statistics
+                </TabsTrigger>
+              </TabsList>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Implementation Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label className="text-stone-500">Type</Label>
-                      <p className="font-medium capitalize">{skill.implementation_type?.replace('_', ' ') || 'Unknown'}</p>
-                    </div>
-                    {skill.implementation_ref && (
-                      <div>
-                        <Label className="text-stone-500">Reference</Label>
-                        <p className="font-mono text-sm bg-stone-100 dark:bg-stone-800 p-2 rounded">
-                          {skill.implementation_ref}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Complexity</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <div className="text-4xl font-bold">{skill.complexity_score}</div>
-                      <div className="text-stone-500">/10</div>
-                      <Badge className={complexityBadge.color}>
-                        {complexityBadge.label}
-                      </Badge>
-                    </div>
-                    <div className="w-full bg-stone-200 dark:bg-stone-700 rounded-full h-3">
-                      <div
-                        className="bg-blue-600 h-3 rounded-full transition-all"
-                        style={{ width: `${(skill.complexity_score / 10) * 100}%` }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {skill.metadata && Object.keys(skill.metadata).length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Metadata</CardTitle>
+                    <CardTitle>Description</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <pre className="text-sm bg-stone-100 dark:bg-stone-800 p-4 rounded overflow-x-auto">
-                      {JSON.stringify(skill.metadata, null, 2)}
-                    </pre>
+                    <p className="text-stone-700 dark:text-stone-300 whitespace-pre-wrap">
+                      {skill.description || 'No description provided.'}
+                    </p>
                   </CardContent>
                 </Card>
-              )}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Timestamps</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <Label className="text-stone-500">Created</Label>
-                      <p>{skill.created_at ? new Date(skill.created_at).toLocaleString() : 'N/A'}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Implementation Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label className="text-stone-500">Type</Label>
+                        <p className="font-medium capitalize">{skill.implementation_type?.replace('_', ' ') || 'Unknown'}</p>
+                      </div>
+                      {skill.implementation_ref && (
+                        <div>
+                          <Label className="text-stone-500">Reference</Label>
+                          <p className="font-mono text-sm bg-stone-100 dark:bg-stone-800 p-2 rounded">
+                            {skill.implementation_ref}
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Complexity</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <div className="text-4xl font-bold">{skill.complexity_score}</div>
+                        <div className="text-stone-500">/10</div>
+                        <Badge className={complexityBadge.color}>
+                          {complexityBadge.label}
+                        </Badge>
+                      </div>
+                      <div className="w-full bg-stone-200 dark:bg-stone-700 rounded-full h-3">
+                        <div
+                          className="bg-blue-600 h-3 rounded-full transition-all"
+                          style={{ width: `${(skill.complexity_score / 10) * 100}%` }}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Quick Stats Summary */}
+                {skillStats && skillStats.total_agents > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5" />
+                        Usage Summary
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center p-4 bg-stone-50 dark:bg-stone-800/50 rounded-lg">
+                          <div className="text-3xl font-bold text-purple-600">{skillStats.total_agents}</div>
+                          <div className="text-sm text-stone-500">Total Agents</div>
+                        </div>
+                        <div className="text-center p-4 bg-stone-50 dark:bg-stone-800/50 rounded-lg">
+                          <div className="text-3xl font-bold text-amber-600">{skillStats.primary_agents}</div>
+                          <div className="text-sm text-stone-500">Primary Skill</div>
+                        </div>
+                        <div className="text-center p-4 bg-stone-50 dark:bg-stone-800/50 rounded-lg">
+                          <div className="text-3xl font-bold text-rose-600">{skillStats.required_by}</div>
+                          <div className="text-sm text-stone-500">Required By</div>
+                        </div>
+                        <div className="text-center p-4 bg-stone-50 dark:bg-stone-800/50 rounded-lg">
+                          <div className="text-3xl font-bold text-emerald-600">{skillStats.active_agents}</div>
+                          <div className="text-sm text-stone-500">Active Agents</div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {skill.metadata && Object.keys(skill.metadata).length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Metadata</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <pre className="text-sm bg-stone-100 dark:bg-stone-800 p-4 rounded overflow-x-auto">
+                        {JSON.stringify(skill.metadata, null, 2)}
+                      </pre>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Timestamps</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <Label className="text-stone-500">Created</Label>
+                        <p>{skill.created_at ? new Date(skill.created_at).toLocaleString() : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-stone-500">Last Updated</Label>
+                        <p>{skill.updated_at ? new Date(skill.updated_at).toLocaleString() : 'N/A'}</p>
+                      </div>
                     </div>
-                    <div>
-                      <Label className="text-stone-500">Last Updated</Label>
-                      <p>{skill.updated_at ? new Date(skill.updated_at).toLocaleString() : 'N/A'}</p>
-                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Related Agents Tab */}
+              <TabsContent value="agents" className="space-y-6">
+                {loadingAgents ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+                    <span className="ml-2 text-stone-500">Loading related agents...</span>
                   </div>
-                </CardContent>
-              </Card>
-            </>
+                ) : relatedAgents.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <Bot className="h-12 w-12 mx-auto text-stone-300 mb-4" />
+                      <h3 className="text-lg font-medium text-stone-700 mb-2">No Agents Using This Skill</h3>
+                      <p className="text-stone-500">
+                        This skill hasn&apos;t been assigned to any agents yet.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-medium text-stone-700">
+                        {relatedAgents.length} Agent{relatedAgents.length !== 1 ? 's' : ''} with this skill
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {relatedAgents.map((agent) => (
+                        <Card key={agent.id} className="hover:border-purple-300 transition-colors">
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <Avatar className="h-12 w-12">
+                                <AvatarImage src={agent.avatar_url || undefined} alt={agent.display_name || agent.name} />
+                                <AvatarFallback className="bg-purple-100 text-purple-700">
+                                  {(agent.display_name || agent.name || 'A').slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <Link
+                                  href={`/agents/${agent.slug}`}
+                                  className="font-medium text-stone-800 hover:text-purple-600 truncate block"
+                                >
+                                  {agent.display_name || agent.name}
+                                </Link>
+                                <p className="text-sm text-stone-500 line-clamp-2 mt-1">
+                                  {agent.description || 'No description'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 mt-4">
+                              {agent.tier && (
+                                <Badge className={TIER_COLORS[agent.tier.toLowerCase().replace(' ', '_')] || TIER_COLORS.unspecified}>
+                                  <Layers className="h-3 w-3 mr-1" />
+                                  {agent.tier}
+                                </Badge>
+                              )}
+                              {agent.proficiency_level && (
+                                <Badge className={PROFICIENCY_COLORS[agent.proficiency_level.toLowerCase()] || PROFICIENCY_COLORS.unspecified}>
+                                  <Star className="h-3 w-3 mr-1" />
+                                  {agent.proficiency_level}
+                                </Badge>
+                              )}
+                              {agent.is_primary && (
+                                <Badge className="bg-amber-100 text-amber-800">
+                                  <Star className="h-3 w-3 mr-1 fill-current" />
+                                  Primary
+                                </Badge>
+                              )}
+                              {agent.is_required && (
+                                <Badge className="bg-rose-100 text-rose-800">
+                                  <AlertCircle className="h-3 w-3 mr-1" />
+                                  Required
+                                </Badge>
+                              )}
+                            </div>
+
+                            {agent.usage_frequency && (
+                              <div className="mt-3 pt-3 border-t">
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-stone-500">Usage Frequency</span>
+                                  <Badge variant="outline" className={USAGE_COLORS[agent.usage_frequency.toLowerCase()] || USAGE_COLORS.unspecified}>
+                                    <Activity className="h-3 w-3 mr-1" />
+                                    {agent.usage_frequency.replace('_', ' ')}
+                                  </Badge>
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </TabsContent>
+
+              {/* Statistics Tab */}
+              <TabsContent value="stats" className="space-y-6">
+                {!skillStats || skillStats.total_agents === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <PieChart className="h-12 w-12 mx-auto text-stone-300 mb-4" />
+                      <h3 className="text-lg font-medium text-stone-700 mb-2">No Statistics Available</h3>
+                      <p className="text-stone-500">
+                        Statistics will appear once agents are assigned to this skill.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    {/* Proficiency Distribution */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Star className="h-5 w-5" />
+                          Proficiency Distribution
+                        </CardTitle>
+                        <CardDescription>
+                          How agents rate their proficiency with this skill
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {Object.entries(skillStats.proficiency_distribution).map(([level, count]) => {
+                          const percentage = (count / skillStats.total_agents) * 100;
+                          return (
+                            <div key={level} className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="capitalize font-medium">{level}</span>
+                                <span className="text-stone-500">{count} agent{count !== 1 ? 's' : ''} ({percentage.toFixed(0)}%)</span>
+                              </div>
+                              <Progress value={percentage} className="h-2" />
+                            </div>
+                          );
+                        })}
+                      </CardContent>
+                    </Card>
+
+                    {/* Usage Frequency Distribution */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Activity className="h-5 w-5" />
+                          Usage Frequency Distribution
+                        </CardTitle>
+                        <CardDescription>
+                          How often agents use this skill
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {Object.entries(skillStats.usage_frequency_distribution).map(([freq, count]) => {
+                          const percentage = (count / skillStats.total_agents) * 100;
+                          return (
+                            <div key={freq} className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="capitalize font-medium">{freq.replace('_', ' ')}</span>
+                                <span className="text-stone-500">{count} agent{count !== 1 ? 's' : ''} ({percentage.toFixed(0)}%)</span>
+                              </div>
+                              <Progress value={percentage} className="h-2" />
+                            </div>
+                          );
+                        })}
+                      </CardContent>
+                    </Card>
+
+                    {/* Tier Distribution */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Layers className="h-5 w-5" />
+                          Tier Distribution
+                        </CardTitle>
+                        <CardDescription>
+                          Distribution of agents by tier
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {Object.entries(skillStats.tier_distribution).map(([tier, count]) => {
+                          const percentage = (count / skillStats.total_agents) * 100;
+                          return (
+                            <div key={tier} className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="capitalize font-medium">{tier.replace('_', ' ')}</span>
+                                <span className="text-stone-500">{count} agent{count !== 1 ? 's' : ''} ({percentage.toFixed(0)}%)</span>
+                              </div>
+                              <Progress value={percentage} className="h-2" />
+                            </div>
+                          );
+                        })}
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
+              </TabsContent>
+            </Tabs>
           )}
         </div>
       </div>

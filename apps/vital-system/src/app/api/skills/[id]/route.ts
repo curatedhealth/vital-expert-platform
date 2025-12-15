@@ -17,6 +17,10 @@ interface SkillUpdate {
   complexity_score?: number;
   is_active?: boolean;
   metadata?: Record<string, unknown>;
+  // Detailed documentation fields
+  detailed_description?: string;
+  github_url?: string;
+  source_url?: string;
 }
 
 /**
@@ -159,6 +163,10 @@ export const PUT = withAgentAuth(async (
     if (body.complexity_score !== undefined) updateData.complexity_score = body.complexity_score;
     if (body.is_active !== undefined) updateData.is_active = body.is_active;
     if (body.metadata !== undefined) updateData.metadata = body.metadata;
+    // Detailed documentation fields
+    if (body.detailed_description !== undefined) updateData.detailed_description = body.detailed_description;
+    if (body.github_url !== undefined) updateData.github_url = body.github_url;
+    if (body.source_url !== undefined) updateData.source_url = body.source_url;
 
     // Add updated_at timestamp
     updateData.updated_at = new Date().toISOString();

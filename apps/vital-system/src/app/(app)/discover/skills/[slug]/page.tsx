@@ -644,6 +644,66 @@ function SkillDetailContent({ slug }: { slug: string }) {
                     onCheckedChange={(checked) => setEditForm({ ...editForm, is_active: checked })}
                   />
                 </div>
+
+                {/* Divider */}
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Documentation & Links
+                  </h3>
+                </div>
+
+                {/* GitHub URL */}
+                <div className="space-y-2">
+                  <Label htmlFor="github_url">GitHub URL</Label>
+                  <Input
+                    id="github_url"
+                    value={editForm.github_url || ''}
+                    onChange={(e) => setEditForm({ ...editForm, github_url: e.target.value })}
+                    placeholder="https://github.com/..."
+                  />
+                  <p className="text-xs text-stone-500">Link to the GitHub repository for this skill</p>
+                </div>
+
+                {/* Source URL */}
+                <div className="space-y-2">
+                  <Label htmlFor="source_url">Source URL</Label>
+                  <Input
+                    id="source_url"
+                    value={editForm.source_url || ''}
+                    onChange={(e) => setEditForm({ ...editForm, source_url: e.target.value })}
+                    placeholder="https://..."
+                  />
+                  <p className="text-xs text-stone-500">External documentation or source link</p>
+                </div>
+
+                {/* Detailed Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="detailed_description">
+                    Detailed Documentation (Markdown)
+                  </Label>
+                  <Textarea
+                    id="detailed_description"
+                    value={editForm.detailed_description || ''}
+                    onChange={(e) => setEditForm({ ...editForm, detailed_description: e.target.value })}
+                    placeholder="# Skill Title
+
+## Overview
+Describe what this skill does...
+
+## Features
+- Feature 1
+- Feature 2
+
+## Usage
+Code examples and instructions..."
+                    rows={20}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-stone-500">
+                    Full markdown documentation with examples, code snippets, and usage instructions
+                  </p>
+                </div>
               </CardContent>
             </Card>
           ) : (

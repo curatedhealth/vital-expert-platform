@@ -388,6 +388,16 @@ async def stream_sse_events_realtime(compiled_graph, initial_state: Dict[str, An
         # Phase 2: Stream LLM response token-by-token
         llm_config = llm_streaming_config_captured or final_state.get('llm_streaming_config', {})
 
+        # DEBUG: Log what was captured during workflow execution
+        logger.info(
+            "phase2_llm_config_source",
+            captured_from_node=bool(llm_streaming_config_captured),
+            captured_from_state='llm_streaming_config' in final_state,
+            captured_config_keys=list(llm_streaming_config_captured.keys()) if llm_streaming_config_captured else [],
+            state_config_keys=list(final_state.get('llm_streaming_config', {}).keys()) if final_state.get('llm_streaming_config') else [],
+            final_state_keys=list(final_state.keys())[:15],
+        )
+
         # Validate llm_config has ALL required fields for streaming
         has_provider = bool(llm_config.get('provider')) if llm_config else False
         has_system_prompt = bool(llm_config.get('system_prompt')) if llm_config else False
@@ -403,6 +413,9 @@ async def stream_sse_events_realtime(compiled_graph, initial_state: Dict[str, An
             can_stream=can_stream,
             model=llm_config.get('model') if llm_config else None,
             config_keys=list(llm_config.keys()) if llm_config else [],
+            provider_value=llm_config.get('provider') if llm_config else None,
+            user_query_preview=llm_config.get('user_query', '')[:50] if llm_config else None,
+            system_prompt_length=len(llm_config.get('system_prompt', '')) if llm_config else 0,
         )
 
         if can_stream:
@@ -441,11 +454,31 @@ async def stream_sse_events_realtime(compiled_graph, initial_state: Dict[str, An
             logger.warning(
                 "no_llm_config_fallback",
                 missing_fields=missing,
-                state_keys=list(final_state.keys())[:10],
+                state_keys=list(final_state.keys())[:20],  # More keys for debugging
+                has_agent_response='agent_response' in final_state,
+                agent_response_length=len(final_state.get('agent_response', '')) if final_state.get('agent_response') else 0,
+                llm_config_keys=list(llm_config.keys()) if llm_config else [],
             )
 
             yield sse.thinking("generate_response", "running", "Generating response (fallback)", f"Missing: {', '.join(missing)}")
-            full_response = final_state.get('agent_response', 'No response generated.')
+
+            # FIXED: Better fallback with actual default message if agent_response is empty
+            full_response = final_state.get('agent_response') or ''
+            if not full_response.strip():
+                # Generate a helpful error message if no response was generated
+                full_response = (
+                    "I apologize, but I wasn't able to generate a response. "
+                    "This may be due to a configuration issue. "
+                    f"Missing LLM config fields: {', '.join(missing) if missing else 'none'}. "
+                    "Please try again or contact support if the issue persists."
+                )
+                logger.error(
+                    "no_response_generated",
+                    missing_fields=missing,
+                    workflow_completed=bool(final_state),
+                    has_llm_config=bool(llm_config),
+                )
+
             for word in full_response.split():
                 tokens_count += 1
                 yield sse.token(word + ' ', tokens_count)

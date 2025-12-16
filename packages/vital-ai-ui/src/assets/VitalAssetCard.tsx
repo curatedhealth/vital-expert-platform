@@ -45,6 +45,9 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  Copy,
+  Bookmark,
+  MessageSquarePlus,
   type LucideIcon,
 } from 'lucide-react';
 import type {
@@ -352,6 +355,9 @@ const RichCard: React.FC<VitalAssetCardProps> = ({
   onTest,
   onViewDetails,
   onAddTo,
+  onAddToChat,
+  onDuplicate,
+  onBookmark,
 }) => {
   const description = getAssetDescription(asset);
   const categoryConfig = getCategoryConfig(asset.category);
@@ -493,6 +499,65 @@ const RichCard: React.FC<VitalAssetCardProps> = ({
               View Details
             </Button>
             <div className="flex items-center gap-2">
+              {/* Icon action buttons */}
+              <TooltipProvider>
+                <div className="flex items-center gap-1">
+                  {onBookmark && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            onBookmark(asset);
+                          }}
+                        >
+                          <Bookmark className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Bookmark</TooltipContent>
+                    </Tooltip>
+                  )}
+                  {onDuplicate && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            onDuplicate(asset);
+                          }}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Duplicate</TooltipContent>
+                    </Tooltip>
+                  )}
+                  {onAddToChat && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            onAddToChat(asset);
+                          }}
+                        >
+                          <MessageSquarePlus className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Add to Chat</TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              </TooltipProvider>
               {onTest && (
                 <Button
                   variant="outline"

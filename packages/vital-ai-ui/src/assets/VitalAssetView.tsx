@@ -152,6 +152,12 @@ export interface VitalAssetViewProps {
   onAssetClick?: (asset: VitalAsset) => void;
   onEdit?: (asset: VitalAsset) => void;
   onDelete?: (asset: VitalAsset) => void;
+  /** Called when adding agent to chat (agent-specific) */
+  onAddToChat?: (asset: VitalAsset) => void;
+  /** Called when duplicating asset */
+  onDuplicate?: (asset: VitalAsset) => void;
+  /** Called when bookmarking asset */
+  onBookmark?: (asset: VitalAsset) => void;
 }
 
 // ============================================================================
@@ -449,6 +455,9 @@ export const VitalAssetView: React.FC<VitalAssetViewProps> = ({
   onAssetClick,
   onEdit,
   onDelete,
+  onAddToChat,
+  onDuplicate,
+  onBookmark,
 }) => {
   // Internal state for uncontrolled mode
   const [internalViewMode, setInternalViewMode] = React.useState<ExtendedViewMode>(defaultView);
@@ -555,6 +564,9 @@ export const VitalAssetView: React.FC<VitalAssetViewProps> = ({
       onAssetClick,
       onEdit,
       onDelete,
+      onAddToChat,
+      onDuplicate,
+      onBookmark,
     };
 
     switch (viewMode) {

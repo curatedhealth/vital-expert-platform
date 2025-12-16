@@ -26,6 +26,7 @@ import { useAgentActions } from '@/features/agents/hooks';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
 import { ActiveFiltersBar } from '@/components/shared/ActiveFiltersBar';
+import { useUserRole } from '@/hooks/useUserRole';
 
 // Comparison components
 import {
@@ -66,6 +67,7 @@ function AgentsPageContent() {
   const queryClient = useQueryClient();
   const { user, userProfile } = useAuth();
   const { agents } = useAgentsStore();
+  const { isSuperAdmin } = useUserRole();
 
   // Filter context
   const {
@@ -185,6 +187,33 @@ function AgentsPageContent() {
     }
   }, [filteredAgents, setEditingAgent, setShowEnhancedEditModal]);
 
+  // Handler for asset add to chat
+  const handleAssetAddToChat = useCallback((asset: VitalAsset) => {
+    const agent = filteredAgents.find((a: Agent) => a.id === asset.id);
+    if (agent) {
+      handleAddAgentToChat(agent, user?.id);
+    }
+  }, [filteredAgents, handleAddAgentToChat, user?.id]);
+
+  // Handler for asset duplicate
+  const handleAssetDuplicate = useCallback((asset: VitalAsset) => {
+    const agent = filteredAgents.find((a: Agent) => a.id === asset.id);
+    if (agent) {
+      // Set up for creating a copy of the agent
+      setEditingAgent({ ...agent, id: '', name: `${agent.name} (Copy)`, display_name: `${agent.display_name || agent.name} (Copy)` });
+      setShowCreateModal(true);
+    }
+  }, [filteredAgents, setEditingAgent, setShowCreateModal]);
+
+  // Handler for asset bookmark (placeholder - can be expanded later)
+  const handleAssetBookmark = useCallback((asset: VitalAsset) => {
+    const agent = filteredAgents.find((a: Agent) => a.id === asset.id);
+    if (agent) {
+      // TODO: Implement bookmark functionality
+      console.log('Bookmark agent:', agent.name);
+    }
+  }, [filteredAgents]);
+
   // Build active filters for display
   const activeFiltersForBar = useMemo(() => {
     const filtersList: { key: string; value: string; label: string }[] = [];
@@ -276,13 +305,16 @@ function AgentsPageContent() {
               isAdmin={isAdmin}
               onAssetClick={handleAssetClick}
               onEdit={isAdmin ? handleAssetEdit : undefined}
+              onAddToChat={!isSuperAdmin() ? handleAssetAddToChat : undefined}
+              onDuplicate={handleAssetDuplicate}
+              onBookmark={handleAssetBookmark}
             />
           )}
 
           {activeTab === 'list' && (
             <AgentsBoard
               onAgentSelect={handleAgentSelect}
-              onAddToChat={(agent) => handleAddAgentToChat(agent, user?.id)}
+              onAddToChat={!isSuperAdmin() ? (agent) => handleAddAgentToChat(agent, user?.id) : undefined}
               showCreateButton={false}
               hiddenControls={true}
               searchQuery={searchQuery}
@@ -297,7 +329,7 @@ function AgentsPageContent() {
           {activeTab === 'table' && (
             <AgentsTable
               onAgentSelect={handleAgentSelect}
-              onAddToChat={(agent) => handleAddAgentToChat(agent, user?.id)}
+              onAddToChat={!isSuperAdmin() ? (agent) => handleAddAgentToChat(agent, user?.id) : undefined}
             />
           )}
 

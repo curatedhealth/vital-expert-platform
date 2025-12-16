@@ -140,9 +140,25 @@ export interface VitalGenericAsset extends VitalAssetBase {
 }
 
 /**
+ * Mission asset type for mission templates
+ */
+export interface VitalMissionAsset extends VitalAssetBase {
+  asset_type: 'mission';
+  family?: string;
+  complexity?: 'low' | 'easy' | 'medium' | 'hard' | 'high' | 'expert' | 'critical';
+  estimated_duration_min?: number;
+  estimated_duration_max?: number;
+  estimated_cost_min?: number;
+  estimated_cost_max?: number;
+  min_agents?: number;
+  max_agents?: number;
+  example_queries?: string[];
+}
+
+/**
  * Union type for all asset types
  */
-export type VitalAsset = VitalToolAsset | VitalSkillAsset | VitalWorkflowAsset | VitalPromptAsset | VitalGenericAsset;
+export type VitalAsset = VitalToolAsset | VitalSkillAsset | VitalWorkflowAsset | VitalPromptAsset | VitalGenericAsset | VitalMissionAsset;
 
 /**
  * Asset category configuration
@@ -213,6 +229,12 @@ export interface VitalAssetCardActions {
   onViewDetails?: (asset: VitalAsset) => void;
   /** Called when adding to agent/workflow */
   onAddTo?: (asset: VitalAsset) => void;
+  /** Called when adding agent to chat (agent-specific) */
+  onAddToChat?: (asset: VitalAsset) => void;
+  /** Called when duplicating asset */
+  onDuplicate?: (asset: VitalAsset) => void;
+  /** Called when bookmarking asset */
+  onBookmark?: (asset: VitalAsset) => void;
 }
 
 /**
@@ -254,6 +276,12 @@ export interface VitalAssetGridProps {
   onAssetClick?: (asset: VitalAsset) => void;
   onEdit?: (asset: VitalAsset) => void;
   onDelete?: (asset: VitalAsset) => void;
+  /** Called when adding agent to chat (agent-specific) */
+  onAddToChat?: (asset: VitalAsset) => void;
+  /** Called when duplicating asset */
+  onDuplicate?: (asset: VitalAsset) => void;
+  /** Called when bookmarking asset */
+  onBookmark?: (asset: VitalAsset) => void;
 }
 
 /**

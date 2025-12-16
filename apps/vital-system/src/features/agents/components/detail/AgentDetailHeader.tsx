@@ -18,6 +18,7 @@ import {
   Building2,
   Briefcase,
   Brain,
+  Plus,
 } from 'lucide-react';
 import { type Agent } from '@/lib/stores/agents-store';
 import { LEVEL_COLORS, agentLevelConfig } from '../../hooks/useAgentHierarchy';
@@ -25,16 +26,18 @@ import { LEVEL_COLORS, agentLevelConfig } from '../../hooks/useAgentHierarchy';
 interface AgentDetailHeaderProps {
   agent: Agent;
   onAddToCompare?: () => void;
+  onAddToChat?: () => void;
 }
 
-export function AgentDetailHeader({ agent, onAddToCompare }: AgentDetailHeaderProps) {
+export function AgentDetailHeader({ agent, onAddToCompare, onAddToChat }: AgentDetailHeaderProps) {
   const router = useRouter();
   const levelNumber = agent.tier || 2;
   const levelInfo = agentLevelConfig[levelNumber as keyof typeof agentLevelConfig];
   const headerColors = LEVEL_COLORS[levelNumber] || LEVEL_COLORS[2];
 
   const handleStartChat = () => {
-    router.push(`/chat?agent=${agent.id}`);
+    // Navigate to Mode 1 Expert Chat with the agent pre-selected
+    router.push(`/ask-expert/interactive/mode1?agent=${agent.id}`);
   };
 
   const handleEdit = () => {
@@ -159,6 +162,16 @@ export function AgentDetailHeader({ agent, onAddToCompare }: AgentDetailHeaderPr
 
           {/* Action buttons */}
           <div className="flex items-center gap-3">
+            {onAddToChat && (
+              <Button
+                variant="outline"
+                onClick={onAddToChat}
+                className="bg-white/80 hover:bg-white shadow-sm border-stone-200"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add to Chat
+              </Button>
+            )}
             {onAddToCompare && (
               <Button
                 variant="outline"

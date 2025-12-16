@@ -144,6 +144,9 @@ export const VitalAssetGrid: React.FC<VitalAssetGridProps> = ({
   onAssetClick,
   onEdit,
   onDelete,
+  onAddToChat,
+  onDuplicate,
+  onBookmark,
 }) => {
   // Show skeleton loading state
   if (loading) {
@@ -174,6 +177,9 @@ export const VitalAssetGrid: React.FC<VitalAssetGridProps> = ({
           onClick={onAssetClick}
           onEdit={onEdit}
           onDelete={onDelete}
+          onAddToChat={onAddToChat}
+          onDuplicate={onDuplicate}
+          onBookmark={onBookmark}
           showActions
         />
       ))}

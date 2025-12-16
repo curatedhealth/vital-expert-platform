@@ -54,9 +54,11 @@ import {
 import { AgentNetworkGraph } from '@/components/agents/AgentNetworkGraph';
 
 // Hooks
-import { useAgentDetail } from '@/features/agents/hooks';
+import { useAgentDetail, useAgentActions } from '@/features/agents/hooks';
 import { agentLevelConfig } from '@/features/agents/hooks/useAgentHierarchy';
 import { useAgentsStore } from '@/lib/stores/agents-store';
+import { useAuth } from '@/lib/auth/supabase-auth-context';
+import { useUserRole } from '@/hooks/useUserRole';
 
 // Helper to convert tier number to L1-L5 level format for Cytoscape
 const tierToLevel = (tier: number | undefined): 'L1' | 'L2' | 'L3' | 'L4' | 'L5' => {
@@ -77,11 +79,14 @@ function AgentDetailContent() {
   const params = useParams();
   const router = useRouter();
   const slug = params.slug as string;
+  const { user } = useAuth();
+  const { isSuperAdmin } = useUserRole();
 
   // Use the custom hook for agent data
   const { agent, relatedAgents, loading, error } = useAgentDetail(slug);
   const { agents } = useAgentsStore();
   const { addToComparison, comparisonAgents } = useAgentComparison();
+  const { handleAddAgentToChat } = useAgentActions();
 
   // Hierarchy view mode: 'tree' (React Flow) or 'network' (Cytoscape)
   const [hierarchyViewMode, setHierarchyViewMode] = useState<'tree' | 'network'>('network');
@@ -109,6 +114,13 @@ function AgentDetailContent() {
       addToComparison(agent as any);
     }
   }, [agent, addToComparison]);
+
+  // Handle adding to chat list
+  const handleAddToChat = useCallback(() => {
+    if (agent) {
+      handleAddAgentToChat(agent as any, user?.id);
+    }
+  }, [agent, handleAddAgentToChat, user?.id]);
 
   // Loading state
   if (loading || (!agent && !error)) {
@@ -153,13 +165,18 @@ function AgentDetailContent() {
   const satisfaction = (agent as any).satisfaction_rating ?? (agent as any).rating ?? (85 + (idHash % 15));
 
   const handleStartChat = () => {
-    router.push(`/chat?agent=${agent.id}`);
+    // Navigate to Mode 1 Expert Chat with the agent pre-selected
+    router.push(`/ask-expert/interactive/mode1?agent=${agent.id}`);
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden h-full">
       {/* Hero Header */}
-      <AgentDetailHeader agent={agent} onAddToCompare={handleAddToCompare} />
+      <AgentDetailHeader
+        agent={agent}
+        onAddToCompare={handleAddToCompare}
+        onAddToChat={!isSuperAdmin() ? handleAddToChat : undefined}
+      />
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">

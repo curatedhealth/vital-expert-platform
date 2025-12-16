@@ -338,11 +338,11 @@ export function VitalMissionExecution({
   // Limit displayed events unless showing all
   const displayedEvents = showAllEvents ? events : events.slice(-20);
 
-  // Status indicator
+  // Status indicator - NO SPINNERS in header (Activity Feed shows detailed progress)
   const statusConfig = useMemo(() => {
     switch (status) {
       case 'initializing':
-        return { icon: <Loader2 className="w-4 h-4 animate-spin" />, label: 'Initializing...', color: 'text-slate-600' };
+        return { icon: <Play className="w-4 h-4" />, label: 'Starting', color: 'text-purple-600' };
       case 'executing':
         return { icon: <Play className="w-4 h-4" />, label: 'Executing', color: 'text-green-600' };
       case 'paused':
@@ -356,7 +356,7 @@ export function VitalMissionExecution({
       case 'cancelled':
         return { icon: <Square className="w-4 h-4" />, label: 'Cancelled', color: 'text-slate-600' };
       default:
-        return { icon: <Loader2 className="w-4 h-4" />, label: 'Unknown', color: 'text-slate-600' };
+        return { icon: <Play className="w-4 h-4" />, label: 'Ready', color: 'text-slate-600' };
     }
   }, [status]);
 

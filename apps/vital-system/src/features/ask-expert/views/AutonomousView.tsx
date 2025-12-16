@@ -40,6 +40,11 @@ import {
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@vital/utils';
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '@/components/ui/resizable';
 
 // ============================================================================
 // SHARED COMPONENTS FROM @vital/ai-ui
@@ -481,8 +486,34 @@ export function AutonomousView({
 
   // Map stream state to execution events for VitalMissionExecution
   // Shows meaningful step events, NOT raw streaming tokens
+  // CRITICAL: Show events from the FIRST token - user should never see empty feed
   const executionEvents: MissionEvent[] = useMemo(() => {
     const events: MissionEvent[] = [];
+
+    // IMMEDIATE FEEDBACK: Add status-based events so Activity Feed is never empty
+    // This ensures user sees activity from the very first moment
+    // Handle all pre-streaming states to eliminate any delay/empty feed
+    if (streamState.status === 'idle' || streamState.status === 'connecting') {
+      events.push({
+        id: 'init-connecting',
+        type: 'thinking',
+        timestamp: new Date(),
+        message: streamState.status === 'idle'
+          ? 'Preparing mission...'
+          : 'Connecting to AI engine...',
+        agentName: 'System',
+      });
+    }
+
+    if (streamState.status === 'thinking' && streamState.reasoning.length === 0) {
+      events.push({
+        id: 'init-thinking',
+        type: 'thinking',
+        timestamp: new Date(),
+        message: 'AI is analyzing your request...',
+        agentName: 'Orchestrator',
+      });
+    }
 
     // Add reasoning steps as events - these are meaningful AI thinking steps
     streamState.reasoning.forEach((step) => {
@@ -514,6 +545,18 @@ export function AutonomousView({
       });
     });
 
+    // Add plan received event - shows immediately when plan arrives
+    if (streamState.plan?.plan && streamState.plan.plan.length > 0) {
+      events.push({
+        id: 'plan-received',
+        type: 'progress_update',
+        timestamp: new Date(),
+        message: `Mission plan ready: ${streamState.plan.plan.length} steps`,
+        agentName: 'Orchestrator',
+        details: { stepCount: streamState.plan.plan.length },
+      });
+    }
+
     // Add progress update as current phase indicator
     if (streamState.progress?.stage) {
       events.push({
@@ -525,19 +568,21 @@ export function AutonomousView({
       });
     }
 
-    // Show writing status if content is streaming (but not the raw content)
-    if (streamState.content && streamState.status === 'streaming') {
+    // Show streaming status from the FIRST token - don't wait for content accumulation
+    if (streamState.status === 'streaming') {
       events.push({
         id: 'streaming-status',
         type: 'writing',
         timestamp: new Date(),
-        message: `Generating response... (${streamState.contentTokens} tokens)`,
+        message: streamState.contentTokens > 0
+          ? `Generating response... (${streamState.contentTokens} tokens)`
+          : 'Starting response generation...',
         details: { tokenCount: streamState.contentTokens },
       });
     }
 
     return events;
-  }, [streamState.reasoning, streamState.toolCalls, streamState.progress, streamState.content, streamState.status, streamState.contentTokens]);
+  }, [streamState.reasoning, streamState.toolCalls, streamState.progress, streamState.content, streamState.status, streamState.contentTokens, streamState.plan]);
 
   // Map stream artifacts to execution artifacts
   const executionArtifacts: ExecutionArtifact[] = useMemo(() => {
@@ -586,12 +631,13 @@ export function AutonomousView({
 
   // Mission status mapping (aligned with VitalMissionExecution MissionStatus type)
   // Valid MissionStatus: 'initializing' | 'executing' | 'paused' | 'awaiting_approval' | 'completed' | 'failed' | 'cancelled'
+  // CRITICAL: Show 'executing' as soon as we start connecting - avoid prolonged "Initializing..." state
   const executionStatus: MissionStatus = useMemo(() => {
     switch (streamState.status) {
       case 'connecting':
-        return 'initializing';
       case 'streaming':
       case 'thinking':
+        // All active states show as 'executing' - Activity Feed provides detailed status
         return 'executing';
       case 'checkpoint_pending':
         return 'awaiting_approval';
@@ -603,6 +649,7 @@ export function AutonomousView({
         return 'failed';
       case 'idle':
       default:
+        // Only truly idle state shows as initializing
         return 'initializing';
     }
   }, [streamState.status]);
@@ -663,6 +710,11 @@ export function AutonomousView({
   const { connect, disconnect } = useSSEStream({
     // Use unified streaming endpoint that routes to backend based on mode
     url: '/api/ask-expert/stream',
+
+    // CRITICAL: x-tenant-id header is required by the backend
+    headers: {
+      'x-tenant-id': tenantId,
+    },
 
     // CRITICAL: flushSync bypasses React 18 batching for real-time token streaming
     // Without this, tokens get batched and user sees delayed chunks instead of character-by-character
@@ -1788,54 +1840,70 @@ export function AutonomousView({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="flex-1 flex flex-col overflow-hidden gap-4"
+            className="flex-1 flex flex-col overflow-hidden"
           >
-            {/* Progress & Events Panel */}
-            <div className="flex-shrink-0 max-h-[45%]">
-              {/* SHARED COMPONENT: VitalMissionExecution from @vital/ai-ui */}
-              <VitalMissionExecution
-                missionId={missionId}
-                missionTitle={selectedTemplate?.name || 'Research Mission'}
-                status={executionStatus}
-                progress={streamState.progress?.progress || 0}
-                currentPhase={streamState.progress?.stage}
-                events={executionEvents}
-                checkpoints={executionCheckpoints}
-                artifacts={executionArtifacts}
-                metrics={executionMetrics}
-                onApproveCheckpoint={(id, feedback) => handleCheckpointResponse(id, 'approve', { feedback })}
-                onRejectCheckpoint={(id, reason) => handleCheckpointResponse(id, 'reject', { reason })}
-                onPause={() => logger.info('[AutonomousView] Pause requested')}
-                onResume={() => logger.info('[AutonomousView] Resume requested')}
-                onCancel={handleAbortMission}
-                onDownloadArtifact={(id) => logger.info('[AutonomousView] Download artifact', { id })}
-                mode={mode}
-              />
-            </div>
-
-            {/* Live Output Panel - Shows streaming content with markdown rendering */}
-            {streamState.content && (
-              <div className="flex-1 overflow-auto bg-white rounded-lg border border-slate-200 shadow-sm">
-                <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-2 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-purple-600" />
-                  <span className="text-sm font-medium text-slate-700">
-                    {streamState.status === 'streaming' ? 'Generating Output...' : 'Research Output'}
-                  </span>
-                  {streamState.status === 'streaming' && (
-                    <Loader2 className="w-3 h-3 animate-spin text-purple-500 ml-auto" />
-                  )}
-                </div>
-                <div className="p-4">
-                  <VitalStreamText
-                    content={streamState.content}
-                    isStreaming={streamState.status === 'streaming' || streamState.status === 'thinking'}
-                    highlightCode={true}
-                    enableMermaid={true}
-                    showControls={true}
+            <ResizablePanelGroup
+              direction="vertical"
+              className="h-full rounded-lg"
+            >
+              {/* Progress & Events Panel - Activity Feed */}
+              <ResizablePanel defaultSize={45} minSize={20} maxSize={80}>
+                <div className="h-full overflow-auto">
+                  {/* SHARED COMPONENT: VitalMissionExecution from @vital/ai-ui */}
+                  <VitalMissionExecution
+                    missionId={missionId}
+                    missionTitle={selectedTemplate?.name || 'Research Mission'}
+                    status={executionStatus}
+                    progress={streamState.progress?.progress || 0}
+                    currentPhase={streamState.progress?.stage}
+                    events={executionEvents}
+                    checkpoints={executionCheckpoints}
+                    artifacts={executionArtifacts}
+                    metrics={executionMetrics}
+                    onApproveCheckpoint={(id, feedback) => handleCheckpointResponse(id, 'approve', { feedback })}
+                    onRejectCheckpoint={(id, reason) => handleCheckpointResponse(id, 'reject', { reason })}
+                    onPause={() => logger.info('[AutonomousView] Pause requested')}
+                    onResume={() => logger.info('[AutonomousView] Resume requested')}
+                    onCancel={handleAbortMission}
+                    onDownloadArtifact={(id) => logger.info('[AutonomousView] Download artifact', { id })}
+                    mode={mode}
                   />
                 </div>
-              </div>
-            )}
+              </ResizablePanel>
+
+              {/* Resizable Handle with visual grip indicator */}
+              <ResizableHandle withHandle className="bg-slate-200 hover:bg-purple-200 transition-colors" />
+
+              {/* Live Output Panel - Research Output / Responses Feed */}
+              <ResizablePanel defaultSize={55} minSize={20} maxSize={80}>
+                <div className="h-full overflow-auto bg-white rounded-lg border border-slate-200 shadow-sm">
+                  <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-2 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium text-slate-700">
+                      {streamState.status === 'streaming' ? 'Generating Output...' : 'Research Output'}
+                    </span>
+                    {streamState.status === 'streaming' && (
+                      <Loader2 className="w-3 h-3 animate-spin text-purple-500 ml-auto" />
+                    )}
+                  </div>
+                  <div className="p-4">
+                    {streamState.content ? (
+                      <VitalStreamText
+                        content={streamState.content}
+                        isStreaming={streamState.status === 'streaming' || streamState.status === 'thinking'}
+                        highlightCode={true}
+                        enableMermaid={true}
+                        showControls={true}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-32 text-slate-400">
+                        <span className="text-sm">Research output will appear here...</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
           </motion.div>
         )}
 

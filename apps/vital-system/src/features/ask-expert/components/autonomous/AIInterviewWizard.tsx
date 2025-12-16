@@ -839,7 +839,12 @@ export function AIInterviewWizard({
                   'shadow-lg shadow-amber-500/25'
                 )}
               >
-                {currentStepIndex === steps.length - 1 ? (
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : currentStepIndex === steps.length - 1 ? (
                   <>
                     Generate Config
                     <Sparkles className="w-4 h-4 ml-2" />

@@ -315,23 +315,25 @@ export function VitalStreamText({
 
   return (
     <div className={cn('relative group', className)}>
-      {/* Copy entire response button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className={cn(
-          'absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10',
-          'bg-background/80 backdrop-blur-sm'
-        )}
-        onClick={handleCopy}
-        title="Copy entire response"
-      >
-        {copied ? (
-          <Check className="h-3.5 w-3.5 text-green-500" />
-        ) : (
-          <Copy className="h-3.5 w-3.5" />
-        )}
-      </Button>
+      {/* Copy entire response button - only show when showControls is true */}
+      {showControls && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            'absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10',
+            'bg-background/80 backdrop-blur-sm'
+          )}
+          onClick={handleCopy}
+          title="Copy entire response"
+        >
+          {copied ? (
+            <Check className="h-3.5 w-3.5 text-green-500" />
+          ) : (
+            <Copy className="h-3.5 w-3.5" />
+          )}
+        </Button>
+      )}
 
       <div
         className={cn(
@@ -364,7 +366,9 @@ export function VitalStreamText({
           // which conflicts with real-time SSE streaming. We want immediate render.
           isAnimating={false}
           shikiTheme={['github-light', 'github-dark']}
-          controls={showControls ? { code: true, table: true, mermaid: enableMermaid } : false}
+          // Separate controls: showControls affects code/table copy buttons,
+          // but mermaid code/preview toggle is always enabled when enableMermaid is true
+          controls={{ code: showControls, table: showControls, mermaid: enableMermaid }}
           mermaidConfig={{
             theme: 'neutral',
             securityLevel: 'strict',

@@ -345,17 +345,21 @@ export function VitalMissionGoalInput({
               onClick={handleSubmit}
               disabled={!goal.trim() || isAnalyzing || isEnhancing}
               className={cn(
-                'rounded-xl px-4 py-2 h-auto transition-all',
-                `bg-gradient-to-r ${config.gradientFrom} ${config.gradientTo}`,
-                `hover:brightness-110`,
-                `shadow-lg ${config.shadowColor}`,
-                'disabled:opacity-50 disabled:cursor-not-allowed'
+                'rounded-xl px-4 py-2 h-auto transition-all duration-300',
+                isAnalyzing
+                  ? 'bg-slate-500 shadow-slate-500/25 cursor-wait'
+                  : cn(
+                      `bg-gradient-to-r ${config.gradientFrom} ${config.gradientTo}`,
+                      `hover:brightness-110`,
+                      `shadow-lg ${config.shadowColor}`
+                    ),
+                'disabled:opacity-70 disabled:cursor-not-allowed'
               )}
             >
               {isAnalyzing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Analyzing...
+                  Processing...
                 </>
               ) : (
                 <>
@@ -374,25 +378,25 @@ export function VitalMissionGoalInput({
           </div>
         </div>
 
-        {/* Analyzing State */}
+        {/* Processing State */}
         {isAnalyzing && (
-          <div className="absolute -bottom-16 left-0 right-0 flex items-center justify-center gap-2 text-purple-600">
+          <div className="absolute -bottom-16 left-0 right-0 flex items-center justify-center gap-2">
             <div className="flex gap-1">
               <span
-                className={cn('w-2 h-2 rounded-full animate-bounce', mode === 'mode3' ? 'bg-purple-600' : 'bg-amber-600')}
+                className="w-2 h-2 rounded-full animate-bounce bg-slate-500"
                 style={{ animationDelay: '0ms' }}
               />
               <span
-                className={cn('w-2 h-2 rounded-full animate-bounce', mode === 'mode3' ? 'bg-purple-600' : 'bg-amber-600')}
+                className="w-2 h-2 rounded-full animate-bounce bg-slate-500"
                 style={{ animationDelay: '150ms' }}
               />
               <span
-                className={cn('w-2 h-2 rounded-full animate-bounce', mode === 'mode3' ? 'bg-purple-600' : 'bg-amber-600')}
+                className="w-2 h-2 rounded-full animate-bounce bg-slate-500"
                 style={{ animationDelay: '300ms' }}
               />
             </div>
-            <span className={cn('text-sm font-medium', mode === 'mode3' ? 'text-purple-600' : 'text-amber-600')}>
-              Analyzing your research goal...
+            <span className="text-sm font-medium text-slate-600">
+              Processing your research goal...
             </span>
           </div>
         )}

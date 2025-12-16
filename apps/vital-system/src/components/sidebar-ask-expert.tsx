@@ -26,6 +26,11 @@ import {
   Archive as ArchiveIcon,
   Pin as PinIcon,
   Briefcase,
+  Rocket,
+  Play,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
@@ -367,6 +372,22 @@ export function SidebarAskExpert() {
   }, [filteredAgents])
 
   // Group conversations by time period
+  // Separate sessions into conversations (Mode 1/2) and missions (Mode 3/4)
+  const { conversations, missions } = useMemo(() => {
+    const convs: typeof sessions = []
+    const miss: typeof sessions = []
+
+    sessions.forEach(session => {
+      if (session.metadata?.isMission || session.missionId) {
+        miss.push(session)
+      } else {
+        convs.push(session)
+      }
+    })
+
+    return { conversations: convs, missions: miss }
+  }, [sessions])
+
   const groupedSessions = useMemo(() => {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -377,15 +398,16 @@ export function SidebarAskExpert() {
     const thirtyDaysAgo = new Date(today)
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    // Filter sessions: exclude archived, apply search
-    const visibleSessions = sessions.filter(session => {
+    // Filter conversations: exclude archived, apply search
+    const visibleSessions = conversations.filter(session => {
       if (archivedSessions.has(session.sessionId)) return false
 
       if (conversationSearch.trim()) {
         const searchLower = conversationSearch.toLowerCase()
+        const title = (session.title || "").toLowerCase()
         const agentName = (session.agent?.name || "").toLowerCase()
         const sessionId = session.sessionId.toLowerCase()
-        return agentName.includes(searchLower) || sessionId.includes(searchLower)
+        return title.includes(searchLower) || agentName.includes(searchLower) || sessionId.includes(searchLower)
       }
 
       return true
@@ -425,7 +447,30 @@ export function SidebarAskExpert() {
       last30Days: last30DaysSessions,
       older: olderSessions,
     }
-  }, [sessions, pinnedSessions, archivedSessions, conversationSearch])
+  }, [conversations, pinnedSessions, archivedSessions, conversationSearch])
+
+  // Group missions by status
+  const groupedMissions = useMemo(() => {
+    const visibleMissions = missions.filter(mission => {
+      if (archivedSessions.has(mission.sessionId)) return false
+
+      if (conversationSearch.trim()) {
+        const searchLower = conversationSearch.toLowerCase()
+        const title = (mission.title || "").toLowerCase()
+        const agentName = (mission.agent?.name || "").toLowerCase()
+        return title.includes(searchLower) || agentName.includes(searchLower)
+      }
+
+      return true
+    })
+
+    const running = visibleMissions.filter(m => m.metadata?.status === 'running' || m.metadata?.status === 'in_progress')
+    const completed = visibleMissions.filter(m => m.metadata?.status === 'completed' || m.metadata?.status === 'done')
+    const draft = visibleMissions.filter(m => m.metadata?.status === 'draft' || m.metadata?.status === 'pending' || (!m.metadata?.status))
+    const failed = visibleMissions.filter(m => m.metadata?.status === 'failed' || m.metadata?.status === 'error')
+
+    return { running, completed, draft, failed }
+  }, [missions, archivedSessions, conversationSearch])
 
   const handleNewChat = useCallback(async () => {
     if (isCreatingChat) return
@@ -1166,7 +1211,7 @@ export function SidebarAskExpert() {
       <SidebarGroup className="hidden group-data-[collapsible=icon]:flex flex-col items-center py-2">
         <SidebarMenu className="flex flex-col items-center">
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleNewChat} tooltip={`Conversations (${sessions.length})`} className="h-10 w-10 p-0 flex items-center justify-center">
+            <SidebarMenuButton onClick={handleNewChat} tooltip={`Conversations (${conversations.length})`} className="h-10 w-10 p-0 flex items-center justify-center">
               <MessageSquare className="h-5 w-5" />
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -1181,9 +1226,9 @@ export function SidebarAskExpert() {
               <span className="flex items-center gap-2">
                 <MessageSquare className="h-3.5 w-3.5" />
                 Conversations
-                {sessions.length > 0 && (
+                {conversations.length > 0 && (
                   <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
-                    {sessions.length}
+                    {conversations.length}
                   </Badge>
                 )}
               </span>
@@ -1210,14 +1255,14 @@ export function SidebarAskExpert() {
                 </div>
               )}
 
-              {!sessionsLoading && sessions.length === 0 && (
+              {!sessionsLoading && conversations.length === 0 && (
                 <div className="px-2 py-4 text-center">
                   <MessageSquare className="h-6 w-6 text-muted-foreground mx-auto mb-2 opacity-50" />
                   <p className="text-xs text-muted-foreground">No conversations yet</p>
                 </div>
               )}
 
-              {!sessionsLoading && sessions.length > 0 && (
+              {!sessionsLoading && conversations.length > 0 && (
                 <ScrollArea className="max-h-[calc(100vh-300px)]">
                   <SidebarMenu className="px-1">
                     {/* Pinned conversations */}
@@ -1306,6 +1351,123 @@ export function SidebarAskExpert() {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           {groupedSessions.older.map((session, idx) => renderSessionItem(session, idx))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
+                  </SidebarMenu>
+                </ScrollArea>
+              )}
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* ============================================================
+          2.5 MISSIONS (Mode 3/4 Deep Research & Background Tasks)
+          ============================================================ */}
+      {/* Collapsed icon for Missions */}
+      <SidebarGroup className="hidden group-data-[collapsible=icon]:flex flex-col items-center py-2">
+        <SidebarMenu className="flex flex-col items-center">
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip={`Missions (${missions.length})`} className="h-10 w-10 p-0 flex items-center justify-center">
+              <Rocket className="h-5 w-5" />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroup>
+
+      {/* Expanded Missions */}
+      <Collapsible defaultOpen={missions.length > 0} className="group/collapsible group-data-[collapsible=icon]:hidden">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Rocket className="h-3.5 w-3.5" />
+                Missions
+                {missions.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                    {missions.length}
+                  </Badge>
+                )}
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              {sessionsLoading && (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
+
+              {!sessionsLoading && missions.length === 0 && (
+                <div className="px-2 py-4 text-center">
+                  <Rocket className="h-6 w-6 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-xs text-muted-foreground">No research missions yet</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Start a Mode 3 consultation</p>
+                </div>
+              )}
+
+              {!sessionsLoading && missions.length > 0 && (
+                <ScrollArea className="max-h-[200px]">
+                  <SidebarMenu className="px-1">
+                    {/* Running missions */}
+                    {groupedMissions.running.length > 0 && (
+                      <Collapsible defaultOpen className="mb-2">
+                        <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+                          <Play className="h-3 w-3 text-green-500" />
+                          Running
+                          <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4 border-green-300 text-green-600">{groupedMissions.running.length}</Badge>
+                          <ChevronDown className="ml-auto h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          {groupedMissions.running.map((mission, idx) => renderSessionItem(mission, idx))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
+
+                    {/* Draft missions */}
+                    {groupedMissions.draft.length > 0 && (
+                      <Collapsible defaultOpen className="mb-2">
+                        <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+                          <Clock className="h-3 w-3 text-amber-500" />
+                          Drafts
+                          <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4 border-amber-300 text-amber-600">{groupedMissions.draft.length}</Badge>
+                          <ChevronDown className="ml-auto h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          {groupedMissions.draft.map((mission, idx) => renderSessionItem(mission, idx))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
+
+                    {/* Completed missions */}
+                    {groupedMissions.completed.length > 0 && (
+                      <Collapsible defaultOpen className="mb-2">
+                        <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+                          <CheckCircle2 className="h-3 w-3 text-blue-500" />
+                          Completed
+                          <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4 border-blue-300 text-blue-600">{groupedMissions.completed.length}</Badge>
+                          <ChevronDown className="ml-auto h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          {groupedMissions.completed.map((mission, idx) => renderSessionItem(mission, idx))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
+
+                    {/* Failed missions */}
+                    {groupedMissions.failed.length > 0 && (
+                      <Collapsible className="mb-2">
+                        <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+                          <AlertCircle className="h-3 w-3 text-red-500" />
+                          Failed
+                          <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4 border-red-300 text-red-600">{groupedMissions.failed.length}</Badge>
+                          <ChevronDown className="ml-auto h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          {groupedMissions.failed.map((mission, idx) => renderSessionItem(mission, idx))}
                         </CollapsibleContent>
                       </Collapsible>
                     )}

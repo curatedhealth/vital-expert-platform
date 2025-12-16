@@ -1571,7 +1571,7 @@ export function AutonomousView({
                 industry="pharmaceutical"
                 onSubmit={handleGoalSubmit}
                 onEnhance={handlePromptEnhance}
-                isAnalyzing={isExecuting}
+                isAnalyzing={isAnalyzing || isExecuting}
                 initialValue={missionGoal}
                 showExamples={true}
                 title={mode === 'mode3'

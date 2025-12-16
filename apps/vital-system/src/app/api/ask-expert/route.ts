@@ -74,20 +74,38 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('[Ask Expert API] Failed to fetch conversations:', error);
-      // Return empty sessions on error (graceful degradation)
+    }
+
+    // Also fetch Mode 3/4 MISSIONS
+    const { data: missions, error: missionsError } = await supabase
+      .from('missions')
+      .select('id, title, objective, mode, status, selected_agents, metadata, created_at, updated_at')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+      .limit(50);
+
+    if (missionsError) {
+      console.error('[Ask Expert API] Failed to fetch missions:', missionsError);
+    }
+
+    // If both queries failed or returned nothing, return empty
+    if ((!conversations || conversations.length === 0) && (!missions || missions.length === 0)) {
       return NextResponse.json({ success: true, sessions: [] });
     }
 
-    if (!conversations || conversations.length === 0) {
-      return NextResponse.json({ success: true, sessions: [] });
-    }
+    // Get unique agent IDs from conversations metadata AND missions selected_agents
+    const conversationAgentIds = (conversations || [])
+      .map((c: any) => c.metadata?.agent_id)
+      .filter(Boolean);
 
-    // Get unique agent IDs from metadata
-    const agentIds = [...new Set(
-      conversations
-        .map((c: any) => c.metadata?.agent_id)
-        .filter(Boolean)
-    )];
+    const missionAgentIds = (missions || [])
+      .flatMap((m: any) => {
+        // selected_agents can be array of IDs or array of objects with id
+        const agents = m.selected_agents || [];
+        return agents.map((a: any) => typeof a === 'string' ? a : a?.id).filter(Boolean);
+      });
+
+    const agentIds = [...new Set([...conversationAgentIds, ...missionAgentIds])];
 
     // Fetch agent details
     let agentMap = new Map();
@@ -105,7 +123,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform conversations to sessions format
-    const sessions = conversations.map((conv: any) => {
+    const conversationSessions = (conversations || []).map((conv: any) => {
       const agentId = conv.metadata?.agent_id;
       const agent = agentId ? agentMap.get(agentId) : null;
       const messagesArray = conv.context?.messages || [];
@@ -118,19 +136,54 @@ export async function GET(request: NextRequest) {
         sessionId: conv.id,
         conversationId: conv.id,
         title: conv.title || 'New Consultation',
-        firstMessagePreview, // Include first message for intelligent naming
+        firstMessagePreview,
         agent: agent ? {
           id: agent.id,
           name: agent.display_name || agent.name,
           description: agent.description,
           avatar: agent.avatar_url,
         } : undefined,
-        // Include metadata for mode detection and navigation
         metadata: conv.metadata || undefined,
         lastMessage: conv.updated_at || conv.created_at,
         messageCount: messagesArray.length,
       };
     });
+
+    // Transform missions to sessions format (Mode 3/4)
+    const missionSessions = (missions || []).map((mission: any) => {
+      // Get first selected agent for display
+      const selectedAgents = mission.selected_agents || [];
+      const firstAgentId = typeof selectedAgents[0] === 'string'
+        ? selectedAgents[0]
+        : selectedAgents[0]?.id;
+      const agent = firstAgentId ? agentMap.get(firstAgentId) : null;
+
+      return {
+        sessionId: mission.id,
+        conversationId: mission.id,
+        missionId: mission.id, // Mark as mission for routing
+        title: mission.title || mission.objective || 'Research Mission',
+        firstMessagePreview: mission.objective?.slice(0, 100) || '',
+        agent: agent ? {
+          id: agent.id,
+          name: agent.display_name || agent.name,
+          description: agent.description,
+          avatar: agent.avatar_url,
+        } : undefined,
+        metadata: {
+          mode: mission.mode.toString(), // '3' or '4'
+          status: mission.status,
+          isMission: true,
+          ...mission.metadata,
+        },
+        lastMessage: mission.updated_at || mission.created_at,
+        messageCount: 0, // Missions don't have traditional message count
+      };
+    });
+
+    // Merge and sort by lastMessage (most recent first)
+    const sessions = [...conversationSessions, ...missionSessions]
+      .sort((a, b) => new Date(b.lastMessage).getTime() - new Date(a.lastMessage).getTime());
 
     return NextResponse.json({ success: true, sessions });
   } catch (error: any) {

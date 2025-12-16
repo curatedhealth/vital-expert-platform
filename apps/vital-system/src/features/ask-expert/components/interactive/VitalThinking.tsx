@@ -20,7 +20,6 @@
 import { useState, useCallback, useEffect, useRef, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import {
   Brain,
   ChevronDown,
@@ -29,7 +28,6 @@ import {
   Calculator,
   AlertCircle,
   CheckCircle2,
-  Clock,
   Sparkles,
   Loader2,
   Target,
@@ -260,10 +258,8 @@ export function VitalThinking({
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
       className={cn(
-        'rounded-xl overflow-hidden',
-        'border border-purple-200',
-        'bg-gradient-to-br from-purple-50/80 to-white',
-        'backdrop-blur-sm',
+        'rounded-lg overflow-hidden',
+        // No border or background - clean, minimal look
         className
       )}
     >
@@ -271,8 +267,8 @@ export function VitalThinking({
       <button
         onClick={handleToggle}
         className={cn(
-          'w-full px-4 py-3 flex items-center gap-3',
-          'hover:bg-purple-50/50 transition-colors',
+          'w-full px-3 py-2 flex items-center gap-2',
+          'hover:bg-slate-50/50 transition-colors rounded-lg',
           'text-left'
         )}
         aria-expanded={isExpanded}
@@ -281,41 +277,41 @@ export function VitalThinking({
         {/* Thinking indicator */}
         <div
           className={cn(
-            'relative p-2 rounded-lg',
-            isActive ? 'bg-purple-100' : 'bg-stone-100'
+            'relative p-1.5 rounded-md',
+            isActive ? 'bg-purple-50' : 'bg-slate-50'
           )}
           aria-hidden="true"
         >
           {isActive ? (
             <>
-              <Brain className="h-4 w-4 text-purple-600" />
+              <Brain className="h-3.5 w-3.5 text-purple-500" />
               <motion.div
-                className="absolute inset-0 rounded-lg border-2 border-purple-400"
-                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
+                className="absolute inset-0 rounded-md border border-purple-300"
+                animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0, 0.4] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               />
             </>
           ) : (
-            <Sparkles className="h-4 w-4 text-stone-500" />
+            <Sparkles className="h-3.5 w-3.5 text-slate-400" />
           )}
         </div>
 
         {/* Title */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span className={cn(
               'text-sm font-medium',
-              isActive ? 'text-purple-700' : 'text-stone-700'
+              isActive ? 'text-purple-600' : 'text-slate-600'
             )}>
               {isActive ? 'Thinking...' : 'Reasoning Complete'}
             </span>
+            <span className="text-xs text-slate-400">
+              {steps.length} step{steps.length !== 1 ? 's' : ''}
+            </span>
             {isActive && (
-              <Loader2 className="h-3 w-3 text-purple-500 animate-spin" />
+              <Loader2 className="h-3 w-3 text-purple-400 animate-spin" />
             )}
           </div>
-          <span className="text-xs text-stone-500">
-            {steps.length} step{steps.length !== 1 ? 's' : ''}
-          </span>
         </div>
 
         {/* Expand/collapse chevron */}
@@ -340,7 +336,7 @@ export function VitalThinking({
           >
             <div
               id="thinking-steps"
-              className="px-4 pb-4 space-y-2 max-h-[300px] overflow-y-auto"
+              className="px-3 pb-2 space-y-1 max-h-[280px] overflow-y-auto"
               aria-live={isActive ? 'polite' : 'off'}
               aria-label="AI reasoning steps"
             >
@@ -359,13 +355,13 @@ export function VitalThinking({
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex items-center gap-2 py-2 px-3 rounded-lg bg-purple-50/50"
+                  className="flex items-center gap-2 py-1 px-2"
                 >
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5">
                     {[0, 1, 2].map(i => (
                       <motion.div
                         key={i}
-                        className="w-1.5 h-1.5 rounded-full bg-purple-400"
+                        className="w-1 h-1 rounded-full bg-purple-400"
                         animate={{ scale: [1, 1.5, 1] }}
                         transition={{
                           duration: 0.6,
@@ -375,7 +371,7 @@ export function VitalThinking({
                       />
                     ))}
                   </div>
-                  <span className="text-xs text-purple-600">Processing...</span>
+                  <span className="text-xs text-purple-500">Processing...</span>
                 </motion.div>
               )}
             </div>
@@ -415,70 +411,54 @@ const ThinkingStepCard = forwardRef<HTMLDivElement, ThinkingStepCardProps>(
         ref={ref}
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: index * 0.05 }}
-        className="flex items-start gap-3"
+        transition={{ delay: index * 0.03 }}
+        className="flex items-start gap-2"
       >
         {/* Step icon (no numbers - just adaptive icons) */}
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center">
           <div className={cn(
-            'w-6 h-6 rounded-full flex items-center justify-center',
+            'w-5 h-5 rounded-full flex items-center justify-center',
             config.bgColor
           )}>
-            <Icon className={cn('h-3.5 w-3.5', config.color)} />
+            <Icon className={cn('h-3 w-3', config.color)} />
           </div>
           {!isLast && (
-            <div className="w-px h-full min-h-[20px] bg-slate-200" />
+            <div className="w-px h-full min-h-[12px] bg-slate-200" />
           )}
         </div>
 
         {/* Step content - shows user-friendly label or real LLM content */}
-        <div className="flex-1 min-w-0 pb-2">
-          <p className="text-sm text-slate-700">
+        <div className="flex-1 min-w-0 pb-1">
+          <p className="text-sm text-slate-600 leading-tight">
             {displayText}
           </p>
 
-          {/* Metadata row */}
-          <div className="flex items-center gap-2 mt-1">
-            {step.timestamp && (
-              <span className="text-xs text-slate-400 flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {formatTimestamp(step.timestamp)}
-              </span>
-            )}
-            {step.duration !== undefined && (
-              <span className="text-xs text-slate-400">
-                {step.duration < 1000
-                  ? `${step.duration}ms`
-                  : `${(step.duration / 1000).toFixed(1)}s`}
-              </span>
-            )}
-            {step.confidence !== undefined && (
-              <span className={cn(
-                'text-xs',
-                step.confidence >= 0.8 ? 'text-green-600' :
-                step.confidence >= 0.6 ? 'text-amber-600' : 'text-red-600'
-              )}>
-                {Math.round(step.confidence * 100)}% confident
-              </span>
-            )}
-          </div>
+          {/* Metadata row - only show if there's meaningful metadata */}
+          {(step.duration !== undefined || step.confidence !== undefined) && (
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {step.duration !== undefined && (
+                <span className="text-xs text-slate-400">
+                  {step.duration < 1000
+                    ? `${step.duration}ms`
+                    : `${(step.duration / 1000).toFixed(1)}s`}
+                </span>
+              )}
+              {step.confidence !== undefined && (
+                <span className={cn(
+                  'text-xs',
+                  step.confidence >= 0.8 ? 'text-green-600' :
+                  step.confidence >= 0.6 ? 'text-amber-600' : 'text-red-600'
+                )}>
+                  {Math.round(step.confidence * 100)}%
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </motion.div>
     );
   }
 );
-
-// =============================================================================
-// HELPERS
-// =============================================================================
-
-function formatTimestamp(date: Date): string {
-  return date.toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
 
 // =============================================================================
 // COMPACT VARIANT (for inline use)

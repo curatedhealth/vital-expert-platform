@@ -40,6 +40,7 @@ export interface Agent {
 
 export interface AskExpertSession {
   sessionId: string;
+  missionId?: string; // Present if this is a Mode 3/4 mission
   title?: string;
   firstMessagePreview?: string; // First user message for intelligent title generation
   agent?: {
@@ -52,6 +53,8 @@ export interface AskExpertSession {
   metadata?: {
     agent_id?: string;
     mode?: string;
+    isMission?: boolean; // True for Mode 3/4 missions
+    status?: string; // Mission status (draft, running, completed, etc.)
   };
   lastMessage: string;
   messageCount: number;
@@ -402,14 +405,18 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       const fetchedSessions: AskExpertSession[] = (data.sessions || []).map((session: any) => ({
         sessionId: session.sessionId,
+        missionId: session.missionId, // Present for Mode 3/4 missions
         title: session.title,
+        firstMessagePreview: session.firstMessagePreview,
         agent: session.agent
           ? {
+              id: session.agent.id,
               name: session.agent.name,
               description: session.agent.description,
               avatar: session.agent.avatar,
             }
           : undefined,
+        metadata: session.metadata, // Includes mode, isMission, status
         lastMessage: session.lastMessage,
         messageCount: session.messageCount ?? 0,
       }));

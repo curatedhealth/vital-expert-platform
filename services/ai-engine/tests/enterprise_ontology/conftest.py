@@ -6,9 +6,10 @@ Pytest fixtures and configuration.
 
 import pytest
 import sys
+import os
 
-# Add src to path
-sys.path.insert(0, '/Users/hichamnaim/Downloads/Cursor/VITAL/src')
+# Add src to path (relative path - works from any location)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 # =============================================================================
 # FIXTURES

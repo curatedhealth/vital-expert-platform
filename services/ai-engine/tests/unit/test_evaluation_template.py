@@ -7,7 +7,7 @@ from langgraph_workflows.modes34.templates.schema import TemplateConfig
 
 def test_evaluation_template_loads_and_has_required_fields() -> None:
     template_path = (
-        Path(__file__).resolve().parents[3]
+        Path(__file__).resolve().parents[2]
         / "src"
         / "langgraph_workflows"
         / "modes34"

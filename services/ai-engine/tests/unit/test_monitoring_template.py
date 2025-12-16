@@ -6,7 +6,7 @@ from langgraph_workflows.modes34.templates.schema import TemplateConfig
 
 
 def test_monitoring_template_loads_and_has_required_fields() -> None:
-    template_path = Path(__file__).resolve().parents[3] / "src" / "langgraph_workflows" / "modes34" / "templates" / "regulatory_watch.yaml"
+    template_path = Path(__file__).resolve().parents[2] / "src" / "langgraph_workflows" / "modes34" / "templates" / "regulatory_watch.yaml"
     config = TemplateConfig.from_yaml(template_path)
 
     assert config.slug == "regulatory_watch"

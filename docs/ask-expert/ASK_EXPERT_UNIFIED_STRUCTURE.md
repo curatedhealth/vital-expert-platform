@@ -1,31 +1,100 @@
 <!-- PRODUCTION_TAG: PRODUCTION_READY -->
-<!-- LAST_VERIFIED: 2025-01-27 -->
+<!-- LAST_VERIFIED: 2025-12-16 -->
 <!-- CATEGORY: documentation -->
 <!-- DEPENDENCIES: [services/ai-engine, apps/vital-system, packages/] -->
-<!-- VERSION: 3.2.1 -->
+<!-- VERSION: 3.3.0 -->
 
 # Ask Expert Service - Codebase Structure & File Inventory
 
-**Version:** 3.2.1 STRUCTURE REFACTORED
-**Date:** January 27, 2025
+**Version:** 3.3.0 ARCHITECTURE CORRECTED
+**Date:** December 16, 2025
 **Author:** Claude Code
 **Scope:** Complete codebase structure, file inventory, and organization
 
-> **Document Refactored:** January 27, 2025
-> - Extracted from unified implementation overview
-> - Focus: Codebase structure, file inventory, organization
-> - Comprehensive file listing included
+> **Document Updated:** December 16, 2025
+> - Architecture correction: Mode 3 & 4 share same workflow
+> - Added 2×2 Mode Matrix clarification
+> - Verified LangGraph implementation
+> - See: `AUDIT_CORRECTION_MODE_3_4_ARCHITECTURE.md` for details
 
 ---
 
 ## Executive Summary
 
-| Layer | Active Files | Test Files | Archive Files | Total |
-|-------|-------------|------------|---------------|-------|
-| **Backend (Python)** | 425 | 47 | 96 | 568 |
-| **Frontend (TypeScript)** | 1,394 | 18 | 0 | 1,412 |
-| **Packages (TypeScript)** | 223 | 0 | 0 | 223 |
-| **Grand Total** | **2,042** | **65** | **96** | **2,203** |
+> **File counts verified:** December 16, 2025
+
+| Layer | Active Files | Test Files | Total |
+|-------|-------------|------------|-------|
+| **Backend (Python)** | 502 | 49 | 551 |
+| **Frontend (TypeScript)** | 1,554 | - | 1,554 |
+| **Packages (TypeScript)** | 305 | - | 305 |
+| **Grand Total** | **2,361** | **49** | **2,410** |
+
+### Ask Expert Service Summary
+
+| Component | Backend | Frontend | Description |
+|-----------|---------|----------|-------------|
+| **Mode 1 & 2 (Interactive)** | 16 files | 16 hooks | Manual & Auto agent selection |
+| **Mode 3 & 4 (Autonomous)** | 35 files | 124 files | Shared workflow, missions |
+| **Agents (L1-L5)** | 66 files | - | Agent hierarchy |
+| **Streaming/SSE** | 6 files | 9 files | Real-time updates |
+| **GraphRAG/Fusion** | 38 files | 5 components | Agent selection |
+
+---
+
+## CRITICAL: Mode Architecture (2×2 Matrix)
+
+> **Key Understanding:** Modes are organized in a 2×2 matrix. Mode pairs share the SAME workflow - they differ ONLY in agent selection method.
+
+### The 2×2 Mode Matrix
+
+```
+                    ┌─────────────────┬─────────────────┐
+                    │   INTERACTIVE   │   AUTONOMOUS    │
+                    │  (Basic Flow)   │ (Full Safety)   │
+                    │  NO Missions    │ + MISSIONS      │
+┌───────────────────┼─────────────────┼─────────────────┤
+│   MANUAL          │     MODE 1      │     MODE 3      │
+│   (User Selects)  │  Basic flow     │  Full safety    │
+│                   │  NO safety      │  + HITL         │
+│                   │  NO runners     │  + Runners      │
+├───────────────────┼─────────────────┼─────────────────┤
+│   AUTOMATIC       │     MODE 2      │     MODE 4      │
+│   (AI Selects)    │  Basic flow     │  Full safety    │
+│                   │  NO safety      │  + HITL         │
+│                   │  NO runners     │  + Runners      │
+└───────────────────┴─────────────────┴─────────────────┘
+```
+
+### Workflow Sharing Pattern
+
+| Mode Pair | Shared Workflow | Agent Selection Difference |
+|-----------|-----------------|---------------------------|
+| **Mode 1 & 2** | `unified_interactive_workflow.py` | Mode 1: User selects, Mode 2: GraphRAG auto-selects |
+| **Mode 3 & 4** | `unified_autonomous_workflow.py` | Mode 3: User selects, Mode 4: GraphRAG auto-selects |
+
+### Implementation Files
+
+```
+Mode 1 & 2 (Interactive):
+├── langgraph_workflows/ask_expert/unified_interactive_workflow.py  ← SHARED
+├── langgraph_workflows/ask_expert/unified_agent_selector.py        ← Mode 2 auto-selection
+└── api/routes/ask_expert_interactive.py
+
+Mode 3 & 4 (Autonomous):
+├── langgraph_workflows/modes34/unified_autonomous_workflow.py      ← SHARED ⭐
+├── langgraph_workflows/ask_expert/unified_agent_selector.py        ← Mode 4 auto-selection
+└── api/routes/ask_expert_autonomous.py
+```
+
+### Agent Selection (The ONLY Difference Within Pairs)
+
+| Mode | Selection Method | Implementation |
+|------|-----------------|----------------|
+| Mode 1 | MANUAL (user selects) | User picks agent from list |
+| Mode 2 | AUTOMATIC (AI selects) | `FusionSearchSelector` with GraphRAG |
+| Mode 3 | MANUAL (user selects) | User picks agent from list |
+| Mode 4 | AUTOMATIC (AI selects) | `FusionSearchSelector` with GraphRAG |
 
 ---
 
@@ -103,7 +172,13 @@ VITAL path/
 
 ### 2.2 Ask Expert Service Files - Backend
 
-**Backend (Python) - Unified Architecture (December 12, 2025):**
+> **Architecture Note (December 16, 2025):**
+> - Mode 1 & 2 share `unified_interactive_workflow.py`
+> - Mode 3 & 4 share `unified_autonomous_workflow.py` (same workflow, different agent selection)
+> - The ONLY difference between Mode 3 and Mode 4 is agent selection method
+> - LangGraph StateGraph is fully implemented with 11 nodes, conditional edges, and checkpointing
+
+**Backend (Python) - Unified Architecture (December 16, 2025):**
 ```
 langgraph_workflows/ask_expert/
 ├── __init__.py                           # Module exports, mode registry, factory functions
@@ -138,11 +213,39 @@ langgraph_workflows/modes34/              # 🆕 Production Mode 3 & 4 Workflows
     ├── __init__.py
     └── registry.py                       # Runner registry with lazy imports
 
-modules/expert/                           # Mission/Runner System (Mode 3 & 4 ONLY)
-├── workflows/
-│   └── mission_workflow.py               # MissionWorkflowBuilder (enforces mode=3/4)
-└── registry/
-    └── mission_registry.py               # Maps 24 templates → 7 runner families
+modules/expert/                           # Mission/Runner System (24 files, Mode 3 & 4 ONLY)
+├── __init__.py                           # Module exports
+├── agents/__init__.py                    # L2 experts integration
+├── fusion/__init__.py                    # Fusion search integration
+├── registry/
+│   ├── base_runner.py                    # Base runner class
+│   ├── mission_registry.py               # Maps 24 templates → 7 runner families
+│   └── runners/                          # Runner implementations (7 families)
+│       ├── communication.py              # Communication runner
+│       ├── deep_research.py              # Deep research runner
+│       ├── evaluation.py                 # Evaluation runner
+│       ├── investigation.py              # Investigation runner
+│       ├── monitoring.py                 # Monitoring runner
+│       ├── problem_solving.py            # Problem solving runner
+│       └── strategy.py                   # Strategy runner
+├── safety/
+│   ├── circuit_breaker.py                # Circuit breaker pattern
+│   └── preflight_service.py              # Pre-flight checks
+├── schemas/
+│   ├── interactive_state.py              # Mode 1 & 2 state
+│   └── mission_state.py                  # Mode 3 & 4 state
+├── services/
+│   ├── agent_factory.py                  # Agent instantiation
+│   └── context_enricher.py               # Context enrichment
+└── workflows/
+    ├── interactive_workflow.py           # Mode 1 & 2 workflow
+    ├── mission_workflow.py               # MissionWorkflowBuilder (enforces mode=3/4)
+    ├── nodes/
+    │   ├── l2_nodes.py                   # L2 delegation nodes
+    │   └── mode2_nodes.py                # Mode 2 specific nodes
+    └── wrappers/
+        ├── __init__.py
+        └── l2_wrappers.py                # L2 wrapper utilities
 
 modules/execution/
 └── runner.py                             # WorkflowRunner (sync/async execution)
@@ -192,14 +295,19 @@ services/
 
 **Mode 3 & 4 Workflows (services/ai-engine/src/langgraph_workflows/modes34/):**
 
+> **CRITICAL:** Mode 3 and Mode 4 use the **SAME** workflow file. The only difference is in the `_select_team` node which:
+> - Mode 3: Returns immediately (user already provided agent_id)
+> - Mode 4: Calls `select_team_async()` via GraphRAG Fusion Search
+
 | File | Purpose |
 |------|---------|
 | `__init__.py` | Package exports for Mode 3/4 |
-| `unified_autonomous_workflow.py` | ⭐ **PRODUCTION** Mode 3 & 4 workflow |
-| `research_quality.py` | Quality assessment, RACE/FACT metrics |
-| `state.py` | Mode 3/4 state definitions |
+| `unified_autonomous_workflow.py` | ⭐ **PRODUCTION** Mode 3 & 4 SHARED workflow (1,472 lines) |
+| `research_quality.py` | Quality assessment, RACE/FACT metrics, confidence scoring |
+| `state.py` | Mode 3/4 state definitions (`MissionState` TypedDict) |
 | `runners/__init__.py` | Runner package exports |
 | `runners/registry.py` | Runner registry with lazy imports, template caching |
+| `agent_selector.py` | GraphRAG agent selection for Mode 4 auto-selection |
 
 **LangGraph Core (services/ai-engine/src/langgraph_workflows/):**
 
@@ -735,9 +843,172 @@ services/ai-engine/src/_legacy_archive/
 
 ---
 
-## Part 7: Production File Registry
+## Part 7: Production File Registry (December 16, 2025)
 
-### 7.1 File Tagging System
+> **Registry Updated:** December 16, 2025 - Verified file counts from codebase scan
+
+### 7.1 Backend File Registry (services/ai-engine/src/)
+
+**Total Python Files: 551**
+
+| Directory | Files | Purpose | Status |
+|-----------|-------|---------|--------|
+| `services/` | 83 | Business logic services | Production |
+| `api/` | 69 | FastAPI routes, schemas, SSE | Production |
+| `langgraph_workflows/` | 68 | LangGraph workflows for all modes | Production |
+| `agents/` | 66 | L1-L5 agent hierarchy | Production |
+| `tests/` | 49 | Unit & integration tests | Active |
+| `modules/` | 41 | Expert modules, execution | Production |
+| `graphrag/` | 31 | Knowledge graph, chunking, search | Production |
+| `runners/` | 19 | Mission runners (7 families) | Production |
+| `core/` | 17 | Config, security, streaming | Production |
+| `langgraph_compilation/` | 16 | Graph compilation, node types | Production |
+| `infrastructure/` | 12 | Database repos, LLM clients | Production |
+| `domain/` | 11 | Domain entities, events | Production |
+| `workers/` | 8 | Background tasks | Production |
+| `monitoring/` | 8 | Metrics, drift detection | Production |
+| `models/` | 7 | Data models | Production |
+| `fusion/` | 7 | GraphRAG fusion engine | Production |
+| `tools/` | 6 | Agent tools (RAG, web, medical) | Production |
+| `streaming/` | 6 | SSE formatters | Production |
+| `middleware/` | 5 | Auth, rate limiting | Production |
+| `protocols/` | 5 | Pharma protocols | Production |
+| Other | 17 | Utils, config, integrations | Various |
+
+#### Agent Hierarchy Breakdown (66 files)
+
+| Level | Files | Purpose |
+|-------|-------|---------|
+| `l1_orchestrators/` | 4 | Master orchestrator |
+| `l2_experts/` | 6 | Domain experts (clinical, regulatory, safety) |
+| `l3_specialists/` | 4 | Specialists (domain analyst, context) |
+| `l4_workers/` | 26 | Task workers (24 specialized workers) |
+| `l5_tools/` | 21 | Tools (medical, regulatory, NLP, etc.) |
+| Root | 5 | Base agent, medical specialist, etc. |
+
+#### LangGraph Workflows Breakdown (68 files)
+
+| Subdirectory | Files | Purpose |
+|--------------|-------|---------|
+| `modes34/` | 35 | ⭐ Mode 3 & 4 autonomous workflows |
+| `ask_expert/` | 16 | Mode 1 & 2 interactive workflows |
+| `ask_panel_enhanced/` | 2 | Panel workflows |
+| `shared/` | 2 | Shared workflow utilities |
+| Root | 13 | Base workflows, state schemas |
+
+#### Mode 3/4 Workflow Files (35 files in modes34/)
+
+| File/Directory | Files | Purpose |
+|----------------|-------|---------|
+| `unified_autonomous_workflow.py` | 1 | ⭐ SHARED Mode 3 & 4 workflow (1,472 lines) |
+| `research_quality.py` | 1 | Quality assessment, confidence scoring |
+| `state.py` | 1 | MissionState TypedDict |
+| `agent_selector.py` | 1 | GraphRAG agent selection |
+| `wrappers/` | 8 | L2-L5 delegation wrappers |
+| `resilience/` | 5 | Error handling, graceful degradation |
+| `runners/` | 10 | 7 runner families + base |
+| `validation/` | 3 | Citation, quality validators |
+| `templates/` | 2 | Template schema |
+| `complete_impl/` | 1 | Complete L2 wrapper |
+
+#### API Routes (26 files in api/routes/)
+
+| File | Size | Purpose |
+|------|------|---------|
+| `ask_expert_autonomous.py` | 57KB | Mode 3 & 4 API endpoints |
+| `ask_expert_interactive.py` | 55KB | Mode 1 & 2 API endpoints |
+| `missions.py` | 48KB | Mission management |
+| `mode1_manual_interactive.py` | 46KB | Mode 1 dedicated routes |
+| `knowledge_graph.py` | 41KB | GraphRAG API |
+| `expert.py` | 37KB | Expert consultation |
+| `agent_context.py` | 25KB | Agent context management |
+| `agent_sessions.py` | 24KB | Session management |
+| `ask_panel_streaming.py` | 25KB | Panel streaming |
+| `mode2_auto_interactive.py` | 19KB | Mode 2 dedicated routes |
+| Others | Various | HITL, streaming, hybrid search |
+
+### 7.2 Frontend File Registry (apps/vital-system/src/)
+
+**Total TypeScript/TSX Files: 1,554**
+
+| Directory | Files | Purpose | Status |
+|-----------|-------|---------|--------|
+| `components/` | 429 | UI components | Production |
+| `features/` | 408 | Feature modules | Production |
+| `lib/` | 344 | Utilities, services | Production |
+| `app/` | 310 | Next.js pages, API routes | Production |
+| `types/` | 21 | TypeScript definitions | Production |
+| `hooks/` | 19 | React hooks | Production |
+| `contexts/` | 12 | React contexts | Production |
+| `middleware/` | 10 | Auth, security | Production |
+| `stores/` | 1 | State stores | Production |
+
+#### Frontend Features Breakdown (408 files)
+
+| Feature | Files | Purpose |
+|---------|-------|---------|
+| `ask-expert/` | 124 | ⭐ Ask Expert modes 1-4 |
+| `agents/` | 72 | Agent management UI |
+| `workflow-designer/` | 23 | Visual workflow builder |
+| `chat/` | 20 | Chat components |
+| `knowledge/` | 19 | Knowledge base UI |
+| `landing/` | 17 | Landing pages |
+| `personas/` | 16 | Persona management |
+| `ask-panel/` | 10 | Panel consultation |
+| `streaming/` | 9 | Streaming components |
+| `solution-builder/` | 9 | Solution builder |
+| `rag/` | 9 | RAG UI components |
+| Others | 80 | Various features |
+
+#### Ask Expert Feature Files (124 files)
+
+| Directory | Files | Key Files |
+|-----------|-------|-----------|
+| `components/` | 80 | UI components for all modes |
+| `hooks/` | 16 | useMode1-4, useSSEStream, useBaseAutonomous |
+| `mode-1/` | 16 | Mode 1 specific (tools, services, utils) |
+| `services/` | 3 | API services |
+| `views/` | 2 | AutonomousView.tsx (86KB), InteractiveView.tsx (57KB) |
+| `utils/` | 2 | Mode mapper utilities |
+| `types/` | 2 | Type definitions |
+| `mode-3/` | 2 | Mode 3 specific types |
+
+#### Ask Expert Hooks (16 files)
+
+| Hook | Size | Purpose |
+|------|------|---------|
+| `useBaseAutonomous.ts` | 28KB | Base hook for Mode 3 & 4 |
+| `useSSEStream.ts` | 25KB | SSE streaming connection |
+| `useMode3.ts` | 25KB | Mode 3 specific logic |
+| `streamReducer.ts` | 21KB | Streaming state reducer |
+| `useBaseInteractive.ts` | 16KB | Base hook for Mode 1 & 2 |
+| `useCheckpoint.ts` | 8KB | HITL checkpoint handling |
+| `useMode4Background.ts` | 6KB | Mode 4 background tasks |
+| `useAskExpertMode.ts` | 3KB | Mode selection |
+| `useAgentWithStats.ts` | 4KB | Agent statistics |
+| `useDocumentGeneration.ts` | 4KB | Document generation |
+| `useMode3Mission.ts` | 4KB | Mode 3 mission handling |
+| `useMode2Chat.ts` | 3KB | Mode 2 chat |
+| `useMode1Chat.ts` | 3KB | Mode 1 chat |
+| `useAutonomousMode.ts` | 1KB | Autonomous mode toggle |
+| `useMissionStream.ts` | <1KB | Mission streaming |
+| `index.ts` | 4KB | Exports |
+
+### 7.3 Packages File Registry (packages/)
+
+**Total TypeScript/TSX Files: 305**
+
+| Package | Files | Purpose |
+|---------|-------|---------|
+| `vital-ai-ui/` | 171 | ⭐ VITAL AI UI component library |
+| `ui/` | 92 | Core shadcn/ui components |
+| `protocol/` | 15 | Shared protocol definitions |
+| `sdk/` | 10 | SDK utilities |
+| `types/` | 8 | Shared types |
+| `utils/` | 6 | Shared utilities |
+| `shared/` | 3 | Shared components |
+
+### 7.4 File Tagging System
 
 | Tag | Meaning | Cleanup Action |
 |-----|---------|----------------|
@@ -749,19 +1020,7 @@ services/ai-engine/src/_legacy_archive/
 | `ARCHIVE` | Kept for reference only | Move to archive |
 | `STUB` | Placeholder implementation | Complete or remove |
 
-### 7.2 Registry Summary (132 Files Tagged)
-
-| Category | Production Ready | Needs Review | Deprecated | Total |
-|----------|-----------------|--------------|------------|-------|
-| API Routes | 15 | 8 | 3 | 26 |
-| LangGraph Workflows | 8 | 6 | 4 | 18 |
-| Streaming | 6 | 0 | 0 | 6 |
-| Services | 22 | 15 | 5 | 42 |
-| GraphRAG | 12 | 8 | 2 | 22 |
-| Core Infrastructure | 14 | 4 | 0 | 18 |
-| **Total** | **77** | **41** | **14** | **132** |
-
-### 7.3 File Tagging Convention
+### 7.5 File Tagging Convention
 
 Add this comment at the top of each production file:
 
@@ -775,85 +1034,141 @@ Add this comment at the top of each production file:
 **Example:**
 ```python
 # PRODUCTION_TAG: PRODUCTION_READY
-# LAST_VERIFIED: 2025-01-27
-# MODES_SUPPORTED: [1, 2]
-# DEPENDENCIES: [streaming, graphrag, services.confidence_calculator]
+# LAST_VERIFIED: 2025-12-16
+# MODES_SUPPORTED: [3, 4]
+# DEPENDENCIES: [langgraph, checkpoint.postgres, state, wrappers.*, services.graphrag]
 ```
 
 ---
 
-## Part 8: Directory Structure Reference
+## Part 8: Directory Structure Reference (Updated December 16, 2025)
 
 ### 8.1 Backend Directory Structure
 
 ```
-services/ai-engine/src/
-├── agents/                    # 66 files - L1-L5 agent hierarchy
-│   ├── l1_orchestrators/
-│   ├── l2_experts/
-│   ├── l3_specialists/
-│   ├── l4_workers/
-│   └── l5_tools/
-├── api/                       # 66 files - FastAPI routes
-│   ├── routes/
-│   ├── schemas/
-│   ├── middleware/
-│   └── sse/
-├── core/                      # 17 files - Core utilities
-│   ├── security.py
-│   ├── resilience.py
-│   ├── streaming.py
-│   └── ...
-├── langgraph_workflows/       # 40 files - Workflow definitions
-│   ├── ask_expert/
-│   ├── modes34/
-│   └── ...
-├── services/                  # 71 files - Business logic
+services/ai-engine/src/               # Total: 551 Python files
+├── services/                         # 83 files - Business logic services
 │   ├── session_memory_service.py
 │   ├── agent_usage_tracker.py
 │   ├── hitl_service.py
+│   ├── mission_service.py
+│   ├── graphrag_selector.py
 │   └── ...
-└── tests/                     # 47 files - Test suite
+├── api/                              # 69 files - FastAPI routes
+│   ├── routes/                       # 26 API route files
+│   │   ├── ask_expert_autonomous.py  # Mode 3 & 4 (57KB)
+│   │   ├── ask_expert_interactive.py # Mode 1 & 2 (55KB)
+│   │   ├── missions.py               # Mission management (48KB)
+│   │   └── ...
+│   ├── schemas/
+│   ├── middleware/
+│   └── sse/
+├── langgraph_workflows/              # 68 files - LangGraph workflows
+│   ├── modes34/                      # 35 files ⭐ Mode 3 & 4
+│   │   ├── unified_autonomous_workflow.py  # SHARED workflow (1,472 lines)
+│   │   ├── research_quality.py
+│   │   ├── state.py
+│   │   ├── agent_selector.py
+│   │   ├── wrappers/                 # 8 files - L2-L5 wrappers
+│   │   ├── resilience/               # 5 files - Error handling
+│   │   ├── runners/                  # 10 files - Runner families
+│   │   └── validation/               # 3 files - Validators
+│   ├── ask_expert/                   # 16 files - Mode 1 & 2
+│   │   ├── unified_interactive_workflow.py
+│   │   ├── unified_agent_selector.py
+│   │   └── shared/
+│   └── ...
+├── agents/                           # 66 files - L1-L5 agent hierarchy
+│   ├── l1_orchestrators/             # 4 files
+│   ├── l2_experts/                   # 6 files
+│   ├── l3_specialists/               # 4 files
+│   ├── l4_workers/                   # 26 files
+│   └── l5_tools/                     # 21 files
+├── modules/                          # 41 files - Expert modules
+├── graphrag/                         # 31 files - Knowledge graph
+├── runners/                          # 19 files - Mission runners
+├── core/                             # 17 files - Core utilities
+├── infrastructure/                   # 12 files - Database, LLM
+├── domain/                           # 11 files - Domain entities
+├── tests/                            # 49 files - Test suite
+└── ...
 ```
 
 ### 8.2 Frontend Directory Structure
 
 ```
-apps/vital-system/src/
-├── app/                       # 281 files - Next.js pages
-│   ├── (app)/ask-expert/
-│   └── api/
-├── components/                # 385 files - UI components
+apps/vital-system/src/                # Total: 1,554 TypeScript/TSX files
+├── components/                       # 429 files - UI components
 │   ├── vital-ai-ui/
 │   ├── langgraph-gui/
 │   └── ui/
-├── features/                  # 344 files - Feature modules
-│   ├── ask-expert/
-│   ├── agents/
-│   └── rag/
-├── lib/                       # 175 files - Utilities
+├── features/                         # 408 files - Feature modules
+│   ├── ask-expert/                   # 124 files ⭐ Ask Expert
+│   │   ├── components/               # 80 files - Mode 1-4 UI
+│   │   ├── hooks/                    # 16 files - React hooks
+│   │   │   ├── useBaseAutonomous.ts  # Mode 3 & 4 base (28KB)
+│   │   │   ├── useSSEStream.ts       # SSE streaming (25KB)
+│   │   │   ├── useBaseInteractive.ts # Mode 1 & 2 base (16KB)
+│   │   │   └── ...
+│   │   ├── views/                    # 2 files
+│   │   │   ├── AutonomousView.tsx    # Mode 3 & 4 (86KB)
+│   │   │   └── InteractiveView.tsx   # Mode 1 & 2 (57KB)
+│   │   └── ...
+│   ├── agents/                       # 72 files
+│   ├── workflow-designer/            # 23 files
+│   ├── chat/                         # 20 files
+│   └── ...
+├── lib/                              # 344 files - Utilities
 │   ├── services/
 │   └── rag/
-└── shared/                    # 141 files - Shared components
+├── app/                              # 310 files - Next.js pages
+│   ├── (app)/ask-expert/
+│   │   ├── page.tsx                  # Mode selector
+│   │   ├── mode-1/page.tsx
+│   │   ├── mode-2/page.tsx
+│   │   ├── autonomous/page.tsx       # Mode 3 & 4
+│   │   ├── interactive/page.tsx      # Mode 1 & 2
+│   │   └── missions/
+│   └── api/
+├── types/                            # 21 files
+├── hooks/                            # 19 files
+├── contexts/                         # 12 files
+└── middleware/                       # 10 files
 ```
 
 ### 8.3 Packages Directory Structure
 
 ```
-packages/
-├── vital-ai-ui/               # 141 files - VITAL AI UI library
-│   ├── agents/
-│   ├── conversation/
-│   ├── workflow/
+packages/                             # Total: 305 TypeScript/TSX files
+├── vital-ai-ui/                      # 171 files - VITAL AI UI library
+│   ├── agents/                       # Agent cards, badges
+│   ├── conversation/                 # Messages, streaming
+│   ├── workflow/                     # Progress, tasks
+│   ├── hitl/                         # HITL controls
+│   ├── fusion/                       # RRF visualization
+│   ├── reasoning/                    # Thinking, citations
 │   └── ...
-├── ui/                        # 67 files - Core UI components
-└── protocol/                  # 15 files - Shared protocols
+├── ui/                               # 92 files - Core shadcn/ui
+├── protocol/                         # 15 files - Shared protocols
+├── sdk/                              # 10 files - SDK utilities
+├── types/                            # 8 files - Shared types
+├── utils/                            # 6 files - Shared utilities
+└── shared/                           # 3 files - Shared components
 ```
+
+### 8.4 Grand Total File Count
+
+| Layer | Files | Percentage |
+|-------|-------|------------|
+| **Backend (Python)** | 551 | 22.9% |
+| **Frontend (TypeScript)** | 1,554 | 64.5% |
+| **Packages (TypeScript)** | 305 | 12.6% |
+| **Grand Total** | **2,410** | 100% |
 
 ---
 
-**Report Generated:** January 27, 2025
-**Document Version:** 3.2.1 STRUCTURE REFACTORED
+**Report Generated:** December 16, 2025
+**Document Version:** 3.3.0 ARCHITECTURE CORRECTED
 **Status:** PRODUCTION READY
 
-*This document provides comprehensive codebase structure and file inventory. For backend implementation details, see `ASK_EXPERT_UNIFIED_BACKEND_OVERVIEW.md`. For frontend implementation details, see `ASK_EXPERT_UNIFIED_FRONTEND_OVERVIEW.md`.*
+*This document provides comprehensive codebase structure and file inventory. For backend implementation details, see `ASK_EXPERT_UNIFIED_BACKEND_OVERVIEW.md`. For frontend implementation details, see `ASK_EXPERT_UNIFIED_FRONTEND_OVERVIEW.md`. For Mode 3/4 architecture correction, see `AUDIT_CORRECTION_MODE_3_4_ARCHITECTURE.md`.*

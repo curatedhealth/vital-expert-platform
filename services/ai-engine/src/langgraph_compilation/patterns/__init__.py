@@ -11,7 +11,8 @@ from .constitutional_ai import (
     validate_pharma_response,
     validate_autonomous_response,
     quick_safety_check,
-    get_constitution_for_agent_type
+    get_constitution_for_agent_type,
+    wrap_with_constitution
 )
 
 __all__ = [
@@ -25,6 +26,7 @@ __all__ = [
     'validate_pharma_response',
     'validate_autonomous_response',
     'quick_safety_check',
-    'get_constitution_for_agent_type'
+    'get_constitution_for_agent_type',
+    'wrap_with_constitution'
 ]
 

@@ -32,8 +32,6 @@ from langgraph_workflows.shared.events import (
     sources_event,
     done_event,
     tool_event,
-    artifact_event,
-    STEP_TO_ARTIFACT_TYPE,
     # New SSE events for frontend contract
     reasoning_event,
     token_event,
@@ -42,20 +40,13 @@ from langgraph_workflows.shared.events import (
     thinking_start_event,
     thinking_end_event,
     hitl_checkpoint_event,
-    # Enhanced streaming events
-    rag_results_event,
-    web_search_event,
-    cot_step_event,
-    tool_start_event,
-    tool_result_event,
-    content_chunk_event,
 )
 from langgraph_workflows.modes34.unified_autonomous_workflow import build_master_graph
 from langgraph_workflows.modes34.agent_selector import select_team
 from services.runner_registry import runner_registry
 from services.checkpoint_store import checkpoint_store
 from langgraph.graph import END
-import structlog
+import logging
 
 USE_MASTER_GRAPH = os.getenv("USE_MASTER_GRAPH", "true").lower() == "true"
 from services.publisher import publisher
@@ -65,7 +56,7 @@ from agents.base_agent import AgentConfig
 
 
 router = APIRouter(prefix="/api/missions", tags=["missions"])
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 # --------------------------------------------------------------------------- Models
@@ -154,7 +145,7 @@ async def mission_stream(
         "template_id": payload.template_id,
         "user_context": payload.user_context,
         "tenant_id": tenant_fallback,
-        "selected_agent": payload.agent_id,
+        "selected_agent": payload.expert_id,
         "budget_limit": payload.budget_limit,
     }
     # If a template is provided and contains tasks/plan, seed it into initial state
@@ -198,9 +189,9 @@ async def mission_stream(
             if missing_inputs:
                 # Return validation error as StreamingResponse with error event
                 logger.warning(
-                    "mission_missing_required_inputs: template_id=%s, missing=%s",
-                    payload.template_id,
-                    missing_inputs,
+                    "mission_missing_required_inputs",
+                    template_id=payload.template_id,
+                    missing=missing_inputs,
                 )
                 # For now, log warning but don't block - inputs can be provided via prompts
                 # Future: return error response if strict mode enabled
@@ -222,117 +213,26 @@ async def mission_stream(
 
     async def event_generator() -> AsyncGenerator[bytes, None]:
         # If master graph is enabled, stream via LangGraph compiled graph
-        print(f"[DEBUG] mission_stream_path_decision: USE_MASTER_GRAPH={USE_MASTER_GRAPH}, mission_id={mission_id}")
-        logger.info("mission_stream_path_decision", use_master_graph=USE_MASTER_GRAPH, mission_id=mission_id)
         if USE_MASTER_GRAPH:
             try:
-                logger.info("mission_stream_master_graph_path", mission_id=mission_id)
                 graph = build_master_graph()
                 master_artifacts = []
-                custom_events_buffer = []  # Buffer for custom events from nodes
-
-                # Helper to convert custom events to SSE
-                def _emit_custom_event(event_data: dict) -> bytes:
-                    """Convert custom event dict to SSE bytes."""
-                    event_type = event_data.get("event", "custom")
-                    if event_type == "rag_results":
-                        return rag_results_event(
-                            query=event_data.get("query", ""),
-                            results=event_data.get("results", []),
-                            source=event_data.get("source", "pinecone"),
-                            total_found=event_data.get("totalFound"),
-                            latency_ms=event_data.get("latencyMs"),
-                        )
-                    elif event_type == "web_search":
-                        return web_search_event(
-                            query=event_data.get("query", ""),
-                            results=event_data.get("results", []),
-                            engine=event_data.get("engine", "pubmed"),
-                            total_found=event_data.get("totalFound"),
-                        )
-                    elif event_type == "cot_step":
-                        return cot_step_event(
-                            step_number=event_data.get("stepNumber", 1),
-                            thought=event_data.get("thought", ""),
-                            action=event_data.get("action"),
-                            observation=event_data.get("observation"),
-                            agent_id=event_data.get("agentId"),
-                        )
-                    elif event_type == "tool_start":
-                        return tool_start_event(
-                            tool_name=event_data.get("tool", ""),
-                            tool_type=event_data.get("type", "general"),
-                            step=event_data.get("step"),
-                            params=event_data.get("params"),
-                        )
-                    elif event_type == "tool_result":
-                        return tool_result_event(
-                            tool_name=event_data.get("tool", ""),
-                            success=event_data.get("success", True),
-                            result_summary=event_data.get("summary", ""),
-                            sources_count=event_data.get("sourcesCount", 0),
-                            cost=event_data.get("cost"),
-                            latency_ms=event_data.get("latencyMs"),
-                        )
-                    elif event_type == "content_chunk":
-                        return content_chunk_event(
-                            content=event_data.get("content", ""),
-                            chunk_type=event_data.get("chunkType", "text"),
-                            step=event_data.get("step"),
-                            agent_id=event_data.get("agentId"),
-                            is_final=event_data.get("isFinal", False),
-                        )
-                    elif event_type == "thinking_start":
-                        return thinking_start_event(
-                            agent_id=event_data.get("agentId", ""),
-                            step=event_data.get("step"),
-                        )
-                    elif event_type == "thinking_end":
-                        return thinking_end_event(
-                            agent_id=event_data.get("agentId", ""),
-                            step=event_data.get("step"),
-                        )
-                    else:
-                        # Generic custom event
-                        return sse_event(event_type, event_data)
-
                 # Emit initial status
                 yield sse_event("status", {"status": "planning", "message": "Planning mission"})
-
-                # Use multi-mode streaming to capture both updates and custom events
-                async for stream_item in graph.astream(
+                async for update in graph.astream(
                     initial_state,
                     config={"configurable": {"thread_id": mission_id}},
-                    stream_mode=["updates", "custom"],
+                    stream_mode="updates",
                 ):
-                    # Multi-mode returns tuples: (mode, data)
-                    # Handle both multi-mode (tuple) and single-mode (dict) formats
-                    if isinstance(stream_item, tuple) and len(stream_item) == 2:
-                        stream_mode, stream_data = stream_item
-
-                        # Handle custom events from nodes (tool_start, rag_results, etc.)
-                        if stream_mode == "custom":
-                            if isinstance(stream_data, dict) and stream_data.get("event"):
-                                yield _emit_custom_event(stream_data)
-                            continue
-
-                        # Handle updates mode - node completion events
-                        update = stream_data
-                    else:
-                        # Fallback for single-mode streaming (dict format)
-                        update = stream_item
-
-                    # Process node updates
+                    # update is a dict of {node_name: payload}
+                    # Handle both dict and tuple formats from LangGraph
                     if isinstance(update, tuple):
                         node_name, node_output = update[0], update[1] if len(update) > 1 else {}
                         if not isinstance(node_output, dict):
                             node_output = {"raw": node_output}
                         items = [(node_name, node_output)]
-                    elif isinstance(update, dict):
-                        items = update.items()
                     else:
-                        continue
-
+                        items = update.items()
                     for node_name, node_output in items:
                         # Ensure node_output is a dict
                         if not isinstance(node_output, dict):
@@ -368,14 +268,16 @@ async def mission_stream(
                             if node_output.get("artifacts"):
                                 last_artifact = node_output["artifacts"][-1]
                                 master_artifacts = node_output.get("artifacts") or master_artifacts
-                                # Use artifact_event helper to add type mapping
-                                yield artifact_event(
-                                    artifact_id=last_artifact.get("id"),
-                                    summary=last_artifact.get("summary", ""),
-                                    artifact_path=last_artifact.get("artifact_path"),
-                                    citations=last_artifact.get("citations", []),
-                                    step=last_artifact.get("step"),
-                                    status=last_artifact.get("status", "completed"),
+                                yield sse_event(
+                                    "artifact",
+                                    {
+                                        "id": last_artifact.get("id"),
+                                        "summary": last_artifact.get("summary"),
+                                        "artifactPath": last_artifact.get("artifact_path"),
+                                        "citations": last_artifact.get("citations", []),
+                                        "step": last_artifact.get("step"),
+                                        "status": last_artifact.get("status", "completed"),
+                                    },
                                 )
                                 if last_artifact.get("sources"):
                                     yield sources_event(last_artifact.get("sources"))
@@ -401,12 +303,7 @@ async def mission_stream(
                                 yield checkpoint_event(node_output.get("checkpoint_pending"))
                         elif node_name == "synthesize":
                             if node_output.get("final_output"):
-                                final_artifact = node_output.get("final_output")
-                                # Ensure artifact has type field for frontend
-                                if isinstance(final_artifact, dict) and 'type' not in final_artifact:
-                                    step = final_artifact.get('step', 'synthesis')
-                                    final_artifact['type'] = STEP_TO_ARTIFACT_TYPE.get(step, 'summary')
-                                yield sse_event("artifact", {"artifacts": [final_artifact]})
+                                yield sse_event("artifact", {"artifacts": [node_output.get("final_output")]})
                         # Costs
                         if node_output.get("cost"):
                             cost_val = node_output.get("cost")
@@ -433,7 +330,6 @@ async def mission_stream(
                 yield done_event({"mission_id": mission_id, "status": "completed"}, master_artifacts)
                 return
             except Exception as e:
-                print(f"[DEBUG] master_graph_exception: {type(e).__name__}: {e}")
                 logger.exception("Master graph streaming failed", exc_info=True)
                 mission_repo.save_state(mission_id, {"status": "failed", "tenant_id": tenant_fallback, "reason": str(e)})
                 yield sse_event("error", {"message": str(e), "mission_id": mission_id, "status": "failed"})
@@ -441,8 +337,6 @@ async def mission_stream(
 
         # ------------------------------------------------------------------
         # Legacy path (kept for fallback)
-        print(f"[DEBUG] mission_stream_legacy_path: mission_id={mission_id}")
-        logger.info("mission_stream_legacy_path", mission_id=mission_id, reason="USE_MASTER_GRAPH is False or master graph failed")
         state: MissionState = initial_state
 
         try:
@@ -498,7 +392,7 @@ async def mission_stream(
                         avatar_url=agent.get("avatar_url"),
                     )
             else:
-                selected_agent = payload.agent_id or "l2_placeholder"
+                selected_agent = payload.expert_id or "l2_placeholder"
                 # Emit agent_selected for Mode 3 manual selection
                 yield agent_selected_event(
                     agent_id=selected_agent,
@@ -561,10 +455,6 @@ async def mission_stream(
                     "template_id": payload.template_id,
                     "runner_code": runner_code,
                     "stage": step.get("stage"),
-                    # CRITICAL: Pass agent_id so L2 wrapper loads agent-specific tools (RAG, websearch)
-                    "agent_id": selected_agent,
-                    # Pass plan-level tools for tool execution
-                    "plan_tools": step.get("tools") or [],
                 }
                 expert_code = selected_agent or "l2_placeholder"
 
@@ -657,7 +547,7 @@ async def mission_stream(
                         )
 
                 except Exception as exc:  # pragma: no cover - defensive
-                    logger.error("delegate_execution_failed: step=%s, error=%s", step, str(exc))
+                    logger.error("delegate_execution_failed", step=step, error=str(exc))
                     mission_repo.save_state(
                         mission_id,
                         {"status": "failed", "tenant_id": tenant_fallback, "reason": str(exc)},
@@ -716,14 +606,10 @@ async def mission_stream(
                 quality_check_counter += 1
                 if delegate_res.get("citations"):
                     yield sources_event(delegate_res.get("citations", []))
-                # Map step to artifact type for frontend compatibility
-                step_name = artifact.get("step", "")
-                artifact_type = STEP_TO_ARTIFACT_TYPE.get(step_name, 'other')
                 yield sse_event(
                     "artifact",
                     {
                         "id": artifact["id"],
-                        "type": artifact_type,  # Required by frontend
                         "summary": artifact["summary"],
                         "artifactPath": artifact["artifact_path"],
                         "citations": artifact["citations"],
@@ -809,8 +695,7 @@ async def mission_stream(
                         yield sse_event("status", {"status": "awaiting_checkpoint", "message": "Budget checkpoint"})
                         yield checkpoint_event(budget_cp)
                         try:
-                            # Long timeout (1 hour) - user approval should not timeout
-                            await asyncio.wait_for(checkpoint_event_received.wait(), timeout=3600)
+                            await asyncio.wait_for(checkpoint_event_received.wait(), timeout=15)
                         except asyncio.TimeoutError:
                             yield sse_event("error", {"message": "Budget checkpoint timeout"})
                             mission_repo.save_state(mission_id, {"status": "failed", "reason": "budget_checkpoint_timeout"})
@@ -838,8 +723,7 @@ async def mission_stream(
                     yield sse_event("status", {"status": "awaiting_checkpoint", "message": "Quality checkpoint"})
                     yield checkpoint_event(quality_cp)
                     try:
-                        # Long timeout (1 hour) - user approval should not timeout
-                        await asyncio.wait_for(checkpoint_event_received.wait(), timeout=3600)
+                        await asyncio.wait_for(checkpoint_event_received.wait(), timeout=15)
                     except asyncio.TimeoutError:
                         yield sse_event("error", {"message": "Quality checkpoint timeout"})
                         mission_repo.save_state(mission_id, {"status": "failed", "reason": "quality_checkpoint_timeout"})
@@ -865,8 +749,7 @@ async def mission_stream(
 
             # Await checkpoint resolution (event-driven)
             try:
-                # Long timeout (1 hour) - user approval should not timeout
-                await asyncio.wait_for(checkpoint_event_received.wait(), timeout=3600)
+                await asyncio.wait_for(checkpoint_event_received.wait(), timeout=15)
             except asyncio.TimeoutError:
                 yield sse_event("error", {"message": "Checkpoint timeout"})
                 mission_repo.save_state(mission_id, {"status": "failed", "reason": "checkpoint_timeout"})
@@ -922,11 +805,9 @@ async def respond_checkpoint(payload: CheckpointResponseRequest):
         "reason": payload.reason,
         "modifications": payload.modifications,
     }
-    # ALWAYS publish checkpoint_resolved to signal the waiting coroutine
-    # This unblocks the event generator that's waiting at checkpoint_event_received.wait()
-    await publisher.publish(payload.mission_id, {"type": "checkpoint_resolved", "checkpoint_id": payload.checkpoint_id, "action": payload.action})
     if payload.resume:
         response["resume"] = True
+        await publisher.publish(payload.mission_id, {"type": "checkpoint_resolved"})
     return response
 
 
@@ -1019,11 +900,10 @@ async def respond_to_checkpoint(
         "ack": True,
     }
 
-    # ALWAYS publish checkpoint_resolved to signal the waiting coroutine
-    # This unblocks the event generator that's waiting at checkpoint_event_received.wait()
-    await publisher.publish(payload.mission_id, {"type": "checkpoint_resolved", "checkpoint_id": checkpoint_id, "action": payload.action})
+    # Resume mission if requested
     if payload.resume:
         response["resume"] = True
+        await publisher.publish(payload.mission_id, {"type": "checkpoint_resolved"})
 
     return response
 

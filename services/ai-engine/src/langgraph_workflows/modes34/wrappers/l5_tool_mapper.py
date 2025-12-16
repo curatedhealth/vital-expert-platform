@@ -26,13 +26,10 @@ import asyncio
 import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 # Import the existing L5 factory (absolute import to avoid package resolution issues)
 from agents.l5_tools import create_l5_tool, get_tool_config
-
-# Type alias for stream writer callback
-StreamWriterCallback = Optional[Callable[[Dict[str, Any]], None]]
 
 # Database-driven tool registry (Phase 2)
 try:
@@ -218,16 +215,10 @@ class L5ToolExecutor:
         self,
         slug: str,
         params: Dict[str, Any],
-        stream_writer: StreamWriterCallback = None,
     ) -> Dict[str, Any]:
         """
-        Execute a single L5 tool with optional streaming events.
+        Execute a single L5 tool.
         Returns dict with success, data, cost_usd, execution_time_ms, sources, error.
-
-        Args:
-            slug: Tool slug (e.g., "rag", "pubmed", "web_search")
-            params: Parameters to pass to tool
-            stream_writer: Optional callback to emit streaming events
         """
         tool = await self._get_tool(slug)
         if not tool:
@@ -239,15 +230,6 @@ class L5ToolExecutor:
                 "execution_time_ms": 0,
                 "sources": [],
             }
-
-        # Emit tool_start event for real-time feedback
-        if stream_writer:
-            stream_writer({
-                "event": "tool_start",
-                "tool": slug,
-                "type": L5_TOOL_CATEGORIES.get(slug, "general"),
-                "params": {"query": params.get("query", "")[:100]},  # Truncate for streaming
-            })
 
         start_time = datetime.utcnow()
         try:
@@ -268,51 +250,11 @@ class L5ToolExecutor:
                 execution_time_ms = result.execution_time_ms
 
             sources = self._extract_sources(result, slug)
-            data = getattr(result, "data", result)
-
-            # Emit specialized streaming events for RAG and web search
-            if stream_writer:
-                if slug == "rag":
-                    # Emit rag_results event for Glass Box transparency
-                    results_preview = []
-                    if isinstance(data, dict) and "results" in data:
-                        results_preview = data["results"][:5]  # Top 5 for streaming
-                    elif isinstance(data, list):
-                        results_preview = data[:5]
-                    stream_writer({
-                        "event": "rag_results",
-                        "query": params.get("query", ""),
-                        "results": results_preview,
-                        "source": "pinecone",
-                        "totalFound": len(sources),
-                        "latencyMs": execution_time_ms,
-                    })
-                elif slug in ("web_search", "pubmed", "clinicaltrials"):
-                    # Emit web_search event for literature/web results
-                    results_preview = sources[:5] if sources else []
-                    stream_writer({
-                        "event": "web_search",
-                        "query": params.get("query", ""),
-                        "results": results_preview,
-                        "engine": slug,
-                        "totalFound": len(sources),
-                    })
-
-                # Emit tool_result event
-                stream_writer({
-                    "event": "tool_result",
-                    "tool": slug,
-                    "success": getattr(result, "success", True),
-                    "summary": f"{len(sources)} sources found" if sources else "No sources",
-                    "sourcesCount": len(sources),
-                    "cost": cost_usd,
-                    "latencyMs": execution_time_ms,
-                })
 
             return {
                 "success": getattr(result, "success", True),
                 "tool_id": getattr(result, "tool_id", slug),
-                "data": data,
+                "data": getattr(result, "data", result),
                 "cost_usd": cost_usd,
                 "execution_time_ms": execution_time_ms,
                 "sources": sources,
@@ -323,18 +265,6 @@ class L5ToolExecutor:
         except Exception as e:
             execution_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
             logger.error(f"L5 tool '{slug}' execution failed: {e}")
-
-            # Emit tool_result error event
-            if stream_writer:
-                stream_writer({
-                    "event": "tool_result",
-                    "tool": slug,
-                    "success": False,
-                    "summary": f"Error: {str(e)[:100]}",
-                    "sourcesCount": 0,
-                    "latencyMs": execution_time_ms,
-                })
-
             return {
                 "success": False,
                 "error": str(e),
@@ -349,20 +279,18 @@ class L5ToolExecutor:
         runner_code: str,
         query: str,
         params: Optional[Dict[str, Any]] = None,
-        stream_writer: StreamWriterCallback = None,
     ) -> L5ExecutionSummary:
         """Execute all L5 tools mapped to a runner code."""
         slugs = self.map_runner_to_l5_tools(runner_code)
         if not slugs:
             return L5ExecutionSummary()
-        return await self._execute_multiple(slugs, query, params, stream_writer)
+        return await self._execute_multiple(slugs, query, params)
 
     async def execute_for_plan_tools(
         self,
         plan_tools: List[str],
         query: str,
         params: Optional[Dict[str, Any]] = None,
-        stream_writer: StreamWriterCallback = None,
     ) -> L5ExecutionSummary:
         """Execute L5 tools for a list of plan tool names."""
         slugs: List[str] = []
@@ -372,14 +300,13 @@ class L5ToolExecutor:
                 slugs.append(slug)
         if not slugs:
             return L5ExecutionSummary()
-        return await self._execute_multiple(slugs, query, params, stream_writer)
+        return await self._execute_multiple(slugs, query, params)
 
     async def _execute_multiple(
         self,
         slugs: List[str],
         query: str,
         params: Optional[Dict[str, Any]],
-        stream_writer: StreamWriterCallback = None,
     ) -> L5ExecutionSummary:
         summary = L5ExecutionSummary()
         params = params or {}
@@ -387,7 +314,7 @@ class L5ToolExecutor:
         outputs = []
 
         for slug in slugs:
-            result = await self.execute_tool(slug, tool_params, stream_writer)
+            result = await self.execute_tool(slug, tool_params)
             summary.tool_slugs_called.append(slug)
             summary.total_execution_time_ms += result.get("execution_time_ms", 0)
             summary.total_cost_usd += result.get("cost_usd", 0.0)
@@ -477,7 +404,6 @@ class L5ToolExecutor:
         query: str,
         params: Optional[Dict[str, Any]] = None,
         tool_filter: Optional[List[str]] = None,
-        stream_writer: StreamWriterCallback = None,
     ) -> L5ExecutionSummary:
         """
         Execute L5 tools for a specific agent using database-driven permissions.
@@ -490,7 +416,6 @@ class L5ToolExecutor:
             query: Search query
             params: Additional parameters
             tool_filter: Optional list to further filter tools (intersection)
-            stream_writer: Optional callback to emit streaming events
 
         Returns:
             L5ExecutionSummary with aggregated results
@@ -526,11 +451,11 @@ class L5ToolExecutor:
 
         # Execute via ToolRegistry if available, else fall back to slug-based execution
         if TOOL_REGISTRY_AVAILABLE and ToolRegistry is not None:
-            return await self._execute_via_registry(agent_id, agent_tools, query, params, stream_writer)
+            return await self._execute_via_registry(agent_id, agent_tools, query, params)
         else:
             # Convert L5 IDs to slugs and use standard execution
             slugs = [self._l5_id_to_slug(t) for t in agent_tools]
-            return await self._execute_multiple(slugs, query, params, stream_writer)
+            return await self._execute_multiple(slugs, query, params)
 
     async def _execute_via_registry(
         self,
@@ -538,25 +463,14 @@ class L5ToolExecutor:
         tool_ids: List[str],
         query: str,
         params: Optional[Dict[str, Any]],
-        stream_writer: StreamWriterCallback = None,
     ) -> L5ExecutionSummary:
-        """Execute tools via ToolRegistry with proper permission checking and streaming."""
+        """Execute tools via ToolRegistry with proper permission checking."""
         summary = L5ExecutionSummary()
         params = params or {}
         tool_params = {"query": query, **params}
         outputs = []
 
         for tool_id in tool_ids:
-            # Emit tool_start event
-            slug = self._l5_id_to_slug(tool_id)
-            if stream_writer:
-                stream_writer({
-                    "event": "tool_start",
-                    "tool": tool_id,
-                    "type": L5_TOOL_CATEGORIES.get(slug, "general"),
-                    "params": {"query": query[:100]},
-                })
-
             start_time = datetime.utcnow()
             try:
                 result = await ToolRegistry.execute_for_agent(agent_id, tool_id, tool_params)
@@ -586,52 +500,10 @@ class L5ToolExecutor:
                             outputs.append(f"[{tool_id}]: {data['response']}")
                         elif "results" in data:
                             outputs.append(f"[{tool_id}]: {len(data['results'])} results found")
-
-                    # Emit streaming events for RAG and web search results
-                    if stream_writer:
-                        if slug == "rag":
-                            results_preview = []
-                            if isinstance(data, dict) and "results" in data:
-                                results_preview = data["results"][:5]
-                            stream_writer({
-                                "event": "rag_results",
-                                "query": query,
-                                "results": results_preview,
-                                "source": "pinecone",
-                                "totalFound": len(sources),
-                                "latencyMs": exec_ms,
-                            })
-                        elif slug in ("web_search", "pubmed", "clinicaltrials"):
-                            stream_writer({
-                                "event": "web_search",
-                                "query": query,
-                                "results": sources[:5],
-                                "engine": slug,
-                                "totalFound": len(sources),
-                            })
-
-                        stream_writer({
-                            "event": "tool_result",
-                            "tool": tool_id,
-                            "success": True,
-                            "summary": f"{len(sources)} sources found",
-                            "sourcesCount": len(sources),
-                            "latencyMs": exec_ms,
-                        })
                 else:
                     summary.error_count += 1
                     error_msg = result.get("error", "Unknown error")
                     summary.errors.append(f"{tool_id}: {error_msg}")
-
-                    if stream_writer:
-                        stream_writer({
-                            "event": "tool_result",
-                            "tool": tool_id,
-                            "success": False,
-                            "summary": f"Error: {error_msg[:100]}",
-                            "sourcesCount": 0,
-                            "latencyMs": exec_ms,
-                        })
 
             except Exception as e:
                 exec_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
@@ -645,16 +517,6 @@ class L5ToolExecutor:
                     agent_id=agent_id[:8],
                     error=str(e)[:100],
                 )
-
-                if stream_writer:
-                    stream_writer({
-                        "event": "tool_result",
-                        "tool": tool_id,
-                        "success": False,
-                        "summary": f"Error: {str(e)[:100]}",
-                        "sourcesCount": 0,
-                        "latencyMs": exec_ms,
-                    })
 
         summary.combined_output = "\n\n".join(outputs)
 

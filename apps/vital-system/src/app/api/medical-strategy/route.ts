@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const searchParams = request.nextUrl.searchParams;
-    const tenantId = searchParams.get('tenant_id') || 'c6d221f8-1e8d-4dd9-86c5-d640ad6bf30b';
+    const tenantId = searchParams.get('tenant_id') || '00000000-0000-0000-0000-000000000001';
     const functionFilter = searchParams.get('function') || 'Medical Affairs';
 
     const insights: StrategicInsight[] = [];

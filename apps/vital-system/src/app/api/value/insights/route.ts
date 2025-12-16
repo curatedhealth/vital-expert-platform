@@ -25,9 +25,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     let tenantId = searchParams.get('tenant_id');
 
-    // If no tenant specified, default to Pharma Enterprise (has most data)
+    // If no tenant specified, default to VITAL Platform (has all agents)
     if (!tenantId) {
-      tenantId = 'c6d221f8-1e8d-4dd9-86c5-d640ad6bf30b';
+      tenantId = '00000000-0000-0000-0000-000000000001';
     }
 
     const insights: ValueInsight[] = [];

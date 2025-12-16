@@ -747,6 +747,24 @@ class SupabaseClient:
             raise RuntimeError("Supabase client not initialized")
         return self.client.table(table_name)
 
+    def rpc(self, fn: str, params: Optional[Dict[str, Any]] = None):
+        """
+        Call a PostgreSQL RPC function via Supabase.
+
+        This delegates to the underlying supabase-py client's rpc method,
+        enabling calls to PostgreSQL functions like search_agents_fulltext.
+
+        Args:
+            fn: The name of the PostgreSQL function to call
+            params: Optional dictionary of parameters to pass to the function
+
+        Returns:
+            Supabase RPC query builder (call .execute() to run)
+        """
+        if not self.client:
+            raise RuntimeError("Supabase client not initialized")
+        return self.client.rpc(fn, params or {})
+
 
 # Singleton instance
 _supabase_client: Optional[SupabaseClient] = None

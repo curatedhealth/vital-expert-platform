@@ -58,8 +58,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Default to Pharma Enterprise tenant if not specified
-    const tenantId = body.tenant_id || 'c6d221f8-1e8d-4dd9-86c5-d640ad6bf30b';
+    // Default to VITAL Platform tenant (has all agents)
+    const tenantId = body.tenant_id || '00000000-0000-0000-0000-000000000001';
 
     // Call the Value Investigator agent via ai-engine service
     const response = await fetch(`${AI_ENGINE_URL}/v1/value-investigator/query`, {

@@ -8,13 +8,13 @@ import asyncio
 import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from uuid import uuid4
 
 from services.deepagents_tools import VirtualFilesystem
 from services.runner_registry import runner_registry
 from .registry import get_l4_class
-from .l5_tool_mapper import get_l5_executor, L5ExecutionSummary
+from .l5_tool_mapper import get_l5_executor, L5ExecutionSummary, StreamWriterCallback
 
 # Phase 1 CRITICAL Fix C1: LLM timeout protection
 from langgraph_workflows.modes34.resilience import (
@@ -59,15 +59,32 @@ async def delegate_to_l4(
     worker_code: str,
     task: str,
     context: Dict[str, Any] | None = None,
+    stream_writer: StreamWriterCallback = None,
 ) -> Dict[str, Any]:
     """
-    Wrapper for L4 workers with real L5 tool execution and cost rollup.
+    Wrapper for L4 workers with real L5 tool execution, cost rollup, and streaming events.
+
+    Args:
+        worker_code: L4 worker code (e.g., "evidence", "research", "synthesize")
+        task: Task description for the worker
+        context: Execution context with goal, runner, agent_id, plan_tools
+        stream_writer: Optional callback to emit streaming events (tool_start, rag_results, etc.)
     """
     logger.info("modes34_delegate_to_l4", worker=worker_code, task=task)
     context = context or {}
     runner = _pick_runner(worker_code, stage=context.get("stage"))
     runner_codes = [runner.get("run_code")] if runner else []
     plan_tools = context.get("plan_tools") or []
+
+    # Emit CoT reasoning event at start of L4 execution
+    if stream_writer:
+        stream_writer({
+            "event": "cot_step",
+            "stepNumber": 1,
+            "thought": f"Starting {worker_code} analysis for: {task[:100]}...",
+            "action": f"Execute L5 tools: {', '.join(plan_tools) if plan_tools else 'default tools'}",
+            "agentId": context.get("agent_id"),
+        })
 
     # Execute L5 tools first
     # Phase 2: Use database-driven agent tools when agent_id is available
@@ -83,14 +100,35 @@ async def delegate_to_l4(
             query=task,
             params=context,
             tool_filter=plan_tools,  # Apply plan_tools as filter
+            stream_writer=stream_writer,  # Pass stream_writer for real-time events
         )
     else:
         # Legacy: use runner code mapping
         if runner_codes:
-            l5_summary = await l5_exec.execute_for_runner(runner_code=runner_codes[0], query=task, params=context)
+            l5_summary = await l5_exec.execute_for_runner(
+                runner_code=runner_codes[0],
+                query=task,
+                params=context,
+                stream_writer=stream_writer,
+            )
         if plan_tools:
-            l5_plan_summary = await l5_exec.execute_for_plan_tools(plan_tools=plan_tools, query=task, params=context)
+            l5_plan_summary = await l5_exec.execute_for_plan_tools(
+                plan_tools=plan_tools,
+                query=task,
+                params=context,
+                stream_writer=stream_writer,
+            )
             _merge_summaries(l5_summary, l5_plan_summary)
+
+    # Emit CoT reasoning event after L5 tools complete
+    if stream_writer:
+        stream_writer({
+            "event": "cot_step",
+            "stepNumber": 2,
+            "thought": f"L5 tools completed. Retrieved {len(l5_summary.all_sources)} sources.",
+            "observation": f"Tools used: {', '.join(l5_summary.tool_slugs_called)}",
+            "agentId": agent_id,
+        })
 
     # Resolve worker
     worker_cls = get_l4_class(worker_code)
@@ -184,6 +222,27 @@ async def delegate_to_l4(
         path=f"missions/modes34/l4/{worker_code}.md",
         content=content,
     )
+
+    # Emit final CoT step with synthesis summary
+    if stream_writer:
+        stream_writer({
+            "event": "cot_step",
+            "stepNumber": 3,
+            "thought": f"Analysis complete. Generated {len(summary_text)} character response with {len(citations)} citations.",
+            "observation": f"Sources: {len(sources)} | Duration: {exec_ms}ms | Cost: ${cost_usd:.4f}",
+            "agentId": agent_id,
+        })
+
+        # Emit content chunk with the summary
+        if summary_text:
+            stream_writer({
+                "event": "content_chunk",
+                "content": summary_text[:500] + ("..." if len(summary_text) > 500 else ""),
+                "chunkType": "text",
+                "step": worker_code,
+                "agentId": agent_id,
+                "isFinal": True,
+            })
 
     return {
         "summary": summary_text[:MAX_SUMMARY_CHARS] or f"{worker_code} produced no output.",

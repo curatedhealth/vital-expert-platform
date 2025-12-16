@@ -46,8 +46,13 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
 // Check for bypass mode
 const BYPASS_AUTH = process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV === 'development';
 
-// Default tenant context for bypass mode - uses Vital System tenant UUID
-const VITAL_SYSTEM_TENANT_ID = 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244';
+// Default tenant context - uses VITAL Platform tenant UUID (has all 1271 agents)
+// NOTE: This is the ONLY tenant with active agents. Other tenants have 0 agents.
+const VITAL_SYSTEM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+
+// FORCE VITAL PLATFORM TENANT: Override any other tenant to use the one with agents
+// Remove this override once agents are properly distributed across tenants
+const FORCE_VITAL_TENANT = true;
 
 const DEFAULT_TENANT: Organization = {
   id: VITAL_SYSTEM_TENANT_ID,
@@ -67,7 +72,7 @@ const DEFAULT_TENANT: Organization = {
 };
 
 const DEFAULT_CONFIG: TenantConfiguration = {
-  id: 'c6d221f8-0000-0000-0000-000000000001',
+  id: '00000000-0000-0000-0000-000000000002',
   tenant_id: VITAL_SYSTEM_TENANT_ID,
   ui_config: {
     theme: 'default',
@@ -110,11 +115,15 @@ export function TenantProviderSubdomain({ children }: TenantProviderProps) {
   const authContext = useAuth();
   const user = authContext?.user || null;
 
-  const [tenant, setTenant] = useState<Organization | null>(BYPASS_AUTH ? DEFAULT_TENANT : null);
-  const [configuration, setConfiguration] = useState<TenantConfiguration | null>(BYPASS_AUTH ? DEFAULT_CONFIG : null);
+  // FORCE_VITAL_TENANT: Always use the VITAL Platform tenant (has all agents)
+  // This ensures Mode 2 Fusion Search can find agents
+  const shouldUseDefault = BYPASS_AUTH || FORCE_VITAL_TENANT;
+
+  const [tenant, setTenant] = useState<Organization | null>(shouldUseDefault ? DEFAULT_TENANT : null);
+  const [configuration, setConfiguration] = useState<TenantConfiguration | null>(shouldUseDefault ? DEFAULT_CONFIG : null);
   const [apps, setApps] = useState<TenantApp[]>([]);
   const [featureFlags, setFeatureFlags] = useState<Map<string, boolean>>(new Map());
-  const [isLoading, setIsLoading] = useState(!BYPASS_AUTH); // Don't start loading in bypass mode
+  const [isLoading, setIsLoading] = useState(!shouldUseDefault); // Don't start loading when using default tenant
   const [error, setError] = useState<Error | undefined>();
 
   // Use singleton Supabase client
@@ -215,9 +224,9 @@ export function TenantProviderSubdomain({ children }: TenantProviderProps) {
    * Load tenant on mount and when cookie changes
    */
   useEffect(() => {
-    // Skip loading in bypass mode - use defaults
-    if (BYPASS_AUTH) {
-      console.log('[TenantContext] Bypass mode enabled, using default tenant context');
+    // Skip loading when using default tenant (bypass mode or forced VITAL tenant)
+    if (shouldUseDefault) {
+      console.log('[TenantContext] Using default VITAL Platform tenant (has all 1271 agents)');
       return;
     }
 

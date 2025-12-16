@@ -266,3 +266,130 @@ def hitl_checkpoint_event(
             "context": context or {},
         },
     )
+
+
+# --------------------------------------------------------------------------- Enhanced engagement events
+
+
+def rag_results_event(
+    query: str,
+    results: list,
+    source: str = "pinecone",
+    total_found: int | None = None,
+    latency_ms: int | None = None,
+) -> bytes:
+    """Emit RAG retrieval results for transparency."""
+    return sse_event(
+        "rag_results",
+        {
+            "query": query,
+            "results": results[:5],  # Limit to top 5 for streaming
+            "source": source,
+            "totalFound": total_found or len(results),
+            "latencyMs": latency_ms,
+            "status": "retrieved",
+        },
+    )
+
+
+def web_search_event(
+    query: str,
+    results: list,
+    engine: str = "pubmed",
+    total_found: int | None = None,
+) -> bytes:
+    """Emit web/literature search results."""
+    return sse_event(
+        "web_search",
+        {
+            "query": query,
+            "results": results[:5],  # Limit to top 5
+            "engine": engine,
+            "totalFound": total_found or len(results),
+            "status": "completed",
+        },
+    )
+
+
+def cot_step_event(
+    step_number: int,
+    thought: str,
+    action: str | None = None,
+    observation: str | None = None,
+    agent_id: str | None = None,
+) -> bytes:
+    """Emit Chain of Thought / ReAct reasoning step."""
+    return sse_event(
+        "cot_step",
+        {
+            "stepNumber": step_number,
+            "thought": thought,
+            "action": action,
+            "observation": observation,
+            "agentId": agent_id,
+            "status": "reasoning",
+        },
+    )
+
+
+def tool_start_event(
+    tool_name: str,
+    tool_type: str,
+    step: str | None = None,
+    params: Dict[str, Any] | None = None,
+) -> bytes:
+    """Emit when a tool execution starts."""
+    return sse_event(
+        "tool_start",
+        {
+            "tool": tool_name,
+            "type": tool_type,
+            "step": step,
+            "params": params or {},
+            "status": "running",
+        },
+    )
+
+
+def tool_result_event(
+    tool_name: str,
+    success: bool,
+    result_summary: str,
+    sources_count: int = 0,
+    cost: float | None = None,
+    latency_ms: int | None = None,
+) -> bytes:
+    """Emit tool execution result."""
+    return sse_event(
+        "tool_result",
+        {
+            "tool": tool_name,
+            "success": success,
+            "summary": result_summary,
+            "sourcesCount": sources_count,
+            "cost": cost,
+            "latencyMs": latency_ms,
+            "status": "completed" if success else "failed",
+        },
+    )
+
+
+def content_chunk_event(
+    content: str,
+    chunk_type: str = "text",
+    step: str | None = None,
+    agent_id: str | None = None,
+    is_final: bool = False,
+) -> bytes:
+    """Emit content chunk for real-time streaming."""
+    return sse_event(
+        "content_chunk",
+        {
+            "content": content,
+            "chunkType": chunk_type,  # text, code, markdown, citation
+            "step": step,
+            "agentId": agent_id,
+            "isFinal": is_final,
+            "status": "streaming" if not is_final else "complete",
+        },
+    )

@@ -42,6 +42,15 @@ from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph.state import CompiledStateGraph
 
+# Custom streaming for enhanced engagement events
+try:
+    from langgraph.config import get_stream_writer
+    STREAM_WRITER_AVAILABLE = True
+except ImportError:
+    # Fallback for older LangGraph versions
+    get_stream_writer = None
+    STREAM_WRITER_AVAILABLE = False
+
 try:
     from langgraph.checkpoint.postgres import PostgresSaver  # type: ignore
     POSTGRES_AVAILABLE = True
@@ -507,6 +516,15 @@ def build_master_graph() -> CompiledStateGraph:
         idx = state.get("current_step", 0)
         total_steps = state.get("total_steps") or len(plan)
 
+        # Get stream writer for custom events (RAG results, CoT, tool calls)
+        stream_writer = None
+        if STREAM_WRITER_AVAILABLE and get_stream_writer:
+            try:
+                stream_writer = get_stream_writer()
+            except Exception:
+                # Not in streaming context, continue without streaming
+                pass
+
         # DEBUG: Log step entry
         logger.info(
             "execute_step_entry",
@@ -515,6 +533,7 @@ def build_master_graph() -> CompiledStateGraph:
             plan_length=len(plan),
             artifacts_count=len(artifacts),
             mission_id=state.get("mission_id"),
+            streaming_enabled=stream_writer is not None,
         )
 
         if idx >= len(plan):
@@ -523,6 +542,8 @@ def build_master_graph() -> CompiledStateGraph:
 
         step = plan[idx]
         delegate = step.get("agent", "L2")
+        agent_id = state.get("selected_agent")
+
         # Build context with goal, tools, and runner from step
         ctx = {
             "goal": state.get("goal"),
@@ -530,6 +551,7 @@ def build_master_graph() -> CompiledStateGraph:
             "stage": step.get("stage"),
             "plan_tools": step.get("tools", []),  # Pass tools to L4 for L5 invocation
             "runner": step.get("runner"),
+            "agent_id": agent_id,  # Pass agent_id for database-driven tool assignment
         }
 
         logger.info(
@@ -541,13 +563,35 @@ def build_master_graph() -> CompiledStateGraph:
             runner=step.get("runner"),
         )
 
+        # Emit thinking_start event for real-time feedback
+        if stream_writer:
+            stream_writer({
+                "event": "thinking_start",
+                "agentId": agent_id,
+                "step": step.get("id"),
+            })
+
         if delegate == "L2":
-            res = await delegate_to_l2(expert_code=state.get("selected_agent") or "domain_lead", task=step.get("description", ""), context=ctx)
+            res = await delegate_to_l2(expert_code=agent_id or "domain_lead", task=step.get("description", ""), context=ctx)
         elif delegate == "L3":
             res = await delegate_to_l3(specialist_code="context_specialist", task=step.get("description", ""), context=ctx)
         else:
             # L4 worker - use "evidence" worker code with plan_tools for L5 tool invocation
-            res = await delegate_to_l4(worker_code=step.get("runner") or "evidence", task=step.get("description", ""), context=ctx)
+            # Pass stream_writer for real-time tool/RAG/search events
+            res = await delegate_to_l4(
+                worker_code=step.get("runner") or "evidence",
+                task=step.get("description", ""),
+                context=ctx,
+                stream_writer=stream_writer,
+            )
+
+        # Emit thinking_end event
+        if stream_writer:
+            stream_writer({
+                "event": "thinking_end",
+                "agentId": agent_id,
+                "step": step.get("id"),
+            })
 
         artifacts.append({**res, "id": step.get("id"), "step": step.get("name"), "status": "completed"})
         plan[idx]["status"] = "completed"

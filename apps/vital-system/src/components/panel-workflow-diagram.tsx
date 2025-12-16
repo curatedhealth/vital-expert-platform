@@ -77,11 +77,11 @@ const nodeTypes = {
   round: RoundNode,
 };
 
-export function PanelWorkflowDiagram({ 
+export function PanelWorkflowDiagram({
   panelName = 'Structured Panel',
   panelId = 'structured_panel',
   agentIds = [],
-  tenantId = 'c1977eb4-cb2e-4cf7-8cf8-4ac71e27a244',
+  tenantId = '00000000-0000-0000-0000-000000000001',
 }: PanelWorkflowDiagramProps) {
   const [showTestModal, setShowTestModal] = useState(false);
   const [testQuestion, setTestQuestion] = useState('');

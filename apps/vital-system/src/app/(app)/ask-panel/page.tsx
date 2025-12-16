@@ -33,6 +33,7 @@ import {
   Trash2,
   Play,
   Star,
+  Zap,
 } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 
@@ -441,6 +442,39 @@ export default function AskPanelPage() {
       {/* Main Content - Scrollable */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-6xl mx-auto p-6 space-y-6">
+          {/* Featured: Autonomous Panel */}
+          <button
+            type="button"
+            onClick={() => router.push('/ask-panel/autonomous')}
+            className="w-full group relative overflow-hidden rounded-2xl border-2 border-transparent bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 p-[2px] transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/25"
+          >
+            <div className="relative flex items-center justify-between rounded-2xl bg-background p-5 transition-all">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg">
+                  <Zap className="h-6 w-6" />
+                </div>
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">Autonomous Panel</h3>
+                    <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 text-xs">
+                      Mode 4
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Multi-expert parallel execution with consensus building, iterative refinement, and HITL checkpoints
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex flex-col items-end text-right">
+                  <span className="text-xs font-medium text-muted-foreground">Features</span>
+                  <span className="text-xs text-muted-foreground/70">Auto-select • Multi-round • Quality gates</span>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-purple-600 group-hover:translate-x-1 transition-all" />
+              </div>
+            </div>
+          </button>
+
           {/* Panel Types Grid - 2x3 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {PANEL_TYPES.map((config) => (
@@ -498,6 +532,14 @@ export default function AskPanelPage() {
           <div className="text-center pt-4">
             <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Quick Links</p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
+              <button
+                type="button"
+                onClick={() => router.push('/ask-panel/autonomous')}
+                className="text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors"
+              >
+                Autonomous Mode
+              </button>
+              <span className="text-muted-foreground/30">•</span>
               <button
                 type="button"
                 onClick={() => router.push('/ask-panel/history')}

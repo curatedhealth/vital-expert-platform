@@ -126,6 +126,14 @@ def _register_panel_routes(app: FastAPI) -> None:
     except ImportError as e:
         logger.warning("unified_panel_routes_import_failed", error=str(e))
 
+    # Register Panel Autonomous routes (Mode 4 - autonomous multi-expert panel)
+    try:
+        from api.routes.panel_autonomous import router as panel_autonomous_router
+        app.include_router(panel_autonomous_router, prefix="", tags=["ask-panel-autonomous"])
+        logger.info("✅ Ask Panel Autonomous routes registered")
+    except ImportError as e:
+        logger.warning("panel_autonomous_routes_import_failed", error=str(e))
+
 
 def _register_expert_routes(app: FastAPI) -> None:
     """Register Ask Expert routes (4-Mode System)."""

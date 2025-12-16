@@ -9,7 +9,8 @@ import {
   Brain,
   Swords,
   Vote,
-  Target
+  Target,
+  Zap,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -125,17 +126,29 @@ export function PanelSidebar({
         </div>
       </div>
 
-      {/* New Panel Button */}
-      <div className="p-3 border-b border-slate-100">
+      {/* New Panel Buttons */}
+      <div className="p-3 border-b border-slate-100 space-y-2">
         <button
+          onClick={() => router.push('/ask-panel/autonomous')}
           className={cn(
             'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg',
-            'bg-purple-600 text-white font-medium text-sm',
-            'hover:bg-purple-700 transition-colors'
+            'bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium text-sm',
+            'hover:from-purple-700 hover:to-pink-700 transition-colors'
+          )}
+        >
+          <Zap className="w-4 h-4" />
+          Autonomous Panel
+        </button>
+        <button
+          onClick={() => router.push('/ask-panel/interactive')}
+          className={cn(
+            'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg',
+            'border border-purple-200 text-purple-700 font-medium text-sm',
+            'hover:bg-purple-50 transition-colors'
           )}
         >
           <Plus className="w-4 h-4" />
-          New Advisory Panel
+          Interactive Panel
         </button>
       </div>
 

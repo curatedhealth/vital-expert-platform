@@ -13,6 +13,7 @@ import {
   Building2,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   Clock,
   Cloud,
   DollarSign,
@@ -204,6 +205,50 @@ export function SidebarDashboardContent() {
 
 export function SidebarAskPanelContent() {
   const { savedPanels } = useSavedPanels()
+  const [panelHistory, setPanelHistory] = useState<any[]>([])
+  const [historyLoading, setHistoryLoading] = useState(true)
+  const router = useRouter()
+
+  // Fetch panel history
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user?.id) {
+          setHistoryLoading(false)
+          return
+        }
+
+        const response = await fetch(`/api/ask-panel?userId=${user.id}`)
+        const data = await response.json()
+        if (response.ok && data.sessions) {
+          setPanelHistory(data.sessions.slice(0, 5))
+        }
+      } catch (err) {
+        console.error('Error fetching panel history:', err)
+      } finally {
+        setHistoryLoading(false)
+      }
+    }
+    fetchHistory()
+  }, [])
+
+  // Format time ago
+  const formatTimeAgo = (dateString: string): string => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    return date.toLocaleDateString()
+  }
 
   return (
     <>
@@ -240,62 +285,70 @@ export function SidebarAskPanelContent() {
         </Collapsible>
       )}
 
-      {/* Panel Workflows */}
+      {/* History */}
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              Panel Workflows
+              <span className="flex items-center gap-2">
+                <History className="h-4 w-4" />
+                History
+              </span>
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
           <CollapsibleContent>
             <SidebarGroupContent>
-              <ScrollArea className="h-[calc(100vh-400px)]">
-                <SidebarMenu>
-                  {PANEL_TEMPLATES.map((template) => {
-                    const IconComponent = getCategoryIcon(template.category);
-                    
-                    return (
-                      <SidebarMenuItem key={template.id}>
+              <SidebarMenu>
+                {historyLoading ? (
+                  <SidebarMenuItem>
+                    <div className="flex items-center gap-2 px-2 py-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-xs">Loading...</span>
+                    </div>
+                  </SidebarMenuItem>
+                ) : panelHistory.length === 0 ? (
+                  <SidebarMenuItem>
+                    <div className="px-2 py-3 text-center">
+                      <History className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
+                      <p className="text-xs text-muted-foreground">No history yet</p>
+                    </div>
+                  </SidebarMenuItem>
+                ) : (
+                  <>
+                    {panelHistory.map((session) => (
+                      <SidebarMenuItem key={session.sessionId}>
                         <SidebarMenuButton
-                          asChild
-                          className="h-auto py-2 px-3 flex-col items-start gap-1"
+                          className="w-full h-auto py-2"
+                          onClick={() => router.push(`/ask-panel/history/${session.conversationId}`)}
                         >
-                          <Link href={`/ask-panel?panelId=${template.id}`}>
-                            <div className="flex items-center gap-2 w-full">
-                              <div className="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                                <IconComponent className="w-4 h-4 text-white" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium truncate">
-                                  {template.name}
-                                </div>
-                                <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                                  {template.description}
-                                </div>
-                                <div className="flex flex-wrap gap-1 mt-1.5">
-                                  <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 capitalize">
-                                    {template.category}
-                                  </Badge>
-                                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
-                                    <Zap className="w-2.5 h-2.5 mr-0.5" />
-                                    {template.mode}
-                                  </Badge>
-                                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
-                                    <Bot className="w-2.5 h-2.5 mr-0.5" />
-                                    {template.suggestedAgents.length}
-                                  </Badge>
-                                </div>
-                              </div>
+                          <div className="flex flex-col items-start gap-1 w-full">
+                            <span className="text-sm font-medium truncate w-full">
+                              {session.title || 'Panel Discussion'}
+                            </span>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Users className="h-3 w-3" />
+                                {session.agentCount}
+                              </span>
+                              <span>{formatTimeAgo(session.lastMessage)}</span>
                             </div>
-                          </Link>
+                          </div>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </ScrollArea>
+                    ))}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        className="w-full text-primary hover:text-primary"
+                        onClick={() => router.push('/ask-panel/history')}
+                      >
+                        <span className="text-xs">View all history</span>
+                        <ChevronRight className="h-3 w-3 ml-auto" />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </>
+                )}
+              </SidebarMenu>
             </SidebarGroupContent>
           </CollapsibleContent>
         </SidebarGroup>

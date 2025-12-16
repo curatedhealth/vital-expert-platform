@@ -76,103 +76,151 @@ interface PanelState {
   clearError: () => void;
 }
 
-// Default panel templates
+// Default panel templates - 6 main panel workflow types
 const defaultTemplates: PanelTemplate[] = [
   {
-    id: 'regulatory-advisory',
-    name: 'Regulatory Advisory Panel',
-    description: 'Expert panel for regulatory strategy and compliance decisions',
-    domain: 'regulatory',
+    id: 'structured_panel',
+    name: 'Structured Panel',
+    description: 'Structured multi-expert panel with moderator, opening statements, multiple discussion rounds, consensus and documentation.',
+    domain: 'panel',
     recommendedMembers: {
-      roles: ['regulatory_strategist', 'compliance_officer', 'regulatory_affairs'],
-      businessFunctions: ['regulatory', 'quality', 'clinical'],
+      roles: ['moderator', 'expert', 'advisor'],
+      businessFunctions: ['regulatory', 'clinical', 'quality', 'compliance'],
       minMembers: 3,
-      maxMembers: 5
+      maxMembers: 10
     },
     promptTemplates: [
-      'What regulatory pathway should we pursue for FDA approval?',
-      'How should we address this FDA feedback?',
-      'What are the compliance requirements for this indication?'
+      'Conduct a structured review of this regulatory submission strategy',
+      'Facilitate a formal panel discussion on clinical trial design',
+      'Lead a consensus-building session on compliance requirements'
     ],
     useCases: [
-      'FDA submission strategy',
-      'Regulatory pathway selection',
-      'Compliance assessment',
-      'Global regulatory strategy'
+      'Formal advisory board meetings',
+      'Regulatory strategy sessions',
+      'Consensus building',
+      'Structured decision-making'
     ],
     complexity: 'high'
   },
   {
-    id: 'clinical-design',
-    name: 'Clinical Trial Design Panel',
-    description: 'Expert panel for clinical trial design and strategy',
-    domain: 'clinical',
+    id: 'open_panel',
+    name: 'Open Panel',
+    description: 'Open, collaborative panel format optimized for brainstorming, innovation and exploratory discussions.',
+    domain: 'panel',
     recommendedMembers: {
-      roles: ['clinical_researcher', 'biostatistician', 'clinical_operations'],
-      businessFunctions: ['clinical', 'biostatistics', 'medical_affairs'],
+      roles: ['facilitator', 'expert', 'innovator'],
+      businessFunctions: ['commercial', 'digital_health', 'clinical', 'marketing'],
       minMembers: 3,
-      maxMembers: 6
+      maxMembers: 10
     },
     promptTemplates: [
-      'Design an optimal Phase II study for this indication',
-      'What endpoints should we use for this trial?',
-      'How should we structure our patient recruitment strategy?'
+      'Brainstorm innovative approaches for market entry',
+      'Explore new digital health opportunities',
+      'Generate creative solutions for patient engagement'
     ],
     useCases: [
-      'Protocol design',
-      'Endpoint selection',
-      'Statistical planning',
-      'Operational feasibility'
-    ],
-    complexity: 'high'
-  },
-  {
-    id: 'market-access',
-    name: 'Market Access Advisory Panel',
-    description: 'Expert panel for market access and commercialization strategy',
-    domain: 'commercial',
-    recommendedMembers: {
-      roles: ['market_access', 'health_economist', 'payer_expert'],
-      businessFunctions: ['commercial', 'market_access', 'health_economics'],
-      minMembers: 3,
-      maxMembers: 5
-    },
-    promptTemplates: [
-      'What pricing strategy should we pursue?',
-      'How should we approach payer negotiations?',
-      'What health economics evidence do we need?'
-    ],
-    useCases: [
-      'Pricing strategy',
-      'Payer engagement',
-      'Value proposition',
-      'Market positioning'
+      'Innovation sessions',
+      'Brainstorming',
+      'Exploratory discussions',
+      'Creative problem-solving'
     ],
     complexity: 'medium'
   },
   {
-    id: 'digital-health',
-    name: 'Digital Health Innovation Panel',
-    description: 'Expert panel for digital therapeutics and health technology',
-    domain: 'digital_health',
+    id: 'expert_panel',
+    name: 'Expert Panel',
+    description: 'Focused expert consensus panel where domain specialists provide opinions and converge on a recommendation.',
+    domain: 'panel',
     recommendedMembers: {
-      roles: ['digital_health', 'software_architect', 'regulatory_digital'],
-      businessFunctions: ['digital_health', 'regulatory', 'clinical'],
+      roles: ['lead_expert', 'domain_specialist', 'advisor'],
+      businessFunctions: ['clinical', 'regulatory', 'health_economics', 'biostatistics'],
       minMembers: 3,
-      maxMembers: 4
+      maxMembers: 10
     },
     promptTemplates: [
-      'How should we classify this digital therapeutic?',
-      'What clinical evidence is needed for our app?',
-      'How do we ensure cybersecurity compliance?'
+      'Provide expert consensus on this clinical trial design',
+      'Reach agreement on regulatory pathway selection',
+      'Develop unified recommendations for payer strategy'
     ],
     useCases: [
-      'SaMD classification',
-      'Digital therapeutic validation',
-      'Cybersecurity framework',
-      'User experience optimization'
+      'Expert advisory sessions',
+      'Consensus recommendations',
+      'Strategic guidance',
+      'Domain-specific decisions'
     ],
     complexity: 'high'
+  },
+  {
+    id: 'socratic_panel',
+    name: 'Socratic Panel',
+    description: 'Panel focused on structured questioning, probing assumptions and refining ideas through iterative Q&A.',
+    domain: 'panel',
+    recommendedMembers: {
+      roles: ['questioner', 'expert', 'analyst'],
+      businessFunctions: ['clinical', 'regulatory', 'biostatistics', 'health_economics'],
+      minMembers: 3,
+      maxMembers: 10
+    },
+    promptTemplates: [
+      'Challenge the assumptions in this trial design',
+      'Probe the weaknesses in this regulatory strategy',
+      'Question the evidence supporting this market access approach'
+    ],
+    useCases: [
+      'Assumption testing',
+      'Critical analysis',
+      'Idea refinement',
+      'Deep questioning'
+    ],
+    complexity: 'medium'
+  },
+  {
+    id: 'devils_advocate_panel',
+    name: "Devil's Advocate Panel",
+    description: 'Panel configuration where one or more experts are assigned to challenge assumptions and stress-test proposals.',
+    domain: 'panel',
+    recommendedMembers: {
+      roles: ['challenger', 'defender', 'arbiter'],
+      businessFunctions: ['risk_management', 'regulatory', 'compliance', 'clinical'],
+      minMembers: 3,
+      maxMembers: 10
+    },
+    promptTemplates: [
+      'Stress-test this go-to-market strategy',
+      'Challenge the feasibility of this clinical trial design',
+      'Identify potential failures in this regulatory approach'
+    ],
+    useCases: [
+      'Risk assessment',
+      'Stress testing',
+      'Challenge sessions',
+      'Proposal validation'
+    ],
+    complexity: 'high'
+  },
+  {
+    id: 'structured_ask_expert',
+    name: 'Structured Ask Expert',
+    description: 'Single-expert structured consultation with clear phases, from initial assessment to recommendation and next steps.',
+    domain: 'panel',
+    recommendedMembers: {
+      roles: ['lead_expert', 'advisor'],
+      businessFunctions: ['clinical', 'regulatory', 'biostatistics', 'health_economics'],
+      minMembers: 1,
+      maxMembers: 3
+    },
+    promptTemplates: [
+      'Provide structured guidance on FDA submission requirements',
+      'Walk through the clinical trial design process step by step',
+      'Give a comprehensive assessment of market access strategy'
+    ],
+    useCases: [
+      'One-on-one expert consultation',
+      'Structured guidance',
+      'Step-by-step advisory',
+      'Focused expertise'
+    ],
+    complexity: 'low'
   }
 ];
 

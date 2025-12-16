@@ -12,7 +12,7 @@
  */
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@/lib/utils';
@@ -34,10 +34,13 @@ import {
   ChevronDown,
   ChevronUp,
   Circle,
+  Search,
+  X,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { EnhancedAgentCard, AgentCardGrid, type Agent as UIAgent } from '@vital/ui';
@@ -252,11 +255,13 @@ function PanelInteractiveContent() {
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<ChatMessage[]>([]); // Track current messages for save callback
 
   // State
   const [sessionId] = useState(() => uuidv4());
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
+  const [agentSearchQuery, setAgentSearchQuery] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionPhase, setExecutionPhase] = useState<string>('idle');
   const [currentThinkingExpert, setCurrentThinkingExpert] = useState<string | null>(null);
@@ -298,33 +303,15 @@ function PanelInteractiveContent() {
     sessionStorage.removeItem('preselectedPanelName');
   }, []);
 
-  // Set header actions with panel info
-  useEffect(() => {
-    if (selectedAgentIds.size > 0) {
-      setHeaderActions(
-        <div className="flex items-center gap-2">
-          <div className={`w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600`}>
-            {meta.icon}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-sm text-foreground">{meta.title}</span>
-            <Badge variant="outline" className="text-xs">
-              {selectedAgentIds.size} experts
-            </Badge>
-          </div>
-        </div>
-      );
-    } else {
-      setHeaderActions(null);
-    }
-
-    return () => setHeaderActions(null);
-  }, [selectedAgentIds.size, meta, setHeaderActions]);
-
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
+
+  // Keep messagesRef in sync with messages state (for save callback)
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   // Filter valid agents
   const validAgents = storeAgents
@@ -336,8 +323,75 @@ function PanelInteractiveContent() {
       department_name: (agent as any).department_name ?? undefined,
     })) as unknown as UIAgent[];
 
-  // Get selected agents
-  const selectedAgents = validAgents.filter((a) => selectedAgentIds.has(a.id));
+  // Filter agents by search query
+  const filteredAgents = useMemo(() => {
+    if (!agentSearchQuery.trim()) return validAgents;
+    const query = agentSearchQuery.toLowerCase();
+    return validAgents.filter((agent) =>
+      (agent.display_name || agent.name || '').toLowerCase().includes(query) ||
+      (agent.description || '').toLowerCase().includes(query) ||
+      ((agent as any).business_function || '').toLowerCase().includes(query) ||
+      ((agent as any).department_name || '').toLowerCase().includes(query)
+    );
+  }, [validAgents, agentSearchQuery]);
+
+  // Get selected agents - memoized to prevent infinite loops
+  const selectedAgents = useMemo(
+    () => validAgents.filter((a) => selectedAgentIds.has(a.id)),
+    [validAgents, selectedAgentIds]
+  );
+
+  // Set header actions with panel info and selected agents
+  useEffect(() => {
+    if (selectedAgentIds.size > 0) {
+      // Compute agents inside effect to avoid dependency on selectedAgents array reference
+      const agentsForHeader = validAgents.filter((a) => selectedAgentIds.has(a.id));
+
+      setHeaderActions(
+        <div className="flex items-center gap-3">
+          {/* Panel Type Icon */}
+          <div className={`w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600`}>
+            {meta.icon}
+          </div>
+
+          {/* Panel Title */}
+          <span className="font-medium text-sm text-foreground">{meta.title}</span>
+
+          {/* Selected Agents Avatars */}
+          {agentsForHeader.length > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground text-xs">with</span>
+              <div className="flex -space-x-2">
+                {agentsForHeader.slice(0, 4).map((agent) => (
+                  <Avatar key={agent.id} className="w-6 h-6 border-2 border-background">
+                    <AvatarImage src={agent.avatar_url} alt={agent.name} />
+                    <AvatarFallback className="text-[10px] bg-purple-100 text-purple-700">
+                      {(agent.display_name || agent.name).charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+                {agentsForHeader.length > 4 && (
+                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] border-2 border-background font-medium">
+                    +{agentsForHeader.length - 4}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Expert Count Badge */}
+          <Badge variant="outline" className="text-xs">
+            {selectedAgentIds.size} expert{selectedAgentIds.size !== 1 ? 's' : ''}
+          </Badge>
+        </div>
+      );
+    } else {
+      setHeaderActions(null);
+    }
+
+    return () => setHeaderActions(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAgentIds.size, storeAgents.length, meta.title, setHeaderActions]);
 
   // Streaming mutation
   const streamingMutation = useExecuteUnifiedPanelStreaming({
@@ -426,27 +480,36 @@ ${consensusData.key_themes?.length ? `**Key Themes:** ${consensusData.key_themes
   });
 
   // Save panel to conversations (like ask-expert)
+  // Uses messagesRef to get current messages (avoids stale closure)
   const savePanelToConversations = useCallback(async (panelId: string, executionTimeMs?: number) => {
-    if (!user?.id || messages.length === 0) return;
+    const currentMessages = messagesRef.current;
+    if (!user?.id || currentMessages.length === 0) return;
 
     try {
       const supabase = createClient();
       const now = new Date().toISOString();
 
-      // Convert messages to storage format
-      const storedMessages = messages.map((m) => ({
+      // Convert messages to storage format - preserve expert info for history display
+      const storedMessages = currentMessages.map((m) => ({
         role: m.role === 'expert' ? 'assistant' : m.role,
-        content: m.role === 'expert' && m.expert
-          ? `**${m.expert.name}** (${Math.round((m.expert.confidence || 0) * 100)}% confidence):\n\n${m.content}`
-          : m.content,
+        content: m.content,
         timestamp: m.timestamp.getTime(),
+        // Preserve expert info for display in history
+        expert: m.expert ? {
+          name: m.expert.name,
+          avatar: m.expert.avatar,
+          confidence: m.expert.confidence,
+        } : undefined,
       }));
 
       // Get first user message for title
-      const firstUserMessage = messages.find((m) => m.role === 'user');
+      const firstUserMessage = currentMessages.find((m) => m.role === 'user');
       const title = firstUserMessage
         ? firstUserMessage.content.substring(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '')
         : 'Panel Discussion';
+
+      // Get current selected agents for metadata
+      const currentSelectedAgents = validAgents.filter((a) => selectedAgentIds.has(a.id));
 
       const { error } = await supabase
         .from('conversations')
@@ -467,7 +530,7 @@ ${consensusData.key_themes?.length ? `**Key Themes:** ${consensusData.key_themes
             mode: 'panel',
             panel_type: panelType,
             agent_ids: Array.from(selectedAgentIds),
-            agent_names: selectedAgents.map((a) => a.display_name || a.name),
+            agent_names: currentSelectedAgents.map((a) => a.display_name || a.name),
             consensus_score: consensus?.consensus_score,
             is_pinned: false,
           },
@@ -477,11 +540,14 @@ ${consensusData.key_themes?.length ? `**Key Themes:** ${consensusData.key_themes
 
       if (error) {
         console.error('Failed to save panel to conversations:', error);
+      } else {
+        console.log('✅ Panel conversation saved with', currentMessages.length, 'messages');
       }
     } catch (err) {
       console.error('Error saving panel:', err);
     }
-  }, [user?.id, messages, panelType, meta.title, consensus, selectedAgentIds, selectedAgents]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, panelType, meta.title, consensus, selectedAgentIds, validAgents]);
 
   // Handle sending a message (starting panel)
   const handleSend = useCallback(async (content: string) => {
@@ -607,16 +673,46 @@ ${consensusData.key_themes?.length ? `**Key Themes:** ${consensusData.key_themes
                 </div>
               </div>
 
+              {/* Search Input */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search experts by name, role, or department..."
+                  value={agentSearchQuery}
+                  onChange={(e) => setAgentSearchQuery(e.target.value)}
+                  className="pl-9 pr-9"
+                />
+                {agentSearchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                    onClick={() => setAgentSearchQuery('')}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+
               {/* Agent Grid */}
               {loadingAgents ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin" />
                   <span className="ml-2 text-muted-foreground">Loading experts...</span>
                 </div>
+              ) : filteredAgents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Search className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                  <p className="text-muted-foreground font-medium">No experts found</p>
+                  <p className="text-sm text-muted-foreground/70">
+                    Try a different search term
+                  </p>
+                </div>
               ) : (
                 <ScrollArea className="h-[400px]">
                   <AgentCardGrid columns={3} className="gap-3 pr-4">
-                    {validAgents.map((agent) => {
+                    {filteredAgents.map((agent) => {
                       const isSelected = selectedAgentIds.has(agent.id);
                       return (
                         <div key={agent.id} className="relative">

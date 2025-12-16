@@ -25,7 +25,7 @@
  * REFACTORED to use @vital/ai-ui shared components
  */
 
-import { useState, useReducer, useCallback, useMemo, useEffect } from 'react';
+import { useState, useReducer, useCallback, useMemo, useEffect, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -484,105 +484,210 @@ export function AutonomousView({
     }];
   }, [selectedExpert]);
 
-  // Map stream state to execution events for VitalMissionExecution
-  // Shows meaningful step events, NOT raw streaming tokens
-  // CRITICAL: Show events from the FIRST token - user should never see empty feed
-  const executionEvents: MissionEvent[] = useMemo(() => {
-    const events: MissionEvent[] = [];
+  // =========================================================================
+  // PERSISTENT ACTIVITY FEED - Events are accumulated and never lost
+  // =========================================================================
 
-    // IMMEDIATE FEEDBACK: Add status-based events so Activity Feed is never empty
-    // This ensures user sees activity from the very first moment
-    // Handle all pre-streaming states to eliminate any delay/empty feed
-    if (streamState.status === 'idle' || streamState.status === 'connecting') {
-      events.push({
-        id: 'init-connecting',
+  // Ref to track which events we've already added (by ID)
+  const addedEventIds = useRef<Set<string>>(new Set());
+  // State to hold persistent event history
+  const [eventHistory, setEventHistory] = useState<MissionEvent[]>([]);
+  // Track previous status to detect transitions
+  const prevStatusRef = useRef<string>('idle');
+  // Track last progress stage to avoid duplicates
+  const lastProgressStageRef = useRef<string>('');
+
+  // Reset event history when mission resets
+  useEffect(() => {
+    if (streamState.status === 'idle' && prevStatusRef.current !== 'idle') {
+      // Mission reset - clear history
+      setEventHistory([]);
+      addedEventIds.current.clear();
+      lastProgressStageRef.current = '';
+    }
+    prevStatusRef.current = streamState.status;
+  }, [streamState.status]);
+
+  // Add status transition events
+  useEffect(() => {
+    const status = streamState.status;
+
+    // Add connecting event once
+    if (status === 'connecting' && !addedEventIds.current.has('status-connecting')) {
+      addedEventIds.current.add('status-connecting');
+      setEventHistory(prev => [...prev, {
+        id: 'status-connecting',
         type: 'thinking',
         timestamp: new Date(),
-        message: streamState.status === 'idle'
-          ? 'Preparing mission...'
-          : 'Connecting to AI engine...',
+        message: 'Connecting to AI engine...',
         agentName: 'System',
-      });
+      }]);
     }
 
-    if (streamState.status === 'thinking' && streamState.reasoning.length === 0) {
-      events.push({
-        id: 'init-thinking',
+    // Add thinking event once
+    if (status === 'thinking' && !addedEventIds.current.has('status-thinking')) {
+      addedEventIds.current.add('status-thinking');
+      setEventHistory(prev => [...prev, {
+        id: 'status-thinking',
         type: 'thinking',
         timestamp: new Date(),
         message: 'AI is analyzing your request...',
         agentName: 'Orchestrator',
-      });
+      }]);
     }
 
-    // Add reasoning steps as events - these are meaningful AI thinking steps
+    // Add streaming started event once
+    if (status === 'streaming' && !addedEventIds.current.has('status-streaming')) {
+      addedEventIds.current.add('status-streaming');
+      setEventHistory(prev => [...prev, {
+        id: 'status-streaming',
+        type: 'writing',
+        timestamp: new Date(),
+        message: 'Generating response...',
+        agentName: 'AI Writer',
+      }]);
+    }
+
+    // Add completion event once
+    if (status === 'complete' && !addedEventIds.current.has('status-complete')) {
+      addedEventIds.current.add('status-complete');
+      setEventHistory(prev => [...prev, {
+        id: 'status-complete',
+        type: 'progress_update',
+        timestamp: new Date(),
+        message: `Mission completed (${streamState.contentTokens} tokens generated)`,
+        agentName: 'System',
+      }]);
+    }
+  }, [streamState.status, streamState.contentTokens]);
+
+  // Add reasoning steps as they arrive
+  useEffect(() => {
     streamState.reasoning.forEach((step) => {
-      // Determine event type based on content
-      const eventType: EventType =
-        step.content?.toLowerCase().includes('search') || step.content?.toLowerCase().includes('retriev') ? 'searching' :
-        step.content?.toLowerCase().includes('analyz') ? 'analyzing' :
-        step.content?.toLowerCase().includes('writ') || step.content?.toLowerCase().includes('generat') ? 'writing' :
-        'thinking';
+      if (!addedEventIds.current.has(step.id)) {
+        addedEventIds.current.add(step.id);
 
-      events.push({
-        id: step.id,
-        type: eventType,
-        timestamp: new Date(),
-        message: step.content || step.step || 'Processing...',
-        agentName: step.agentName,
-        details: { status: step.status, step: step.step },
-      });
+        const eventType: EventType =
+          step.content?.toLowerCase().includes('search') || step.content?.toLowerCase().includes('retriev') ? 'searching' :
+          step.content?.toLowerCase().includes('analyz') ? 'analyzing' :
+          step.content?.toLowerCase().includes('writ') || step.content?.toLowerCase().includes('generat') ? 'writing' :
+          'thinking';
+
+        setEventHistory(prev => [...prev, {
+          id: step.id,
+          type: eventType,
+          timestamp: new Date(),
+          message: step.content || step.step || 'Processing...',
+          agentName: step.agentName,
+          details: { status: step.status, step: step.step },
+        }]);
+      }
     });
+  }, [streamState.reasoning]);
 
-    // Add tool calls as events
+  // Add tool calls as they arrive
+  useEffect(() => {
     streamState.toolCalls.forEach((tool) => {
-      events.push({
-        id: tool.id,
-        type: 'tool_call',
-        timestamp: new Date(),
-        message: `${tool.toolName}: ${tool.status === 'success' ? 'Completed' : tool.status === 'error' ? 'Failed' : 'Running...'}`,
-        details: { toolName: tool.toolName, status: tool.status, result: tool.result },
-      });
+      const eventId = `tool-${tool.id}-${tool.status}`;
+      if (!addedEventIds.current.has(eventId)) {
+        addedEventIds.current.add(eventId);
+        setEventHistory(prev => [...prev, {
+          id: eventId,
+          type: 'tool_call',
+          timestamp: new Date(),
+          message: `${tool.toolName}: ${tool.status === 'success' ? 'Completed' : tool.status === 'error' ? 'Failed' : 'Running...'}`,
+          agentName: 'Tool',
+          details: { toolName: tool.toolName, status: tool.status, result: tool.result },
+        }]);
+      }
     });
+  }, [streamState.toolCalls]);
 
-    // Add plan received event - shows immediately when plan arrives
-    if (streamState.plan?.plan && streamState.plan.plan.length > 0) {
-      events.push({
+  // Add plan event when received
+  useEffect(() => {
+    if (streamState.plan?.plan && streamState.plan.plan.length > 0 && !addedEventIds.current.has('plan-received')) {
+      addedEventIds.current.add('plan-received');
+      setEventHistory(prev => [...prev, {
         id: 'plan-received',
         type: 'progress_update',
         timestamp: new Date(),
-        message: `Mission plan ready: ${streamState.plan.plan.length} steps`,
+        message: `Mission plan ready: ${streamState.plan!.plan.length} steps`,
         agentName: 'Orchestrator',
-        details: { stepCount: streamState.plan.plan.length },
-      });
+        details: { stepCount: streamState.plan!.plan.length },
+      }]);
     }
+  }, [streamState.plan]);
 
-    // Add progress update as current phase indicator
-    if (streamState.progress?.stage) {
-      events.push({
-        id: 'progress-current',
-        type: 'progress_update',
+  // Add progress stage changes
+  useEffect(() => {
+    if (streamState.progress?.stage && streamState.progress.stage !== lastProgressStageRef.current) {
+      const stageId = `progress-${streamState.progress.stage}-${streamState.progress.progress}`;
+      if (!addedEventIds.current.has(stageId)) {
+        addedEventIds.current.add(stageId);
+        lastProgressStageRef.current = streamState.progress.stage;
+        setEventHistory(prev => [...prev, {
+          id: stageId,
+          type: 'progress_update',
+          timestamp: new Date(),
+          message: `${streamState.progress!.stage} (${streamState.progress!.progress || 0}%)`,
+          agentName: 'Mission Control',
+          details: { progress: streamState.progress!.progress },
+        }]);
+      }
+    }
+  }, [streamState.progress]);
+
+  // Add artifacts as they arrive
+  useEffect(() => {
+    streamState.artifacts.forEach((artifact) => {
+      const eventId = `artifact-${artifact.id}`;
+      if (!addedEventIds.current.has(eventId)) {
+        addedEventIds.current.add(eventId);
+        setEventHistory(prev => [...prev, {
+          id: eventId,
+          type: 'progress_update',
+          timestamp: new Date(),
+          message: `Artifact created: ${artifact.title || artifact.artifactType}`,
+          agentName: 'AI Writer',
+          details: { artifactType: artifact.artifactType, title: artifact.title },
+        }]);
+      }
+    });
+  }, [streamState.artifacts]);
+
+  // Add citations as they arrive
+  useEffect(() => {
+    streamState.citations.forEach((citation) => {
+      const eventId = `citation-${citation.id}`;
+      if (!addedEventIds.current.has(eventId)) {
+        addedEventIds.current.add(eventId);
+        setEventHistory(prev => [...prev, {
+          id: eventId,
+          type: 'searching',
+          timestamp: new Date(),
+          message: `Source found: ${citation.title}`,
+          agentName: 'Research',
+          details: { source: citation.source, url: citation.url },
+        }]);
+      }
+    });
+  }, [streamState.citations]);
+
+  // The final execution events - combines history with any live status indicator
+  const executionEvents: MissionEvent[] = useMemo(() => {
+    // If we have no history yet and we're in idle state, show preparing message
+    if (eventHistory.length === 0 && streamState.status === 'idle') {
+      return [{
+        id: 'init-preparing',
+        type: 'thinking' as EventType,
         timestamp: new Date(),
-        message: `${streamState.progress.stage} (${streamState.progress.progress || 0}%)`,
-        details: { progress: streamState.progress.progress },
-      });
+        message: 'Preparing mission...',
+        agentName: 'System',
+      }];
     }
 
-    // Show streaming status from the FIRST token - don't wait for content accumulation
-    if (streamState.status === 'streaming') {
-      events.push({
-        id: 'streaming-status',
-        type: 'writing',
-        timestamp: new Date(),
-        message: streamState.contentTokens > 0
-          ? `Generating response... (${streamState.contentTokens} tokens)`
-          : 'Starting response generation...',
-        details: { tokenCount: streamState.contentTokens },
-      });
-    }
-
-    return events;
-  }, [streamState.reasoning, streamState.toolCalls, streamState.progress, streamState.content, streamState.status, streamState.contentTokens, streamState.plan]);
+    return eventHistory;
+  }, [eventHistory, streamState.status]);
 
   // Map stream artifacts to execution artifacts
   const executionArtifacts: ExecutionArtifact[] = useMemo(() => {

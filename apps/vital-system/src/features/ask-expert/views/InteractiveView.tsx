@@ -279,6 +279,10 @@ export function InteractiveView({
 
     // Token streaming - flushSync bypasses React 18 batching for real-time updates
     onToken: useCallback((event: TokenEvent) => {
+      // Debug: trace token reception in InteractiveView
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('[InteractiveView] onToken received:', event);
+      }
       flushSync(() => {
         dispatch(streamActions.appendContent(event));
       });
@@ -312,6 +316,18 @@ export function InteractiveView({
 
     // Error handling
     onError: useCallback((event: ErrorEvent) => {
+      // ========================================
+      // DEBUG TRACING: Error callback logging
+      // ========================================
+      // eslint-disable-next-line no-console
+      console.log('[InteractiveView] 🔴 onError callback received:', {
+        event,
+        eventStringified: JSON.stringify(event),
+        hasCode: 'code' in event,
+        hasMessage: 'message' in event,
+        code: event?.code,
+        message: event?.message,
+      });
       dispatch(streamActions.error(event));
     }, []),
 
@@ -696,7 +712,21 @@ export function InteractiveView({
   // Handle stream errors - add error message to conversation
   useEffect(() => {
     if (streamState.status === 'error' && streamState.error) {
-      console.error('[InteractiveView] Stream error:', streamState.error);
+      // ========================================
+      // DEBUG TRACING: Stream error state logging
+      // ========================================
+      // eslint-disable-next-line no-console
+      console.log('[InteractiveView] 🔴 Stream error state detected:', {
+        error: streamState.error,
+        errorStringified: JSON.stringify(streamState.error),
+        errorType: typeof streamState.error,
+        errorKeys: Object.keys(streamState.error),
+        code: streamState.error.code,
+        message: streamState.error.message,
+        recoverable: streamState.error.recoverable,
+        timestamp: streamState.error.timestamp,
+        status: streamState.status,
+      });
 
       // Create error message for the conversation
       const errorContent = `**Error:** ${streamState.error.message || 'An unexpected error occurred'}${
@@ -753,6 +783,16 @@ export function InteractiveView({
       status: 'thinking',
     }));
 
+    // Debug: Log what we're sending
+    // eslint-disable-next-line no-console
+    console.log('[InteractiveView] 🔍 CONNECT DEBUG:', {
+      tenantId,
+      tenantIdType: typeof tenantId,
+      selectedExpertId: selectedExpert?.id,
+      sessionId,
+      mode,
+    });
+
     // Connect to stream
     await connect({
       agent_id: selectedExpert?.id,
@@ -760,7 +800,7 @@ export function InteractiveView({
       tenant_id: tenantId,
       session_id: sessionId,
     });
-  }, [selectedExpert, tenantId, sessionId, connect]);
+  }, [selectedExpert, tenantId, sessionId, connect, mode]);
 
   const handleSuggestionSelect = useCallback((suggestion: Suggestion) => {
     handleSend(suggestion.text);
@@ -1047,7 +1087,8 @@ export function InteractiveView({
                         onStop={() => disconnect()}
                         placeholder="What would you like help with today?"
                         showAttachments={true}
-                        showEnhance={false}
+                        showEnhance={true}
+                        showAdvancedControls={false}
                         maxLength={4000}
                       />
                     </motion.div>
@@ -1139,6 +1180,7 @@ export function InteractiveView({
                           placeholder={`Ask ${selectedExpert.name}...`}
                           showAttachments={true}
                           showEnhance={true}
+                          showAdvancedControls={false}
                           maxLength={4000}
                         />
                       </motion.div>
@@ -1258,7 +1300,8 @@ export function InteractiveView({
                       : 'Type your question...'
                   }
                   showAttachments={true}
-                  showEnhance={!!selectedExpert}
+                  showEnhance={true}
+                  showAdvancedControls={false}
                   maxLength={4000}
                 />
                 </motion.div>

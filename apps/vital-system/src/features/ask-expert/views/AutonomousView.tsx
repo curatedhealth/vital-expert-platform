@@ -26,6 +26,7 @@
  */
 
 import { useState, useReducer, useCallback, useMemo, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
@@ -51,6 +52,7 @@ import {
   VitalMissionComplete,
   VitalTemplateRecommendation,
   type MissionEvent,
+  type EventType,
   type HITLCheckpoint,
   type MissionArtifact as ExecutionArtifact,
   type MissionMetrics,
@@ -84,6 +86,9 @@ import {
   type ErrorEvent,
 } from '../hooks/useSSEStream';
 
+// VitalStreamText for markdown-rendered streaming content
+import { VitalStreamText } from '@/components/vital-ai-ui/conversation/VitalStreamText';
+
 // Phase 2 Interactive components - Expert type for state management
 // Note: Agent selection happens via SIDEBAR for Mode 3, not in this view
 import { type Expert } from '../components/interactive/ExpertPicker';
@@ -115,6 +120,23 @@ import type {
 // Mission Family Selector for Mode 3 (mission-first flow)
 import { MissionFamilySelector } from '../components/autonomous/MissionFamilySelector';
 
+// Mode 3 HITL Checkpoint Components
+import { GoalConfirmationCheckpoint } from '../components/mode3-checkpoints/GoalConfirmationCheckpoint';
+import { PlanConfirmationCheckpoint } from '../components/mode3-checkpoints/PlanConfirmationCheckpoint';
+import { MissionValidationCheckpoint } from '../components/mode3-checkpoints/MissionValidationCheckpoint';
+import { DeliverableConfirmationCheckpoint } from '../components/mode3-checkpoints/DeliverableConfirmationCheckpoint';
+
+// Mode 3 Hook for LLM-powered HITL checkpoint preparation
+import { useMode3 } from '../hooks/useMode3';
+import type {
+  MissionGoal,
+  PlanPhase,
+  TeamMember,
+  Deliverable,
+  MissionConfig as Mode3MissionConfig,
+  LoopConfig,
+} from '../mode-3/types/mode3.types';
+
 // =============================================================================
 // TYPES (Local view-specific types that extend canonical types)
 // =============================================================================
@@ -124,7 +146,34 @@ export type AutonomousMode = 'mode3' | 'mode4';
 // Mode 3 Flow: goal → recommendation → briefing → execution → complete (agent from sidebar)
 // Mode 4 Flow: mission_family → goal → recommendation → briefing → execution → complete
 // Note: 'template' phase is the full library, accessible via "Browse all templates" toggle
-export type MissionPhase = 'mission_family' | 'selection' | 'goal' | 'recommendation' | 'template' | 'briefing' | 'execution' | 'complete';
+/**
+ * Mission Phases:
+ * - mission_family: Mode 4 - Select mission family
+ * - selection: Legacy - Expert selection
+ * - goal: Both - Enter research goal
+ * - goal_confirmation: Mode 3 HITL Checkpoint 1 - Review parsed goals
+ * - plan_confirmation: Mode 3 HITL Checkpoint 2 - Review execution plan
+ * - team_validation: Mode 3 HITL Checkpoint 3 - Review team & deliverables
+ * - recommendation: Mode 4 - AI template recommendations
+ * - template: Mode 4 - Browse template library
+ * - briefing: Mode 4 - Mission briefing
+ * - execution: Both - Mission running
+ * - complete: Both - Mission complete
+ * - deliverable_review: Mode 3 HITL Checkpoint 4 - Review outputs (post-execution)
+ */
+export type MissionPhase =
+  | 'mission_family'
+  | 'selection'
+  | 'goal'
+  | 'goal_confirmation'    // Mode 3 HITL Checkpoint 1
+  | 'plan_confirmation'    // Mode 3 HITL Checkpoint 2
+  | 'team_validation'      // Mode 3 HITL Checkpoint 3
+  | 'recommendation'
+  | 'template'
+  | 'briefing'
+  | 'execution'
+  | 'complete'
+  | 'deliverable_review';  // Mode 3 HITL Checkpoint 4
 
 // Local simplified template for the view's internal state
 // Uses legacy format for backward compatibility with existing UI
@@ -242,6 +291,25 @@ export function AutonomousView({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recommendations, setRecommendations] = useState<TemplateRecommendationType[]>([]);
   const [showAllTemplates, setShowAllTemplates] = useState(false);
+
+  // ==========================================================================
+  // MODE 3 HITL CHECKPOINT STATE
+  // ==========================================================================
+  const [mode3Goals, setMode3Goals] = useState<MissionGoal[]>([]);
+  const [mode3Plan, setMode3Plan] = useState<PlanPhase[]>([]);
+  const [mode3Team, setMode3Team] = useState<TeamMember[]>([]);
+  const [mode3Deliverables, setMode3Deliverables] = useState<Deliverable[]>([]);
+  const [mode3Summary, setMode3Summary] = useState<string>('');
+  const [mode3EstimatedDuration, setMode3EstimatedDuration] = useState<number>(60);
+  const [mode3RevisionCount, setMode3RevisionCount] = useState<number>(0);
+  const MAX_REVISIONS = 3;
+
+  // Initialize Mode 3 hook for LLM-powered HITL preparation
+  const mode3Hook = useMode3({
+    tenantId: tenantId || 'default',
+    userId: 'anonymous', // Would be from auth context in production
+    agentId: selectedExpert?.id || '',
+  });
 
   // Stream state (centralized via reducer)
   const [streamState, dispatch] = useReducer(streamReducer, initialStreamState);
@@ -412,17 +480,26 @@ export function AutonomousView({
   }, [selectedExpert]);
 
   // Map stream state to execution events for VitalMissionExecution
+  // Shows meaningful step events, NOT raw streaming tokens
   const executionEvents: MissionEvent[] = useMemo(() => {
     const events: MissionEvent[] = [];
 
-    // Add reasoning steps as events
+    // Add reasoning steps as events - these are meaningful AI thinking steps
     streamState.reasoning.forEach((step) => {
+      // Determine event type based on content
+      const eventType: EventType =
+        step.content?.toLowerCase().includes('search') || step.content?.toLowerCase().includes('retriev') ? 'searching' :
+        step.content?.toLowerCase().includes('analyz') ? 'analyzing' :
+        step.content?.toLowerCase().includes('writ') || step.content?.toLowerCase().includes('generat') ? 'writing' :
+        'thinking';
+
       events.push({
         id: step.id,
-        type: 'thinking',
+        type: eventType,
         timestamp: new Date(),
-        message: `${step.step}: ${step.content}`,
-        details: { status: step.status },
+        message: step.content || step.step || 'Processing...',
+        agentName: step.agentName,
+        details: { status: step.status, step: step.step },
       });
     });
 
@@ -432,13 +509,35 @@ export function AutonomousView({
         id: tool.id,
         type: 'tool_call',
         timestamp: new Date(),
-        message: `Tool: ${tool.toolName} - ${tool.status === 'success' ? 'Completed successfully' : tool.status === 'error' ? 'Failed' : 'Running...'}`,
-        details: { toolName: tool.toolName, status: tool.status },
+        message: `${tool.toolName}: ${tool.status === 'success' ? 'Completed' : tool.status === 'error' ? 'Failed' : 'Running...'}`,
+        details: { toolName: tool.toolName, status: tool.status, result: tool.result },
       });
     });
 
+    // Add progress update as current phase indicator
+    if (streamState.progress?.stage) {
+      events.push({
+        id: 'progress-current',
+        type: 'progress_update',
+        timestamp: new Date(),
+        message: `${streamState.progress.stage} (${streamState.progress.progress || 0}%)`,
+        details: { progress: streamState.progress.progress },
+      });
+    }
+
+    // Show writing status if content is streaming (but not the raw content)
+    if (streamState.content && streamState.status === 'streaming') {
+      events.push({
+        id: 'streaming-status',
+        type: 'writing',
+        timestamp: new Date(),
+        message: `Generating response... (${streamState.contentTokens} tokens)`,
+        details: { tokenCount: streamState.contentTokens },
+      });
+    }
+
     return events;
-  }, [streamState.reasoning, streamState.toolCalls]);
+  }, [streamState.reasoning, streamState.toolCalls, streamState.progress, streamState.content, streamState.status, streamState.contentTokens]);
 
   // Map stream artifacts to execution artifacts
   const executionArtifacts: ExecutionArtifact[] = useMemo(() => {
@@ -562,16 +661,22 @@ export function AutonomousView({
   // =========================================================================
 
   const { connect, disconnect } = useSSEStream({
-    url: mode === 'mode3'
-      ? '/api/expert/mode3/stream'
-      : '/api/expert/mode4/stream',
+    // Use unified streaming endpoint that routes to backend based on mode
+    url: '/api/ask-expert/stream',
 
+    // CRITICAL: flushSync bypasses React 18 batching for real-time token streaming
+    // Without this, tokens get batched and user sees delayed chunks instead of character-by-character
     onToken: useCallback((event: TokenEvent) => {
-      dispatch(streamActions.appendContent(event));
+      flushSync(() => {
+        dispatch(streamActions.appendContent(event));
+      });
     }, []),
 
+    // flushSync for reasoning events ensures thinking steps appear immediately
     onReasoning: useCallback((event: ReasoningEvent) => {
-      dispatch(streamActions.addReasoning(event));
+      flushSync(() => {
+        dispatch(streamActions.addReasoning(event));
+      });
     }, []),
 
     onCitation: useCallback((event: CitationEvent) => {
@@ -601,7 +706,18 @@ export function AutonomousView({
     onDone: useCallback((event: DoneEvent) => {
       dispatch(streamActions.complete(event));
       setPhase('complete');
-      onMissionComplete?.(missionId, streamState.artifacts);
+      // Use artifacts from done event if available, otherwise fallback to stream state
+      // This avoids stale closure issues with streamState.artifacts
+      const finalArtifacts = event.artifacts?.map((a) => ({
+        id: a.id,
+        artifactType: a.type,
+        title: a.step || 'Artifact',
+        content: a.summary || '',
+        downloadUrl: a.artifactPath,
+        citations: a.citations,
+      })) || streamState.artifacts;
+      console.log('[AutonomousView] Mission done, artifacts:', finalArtifacts.length, event.artifacts?.length);
+      onMissionComplete?.(missionId, finalArtifacts);
     }, [missionId, streamState.artifacts, onMissionComplete]),
 
     onError: useCallback((event: ErrorEvent) => {
@@ -626,7 +742,7 @@ export function AutonomousView({
 
   // Mode 3: Handle mission family selection (mission-first flow)
   const handleFamilySelect = useCallback((family: MissionFamily) => {
-    logger.info('[AutonomousView] Mission family selected', { family: family.family, nextPhase: 'goal' });
+    logger.info('[AutonomousView] Mission family selected', { family, nextPhase: 'goal' });
     setSelectedFamily(family);
     setPhase('goal');  // Go to goal input, then filtered template selection
   }, []);
@@ -642,12 +758,71 @@ export function AutonomousView({
     setPhase('template');  // Proceed to template selection
   }, []);
 
+  // AI Prompt Enhancement handler for research goals
+  const handlePromptEnhance = useCallback(async (goal: string): Promise<string> => {
+    try {
+      const response = await fetch('/api/prompt-enhancer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: goal,
+          mode: 'research',
+          instructions: 'Enhance this research goal for an autonomous AI mission. Make it specific, measurable, and actionable while preserving the original intent.',
+          context: selectedExpert ? {
+            expertName: selectedExpert.name,
+            level: selectedExpert.level,
+          } : undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to enhance prompt');
+      }
+
+      const data = await response.json();
+      logger.info('[AutonomousView] Goal enhanced', { originalLength: goal.length, enhancedLength: data.enhanced?.length || 0 });
+      return data.enhanced || goal;
+    } catch (error) {
+      logger.error('[AutonomousView] Prompt enhancement failed:', error);
+      return goal; // Return original on error
+    }
+  }, [selectedExpert]);
+
   // Handle goal submission from VitalMissionGoalInput (new shared component)
-  // Now goes to recommendation phase for AI-powered template suggestions
+  // Mode 3: Goes to HITL checkpoint flow (goal_confirmation → plan_confirmation → team_validation)
+  // Mode 4: Goes to recommendation phase for AI-powered template suggestions
   const handleGoalSubmit = useCallback(async (goal: string) => {
-    logger.info('[AutonomousView] Goal submitted', { goalPreview: goal.substring(0, 50) });
+    logger.info('[AutonomousView] Goal submitted', { goalPreview: goal.substring(0, 50), mode });
     setMissionGoal(goal);
     setIsAnalyzing(true);
+
+    // MODE 3: LLM-powered HITL checkpoint flow
+    if (mode === 'mode3') {
+      try {
+        logger.info('[AutonomousView] Mode 3: Parsing goals with LLM');
+        const parsedGoals = await mode3Hook.parseGoals(goal);
+        setMode3Goals(parsedGoals);
+        setPhase('goal_confirmation');
+        logger.info('[AutonomousView] Mode 3: Goals parsed', { count: parsedGoals.length });
+      } catch (error) {
+        logger.error('[AutonomousView] Mode 3: Failed to parse goals', error);
+        // Fallback: create a single goal from the prompt
+        setMode3Goals([{
+          id: 'goal_1',
+          text: goal,
+          priority: 5,
+          order: 0,
+          category: 'research',
+          confidence: 0.5,
+        }]);
+        setPhase('goal_confirmation');
+      } finally {
+        setIsAnalyzing(false);
+      }
+      return;
+    }
+
+    // MODE 4: AI recommendation flow
     setPhase('recommendation');  // Go to AI recommendation phase instead of full template library
 
     // Simulate AI analysis with intelligent template matching
@@ -794,11 +969,27 @@ export function AutonomousView({
     });
 
     try {
-      await fetch(`/api/expert/mission/checkpoint/${checkpointId}`, {
+      // Send checkpoint response to backend - matches /api/missions/checkpoint endpoint
+      // Backend expects: mission_id, checkpoint_id, action (approve/reject/modify)
+      const response = await fetch('/api/missions/checkpoint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision, data }),
+        body: JSON.stringify({
+          mission_id: missionId,
+          checkpoint_id: checkpointId,
+          action: decision,
+          // Optional data for modifications
+          option: (data as { feedback?: string; reason?: string })?.feedback || (data as { feedback?: string; reason?: string })?.reason,
+          modifications: data,
+        }),
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error('[AutonomousView] Checkpoint response failed', { status: response.status, error: errorText });
+      } else {
+        logger.info('[AutonomousView] Checkpoint response sent', { checkpointId, decision });
+      }
     } catch (error) {
       logger.error('[AutonomousView] Failed to respond to checkpoint', error);
       // The stream will handle reconnection
@@ -819,6 +1010,180 @@ export function AutonomousView({
 
   const handleBackToGoal = useCallback(() => {
     setPhase('goal');
+  }, []);
+
+  // ==========================================================================
+  // MODE 3 HITL CHECKPOINT HANDLERS
+  // ==========================================================================
+
+  // HITL Checkpoint 1: Goal Confirmation
+  const handleMode3GoalsConfirm = useCallback(async (confirmedGoals: MissionGoal[]) => {
+    logger.info('[AutonomousView] Mode 3: Goals confirmed', { count: confirmedGoals.length });
+    setMode3Goals(confirmedGoals);
+    setIsAnalyzing(true);
+
+    try {
+      const planPhases = await mode3Hook.generatePlan(confirmedGoals);
+      setMode3Plan(planPhases);
+      setPhase('plan_confirmation');
+      logger.info('[AutonomousView] Mode 3: Plan generated', { phases: planPhases.length });
+    } catch (error) {
+      logger.error('[AutonomousView] Mode 3: Failed to generate plan', error);
+      // Create a simple fallback plan
+      setMode3Plan([{
+        id: 'phase_1',
+        name: 'Research Phase',
+        description: 'Execute the research goals',
+        steps: confirmedGoals.map((g, idx) => ({
+          id: `step_${idx}`,
+          name: g.text.substring(0, 50),
+          description: g.text,
+          estimated_duration_minutes: 30,
+          dependencies: [],
+          order: idx,
+        })),
+        estimated_duration_minutes: confirmedGoals.length * 30,
+        order: 0,
+      }]);
+      setPhase('plan_confirmation');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [mode3Hook]);
+
+  const handleMode3GoalsRefine = useCallback(() => {
+    logger.info('[AutonomousView] Mode 3: Refining goals - back to goal input');
+    setPhase('goal');
+  }, []);
+
+  const handleMode3StartOver = useCallback(() => {
+    logger.info('[AutonomousView] Mode 3: Starting over');
+    setMode3Goals([]);
+    setMode3Plan([]);
+    setMode3Team([]);
+    setMode3Deliverables([]);
+    setMissionGoal('');
+    setPhase('goal');
+  }, []);
+
+  // HITL Checkpoint 2: Plan Confirmation
+  const handleMode3PlanConfirm = useCallback(async (confirmedPlan: PlanPhase[]) => {
+    logger.info('[AutonomousView] Mode 3: Plan confirmed', { phases: confirmedPlan.length });
+    setMode3Plan(confirmedPlan);
+    setIsAnalyzing(true);
+
+    try {
+      const { team, deliverables } = await mode3Hook.assembleTeam(confirmedPlan);
+      setMode3Team(team);
+      setMode3Deliverables(deliverables);
+      setPhase('team_validation');
+      logger.info('[AutonomousView] Mode 3: Team assembled', { teamSize: team.length, deliverables: deliverables.length });
+    } catch (error) {
+      logger.error('[AutonomousView] Mode 3: Failed to assemble team', error);
+      // Create fallback team with selected expert
+      setMode3Team([{
+        id: 'team_1',
+        agent_id: selectedExpert?.id || 'default',
+        agent_name: selectedExpert?.name || 'Research Expert',
+        role: 'Lead Expert',
+        responsibilities: ['Research', 'Analysis', 'Synthesis'],
+        tier: 2,
+      }]);
+      setMode3Deliverables([{
+        id: 'deliverable_1',
+        name: 'Research Report',
+        type: 'markdown',
+        status: 'pending',
+      }]);
+      setPhase('team_validation');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [mode3Hook, selectedExpert]);
+
+  const handleMode3PlanBack = useCallback(() => {
+    setPhase('goal_confirmation');
+  }, []);
+
+  // HITL Checkpoint 3: Team & Deliverables Validation (Mission Launch)
+  const handleMode3Launch = useCallback(async (config: Mode3MissionConfig) => {
+    logger.info('[AutonomousView] Mode 3: Launching mission', {
+      goals: config.goals.length,
+      phases: config.plan.length,
+      team: config.team.length,
+      deliverables: config.deliverables.length,
+    });
+
+    setPhase('execution');
+    dispatch(streamActions.reset());
+    dispatch(streamActions.connect());
+
+    // Truncate goal to meet validation requirements (max 2000 chars)
+    const truncatedGoal = config.goals.map(g => g.text).join('. ').substring(0, 1900);
+
+    await connect({
+      mission_id: missionId,
+      template_id: 'deep_dive',  // Valid template for deep research
+      agent_id: selectedExpert?.id || '',
+      expert_id: selectedExpert?.id || '', // Backend compatibility
+      inputs: {
+        goal: truncatedGoal,
+        goals: config.goals,
+        plan: config.plan,
+        team: config.team,
+        deliverables: config.deliverables,
+      },
+      autonomy_band: 'guided', // Mode 3 uses HITL
+      tenant_id: tenantId,
+      mode: 3,  // Backend expects number, not string
+      goal: truncatedGoal,
+    });
+  }, [connect, missionId, selectedExpert, tenantId]);
+
+  const handleMode3SaveDraft = useCallback(async (name: string, config: Mode3MissionConfig) => {
+    logger.info('[AutonomousView] Mode 3: Saving draft', { name });
+    // Draft saving would be implemented here
+    alert(`Draft "${name}" saved successfully!`);
+  }, []);
+
+  const handleMode3SaveTemplate = useCallback(async (name: string, description: string, config: Mode3MissionConfig) => {
+    logger.info('[AutonomousView] Mode 3: Saving as template', { name });
+    // Template saving would be implemented here
+    alert(`Template "${name}" saved successfully!`);
+  }, []);
+
+  const handleMode3EditSection = useCallback((section: 'goals' | 'plan' | 'team' | 'settings') => {
+    logger.info('[AutonomousView] Mode 3: Edit section', { section });
+    if (section === 'goals') {
+      setPhase('goal_confirmation');
+    } else if (section === 'plan') {
+      setPhase('plan_confirmation');
+    }
+    // team/settings stay on current page with expanded section
+  }, []);
+
+  // HITL Checkpoint 4: Deliverable Review (post-execution)
+  const handleMode3AcceptDeliverables = useCallback(async () => {
+    logger.info('[AutonomousView] Mode 3: Deliverables accepted');
+    await mode3Hook.acceptDeliverables();
+    setPhase('complete');
+  }, [mode3Hook]);
+
+  const handleMode3RequestRevision = useCallback(async (feedback: string) => {
+    logger.info('[AutonomousView] Mode 3: Requesting revision', { feedback: feedback.substring(0, 50) });
+    setMode3RevisionCount(prev => prev + 1);
+    await mode3Hook.requestRevision(feedback);
+    setPhase('execution'); // Re-execute with feedback
+  }, [mode3Hook]);
+
+  const handleMode3DownloadDeliverable = useCallback((deliverableId: string) => {
+    logger.info('[AutonomousView] Mode 3: Downloading deliverable', { deliverableId });
+    // Download implementation
+  }, []);
+
+  const handleMode3PreviewDeliverable = useCallback((deliverableId: string) => {
+    logger.info('[AutonomousView] Mode 3: Previewing deliverable', { deliverableId });
+    // Preview implementation - could open modal
   }, []);
 
   // Template Preview/Customizer handlers - WIRED December 11, 2025
@@ -1048,6 +1413,7 @@ export function AutonomousView({
                 mode={mode}
                 industry="pharmaceutical"
                 onSubmit={handleGoalSubmit}
+                onEnhance={handlePromptEnhance}
                 isAnalyzing={isExecuting}
                 initialValue={missionGoal}
                 showExamples={true}
@@ -1061,6 +1427,116 @@ export function AutonomousView({
                 }
               />
             </div>
+          </motion.div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════
+            MODE 3 HITL CHECKPOINT 1: GOAL CONFIRMATION
+            User reviews and edits LLM-parsed goals from their research prompt
+            ═══════════════════════════════════════════════════════════════ */}
+        {phase === 'goal_confirmation' && mode === 'mode3' && (
+          <motion.div
+            key="goal_confirmation"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="flex-1 overflow-auto"
+          >
+            <GoalConfirmationCheckpoint
+              goals={mode3Goals}
+              originalPrompt={missionGoal}
+              onConfirm={handleMode3GoalsConfirm}
+              onRefine={handleMode3GoalsRefine}
+              onStartOver={handleMode3StartOver}
+              isLoading={isAnalyzing}
+            />
+          </motion.div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════
+            MODE 3 HITL CHECKPOINT 2: PLAN CONFIRMATION
+            User reviews and edits the LLM-generated execution plan
+            ═══════════════════════════════════════════════════════════════ */}
+        {phase === 'plan_confirmation' && mode === 'mode3' && (
+          <motion.div
+            key="plan_confirmation"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="flex-1 overflow-auto"
+          >
+            <PlanConfirmationCheckpoint
+              phases={mode3Plan}
+              estimatedDuration={mode3EstimatedDuration}
+              onConfirm={handleMode3PlanConfirm}
+              onRefine={handleMode3PlanBack}
+              onBack={handleMode3PlanBack}
+              isLoading={isAnalyzing}
+            />
+          </motion.div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════
+            MODE 3 HITL CHECKPOINT 3: TEAM & DELIVERABLES VALIDATION
+            Final review before mission launch - team, deliverables, settings
+            ═══════════════════════════════════════════════════════════════ */}
+        {phase === 'team_validation' && mode === 'mode3' && (
+          <motion.div
+            key="team_validation"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="flex-1 overflow-auto"
+          >
+            <MissionValidationCheckpoint
+              config={{
+                goals: mode3Goals,
+                plan: mode3Plan,
+                team: mode3Team,
+                deliverables: mode3Deliverables,
+                loops: {
+                  max_iterations: 3,
+                  convergence_threshold: 0.8,
+                  enable_auto_refinement: true,
+                },
+                variables: {},
+              }}
+              onLaunch={handleMode3Launch}
+              onSaveDraft={handleMode3SaveDraft}
+              onSaveTemplate={handleMode3SaveTemplate}
+              onEditSection={handleMode3EditSection}
+              isLoading={isAnalyzing}
+            />
+          </motion.div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════
+            MODE 3 HITL CHECKPOINT 4: DELIVERABLE REVIEW (Post-execution)
+            User reviews generated deliverables - accept or request revision
+            ═══════════════════════════════════════════════════════════════ */}
+        {phase === 'deliverable_review' && mode === 'mode3' && (
+          <motion.div
+            key="deliverable_review"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="flex-1 overflow-auto"
+          >
+            <DeliverableConfirmationCheckpoint
+              deliverables={mode3Deliverables}
+              missionId={missionId}
+              revisionCount={mode3RevisionCount}
+              maxRevisions={MAX_REVISIONS}
+              onAccept={handleMode3AcceptDeliverables}
+              onRequestRevision={handleMode3RequestRevision}
+              onDownload={handleMode3DownloadDeliverable}
+              onPreview={handleMode3PreviewDeliverable}
+              isLoading={isAnalyzing}
+            />
           </motion.div>
         )}
 
@@ -1312,27 +1788,54 @@ export function AutonomousView({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="flex-1 overflow-hidden"
+            className="flex-1 flex flex-col overflow-hidden gap-4"
           >
-            {/* SHARED COMPONENT: VitalMissionExecution from @vital/ai-ui */}
-            <VitalMissionExecution
-              missionId={missionId}
-              missionTitle={selectedTemplate?.name || 'Research Mission'}
-              status={executionStatus}
-              progress={streamState.progress?.progress || 0}
-              currentPhase={streamState.progress?.stage}
-              events={executionEvents}
-              checkpoints={executionCheckpoints}
-              artifacts={executionArtifacts}
-              metrics={executionMetrics}
-              onApproveCheckpoint={(id, feedback) => handleCheckpointResponse(id, 'approve', { feedback })}
-              onRejectCheckpoint={(id, reason) => handleCheckpointResponse(id, 'reject', { reason })}
-              onPause={() => logger.info('[AutonomousView] Pause requested')}
-              onResume={() => logger.info('[AutonomousView] Resume requested')}
-              onCancel={handleAbortMission}
-              onDownloadArtifact={(id) => logger.info('[AutonomousView] Download artifact', { id })}
-              mode={mode}
-            />
+            {/* Progress & Events Panel */}
+            <div className="flex-shrink-0 max-h-[45%]">
+              {/* SHARED COMPONENT: VitalMissionExecution from @vital/ai-ui */}
+              <VitalMissionExecution
+                missionId={missionId}
+                missionTitle={selectedTemplate?.name || 'Research Mission'}
+                status={executionStatus}
+                progress={streamState.progress?.progress || 0}
+                currentPhase={streamState.progress?.stage}
+                events={executionEvents}
+                checkpoints={executionCheckpoints}
+                artifacts={executionArtifacts}
+                metrics={executionMetrics}
+                onApproveCheckpoint={(id, feedback) => handleCheckpointResponse(id, 'approve', { feedback })}
+                onRejectCheckpoint={(id, reason) => handleCheckpointResponse(id, 'reject', { reason })}
+                onPause={() => logger.info('[AutonomousView] Pause requested')}
+                onResume={() => logger.info('[AutonomousView] Resume requested')}
+                onCancel={handleAbortMission}
+                onDownloadArtifact={(id) => logger.info('[AutonomousView] Download artifact', { id })}
+                mode={mode}
+              />
+            </div>
+
+            {/* Live Output Panel - Shows streaming content with markdown rendering */}
+            {streamState.content && (
+              <div className="flex-1 overflow-auto bg-white rounded-lg border border-slate-200 shadow-sm">
+                <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-2 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-600" />
+                  <span className="text-sm font-medium text-slate-700">
+                    {streamState.status === 'streaming' ? 'Generating Output...' : 'Research Output'}
+                  </span>
+                  {streamState.status === 'streaming' && (
+                    <Loader2 className="w-3 h-3 animate-spin text-purple-500 ml-auto" />
+                  )}
+                </div>
+                <div className="p-4">
+                  <VitalStreamText
+                    content={streamState.content}
+                    isStreaming={streamState.status === 'streaming' || streamState.status === 'thinking'}
+                    highlightCode={true}
+                    enableMermaid={true}
+                    showControls={true}
+                  />
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 

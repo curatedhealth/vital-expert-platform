@@ -58,7 +58,14 @@ import {
   FileText,
   Eye,
   Zap,
+  Loader2,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // Import comprehensive mission templates
 import { DEFAULT_MISSION_TEMPLATES, type MissionFamily } from '../types/mission-runners';
@@ -87,6 +94,8 @@ export interface MissionInputProps {
   selectedMissionFamily?: MissionFamily | null;
   /** Callback when mission should start */
   onStartMission: (goal: string, config: MissionConfig) => void;
+  /** Callback to enhance the research goal with AI */
+  onEnhance?: (goal: string) => Promise<string>;
   /** Whether a mission is currently running */
   isRunning?: boolean;
   /** Custom class name */
@@ -117,11 +126,13 @@ export function MissionInput({
   autoSelect,
   selectedExpert,
   onStartMission,
+  onEnhance,
   isRunning = false,
   className,
 }: MissionInputProps) {
   const [goal, setGoal] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const [config, setConfig] = useState<MissionConfig>({
     enableRag: true,
     enableWebSearch: true,
@@ -167,6 +178,17 @@ export function MissionInput({
     if (!goal.trim()) return;
     onStartMission(goal.trim(), config);
   }, [goal, config, onStartMission]);
+
+  const handleEnhance = useCallback(async () => {
+    if (!onEnhance || !goal.trim() || isEnhancing) return;
+    setIsEnhancing(true);
+    try {
+      const enhanced = await onEnhance(goal);
+      setGoal(enhanced);
+    } finally {
+      setIsEnhancing(false);
+    }
+  }, [onEnhance, goal, isEnhancing]);
 
   const canStart = goal.trim().length > 10 && (autoSelect || selectedExpert);
 
@@ -259,16 +281,43 @@ export function MissionInput({
 
         {/* Research Goal Input */}
         <div className="space-y-2">
-          <Label htmlFor="research-goal" className="text-sm font-medium">
-            Research Goal
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="research-goal" className="text-sm font-medium">
+              Research Goal
+            </Label>
+            {onEnhance && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleEnhance}
+                      disabled={isRunning || !goal.trim() || isEnhancing}
+                      className="h-7 gap-1.5 text-xs"
+                    >
+                      {isEnhancing ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-3.5 w-3.5" />
+                      )}
+                      <span className="hidden sm:inline">Enhance with AI</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Enhance your research goal with AI-powered optimization</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
           <Textarea
             id="research-goal"
             placeholder="Describe your research objective in detail..."
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
             className="min-h-[120px] resize-none"
-            disabled={isRunning}
+            disabled={isRunning || isEnhancing}
           />
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>{goal.length} characters</span>

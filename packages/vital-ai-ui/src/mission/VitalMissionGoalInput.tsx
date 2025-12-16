@@ -65,6 +65,8 @@ export interface ExamplePrompt {
 export interface VitalMissionGoalInputProps {
   /** Called when user submits their goal */
   onSubmit: (goal: string) => void;
+  /** Called to enhance the goal with AI (optional) */
+  onEnhance?: (goal: string) => Promise<string>;
   /** Whether the AI is processing the goal */
   isAnalyzing?: boolean;
   /** Mode 3 (expert) or Mode 4 (wizard) - affects UI messaging and colors */
@@ -193,6 +195,7 @@ const MODE_CONFIG: Record<MissionMode, {
 
 export function VitalMissionGoalInput({
   onSubmit,
+  onEnhance,
   isAnalyzing = false,
   mode,
   industry = 'pharmaceutical',
@@ -206,6 +209,7 @@ export function VitalMissionGoalInput({
 }: VitalMissionGoalInputProps) {
   const [goal, setGoal] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const config = MODE_CONFIG[mode];
@@ -230,6 +234,18 @@ export function VitalMissionGoalInput({
     if (!goal.trim() || isAnalyzing) return;
     onSubmit(goal.trim());
   }, [goal, isAnalyzing, onSubmit]);
+
+  // Handle AI enhancement
+  const handleEnhance = useCallback(async () => {
+    if (!onEnhance || !goal.trim() || isEnhancing || isAnalyzing) return;
+    setIsEnhancing(true);
+    try {
+      const enhanced = await onEnhance(goal);
+      setGoal(enhanced);
+    } finally {
+      setIsEnhancing(false);
+    }
+  }, [onEnhance, goal, isEnhancing, isAnalyzing]);
 
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback(
@@ -298,11 +314,36 @@ export function VitalMissionGoalInput({
             disabled={isAnalyzing}
           />
 
-          {/* Submit Button */}
-          <div className="absolute right-3 bottom-3">
+          {/* Action Buttons */}
+          <div className="absolute right-3 bottom-3 flex items-center gap-2">
+            {/* AI Enhance Button */}
+            {onEnhance && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEnhance}
+                disabled={!goal.trim() || isAnalyzing || isEnhancing}
+                className={cn(
+                  'rounded-xl h-auto py-2 px-3 transition-all border-2',
+                  mode === 'mode3'
+                    ? 'border-purple-200 hover:border-purple-400 hover:bg-purple-50'
+                    : 'border-amber-200 hover:border-amber-400 hover:bg-amber-50',
+                  'disabled:opacity-50 disabled:cursor-not-allowed'
+                )}
+                title="Enhance your research goal with AI"
+              >
+                {isEnhancing ? (
+                  <Loader2 className={cn('w-4 h-4 animate-spin', mode === 'mode3' ? 'text-purple-600' : 'text-amber-600')} />
+                ) : (
+                  <Sparkles className={cn('w-4 h-4', mode === 'mode3' ? 'text-purple-600' : 'text-amber-600')} />
+                )}
+              </Button>
+            )}
+
+            {/* Submit Button */}
             <Button
               onClick={handleSubmit}
-              disabled={!goal.trim() || isAnalyzing}
+              disabled={!goal.trim() || isAnalyzing || isEnhancing}
               className={cn(
                 'rounded-xl px-4 py-2 h-auto transition-all',
                 `bg-gradient-to-r ${config.gradientFrom} ${config.gradientTo}`,

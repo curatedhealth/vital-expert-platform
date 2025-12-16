@@ -145,6 +145,7 @@ export type {
   RetrieverType as SourcesRetrieverType,
   SourceCategory,
   FusionBreakdown,
+  CitationStyle,
   // Component props
   VitalSourcesProps,
   VitalSourcesTriggerProps,

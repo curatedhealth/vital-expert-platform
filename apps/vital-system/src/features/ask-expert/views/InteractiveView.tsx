@@ -207,6 +207,9 @@ export function InteractiveView({
     messageCount: number;
   } | null>(null);
 
+  // Agent header collapsed/expanded state (default: collapsed for compact view)
+  const [isAgentHeaderExpanded, setIsAgentHeaderExpanded] = useState(false);
+
   // Phase management
   // BOTH Mode 1 and Mode 2 now start in conversation phase
   // Mode 1: User picks expert from sidebar → Chats
@@ -956,50 +959,79 @@ export function InteractiveView({
     )}>
       {/* Breadcrumb removed - now handled by global DashboardHeader */}
 
-      {/* Conversation Metadata Header (shown when loading existing conversation) */}
+      {/* Conversation Metadata Header - Collapsible (Agent name already in global header top-right) */}
       {conversationMeta && (
-        <div className="border-b bg-muted/30">
-          <div className="max-w-4xl mx-auto px-4 pb-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {selectedExpert && (
-                <div className="flex items-center gap-2">
-                  {(selectedExpert as Expert & { avatarUrl?: string }).avatarUrl ? (
-                    <img
-                      src={(selectedExpert as Expert & { avatarUrl?: string }).avatarUrl}
-                      alt={selectedExpert.name}
-                      className="w-8 h-8 rounded-full border border-border"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <MessageSquare className="w-4 h-4 text-primary" />
+        <>
+          {/* Collapsed state: Just a thin expand trigger */}
+          {!isAgentHeaderExpanded ? (
+            <button
+              type="button"
+              onClick={() => setIsAgentHeaderExpanded(true)}
+              className="w-full h-6 border-b bg-muted/20 hover:bg-muted/40 transition-colors flex items-center justify-center gap-1 group"
+            >
+              <ChevronDown className="w-3 h-3 text-muted-foreground group-hover:text-foreground transition-colors" />
+              <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors">
+                Show conversation details
+              </span>
+            </button>
+          ) : (
+            /* Expanded state: Full header with all details */
+            <div className="border-b bg-muted/30">
+              <div className="max-w-4xl mx-auto px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {selectedExpert && (
+                      <div className="flex items-center gap-2">
+                        {(selectedExpert as Expert & { avatarUrl?: string }).avatarUrl ? (
+                          <img
+                            src={(selectedExpert as Expert & { avatarUrl?: string }).avatarUrl}
+                            alt={selectedExpert.name}
+                            className="w-8 h-8 rounded-full border border-border"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <MessageSquare className="w-4 h-4 text-primary" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-medium text-foreground">
+                            {selectedExpert.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {selectedExpert.domain}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="text-xs text-muted-foreground">
+                        Started {formatConversationDate(conversationMeta.createdAt)}
+                      </span>
+                      {conversationMeta.createdAt !== conversationMeta.updatedAt && (
+                        <span className="text-xs text-muted-foreground/70">
+                          Last updated {formatConversationDate(conversationMeta.updatedAt)}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-muted-foreground/60">
+                        {conversationMeta.messageCount} messages
+                      </span>
                     </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {selectedExpert.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedExpert.domain}
-                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setIsAgentHeaderExpanded(false)}
+                      className="p-1 hover:bg-muted rounded transition-colors"
+                      title="Hide conversation details"
+                    >
+                      <ChevronDown className="w-4 h-4 text-muted-foreground rotate-180" />
+                    </button>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
-            <div className="flex flex-col items-end gap-0.5">
-              <span className="text-xs text-muted-foreground">
-                Started {formatConversationDate(conversationMeta.createdAt)}
-              </span>
-              {conversationMeta.createdAt !== conversationMeta.updatedAt && (
-                <span className="text-xs text-muted-foreground/70">
-                  Last updated {formatConversationDate(conversationMeta.updatedAt)}
-                </span>
-              )}
-              <span className="text-[10px] text-muted-foreground/60">
-                {conversationMeta.messageCount} messages
-              </span>
-            </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
 
       <AnimatePresence mode="wait">

@@ -68,6 +68,8 @@ interface AskExpertContextType {
   setActiveSessionId: (sessionId: string | null) => void;
   refreshSessions: () => Promise<void>;
   createNewSession: (options?: { title?: string; agentId?: string }) => Promise<string>;
+  // Delete a session
+  deleteSession: (sessionId: string) => Promise<void>;
   // New method to get all agents (unfiltered) for agent store pages
   getAllAgents: () => Promise<Agent[]>;
   // Method to refresh agents list (useful when user adds agents from store)
@@ -560,6 +562,44 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
     setActiveSessionIdState(sessionId);
   }, []);
 
+  // Delete a session/conversation
+  const deleteSession = useCallback(async (sessionId: string) => {
+    if (!user?.id) {
+      console.warn('[AskExpertContext] Cannot delete session: user not authenticated');
+      return;
+    }
+
+    try {
+      console.log('🗑️ [AskExpertContext] Deleting session:', sessionId);
+
+      const response = await fetch(`/api/chat/conversations/${sessionId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        console.log('✅ [AskExpertContext] Session deleted successfully:', sessionId);
+
+        // Remove from local state
+        setSessions((prev) => prev.filter((session) => session.sessionId !== sessionId));
+
+        // If this was the active session, clear it
+        if (activeSessionId === sessionId) {
+          setActiveSessionIdState(null);
+        }
+      } else {
+        const errorBody = await response.text();
+        console.error('❌ [AskExpertContext] Failed to delete session');
+        console.error('   Status:', response.status, response.statusText);
+        console.error('   Response body:', errorBody);
+        throw new Error(`Failed to delete session: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('❌ [AskExpertContext] Error deleting session:', error);
+      throw error;
+    }
+  }, [user?.id, activeSessionId]);
+
   // Method to get all agents (unfiltered) for agent store pages
   const getAllAgents = useCallback(async (): Promise<Agent[]> => {
     try {
@@ -709,6 +749,7 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       setActiveSessionId: handleSetActiveSessionId,
       refreshSessions,
       createNewSession,
+      deleteSession,
       getAllAgents,
       refreshAgents,
       addAgentToUserList,
@@ -725,6 +766,7 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
     handleSetActiveSessionId,
     refreshSessions,
     createNewSession,
+    deleteSession,
     getAllAgents,
     refreshAgents,
     addAgentToUserList,

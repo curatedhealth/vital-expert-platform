@@ -70,22 +70,24 @@ export function VitalStreamText({
 
   return (
     <div className={cn('relative group', className)}>
-      {/* Copy button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className={cn(
-          'absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity',
-          'bg-background/80 backdrop-blur-sm'
-        )}
-        onClick={handleCopy}
-      >
-        {copied ? (
-          <Check className="h-3.5 w-3.5 text-green-500" />
-        ) : (
-          <Copy className="h-3.5 w-3.5" />
-        )}
-      </Button>
+      {/* Copy button - only shown when showControls is true */}
+      {showControls && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            'absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity',
+            'bg-background/80 backdrop-blur-sm'
+          )}
+          onClick={handleCopy}
+        >
+          {copied ? (
+            <Check className="h-3.5 w-3.5 text-green-500" />
+          ) : (
+            <Copy className="h-3.5 w-3.5" />
+          )}
+        </Button>
+      )}
 
       {/* Streamdown component for jitter-free streaming */}
       <div

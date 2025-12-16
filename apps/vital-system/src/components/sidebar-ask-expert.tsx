@@ -22,6 +22,10 @@ import {
   Users,
   Pencil,
   X,
+  Calendar as CalendarIcon,
+  Archive as ArchiveIcon,
+  Pin as PinIcon,
+  Briefcase,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
@@ -113,6 +117,7 @@ export function SidebarAskExpert() {
     activeSessionId,
     setActiveSessionId,
     createNewSession,
+    deleteSession,
     refreshSessions,
     refreshAgents,
   } = useAskExpert()
@@ -337,6 +342,29 @@ export function SidebarAskExpert() {
       setSelectedResearchExpert(filteredAgents[0].id)
     }
   }, [currentMode?.mode, selectedResearchExpert, filteredAgents])
+
+  // Group agents by field of expertise (knowledge_domains)
+  const groupedAgents = useMemo(() => {
+    const groups: Record<string, typeof filteredAgents> = {}
+
+    filteredAgents.forEach(agent => {
+      // Use first knowledge_domain, or 'General' if none
+      const domain = agent.knowledge_domains?.[0] || 'General'
+      if (!groups[domain]) {
+        groups[domain] = []
+      }
+      groups[domain].push(agent)
+    })
+
+    // Sort domains alphabetically, but put 'General' last
+    const sortedDomains = Object.keys(groups).sort((a, b) => {
+      if (a === 'General') return 1
+      if (b === 'General') return -1
+      return a.localeCompare(b)
+    })
+
+    return { groups, sortedDomains }
+  }, [filteredAgents])
 
   // Group conversations by time period
   const groupedSessions = useMemo(() => {
@@ -614,32 +642,51 @@ export function SidebarAskExpert() {
               router.push(`/ask-expert/interactive?mode=${mode}&conversationId=${session.sessionId}`);
             }}
             className={cn(
-              "py-2.5 px-2 rounded-lg transition-all duration-150",
+              "py-1.5 px-2 rounded-lg transition-all duration-150",
               isActive && "bg-primary/10 border-l-2 border-primary",
               !isActive && "hover:bg-muted/60",
               isKeyboardSelected && !isActive && "ring-1 ring-primary/40 bg-muted/40"
             )}
           >
             <div className="flex items-start gap-2.5 w-full min-w-0">
-              {/* Agent Avatar or Fallback Icon */}
+              {/* Mode-specific Icon */}
               <div className="relative shrink-0 mt-0.5">
                 {(() => {
-                  const avatarUrl = getAvatarUrl(session.agent?.avatar);
-                  return avatarUrl ? (
-                    <Avatar className="h-6 w-6 border border-border/40">
-                      <AvatarImage src={avatarUrl} alt={session.agent?.name || 'Agent'} />
-                      <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                        {(session.agent?.name || 'AI').slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : (
+                  // Determine mode from session metadata
+                  const mode = session.metadata?.mode;
+                  const isAuto = mode === 'auto';
+
+                  // Mode icon and color mapping
+                  const getModeIcon = () => {
+                    // Check if it's autonomous (research) mode based on title/context
+                    const isResearch = session.title?.toLowerCase().includes('research') ||
+                                       session.title?.toLowerCase().includes('mission');
+
+                    if (isResearch && isAuto) {
+                      // Mode 4: Background Mission - Zap, amber
+                      return { Icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' };
+                    } else if (isResearch) {
+                      // Mode 3: Mission Control - Target, emerald
+                      return { Icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-500/10' };
+                    } else if (isAuto) {
+                      // Mode 2: Smart Copilot - Sparkles, violet
+                      return { Icon: SparklesIcon, color: 'text-violet-500', bg: 'bg-violet-500/10' };
+                    } else {
+                      // Mode 1: Expert Chat - User, blue (default)
+                      return { Icon: User, color: 'text-blue-500', bg: 'bg-blue-500/10' };
+                    }
+                  };
+
+                  const { Icon, color, bg } = getModeIcon();
+
+                  return (
                     <div className={cn(
                       "h-6 w-6 rounded-full flex items-center justify-center",
-                      isActive ? "bg-primary/15" : "bg-muted"
+                      isActive ? bg : "bg-muted"
                     )}>
-                      <MessageSquare className={cn(
+                      <Icon className={cn(
                         "h-3.5 w-3.5",
-                        isActive ? "text-primary" : "text-muted-foreground/70"
+                        isActive ? color : "text-muted-foreground/70"
                       )} />
                     </div>
                   );
@@ -649,28 +696,14 @@ export function SidebarAskExpert() {
                 )}
               </div>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0 overflow-hidden">
-                <div className="flex items-center gap-1.5">
-                  <span className={cn(
-                    "text-[13px] truncate leading-tight",
-                    isActive ? "font-semibold text-foreground" : "font-medium text-foreground/90"
-                  )}>
-                    {displayTitle}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {session.agent?.name && (
-                    <span className="text-[10px] text-primary/70 truncate max-w-[80px]">
-                      {session.agent.name}
-                    </span>
-                  )}
-                  {session.messageCount > 0 && (
-                    <span className="text-[10px] text-muted-foreground/50 shrink-0">
-                      · {session.messageCount}
-                    </span>
-                  )}
-                </div>
+              {/* Content - Title only, no subtitle */}
+              <div className="flex-1 min-w-0 overflow-hidden flex items-center">
+                <span className={cn(
+                  "text-[13px] truncate leading-tight",
+                  isActive ? "font-semibold text-foreground" : "font-medium text-foreground/90"
+                )}>
+                  {displayTitle}
+                </span>
               </div>
             </div>
           </SidebarMenuButton>
@@ -748,7 +781,13 @@ export function SidebarAskExpert() {
                   Archive
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600 dark:text-red-400 text-[13px]">
+                <DropdownMenuItem
+                  className="text-red-600 dark:text-red-400 text-[13px]"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    deleteSession(session.sessionId)
+                  }}
+                >
                   <Trash2Icon className="h-3.5 w-3.5 mr-2" />
                   Delete
                 </DropdownMenuItem>
@@ -757,6 +796,97 @@ export function SidebarAskExpert() {
           </div>
         </div>
       </SidebarMenuItem>
+    )
+  }
+
+  // Helper to render an agent item
+  const renderAgentItem = (agent: typeof agents[0]) => {
+    const isSelected = currentMode?.mode === 3
+      ? selectedResearchExpert === agent.id
+      : selectedAgents.includes(agent.id)
+
+    return (
+      <div key={agent.id} className="group/agent relative">
+        <button
+          type="button"
+          onClick={() => {
+            if (currentMode?.mode === 3) {
+              setSelectedResearchExpert(agent.id)
+            } else if (currentMode?.mode === 1) {
+              setSelectedAgents(isSelected ? [] : [agent.id])
+            } else {
+              // No mode - just navigate to agent
+              router.push(`/agents/${agent.id}`)
+            }
+          }}
+          className={cn(
+            "w-full pl-2 pr-10 py-2 rounded-lg text-left transition-all flex items-center gap-2.5",
+            isSelected && currentMode?.mode === 3 && "bg-emerald-500/10 border-l-2 border-emerald-500",
+            isSelected && currentMode?.mode === 1 && "bg-blue-500/10 border-l-2 border-blue-500",
+            !isSelected && "hover:bg-muted/60"
+          )}
+        >
+          {/* Agent Avatar */}
+          <div className="relative shrink-0">
+            {(() => {
+              const avatarUrl = getAvatarUrl(agent.avatar);
+              return avatarUrl ? (
+                <Avatar className="h-7 w-7 border border-border/40">
+                  <AvatarImage src={avatarUrl} alt={agent.displayName} />
+                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                    {agent.displayName.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <div className={cn(
+                  "h-7 w-7 rounded-full flex items-center justify-center",
+                  isSelected ? "bg-primary/15" : "bg-muted"
+                )}>
+                  <User className={cn(
+                    "h-3.5 w-3.5",
+                    isSelected ? "text-primary" : "text-muted-foreground/70"
+                  )} />
+                </div>
+              );
+            })()}
+            {isSelected && (
+              <CheckIcon className={cn(
+                "h-3 w-3 absolute -top-1 -right-1 bg-background rounded-full",
+                currentMode?.mode === 3 ? "text-emerald-500" : "text-blue-500"
+              )} />
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <span className={cn(
+              "text-[13px] truncate block leading-tight",
+              isSelected ? "font-semibold text-foreground" : "font-medium text-foreground/90"
+            )}>
+              {cleanDisplayName(agent.displayName)}
+            </span>
+          </div>
+        </button>
+
+        {/* Edit button - always visible for selected, hover for others */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 right-1 h-7 w-7 p-0 rounded-md transition-all duration-150 hover:bg-muted",
+            isSelected
+              ? "opacity-100 bg-muted/50"
+              : "opacity-0 group-hover/agent:opacity-100"
+          )}
+          onClick={(e) => {
+            e.stopPropagation()
+            router.push(`/agents/${agent.id}`)
+          }}
+          title="Edit agent"
+        >
+          <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+        </Button>
+      </div>
     )
   }
 
@@ -925,137 +1055,6 @@ export function SidebarAskExpert() {
         </Collapsible>
       )}
 
-      {/* Mode Header removed - mode info moved to breadcrumb area for cleaner sidebar */}
-
-      {/* Agent Selection for Manual Modes (Mode 1 & 3) */}
-      {currentMode && (currentMode.mode === 1 || currentMode.mode === 3) && (
-        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel>
-            {currentMode.mode === 3 ? 'Select Research Lead' : 'Select Expert'}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <div className="px-2 space-y-2">
-              {/* Agent Search */}
-              <div className="relative">
-                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search experts..."
-                  className="h-8 pl-9 text-sm"
-                />
-              </div>
-
-              <ScrollArea className="max-h-[240px]">
-                <div className="space-y-1">
-                  {filteredAgents.slice(0, 15).map((agent) => {
-                    const isSelected = currentMode.mode === 3
-                      ? selectedResearchExpert === agent.id
-                      : selectedAgents.includes(agent.id)
-
-                    return (
-                      <div key={agent.id} className="group/agent relative">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (currentMode.mode === 3) {
-                              setSelectedResearchExpert(agent.id)
-                            } else {
-                              // Mode 1: single select
-                              setSelectedAgents(isSelected ? [] : [agent.id])
-                            }
-                          }}
-                          className={cn(
-                            "w-full px-2 py-2.5 rounded-lg text-left transition-all flex items-start gap-2.5",
-                            isSelected && currentMode.mode === 3 && "bg-emerald-500/10 border-l-2 border-emerald-500",
-                            isSelected && currentMode.mode === 1 && "bg-blue-500/10 border-l-2 border-blue-500",
-                            !isSelected && "hover:bg-muted/60"
-                          )}
-                        >
-                          {/* Agent Avatar */}
-                          <div className="relative shrink-0 mt-0.5">
-                            {(() => {
-                              const avatarUrl = getAvatarUrl(agent.avatar);
-                              return avatarUrl ? (
-                                <Avatar className="h-6 w-6 border border-border/40">
-                                  <AvatarImage src={avatarUrl} alt={agent.displayName} />
-                                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                    {agent.displayName.slice(0, 2).toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                              ) : (
-                                <div className={cn(
-                                  "h-6 w-6 rounded-full flex items-center justify-center",
-                                  isSelected ? "bg-primary/15" : "bg-muted"
-                                )}>
-                                  <User className={cn(
-                                    "h-3.5 w-3.5",
-                                    isSelected ? "text-primary" : "text-muted-foreground/70"
-                                  )} />
-                                </div>
-                              );
-                            })()}
-                            {isSelected && (
-                              <CheckIcon className={cn(
-                                "h-2.5 w-2.5 absolute -top-1 -right-1",
-                                currentMode.mode === 3 ? "text-emerald-500" : "text-blue-500"
-                              )} />
-                            )}
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0 overflow-hidden">
-                            <div className="flex items-center gap-1.5">
-                              <span className={cn(
-                                "text-[13px] truncate leading-tight",
-                                isSelected ? "font-semibold text-foreground" : "font-medium text-foreground/90"
-                              )}>
-                                {cleanDisplayName(agent.displayName)}
-                              </span>
-                            </div>
-                            {agent.description && (
-                              <p className="text-[10px] text-muted-foreground/60 truncate mt-0.5">
-                                {agent.description.slice(0, 40)}...
-                              </p>
-                            )}
-                          </div>
-                        </button>
-
-                        {/* Edit button on hover */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            "absolute top-1/2 -translate-y-1/2 right-1.5 h-6 w-6 p-0 rounded-md transition-opacity duration-150",
-                            isSelected ? "opacity-100" : "opacity-0 group-hover/agent:opacity-100"
-                          )}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            router.push(`/agents/${agent.id}`)
-                          }}
-                        >
-                          <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                        </Button>
-                      </div>
-                    )
-                  })}
-                  {filteredAgents.length === 0 && !agentsLoading && (
-                    <p className="text-xs text-muted-foreground text-center py-4">
-                      No agents found
-                    </p>
-                  )}
-                  {agentsLoading && (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
-
       {/* Fusion Intelligence Card for Auto Modes (Mode 2 & 4) */}
       {currentMode && isAutoMode && (
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -1076,9 +1075,35 @@ export function SidebarAskExpert() {
         </SidebarGroup>
       )}
 
-      <Separator className="my-2" />
+      {/* ============================================================
+          1. QUICK ACTIONS (Always on top)
+          ============================================================ */}
+      {/* Collapsed icon for Quick Actions */}
+      <SidebarGroup className="hidden group-data-[collapsible=icon]:flex flex-col items-center py-2">
+        <SidebarMenu className="flex flex-col items-center gap-1">
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleNewChat} disabled={isCreatingChat} tooltip="New Consultation" className="h-10 w-10 p-0 flex items-center justify-center">
+              {isCreatingChat ? (
+                <Loader2Icon className="h-5 w-5 animate-spin" />
+              ) : (
+                <PlusIcon className="h-5 w-5" />
+              )}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleRefresh} disabled={isRefreshing} tooltip="Refresh" className="h-10 w-10 p-0 flex items-center justify-center">
+              {isRefreshing ? (
+                <Loader2Icon className="h-5 w-5 animate-spin" />
+              ) : (
+                <RefreshCwIcon className="h-5 w-5" />
+              )}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroup>
 
-      <Collapsible defaultOpen className="group/collapsible">
+      {/* Expanded Quick Actions */}
+      <Collapsible defaultOpen className="group/collapsible group-data-[collapsible=icon]:hidden">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
@@ -1103,11 +1128,6 @@ export function SidebarAskExpert() {
                       <PlusIcon className="h-4 w-4" />
                     )}
                     <span>New Consultation</span>
-                    {selectedAgents.length > 0 && (
-                      <Badge variant="outline" className="ml-auto text-xs">
-                        {selectedAgents.length}
-                      </Badge>
-                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
@@ -1123,7 +1143,7 @@ export function SidebarAskExpert() {
                     <span>Refresh</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+                <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link href="/agents">
                       <SparklesIcon className="h-4 w-4" />
@@ -1137,13 +1157,35 @@ export function SidebarAskExpert() {
         </SidebarGroup>
       </Collapsible>
 
-      <Collapsible defaultOpen className="group/collapsible">
-        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+      <Separator className="my-2 group-data-[collapsible=icon]:hidden" />
+
+      {/* ============================================================
+          2. CONVERSATIONS (Flat list, no subheaders, collapsible)
+          ============================================================ */}
+      {/* Collapsed icon for Conversations */}
+      <SidebarGroup className="hidden group-data-[collapsible=icon]:flex flex-col items-center py-2">
+        <SidebarMenu className="flex flex-col items-center">
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleNewChat} tooltip={`Conversations (${sessions.length})`} className="h-10 w-10 p-0 flex items-center justify-center">
+              <MessageSquare className="h-5 w-5" />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroup>
+
+      {/* Expanded Conversations */}
+      <Collapsible defaultOpen className="group/collapsible group-data-[collapsible=icon]:hidden">
+        <SidebarGroup>
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
               <span className="flex items-center gap-2">
                 <MessageSquare className="h-3.5 w-3.5" />
                 Conversations
+                {sessions.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                    {sessions.length}
+                  </Badge>
+                )}
               </span>
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
@@ -1157,113 +1199,115 @@ export function SidebarAskExpert() {
                   ref={conversationSearchRef}
                   value={conversationSearch}
                   onChange={(e) => setConversationSearch(e.target.value)}
-                  placeholder="Search conversations… (⌘K)"
+                  placeholder="Search… (⌘K)"
                   className="h-8 pl-8 text-sm"
                 />
               </div>
 
               {sessionsLoading && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton disabled>
-                    <Loader2Icon className="h-4 w-4 animate-spin" />
-                    <span>Loading consultations…</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <div className="flex items-center justify-center py-4">
+                  <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
               )}
 
               {!sessionsLoading && sessions.length === 0 && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton disabled>
-                    <ArrowLeftRightIcon className="h-4 w-4 opacity-60" />
-                    <span>No consultations yet</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <div className="px-2 py-4 text-center">
+                  <MessageSquare className="h-6 w-6 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-xs text-muted-foreground">No conversations yet</p>
+                </div>
               )}
 
               {!sessionsLoading && sessions.length > 0 && (
-                <ScrollArea className="max-h-[300px]">
-                  <SidebarMenu>
-                    {/* Pinned Conversations */}
+                <ScrollArea className="max-h-[calc(100vh-300px)]">
+                  <SidebarMenu className="px-1">
+                    {/* Pinned conversations */}
                     {groupedSessions.pinned.length > 0 && (
-                      <>
-                        <div className="flex items-center gap-1.5 px-2 pt-2 pb-1">
-                          <Pin className="h-3 w-3 text-amber-500" />
-                          <span className="text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wide">
-                            Pinned
-                          </span>
-                        </div>
-                        {groupedSessions.pinned.map((session, idx) => renderSessionItem(session, idx))}
-                      </>
+                      <Collapsible defaultOpen className="mb-2">
+                        <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+                          <PinIcon className="h-3 w-3" />
+                          Pinned
+                          <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4">{groupedSessions.pinned.length}</Badge>
+                          <ChevronDown className="ml-auto h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          {groupedSessions.pinned.map((session, idx) => renderSessionItem(session, idx))}
+                        </CollapsibleContent>
+                      </Collapsible>
                     )}
 
                     {/* Today */}
                     {groupedSessions.today.length > 0 && (
-                      <>
-                        <div className="px-2 pt-3 pb-1">
-                          <span className="text-[11px] font-medium text-muted-foreground/70">
-                            Today
-                          </span>
-                        </div>
-                        {groupedSessions.today.map((session, idx) =>
-                          renderSessionItem(session, groupedSessions.pinned.length + idx)
-                        )}
-                      </>
+                      <Collapsible defaultOpen className="mb-2">
+                        <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+                          <CalendarIcon className="h-3 w-3" />
+                          Today
+                          <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4">{groupedSessions.today.length}</Badge>
+                          <ChevronDown className="ml-auto h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          {groupedSessions.today.map((session, idx) => renderSessionItem(session, idx))}
+                        </CollapsibleContent>
+                      </Collapsible>
                     )}
 
                     {/* Yesterday */}
                     {groupedSessions.yesterday.length > 0 && (
-                      <>
-                        <div className="px-2 pt-3 pb-1">
-                          <span className="text-[11px] font-medium text-muted-foreground/70">
-                            Yesterday
-                          </span>
-                        </div>
-                        {groupedSessions.yesterday.map((session, idx) =>
-                          renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + idx)
-                        )}
-                      </>
+                      <Collapsible defaultOpen className="mb-2">
+                        <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+                          <CalendarIcon className="h-3 w-3" />
+                          Yesterday
+                          <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4">{groupedSessions.yesterday.length}</Badge>
+                          <ChevronDown className="ml-auto h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          {groupedSessions.yesterday.map((session, idx) => renderSessionItem(session, idx))}
+                        </CollapsibleContent>
+                      </Collapsible>
                     )}
 
                     {/* Last 7 Days */}
                     {groupedSessions.last7Days.length > 0 && (
-                      <>
-                        <div className="px-2 pt-3 pb-1">
-                          <span className="text-[11px] font-medium text-muted-foreground/70">
-                            Previous 7 Days
-                          </span>
-                        </div>
-                        {groupedSessions.last7Days.map((session, idx) =>
-                          renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + groupedSessions.yesterday.length + idx)
-                        )}
-                      </>
+                      <Collapsible defaultOpen className="mb-2">
+                        <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+                          <CalendarIcon className="h-3 w-3" />
+                          Last Week
+                          <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4">{groupedSessions.last7Days.length}</Badge>
+                          <ChevronDown className="ml-auto h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          {groupedSessions.last7Days.map((session, idx) => renderSessionItem(session, idx))}
+                        </CollapsibleContent>
+                      </Collapsible>
                     )}
 
                     {/* Last 30 Days */}
                     {groupedSessions.last30Days.length > 0 && (
-                      <>
-                        <div className="px-2 pt-3 pb-1">
-                          <span className="text-[11px] font-medium text-muted-foreground/70">
-                            Previous 30 Days
-                          </span>
-                        </div>
-                        {groupedSessions.last30Days.map((session, idx) =>
-                          renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + groupedSessions.yesterday.length + groupedSessions.last7Days.length + idx)
-                        )}
-                      </>
+                      <Collapsible defaultOpen className="mb-2">
+                        <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+                          <CalendarIcon className="h-3 w-3" />
+                          Last Month
+                          <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4">{groupedSessions.last30Days.length}</Badge>
+                          <ChevronDown className="ml-auto h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          {groupedSessions.last30Days.map((session, idx) => renderSessionItem(session, idx))}
+                        </CollapsibleContent>
+                      </Collapsible>
                     )}
 
                     {/* Older */}
                     {groupedSessions.older.length > 0 && (
-                      <>
-                        <div className="px-2 pt-3 pb-1">
-                          <span className="text-[11px] font-medium text-muted-foreground/70">
-                            Older
-                          </span>
-                        </div>
-                        {groupedSessions.older.map((session, idx) =>
-                          renderSessionItem(session, groupedSessions.pinned.length + groupedSessions.today.length + groupedSessions.yesterday.length + groupedSessions.last7Days.length + groupedSessions.last30Days.length + idx)
-                        )}
-                      </>
+                      <Collapsible className="mb-2">
+                        <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+                          <ArchiveIcon className="h-3 w-3" />
+                          Older
+                          <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4">{groupedSessions.older.length}</Badge>
+                          <ChevronDown className="ml-auto h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          {groupedSessions.older.map((session, idx) => renderSessionItem(session, idx))}
+                        </CollapsibleContent>
+                      </Collapsible>
                     )}
                   </SidebarMenu>
                 </ScrollArea>
@@ -1273,113 +1317,99 @@ export function SidebarAskExpert() {
         </SidebarGroup>
       </Collapsible>
 
-      {/* Browse Agents - only show when on landing page (no mode) */}
-      {!currentMode && (
-        <Collapsible defaultOpen className="group/collapsible">
-          <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-                <span className="flex items-center gap-2">
-                  <Users className="h-3.5 w-3.5" />
-                  Browse Agents
-                </span>
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                {/* Agent Search */}
-                <div className="relative px-2 mb-2">
-                  <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="Search agents…"
-                    className="h-8 pl-8 text-sm"
-                  />
+      <Separator className="my-2 group-data-[collapsible=icon]:hidden" />
+
+      {/* ============================================================
+          3. AGENTS (Flat list, collapsible, with CRUD)
+          ============================================================ */}
+      {/* Collapsed icon for Agents */}
+      <SidebarGroup className="hidden group-data-[collapsible=icon]:flex flex-col items-center py-2">
+        <SidebarMenu className="flex flex-col items-center">
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip={`Agents (${agents.length})`} className="h-10 w-10 p-0 flex items-center justify-center">
+              <Link href="/agents">
+                <Users className="h-5 w-5" />
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroup>
+
+      {/* Expanded Agents */}
+      <Collapsible defaultOpen className="group/collapsible group-data-[collapsible=icon]:hidden">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <Users className="h-3.5 w-3.5" />
+                {currentMode?.mode === 3 ? 'Select Research Lead' : currentMode?.mode === 1 ? 'Select Expert' : 'Agents'}
+                {agents.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                    {agents.length}
+                  </Badge>
+                )}
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              {/* Agent Search */}
+              <div className="relative px-2 mb-2">
+                <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search agents…"
+                  className="h-8 pl-8 text-sm"
+                />
+              </div>
+
+              {agentsLoading && (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
                 </div>
+              )}
 
-                <ScrollArea className="max-h-[280px]">
-                  <div className="space-y-1 px-2">
-                    {agentsLoading && (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
-                      </div>
-                    )}
+              {!agentsLoading && agents.length === 0 && (
+                <div className="px-2 py-4 text-center">
+                  <Users className="h-6 w-6 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-xs text-muted-foreground mb-2">No agents yet</p>
+                  <Link href="/agents">
+                    <Button size="sm" variant="outline" className="text-xs">
+                      <SparklesIcon className="h-3 w-3 mr-1" />
+                      Browse Store
+                    </Button>
+                  </Link>
+                </div>
+              )}
 
-                    {!agentsLoading && filteredAgents.length === 0 && agents.length === 0 && (
-                      <div className="p-3 text-center">
-                        <SparklesIcon className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-sm font-medium">No agents yet</p>
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Add agents from the Agent Store
-                        </p>
-                        <Link href="/agents">
-                          <Button size="sm" variant="outline">
-                            <SparklesIcon className="h-4 w-4 mr-1" />
-                            Browse Agent Store
-                          </Button>
-                        </Link>
-                      </div>
-                    )}
-
-                    {!agentsLoading && filteredAgents.slice(0, 15).map((agent) => (
-                      <div key={agent.id} className="group/browse relative">
-                        <button
-                          type="button"
-                          onClick={() => router.push(`/agents/${agent.id}`)}
-                          className="w-full px-2 py-2.5 rounded-lg text-left transition-all flex items-start gap-2.5 hover:bg-muted/60"
-                        >
-                          {/* Agent Avatar */}
-                          <div className="relative shrink-0 mt-0.5">
-                            {(() => {
-                              const avatarUrl = getAvatarUrl(agent.avatar);
-                              return avatarUrl ? (
-                                <Avatar className="h-6 w-6 border border-border/40">
-                                  <AvatarImage src={avatarUrl} alt={agent.displayName} />
-                                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                    {agent.displayName.slice(0, 2).toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                              ) : (
-                                <div className="h-6 w-6 rounded-full flex items-center justify-center bg-muted">
-                                  <User className="h-3.5 w-3.5 text-muted-foreground/70" />
-                                </div>
-                              );
-                            })()}
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0 overflow-hidden">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[13px] font-medium text-foreground/90 truncate leading-tight">
-                                {cleanDisplayName(agent.displayName)}
-                              </span>
-                            </div>
-                          </div>
-                        </button>
-
-                        {/* Edit button on hover */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute top-1/2 -translate-y-1/2 right-1.5 h-6 w-6 p-0 rounded-md opacity-0 group-hover/browse:opacity-100 transition-opacity duration-150"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            router.push(`/agents/${agent.id}`)
-                          }}
-                        >
-                          <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                        </Button>
-                      </div>
+              {!agentsLoading && filteredAgents.length > 0 && (
+                <ScrollArea className="max-h-[400px]">
+                  <div className="space-y-1 px-1">
+                    {/* Grouped by field of expertise */}
+                    {groupedAgents.sortedDomains.map((domain) => (
+                      <Collapsible key={domain} defaultOpen className="mb-2">
+                        <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+                          <Briefcase className="h-3 w-3" />
+                          {domain}
+                          <Badge variant="outline" className="ml-1 text-[9px] px-1 py-0 h-4">
+                            {groupedAgents.groups[domain].length}
+                          </Badge>
+                          <ChevronDown className="ml-auto h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          {groupedAgents.groups[domain].map((agent) => renderAgentItem(agent))}
+                        </CollapsibleContent>
+                      </Collapsible>
                     ))}
                   </div>
                 </ScrollArea>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
-      )}
+              )}
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
 
       {/* Keyboard Shortcuts Overlay */}
       <KeyboardShortcutsOverlay shortcuts={shortcuts} />

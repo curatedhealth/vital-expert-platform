@@ -1,8 +1,8 @@
 /**
  * VITAL AI UI - Reasoning & Evidence Components (Domain B)
- * 
+ *
  * Components for displaying agent reasoning, citations, and evidence.
- * 7 components total.
+ * 8 components total (including VitalSources with Chicago style citations).
  */
 
 export { VitalThinking, default as Thinking } from './VitalThinking';
@@ -12,6 +12,27 @@ export { VitalConfidenceMeter, default as ConfidenceMeter } from './VitalConfide
 export { VitalToolInvocation, VitalToolInvocationList, default as ToolInvocation } from './VitalToolInvocation';
 export { VitalSourcePreview, VitalSourceTrigger } from './VitalSourcePreview';
 export { VitalDelegationTrace } from './VitalDelegationTrace';
+
+// Sources components (Fusion Intelligence - Triple Retrieval + RRF + Chicago Style)
+export {
+  VitalSources,
+  VitalSourcesTrigger,
+  VitalSourcesContent,
+  VitalSourcesRRFExplanation,
+  VitalSource,
+  // Aliases
+  Sources,
+  SourcesTrigger,
+  SourcesContent,
+  SourcesRRFExplanation,
+  Source,
+  // Utilities
+  retrieverIcons as sourcesRetrieverIcons,
+  retrieverColors as sourcesRetrieverColors,
+  retrieverLabels as sourcesRetrieverLabels,
+  categoryIcons as sourcesCategoryIcons,
+  formatChicagoCitation,
+} from './VitalSources';
 
 // Re-export types
 export type {
@@ -27,3 +48,17 @@ export type {
   DelegationNode,
   VitalDelegationTraceProps,
 } from './VitalDelegationTrace';
+
+export type {
+  // Fusion Intelligence types
+  RetrieverType as SourcesRetrieverType,
+  SourceCategory,
+  FusionBreakdown,
+  CitationStyle,
+  // Component props
+  VitalSourcesProps,
+  VitalSourcesTriggerProps,
+  VitalSourcesContentProps,
+  VitalSourcesRRFExplanationProps,
+  VitalSourceProps,
+} from './VitalSources';

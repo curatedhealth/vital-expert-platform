@@ -29,6 +29,8 @@ import {
   Check,
   User,
   Brain,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { logger } from '@vital/utils';
 
@@ -79,6 +81,7 @@ export function VitalMessage({
 }: VitalMessageProps) {
   const [copied, setCopied] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const isUser = message.role === 'user';
   const displayExpert = message.expert || expert;
@@ -127,6 +130,89 @@ export function VitalMessage({
       metadata: citation.metadata,
     }));
   }, [message.citations]);
+
+  /**
+   * Parse references from message content when no structured citations exist
+   * Extracts [1] Title - Source patterns from "References" section
+   */
+  const parsedCitationsFromContent = useMemo((): CitationEvent[] => {
+    // If we already have structured citations, don't parse
+    if (message.citations && message.citations.length > 0) {
+      return [];
+    }
+
+    // Look for References section in content
+    const referencesMatch = message.content.match(/(?:References|Sources|Citations)\s*\n([\s\S]*?)(?:\n\n|$)/i);
+    if (!referencesMatch) {
+      return [];
+    }
+
+    const referencesText = referencesMatch[1];
+    const citations: CitationEvent[] = [];
+
+    // Parse [1] Title - Source patterns using matchAll (not exec)
+    const refPattern = /\[(\d+)\]\s*([^\n]+)/g;
+    const matches = Array.from(referencesText.matchAll(refPattern));
+
+    for (const match of matches) {
+      const index = parseInt(match[1], 10);
+      const fullText = match[2].trim();
+
+      // Try to split "Title - Source"
+      const parts = fullText.split(' - ');
+      const title = parts[0]?.trim() || fullText;
+      const source = parts.length > 1 ? parts.slice(1).join(' - ').trim() : undefined;
+
+      citations.push({
+        id: `parsed-citation-${index}`,
+        index,
+        title,
+        source,
+        url: undefined,
+        excerpt: undefined,
+        confidence: undefined,
+        metadata: {},
+      });
+    }
+
+    return citations;
+  }, [message.content, message.citations]);
+
+  /**
+   * Get effective citations - either structured or parsed from content
+   */
+  const effectiveCitations = useMemo(() => {
+    if (message.citations && message.citations.length > 0) {
+      return message.citations;
+    }
+    return parsedCitationsFromContent;
+  }, [message.citations, parsedCitationsFromContent]);
+
+  /**
+   * Strip "References" section from message content when we have citations (structured or parsed)
+   * This prevents duplicate display of references (once as text, once as CitationList)
+   */
+  const displayContent = useMemo(() => {
+    // Only strip if we have citations to display
+    if (effectiveCitations.length === 0) {
+      return message.content;
+    }
+
+    // Remove "References" or "Sources" section from the end of the content
+    // Common patterns: "References\n[1]...", "## References", "**References**"
+    const referencesPatterns = [
+      /\n\n(?:#{1,3}\s*)?(?:\*\*)?(?:References|Sources|Citations)(?:\*\*)?\s*\n\[\d+\][\s\S]*$/i,
+      /\n\n(?:References|Sources|Citations):\s*\n\[\d+\][\s\S]*$/i,
+      /\n\nReferences\s*\n[\s\S]*$/i,
+    ];
+
+    let cleanContent = message.content;
+    for (const pattern of referencesPatterns) {
+      cleanContent = cleanContent.replace(pattern, '');
+    }
+
+    return cleanContent.trim();
+  }, [message.content, effectiveCitations]);
 
   // =========================================================================
   // RENDER
@@ -199,13 +285,36 @@ export function VitalMessage({
         {/* Main message container - flat layout for both user and assistant (no filled bubbles) */}
         <div
           className={cn(
-            'relative min-w-0 pr-10 px-4 py-2 rounded-xl border border-slate-200/70 bg-transparent max-w-4xl mx-auto',
+            'relative min-w-0 pr-16 pl-6 py-2 rounded-xl border border-slate-200/70 bg-transparent max-w-4xl mx-auto',
             isUser ? 'text-slate-900' : 'text-stone-800'
           )}
         >
+          {/* Collapse/Expand chevron on the left */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className={cn(
+              'absolute left-0 top-1/2 -translate-y-1/2 h-6 w-6 opacity-40 hover:opacity-100 transition-opacity',
+              'hover:bg-slate-100'
+            )}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
+            )}
+          </Button>
+
           {/* Message content - Using VitalStreamText for unified rendering */}
           {/* This ensures consistent formatting between streaming and completed messages */}
-          {isUser ? (
+          {isCollapsed ? (
+            // Collapsed preview - show first line/truncated content
+            <p className="text-sm text-slate-500 truncate">
+              {message.content.split('\n')[0].slice(0, 100)}
+              {message.content.length > 100 && '...'}
+            </p>
+          ) : isUser ? (
             // User messages - simple text display
             <p className="text-base leading-relaxed whitespace-pre-wrap">
               {message.content}
@@ -213,8 +322,9 @@ export function VitalMessage({
           ) : (
             // Assistant messages - rich rendering with VitalStreamText
             // Provides: syntax highlighting, Mermaid diagrams, inline citation pills
+            // Uses displayContent (with References section stripped when we have structured citations)
             <VitalStreamText
-              content={message.content}
+              content={displayContent}
               isStreaming={false} // Completed message, not streaming
               highlightCode={true}
               enableMermaid={true}
@@ -248,12 +358,13 @@ export function VitalMessage({
           </Button>
         </div>
 
-        {/* Citations list (assistant only) - Shows as footer when there are many citations */}
-        {/* Note: Inline citations are handled by VitalStreamText above */}
-        {!isUser && message.citations && message.citations.length > 3 && (
-          <div>
+        {/* Citations list (assistant only) - Collapsible Sources component */}
+        {/* Uses effectiveCitations (structured or parsed from content) */}
+        {/* Displays "Used X sources" trigger with Chicago style references */}
+        {!isUser && effectiveCitations.length > 0 && (
+          <div className="mt-3">
             <CitationList
-              citations={message.citations}
+              citations={effectiveCitations}
               inline={false}
             />
           </div>

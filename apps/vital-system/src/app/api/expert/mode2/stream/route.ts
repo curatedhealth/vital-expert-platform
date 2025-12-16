@@ -24,14 +24,45 @@ export async function POST(request: NextRequest) {
   try {
     // Authenticate
     const session = await auth();
+
+    // Debug: log auth status
+    console.log('[Mode2 Stream] Auth check:', {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      userId: session?.user?.id?.slice(0, 8) + '...',
+    });
+
     if (!session?.user) {
-      return new Response('Unauthorized', { status: 401 });
+      console.error('[Mode2 Stream] Auth failed - no session or user');
+      // Return SSE-formatted error for proper client handling
+      return new Response(
+        `event: error\ndata: ${JSON.stringify({
+          code: 'AUTH_FAILED',
+          message: 'Authentication required. Please sign in.',
+          recoverable: true,
+        })}\n\n`,
+        {
+          status: 401,
+          headers: { 'Content-Type': 'text/event-stream' },
+        }
+      );
     }
 
     // Get tenant
     const tenantId = request.headers.get('x-tenant-id') || session.user.tenantId;
     if (!tenantId) {
-      return new Response('Tenant not found', { status: 403 });
+      console.error('[Mode2 Stream] No tenant ID found');
+      return new Response(
+        `event: error\ndata: ${JSON.stringify({
+          code: 'TENANT_MISSING',
+          message: 'Tenant not found. Please contact support.',
+          recoverable: false,
+        })}\n\n`,
+        {
+          status: 403,
+          headers: { 'Content-Type': 'text/event-stream' },
+        }
+      );
     }
 
     // Parse request body
@@ -53,6 +84,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Note: Mode 2 does NOT require agent_id - Fusion Intelligence auto-selects
+
+    // Debug: Log FULL tenant context for troubleshooting
+    console.log('[Mode2 Stream] 🔍 TENANT DEBUG:', {
+      headerTenantId: request.headers.get('x-tenant-id'),
+      sessionTenantId: session.user.tenantId,
+      resolvedTenantId: tenantId,
+      bodyTenantId: tenant_id,
+      finalTenantId: tenant_id || tenantId,
+    });
+
+    // Debug: Log request details
+    console.log('[Mode2 Stream] Request:', {
+      message: message?.slice(0, 100),
+      session_id: session_id || conversation_id,
+      tenant_id: tenant_id || tenantId,
+      AI_ENGINE_URL,
+    });
 
     // Forward to Python backend - Unified Interactive endpoint
     // Mode 2 = NO agent_id → backend uses Fusion auto-selection

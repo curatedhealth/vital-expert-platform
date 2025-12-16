@@ -79,7 +79,7 @@ import {
 // =============================================================================
 
 export type MissionOutcome = 'success' | 'partial' | 'failed' | 'cancelled';
-export type ArtifactType = 'document' | 'chart' | 'table' | 'summary' | 'citation' | 'raw_data';
+export type ArtifactType = 'document' | 'chart' | 'table' | 'summary' | 'citation' | 'raw_data' | 'other';
 
 export interface MissionResult {
   /** Overall outcome */
@@ -101,8 +101,8 @@ export interface MissionResult {
 export interface MissionArtifact {
   /** Artifact ID */
   id: string;
-  /** Artifact type */
-  type: ArtifactType;
+  /** Artifact type (optional - defaults to 'other' if missing or unknown) */
+  type?: ArtifactType | string;
   /** Title */
   title: string;
   /** Description */
@@ -324,8 +324,9 @@ export function VitalMissionComplete({
     }
   }, [feedbackRating, feedbackComment, onFeedback]);
 
-  // Group artifacts by type
+  // Group artifacts by type (handles unknown types gracefully)
   const artifactsByType = useMemo(() => {
+    const knownTypes: ArtifactType[] = ['document', 'chart', 'table', 'summary', 'citation', 'raw_data', 'other'];
     const grouped: Record<ArtifactType, MissionArtifact[]> = {
       document: [],
       chart: [],
@@ -333,9 +334,14 @@ export function VitalMissionComplete({
       summary: [],
       citation: [],
       raw_data: [],
+      other: [],
     };
     artifacts.forEach((artifact) => {
-      grouped[artifact.type].push(artifact);
+      // Handle missing or unknown artifact types
+      const type = artifact.type && knownTypes.includes(artifact.type)
+        ? artifact.type
+        : 'other';
+      grouped[type].push(artifact);
     });
     return grouped;
   }, [artifacts]);

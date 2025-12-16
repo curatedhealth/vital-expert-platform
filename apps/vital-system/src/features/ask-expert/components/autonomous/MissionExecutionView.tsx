@@ -412,7 +412,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                   ))}
                 </div>
               )}
-              {output && status === 'complete' && (
+              {status === 'complete' && output != null && (
                 <div className="mt-2 p-2 bg-green-500/10 rounded text-xs text-green-300">
                   {typeof output === 'string' ? output : 'Task completed successfully'}
                 </div>

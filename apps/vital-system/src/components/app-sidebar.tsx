@@ -31,6 +31,7 @@ import {
   SidebarSkillsContent,
 } from "@/components/sidebar-view-content"
 import { SidebarAgentsContent } from "@/components/sidebar/views/SidebarAgentsContent"
+import { SidebarMissionsContent } from "@/components/sidebar/views/SidebarMissionsContent"
 
 export function AppSidebar({
   className,
@@ -113,6 +114,9 @@ export function AppSidebar({
     }
     if (pathname.startsWith("/discover/skills")) {
       return <SidebarSkillsContent />
+    }
+    if (pathname.startsWith("/missions")) {
+      return <SidebarMissionsContent />
     }
     return <SidebarDashboardContent />
   }

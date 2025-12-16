@@ -220,8 +220,22 @@ export interface DoneEvent {
   toolCallCount?: number;
   status?: string;
   message?: string;
-  final?: unknown;
-  artifacts?: unknown;
+  // Mode 3/4 mission artifacts - sent by backend in done event
+  artifacts?: Array<{
+    id: string;
+    type?: string;
+    summary?: string;
+    artifactPath?: string;
+    citations?: unknown[];
+    step?: string;
+    status?: string;
+  }>;
+  // Final output for missions
+  final?: {
+    mission_id?: string;
+    content?: string;
+    status?: string;
+  };
 }
 
 // =============================================================================
@@ -305,6 +319,10 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
     (event: SSEEvent) => {
       switch (event.type) {
         case 'token':
+          // Debug: trace token handling
+          if (process.env.NODE_ENV !== 'production') {
+            console.debug('[useSSEStream] handleEvent token:', event.data);
+          }
           onToken?.(event.data as TokenEvent);
           break;
         case 'reasoning':
@@ -399,7 +417,55 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
           onAgentSelected?.(event.data as AgentSelectedEvent);
           break;
         case 'error':
-          onError?.(event.data as ErrorEvent);
+          // ========================================
+          // DEBUG TRACING: Comprehensive error logging
+          // ========================================
+          // eslint-disable-next-line no-console
+          console.log('[useSSEStream] 🔴 ERROR EVENT RECEIVED:', {
+            rawData: event.data,
+            dataType: typeof event.data,
+            dataKeys: event.data && typeof event.data === 'object' ? Object.keys(event.data as object) : 'N/A',
+            dataStringified: JSON.stringify(event.data),
+            timestamp: event.timestamp,
+          });
+
+          // Normalize error data - handle different backend error formats:
+          // Format 1: { code, message, recoverable } (standard ErrorEvent)
+          // Format 2: { error: string } (simple error)
+          // Format 3: { event: 'error', message: string } (embedded event type)
+          // Format 4: string (plain error message)
+          // Format 5: null/undefined/empty (malformed)
+          const rawError = event.data as Record<string, unknown> | string | null;
+          let errorMessage = 'An unexpected error occurred';
+          let errorCode = 'BACKEND_ERROR';
+          let errorRecoverable = true;
+
+          if (typeof rawError === 'string') {
+            // Plain string error
+            errorMessage = rawError || errorMessage;
+          } else if (rawError && typeof rawError === 'object') {
+            // Object error - extract fields
+            errorMessage =
+              (rawError.message as string) ||
+              (rawError.error as string) ||
+              errorMessage;
+            errorCode = (rawError.code as string) || errorCode;
+            errorRecoverable = (rawError.recoverable as boolean) ?? true;
+          }
+          // else: null/undefined - use defaults
+
+          // Construct the normalized error object
+          const normalizedError: ErrorEvent = {
+            code: errorCode,
+            message: errorMessage,
+            recoverable: errorRecoverable,
+            retryAfterMs: typeof rawError === 'object' ? (rawError?.retryAfterMs as number | undefined) : undefined,
+          };
+
+          // eslint-disable-next-line no-console
+          console.log('[useSSEStream] 🔴 NORMALIZED ERROR:', normalizedError);
+
+          onError?.(normalizedError);
           break;
         case 'done':
           onDone?.(event.data as DoneEvent);
@@ -480,17 +546,28 @@ export function useSSEStream(options: UseSSEStreamOptions): UseSSEStreamReturn {
 
             const event = parseSSEEvent(eventText);
             if (event) {
+              // Debug: trace parsed events (only token/thinking for visibility)
+              if (process.env.NODE_ENV !== 'production' && (event.type === 'token' || event.type === 'thinking')) {
+                console.debug('[useSSEStream] Parsed event:', event.type, event.data);
+              }
               handleEvent(event);
+            } else if (process.env.NODE_ENV !== 'production' && eventText.includes('token')) {
+              // Debug: trace unparsed token events
+              console.warn('[useSSEStream] Failed to parse event containing "token":', eventText.slice(0, 200));
             }
           }
         }
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
           const errorObj = err as Error;
+          // Debug: trace connection errors
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('[useSSEStream] Connection error:', errorObj);
+          }
           setError(errorObj);
           onError?.({
             code: 'CONNECTION_ERROR',
-            message: errorObj.message,
+            message: errorObj?.message || 'Connection failed',
             recoverable: true,
           });
 
@@ -565,15 +642,63 @@ function parseSSEEvent(text: string): SSEEvent | null {
     }
   }
 
+  // Handle case where we have data but no explicit event type
+  // Some backend events embed the event type in the JSON: {"event": "thinking", ...}
+  if (!eventType && data) {
+    try {
+      const parsed = JSON.parse(data);
+      // Extract event type from JSON if present
+      if (parsed.event) {
+        // DEBUG: Trace embedded event type parsing
+        if (parsed.event === 'error') {
+          // eslint-disable-next-line no-console
+          console.log('[parseSSEEvent] 🔴 Embedded error event parsed:', {
+            rawText: text.slice(0, 200),
+            eventType: parsed.event,
+            parsedData: parsed,
+          });
+        }
+        return {
+          type: parsed.event as SSEEventType,
+          data: parsed,
+          timestamp: Date.now(),
+        };
+      }
+    } catch {
+      // Not valid JSON, ignore
+    }
+    return null;
+  }
+
   if (eventType && data) {
     try {
+      const parsedData = JSON.parse(data);
+      // DEBUG: Trace error event parsing
+      if (eventType === 'error') {
+        // eslint-disable-next-line no-console
+        console.log('[parseSSEEvent] 🔴 Error event parsed:', {
+          rawText: text.slice(0, 200),
+          eventType,
+          parsedData,
+          parsedDataStringified: JSON.stringify(parsedData),
+        });
+      }
       return {
         type: eventType,
-        data: JSON.parse(data),
+        data: parsedData,
         timestamp: Date.now(),
       };
     } catch {
       // If data is not JSON, return as string
+      // DEBUG: Trace non-JSON error data
+      if (eventType === 'error') {
+        // eslint-disable-next-line no-console
+        console.log('[parseSSEEvent] 🔴 Error event with non-JSON data:', {
+          rawText: text.slice(0, 200),
+          eventType,
+          rawData: data,
+        });
+      }
       return {
         type: eventType,
         data: data,

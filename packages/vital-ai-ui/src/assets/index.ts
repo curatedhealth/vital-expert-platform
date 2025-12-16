@@ -65,6 +65,7 @@ export type {
   VitalWorkflowAsset,
   VitalPromptAsset,
   VitalGenericAsset,
+  VitalMissionAsset,
   VitalAsset,
   AssetCategoryConfig,
   AssetLifecycleConfig,

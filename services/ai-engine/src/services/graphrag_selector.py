@@ -390,7 +390,7 @@ class GraphRAGSelector:
             # Call PostgreSQL RPC function for full-text search
             # Note: supabase-py client is synchronous, so we run in thread pool
             def _run_rpc():
-                return supabase.client.rpc(
+                return supabase.rpc(
                     "search_agents_fulltext",
                     {
                         "search_query": query,
@@ -929,7 +929,7 @@ class GraphRAGSelector:
             # Batch fetch agent details
             # Note: supabase-py client is synchronous, so we run in thread pool
             def _fetch_agents():
-                return supabase.client.table("agents").select("*").in_(
+                return supabase.table("agents").select("*").in_(
                     "id", agent_ids
                 ).execute()
 

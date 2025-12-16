@@ -434,7 +434,31 @@ export const ChartRenderer = memo(function ChartRenderer({
         );
 
       default:
-        return null;
+        // Fallback to bar chart if unknown type
+        return (
+          <BarChart data={data}>
+            {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />}
+            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip
+              contentStyle={{
+                background: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+              }}
+            />
+            {showLegend && <Legend />}
+            {dataKeys.map((key, index) => (
+              <Bar
+                key={key}
+                dataKey={key}
+                fill={colors[index % colors.length]}
+                radius={[4, 4, 0, 0]}
+              />
+            ))}
+          </BarChart>
+        );
     }
   };
 

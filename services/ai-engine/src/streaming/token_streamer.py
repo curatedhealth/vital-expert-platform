@@ -287,8 +287,16 @@ async def stream_with_context(
     user_query = llm_config.get('user_query', '')
 
     if not system_prompt or not user_query:
-        logger.warning("stream_with_context_missing_prompts", config_keys=list(llm_config.keys()))
-        return
+        logger.error(
+            "stream_with_context_missing_prompts",
+            config_keys=list(llm_config.keys()),
+            has_system_prompt=bool(system_prompt),
+            has_user_query=bool(user_query),
+        )
+        raise ValueError(
+            f"Missing required prompts for streaming: "
+            f"system_prompt={bool(system_prompt)}, user_query={bool(user_query)}"
+        )
 
     messages = [
         SystemMessage(content=system_prompt),

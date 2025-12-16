@@ -1264,7 +1264,7 @@ export function InteractiveView({
 
             {/* Suggestion Chips (after stream completes) */}
             {!isStreaming && streamState.status === 'idle' && messages.length > 0 && streamState.suggestions && streamState.suggestions.length > 0 && (
-              <div className="max-w-4xl mx-auto px-4">
+              <div className="flex-shrink-0 max-w-4xl mx-auto px-4 py-2">
                 <VitalSuggestionChips
                   suggestions={streamState.suggestions}
                   onSelect={handleSuggestionSelect}
@@ -1282,12 +1282,12 @@ export function InteractiveView({
             {/* For Mode 2: Always show input once in conversation phase */}
             {/* IMPORTANT: Only show at bottom when messages.length > 0 (input moves from top) */}
             {messages.length > 0 && (mode === 'mode2' || selectedExpert) && (
-              <div className="border-t bg-white/80 backdrop-blur-sm">
+              <div className="flex-shrink-0 border-t bg-white/95 backdrop-blur-md shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="max-w-4xl mx-auto"
+                  className="max-w-4xl mx-auto px-4 py-3"
                 >
                   <VitalPromptInput
                   onSubmit={handleSend}

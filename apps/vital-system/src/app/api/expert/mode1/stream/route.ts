@@ -24,14 +24,45 @@ export async function POST(request: NextRequest) {
   try {
     // Authenticate
     const session = await auth();
+
+    // Debug: log auth status
+    console.log('[Mode1 Stream] Auth check:', {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      userId: session?.user?.id?.slice(0, 8) + '...',
+    });
+
     if (!session?.user) {
-      return new Response('Unauthorized', { status: 401 });
+      console.error('[Mode1 Stream] Auth failed - no session or user');
+      // Return SSE-formatted error for proper client handling
+      return new Response(
+        `event: error\ndata: ${JSON.stringify({
+          code: 'AUTH_FAILED',
+          message: 'Authentication required. Please sign in.',
+          recoverable: true,
+        })}\n\n`,
+        {
+          status: 401,
+          headers: { 'Content-Type': 'text/event-stream' },
+        }
+      );
     }
 
     // Get tenant from headers or session
     const tenantId = request.headers.get('x-tenant-id') || session.user.tenantId;
     if (!tenantId) {
-      return new Response('Tenant not found', { status: 403 });
+      console.error('[Mode1 Stream] No tenant ID found');
+      return new Response(
+        `event: error\ndata: ${JSON.stringify({
+          code: 'TENANT_MISSING',
+          message: 'Tenant not found. Please contact support.',
+          recoverable: false,
+        })}\n\n`,
+        {
+          status: 403,
+          headers: { 'Content-Type': 'text/event-stream' },
+        }
+      );
     }
 
     // Parse request body

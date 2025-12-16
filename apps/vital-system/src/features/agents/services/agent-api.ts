@@ -482,7 +482,7 @@ export class AgentApiService {
             match_reasons: matchReasons,
           };
         })
-        .sort((a, b) => b.match_score - a.match_score)
+        .sort((a: RecommendedSubagent, b: RecommendedSubagent) => b.match_score - a.match_score)
         .slice(0, limit);
 
       const response: RecommendSubagentsResponse = {

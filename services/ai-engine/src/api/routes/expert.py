@@ -39,8 +39,8 @@ from fastapi import APIRouter, Depends, Header, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, validator
 
-# Mode 1 workflow imports (same generation for both modes)
-from langgraph_workflows.ask_expert.ask_expert_mode1_workflow import AskExpertMode1Workflow
+# Unified workflow for Mode 1 & 2
+from langgraph_workflows.ask_expert.unified_interactive_workflow import UnifiedInteractiveWorkflow as AskExpertMode1Workflow
 from langgraph_workflows.state_schemas import create_initial_state, WorkflowMode
 from services.agent_orchestrator import AgentOrchestrator
 from services.unified_rag_service import UnifiedRAGService
@@ -136,6 +136,12 @@ async def select_expert_via_fusion(supabase, query: str, tenant_id: str) -> Opti
     Uses weighted Reciprocal Rank Fusion (RRF) to combine results.
     Same search mechanism as Mode 4 for consistency.
     """
+    logger.info(
+        "mode2_fusion_search_starting",
+        query_preview=query[:100] if query else None,
+        tenant_id=tenant_id,
+        tenant_id_type=type(tenant_id).__name__,
+    )
     try:
         # Get GraphRAGSelector instance (pass supabase client for DB access)
         selector = get_graphrag_selector(supabase_client=supabase)
@@ -582,16 +588,26 @@ async def expert_stream(
     start_time = time.time()
     tenant_id = payload.tenant_id or x_tenant_id
 
+    # Debug: Log full tenant context
+    logger.info(
+        "expert_stream_tenant_debug",
+        payload_tenant_id=payload.tenant_id,
+        header_tenant_id=x_tenant_id,
+        resolved_tenant_id=tenant_id,
+        mode=payload.mode,
+        message_preview=payload.message[:50] if payload.message else None,
+    )
+
     if not tenant_id:
         async def error_gen():
-            yield f"data: {json.dumps({'event': 'error', 'message': 'tenant_id required'})}\n\n"
+            yield f"event: error\ndata: {json.dumps({'code': 'TENANT_MISSING', 'message': 'tenant_id required', 'recoverable': False})}\n\n"
         return StreamingResponse(error_gen(), media_type="text/event-stream")
 
     # Initialize Supabase
     supabase = get_supabase_client()
     if not supabase:
         async def error_gen():
-            yield f"data: {json.dumps({'event': 'error', 'message': 'Database connection failed'})}\n\n"
+            yield f"event: error\ndata: {json.dumps({'code': 'DATABASE_ERROR', 'message': 'Database connection failed', 'recoverable': True})}\n\n"
         return StreamingResponse(error_gen(), media_type="text/event-stream")
 
     # Determine agent_id (supports both agent_id and deprecated expert_id)
@@ -611,7 +627,7 @@ async def expert_stream(
             selected_expert = await select_expert_via_fusion(supabase, payload.message, tenant_id)
 
             if not selected_expert:
-                yield f"data: {json.dumps({'event': 'error', 'message': 'No agent could be selected via Fusion Search'})}\n\n"
+                yield f"event: error\ndata: {json.dumps({'code': 'FUSION_NO_AGENT', 'message': 'No agent could be selected via Fusion Search', 'recoverable': True})}\n\n"
                 return
 
             agent_id = selected_expert.get("id")
@@ -689,7 +705,7 @@ async def expert_stream(
 
             except Exception as e:
                 logger.error("mode2_workflow_failed", error=str(e), exc_info=True)
-                yield f"data: {json.dumps({'event': 'error', 'message': f'Workflow error: {str(e)}'})}\n\n"
+                yield f"event: error\ndata: {json.dumps({'code': 'WORKFLOW_ERROR', 'message': f'Workflow error: {str(e)}', 'recoverable': True})}\n\n"
 
         return StreamingResponse(
             mode2_generator(),
@@ -776,7 +792,7 @@ async def expert_stream(
 
             except Exception as e:
                 logger.error("mode1_workflow_failed", error=str(e), exc_info=True)
-                yield f"data: {json.dumps({'event': 'error', 'message': f'Workflow error: {str(e)}'})}\n\n"
+                yield f"event: error\ndata: {json.dumps({'code': 'WORKFLOW_ERROR', 'message': f'Workflow error: {str(e)}', 'recoverable': True})}\n\n"
 
         return StreamingResponse(
             mode1_generator(),
@@ -802,3 +818,7 @@ async def expert_interactive(
     Named /interactive for clarity alongside /autonomous (Mode 3/4).
     """
     return await expert_stream(payload, x_tenant_id, req)
+
+
+
+

@@ -506,15 +506,36 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
       };
 
     case 'STREAM_ERROR':
+      // ========================================
+      // DEBUG TRACING: Stream error reducer
+      // ========================================
+      // eslint-disable-next-line no-console
+      console.log('[streamReducer] 🔴 STREAM_ERROR action received:', {
+        payload: action.payload,
+        payloadStringified: JSON.stringify(action.payload),
+        payloadType: typeof action.payload,
+        payloadKeys: action.payload && typeof action.payload === 'object' ? Object.keys(action.payload) : 'N/A',
+        code: action.payload?.code,
+        message: action.payload?.message,
+        recoverable: action.payload?.recoverable,
+      });
+
+      // Defensive handling: ensure error object always has valid fields
+      // even if payload is malformed or undefined
+      const errorObject: StreamError = {
+        code: action.payload?.code || 'UNKNOWN_ERROR',
+        message: action.payload?.message || 'An unexpected error occurred',
+        recoverable: action.payload?.recoverable ?? true,
+        timestamp: Date.now(),
+      };
+
+      // eslint-disable-next-line no-console
+      console.log('[streamReducer] 🔴 Constructed error object:', errorObject);
+
       return {
         ...state,
         status: 'error',
-        error: {
-          code: action.payload.code,
-          message: action.payload.message,
-          recoverable: action.payload.recoverable,
-          timestamp: Date.now(),
-        },
+        error: errorObject,
         isThinking: false,
       };
 

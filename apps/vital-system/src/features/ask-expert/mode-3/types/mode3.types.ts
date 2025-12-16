@@ -669,3 +669,261 @@ export interface Mode3HITLResponseAPI extends Mode3APIResponse {
   checkpoint: HITLCheckpoint;
   next_action?: 'continue' | 'wait' | 'complete';
 }
+
+// ============================================================================
+// NEW: Canonical 4 HITL Checkpoint Journey Types (December 2025)
+// ============================================================================
+
+/**
+ * Mission Goal - Parsed from user prompt by L1 orchestrator
+ * Supports editing, reordering, and priority assignment
+ */
+export interface MissionGoal {
+  id: string;
+  text: string;
+  priority: number; // 1-5, where 5 is highest
+  category?: 'research' | 'analysis' | 'synthesis' | 'comparison' | 'validation' | 'custom';
+  extracted_from?: string; // Original prompt text this was extracted from
+  order: number;
+  confidence?: number; // L1 confidence in extraction (0-1)
+}
+
+/**
+ * Plan Step - Individual action within a phase
+ */
+export interface PlanStep {
+  id: string;
+  name: string;
+  description: string;
+  estimated_duration_minutes: number;
+  dependencies: string[]; // Step IDs this depends on
+  assigned_to?: string; // Agent name
+  tools_required?: string[];
+  order: number;
+}
+
+/**
+ * Plan Phase - Multi-step execution phase
+ */
+export interface PlanPhase {
+  id: string;
+  name: string;
+  description: string;
+  steps: PlanStep[];
+  estimated_duration_minutes: number;
+  order: number;
+  parallel_allowed?: boolean;
+}
+
+/**
+ * Team Member - Agent assigned to mission
+ */
+export interface TeamMember {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  role: string;
+  responsibilities: string[];
+  avatar?: string;
+  tier?: 1 | 2 | 3;
+}
+
+/**
+ * Loop Configuration - Controls iteration and refinement
+ */
+export interface LoopConfig {
+  max_iterations: number;
+  convergence_threshold: number;
+  enable_auto_refinement: boolean;
+  refinement_loops?: number;
+  verification_loops?: number;
+}
+
+/**
+ * Deliverable - Mission output artifact
+ */
+export interface Deliverable {
+  id: string;
+  name: string;
+  type: 'markdown' | 'csv' | 'json' | 'bibtex' | 'pdf' | 'pptx';
+  status: 'pending' | 'generating' | 'generated' | 'approved' | 'revision_requested';
+  quality_score?: number; // 0-100
+  content?: string;
+  file_url?: string;
+  preview?: string;
+  revision_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Mission Configuration - Complete mission setup
+ */
+export interface MissionConfig {
+  goals: MissionGoal[];
+  plan: PlanPhase[];
+  team: TeamMember[];
+  loops: LoopConfig;
+  deliverables: Deliverable[];
+  variables: Record<string, unknown>;
+  metadata?: {
+    mission_name?: string;
+    description?: string;
+    created_at?: string;
+    estimated_total_duration?: number;
+    estimated_cost?: number;
+  };
+  budget_limit?: number;
+  time_limit_minutes?: number;
+  quality_threshold?: number;
+}
+
+/**
+ * Mission Draft - Saved mission configuration before launch
+ */
+export interface MissionDraft {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  name: string;
+  config: Partial<MissionConfig>;
+  checkpoint: CanonicalCheckpoint;
+  original_prompt?: string;
+  agent_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Mission Template - Reusable mission configuration
+ */
+export interface MissionTemplate {
+  id: string;
+  name: string;
+  description: string;
+  config: Partial<MissionConfig>;
+  category?: string;
+  tags?: string[];
+  created_by: string;
+  tenant_id: string;
+  is_public?: boolean;
+  created_at: string;
+  usage_count: number;
+}
+
+/**
+ * Canonical 4 HITL Checkpoint Types
+ * These are the pre-execution checkpoints for the new user journey
+ */
+export type CanonicalCheckpoint =
+  | 'goal_confirmation'      // HITL 1: Review/edit parsed goals
+  | 'plan_confirmation'      // HITL 2: Review/edit generated plan
+  | 'mission_validation'     // HITL 3: Final review before launch
+  | 'deliverable_confirmation'; // HITL 4: Accept or request revision
+
+/**
+ * Mode 3 Orchestrator Phase - State machine phases
+ */
+export type Mode3OrchestratorPhase =
+  | 'initial'                // Entry point
+  | 'goal_parsing'           // L1 orchestrator parsing prompt
+  | 'goal_confirmation'      // HITL 1 - User reviews goals
+  | 'plan_generation'        // L1 orchestrator generating plan
+  | 'plan_confirmation'      // HITL 2 - User reviews plan
+  | 'team_assembly'          // L1 orchestrator assembling team
+  | 'mission_validation'     // HITL 3 - Final pre-launch review
+  | 'execution'              // Mission running (immutable plan)
+  | 'deliverable_generation' // Generating outputs
+  | 'deliverable_review'     // HITL 4 - User reviews deliverables
+  | 'revision'               // Re-executing with feedback
+  | 'completed'              // Mission finished successfully
+  | 'failed'                 // Mission failed
+  | 'cancelled';             // User cancelled
+
+/**
+ * Mode 3 Orchestrator State
+ */
+export interface Mode3OrchestratorState {
+  phase: Mode3OrchestratorPhase;
+  config: Partial<MissionConfig>;
+  conversation_id?: string;
+  mission_id?: string;
+  original_prompt?: string;
+  agent_id?: string;
+  error?: string;
+  is_loading: boolean;
+  revision_feedback?: string;
+  revision_count: number;
+  max_revisions: number;
+}
+
+/**
+ * SSE Events for Canonical 4 HITL Journey
+ */
+export type CanonicalSSEEventType =
+  | 'goals_parsed'           // L1 finished parsing goals
+  | 'plan_generated'         // L1 finished generating plan
+  | 'team_assembled'         // L1 finished assembling team
+  | 'checkpoint_reached'     // Waiting for user at HITL checkpoint
+  | 'checkpoint_resolved'    // User responded to checkpoint
+  | 'execution_started'      // Mission launch confirmed
+  | 'execution_progress'     // Step-by-step progress
+  | 'deliverables_ready'     // All outputs generated
+  | 'revision_started'       // Revision round started
+  | 'mission_completed'      // Successfully finished
+  | 'mission_failed'         // Failed with error
+  | 'draft_saved'            // Draft saved successfully
+  | 'template_saved';        // Template saved successfully
+
+export interface CanonicalSSEEvent {
+  type: CanonicalSSEEventType;
+  conversation_id: string;
+  mission_id?: string;
+  timestamp: string;
+  payload: unknown;
+  error?: string;
+}
+
+// ============================================================================
+// HITL Checkpoint Component Props
+// ============================================================================
+
+export interface GoalConfirmationCheckpointProps {
+  goals: MissionGoal[];
+  originalPrompt?: string;
+  onConfirm: (goals: MissionGoal[]) => void;
+  onRefine: () => void;
+  onStartOver: () => void;
+  isLoading?: boolean;
+}
+
+export interface PlanConfirmationCheckpointProps {
+  phases: PlanPhase[];
+  estimatedDuration?: number;
+  estimatedCost?: number;
+  onConfirm: (phases: PlanPhase[]) => void;
+  onRefine: () => void;
+  onBack: () => void;
+  isLoading?: boolean;
+}
+
+export interface MissionValidationCheckpointProps {
+  config: MissionConfig;
+  onLaunch: (config: MissionConfig) => void;
+  onSaveDraft: (name: string, config: MissionConfig) => void;
+  onSaveTemplate: (name: string, description: string, config: MissionConfig) => void;
+  onEditSection: (section: 'goals' | 'plan' | 'team' | 'settings') => void;
+  isLoading?: boolean;
+}
+
+export interface DeliverableConfirmationCheckpointProps {
+  deliverables: Deliverable[];
+  missionId: string;
+  revisionCount: number;
+  maxRevisions: number;
+  onAccept: () => void;
+  onRequestRevision: (feedback: string, deliverableIds?: string[]) => void;
+  onDownload: (deliverableId: string) => void;
+  onPreview: (deliverableId: string) => void;
+  isLoading?: boolean;
+}

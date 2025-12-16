@@ -28,8 +28,8 @@ import time
 import urllib.parse
 import uuid
 
-# Internal imports
-from langgraph_workflows.ask_expert.ask_expert_mode1_workflow import AskExpertMode1Workflow
+# Internal imports - unified workflow
+from langgraph_workflows.ask_expert.unified_interactive_workflow import UnifiedInteractiveWorkflow as AskExpertMode1Workflow
 from langgraph_workflows.state_schemas import create_initial_state, WorkflowMode
 from services.agent_orchestrator import AgentOrchestrator
 from services.unified_rag_service import UnifiedRAGService

@@ -14,6 +14,7 @@ export const AGENT_LEVEL_MAP: Record<string, number> = {
 export interface Agent {
   id: string;
   name: string;
+  slug?: string;
   display_name: string;
   description: string;
   system_prompt: string;

@@ -48,7 +48,7 @@ export interface StrategyStep {
   estimatedDuration: string;
   estimatedTokens?: number;
   tools?: string[];
-  status: 'pending' | 'active' | 'complete' | 'skipped';
+  status: 'pending' | 'active' | 'complete' | 'skipped' | 'failed';
   reasoning?: string;
 }
 

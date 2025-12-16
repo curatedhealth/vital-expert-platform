@@ -127,7 +127,7 @@ const COMPLEXITY_CONFIG: Record<Exclude<TemplateComplexity, 'all'>, { label: str
 
 export function MissionTemplateSelector({
   expert,
-  templates = DEFAULT_MISSION_TEMPLATES,
+  templates = DEFAULT_MISSION_TEMPLATES as MissionTemplate[],
   onSelect,
   onBack,
   className,
@@ -149,7 +149,7 @@ export function MissionTemplateSelector({
   const filteredTemplates = useMemo(() => {
     return templates.filter((template) => {
       // Only show active templates
-      if (template.is_active === false) {
+      if (template.isActive === false) {
         return false;
       }
 
@@ -355,7 +355,7 @@ export function MissionTemplateSelector({
                   description: template.description || '',
                   family: template.family,
                   status: 'pending',
-                  category: template.category,
+                  templateId: template.id,
                 }}
                 showStatus={false}
                 showProgress={false}

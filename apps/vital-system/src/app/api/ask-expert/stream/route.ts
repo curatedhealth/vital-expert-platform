@@ -47,7 +47,16 @@ export async function POST(request: NextRequest) {
           expert_id: agentId,  // Backwards compatibility
           mission_id: body.mission_id,
           options: body.options,
-          user_context: body.user_context || {},
+          // Mode 3 HITL checkpoint data - pass through inputs object
+          user_context: {
+            ...(body.user_context || {}),
+            // Merge inputs if present (contains goals, plan, team, deliverables)
+            ...(body.inputs || {}),
+          },
+          // Also pass autonomy_band for HITL configuration
+          autonomy_band: body.autonomy_band,
+          // Pass title if provided
+          title: body.title,
         };
 
     const response = await fetch(`${AI_ENGINE_URL}${backendPath}`, {
@@ -110,6 +119,10 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+
+
+
 
 
 

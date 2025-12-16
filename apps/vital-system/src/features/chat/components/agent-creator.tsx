@@ -3,10 +3,12 @@
 /**
  * AgentCreator - Modal component for creating and editing agents
  * Brand Guidelines V6 compliant
+ *
+ * Supports both create (POST /api/agents-crud) and update (PUT /api/agents/[id]) operations
  */
 
-import React, { useState, useEffect } from 'react';
-import { X, Sparkles, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Sparkles, CheckCircle2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { agentService } from '@/features/agents/services/agent-service';
 
 // Agent type for editing (matches agents-store Agent type)
 export interface EditingAgent {
@@ -67,8 +70,11 @@ export function AgentCreator({
   initialData,
   className,
 }: AgentCreatorProps) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   // Determine initial form data from either editingAgent or initialData
-  const getInitialFormData = (): AgentFormData => {
+  const getInitialFormData = useCallback((): AgentFormData => {
     if (editingAgent) {
       return {
         name: editingAgent.display_name ?? editingAgent.name ?? '',
@@ -85,45 +91,96 @@ export function AgentCreator({
       model: initialData?.model ?? 'gpt-4',
       temperature: initialData?.temperature ?? 0.7,
     };
-  };
+  }, [editingAgent, initialData]);
 
   const [formData, setFormData] = useState<AgentFormData>(getInitialFormData());
 
   // Reset form when editingAgent changes
   useEffect(() => {
     setFormData(getInitialFormData());
-  }, [editingAgent, initialData]);
+    setError(null);
+  }, [editingAgent, initialData, getInitialFormData]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSubmit) {
-      onSubmit(formData);
+    setError(null);
+
+    // Validate required fields
+    if (!formData.name.trim()) {
+      setError('Agent name is required');
+      return;
     }
-    if (onSave) {
-      // TODO: Actually save the agent data via API
-      onSave();
+
+    try {
+      setSaving(true);
+
+      if (onSubmit) {
+        onSubmit(formData);
+      }
+
+      const isEditing = !!editingAgent?.id;
+
+      if (isEditing) {
+        // Update existing agent
+        await agentService.updateAgent(editingAgent!.id!, {
+          display_name: formData.name,
+          description: formData.description,
+          system_prompt: formData.systemPrompt,
+          base_model: formData.model,
+          temperature: formData.temperature,
+        } as any);
+      } else {
+        // Create new agent
+        await agentService.createCustomAgent({
+          name: formData.name,
+          description: formData.description,
+          system_prompt: formData.systemPrompt,
+          base_model: formData.model || 'gpt-4',
+          temperature: formData.temperature ?? 0.7,
+          status: 'development',
+        } as any);
+      }
+
+      // Call onSave callback to refresh the agents list
+      if (onSave) {
+        onSave();
+      }
+    } catch (err) {
+      console.error('Failed to save agent:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save agent');
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleClose = () => {
+    if (saving) return; // Don't close while saving
+    setError(null);
     if (onClose) onClose();
     if (onCancel) onCancel();
   };
 
-  const isEditing = !!editingAgent;
+  const isEditing = !!editingAgent?.id;
 
   // Form content (shared between modal and card views)
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="name" className="text-sm font-medium text-stone-800">
-          Agent Name
+          Agent Name <span className="text-red-500">*</span>
         </Label>
         <Input
           id="name"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="Enter agent name"
+          disabled={saving}
           className="bg-stone-50 border-stone-200 text-stone-600 placeholder:text-stone-400 focus:border-purple-600 focus:ring-purple-600"
         />
       </div>
@@ -138,6 +195,7 @@ export function AgentCreator({
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Describe what this agent does"
           rows={3}
+          disabled={saving}
           className="bg-stone-50 border-stone-200 text-stone-600 placeholder:text-stone-400 focus:border-purple-600 focus:ring-purple-600"
         />
       </div>
@@ -152,6 +210,7 @@ export function AgentCreator({
           onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
           placeholder="Enter the system prompt for the agent"
           rows={5}
+          disabled={saving}
           className="bg-stone-50 border-stone-200 text-stone-600 placeholder:text-stone-400 focus:border-purple-600 focus:ring-purple-600"
         />
       </div>
@@ -161,16 +220,27 @@ export function AgentCreator({
           type="button"
           variant="outline"
           onClick={handleClose}
+          disabled={saving}
           className="bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:border-purple-600"
         >
           Cancel
         </Button>
         <Button
           type="submit"
-          className="bg-purple-600 text-white hover:bg-purple-700"
+          disabled={saving || !formData.name.trim()}
+          className="bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
         >
-          <CheckCircle2 className="h-4 w-4 mr-2" />
-          {isEditing ? 'Update Agent' : 'Create Agent'}
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              {isEditing ? 'Updating...' : 'Creating...'}
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              {isEditing ? 'Update Agent' : 'Create Agent'}
+            </>
+          )}
         </Button>
       </div>
     </form>
@@ -226,3 +296,4 @@ export function AgentCreator({
 }
 
 export default AgentCreator;
+

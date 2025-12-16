@@ -727,7 +727,7 @@ export const DEFAULT_MISSION_TEMPLATES: Partial<MissionTemplate>[] = [
     tags: ['risk', 'assessment', 'mitigation'],
   },
   {
-    id: 'scenario_planning',
+    id: 'scenario_planning_roadmap',
     name: 'Scenario Planning & Roadmap',
     family: 'STRATEGY',
     category: 'Strategy',

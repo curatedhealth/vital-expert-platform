@@ -73,9 +73,13 @@ def register_routes(app: FastAPI) -> None:
     _register_ontology_investigator_routes(app)
     
     # 12. Register Missions/Templates routes (Autonomous Modes 3/4)
+    # Note: Mode 3 HITL checkpoints are handled by ask_expert_autonomous.py
     _register_mission_routes(app)
 
-    # 12. Register Agent Context routes (Phase 2 - Agent OS)
+    # 12.5. Register Mode 3 Preparation routes (LLM-powered HITL checkpoint prep)
+    _register_mode3_preparation_routes(app)
+
+    # 13. Register Agent Context routes (Phase 2 - Agent OS)
     _register_agent_context_routes(app)
     
     # 13. Register Agent Synergies routes (Phase 2 - Agent OS)
@@ -306,3 +310,15 @@ def _register_mission_routes(app: FastAPI) -> None:
         logger.warning("mission_routes_import_failed", error=str(e))
     except Exception as e:
         logger.error("mission_routes_error", error=str(e))
+
+
+def _register_mode3_preparation_routes(app: FastAPI) -> None:
+    """Register Mode 3 Preparation routes (LLM-powered HITL checkpoint preparation)."""
+    try:
+        from api.routes.mode3_preparation import router as mode3_prep_router
+        app.include_router(mode3_prep_router, prefix="", tags=["mode3-preparation"])
+        logger.info("✅ Mode 3 Preparation routes registered (LLM-powered)")
+    except ImportError as e:
+        logger.warning("mode3_preparation_routes_import_failed", error=str(e))
+    except Exception as e:
+        logger.error("mode3_preparation_routes_error", error=str(e))

@@ -46,7 +46,7 @@ from langgraph_workflows.modes34.agent_selector import select_team
 from services.runner_registry import runner_registry
 from services.checkpoint_store import checkpoint_store
 from langgraph.graph import END
-import logging
+import structlog
 
 USE_MASTER_GRAPH = os.getenv("USE_MASTER_GRAPH", "true").lower() == "true"
 from services.publisher import publisher
@@ -56,7 +56,7 @@ from agents.base_agent import AgentConfig
 
 
 router = APIRouter(prefix="/api/missions", tags=["missions"])
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # --------------------------------------------------------------------------- Models
@@ -145,7 +145,7 @@ async def mission_stream(
         "template_id": payload.template_id,
         "user_context": payload.user_context,
         "tenant_id": tenant_fallback,
-        "selected_agent": payload.expert_id,
+        "selected_agent": payload.agent_id,
         "budget_limit": payload.budget_limit,
     }
     # If a template is provided and contains tasks/plan, seed it into initial state
@@ -392,7 +392,7 @@ async def mission_stream(
                         avatar_url=agent.get("avatar_url"),
                     )
             else:
-                selected_agent = payload.expert_id or "l2_placeholder"
+                selected_agent = payload.agent_id or "l2_placeholder"
                 # Emit agent_selected for Mode 3 manual selection
                 yield agent_selected_event(
                     agent_id=selected_agent,
@@ -695,7 +695,7 @@ async def mission_stream(
                         yield sse_event("status", {"status": "awaiting_checkpoint", "message": "Budget checkpoint"})
                         yield checkpoint_event(budget_cp)
                         try:
-                            await asyncio.wait_for(checkpoint_event_received.wait(), timeout=15)
+                            await asyncio.wait_for(checkpoint_event_received.wait(), timeout=3600)  # 1 hour timeout
                         except asyncio.TimeoutError:
                             yield sse_event("error", {"message": "Budget checkpoint timeout"})
                             mission_repo.save_state(mission_id, {"status": "failed", "reason": "budget_checkpoint_timeout"})
@@ -723,7 +723,7 @@ async def mission_stream(
                     yield sse_event("status", {"status": "awaiting_checkpoint", "message": "Quality checkpoint"})
                     yield checkpoint_event(quality_cp)
                     try:
-                        await asyncio.wait_for(checkpoint_event_received.wait(), timeout=15)
+                        await asyncio.wait_for(checkpoint_event_received.wait(), timeout=3600)  # 1 hour timeout
                     except asyncio.TimeoutError:
                         yield sse_event("error", {"message": "Quality checkpoint timeout"})
                         mission_repo.save_state(mission_id, {"status": "failed", "reason": "quality_checkpoint_timeout"})
@@ -749,7 +749,7 @@ async def mission_stream(
 
             # Await checkpoint resolution (event-driven)
             try:
-                await asyncio.wait_for(checkpoint_event_received.wait(), timeout=15)
+                await asyncio.wait_for(checkpoint_event_received.wait(), timeout=3600)  # 1 hour timeout
             except asyncio.TimeoutError:
                 yield sse_event("error", {"message": "Checkpoint timeout"})
                 mission_repo.save_state(mission_id, {"status": "failed", "reason": "checkpoint_timeout"})

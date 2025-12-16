@@ -124,7 +124,7 @@ export class RAGIntegrationService {
 
     capabilities.forEach(({ capability }) => {
       const domain = capability.domain;
-      if (this.knowledgeDomainMap.has(domain)) {
+      if (domain && this.knowledgeDomainMap.has(domain)) {
         domains.add(domain);
       }
     });

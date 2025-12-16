@@ -79,7 +79,7 @@ export interface MermaidRendererProps {
 
 const MERMAID_THEMES = {
   light: {
-    theme: 'base',
+    theme: 'base' as const,
     themeVariables: {
       primaryColor: '#9055E0',
       primaryTextColor: '#1e1e1e',
@@ -98,7 +98,7 @@ const MERMAID_THEMES = {
     },
   },
   dark: {
-    theme: 'base',
+    theme: 'base' as const,
     themeVariables: {
       primaryColor: '#9055E0',
       primaryTextColor: '#fafaf9',

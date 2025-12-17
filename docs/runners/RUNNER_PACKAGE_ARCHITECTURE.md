@@ -252,9 +252,16 @@ Loop:
 
 # Part 3: LangGraph Workflow Archetypes
 
+> **Scope Clarification:** These 6 archetypes define how a **single runner** executes internally (node-level patterns). For patterns that orchestrate **multiple runners** into complete workflows, see `TASK_COMPOSITION_ARCHITECTURE.md` which defines **8 Orchestration Patterns**.
+
+| Scope | Document | Patterns |
+|-------|----------|----------|
+| **Runner (Node)** | This document (Part 3) | 6 LangGraph Archetypes |
+| **Workflow (Graph)** | TASK_COMPOSITION_ARCHITECTURE.md | 8 Orchestration Patterns |
+
 ## 3.1 The Six Workflow Archetypes
 
-Based on LangGraph 2025 best practices, we define **six workflow archetypes**:
+Based on LangGraph 2025 best practices, we define **six workflow archetypes** for individual runner execution:
 
 ### Archetype 1: Pipeline (Sequential)
 
@@ -1933,18 +1940,120 @@ output_requirements:
 
 ---
 
+# Part 15: Database-First Template Architecture
+
+## 15.1 Overview
+
+While Part 1-14 define the **file-based** package structure for runner development, production deployments use a **Database-First Architecture** where templates are stored in PostgreSQL and loaded at runtime.
+
+**Key Principle:** YAML files are for version control and development. At runtime, runners load templates from the database via `get_effective_template()`.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    TEMPLATE LIFECYCLE                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   DEVELOPMENT                         RUNTIME                    │
+│   ═══════════                         ═══════════                │
+│                                                                  │
+│   ┌─────────────┐    Seed            ┌─────────────┐            │
+│   │ YAML Files  │ ──────────────────►│  PostgreSQL │            │
+│   │ (Package)   │    (One-time)      │  (Templates)│            │
+│   └─────────────┘                    └──────┬──────┘            │
+│         │                                   │                    │
+│         │ Version Control                   │ Runtime Load       │
+│         ▼                                   ▼                    │
+│   ┌─────────────┐                    ┌─────────────┐            │
+│   │    Git      │                    │   Runner    │            │
+│   │  Repository │                    │  Execution  │            │
+│   └─────────────┘                    └─────────────┘            │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 15.2 User Template Customization
+
+Users can create and customize templates via the frontend UI without touching code:
+
+| Feature | Description |
+|---------|-------------|
+| **Template Browser** | Search, filter, fork system templates |
+| **Multi-tab Editor** | Edit prompts, models, evaluation, HITL in tabs |
+| **Live Preview** | Test templates before publishing |
+| **Version History** | Automatic versioning with rollback |
+| **Sharing** | Private, team, or public visibility |
+| **A/B Testing** | Compare template performance |
+
+## 15.3 Template Inheritance
+
+User templates inherit from system templates with a delta-based approach:
+
+```python
+effective_config = system_template + user_overrides
+```
+
+| Layer | Source | Priority |
+|-------|--------|----------|
+| System Template | `runner_templates` table | Base (lowest) |
+| User Template | `user_runner_templates` table | Override (highest) |
+
+**Runtime Loading:**
+```python
+async def load_template(run_code: str, user_id: str = None) -> TemplateConfig:
+    result = await supabase.rpc(
+        'get_effective_template',
+        {'p_run_code': run_code, 'p_user_id': user_id}
+    ).execute()
+    return TemplateConfig(**result.data)
+```
+
+## 15.4 Database Schema
+
+Core tables for template storage:
+
+| Table | Purpose |
+|-------|---------|
+| `runner_templates` | System templates (from YAML seeds) |
+| `user_runner_templates` | User customizations |
+| `user_template_prompts` | User prompt overrides |
+| `user_template_models` | User model configuration |
+| `user_template_evaluation` | User evaluation metrics |
+| `user_template_hitl` | User HITL configuration |
+| `user_template_versions` | Automatic version history |
+
+## 15.5 YAML Export (Backup Only)
+
+YAML export is available for:
+- **Backup/Restore** - Export templates for disaster recovery
+- **Version Control** - Store templates in Git
+- **Migration** - Move templates between environments
+- **DevOps** - CI/CD pipeline integration
+
+**Important:** YAML export is NOT used at runtime. Runners always load from the database.
+
+## 15.6 Reference Documentation
+
+For complete implementation details, see:
+- **`USER_TEMPLATE_EDITOR_ARCHITECTURE.md`** - Full frontend/backend architecture
+- **`20251217_user_runner_templates.sql`** - Database migration
+
+---
+
 # Summary
 
 This document defines the **world-class package architecture** for VITAL's 88 cognitive runners. Key standards:
 
 1. **13-Component Package Structure** - Consistent, scalable organization
 2. **5 Prompt Patterns** - CoT, ToT, ReAct, Self-Critique, Meta-Prompting
-3. **6 LangGraph Archetypes** - Pipeline, Conditional, Iteration, Map-Reduce, Generator-Critic, HITL
+3. **6 LangGraph Archetypes** - Pipeline, Conditional, Iteration, Map-Reduce, Generator-Critic, HITL (runner-level)
 4. **Pydantic Schemas** - Type-safe I/O validation
 5. **RAGAS + DeepEval** - Quality assurance
 6. **MCP Integration** - Universal tool standard
 7. **HITL Patterns** - Human oversight where needed
 8. **Semantic Versioning** - Prompt management
+9. **Database-First Templates** - Runtime loading from PostgreSQL (Part 15)
+
+**Related:** For workflow-level orchestration (combining multiple runners), see `TASK_COMPOSITION_ARCHITECTURE.md` which defines **8 Orchestration Patterns** (Sequential, Fan-out/Fan-in, Monitoring, Conditional, Iterative Refinement, Generator-Critic Loop, Saga, Event-Driven).
 
 ---
 
@@ -1964,6 +2073,7 @@ This document defines the **world-class package architecture** for VITAL's 88 co
 ---
 
 **Version History:**
+- v1.1 (December 2025): Added Part 15 - Database-First Template Architecture
 - v1.0 (December 2025): Initial world-class architecture document
 
 ---

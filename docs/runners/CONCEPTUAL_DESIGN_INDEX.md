@@ -96,6 +96,69 @@ This index provides a complete reference to all conceptual design documents for 
 │  │ • 6 LangGraph Workflow Archetypes                                    │   │
 │  │ • Pydantic Schemas, Evaluation, HITL, MCP Integration               │   │
 │  │ • Testing, Monitoring, Governance Standards                          │   │
+│  │ • Database-First Template Architecture (Part 15)                     │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                              │                                               │
+│                              ▼                                               │
+│  USER TEMPLATE CUSTOMIZATION                                                │
+│  ═══════════════════════════                                                │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ USER_TEMPLATE_EDITOR_ARCHITECTURE.md                                 │   │
+│  │ ───────────────────────────────────                                  │   │
+│  │ Database-First architecture for user template customization:         │   │
+│  │ • Frontend UI/UX with Template Browser and Multi-Tab Editor         │   │
+│  │ • API Design for template CRUD operations                           │   │
+│  │ • Runtime Integration with get_effective_template()                 │   │
+│  │ • Version Control and YAML Export (backup only)                     │   │
+│  │ • Database Schema: user_runner_templates, prompts, models, etc.     │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                              │                                               │
+│                              ▼                                               │
+│  WORKFLOW ORCHESTRATION                                                     │
+│  ══════════════════════                                                     │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ TASK_COMPOSITION_ARCHITECTURE.md                                     │   │
+│  │ ───────────────────────────────                                      │   │
+│  │ Orchestrate runners into business workflows:                         │   │
+│  │ • TaskDefinition Schema (Pydantic with HITL)                        │   │
+│  │ • 8 Orchestration Patterns:                                         │   │
+│  │   - Sequential, Fan-out/Fan-in, Monitoring, Conditional             │   │
+│  │   - Iterative Refinement, Generator-Critic, Saga, Event-Driven     │   │
+│  │ • Database Schema for compositions and executions                    │   │
+│  │ • LangGraph Integration with pattern-specific builders              │   │
+│  │ • Pre-Composed Workflows (Quick Positioning, Brand Plan, etc.)      │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                              │                                               │
+│                              ▼                                               │
+│  VISUAL WORKFLOW DESIGNER                                                   │
+│  ════════════════════════                                                   │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ WORKFLOW_DESIGNER_RUNNER_INTEGRATION.md                             │   │
+│  │ ──────────────────────────────────────                              │   │
+│  │ Runners as first-class workflow nodes in ReactFlow designer:        │   │
+│  │ • 215 Runners as draggable node types                               │   │
+│  │ • Hierarchical palette (22 categories + 8 families)                 │   │
+│  │ • Visual → JSON → LangGraph translation pipeline                    │   │
+│  │ • RunnerNode schema with input/output mapping                       │   │
+│  │ • Backend registry handler for runner execution                     │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                              │                                               │
+│                              ▼                                               │
+│  BACKEND ARCHITECTURE & MIGRATION                                           │
+│  ════════════════════════════════                                           │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ GOLD_STANDARD_BACKEND_ARCHITECTURE.md                               │   │
+│  │ ────────────────────────────────────                                │   │
+│  │ Current state analysis and migration roadmap for ai-engine:         │   │
+│  │ • Current State: 709 files, 256 directories mapped                  │   │
+│  │ • Gap Analysis: 6 critical gaps identified                          │   │
+│  │ • Target State: 8-layer world-class architecture                    │   │
+│  │ • Migration Plan: 6 phases with commands and scripts                │   │
+│  │ • Service Classification: 80 flat files → organized domains        │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -209,6 +272,11 @@ TASK (L1-L2)    │ Input  │ Context│ Compose │ Schema  │ Task    │ Fo
 | Unified Runner Strategy | `docs/runners/UNIFIED_RUNNER_STRATEGY.md` |
 | JTBD Runner Mapping | `docs/runners/JTBD_RUNNER_MAPPING.md` |
 | Runner Package Architecture | `docs/runners/RUNNER_PACKAGE_ARCHITECTURE.md` |
+| User Template Editor Architecture | `docs/runners/USER_TEMPLATE_EDITOR_ARCHITECTURE.md` |
+| Task Composition Architecture | `docs/runners/TASK_COMPOSITION_ARCHITECTURE.md` |
+| Workflow Designer Integration | `docs/runners/WORKFLOW_DESIGNER_RUNNER_INTEGRATION.md` |
+| **World-Class Project Structure** | `docs/runners/WORLD_CLASS_PROJECT_STRUCTURE.md` |
+| **Gold Standard Backend Architecture** | `docs/runners/GOLD_STANDARD_BACKEND_ARCHITECTURE.md` |
 | Recommended Project Structure | `docs/runners/RECOMMENDED_PROJECT_STRUCTURE.md` |
 | Conceptual Design Index | `docs/runners/CONCEPTUAL_DESIGN_INDEX.md` (this file) |
 
@@ -222,6 +290,8 @@ TASK (L1-L2)    │ Input  │ Context│ Compose │ Schema  │ Task    │ Fo
 | Work Hierarchy Gold Standard | `.claude/docs/platform/jtbds/04-docs/01-gold-standard/` | Work hierarchy standards |
 | Ask Expert PRD | `.claude/docs/services/ask-expert/ASK_EXPERT_PRD/` | Product requirements |
 | Ask Expert ARD | `.claude/docs/services/ask-expert/ASK_EXPERT_ARD/` | Architecture design |
+| Panel/Workflow/Runner Linkages | `database/postgres/migrations/20251217_panel_workflow_task_runner_linkages.sql` | Database migration |
+| User Template Tables | `database/postgres/migrations/20251217_user_runner_templates.sql` | User template schema |
 
 ---
 
@@ -320,6 +390,10 @@ All conceptual design documents are grounded in peer-reviewed research and indus
 ---
 
 **Version History:**
+- v1.5 (Dec 2025): Added World-Class Project Structure (CANONICAL)
+- v1.4 (Dec 2025): Added Workflow Designer Runner Integration document
+- v1.3 (Dec 2025): Added Task Composition Architecture document
+- v1.2 (Dec 2025): Added User Template Editor Architecture document
 - v1.1 (Dec 2025): Added theoretical foundation summary
 - v1.0 (Dec 2025): Initial conceptual design index
 

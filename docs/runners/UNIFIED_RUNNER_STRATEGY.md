@@ -914,4 +914,14 @@ class DeepResearchRunner(BaseFamilyRunner[DeepResearchState]):
 
 ---
 
+## Related Documents
+
+- **[RUNNER_PACKAGE_ARCHITECTURE.md](./RUNNER_PACKAGE_ARCHITECTURE.md)** - 13-component runner package, 5 prompt patterns, 6 LangGraph archetypes
+- **[TASK_COMPOSITION_ARCHITECTURE.md](./TASK_COMPOSITION_ARCHITECTURE.md)** - 8 workflow orchestration patterns (Sequential, Fan-out/Fan-in, Monitoring, Conditional, Iterative Refinement, Generator-Critic, Saga, Event-Driven)
+- **[JTBD_RUNNER_MAPPING.md](./JTBD_RUNNER_MAPPING.md)** - JTBD to Runner routing guide
+- **[USER_TEMPLATE_EDITOR_ARCHITECTURE.md](./USER_TEMPLATE_EDITOR_ARCHITECTURE.md)** - Database-First template customization
+- **[CONCEPTUAL_DESIGN_INDEX.md](./CONCEPTUAL_DESIGN_INDEX.md)** - Master index of all documents
+
+---
+
 *End of Document*

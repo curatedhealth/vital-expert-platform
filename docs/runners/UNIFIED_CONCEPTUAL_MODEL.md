@@ -808,6 +808,9 @@ L5: Strategic Advisor (persistent, "Big Hire")
 
 - **[JTBD_HIERARCHICAL_MODEL.md](./JTBD_HIERARCHICAL_MODEL.md)** - Complete world-class JTBD hierarchy
 - **[UNIFIED_RUNNER_STRATEGY.md](./UNIFIED_RUNNER_STRATEGY.md)** - Runner architecture and mapping
+- **[RUNNER_PACKAGE_ARCHITECTURE.md](./RUNNER_PACKAGE_ARCHITECTURE.md)** - 13-component runner package, 5 prompt patterns, 6 LangGraph archetypes
+- **[TASK_COMPOSITION_ARCHITECTURE.md](./TASK_COMPOSITION_ARCHITECTURE.md)** - 8 workflow orchestration patterns, TaskDefinition schema
+- **[USER_TEMPLATE_EDITOR_ARCHITECTURE.md](./USER_TEMPLATE_EDITOR_ARCHITECTURE.md)** - Database-First template customization
 - **[RECOMMENDED_PROJECT_STRUCTURE.md](./RECOMMENDED_PROJECT_STRUCTURE.md)** - Code organization
 - **[CONCEPTUAL_DESIGN_INDEX.md](./CONCEPTUAL_DESIGN_INDEX.md)** - Master index of all conceptual documents
 

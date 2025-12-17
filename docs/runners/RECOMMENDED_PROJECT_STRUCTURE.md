@@ -756,4 +756,32 @@ class WorkflowEngine:
 
 ---
 
+# Related Documents
+
+This document is part of the VITAL Runner Documentation Suite. See related documents for complete architecture understanding:
+
+| Document | Path | Purpose |
+|----------|------|---------|
+| **Conceptual Design Index** | `docs/runners/CONCEPTUAL_DESIGN_INDEX.md` | Master index of all documents |
+| **Unified Conceptual Model** | `docs/runners/UNIFIED_CONCEPTUAL_MODEL.md` | Task Formula & Knowledge Stack |
+| **JTBD Hierarchical Model** | `docs/runners/JTBD_HIERARCHICAL_MODEL.md` | 4-level JTBD framework |
+| **Unified Runner Strategy** | `docs/runners/UNIFIED_RUNNER_STRATEGY.md` | Cross-service runner architecture |
+| **JTBD Runner Mapping** | `docs/runners/JTBD_RUNNER_MAPPING.md` | JTBD → Runner routing logic |
+| **Runner Package Architecture** | `docs/runners/RUNNER_PACKAGE_ARCHITECTURE.md` | 13-component package, 5 prompt patterns, 6 LangGraph archetypes |
+| **Task Composition Architecture** | `docs/runners/TASK_COMPOSITION_ARCHITECTURE.md` | **8 orchestration patterns**, TaskDefinition schema, pre-composed workflows |
+| **User Template Editor** | `docs/runners/USER_TEMPLATE_EDITOR_ARCHITECTURE.md` | Database-First template customization |
+
+## Pattern Architecture
+
+| Level | Pattern Type | Count | Scope |
+|-------|-------------|-------|-------|
+| **Workflow** | Orchestration Patterns | 8 | How runners connect into workflows |
+| **Runner** | LangGraph Archetypes | 6 | How single runners execute internally |
+| **LLM** | Prompt Patterns | 5 | How LLM thinks (CoT, ToT, ReAct, etc.) |
+
+---
+
+**Version:** 1.1
+**Last Updated:** December 2025
+
 *End of Document*

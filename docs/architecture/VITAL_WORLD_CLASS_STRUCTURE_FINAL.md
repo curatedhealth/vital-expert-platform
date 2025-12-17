@@ -1,12 +1,15 @@
 # VITAL Path - World-Class Project Structure (FINAL)
 
-**Version:** 4.4 (WORLD-CLASS COMPLETE + Production Registry + Reorganization + Infrastructure Cleanup + Source Cleanup)
+**Version:** 5.0 (Ontology-Aligned Architecture)
 **Date:** December 5, 2025
-**Updated:** December 14, 2025
-**Status:** ✅ ALL WORLD-CLASS COMPONENTS COMPLETE
+**Updated:** December 17, 2025
+**Status:** ✅ ALL WORLD-CLASS COMPONENTS COMPLETE + ONTOLOGY INTEGRATION
 **Type:** AI Healthcare Platform - Modular Monolith Architecture
 
-> **See Also:** [`PRODUCTION_FILE_REGISTRY.md`](./PRODUCTION_FILE_REGISTRY.md) - Complete file-level inventory with production tags
+> **See Also:**
+> - [`PRODUCTION_FILE_REGISTRY.md`](./PRODUCTION_FILE_REGISTRY.md) - Complete file-level inventory with production tags
+> - [`ONTOLOGY_DRIVEN_BACKEND_STRUCTURE.md`](./ONTOLOGY_DRIVEN_BACKEND_STRUCTURE.md) - Detailed ontology layer analysis
+> - [`../ONTOLOGY_BACKEND_IMPLEMENTATION_STRATEGY.md`](../ONTOLOGY_BACKEND_IMPLEMENTATION_STRATEGY.md) - End-to-end implementation strategy (10 weeks)
 
 ---
 
@@ -17,16 +20,17 @@
 3. [System Architecture](#system-architecture)
 4. [Monorepo Structure](#monorepo-structure)
 5. [Backend Architecture (Golden Standard)](#backend-architecture-golden-standard)
-6. [Frontend Architecture](#frontend-architecture)
-7. [Protocol Package (Type Synchronization)](#protocol-package)
-8. [Database & Multi-Tenancy](#database--multi-tenancy)
-9. [Code Generation Pipeline](#code-generation-pipeline)
-10. [Async Workers & Long-Running Tasks](#async-workers)
-11. [Token Budgeting & Cost Management](#token-budgeting)
-12. [Infrastructure](#infrastructure)
-13. [Documentation](#documentation)
-14. [File Naming Standards](#file-naming-standards)
-15. [Implementation Roadmap](#implementation-roadmap)
+6. [**Ontology-Aligned Backend (8-Layer Model)**](#ontology-aligned-backend-8-layer-model) ← NEW
+7. [Frontend Architecture](#frontend-architecture)
+8. [Protocol Package (Type Synchronization)](#protocol-package)
+9. [Database & Multi-Tenancy](#database--multi-tenancy)
+10. [Code Generation Pipeline](#code-generation-pipeline)
+11. [Async Workers & Long-Running Tasks](#async-workers)
+12. [Token Budgeting & Cost Management](#token-budgeting)
+13. [Infrastructure](#infrastructure)
+14. [Documentation](#documentation)
+15. [File Naming Standards](#file-naming-standards)
+16. [Implementation Roadmap](#implementation-roadmap)
 
 ---
 
@@ -570,6 +574,301 @@ services/ai-engine/
 │
 └── 📄 README.md
 ```
+
+---
+
+## Ontology-Aligned Backend (8-Layer Model)
+
+> **NEW in v5.0** - This section defines the target world-class backend structure aligned with VITAL's 8-layer Enterprise Ontology model.
+> **See:** [`ONTOLOGY_DRIVEN_BACKEND_STRUCTURE.md`](./ONTOLOGY_DRIVEN_BACKEND_STRUCTURE.md) for detailed analysis
+
+### Enterprise Ontology - 8 Layers
+
+The VITAL platform is built on a semantic 8-layer enterprise ontology that drives all AI behaviors:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ENTERPRISE ONTOLOGY MODEL                     │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  L7: VALUE TRANSFORMATION    ← VPANES + ODI Scoring, ROI        │
+│        ↑                                                        │
+│  L6: ANALYTICS               ← Metrics, Quality, Usage          │
+│        ↑                                                        │
+│  L5: EXECUTION               ← Mission Runtime, Task Runners    │
+│        ↑                                                        │
+│  L4: AGENT COORDINATION      ← Agent Selection, Orchestration   │
+│        ↑                                                        │
+│  L3: TASK & ACTIVITY (JTBD)  ← Jobs-to-be-Done, Pain Points     │
+│        ↑                                                        │
+│  L2: PROCESS & WORKFLOW      ← Workflow Templates, Stages       │
+│        ↑                                                        │
+│  L1: ORGANIZATIONAL          ← Functions, Departments, Roles    │
+│        ↑                                                        │
+│  L0: DOMAIN KNOWLEDGE        ← Therapeutic Areas, Evidence, RAG │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Layer Coverage Analysis
+
+| Layer | Name | Current Coverage | Priority | Status |
+|-------|------|-----------------|----------|--------|
+| **L0** | Domain Knowledge | 30% | HIGH | GraphRAG exists, needs DB alignment |
+| **L1** | Organizational | 40% | MEDIUM | Basic API, no service layer |
+| **L2** | Process/Workflow | 35% | MEDIUM | Workflows code-defined, not DB-driven |
+| **L3** | Task/JTBD | **10%** | **CRITICAL** | Almost completely missing |
+| **L4** | Agent Coordination | 50% | HIGH | Agents exist, naming conflicts |
+| **L5** | Execution | 75% | LOW | Best aligned layer |
+| **L6** | Analytics | 40% | MEDIUM | Scattered, not consolidated |
+| **L7** | Value Transform | **20%** | **CRITICAL** | Poorly represented |
+
+### Target Ontology-Aligned Structure
+
+```
+services/ai-engine/src/
+│
+├── 📁 ontology/                          # 🔥 NEW: Ontology-aligned modules
+│   │
+│   ├── 📁 l0_domain/                     # L0: Domain Knowledge (RAG Foundation)
+│   │   ├── __init__.py
+│   │   ├── therapeutic_areas.py          # Therapeutic area service
+│   │   ├── diseases.py                   # Disease taxonomy
+│   │   ├── products.py                   # Product catalog
+│   │   ├── evidence_types.py             # Evidence type registry
+│   │   ├── stakeholders.py               # Stakeholder types
+│   │   ├── jurisdictions.py              # Regulatory jurisdictions
+│   │   └── rag_pointers.py               # RAG collection pointers
+│   │
+│   ├── 📁 l1_organization/               # L1: Organizational Structure
+│   │   ├── __init__.py
+│   │   ├── functions.py                  # Business functions (15 pharma)
+│   │   ├── departments.py                # Department hierarchy
+│   │   ├── roles.py                      # Role definitions
+│   │   ├── teams.py                      # Team structures
+│   │   ├── geography.py                  # Geographic hierarchy
+│   │   └── responsibilities.py           # Role responsibilities
+│   │
+│   ├── 📁 l2_process/                    # L2: Process & Workflow
+│   │   ├── __init__.py
+│   │   ├── workflow_templates.py         # DB-driven templates
+│   │   ├── workflow_stages.py            # Stage definitions
+│   │   ├── workflow_tasks.py             # Task specifications
+│   │   └── workflow_engine.py            # Execution engine adapter
+│   │
+│   ├── 📁 l3_jtbd/                       # L3: Task & Activity (CRITICAL GAP)
+│   │   ├── __init__.py
+│   │   ├── jobs.py                       # JTBD definitions
+│   │   ├── job_mappings.py               # Function/role/dept mappings
+│   │   ├── pain_points.py                # Pain point registry
+│   │   ├── outcomes.py                   # Desired outcomes
+│   │   ├── kpis.py                       # KPI definitions
+│   │   └── success_criteria.py           # Success metrics
+│   │
+│   ├── 📁 l4_agents/                     # L4: Agent Coordination
+│   │   ├── __init__.py
+│   │   ├── agent_registry.py             # Agent definitions (from DB)
+│   │   ├── agent_jtbd_mapping.py         # Agent-to-JTBD links
+│   │   ├── selection_strategy.py         # Ontology-aware selection
+│   │   ├── orchestration.py              # Multi-agent orchestration
+│   │   └── synergy_calculator.py         # Agent synergy scoring
+│   │
+│   ├── 📁 l5_execution/                  # L5: Execution (Best Aligned)
+│   │   ├── __init__.py
+│   │   ├── mission_manager.py            # Mission lifecycle
+│   │   ├── task_executor.py              # Task execution
+│   │   ├── checkpoint_manager.py         # State persistence
+│   │   ├── runners/                      # 🔥 CONSOLIDATED from 3 locations
+│   │   │   ├── framework/                # Base runners
+│   │   │   ├── core/                     # Core runners (critique, decompose, etc.)
+│   │   │   ├── pharma/                   # Pharma-specific runners
+│   │   │   └── families/                 # 28 task runner families
+│   │   └── event_publisher.py            # Event streaming
+│   │
+│   ├── 📁 l6_analytics/                  # L6: Analytics
+│   │   ├── __init__.py
+│   │   ├── session_analytics.py          # Session metrics
+│   │   ├── agent_performance.py          # Agent KPIs
+│   │   ├── quality_metrics.py            # Response quality
+│   │   ├── usage_tracking.py             # Usage patterns
+│   │   └── insights_generator.py         # AI-driven insights
+│   │
+│   ├── 📁 l7_value/                      # L7: Value Transformation (CRITICAL GAP)
+│   │   ├── __init__.py
+│   │   ├── value_drivers.py              # Value driver hierarchy
+│   │   ├── vpanes_scorer.py              # VPANES scoring (6 dimensions)
+│   │   ├── odi_calculator.py             # ODI opportunity scoring
+│   │   ├── roi_analyzer.py               # ROI impact analysis
+│   │   └── value_realization.py          # Value tracking
+│   │
+│   └── 📄 resolver.py                    # 🔥 Cross-layer OntologyResolver
+│
+├── 📁 agents/                            # Agent implementations (RENAMED)
+│   ├── __init__.py
+│   ├── base_agent.py
+│   ├── orchestrators/                    # Top-level (was l1_orchestrators)
+│   ├── experts/                          # Domain (was l2_experts)
+│   ├── specialists/                      # Specialized (was l3_specialists)
+│   ├── workers/                          # Task (was l4_workers) - 27 files
+│   └── tools/                            # Tools (was l5_tools) - 23 files
+│
+├── 📁 api/                               # API layer (reorganized)
+│   ├── routes/
+│   │   ├── ontology/                     # 🔥 NEW: Ontology CRUD endpoints
+│   │   │   ├── l0_domain.py
+│   │   │   ├── l1_organization.py
+│   │   │   ├── l2_process.py
+│   │   │   ├── l3_jtbd.py
+│   │   │   ├── l4_agents.py
+│   │   │   ├── l5_execution.py
+│   │   │   ├── l6_analytics.py
+│   │   │   └── l7_value.py
+│   │   └── ...existing routes...
+│   ├── schemas/
+│   │   └── ontology/                     # Ontology Pydantic schemas
+│   └── middleware/
+│
+├── 📁 modules/                           # Feature modules (CLEANED)
+│   ├── translator/                       # React Flow → LangGraph
+│   ├── execution/                        # Execution engine
+│   ├── expert/                           # Ask Expert (20+ files)
+│   ├── panels/                           # Ask Panels
+│   ├── ask_expert/                       # Ask Expert service
+│   ├── companion/                        # 🔥 AI Companion (NOW POPULATED)
+│   └── knowledge/                        # 🔥 Knowledge service (NOW POPULATED)
+│
+├── ...existing directories (core, domain, graphrag, infrastructure, etc.)...
+│
+└── 📁 langgraph_workflows/               # Workflows (unchanged location)
+    ├── ask_expert/                       # Mode 1/2
+    ├── modes34/                          # Mode 3/4 autonomous
+    ├── task_runners/                     # → Migrating to ontology/l5_execution/runners/
+    └── shared/
+```
+
+### Agent Naming Convention (Resolved Conflict)
+
+**BEFORE (Confusing):**
+```
+agents/
+├── l1_orchestrators/    ← Conflicts with ontology L0-L7
+├── l2_experts/
+├── l3_specialists/
+├── l4_workers/
+└── l5_tools/
+```
+
+**AFTER (Semantic):**
+```
+agents/
+├── orchestrators/       ← Clear, no L-prefix confusion
+├── experts/
+├── specialists/
+├── workers/
+└── tools/
+```
+
+### Runners Consolidation
+
+**BEFORE (Fragmented - 3 Locations):**
+```
+Location 1: runners/                           # Framework + pharma
+Location 2: langgraph_workflows/task_runners/  # 28 families
+Location 3: langgraph_workflows/modes34/runners/  # Mode-specific
+```
+
+**AFTER (Consolidated):**
+```
+ontology/l5_execution/runners/
+├── framework/           # Base runners
+├── core/                # Core runners (critique, decompose, etc.)
+├── pharma/              # Pharma-specific runners
+├── families/            # 28 task runner families
+│   ├── investigate/
+│   ├── synthesize/
+│   ├── validate/
+│   ├── create/
+│   ├── design/
+│   └── ...22 more families
+└── modes34/             # Mode-specific runners
+```
+
+### OntologyResolver - Cross-Layer Integration
+
+```python
+# ontology/resolver.py
+class OntologyResolver:
+    """Cross-layer resolution for contextual queries."""
+
+    def __init__(self):
+        self.l0 = L0DomainService()
+        self.l1 = L1OrganizationService()
+        self.l2 = L2ProcessService()
+        self.l3 = L3JTBDService()
+        self.l4 = L4AgentService()
+        self.l5 = L5ExecutionService()
+        self.l6 = L6AnalyticsService()
+        self.l7 = L7ValueService()
+
+    async def resolve_context(
+        self,
+        query: str,
+        user_role_id: str | None = None,
+        therapeutic_area_id: str | None = None
+    ) -> OntologyContext:
+        """Build full context traversing all 8 layers."""
+
+        # L0: Domain context (therapeutic areas, evidence types)
+        domain = await self.l0.resolve_domain(query, therapeutic_area_id)
+
+        # L1: Organization context (user's role, function, dept)
+        org = await self.l1.resolve_organization(user_role_id)
+
+        # L3: Relevant JTBDs based on query + org context
+        jtbds = await self.l3.find_relevant_jtbds(
+            query=query,
+            role_id=org.role_id,
+            function_id=org.function_id
+        )
+
+        # L4: Best agents for these JTBDs
+        agents = await self.l4.select_agents_for_jtbds(jtbds)
+
+        # L7: Value context for impact estimation
+        value = await self.l7.get_value_context(jtbds)
+
+        return OntologyContext(
+            domain=domain,
+            organization=org,
+            jtbds=jtbds,
+            agents=agents,
+            value=value
+        )
+```
+
+### Benefits of Ontology-Aligned Structure
+
+| Category | Benefit | Impact |
+|----------|---------|--------|
+| **Technical** | Single Source of Truth | Database drives behavior, not hardcoded patterns |
+| **Technical** | Consistent Naming | No more l1-l5 vs L0-L7 confusion |
+| **Technical** | Clear Boundaries | Each layer has dedicated services |
+| **Business** | JTBD Integration | Backend recommends agents by job-to-be-done |
+| **Business** | Value Tracking | Every execution measures value impact |
+| **Operational** | Cache Strategy | Each layer can have appropriate TTLs |
+| **Operational** | Monitoring | Per-layer metrics and health checks |
+
+### Migration Priority
+
+| Priority | Action | Timeline |
+|----------|--------|----------|
+| **P1 (Critical)** | Create `ontology/l3_jtbd/` module | Week 1 |
+| **P1 (Critical)** | Create `ontology/l7_value/` module | Week 1 |
+| **P2 (High)** | Rename `agents/l1-l5` to semantic names | Week 2 |
+| **P2 (High)** | Consolidate runners to `ontology/l5_execution/runners/` | Week 2 |
+| **P3 (Medium)** | Organize `services/` by ontology layer | Week 3-4 |
+| **P3 (Medium)** | Add API routes for each layer | Week 3-4 |
+| **P4 (Low)** | Add caching layer for ontology data | Week 5-6 |
 
 ---
 

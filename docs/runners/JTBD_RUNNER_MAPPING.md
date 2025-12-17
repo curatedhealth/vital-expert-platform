@@ -909,6 +909,16 @@ The runner mappings have been validated in pharmaceutical contexts:
 
 ---
 
+## Related Documents
+
+- **[UNIFIED_RUNNER_STRATEGY.md](./UNIFIED_RUNNER_STRATEGY.md)** - Complete runner architecture for all services
+- **[RUNNER_PACKAGE_ARCHITECTURE.md](./RUNNER_PACKAGE_ARCHITECTURE.md)** - 13-component runner package, 5 prompt patterns, 6 LangGraph archetypes
+- **[TASK_COMPOSITION_ARCHITECTURE.md](./TASK_COMPOSITION_ARCHITECTURE.md)** - 8 workflow orchestration patterns for combining runners
+- **[JTBD_HIERARCHICAL_MODEL.md](./JTBD_HIERARCHICAL_MODEL.md)** - World-class JTBD hierarchy framework
+- **[CONCEPTUAL_DESIGN_INDEX.md](./CONCEPTUAL_DESIGN_INDEX.md)** - Master index of all documents
+
+---
+
 **Version History:**
 - v1.0 (Dec 2025): Initial JTBD to Runner mapping guide with comprehensive theoretical foundation
 

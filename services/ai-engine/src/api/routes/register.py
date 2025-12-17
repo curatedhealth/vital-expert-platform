@@ -126,6 +126,22 @@ def _register_panel_routes(app: FastAPI) -> None:
     except ImportError as e:
         logger.warning("unified_panel_routes_import_failed", error=str(e))
 
+    # Register Panel Autonomous routes (Mode 4 - autonomous multi-expert panel)
+    try:
+        from api.routes.panel_autonomous import router as panel_autonomous_router
+        app.include_router(panel_autonomous_router, prefix="", tags=["ask-panel-autonomous"])
+        logger.info("✅ Ask Panel Autonomous routes registered")
+    except ImportError as e:
+        logger.warning("panel_autonomous_routes_import_failed", error=str(e))
+
+    # Register Panel Wizard routes (AI-guided panel creation with HITL)
+    try:
+        from api.routes.panel_wizard import router as panel_wizard_router
+        app.include_router(panel_wizard_router, prefix="", tags=["ask-panel-wizard"])
+        logger.info("✅ Ask Panel Wizard routes registered")
+    except ImportError as e:
+        logger.warning("panel_wizard_routes_import_failed", error=str(e))
+
 
 def _register_expert_routes(app: FastAPI) -> None:
     """Register Ask Expert routes (4-Mode System)."""

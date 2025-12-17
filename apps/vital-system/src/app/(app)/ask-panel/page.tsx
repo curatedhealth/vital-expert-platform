@@ -33,8 +33,12 @@ import {
   Trash2,
   Play,
   Star,
+  Zap,
+  Wand2,
+  X,
 } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
+import { AIWizardPanel } from '@/features/ask-panel/components/AIWizardPanel';
 
 // Custom User Panel type
 type UserPanel = {
@@ -337,6 +341,17 @@ export default function AskPanelPage() {
   const [customPanels, setCustomPanels] = useState<UserPanel[]>([]);
   const [loadingPanels, setLoadingPanels] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showAIWizard, setShowAIWizard] = useState(false);
+
+  // Auto-open wizard if ?wizard=true is in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('wizard') === 'true') {
+      setShowAIWizard(true);
+      // Remove the query param from URL without refresh
+      window.history.replaceState({}, '', '/ask-panel');
+    }
+  }, []);
 
   // Fetch panels from database (both user_panels and panels table)
   useEffect(() => {
@@ -429,6 +444,21 @@ export default function AskPanelPage() {
     router.push(`/ask-panel/interactive?type=${panelType}&panelId=${panel.id}`);
   };
 
+  // Handle AI Wizard completion - navigate to streaming mission view
+  const handleWizardComplete = (missionId: string, streamUrl: string) => {
+    setShowAIWizard(false);
+    // Store mission info so autonomous page can resume streaming
+    sessionStorage.setItem('wizardMissionId', missionId);
+    sessionStorage.setItem('wizardStreamUrl', streamUrl);
+    // Navigate to the autonomous panel with the mission streaming
+    router.push(`/ask-panel/autonomous?missionId=${missionId}&fromWizard=true`);
+  };
+
+  // Handle AI Wizard cancel
+  const handleWizardCancel = () => {
+    setShowAIWizard(false);
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Page Header */}
@@ -441,6 +471,72 @@ export default function AskPanelPage() {
       {/* Main Content - Scrollable */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-6xl mx-auto p-6 space-y-6">
+          {/* Featured: AI Wizard - Guided Panel Creation */}
+          <button
+            type="button"
+            onClick={() => setShowAIWizard(true)}
+            className="w-full group relative overflow-hidden rounded-2xl border-2 border-transparent bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 p-[2px] transition-all duration-300 hover:shadow-2xl hover:shadow-amber-500/25"
+          >
+            <div className="relative flex items-center justify-between rounded-2xl bg-background p-5 transition-all">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-lg">
+                  <Wand2 className="h-6 w-6" />
+                </div>
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">AI Panel Wizard</h3>
+                    <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 text-xs">
+                      NEW
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    AI-guided panel creation with smart agent recommendations and HITL checkpoints
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex flex-col items-end text-right">
+                  <span className="text-xs font-medium text-muted-foreground">Features</span>
+                  <span className="text-xs text-muted-foreground/70">Intent parsing • Smart matching • Step-by-step</span>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-amber-600 group-hover:translate-x-1 transition-all" />
+              </div>
+            </div>
+          </button>
+
+          {/* Featured: Autonomous Panel */}
+          <button
+            type="button"
+            onClick={() => router.push('/ask-panel/autonomous')}
+            className="w-full group relative overflow-hidden rounded-2xl border-2 border-transparent bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 p-[2px] transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/25"
+          >
+            <div className="relative flex items-center justify-between rounded-2xl bg-background p-5 transition-all">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg">
+                  <Zap className="h-6 w-6" />
+                </div>
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">Autonomous Panel</h3>
+                    <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 text-xs">
+                      Mode 4
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Multi-expert parallel execution with consensus building, iterative refinement, and HITL checkpoints
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex flex-col items-end text-right">
+                  <span className="text-xs font-medium text-muted-foreground">Features</span>
+                  <span className="text-xs text-muted-foreground/70">Auto-select • Multi-round • Quality gates</span>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-purple-600 group-hover:translate-x-1 transition-all" />
+              </div>
+            </div>
+          </button>
+
           {/* Panel Types Grid - 2x3 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {PANEL_TYPES.map((config) => (
@@ -500,6 +596,22 @@ export default function AskPanelPage() {
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <button
                 type="button"
+                onClick={() => setShowAIWizard(true)}
+                className="text-sm text-amber-600 hover:text-amber-700 font-medium transition-colors"
+              >
+                AI Wizard
+              </button>
+              <span className="text-muted-foreground/30">•</span>
+              <button
+                type="button"
+                onClick={() => router.push('/ask-panel/autonomous')}
+                className="text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors"
+              >
+                Autonomous Mode
+              </button>
+              <span className="text-muted-foreground/30">•</span>
+              <button
+                type="button"
                 onClick={() => router.push('/ask-panel/history')}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
@@ -547,6 +659,30 @@ export default function AskPanelPage() {
           </div>
         </div>
       </div>
+
+      {/* AI Wizard Overlay */}
+      {showAIWizard && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl border bg-background shadow-2xl">
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={handleWizardCancel}
+              className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* Wizard Content */}
+            <div className="overflow-y-auto max-h-[90vh]">
+              <AIWizardPanel
+                onComplete={handleWizardComplete}
+                onCancel={handleWizardCancel}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

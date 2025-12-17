@@ -704,7 +704,7 @@ FINAL RECOMMENDATION:"""
                 prompt=prompt,
                 model=self._llm_config.model,
                 temperature=0.3,
-                max_tokens=500
+                max_tokens=2000  # Increased to allow complete recommendations
             )
 
             # Clean up the response

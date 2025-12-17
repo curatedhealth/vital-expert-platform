@@ -1,0 +1,96 @@
+# Socratic Panel Definition
+# Dialectical questioning to explore assumptions and deepen understanding
+
+id: socratic
+name: Socratic Panel
+description: >
+  Dialectical questioning approach to explore assumptions, challenge reasoning,
+  and deepen understanding through inquiry. Best for complex philosophical
+  questions or when existing assumptions need examination.
+version: "1.0.0"
+
+config:
+  default_expert_count: 3
+  min_experts: 2
+  max_experts: 6
+  default_rounds: 3
+  min_rounds: 2
+  max_rounds: 5
+  supports_consensus: true
+  supports_checkpoints: true
+  requires_positions: false
+  expert_selection_method: fusion
+  diversity_weight: 0.3
+  default_consensus_threshold: 0.65
+  early_termination_enabled: true
+
+prompts:
+  initial:
+    id: socratic_initial
+    description: First round Socratic questioning
+    placeholders:
+      - goal
+      - context
+      - round_number
+    template: |
+      You are participating in a Socratic panel discussion.
+
+      QUESTION/GOAL: {goal}
+
+      {context_section}
+
+      Round {round_number} of discussion.
+
+      {previous_responses_section}
+
+      Question the assumptions. Address:
+
+      What assumptions underlie this question? Are they valid?
+
+      What evidence would change your view on this?
+
+      What are we missing? What questions should we be asking instead?
+
+      What are the implications if we are wrong?
+
+  followup:
+    id: socratic_followup
+    description: Follow-up round examining other panelists' assumptions
+    placeholders:
+      - goal
+      - context
+      - round_number
+      - previous_responses
+    template: |
+      You are participating in a Socratic panel discussion.
+
+      QUESTION/GOAL: {goal}
+
+      {context_section}
+
+      Round {round_number} of discussion.
+
+      PREVIOUS ROUND RESPONSES:
+      {previous_responses}
+
+      Examine the assumptions made by other panelists. Consider:
+
+      What assumptions did other panelists make that should be examined?
+
+      What logical gaps exist in the reasoning presented so far?
+
+      What alternative interpretations exist for the evidence provided?
+
+      What questions would challenge the emerging consensus?
+
+      What evidence would be needed to resolve the remaining uncertainties?
+
+      Are we converging on the right questions, or should we reframe entirely?
+
+format_instructions: |
+  IMPORTANT FORMAT RULE: Write in plain text only. Do NOT use any markdown formatting such as:
+  - No asterisks for bold or italic (no ** or *)
+  - No hash symbols for headings (no # or ##)
+  - No bullet points or dashes at start of lines
+  - No code blocks or backticks
+  Write in clear paragraphs with complete sentences. Use line breaks between sections.

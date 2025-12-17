@@ -156,22 +156,23 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
   const mergeExternalAgents = useAgentsStore((state) => state.mergeExternalAgents);
   const loadAgentStatsFromStore = useAgentsStore((state) => state.loadAgentStats);
 
+  // Track if we're currently refreshing to prevent duplicate calls
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // Method to refresh agents list (useful when user adds agents from store)
   const refreshAgents = useCallback(async () => {
-    console.log('🔄 [AskExpertContext] refreshAgents called:', {
-      hasUser: !!user,
-      userId: user?.id,
-      userEmail: user?.email,
-      userObject: user
-    });
+    // Prevent duplicate/concurrent refreshes
+    if (isRefreshing) {
+      console.log('🔄 [AskExpertContext] refreshAgents skipped - already refreshing');
+      return;
+    }
 
     if (!user?.id) {
-      console.log('🔄 [AskExpertContext] No user ID, clearing agents');
       setAgents([]);
       return;
     }
 
-    console.log('🔄 [AskExpertContext] Refreshing agents list for user:', user.id);
+    setIsRefreshing(true);
     setAgentsLoading(true);
     try {
       // First, fetch user's added agents
@@ -361,8 +362,10 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       setAgents([]);
     } finally {
       setAgentsLoading(false);
+      setIsRefreshing(false);
     }
-  }, [user?.id, loadAgentStatsFromStore, mergeExternalAgents]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only depend on user?.id - other deps cause infinite loops
 
   // Initial load of agents based on the signed-in user
   useEffect(() => {
@@ -372,12 +375,16 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
     }
 
     void refreshAgents();
-  }, [refreshAgents, user?.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only run when user changes, not when refreshAgents changes
 
   // Listen for page visibility changes to refresh agents when user returns to Ask Expert page
+  // Note: We use a ref to avoid recreating the listener when refreshAgents changes
   useEffect(() => {
+    if (!user?.id) return;
+
     const handleVisibilityChange = () => {
-      if (!document.hidden && user?.id) {
+      if (!document.hidden) {
         // Page became visible, refresh agents list
         refreshAgents();
       }
@@ -387,7 +394,8 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [refreshAgents, user?.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only depend on user?.id to prevent listener recreation
 
   const fetchSessions = useCallback(async () => {
     if (!user?.id) {
@@ -726,16 +734,6 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       throw error;
     }
   }, [user?.id, setSelectedAgents, refreshAgents]);
-
-  // Auto-refresh agents when user changes
-  useEffect(() => {
-    console.log('🔄 [AskExpertContext] User changed, refreshing agents:', {
-      hasUser: !!user,
-      userId: user?.id,
-      userEmail: user?.email
-    });
-    refreshAgents();
-  }, [user?.id, refreshAgents]);
 
   // CRITICAL FIX: Memoize context value to prevent unnecessary re-renders
   // Without this, every render creates a new object reference, causing all consumers to re-render

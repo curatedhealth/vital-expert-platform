@@ -12,7 +12,7 @@
  */
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@/lib/utils';
@@ -34,10 +34,17 @@ import {
   ChevronDown,
   ChevronUp,
   Circle,
+  Search,
+  X,
+  Wand2,
+  Lightbulb,
+  AlertTriangle,
+  Compass,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { EnhancedAgentCard, AgentCardGrid, type Agent as UIAgent } from '@vital/ui';
@@ -102,7 +109,7 @@ const PANEL_TYPE_META: Record<string, {
 // Message type for chat display
 interface ChatMessage {
   id: string;
-  role: 'user' | 'expert' | 'system' | 'consensus';
+  role: 'user' | 'expert' | 'system' | 'consensus' | 'orchestrator';
   content: string;
   timestamp: Date;
   expert?: {
@@ -110,6 +117,19 @@ interface ChatMessage {
     name: string;
     avatar?: string;
     confidence?: number;
+  };
+  orchestrator?: {
+    type: 'thinking' | 'message' | 'decision' | 'intervention' | 'topic_analysis';
+    phase?: string;
+    experts?: string[];
+    rationale?: string[];
+    reason?: string;
+    topicAnalysis?: {
+      domain?: string;
+      complexity?: string;
+      focus_areas?: string[];
+      recommended_approach?: string;
+    };
   };
   isStreaming?: boolean;
 }
@@ -119,6 +139,12 @@ function ExpertMessage({ message }: { message: ChatMessage }) {
   const isUser = message.role === 'user';
   const isConsensus = message.role === 'consensus';
   const isSystem = message.role === 'system';
+  const isOrchestrator = message.role === 'orchestrator';
+
+  // Delegate orchestrator messages to OrchestratorMessage component
+  if (isOrchestrator) {
+    return <OrchestratorMessage message={message} />;
+  }
 
   if (isUser) {
     return (
@@ -242,6 +268,158 @@ function ThinkingIndicator({ expertName }: { expertName?: string }) {
   );
 }
 
+// Orchestrator Message Component
+function OrchestratorMessage({ message }: { message: ChatMessage }) {
+  const orchestrator = message.orchestrator;
+  if (!orchestrator) return null;
+
+  // Get icon and styling based on type
+  const getOrchestratorStyle = () => {
+    switch (orchestrator.type) {
+      case 'thinking':
+        return {
+          icon: <Loader2 className="w-4 h-4 animate-spin" />,
+          bgColor: 'bg-blue-50',
+          borderColor: 'border-blue-200',
+          textColor: 'text-blue-700',
+          label: 'Orchestrator is thinking...',
+        };
+      case 'topic_analysis':
+        return {
+          icon: <Compass className="w-4 h-4" />,
+          bgColor: 'bg-indigo-50',
+          borderColor: 'border-indigo-200',
+          textColor: 'text-indigo-700',
+          label: 'Topic Analysis',
+        };
+      case 'decision':
+        return {
+          icon: <Lightbulb className="w-4 h-4" />,
+          bgColor: 'bg-amber-50',
+          borderColor: 'border-amber-200',
+          textColor: 'text-amber-700',
+          label: 'Expert Selection',
+        };
+      case 'intervention':
+        return {
+          icon: <AlertTriangle className="w-4 h-4" />,
+          bgColor: 'bg-orange-50',
+          borderColor: 'border-orange-200',
+          textColor: 'text-orange-700',
+          label: 'Orchestrator Intervention',
+        };
+      case 'message':
+      default:
+        return {
+          icon: <Wand2 className="w-4 h-4" />,
+          bgColor: 'bg-violet-50',
+          borderColor: 'border-violet-200',
+          textColor: 'text-violet-700',
+          label: orchestrator.phase || 'Orchestrator',
+        };
+    }
+  };
+
+  const style = getOrchestratorStyle();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-4"
+    >
+      <Card className={cn('border', style.borderColor, style.bgColor)}>
+        <CardHeader className="py-2 px-4">
+          <div className="flex items-center gap-2">
+            {/* Orchestrator Avatar */}
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+              <Wand2 className="w-4 h-4 text-white" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={cn('font-medium text-sm', style.textColor)}>
+                {style.label}
+              </span>
+              {style.icon}
+            </div>
+            {orchestrator.type === 'thinking' && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
+                <Circle className="w-2 h-2 fill-violet-500 animate-pulse" />
+                processing
+              </span>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="py-2 px-4">
+          <p className={cn('text-sm', style.textColor)}>{message.content}</p>
+
+          {/* Topic Analysis Details */}
+          {orchestrator.type === 'topic_analysis' && orchestrator.topicAnalysis && (
+            <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+              {orchestrator.topicAnalysis.domain && (
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground">Domain:</span>
+                  <Badge variant="outline" className="text-xs py-0">
+                    {orchestrator.topicAnalysis.domain}
+                  </Badge>
+                </div>
+              )}
+              {orchestrator.topicAnalysis.complexity && (
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground">Complexity:</span>
+                  <Badge variant="outline" className="text-xs py-0">
+                    {orchestrator.topicAnalysis.complexity}
+                  </Badge>
+                </div>
+              )}
+              {orchestrator.topicAnalysis.focus_areas && orchestrator.topicAnalysis.focus_areas.length > 0 && (
+                <div className="col-span-2 flex flex-wrap items-center gap-1">
+                  <span className="text-muted-foreground">Focus:</span>
+                  {orchestrator.topicAnalysis.focus_areas.slice(0, 3).map((area, i) => (
+                    <Badge key={i} variant="secondary" className="text-xs py-0">
+                      {area}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Expert Selection Details */}
+          {orchestrator.type === 'decision' && orchestrator.experts && orchestrator.experts.length > 0 && (
+            <div className="mt-2">
+              <div className="flex flex-wrap gap-1">
+                {orchestrator.experts.map((expert, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs">
+                    {expert}
+                  </Badge>
+                ))}
+              </div>
+              {orchestrator.rationale && orchestrator.rationale.length > 0 && (
+                <ul className="mt-1 text-xs text-muted-foreground list-disc list-inside">
+                  {orchestrator.rationale.slice(0, 2).map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {/* Intervention Reason */}
+          {orchestrator.type === 'intervention' && orchestrator.reason && (
+            <div className="mt-1 text-xs text-orange-600">
+              Reason: {orchestrator.reason}
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground mt-2">
+            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
 // Main Interactive Panel Content
 function PanelInteractiveContent() {
   const searchParams = useSearchParams();
@@ -252,11 +430,13 @@ function PanelInteractiveContent() {
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<ChatMessage[]>([]); // Track current messages for save callback
 
   // State
   const [sessionId] = useState(() => uuidv4());
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
+  const [agentSearchQuery, setAgentSearchQuery] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionPhase, setExecutionPhase] = useState<string>('idle');
   const [currentThinkingExpert, setCurrentThinkingExpert] = useState<string | null>(null);
@@ -298,33 +478,15 @@ function PanelInteractiveContent() {
     sessionStorage.removeItem('preselectedPanelName');
   }, []);
 
-  // Set header actions with panel info
-  useEffect(() => {
-    if (selectedAgentIds.size > 0) {
-      setHeaderActions(
-        <div className="flex items-center gap-2">
-          <div className={`w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600`}>
-            {meta.icon}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-sm text-foreground">{meta.title}</span>
-            <Badge variant="outline" className="text-xs">
-              {selectedAgentIds.size} experts
-            </Badge>
-          </div>
-        </div>
-      );
-    } else {
-      setHeaderActions(null);
-    }
-
-    return () => setHeaderActions(null);
-  }, [selectedAgentIds.size, meta, setHeaderActions]);
-
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
+
+  // Keep messagesRef in sync with messages state (for save callback)
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   // Filter valid agents
   const validAgents = storeAgents
@@ -336,36 +498,191 @@ function PanelInteractiveContent() {
       department_name: (agent as any).department_name ?? undefined,
     })) as unknown as UIAgent[];
 
-  // Get selected agents
-  const selectedAgents = validAgents.filter((a) => selectedAgentIds.has(a.id));
+  // Filter agents by search query
+  const filteredAgents = useMemo(() => {
+    if (!agentSearchQuery.trim()) return validAgents;
+    const query = agentSearchQuery.toLowerCase();
+    return validAgents.filter((agent) =>
+      (agent.display_name || agent.name || '').toLowerCase().includes(query) ||
+      (agent.description || '').toLowerCase().includes(query) ||
+      ((agent as any).business_function || '').toLowerCase().includes(query) ||
+      ((agent as any).department_name || '').toLowerCase().includes(query)
+    );
+  }, [validAgents, agentSearchQuery]);
 
-  // Streaming mutation
-  const streamingMutation = useExecuteUnifiedPanelStreaming({
+  // Get selected agents - memoized to prevent infinite loops
+  const selectedAgents = useMemo(
+    () => validAgents.filter((a) => selectedAgentIds.has(a.id)),
+    [validAgents, selectedAgentIds]
+  );
+
+  // Set header actions with panel info and selected agents
+  useEffect(() => {
+    if (selectedAgentIds.size > 0) {
+      // Compute agents inside effect to avoid dependency on selectedAgents array reference
+      const agentsForHeader = validAgents.filter((a) => selectedAgentIds.has(a.id));
+
+      setHeaderActions(
+        <div className="flex items-center gap-3">
+          {/* Panel Type Icon */}
+          <div className={`w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600`}>
+            {meta.icon}
+          </div>
+
+          {/* Panel Title */}
+          <span className="font-medium text-sm text-foreground">{meta.title}</span>
+
+          {/* Selected Agents Avatars */}
+          {agentsForHeader.length > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground text-xs">with</span>
+              <div className="flex -space-x-2">
+                {agentsForHeader.slice(0, 4).map((agent) => (
+                  <Avatar key={agent.id} className="w-6 h-6 border-2 border-background">
+                    <AvatarImage src={agent.avatar_url} alt={agent.name} />
+                    <AvatarFallback className="text-[10px] bg-purple-100 text-purple-700">
+                      {(agent.display_name || agent.name).charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+                {agentsForHeader.length > 4 && (
+                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] border-2 border-background font-medium">
+                    +{agentsForHeader.length - 4}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Expert Count Badge */}
+          <Badge variant="outline" className="text-xs">
+            {selectedAgentIds.size} expert{selectedAgentIds.size !== 1 ? 's' : ''}
+          </Badge>
+        </div>
+      );
+    } else {
+      setHeaderActions(null);
+    }
+
+    return () => setHeaderActions(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAgentIds.size, storeAgents.length, meta.title, setHeaderActions]);
+
+  // Stable refs to avoid stale closures in callbacks
+  const validAgentsRef = useRef(validAgents);
+  validAgentsRef.current = validAgents;
+
+  const metaTitleRef = useRef(meta.title);
+  metaTitleRef.current = meta.title;
+
+  const selectedAgentIdsRef = useRef(selectedAgentIds);
+  selectedAgentIdsRef.current = selectedAgentIds;
+
+  const consensusRef = useRef(consensus);
+  consensusRef.current = consensus;
+
+  // Save panel to conversations - defined early so it can be used in callbacks
+  const savePanelToConversationsRef = useRef<(panelId: string, executionTimeMs?: number) => Promise<void>>();
+  savePanelToConversationsRef.current = async (panelId: string, executionTimeMs?: number) => {
+    const currentMessages = messagesRef.current;
+    if (!user?.id || currentMessages.length === 0) return;
+
+    try {
+      const supabase = createClient();
+      const now = new Date().toISOString();
+
+      // Convert messages to storage format - preserve expert and orchestrator info for history display
+      const storedMessages = currentMessages.map((m) => ({
+        role: m.role === 'expert' ? 'assistant' : m.role,
+        content: m.content,
+        timestamp: m.timestamp.getTime(),
+        // Preserve expert info for display in history
+        expert: m.expert ? {
+          name: m.expert.name,
+          avatar: m.expert.avatar,
+          confidence: m.expert.confidence,
+        } : undefined,
+        // Preserve orchestrator info for display in history
+        orchestrator: m.orchestrator ? {
+          type: m.orchestrator.type,
+          phase: m.orchestrator.phase,
+          topicAnalysis: m.orchestrator.topicAnalysis,
+        } : undefined,
+      }));
+
+      // Get first user message for title
+      const firstUserMessage = currentMessages.find((m) => m.role === 'user');
+      const title = firstUserMessage
+        ? firstUserMessage.content.substring(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '')
+        : 'Panel Discussion';
+
+      // Get current selected agents for metadata
+      const currentSelectedAgents = validAgentsRef.current.filter((a) => selectedAgentIdsRef.current.has(a.id));
+
+      const { error } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: user.id,
+          title: `[${metaTitleRef.current}] ${title}`,
+          context: {
+            messages: storedMessages,
+            panel_result: {
+              panel_id: panelId,
+              panel_type: panelType,
+              consensus_score: consensusRef.current?.consensus_score,
+              execution_time_ms: executionTimeMs,
+              expert_count: selectedAgentIdsRef.current.size,
+            },
+          },
+          metadata: {
+            mode: 'panel',
+            panel_type: panelType,
+            agent_ids: Array.from(selectedAgentIdsRef.current),
+            agent_names: currentSelectedAgents.map((a) => a.display_name || a.name),
+            consensus_score: consensusRef.current?.consensus_score,
+            is_pinned: false,
+          },
+          created_at: now,
+          updated_at: now,
+        });
+
+      if (error) {
+        console.error('Failed to save panel to conversations:', error);
+      } else {
+        console.log('✅ Panel conversation saved with', currentMessages.length, 'messages');
+      }
+    } catch (err) {
+      console.error('Error saving panel:', err);
+    }
+  };
+
+  // Memoized callbacks to prevent recreation
+  const streamingCallbacks = useMemo(() => ({
     onPanelStarted: () => {
       setExecutionPhase('Panel started');
       setMessages((prev) => [...prev, {
         id: uuidv4(),
-        role: 'system',
-        content: `${meta.title} session started with ${selectedAgentIds.size} experts`,
+        role: 'system' as const,
+        content: `${metaTitleRef.current} session started with ${selectedAgentIdsRef.current.size} experts`,
         timestamp: new Date(),
       }]);
     },
-    onExpertsLoaded: (data) => {
+    onExpertsLoaded: (data: { experts?: Array<{ id: string; name: string }> }) => {
       setExecutionPhase(`${data.experts?.length || 0} experts loaded`);
     },
-    onExpertThinking: (data) => {
+    onExpertThinking: (data: { expert_name?: string }) => {
       setCurrentThinkingExpert(data.expert_name || null);
       setExecutionPhase(`${data.expert_name} is analyzing...`);
     },
-    onExpertResponse: (data) => {
+    onExpertResponse: (data: { expert_id?: string; expert_name?: string; content?: string; confidence?: number }) => {
       setCurrentThinkingExpert(null);
 
-      // Find agent info
-      const agent = validAgents.find((a) => a.id === data.expert_id);
+      // Find agent info using ref
+      const agent = validAgentsRef.current.find((a) => a.id === data.expert_id);
 
       setMessages((prev) => [...prev, {
         id: uuidv4(),
-        role: 'expert',
+        role: 'expert' as const,
         content: data.content || '',
         timestamp: new Date(),
         expert: {
@@ -381,12 +698,12 @@ function PanelInteractiveContent() {
       setCurrentThinkingExpert(null);
       setMessages((prev) => [...prev, {
         id: uuidv4(),
-        role: 'system',
+        role: 'system' as const,
         content: 'Analyzing expert responses and building consensus...',
         timestamp: new Date(),
       }]);
     },
-    onConsensusComplete: (data) => {
+    onConsensusComplete: (data: Partial<UnifiedConsensusResult>) => {
       setConsensus(data as UnifiedConsensusResult);
 
       // Build consensus message
@@ -405,83 +722,99 @@ ${consensusData.key_themes?.length ? `**Key Themes:** ${consensusData.key_themes
 
       setMessages((prev) => [...prev, {
         id: uuidv4(),
-        role: 'consensus',
+        role: 'consensus' as const,
         content: consensusContent,
         timestamp: new Date(),
       }]);
     },
-    onPanelComplete: (data) => {
+    onPanelComplete: (data: { panel_id: string; execution_time_ms?: number }) => {
       setExecutionPhase('Complete');
       setIsExecuting(false);
       setCurrentThinkingExpert(null);
 
-      // Save to conversations
-      savePanelToConversations(data.panel_id, data.execution_time_ms);
+      // Save to conversations (using ref for callback)
+      savePanelToConversationsRef.current?.(data.panel_id, data.execution_time_ms);
     },
-    onError: (data) => {
+    onError: (data: { error?: string }) => {
       setError(data.error || 'An error occurred');
       setIsExecuting(false);
       setCurrentThinkingExpert(null);
     },
-  });
-
-  // Save panel to conversations (like ask-expert)
-  const savePanelToConversations = useCallback(async (panelId: string, executionTimeMs?: number) => {
-    if (!user?.id || messages.length === 0) return;
-
-    try {
-      const supabase = createClient();
-      const now = new Date().toISOString();
-
-      // Convert messages to storage format
-      const storedMessages = messages.map((m) => ({
-        role: m.role === 'expert' ? 'assistant' : m.role,
-        content: m.role === 'expert' && m.expert
-          ? `**${m.expert.name}** (${Math.round((m.expert.confidence || 0) * 100)}% confidence):\n\n${m.content}`
-          : m.content,
-        timestamp: m.timestamp.getTime(),
-      }));
-
-      // Get first user message for title
-      const firstUserMessage = messages.find((m) => m.role === 'user');
-      const title = firstUserMessage
-        ? firstUserMessage.content.substring(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '')
-        : 'Panel Discussion';
-
-      const { error } = await supabase
-        .from('conversations')
-        .insert({
-          user_id: user.id,
-          title: `[${meta.title}] ${title}`,
-          context: {
-            messages: storedMessages,
-            panel_result: {
-              panel_id: panelId,
-              panel_type: panelType,
-              consensus_score: consensus?.consensus_score,
-              execution_time_ms: executionTimeMs,
-              expert_count: selectedAgentIds.size,
-            },
+    // Orchestrator callbacks
+    onOrchestratorThinking: (data: { message: string; phase?: string }) => {
+      setExecutionPhase(data.phase || 'Orchestrator thinking...');
+      setMessages((prev) => [...prev, {
+        id: uuidv4(),
+        role: 'orchestrator' as const,
+        content: data.message,
+        timestamp: new Date(),
+        orchestrator: {
+          type: 'thinking' as const,
+          phase: data.phase,
+        },
+      }]);
+    },
+    onOrchestratorMessage: (data: { message: string; phase?: string }) => {
+      setMessages((prev) => [...prev, {
+        id: uuidv4(),
+        role: 'orchestrator' as const,
+        content: data.message,
+        timestamp: new Date(),
+        orchestrator: {
+          type: 'message' as const,
+          phase: data.phase,
+        },
+      }]);
+    },
+    onOrchestratorDecision: (data: { message: string; experts?: string[]; rationale?: string[] }) => {
+      setMessages((prev) => [...prev, {
+        id: uuidv4(),
+        role: 'orchestrator' as const,
+        content: data.message,
+        timestamp: new Date(),
+        orchestrator: {
+          type: 'decision' as const,
+          experts: data.experts,
+          rationale: data.rationale,
+        },
+      }]);
+    },
+    onOrchestratorIntervention: (data: { message: string; reason: string }) => {
+      setMessages((prev) => [...prev, {
+        id: uuidv4(),
+        role: 'orchestrator' as const,
+        content: data.message,
+        timestamp: new Date(),
+        orchestrator: {
+          type: 'intervention' as const,
+          reason: data.reason,
+        },
+      }]);
+    },
+    onTopicAnalysis: (data: { domain?: string; complexity?: string; focus_areas?: string[]; recommended_approach?: string }) => {
+      const focusAreas = data.focus_areas || [];
+      const message = `Analyzing topic: ${data.domain || 'General'} domain, ${data.complexity || 'moderate'} complexity. ${focusAreas.length > 0 ? `Key focus areas: ${focusAreas.join(', ')}.` : ''} ${data.recommended_approach ? `Recommended approach: ${data.recommended_approach}` : ''}`;
+      setMessages((prev) => [...prev, {
+        id: uuidv4(),
+        role: 'orchestrator' as const,
+        content: message,
+        timestamp: new Date(),
+        orchestrator: {
+          type: 'topic_analysis' as const,
+          topicAnalysis: {
+            domain: data.domain,
+            complexity: data.complexity,
+            focus_areas: data.focus_areas,
+            recommended_approach: data.recommended_approach,
           },
-          metadata: {
-            mode: 'panel',
-            panel_type: panelType,
-            agent_ids: Array.from(selectedAgentIds),
-            agent_names: selectedAgents.map((a) => a.display_name || a.name),
-            consensus_score: consensus?.consensus_score,
-            is_pinned: false,
-          },
-          created_at: now,
-          updated_at: now,
-        });
+        },
+      }]);
+    },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []); // Callbacks are stable - they use refs for all dynamic values
 
-      if (error) {
-        console.error('Failed to save panel to conversations:', error);
-      }
-    } catch (err) {
-      console.error('Error saving panel:', err);
-    }
-  }, [user?.id, messages, panelType, meta.title, consensus, selectedAgentIds, selectedAgents]);
+  // Streaming mutation with stable callbacks
+  const streamingMutation = useExecuteUnifiedPanelStreaming(streamingCallbacks);
 
   // Handle sending a message (starting panel)
   const handleSend = useCallback(async (content: string) => {
@@ -607,16 +940,46 @@ ${consensusData.key_themes?.length ? `**Key Themes:** ${consensusData.key_themes
                 </div>
               </div>
 
+              {/* Search Input */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search experts by name, role, or department..."
+                  value={agentSearchQuery}
+                  onChange={(e) => setAgentSearchQuery(e.target.value)}
+                  className="pl-9 pr-9"
+                />
+                {agentSearchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                    onClick={() => setAgentSearchQuery('')}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+
               {/* Agent Grid */}
               {loadingAgents ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin" />
                   <span className="ml-2 text-muted-foreground">Loading experts...</span>
                 </div>
+              ) : filteredAgents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Search className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                  <p className="text-muted-foreground font-medium">No experts found</p>
+                  <p className="text-sm text-muted-foreground/70">
+                    Try a different search term
+                  </p>
+                </div>
               ) : (
                 <ScrollArea className="h-[400px]">
                   <AgentCardGrid columns={3} className="gap-3 pr-4">
-                    {validAgents.map((agent) => {
+                    {filteredAgents.map((agent) => {
                       const isSelected = selectedAgentIds.has(agent.id);
                       return (
                         <div key={agent.id} className="relative">

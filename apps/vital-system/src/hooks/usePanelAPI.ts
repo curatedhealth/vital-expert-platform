@@ -538,6 +538,12 @@ export interface UnifiedStreamingCallbacks {
   onMatrixComplete?: (data: { aspects: number; overall_consensus: number; synthesis: string }) => void;
   onPanelComplete?: (data: { panel_id: string; status: string; execution_time_ms: number; consensus_score: number; recommendation: string }) => void;
   onError?: (error: { error: string }) => void;
+  // Orchestrator callbacks
+  onOrchestratorThinking?: (data: { message: string; phase?: string }) => void;
+  onOrchestratorMessage?: (data: { message: string; phase?: string; message_type?: string }) => void;
+  onOrchestratorDecision?: (data: { message: string; experts?: string[]; rationale?: string[] }) => void;
+  onOrchestratorIntervention?: (data: { message: string; reason: string }) => void;
+  onTopicAnalysis?: (data: { domain?: string; complexity?: string; focus_areas?: string[]; recommended_approach?: string }) => void;
 }
 
 /**
@@ -572,6 +578,12 @@ export function useExecuteUnifiedPanelStreaming(
           queryClient.invalidateQueries({ queryKey: panelKeys.lists() });
         },
         onError: callbacks.onError,
+        // Orchestrator callbacks
+        onOrchestratorThinking: callbacks.onOrchestratorThinking,
+        onOrchestratorMessage: callbacks.onOrchestratorMessage,
+        onOrchestratorDecision: callbacks.onOrchestratorDecision,
+        onOrchestratorIntervention: callbacks.onOrchestratorIntervention,
+        onTopicAnalysis: callbacks.onTopicAnalysis,
       });
     },
   });

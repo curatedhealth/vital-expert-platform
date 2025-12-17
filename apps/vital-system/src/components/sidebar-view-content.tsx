@@ -13,6 +13,7 @@ import {
   Building2,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   Clock,
   Cloud,
   DollarSign,
@@ -56,6 +57,9 @@ import {
   Briefcase,
   ClipboardList,
   X,
+  Brain,
+  Swords,
+  Vote,
 } from "lucide-react"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -63,6 +67,7 @@ import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, Side
 import { Badge } from "@/components/ui/badge"
 import { createClient } from "@vital/sdk/client"
 import { useSavedPanels } from "@/contexts/ask-panel-context"
+import { useAuth } from "@/lib/auth/supabase-auth-context"
 import { useDesigner } from "@/contexts/designer-context"
 import { PANEL_TEMPLATES } from "@/features/ask-panel/constants/panel-templates"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -202,134 +207,307 @@ export function SidebarDashboardContent() {
   )
 }
 
+// Panel type configurations for quick actions
+const PANEL_TYPE_CONFIG = [
+  { type: 'structured', name: 'Structured', icon: Users, color: 'bg-purple-500' },
+  { type: 'open', name: 'Open', icon: Sparkles, color: 'bg-violet-500' },
+  { type: 'socratic', name: 'Socratic', icon: Brain, color: 'bg-fuchsia-500' },
+  { type: 'adversarial', name: 'Debate', icon: Swords, color: 'bg-rose-500' },
+  { type: 'delphi', name: 'Delphi', icon: Vote, color: 'bg-indigo-500' },
+  { type: 'hybrid', name: 'Hybrid', icon: Target, color: 'bg-cyan-500' },
+]
+
 export function SidebarAskPanelContent() {
-  const { savedPanels } = useSavedPanels()
+  const [customPanels, setCustomPanels] = useState<any[]>([])
+  const [panelHistory, setPanelHistory] = useState<any[]>([])
+  const [historyLoading, setHistoryLoading] = useState(true)
+  const [panelsLoading, setPanelsLoading] = useState(true)
+  const router = useRouter()
+  const { user } = useAuth()
+
+  // Fetch custom panels from /api/panels
+  useEffect(() => {
+    const fetchCustomPanels = async () => {
+      try {
+        const response = await fetch('/api/panels')
+        const data = await response.json()
+        if (response.ok && data.success && data.data?.panels) {
+          // Filter out base templates - show only custom panels
+          const baseTemplateSlugs = ['structured_panel', 'open_panel', 'socratic_panel', 'devils_advocate_panel', 'expert_panel', 'structured_ask_expert_panel']
+          const filtered = data.data.panels.filter((p: any) =>
+            !baseTemplateSlugs.includes(p.slug) || p.metadata?.workflow_definition
+          )
+          setCustomPanels(filtered.slice(0, 5))
+        }
+      } catch (err) {
+        console.error('Error fetching custom panels:', err)
+      } finally {
+        setPanelsLoading(false)
+      }
+    }
+    fetchCustomPanels()
+  }, [])
+
+  // Fetch panel history from /api/ask-panel
+  useEffect(() => {
+    const fetchHistory = async () => {
+      // Use user from auth context - fallback to default user ID for bypass mode
+      const userId = user?.id || 'default-user'
+
+      try {
+        const response = await fetch(`/api/ask-panel?userId=${userId}`)
+        const data = await response.json()
+        if (response.ok && data.sessions) {
+          setPanelHistory(data.sessions.slice(0, 5))
+        }
+      } catch (err) {
+        console.error('Error fetching panel history:', err)
+      } finally {
+        setHistoryLoading(false)
+      }
+    }
+    fetchHistory()
+  }, [user?.id])
+
+  // Format time ago
+  const formatTimeAgo = (dateString: string): string => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    return date.toLocaleDateString()
+  }
 
   return (
     <>
-      {/* My Panels */}
-      {savedPanels.length > 0 && (
-        <Collapsible defaultOpen className="group/collapsible">
-          <SidebarGroup>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-                <span>My Panels ({savedPanels.length})</span>
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {savedPanels.slice(0, 5).map((panel) => {
-                    const IconComponent = panel.IconComponent || Users;
-                    return (
-                      <SidebarMenuItem key={panel.id}>
-                        <SidebarMenuButton className="w-full">
-                          <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 mr-2">
-                            <IconComponent className="h-3 w-3 text-white" />
-                          </div>
-                          <span className="flex-1 text-sm truncate">{panel.name}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
-      )}
-
-      {/* Panel Workflows */}
+      {/* Quick Actions */}
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              Panel Workflows
+              <span className="flex items-center gap-2">
+                <Zap className="h-4 w-4" />
+                Quick Actions
+              </span>
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
           <CollapsibleContent>
             <SidebarGroupContent>
-              <ScrollArea className="h-[calc(100vh-400px)]">
-                <SidebarMenu>
-                  {PANEL_TEMPLATES.map((template) => {
-                    const IconComponent = getCategoryIcon(template.category);
-                    
+              <div className="px-2 space-y-2">
+                {/* Primary Action - AI Wizard */}
+                <button
+                  onClick={() => router.push('/ask-panel?wizard=true')}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition-all text-sm font-medium"
+                >
+                  <Wand2 className="h-4 w-4" />
+                  <span>AI Wizard</span>
+                  <Badge className="ml-auto bg-white/20 text-white text-[10px] px-1.5 py-0">NEW</Badge>
+                </button>
+
+                {/* Secondary Action - Autonomous Panel */}
+                <button
+                  onClick={() => router.push('/ask-panel/autonomous')}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 transition-all text-sm font-medium"
+                >
+                  <Zap className="h-4 w-4" />
+                  <span>Autonomous Panel</span>
+                </button>
+
+                {/* Panel Types Grid */}
+                <div className="grid grid-cols-3 gap-1.5">
+                  {PANEL_TYPE_CONFIG.map((panel) => {
+                    const Icon = panel.icon
                     return (
-                      <SidebarMenuItem key={template.id}>
-                        <SidebarMenuButton
-                          asChild
-                          className="h-auto py-2 px-3 flex-col items-start gap-1"
-                        >
-                          <Link href={`/ask-panel?panelId=${template.id}`}>
-                            <div className="flex items-center gap-2 w-full">
-                              <div className="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                                <IconComponent className="w-4 h-4 text-white" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium truncate">
-                                  {template.name}
-                                </div>
-                                <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                                  {template.description}
-                                </div>
-                                <div className="flex flex-wrap gap-1 mt-1.5">
-                                  <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 capitalize">
-                                    {template.category}
-                                  </Badge>
-                                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
-                                    <Zap className="w-2.5 h-2.5 mr-0.5" />
-                                    {template.mode}
-                                  </Badge>
-                                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
-                                    <Bot className="w-2.5 h-2.5 mr-0.5" />
-                                    {template.suggestedAgents.length}
-                                  </Badge>
-                                </div>
-                              </div>
-                            </div>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
+                      <button
+                        key={panel.type}
+                        onClick={() => router.push(`/ask-panel/interactive?type=${panel.type}`)}
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-sidebar-accent transition-colors text-xs text-muted-foreground hover:text-foreground"
+                        title={panel.name}
+                      >
+                        <div className={`w-6 h-6 rounded-md flex items-center justify-center ${panel.color}`}>
+                          <Icon className="h-3.5 w-3.5 text-white" />
+                        </div>
+                        <span className="truncate w-full text-center">{panel.name}</span>
+                      </button>
+                    )
                   })}
-                </SidebarMenu>
-              </ScrollArea>
+                </div>
+              </div>
             </SidebarGroupContent>
           </CollapsibleContent>
         </SidebarGroup>
       </Collapsible>
 
-      {/* Resources */}
+      {/* Your Custom Panels */}
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
-              Resources
+              <span className="flex items-center gap-2">
+                <Briefcase className="h-4 w-4" />
+                Your Panels
+              </span>
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
           <CollapsibleContent>
             <SidebarGroupContent>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton>
-                    <BookOpen className="h-4 w-4" />
-                    <span>Guidelines</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton>
-                    <Pen className="h-4 w-4" />
-                    <span>Templates</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                {panelsLoading ? (
+                  <SidebarMenuItem>
+                    <div className="flex items-center gap-2 px-2 py-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-xs">Loading...</span>
+                    </div>
+                  </SidebarMenuItem>
+                ) : customPanels.length === 0 ? (
+                  <SidebarMenuItem>
+                    <div className="px-2 py-3 text-center">
+                      <Briefcase className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
+                      <p className="text-xs text-muted-foreground">No custom panels yet</p>
+                      <button
+                        onClick={() => router.push('/ask-panel?wizard=true')}
+                        className="text-xs text-purple-600 hover:text-purple-700 mt-1"
+                      >
+                        Create one →
+                      </button>
+                    </div>
+                  </SidebarMenuItem>
+                ) : (
+                  <>
+                    {customPanels.map((panel) => {
+                      const panelType = panel.metadata?.panel_type || panel.mode || 'structured'
+                      const typeConfig = PANEL_TYPE_CONFIG.find(t => t.type === panelType) || PANEL_TYPE_CONFIG[0]
+                      const Icon = typeConfig.icon
+                      return (
+                        <SidebarMenuItem key={panel.id}>
+                          <SidebarMenuButton
+                            className="w-full"
+                            onClick={() => router.push(`/ask-panel/interactive?type=${panelType}&panelId=${panel.id}`)}
+                          >
+                            <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 mr-2 ${typeConfig.color}`}>
+                              <Icon className="h-3 w-3 text-white" />
+                            </div>
+                            <span className="flex-1 text-sm truncate">{panel.name}</span>
+                            {panel.metadata?.is_favorite && (
+                              <Star className="h-3 w-3 text-amber-500 fill-amber-500 flex-shrink-0" />
+                            )}
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )
+                    })}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        className="w-full text-primary hover:text-primary"
+                        onClick={() => router.push('/ask-panel')}
+                      >
+                        <span className="text-xs">View all panels</span>
+                        <ChevronRight className="h-3 w-3 ml-auto" />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </CollapsibleContent>
         </SidebarGroup>
       </Collapsible>
+
+      {/* History */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              <span className="flex items-center gap-2">
+                <History className="h-4 w-4" />
+                History
+              </span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {historyLoading ? (
+                  <SidebarMenuItem>
+                    <div className="flex items-center gap-2 px-2 py-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-xs">Loading...</span>
+                    </div>
+                  </SidebarMenuItem>
+                ) : panelHistory.length === 0 ? (
+                  <SidebarMenuItem>
+                    <div className="px-2 py-3 text-center">
+                      <History className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
+                      <p className="text-xs text-muted-foreground">No history yet</p>
+                    </div>
+                  </SidebarMenuItem>
+                ) : (
+                  <>
+                    {panelHistory.map((session) => (
+                      <SidebarMenuItem key={session.sessionId}>
+                        <SidebarMenuButton
+                          className="w-full h-auto py-2"
+                          onClick={() => router.push(`/ask-panel/history/${session.conversationId}`)}
+                        >
+                          <div className="flex flex-col items-start gap-1 w-full">
+                            <span className="text-sm font-medium truncate w-full">
+                              {session.title || 'Panel Discussion'}
+                            </span>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Users className="h-3 w-3" />
+                                {session.agentCount}
+                              </span>
+                              <span>{formatTimeAgo(session.lastMessage)}</span>
+                            </div>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        className="w-full text-primary hover:text-primary"
+                        onClick={() => router.push('/ask-panel/history')}
+                      >
+                        <span className="text-xs">View all history</span>
+                        <ChevronRight className="h-3 w-3 ml-auto" />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Empty State for New Users */}
+      {customPanels.length === 0 && panelHistory.length === 0 && !historyLoading && !panelsLoading && (
+        <div className="px-4 py-6 text-center">
+          <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+            <Wand2 className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+          </div>
+          <p className="text-sm font-medium mb-1">Welcome to Ask Panel</p>
+          <p className="text-xs text-muted-foreground mb-3">
+            Consult with multiple AI experts
+          </p>
+          <button
+            onClick={() => router.push('/ask-panel?wizard=true')}
+            className="text-xs text-amber-600 hover:text-amber-700 font-medium"
+          >
+            Start with AI Wizard →
+          </button>
+        </div>
+      )}
     </>
   )
 }

@@ -327,16 +327,66 @@ class UnifiedPanelService:
                 "agent_count": len(agents)
             })
 
+            # === ORCHESTRATOR: Initial Analysis ===
+            yield self._sse_event("orchestrator_thinking", {
+                "message": "Analyzing your question to determine the optimal panel configuration...",
+                "phase": "initialization"
+            })
+
+            # Generate topic analysis using LLM
+            topic_analysis = await self._analyze_topic(question, panel_type)
+            yield self._sse_event("topic_analysis", topic_analysis)
+
             # Convert agents to experts
             experts = self._create_experts(agents)
+
+            # === ORCHESTRATOR: Expert Selection Decision ===
+            expert_names = [e.agent_name for e in experts]
+            yield self._sse_event("orchestrator_decision", {
+                "message": f"I've assembled a panel of {len(experts)} experts to address your question comprehensively.",
+                "experts": expert_names,
+                "rationale": [
+                    f"Selected {len(experts)} diverse perspectives for balanced analysis",
+                    f"Panel type '{panel_type}' chosen for structured deliberation",
+                    "Each expert brings specialized domain knowledge"
+                ]
+            })
 
             # Send expert info
             yield self._sse_event("experts_loaded", {
                 "experts": [{"id": e.agent_id, "name": e.agent_name} for e in experts]
             })
 
+            # === ORCHESTRATOR: Beginning Expert Consultation ===
+            yield self._sse_event("orchestrator_message", {
+                "message": "Now consulting each expert in sequence. I'll synthesize their perspectives once all have responded.",
+                "phase": "expert_consultation",
+                "message_type": "phase_transition"
+            })
+
             # Execute each expert and stream responses
+            all_responses = []
             for i, expert in enumerate(experts):
+                # Orchestrator introduces each expert
+                if i == 0:
+                    yield self._sse_event("orchestrator_message", {
+                        "message": f"Let's begin with {expert.agent_name}...",
+                        "phase": "expert_consultation",
+                        "message_type": "introduction"
+                    })
+                elif i == len(experts) - 1:
+                    yield self._sse_event("orchestrator_message", {
+                        "message": f"Finally, let's hear from {expert.agent_name} to complete our panel perspectives.",
+                        "phase": "expert_consultation",
+                        "message_type": "introduction"
+                    })
+                else:
+                    yield self._sse_event("orchestrator_message", {
+                        "message": f"Next, {expert.agent_name} will share their analysis...",
+                        "phase": "expert_consultation",
+                        "message_type": "introduction"
+                    })
+
                 yield self._sse_event("expert_thinking", {
                     "expert_id": expert.agent_id,
                     "expert_name": expert.agent_name,
@@ -348,6 +398,7 @@ class UnifiedPanelService:
                 response = await self._get_single_expert_response(
                     expert, question, panel_type, context
                 )
+                all_responses.append(response)
 
                 yield self._sse_event("expert_response", {
                     "expert_id": expert.agent_id,
@@ -356,15 +407,21 @@ class UnifiedPanelService:
                     "confidence": response.get("confidence", 0.7)
                 })
 
-            # Collect all responses for consensus
-            all_responses = []
-            for expert in experts:
-                response = await self._get_single_expert_response(
-                    expert, question, panel_type, context
-                )
-                all_responses.append(response)
+                # Orchestrator brief commentary after each response (except last)
+                if i < len(experts) - 1:
+                    yield self._sse_event("orchestrator_message", {
+                        "message": f"Interesting perspective from {expert.agent_name}. Let's see how the next expert's view compares.",
+                        "phase": "expert_consultation",
+                        "message_type": "transition"
+                    })
 
-            # Calculate consensus
+            # === ORCHESTRATOR: Transitioning to Consensus ===
+            yield self._sse_event("orchestrator_thinking", {
+                "message": "All experts have shared their perspectives. Now analyzing areas of agreement and divergence across the panel...",
+                "phase": "consensus_building"
+            })
+
+            # Calculate consensus (using already collected responses)
             yield self._sse_event("calculating_consensus", {
                 "response_count": len(all_responses)
             })
@@ -385,12 +442,24 @@ class UnifiedPanelService:
             yield self._sse_event("consensus_complete", {
                 "consensus_score": consensus.consensus_score,
                 "consensus_level": consensus.consensus_level,
-                "agreement_points": consensus.agreement_points[:3],
-                "divergent_points": consensus.divergent_points[:3],
-                "recommendation": consensus.recommendation[:500]
+                "agreement_points": consensus.agreement_points[:5],
+                "divergent_points": consensus.divergent_points[:5],
+                "recommendation": consensus.recommendation  # Full recommendation, no truncation
+            })
+
+            # === ORCHESTRATOR: Consensus Interpretation ===
+            consensus_interpretation = self._interpret_consensus(consensus)
+            yield self._sse_event("orchestrator_message", {
+                "message": consensus_interpretation,
+                "phase": "consensus_complete",
+                "message_type": "interpretation"
             })
 
             # Build comparison matrix
+            yield self._sse_event("orchestrator_thinking", {
+                "message": "Building a detailed comparison matrix to highlight how each expert's position compares across key aspects...",
+                "phase": "matrix_building"
+            })
             yield self._sse_event("building_matrix", {})
 
             matrix = await self.matrix_builder.build_matrix(
@@ -400,12 +469,19 @@ class UnifiedPanelService:
             yield self._sse_event("matrix_complete", {
                 "aspects": len(matrix.aspects),
                 "overall_consensus": matrix.overall_consensus,
-                "synthesis": matrix.synthesis[:500]
+                "synthesis": matrix.synthesis  # Full synthesis, no truncation
             })
 
             # Calculate final execution time
             end_time = datetime.now(timezone.utc)
             execution_time_ms = int((end_time - start_time).total_seconds() * 1000)
+
+            # === ORCHESTRATOR: Final Synthesis ===
+            yield self._sse_event("orchestrator_message", {
+                "message": f"Panel discussion complete. After consulting {len(experts)} experts and achieving {consensus.consensus_level} consensus ({int(consensus.consensus_score * 100)}%), I've synthesized their insights into actionable recommendations. The comparison matrix highlights {len(matrix.aspects)} key aspects where expert opinions aligned or diverged.",
+                "phase": "completion",
+                "message_type": "final_synthesis"
+            })
 
             # Send completion event
             yield self._sse_event("panel_complete", {
@@ -518,6 +594,73 @@ Please provide your expert analysis with:
     def _sse_event(self, event_type: str, data: Dict[str, Any]) -> str:
         """Format data as SSE event"""
         return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
+
+    async def _analyze_topic(self, question: str, panel_type: str) -> Dict[str, Any]:
+        """Analyze the topic to determine domain, complexity, and recommended approach"""
+        try:
+            analysis_prompt = f"""Analyze this question for a panel discussion:
+
+QUESTION: {question}
+PANEL TYPE: {panel_type}
+
+Provide a brief analysis in JSON format:
+{{
+    "domain": "<primary domain like 'pharmaceuticals', 'regulatory', 'clinical', 'commercial'>",
+    "complexity": "<low/medium/high>",
+    "focus_areas": ["<area1>", "<area2>", "<area3>"],
+    "recommended_approach": "<brief 1-2 sentence approach recommendation>"
+}}
+
+Return ONLY valid JSON, no other text."""
+
+            response = await self.llm_service.generate(
+                prompt=analysis_prompt,
+                model="gpt-3.5-turbo",
+                temperature=0.3,
+                max_tokens=300
+            )
+
+            # Parse JSON response
+            try:
+                analysis = json.loads(response.strip())
+                return {
+                    "domain": analysis.get("domain", "general"),
+                    "complexity": analysis.get("complexity", "medium"),
+                    "focus_areas": analysis.get("focus_areas", []),
+                    "recommended_approach": analysis.get("recommended_approach", "")
+                }
+            except json.JSONDecodeError:
+                return {
+                    "domain": "general",
+                    "complexity": "medium",
+                    "focus_areas": [],
+                    "recommended_approach": f"Using {panel_type} panel format for structured analysis"
+                }
+
+        except Exception as e:
+            logger.warning(f"Topic analysis failed: {e}")
+            return {
+                "domain": "general",
+                "complexity": "medium",
+                "focus_areas": [],
+                "recommended_approach": f"Using {panel_type} panel format for structured analysis"
+            }
+
+    def _interpret_consensus(self, consensus: ConsensusResult) -> str:
+        """Generate orchestrator interpretation of consensus results"""
+        score = consensus.consensus_score
+        level = consensus.consensus_level
+        agreements = len(consensus.agreement_points)
+        divergences = len(consensus.divergent_points)
+
+        if score >= 0.85:
+            return f"Excellent alignment achieved! The panel shows {level} consensus ({int(score * 100)}%) with {agreements} points of strong agreement. The experts are largely unified in their assessment."
+        elif score >= 0.70:
+            return f"Good consensus reached at {int(score * 100)}% ({level}). While there are {agreements} areas of agreement, I've identified {divergences} points where expert opinions differ - these represent areas that may need further consideration."
+        elif score >= 0.50:
+            return f"Moderate consensus at {int(score * 100)}% ({level}). The panel shows significant diversity of opinion with {divergences} divergent viewpoints. This suggests the question has multiple valid perspectives worth considering."
+        else:
+            return f"The panel shows limited consensus ({int(score * 100)}%, {level}) with {divergences} areas of disagreement. This diversity of expert opinion indicates a complex topic where different approaches may be equally valid. Consider the varying perspectives carefully."
 
     async def _save_panel_to_db(
         self,

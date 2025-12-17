@@ -5,6 +5,13 @@
  */
 
 export * from './PanelAutonomousView';
+export * from './DebateNetworkView';
+export * from './AIWizardPanel';
+export * from './PanelCreationWizard';
+export * from './AgentCard';
+export * from './PanelConsultationView';
+export * from './PanelExecutionView';
+export * from './CreateCustomPanelDialog';
 
 // Default export
 export { PanelAutonomousView as default } from './PanelAutonomousView';

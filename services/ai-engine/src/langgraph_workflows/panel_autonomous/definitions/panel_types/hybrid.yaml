@@ -1,0 +1,110 @@
+# Hybrid Panel Definition
+# Combined AI analysis with human-in-the-loop (HITL) checkpoints
+
+id: hybrid
+name: Hybrid Panel
+description: >
+  Combined AI-human collaboration with HITL checkpoints. AI experts provide
+  thorough analysis designed for human review. Explicitly flags areas
+  requiring human judgment, ethical considerations, or domain expertise.
+version: "1.0.0"
+
+config:
+  default_expert_count: 4
+  min_experts: 2
+  max_experts: 8
+  default_rounds: 2
+  min_rounds: 1
+  max_rounds: 4
+  supports_consensus: true
+  supports_checkpoints: true  # Always has checkpoints
+  requires_positions: false
+  expert_selection_method: hybrid
+  diversity_weight: 0.4
+  default_consensus_threshold: 0.7
+  early_termination_enabled: true
+
+prompts:
+  initial:
+    id: hybrid_initial
+    description: Initial analysis designed for human review
+    placeholders:
+      - goal
+      - context
+      - round_number
+    template: |
+      You are participating in a hybrid panel discussion that will be reviewed by humans.
+
+      Your analysis should be thorough and well-structured to facilitate human review.
+      Clearly flag areas where human judgment or expertise is particularly needed.
+
+      QUESTION/GOAL: {goal}
+
+      {context_section}
+
+      Round {round_number} of discussion.
+
+      {previous_responses_section}
+
+      Provide thorough analysis for human review covering:
+
+      Analysis Summary: Key findings and insights from your expert perspective
+
+      Recommendations: What do you recommend and why?
+
+      Areas Needing Human Judgment: What aspects of this question require:
+        - Human expertise or domain knowledge beyond AI capabilities
+        - Ethical considerations
+        - Stakeholder input
+        - Real-world context that may not be in the data
+
+      Confidence and Limitations:
+        - How confident are you in your analysis? (express as percentage)
+        - What are the limitations of this analysis?
+        - What additional information would improve your assessment?
+
+      Suggested Follow-up Questions: What should human reviewers consider or investigate further?
+
+  followup:
+    id: hybrid_followup
+    description: Refined analysis incorporating panel insights
+    placeholders:
+      - goal
+      - context
+      - round_number
+      - previous_responses
+    template: |
+      You are participating in a hybrid panel discussion that will be reviewed by humans.
+
+      QUESTION/GOAL: {goal}
+
+      {context_section}
+
+      Round {round_number} of discussion.
+
+      PREVIOUS PANEL ANALYSIS:
+      {previous_responses}
+
+      Provide refined analysis for human review:
+
+      Synthesis of Panel Views: What are the key points of agreement and disagreement?
+
+      Refined Recommendations: Based on the collective analysis, what do you now recommend?
+
+      Resolved vs. Unresolved Issues:
+        - What questions have been adequately addressed by the panel?
+        - What questions remain open and need human input?
+
+      Critical Decision Points: What are the key decisions that humans must make?
+
+      Risk Assessment: What risks have been identified that require human attention?
+
+      Next Steps: What actions should human reviewers take based on this analysis?
+
+format_instructions: |
+  IMPORTANT FORMAT RULE: Write in plain text only. Do NOT use any markdown formatting such as:
+  - No asterisks for bold or italic (no ** or *)
+  - No hash symbols for headings (no # or ##)
+  - No bullet points or dashes at start of lines
+  - No code blocks or backticks
+  Write in clear paragraphs with complete sentences. Use line breaks between sections.

@@ -1,0 +1,106 @@
+# Delphi Panel Definition
+# Anonymous expert assessment with iterative voting and convergence
+
+id: delphi
+name: Delphi Panel
+description: >
+  Anonymous expert consensus with iterative voting. Experts provide
+  independent assessments that are shared anonymously to encourage
+  convergence toward true consensus without groupthink.
+version: "1.0.0"
+
+config:
+  default_expert_count: 5
+  min_experts: 3
+  max_experts: 12
+  default_rounds: 3
+  min_rounds: 2
+  max_rounds: 5
+  supports_consensus: true
+  supports_checkpoints: true
+  requires_positions: false
+  expert_selection_method: fusion
+  diversity_weight: 0.5  # High diversity for independent views
+  default_consensus_threshold: 0.75  # Higher threshold for true consensus
+  early_termination_enabled: true
+
+prompts:
+  initial:
+    id: delphi_initial
+    description: First round independent assessment
+    placeholders:
+      - goal
+      - context
+      - round_number
+    template: |
+      You are participating in a Delphi panel discussion.
+
+      The Delphi method gathers independent expert opinions iteratively,
+      with each round revealing anonymous feedback to help convergence.
+
+      QUESTION/GOAL: {goal}
+
+      {context_section}
+
+      Round {round_number} of Delphi assessment.
+
+      Provide your INDEPENDENT assessment:
+
+      Your Position: Rate from 1 to 10 (where 1 = strongly disagree, 10 = strongly agree)
+
+      Key Reasoning: Explain the main factors driving your position
+
+      Confidence Level: How confident are you in this assessment? (Low/Medium/High)
+
+      What Would Change Your View: What evidence or arguments would move you significantly?
+
+  followup:
+    id: delphi_followup
+    description: Follow-up round with anonymous group feedback
+    placeholders:
+      - goal
+      - context
+      - round_number
+      - previous_responses
+      - vote_statistics
+    template: |
+      You are participating in a Delphi panel discussion.
+
+      QUESTION/GOAL: {goal}
+
+      {context_section}
+
+      Round {round_number} of Delphi assessment.
+
+      ANONYMOUS GROUP FEEDBACK FROM PREVIOUS ROUND:
+      {vote_statistics}
+
+      {previous_responses}
+
+      Consider whether the anonymous feedback from other experts changes your assessment.
+      You may adjust your position or reinforce it with additional reasoning.
+
+      Provide your updated assessment:
+
+      Your Position: Rate from 1 to 10 (where 1 = strongly disagree, 10 = strongly agree)
+
+      Key Reasoning: Explain the main factors driving your position
+
+      Confidence Level: How confident are you in this assessment? (Low/Medium/High)
+
+      What Would Change Your View: What evidence or arguments would move you significantly?
+
+      Reflection on Group Feedback: Did the other experts' reasoning change your thinking? Why or why not?
+
+format_instructions: |
+  IMPORTANT FORMAT RULE: Write in plain text only. Do NOT use any markdown formatting such as:
+  - No asterisks for bold or italic (no ** or *)
+  - No hash symbols for headings (no # or ##)
+  - No bullet points or dashes at start of lines
+  - No code blocks or backticks
+  Write in clear paragraphs with complete sentences. Use line breaks between sections.
+
+response_formatting:
+  anonymize_responses: true
+  show_vote_statistics: true
+  statistics_format: "Average={avg}, Range={min}-{max}"

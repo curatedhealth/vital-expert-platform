@@ -366,11 +366,11 @@ async def _execute_panel_mission_async(
             "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }).eq("id", mission_id).execute()
 
-        # Emit mission started
+        # Emit mission started - send full goal, no truncation
         await emit_mission_event(mission_id, "panel_started", {
             "mission_id": mission_id,
             "panel_type": request.panel_type,
-            "goal": request.goal[:200],
+            "goal": request.goal,  # Full goal with all questions
             "max_rounds": request.get_max_rounds(),
         })
 

@@ -1,0 +1,165 @@
+# Panel Definition Schema
+# This defines the structure for panel type YAML files
+# All panel definitions must conform to this schema
+
+$schema: "http://json-schema.org/draft-07/schema#"
+$id: "https://vital.ai/schemas/panel-definition.yaml"
+title: Panel Definition Schema
+description: Schema for defining panel types in the VITAL Ask Panel system
+
+definitions:
+  prompt_template:
+    type: object
+    required:
+      - id
+      - template
+    properties:
+      id:
+        type: string
+        description: Unique identifier for this prompt
+      template:
+        type: string
+        description: The prompt template with {placeholders}
+      placeholders:
+        type: array
+        items:
+          type: string
+        description: List of placeholder names used in template
+      description:
+        type: string
+        description: Human-readable description of this prompt
+
+  position:
+    type: object
+    required:
+      - name
+      - role
+    properties:
+      name:
+        type: string
+        description: Display name for this position
+      role:
+        type: string
+        description: Description of the position's role
+      expert_count:
+        type: integer
+        minimum: 1
+        description: Number of experts in this position
+      speaks_in_rounds:
+        type: array
+        items:
+          type: integer
+        description: Which rounds this position participates in
+
+type: object
+required:
+  - id
+  - name
+  - description
+  - config
+  - prompts
+
+properties:
+  id:
+    type: string
+    pattern: "^[a-z_]+$"
+    description: Panel type identifier (e.g., structured, adversarial)
+
+  name:
+    type: string
+    description: Human-readable name
+
+  description:
+    type: string
+    description: Description of this panel type
+
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+    default: "1.0.0"
+    description: Semantic version of this definition
+
+  config:
+    type: object
+    required:
+      - default_expert_count
+      - default_rounds
+    properties:
+      default_expert_count:
+        type: integer
+        minimum: 1
+        maximum: 20
+      min_experts:
+        type: integer
+        minimum: 1
+      max_experts:
+        type: integer
+        minimum: 1
+      default_rounds:
+        type: integer
+        minimum: 1
+        maximum: 10
+      min_rounds:
+        type: integer
+        minimum: 1
+      max_rounds:
+        type: integer
+        minimum: 1
+      supports_consensus:
+        type: boolean
+        default: true
+      supports_checkpoints:
+        type: boolean
+        default: true
+      requires_positions:
+        type: boolean
+        default: false
+      expert_selection_method:
+        type: string
+        enum: [fusion, keyword, hybrid, manual]
+        default: fusion
+      diversity_weight:
+        type: number
+        minimum: 0
+        maximum: 1
+      default_consensus_threshold:
+        type: number
+        minimum: 0
+        maximum: 1
+      early_termination_enabled:
+        type: boolean
+        default: true
+
+  positions:
+    type: object
+    description: Position definitions for positional panels (e.g., adversarial)
+    additionalProperties:
+      $ref: "#/definitions/position"
+
+  prompts:
+    type: object
+    description: Prompt templates for different scenarios
+    properties:
+      initial:
+        $ref: "#/definitions/prompt_template"
+        description: Prompt for first round
+      rebuttal:
+        $ref: "#/definitions/prompt_template"
+        description: Prompt for rebuttal rounds
+      synthesis:
+        $ref: "#/definitions/prompt_template"
+        description: Prompt for synthesis/moderator
+      position_prompts:
+        type: object
+        description: Position-specific prompts (for adversarial panels)
+        additionalProperties:
+          type: object
+          properties:
+            initial:
+              $ref: "#/definitions/prompt_template"
+            rebuttal:
+              $ref: "#/definitions/prompt_template"
+
+  format_instructions:
+    type: string
+    description: Instructions for output formatting (prevents markdown, etc.)

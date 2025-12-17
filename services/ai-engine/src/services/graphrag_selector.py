@@ -180,6 +180,48 @@ class GraphRAGSelector:
             neo4j_results, "Neo4j", []
         )
 
+        # CRITICAL FIX: Adjust min_confidence dynamically based on active methods
+        # When only PostgreSQL is available (30% weight), max RRF score is ~0.005
+        # which means only 1 agent would pass the default 0.005 threshold
+        active_methods = 0
+        active_weight = 0.0
+        if len(postgres_results) > 0:
+            active_methods += 1
+            active_weight += self.WEIGHTS["postgres_fulltext"]
+        if len(pinecone_results) > 0:
+            active_methods += 1
+            active_weight += self.WEIGHTS["pinecone_vector"]
+        if len(neo4j_results) > 0:
+            active_methods += 1
+            active_weight += self.WEIGHTS["neo4j_graph"]
+
+        # Scale min_confidence based on available methods
+        # Full 3-method fusion: use original threshold
+        # Single method: scale threshold to allow more results through
+        if active_methods == 1:
+            # With single method (max weight 0.50), max score is weight/(RRF_K) ≈ 0.008
+            # Lower threshold significantly to allow multiple agents
+            effective_min_confidence = min_confidence * 0.1  # 0.0005 for default
+            logger.info(
+                "Adjusting min_confidence for single-method search",
+                original_threshold=min_confidence,
+                effective_threshold=effective_min_confidence,
+                active_methods=active_methods,
+                active_weight=active_weight
+            )
+        elif active_methods == 2:
+            # With 2 methods, scale moderately
+            effective_min_confidence = min_confidence * 0.5  # 0.0025 for default
+            logger.info(
+                "Adjusting min_confidence for dual-method search",
+                original_threshold=min_confidence,
+                effective_threshold=effective_min_confidence,
+                active_methods=active_methods,
+                active_weight=active_weight
+            )
+        else:
+            effective_min_confidence = min_confidence
+
         # H5: Check if all search methods failed
         all_methods_failed = (
             len(postgres_results) == 0 and
@@ -250,19 +292,22 @@ class GraphRAGSelector:
             "GraphRAG score fusion completed",
             total_unique_agents=len(fused_agents),
             top_fused_score=round(fused_agents[0]["fused_score"], 4) if fused_agents else 0.0,
-            min_confidence_threshold=min_confidence
+            min_confidence_threshold=effective_min_confidence,
+            original_threshold=min_confidence,
+            active_methods=active_methods
         )
 
-        # Apply minimum confidence threshold
+        # Apply minimum confidence threshold (using effective threshold)
         filtered_agents = [
             agent for agent in fused_agents
-            if agent.get("fused_score", 0) >= min_confidence
+            if agent.get("fused_score", 0) >= effective_min_confidence
         ]
 
         logger.info(
             "GraphRAG confidence filtering",
             agents_before_filter=len(fused_agents),
-            agents_after_filter=len(filtered_agents)
+            agents_after_filter=len(filtered_agents),
+            effective_threshold=effective_min_confidence
         )
 
         # Select top-k agents
@@ -293,7 +338,8 @@ class GraphRAGSelector:
                 pinecone_count=len(pinecone_results),
                 neo4j_count=len(neo4j_results),
                 contributing_methods=contributing_methods,
-                min_confidence=min_confidence,
+                effective_min_confidence=effective_min_confidence,
+                original_min_confidence=min_confidence,
                 total_fused=len(fused_agents),
                 agents_filtered_out=len(fused_agents) - len(filtered_agents),
                 top_fused_score=round(fused_agents[0]["fused_score"], 4) if fused_agents else 0.0,
@@ -318,7 +364,7 @@ class GraphRAGSelector:
                 neo4j_count=len(neo4j_results),
                 total_fused=len(fused_agents),
                 filtered_out=len(fused_agents) - len(filtered_agents),
-                min_confidence_threshold=min_confidence,
+                effective_min_confidence=effective_min_confidence,
                 top_fused_score=round(fused_agents[0]["fused_score"], 4) if fused_agents else 0.0,
                 phase="H5_stub_fallback_logging"
             )

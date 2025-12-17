@@ -4,10 +4,10 @@
  * VITAL Platform - Panel Stream State Reducer
  *
  * Centralized state management for Panel Mission SSE events.
- * Handles multi-expert parallel execution, consensus building,
- * and HITL checkpoints.
+ * Supports both parallel execution and turn-based debate topologies.
  *
  * Event Types Handled:
+ * === Parallel Panel Events ===
  * 1. panel_started - Panel discussion begins
  * 2. panel_status - Status updates
  * 3. experts_selected - Expert team assembled
@@ -23,6 +23,13 @@
  * 13. panel_resumed - Panel resumed
  * 14. panel_cancelled - Panel cancelled
  * 15. error - Error events
+ *
+ * === Debate Panel Events (NEW) ===
+ * 16. turn_started - A position (PRO/CON/MODERATOR) begins speaking
+ * 17. argument - PRO presents initial argument
+ * 18. rebuttal - Expert directly responds to opposition
+ * 19. synthesis - Moderator synthesizes the debate
+ * 20. debate_exchange - Complete exchange (argument + rebuttal pair)
  */
 
 import type { PanelType, PanelMissionStatus } from '@/lib/api/panel-client';
@@ -36,6 +43,7 @@ export interface ExpertInfo {
   name: string;
   model?: string;
   role?: 'expert' | 'moderator' | 'advocate';
+  position?: 'pro' | 'con' | 'moderator'; // For debate panels
 }
 
 export interface ExpertResponse {
@@ -44,10 +52,32 @@ export interface ExpertResponse {
   content: string;
   confidence: number;
   round: number;
-  position?: string;
+  position?: 'pro' | 'con' | 'moderator';
   vote?: number;
   timestamp: string;
+  isRebuttal?: boolean;      // True if responding to opposition
+  respondingTo?: 'pro' | 'con'; // Which side this responds to
+  isStreaming?: boolean;     // True if response is being streamed token by token
 }
+
+// Debate-specific types
+export interface DebateExchange {
+  round: number;
+  proArgument: ExpertResponse | null;
+  conRebuttal: ExpertResponse | null;
+  moderatorSynthesis: ExpertResponse | null;
+  timestamp: string;
+}
+
+export interface DebateTurn {
+  position: 'pro' | 'con' | 'moderator';
+  round: number;
+  isRebuttal: boolean;
+  respondingTo?: 'pro' | 'con';
+  timestamp: string;
+}
+
+export type GraphTopology = 'parallel' | 'debate';
 
 export interface ConsensusState {
   consensusScore: number;
@@ -83,11 +113,55 @@ export interface FinalOutput {
   }>;
 }
 
+export interface StreamingExpert {
+  expertId: string;
+  expertName: string;
+  round: number;
+  position?: 'pro' | 'con' | 'moderator';
+  content: string;       // Accumulated tokens
+  startedAt: number;
+}
+
+// =============================================================================
+// ORCHESTRATOR TYPES
+// =============================================================================
+
+export interface OrchestratorMessage {
+  id: string;
+  type: 'thinking' | 'message' | 'decision' | 'intervention';
+  message: string;
+  phase?: string;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface TopicAnalysis {
+  domain: string;
+  complexity: 'Low' | 'Medium' | 'High';
+  keyStakeholders: string[];
+  criticalFactors: string[];
+  recommendedExpertise: string[];
+  discussionFocus: string;
+}
+
+export interface OrchestratorState {
+  name: string;
+  avatar: string;
+  isThinking: boolean;
+  currentPhase: string;
+  messages: OrchestratorMessage[];
+  topicAnalysis: TopicAnalysis | null;
+  expertSelectionRationale: string[];
+}
+
 export interface PanelStreamState {
   // Mission identity
   missionId: string | null;
   panelType: PanelType;
   goal: string;
+
+  // Graph topology (determines how responses are structured)
+  topology: GraphTopology;
 
   // Mission status
   status: PanelMissionStatus;
@@ -98,6 +172,34 @@ export interface PanelStreamState {
   expertCount: number;
   selectionMethod: 'manual' | 'fusion' | null;
 
+  // Token streaming state (tracks experts currently streaming)
+  streamingExperts: Map<string, StreamingExpert>;
+
+  // === Debate-specific state ===
+  // Experts by position (for debate topology)
+  proExperts: ExpertInfo[];
+  conExperts: ExpertInfo[];
+  moderatorExperts: ExpertInfo[];
+
+  // Current turn tracking (for debate topology)
+  currentTurn: DebateTurn | null;
+
+  // Debate exchanges (for debate topology)
+  debateExchanges: DebateExchange[];
+
+  // Debate log (chronological events for UI animation)
+  debateLog: Array<{
+    type: 'turn_started' | 'argument' | 'rebuttal' | 'synthesis';
+    position: 'pro' | 'con' | 'moderator';
+    expertName?: string;
+    content?: string;
+    round: number;
+    isRebuttal?: boolean;
+    respondingTo?: 'pro' | 'con';
+    timestamp: string;
+  }>;
+
+  // === Common state ===
   // Discussion rounds
   currentRound: number;
   maxRounds: number;
@@ -122,6 +224,9 @@ export interface PanelStreamState {
   startedAt: number | null;
   completedAt: number | null;
 
+  // === Orchestrator State (NEW) ===
+  orchestrator: OrchestratorState;
+
   // Force React re-render trigger
   _updateTrigger: number;
 }
@@ -139,20 +244,37 @@ export interface PanelStreamError {
 
 export type PanelStreamAction =
   // Panel lifecycle
-  | { type: 'PANEL_STARTED'; payload: { missionId: string; panelType: PanelType; goal: string; maxRounds?: number } }
+  | { type: 'PANEL_STARTED'; payload: { missionId: string; panelType: PanelType; goal: string; maxRounds?: number; topology?: GraphTopology } }
   | { type: 'PANEL_STATUS'; payload: { status: PanelMissionStatus; progress?: number } }
   | { type: 'PANEL_COMPLETED'; payload: { finalOutput?: FinalOutput; totalCost?: number; qualityScore?: number } }
   | { type: 'PANEL_PAUSED' }
   | { type: 'PANEL_RESUMED' }
   | { type: 'PANEL_CANCELLED'; payload?: { reason?: string } }
 
-  // Expert team
+  // Expert team (parallel topology)
   | { type: 'EXPERTS_SELECTED'; payload: { experts: ExpertInfo[]; selectionMethod: 'manual' | 'fusion' } }
 
-  // Discussion rounds
+  // Expert team (debate topology)
+  | { type: 'DEBATE_EXPERTS_ASSIGNED'; payload: { proExperts: ExpertInfo[]; conExperts: ExpertInfo[]; moderatorExperts: ExpertInfo[] } }
+
+  // Discussion rounds (parallel topology)
   | { type: 'ROUND_STARTED'; payload: { round: number } }
   | { type: 'EXPERT_RESPONSE'; payload: ExpertResponse }
   | { type: 'ROUND_COMPLETE'; payload: { round: number; responses: ExpertResponse[] } }
+
+  // Token streaming (real-time expert responses)
+  | { type: 'EXPERT_STREAM_START'; payload: { expertId: string; expertName: string; round: number; position?: 'pro' | 'con' | 'moderator' } }
+  | { type: 'EXPERT_TOKEN_APPEND'; payload: { expertId: string; token: string } }
+  | { type: 'EXPERT_STREAM_END'; payload: { expertId: string; confidence?: number } }
+
+  // === Debate-specific actions (NEW) ===
+  // Turn tracking
+  | { type: 'TURN_STARTED'; payload: { position: 'pro' | 'con' | 'moderator'; round: number; isRebuttal: boolean; respondingTo?: 'pro' | 'con' } }
+
+  // Arguments and rebuttals
+  | { type: 'ARGUMENT'; payload: ExpertResponse }
+  | { type: 'REBUTTAL'; payload: ExpertResponse & { respondingTo: 'pro' | 'con' } }
+  | { type: 'SYNTHESIS'; payload: ExpertResponse }
 
   // Consensus
   | { type: 'CONSENSUS_UPDATE'; payload: Partial<ConsensusState> }
@@ -167,7 +289,14 @@ export type PanelStreamAction =
   // Stream lifecycle
   | { type: 'STREAM_CONNECT' }
   | { type: 'STREAM_ERROR'; payload: { code: string; message: string; recoverable?: boolean } }
-  | { type: 'STREAM_RESET' };
+  | { type: 'STREAM_RESET' }
+
+  // === Orchestrator actions (NEW) ===
+  | { type: 'ORCHESTRATOR_THINKING'; payload: { message: string; phase?: string } }
+  | { type: 'ORCHESTRATOR_MESSAGE'; payload: { message: string; phase?: string; metadata?: Record<string, unknown> } }
+  | { type: 'ORCHESTRATOR_DECISION'; payload: { message: string; phase?: string; experts?: string[]; rationale?: string[] } }
+  | { type: 'ORCHESTRATOR_INTERVENTION'; payload: { message: string; reason: string } }
+  | { type: 'TOPIC_ANALYSIS'; payload: TopicAnalysis };
 
 // =============================================================================
 // INITIAL STATE
@@ -179,6 +308,9 @@ export const initialPanelStreamState: PanelStreamState = {
   panelType: 'structured',
   goal: '',
 
+  // Graph topology
+  topology: 'parallel',
+
   // Mission status
   status: 'pending',
   progress: 0,
@@ -187,6 +319,17 @@ export const initialPanelStreamState: PanelStreamState = {
   experts: [],
   expertCount: 0,
   selectionMethod: null,
+
+  // Token streaming state
+  streamingExperts: new Map(),
+
+  // Debate-specific state
+  proExperts: [],
+  conExperts: [],
+  moderatorExperts: [],
+  currentTurn: null,
+  debateExchanges: [],
+  debateLog: [],
 
   // Discussion rounds
   currentRound: 0,
@@ -212,6 +355,17 @@ export const initialPanelStreamState: PanelStreamState = {
   startedAt: null,
   completedAt: null,
 
+  // Orchestrator state
+  orchestrator: {
+    name: 'Panel Orchestrator',
+    avatar: '/icons/png/avatars/avatar_0001.png',
+    isThinking: false,
+    currentPhase: '',
+    messages: [],
+    topicAnalysis: null,
+    expertSelectionRationale: [],
+  },
+
   // Update trigger
   _updateTrigger: 0,
 };
@@ -229,16 +383,28 @@ export function panelStreamReducer(
     // PANEL LIFECYCLE
     // =========================================================================
     case 'PANEL_STARTED':
+      // Determine topology from panel type or explicit payload
+      const inferredTopology: GraphTopology = action.payload.topology ??
+        (action.payload.panelType === 'adversarial' ? 'debate' : 'parallel');
+
       return {
         ...state,
         missionId: action.payload.missionId,
         panelType: action.payload.panelType,
         goal: action.payload.goal,
+        topology: inferredTopology,
         maxRounds: action.payload.maxRounds ?? 3,
         status: 'planning',
         progress: 5,
         startedAt: Date.now(),
         error: null,
+        // Reset debate state for new panel
+        proExperts: [],
+        conExperts: [],
+        moderatorExperts: [],
+        currentTurn: null,
+        debateExchanges: [],
+        debateLog: [],
         _updateTrigger: Date.now(),
       };
 
@@ -355,8 +521,297 @@ export function panelStreamReducer(
         currentRound: action.payload.round || state.currentRound,
         // Progress: rounds complete at 70%
         progress: 70,
+        // Clear any remaining streaming experts
+        streamingExperts: new Map(),
         _updateTrigger: Date.now(),
       };
+
+    // =========================================================================
+    // TOKEN STREAMING - Real-time expert response streaming
+    // =========================================================================
+    case 'EXPERT_STREAM_START': {
+      const newStreamingExperts = new Map(state.streamingExperts);
+      newStreamingExperts.set(action.payload.expertId, {
+        expertId: action.payload.expertId,
+        expertName: action.payload.expertName,
+        round: action.payload.round,
+        position: action.payload.position,
+        content: '',
+        startedAt: Date.now(),
+      });
+
+      // Also add a placeholder response to roundResponses
+      const newRoundResponses = [...state.roundResponses];
+      const roundIndex = action.payload.round - 1;
+      while (newRoundResponses.length <= roundIndex) {
+        newRoundResponses.push([]);
+      }
+      if (!newRoundResponses[roundIndex]) {
+        newRoundResponses[roundIndex] = [];
+      }
+
+      // Add streaming placeholder if not exists
+      const existingIdx = newRoundResponses[roundIndex].findIndex(
+        (r) => r.expertId === action.payload.expertId
+      );
+      if (existingIdx < 0) {
+        newRoundResponses[roundIndex].push({
+          expertId: action.payload.expertId,
+          expertName: action.payload.expertName,
+          content: '',
+          confidence: 0,
+          round: action.payload.round,
+          position: action.payload.position,
+          timestamp: new Date().toISOString(),
+          isStreaming: true,
+        });
+      }
+
+      return {
+        ...state,
+        streamingExperts: newStreamingExperts,
+        roundResponses: newRoundResponses,
+        _updateTrigger: Date.now(),
+      };
+    }
+
+    case 'EXPERT_TOKEN_APPEND': {
+      const streamingExpert = state.streamingExperts.get(action.payload.expertId);
+      if (!streamingExpert) {
+        // Expert not streaming, ignore token
+        return state;
+      }
+
+      // Update streaming expert content
+      const newStreamingExperts = new Map(state.streamingExperts);
+      const updatedExpert = {
+        ...streamingExpert,
+        content: streamingExpert.content + action.payload.token,
+      };
+      newStreamingExperts.set(action.payload.expertId, updatedExpert);
+
+      // Update the response in roundResponses with accumulated content
+      const newRoundResponses = [...state.roundResponses];
+      const roundIndex = streamingExpert.round - 1;
+      if (newRoundResponses[roundIndex]) {
+        const responseIdx = newRoundResponses[roundIndex].findIndex(
+          (r) => r.expertId === action.payload.expertId
+        );
+        if (responseIdx >= 0) {
+          newRoundResponses[roundIndex] = [...newRoundResponses[roundIndex]];
+          newRoundResponses[roundIndex][responseIdx] = {
+            ...newRoundResponses[roundIndex][responseIdx],
+            content: updatedExpert.content,
+          };
+        }
+      }
+
+      return {
+        ...state,
+        streamingExperts: newStreamingExperts,
+        roundResponses: newRoundResponses,
+        _updateTrigger: Date.now(),
+      };
+    }
+
+    case 'EXPERT_STREAM_END': {
+      const streamingExpert = state.streamingExperts.get(action.payload.expertId);
+      if (!streamingExpert) {
+        return state;
+      }
+
+      // Remove from streaming experts
+      const newStreamingExperts = new Map(state.streamingExperts);
+      newStreamingExperts.delete(action.payload.expertId);
+
+      // Finalize the response in roundResponses
+      const newRoundResponses = [...state.roundResponses];
+      const roundIndex = streamingExpert.round - 1;
+      if (newRoundResponses[roundIndex]) {
+        const responseIdx = newRoundResponses[roundIndex].findIndex(
+          (r) => r.expertId === action.payload.expertId
+        );
+        if (responseIdx >= 0) {
+          newRoundResponses[roundIndex] = [...newRoundResponses[roundIndex]];
+          newRoundResponses[roundIndex][responseIdx] = {
+            ...newRoundResponses[roundIndex][responseIdx],
+            content: streamingExpert.content,
+            confidence: action.payload.confidence ?? 0.8,
+            isStreaming: false,
+          };
+        }
+      }
+
+      return {
+        ...state,
+        streamingExperts: newStreamingExperts,
+        roundResponses: newRoundResponses,
+        _updateTrigger: Date.now(),
+      };
+    }
+
+    // =========================================================================
+    // DEBATE TOPOLOGY - Expert Assignment
+    // =========================================================================
+    case 'DEBATE_EXPERTS_ASSIGNED': {
+      const allExperts = [
+        ...action.payload.proExperts.map(e => ({ ...e, position: 'pro' as const })),
+        ...action.payload.conExperts.map(e => ({ ...e, position: 'con' as const })),
+        ...action.payload.moderatorExperts.map(e => ({ ...e, position: 'moderator' as const })),
+      ];
+
+      return {
+        ...state,
+        topology: 'debate',
+        proExperts: action.payload.proExperts,
+        conExperts: action.payload.conExperts,
+        moderatorExperts: action.payload.moderatorExperts,
+        experts: allExperts,
+        expertCount: allExperts.length,
+        status: 'executing',
+        progress: 15,
+        _updateTrigger: Date.now(),
+      };
+    }
+
+    // =========================================================================
+    // DEBATE TOPOLOGY - Turn Tracking
+    // =========================================================================
+    case 'TURN_STARTED': {
+      const turn: DebateTurn = {
+        position: action.payload.position,
+        round: action.payload.round,
+        isRebuttal: action.payload.isRebuttal,
+        respondingTo: action.payload.respondingTo,
+        timestamp: new Date().toISOString(),
+      };
+
+      // Add to debate log
+      const logEntry = {
+        type: 'turn_started' as const,
+        position: action.payload.position,
+        round: action.payload.round,
+        isRebuttal: action.payload.isRebuttal,
+        respondingTo: action.payload.respondingTo,
+        timestamp: new Date().toISOString(),
+      };
+
+      return {
+        ...state,
+        currentTurn: turn,
+        currentRound: action.payload.round,
+        debateLog: [...state.debateLog, logEntry],
+        status: 'executing',
+        _updateTrigger: Date.now(),
+      };
+    }
+
+    // =========================================================================
+    // DEBATE TOPOLOGY - Arguments & Rebuttals
+    // =========================================================================
+    case 'ARGUMENT': {
+      // PRO presents initial argument
+      const response: ExpertResponse = {
+        ...action.payload,
+        isRebuttal: false,
+      };
+
+      // Add to round responses
+      const newResponses = [...state.roundResponses];
+      const roundIdx = response.round - 1;
+      while (newResponses.length <= roundIdx) {
+        newResponses.push([]);
+      }
+      newResponses[roundIdx] = [...(newResponses[roundIdx] || []), response];
+
+      // Add to debate log
+      const logEntry = {
+        type: 'argument' as const,
+        position: response.position || 'pro',
+        expertName: response.expertName,
+        content: response.content,
+        round: response.round,
+        isRebuttal: false,
+        timestamp: response.timestamp,
+      };
+
+      return {
+        ...state,
+        roundResponses: newResponses,
+        debateLog: [...state.debateLog, logEntry],
+        _updateTrigger: Date.now(),
+      };
+    }
+
+    case 'REBUTTAL': {
+      // CON responds to PRO's argument
+      const response: ExpertResponse = {
+        ...action.payload,
+        isRebuttal: true,
+        respondingTo: action.payload.respondingTo,
+      };
+
+      // Add to round responses
+      const newResponses = [...state.roundResponses];
+      const roundIdx = response.round - 1;
+      while (newResponses.length <= roundIdx) {
+        newResponses.push([]);
+      }
+      newResponses[roundIdx] = [...(newResponses[roundIdx] || []), response];
+
+      // Add to debate log
+      const logEntry = {
+        type: 'rebuttal' as const,
+        position: response.position || 'con',
+        expertName: response.expertName,
+        content: response.content,
+        round: response.round,
+        isRebuttal: true,
+        respondingTo: action.payload.respondingTo,
+        timestamp: response.timestamp,
+      };
+
+      return {
+        ...state,
+        roundResponses: newResponses,
+        debateLog: [...state.debateLog, logEntry],
+        _updateTrigger: Date.now(),
+      };
+    }
+
+    case 'SYNTHESIS': {
+      // Moderator synthesizes the debate
+      const response: ExpertResponse = {
+        ...action.payload,
+        position: 'moderator',
+      };
+
+      // Add to round responses
+      const newResponses = [...state.roundResponses];
+      const roundIdx = response.round - 1;
+      while (newResponses.length <= roundIdx) {
+        newResponses.push([]);
+      }
+      newResponses[roundIdx] = [...(newResponses[roundIdx] || []), response];
+
+      // Add to debate log
+      const logEntry = {
+        type: 'synthesis' as const,
+        position: 'moderator' as const,
+        expertName: response.expertName,
+        content: response.content,
+        round: response.round,
+        timestamp: response.timestamp,
+      };
+
+      return {
+        ...state,
+        roundResponses: newResponses,
+        debateLog: [...state.debateLog, logEntry],
+        currentTurn: null, // Clear turn after moderator speaks
+        _updateTrigger: Date.now(),
+      };
+    }
 
     // =========================================================================
     // CONSENSUS
@@ -448,6 +903,109 @@ export function panelStreamReducer(
     case 'STREAM_RESET':
       return initialPanelStreamState;
 
+    // =========================================================================
+    // ORCHESTRATOR EVENTS (NEW)
+    // =========================================================================
+    case 'ORCHESTRATOR_THINKING': {
+      const newMessage: OrchestratorMessage = {
+        id: `orch-${Date.now()}`,
+        type: 'thinking',
+        message: action.payload.message,
+        phase: action.payload.phase,
+        timestamp: new Date().toISOString(),
+      };
+
+      return {
+        ...state,
+        orchestrator: {
+          ...state.orchestrator,
+          isThinking: true,
+          currentPhase: action.payload.phase || state.orchestrator.currentPhase,
+          messages: [...state.orchestrator.messages, newMessage],
+        },
+        _updateTrigger: Date.now(),
+      };
+    }
+
+    case 'ORCHESTRATOR_MESSAGE': {
+      const newMessage: OrchestratorMessage = {
+        id: `orch-${Date.now()}`,
+        type: 'message',
+        message: action.payload.message,
+        phase: action.payload.phase,
+        timestamp: new Date().toISOString(),
+        metadata: action.payload.metadata,
+      };
+
+      return {
+        ...state,
+        orchestrator: {
+          ...state.orchestrator,
+          isThinking: false,
+          currentPhase: action.payload.phase || state.orchestrator.currentPhase,
+          messages: [...state.orchestrator.messages, newMessage],
+        },
+        _updateTrigger: Date.now(),
+      };
+    }
+
+    case 'ORCHESTRATOR_DECISION': {
+      const newMessage: OrchestratorMessage = {
+        id: `orch-${Date.now()}`,
+        type: 'decision',
+        message: action.payload.message,
+        phase: action.payload.phase,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          experts: action.payload.experts,
+          rationale: action.payload.rationale,
+        },
+      };
+
+      return {
+        ...state,
+        orchestrator: {
+          ...state.orchestrator,
+          isThinking: false,
+          currentPhase: action.payload.phase || state.orchestrator.currentPhase,
+          messages: [...state.orchestrator.messages, newMessage],
+          expertSelectionRationale: action.payload.rationale || state.orchestrator.expertSelectionRationale,
+        },
+        _updateTrigger: Date.now(),
+      };
+    }
+
+    case 'ORCHESTRATOR_INTERVENTION': {
+      const newMessage: OrchestratorMessage = {
+        id: `orch-${Date.now()}`,
+        type: 'intervention',
+        message: action.payload.message,
+        timestamp: new Date().toISOString(),
+        metadata: { reason: action.payload.reason },
+      };
+
+      return {
+        ...state,
+        orchestrator: {
+          ...state.orchestrator,
+          isThinking: false,
+          messages: [...state.orchestrator.messages, newMessage],
+        },
+        _updateTrigger: Date.now(),
+      };
+    }
+
+    case 'TOPIC_ANALYSIS': {
+      return {
+        ...state,
+        orchestrator: {
+          ...state.orchestrator,
+          topicAnalysis: action.payload,
+        },
+        _updateTrigger: Date.now(),
+      };
+    }
+
     default:
       return state;
   }
@@ -462,10 +1020,11 @@ export const panelStreamActions = {
     missionId: string,
     panelType: PanelType,
     goal: string,
-    maxRounds?: number
+    maxRounds?: number,
+    topology?: GraphTopology
   ): PanelStreamAction => ({
     type: 'PANEL_STARTED',
-    payload: { missionId, panelType, goal, maxRounds },
+    payload: { missionId, panelType, goal, maxRounds, topology },
   }),
 
   panelStatus: (status: PanelMissionStatus, progress?: number): PanelStreamAction => ({
@@ -552,6 +1111,100 @@ export const panelStreamActions = {
   }),
 
   streamReset: (): PanelStreamAction => ({ type: 'STREAM_RESET' }),
+
+  // === Token streaming action creators ===
+
+  expertStreamStart: (
+    expertId: string,
+    expertName: string,
+    round: number,
+    position?: 'pro' | 'con' | 'moderator'
+  ): PanelStreamAction => ({
+    type: 'EXPERT_STREAM_START',
+    payload: { expertId, expertName, round, position },
+  }),
+
+  expertTokenAppend: (expertId: string, token: string): PanelStreamAction => ({
+    type: 'EXPERT_TOKEN_APPEND',
+    payload: { expertId, token },
+  }),
+
+  expertStreamEnd: (expertId: string, confidence?: number): PanelStreamAction => ({
+    type: 'EXPERT_STREAM_END',
+    payload: { expertId, confidence },
+  }),
+
+  // === Debate-specific action creators ===
+
+  debateExpertsAssigned: (
+    proExperts: ExpertInfo[],
+    conExperts: ExpertInfo[],
+    moderatorExperts: ExpertInfo[]
+  ): PanelStreamAction => ({
+    type: 'DEBATE_EXPERTS_ASSIGNED',
+    payload: { proExperts, conExperts, moderatorExperts },
+  }),
+
+  turnStarted: (
+    position: 'pro' | 'con' | 'moderator',
+    round: number,
+    isRebuttal: boolean,
+    respondingTo?: 'pro' | 'con'
+  ): PanelStreamAction => ({
+    type: 'TURN_STARTED',
+    payload: { position, round, isRebuttal, respondingTo },
+  }),
+
+  argument: (response: ExpertResponse): PanelStreamAction => ({
+    type: 'ARGUMENT',
+    payload: response,
+  }),
+
+  rebuttal: (response: ExpertResponse & { respondingTo: 'pro' | 'con' }): PanelStreamAction => ({
+    type: 'REBUTTAL',
+    payload: response,
+  }),
+
+  synthesis: (response: ExpertResponse): PanelStreamAction => ({
+    type: 'SYNTHESIS',
+    payload: response,
+  }),
+
+  // === Orchestrator action creators (NEW) ===
+
+  orchestratorThinking: (message: string, phase?: string): PanelStreamAction => ({
+    type: 'ORCHESTRATOR_THINKING',
+    payload: { message, phase },
+  }),
+
+  orchestratorMessage: (
+    message: string,
+    phase?: string,
+    metadata?: Record<string, unknown>
+  ): PanelStreamAction => ({
+    type: 'ORCHESTRATOR_MESSAGE',
+    payload: { message, phase, metadata },
+  }),
+
+  orchestratorDecision: (
+    message: string,
+    phase?: string,
+    experts?: string[],
+    rationale?: string[]
+  ): PanelStreamAction => ({
+    type: 'ORCHESTRATOR_DECISION',
+    payload: { message, phase, experts, rationale },
+  }),
+
+  orchestratorIntervention: (message: string, reason: string): PanelStreamAction => ({
+    type: 'ORCHESTRATOR_INTERVENTION',
+    payload: { message, reason },
+  }),
+
+  topicAnalysis: (analysis: TopicAnalysis): PanelStreamAction => ({
+    type: 'TOPIC_ANALYSIS',
+    payload: analysis,
+  }),
 };
 
 // =============================================================================
@@ -595,4 +1248,79 @@ export const panelStreamSelectors = {
   /** Get consensus level as number (0-100) */
   getConsensusPercent: (state: PanelStreamState): number =>
     (state.consensus?.consensusScore ?? 0) * 100,
+
+  // === Token streaming selectors ===
+
+  /** Get all currently streaming experts */
+  getStreamingExperts: (state: PanelStreamState): StreamingExpert[] =>
+    Array.from(state.streamingExperts.values()),
+
+  /** Check if any expert is currently streaming */
+  hasStreamingExperts: (state: PanelStreamState): boolean =>
+    state.streamingExperts.size > 0,
+
+  /** Get streaming content for a specific expert */
+  getStreamingContent: (state: PanelStreamState, expertId: string): string | null =>
+    state.streamingExperts.get(expertId)?.content ?? null,
+
+  /** Get responses that are currently streaming */
+  getStreamingResponses: (state: PanelStreamState): ExpertResponse[] =>
+    state.roundResponses.flat().filter((r) => r.isStreaming === true),
+
+  // === Debate-specific selectors ===
+
+  /** Check if this is a debate topology */
+  isDebate: (state: PanelStreamState): boolean =>
+    state.topology === 'debate',
+
+  /** Get current turn info */
+  getCurrentTurn: (state: PanelStreamState): DebateTurn | null =>
+    state.currentTurn,
+
+  /** Get PRO arguments for a specific round */
+  getProArguments: (state: PanelStreamState, round?: number): ExpertResponse[] => {
+    const allResponses = state.roundResponses.flat();
+    return allResponses.filter(
+      (r) => r.position === 'pro' && (round === undefined || r.round === round)
+    );
+  },
+
+  /** Get CON arguments for a specific round */
+  getConArguments: (state: PanelStreamState, round?: number): ExpertResponse[] => {
+    const allResponses = state.roundResponses.flat();
+    return allResponses.filter(
+      (r) => r.position === 'con' && (round === undefined || r.round === round)
+    );
+  },
+
+  /** Get moderator syntheses */
+  getModeratorSyntheses: (state: PanelStreamState): ExpertResponse[] => {
+    const allResponses = state.roundResponses.flat();
+    return allResponses.filter((r) => r.position === 'moderator');
+  },
+
+  /** Get debate log (chronological events) */
+  getDebateLog: (state: PanelStreamState) => state.debateLog,
+
+  /** Get debate exchanges structured by round */
+  getDebateExchangesByRound: (state: PanelStreamState): Map<number, DebateExchange> => {
+    const exchanges = new Map<number, DebateExchange>();
+    const allResponses = state.roundResponses.flat();
+
+    for (let round = 1; round <= state.currentRound; round++) {
+      const proArg = allResponses.find((r) => r.position === 'pro' && r.round === round) || null;
+      const conArg = allResponses.find((r) => r.position === 'con' && r.round === round) || null;
+      const modSyn = allResponses.find((r) => r.position === 'moderator' && r.round === round) || null;
+
+      exchanges.set(round, {
+        round,
+        proArgument: proArg,
+        conRebuttal: conArg,
+        moderatorSynthesis: modSyn,
+        timestamp: proArg?.timestamp || new Date().toISOString(),
+      });
+    }
+
+    return exchanges;
+  },
 };

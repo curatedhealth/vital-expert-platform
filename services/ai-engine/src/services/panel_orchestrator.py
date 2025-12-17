@@ -51,6 +51,10 @@ class PanelOrchestrator:
         self.max_rounds = getattr(self.settings, 'ask_panel_max_rounds', 5)
         self.min_consensus = getattr(self.settings, 'ask_panel_min_consensus', 0.70)
         self.default_timeout = getattr(self.settings, 'ask_panel_default_timeout', 300000)
+
+        # Orchestrator persona configuration
+        self.orchestrator_name = "Panel Orchestrator"
+        self.orchestrator_avatar = "/icons/png/avatars/avatar_0001.png"
         
     async def create_panel(
         self,
@@ -107,6 +111,7 @@ class PanelOrchestrator:
                 "archetype": archetype,
                 "fusion_model": "autonomous",  # AI-only by default
                 "mode": mode,
+                "panel_type": panel_type,  # Store original panel_type for prompt customization
                 "agenda": [{"topic": query, "duration": 10}],
                 "evidence_pack_id": str(evidence_pack_id) if evidence_pack_id else None,
                 "created_by": str(user_id),
@@ -336,7 +341,8 @@ class PanelOrchestrator:
     ) -> List[Dict[str, Any]]:
         """Execute a round where all experts respond in parallel"""
         tasks = []
-        
+        panel_type = self._get_panel_type(panel)
+
         for member in panel["members"]:
             agent = member.get("agents", member)
             task = self._get_expert_response(
@@ -344,17 +350,18 @@ class PanelOrchestrator:
                 query=query,
                 round_num=round_num,
                 rag_context=rag_context,
-                previous_responses=previous_responses
+                previous_responses=previous_responses,
+                panel_type=panel_type
             )
             tasks.append(task)
-        
+
         responses = await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         # Filter out errors
         valid_responses = [r for r in responses if not isinstance(r, Exception)]
-        
+
         return valid_responses
-    
+
     async def _execute_sequential_round(
         self,
         panel: Dict[str, Any],
@@ -365,7 +372,8 @@ class PanelOrchestrator:
     ) -> List[Dict[str, Any]]:
         """Execute a round where experts respond sequentially"""
         responses = []
-        
+        panel_type = self._get_panel_type(panel)
+
         for member in panel["members"]:
             agent = member.get("agents", member)
             response = await self._get_expert_response(
@@ -373,10 +381,11 @@ class PanelOrchestrator:
                 query=query,
                 round_num=round_num,
                 rag_context=rag_context,
-                previous_responses=previous_responses + responses  # Include responses from this round
+                previous_responses=previous_responses + responses,  # Include responses from this round
+                panel_type=panel_type
             )
             responses.append(response)
-        
+
         return responses
     
     async def _get_expert_response(
@@ -385,19 +394,21 @@ class PanelOrchestrator:
         query: str,
         round_num: int,
         rag_context: Optional[Dict[str, Any]],
-        previous_responses: List[Dict[str, Any]]
+        previous_responses: List[Dict[str, Any]],
+        panel_type: str = "structured"
     ) -> Dict[str, Any]:
         """Get response from a single expert"""
         try:
             # Build context from previous responses
             context = self._build_discussion_context(previous_responses)
-            
+
             # Construct prompt for agent
             full_query = self._construct_expert_prompt(
                 query=query,
                 round_num=round_num,
                 context=context,
-                rag_context=rag_context
+                rag_context=rag_context,
+                panel_type=panel_type
             )
             
             # Get response from agent orchestrator
@@ -493,26 +504,485 @@ class PanelOrchestrator:
         query: str,
         round_num: int,
         context: str,
-        rag_context: Optional[Dict[str, Any]]
+        rag_context: Optional[Dict[str, Any]],
+        panel_type: str = "structured"
     ) -> str:
-        """Construct prompt for expert with context"""
+        """Construct prompt for expert with context, adapting to panel type"""
+
+        # Delphi-specific prompt with structured response format
+        if panel_type == "delphi":
+            return self._construct_delphi_prompt(query, round_num, context, rag_context)
+
+        # Adversarial/debate prompt
+        if panel_type == "adversarial":
+            return self._construct_adversarial_prompt(query, round_num, context, rag_context)
+
+        # Socratic prompt
+        if panel_type == "socratic":
+            return self._construct_socratic_prompt(query, round_num, context, rag_context)
+
+        # Default structured/open prompt
         prompt_parts = []
-        
+
         if round_num == 1:
             prompt_parts.append(f"As a healthcare expert, please provide your analysis of:\n{query}")
         else:
             prompt_parts.append(f"Round {round_num} - Building on previous discussion:\n{query}")
             if context:
                 prompt_parts.append(f"\n{context}")
-        
+
         if rag_context and rag_context.get("documents"):
             prompt_parts.append("\nRelevant evidence:")
             for doc in rag_context["documents"][:3]:
                 content = doc.get("content", "")[:200]
                 prompt_parts.append(f"- {content}...")
-        
+
         return "\n\n".join(prompt_parts)
-    
+
+    def _construct_delphi_prompt(
+        self,
+        query: str,
+        round_num: int,
+        context: str,
+        rag_context: Optional[Dict[str, Any]]
+    ) -> str:
+        """Construct Delphi method prompt with structured quantitative response format"""
+
+        if round_num == 1:
+            prompt = f"""## DELPHI METHOD - ROUND {round_num} (Initial Position)
+
+**Question for Expert Analysis:**
+{query}
+
+**Instructions:**
+You are participating in a Delphi panel using the iterative consensus-building methodology. Please provide your ANONYMOUS expert assessment in the EXACT format below.
+
+**REQUIRED RESPONSE FORMAT:**
+
+### Position Score: [X]/10
+(Provide a numerical score from 1-10 where: 1=Strongly Against/Low Priority, 5=Neutral, 10=Strongly Support/High Priority)
+
+### Key Reasoning
+(2-3 bullet points explaining your position - be specific and evidence-based)
+
+### Confidence Level
+High | Medium | Low
+(Select one and briefly explain why)
+
+### What Would Change Your Position
+(List 1-2 specific types of evidence or arguments that could shift your score by 2+ points)
+
+---
+IMPORTANT: Keep your response concise and structured. Focus on quantifiable positions rather than lengthy explanations. Your identity is anonymous to other panelists."""
+
+        else:
+            prompt = f"""## DELPHI METHOD - ROUND {round_num} (Convergence Round)
+
+**Original Question:**
+{query}
+
+**Previous Round Summary:**
+{context if context else "No previous responses yet."}
+
+**Instructions:**
+Review the positions from other anonymous experts above. Consider their arguments and evidence. Now provide your UPDATED position using the same structured format. You may:
+- Maintain your previous position (explain why other arguments didn't persuade you)
+- Adjust your position (explain what specifically changed your view)
+- Move toward consensus (if you see merit in the group's direction)
+
+**REQUIRED RESPONSE FORMAT:**
+
+### Position Score: [X]/10
+(Previous: [your last score] → Current: [new score])
+
+### Position Change Rationale
+(If changed: What argument or evidence shifted your view? If unchanged: Why do you maintain your position?)
+
+### Key Reasoning
+(2-3 updated bullet points)
+
+### Confidence Level
+High | Medium | Low
+
+### Remaining Disagreements
+(If you still diverge from the group consensus, explain the specific points of disagreement)
+
+---
+IMPORTANT: The goal is to identify genuine consensus or clarify meaningful disagreements, not to simply conform."""
+
+        # Add RAG context if available
+        if rag_context and rag_context.get("documents"):
+            evidence_section = "\n\n**Relevant Evidence (for your consideration):**"
+            for doc in rag_context["documents"][:3]:
+                content = doc.get("content", "")[:300]
+                evidence_section += f"\n- {content}..."
+            prompt += evidence_section
+
+        return prompt
+
+    def _construct_adversarial_prompt(
+        self,
+        query: str,
+        round_num: int,
+        context: str,
+        rag_context: Optional[Dict[str, Any]]
+    ) -> str:
+        """Construct adversarial/debate prompt"""
+
+        if round_num == 1:
+            prompt = f"""## ADVERSARIAL DEBATE - ROUND {round_num}
+
+**Question:**
+{query}
+
+**Your Role:** Provide a strong, well-argued position on this topic. Take a clear stance and defend it with evidence and logical reasoning.
+
+**Response Format:**
+1. **Position**: State your clear stance (Pro/Con/Nuanced)
+2. **Core Argument**: Your main thesis in 1-2 sentences
+3. **Supporting Evidence**: 3-4 key points with evidence
+4. **Anticipated Counterarguments**: Address potential objections
+5. **Confidence**: High/Medium/Low"""
+        else:
+            prompt = f"""## ADVERSARIAL DEBATE - ROUND {round_num} (Rebuttal)
+
+**Original Question:**
+{query}
+
+**Previous Arguments:**
+{context if context else "No previous arguments."}
+
+**Your Task:** Respond to the arguments above. You may:
+- Defend your position against critiques
+- Challenge weak points in opposing arguments
+- Acknowledge strong points made by others
+- Refine your position based on the debate
+
+**Response Format:**
+1. **Updated Position**: Has your stance changed?
+2. **Key Rebuttals**: Address specific arguments from others
+3. **Strongest Remaining Argument**: Your best point
+4. **Concessions**: Any points where others convinced you"""
+
+        if rag_context and rag_context.get("documents"):
+            prompt += "\n\n**Evidence to Consider:**"
+            for doc in rag_context["documents"][:3]:
+                content = doc.get("content", "")[:200]
+                prompt += f"\n- {content}..."
+
+        return prompt
+
+    def _construct_socratic_prompt(
+        self,
+        query: str,
+        round_num: int,
+        context: str,
+        rag_context: Optional[Dict[str, Any]]
+    ) -> str:
+        """Construct Socratic method prompt focused on questioning"""
+
+        if round_num == 1:
+            prompt = f"""## SOCRATIC DIALOGUE - ROUND {round_num}
+
+**Topic for Inquiry:**
+{query}
+
+**Your Role:** As a Socratic facilitator, your goal is to deepen understanding through thoughtful questioning and analysis.
+
+**Response Format:**
+1. **Initial Understanding**: What do we think we know about this?
+2. **Key Questions**: 3-5 probing questions that challenge assumptions
+3. **Hidden Assumptions**: What are we taking for granted?
+4. **Preliminary Analysis**: Initial thoughts (with appropriate humility)
+5. **Areas Requiring Investigation**: What evidence would help?"""
+        else:
+            prompt = f"""## SOCRATIC DIALOGUE - ROUND {round_num}
+
+**Original Topic:**
+{query}
+
+**Previous Dialogue:**
+{context if context else "No previous dialogue."}
+
+**Your Task:** Build on the questions and insights raised. Go deeper.
+
+**Response Format:**
+1. **Key Insights Emerged**: What have we learned?
+2. **Deeper Questions**: New questions arising from the discussion
+3. **Refined Understanding**: How has our understanding evolved?
+4. **Remaining Uncertainties**: What still puzzles us?"""
+
+        if rag_context and rag_context.get("documents"):
+            prompt += "\n\n**Evidence for Consideration:**"
+            for doc in rag_context["documents"][:3]:
+                content = doc.get("content", "")[:200]
+                prompt += f"\n- {content}..."
+
+        return prompt
+
+    # ==========================================================================
+    # ORCHESTRATOR VISIBILITY METHODS
+    # ==========================================================================
+
+    async def _analyze_topic(self, query: str, panel_type: str) -> Dict[str, Any]:
+        """
+        Analyze the topic to determine domain, complexity, and required expertise.
+        Returns structured analysis for expert selection and discussion guidance.
+        """
+        try:
+            from models.requests import AgentQueryRequest
+
+            analysis_prompt = f"""Analyze this question for a {panel_type} expert panel discussion:
+
+**Question:** {query}
+
+Provide a brief structured analysis in this exact format:
+
+DOMAIN: [Primary domain - e.g., Clinical Operations, Regulatory Affairs, Market Access, R&D, etc.]
+COMPLEXITY: [Low/Medium/High]
+KEY_STAKEHOLDERS: [Comma-separated list of stakeholder types affected]
+CRITICAL_FACTORS: [2-3 key factors that experts should consider]
+RECOMMENDED_EXPERTISE: [3-5 specific expertise areas needed]
+DISCUSSION_FOCUS: [One sentence on what the discussion should prioritize]
+
+Be concise - each field should be 1-2 lines maximum."""
+
+            # Use a fast model for analysis
+            request = AgentQueryRequest(
+                message=analysis_prompt,
+                agent_id="system",  # Use system agent for meta-analysis
+                tenant_id="default",
+                user_id="system",
+                enable_rag=False,
+                session_id=str(uuid4())
+            )
+
+            response = await self.agent_orchestrator.process_query(request)
+            analysis_text = response.response
+
+            # Parse the analysis
+            analysis = self._parse_topic_analysis(analysis_text)
+            analysis["raw_analysis"] = analysis_text
+            analysis["panel_type"] = panel_type
+
+            return analysis
+
+        except Exception as e:
+            logger.warning("Topic analysis failed, using defaults", error=str(e))
+            return {
+                "domain": "General Healthcare",
+                "complexity": "Medium",
+                "key_stakeholders": ["Healthcare Professionals", "Patients"],
+                "critical_factors": ["Clinical evidence", "Regulatory requirements"],
+                "recommended_expertise": ["Clinical Expert", "Regulatory Expert"],
+                "discussion_focus": "Comprehensive multi-stakeholder analysis",
+                "panel_type": panel_type
+            }
+
+    def _parse_topic_analysis(self, analysis_text: str) -> Dict[str, Any]:
+        """Parse structured topic analysis from LLM response"""
+        result = {
+            "domain": "General Healthcare",
+            "complexity": "Medium",
+            "key_stakeholders": [],
+            "critical_factors": [],
+            "recommended_expertise": [],
+            "discussion_focus": ""
+        }
+
+        lines = analysis_text.strip().split("\n")
+        for line in lines:
+            line = line.strip()
+            if line.startswith("DOMAIN:"):
+                result["domain"] = line.replace("DOMAIN:", "").strip()
+            elif line.startswith("COMPLEXITY:"):
+                result["complexity"] = line.replace("COMPLEXITY:", "").strip()
+            elif line.startswith("KEY_STAKEHOLDERS:"):
+                stakeholders = line.replace("KEY_STAKEHOLDERS:", "").strip()
+                result["key_stakeholders"] = [s.strip() for s in stakeholders.split(",")]
+            elif line.startswith("CRITICAL_FACTORS:"):
+                factors = line.replace("CRITICAL_FACTORS:", "").strip()
+                result["critical_factors"] = [f.strip() for f in factors.split(",")]
+            elif line.startswith("RECOMMENDED_EXPERTISE:"):
+                expertise = line.replace("RECOMMENDED_EXPERTISE:", "").strip()
+                result["recommended_expertise"] = [e.strip() for e in expertise.split(",")]
+            elif line.startswith("DISCUSSION_FOCUS:"):
+                result["discussion_focus"] = line.replace("DISCUSSION_FOCUS:", "").strip()
+
+        return result
+
+    async def _generate_orchestrator_commentary(
+        self,
+        context_type: str,
+        query: str,
+        panel_type: str,
+        round_num: int = 0,
+        responses: List[Dict[str, Any]] = None,
+        topic_analysis: Dict[str, Any] = None,
+        expert_names: List[str] = None
+    ) -> str:
+        """
+        Generate contextual orchestrator commentary based on the discussion phase.
+
+        context_type can be:
+        - 'welcome': Initial panel introduction
+        - 'expert_selection': Explaining why experts were chosen
+        - 'round_intro': Introducing a new round
+        - 'round_summary': Summarizing round results
+        - 'intervention': Redirecting discussion
+        - 'consensus_progress': Commenting on consensus building
+        - 'final_synthesis': Wrapping up the discussion
+        """
+        try:
+            from models.requests import AgentQueryRequest
+
+            # Build context-specific prompts
+            if context_type == "welcome":
+                prompt = f"""You are the Panel Orchestrator introducing a {panel_type} expert panel discussion.
+
+Question: {query}
+Domain: {topic_analysis.get('domain', 'Healthcare') if topic_analysis else 'Healthcare'}
+Complexity: {topic_analysis.get('complexity', 'Medium') if topic_analysis else 'Medium'}
+
+Write a brief, professional welcome message (2-3 sentences) that:
+1. Acknowledges the importance of the question
+2. Sets expectations for the discussion format
+3. Is warm but professional
+
+Do NOT use phrases like "Welcome to" - be more natural. Start directly with the substance."""
+
+            elif context_type == "expert_selection":
+                expert_list = ", ".join(expert_names or ["experts"])
+                prompt = f"""You are the Panel Orchestrator explaining expert selection for a {panel_type} panel.
+
+Question: {query}
+Selected Experts: {expert_list}
+Domain: {topic_analysis.get('domain', 'Healthcare') if topic_analysis else 'Healthcare'}
+Required Expertise: {', '.join(topic_analysis.get('recommended_expertise', [])) if topic_analysis else 'Various'}
+
+Write a brief explanation (2-3 sentences) of why these experts were selected. Be specific about what each brings to the discussion. Sound thoughtful and deliberate."""
+
+            elif context_type == "round_intro":
+                prompt = f"""You are the Panel Orchestrator introducing Round {round_num} of a {panel_type} discussion.
+
+Question: {query}
+Current Round: {round_num}
+Panel Type: {panel_type}
+
+Write a brief round introduction (1-2 sentences) that:
+- For Round 1: Sets up the initial exploration
+- For Round 2+: References building on previous insights
+
+Be concise and action-oriented."""
+
+            elif context_type == "round_summary":
+                response_summary = self._summarize_responses_briefly(responses or [])
+                prompt = f"""You are the Panel Orchestrator summarizing Round {round_num} of a {panel_type} discussion.
+
+Question: {query}
+Round: {round_num}
+Expert Responses Summary: {response_summary}
+
+Write a brief summary (2-3 sentences) that:
+1. Highlights key points of agreement
+2. Notes any divergent perspectives
+3. Sets up what to explore next (if not final round)
+
+Be balanced and insightful."""
+
+            elif context_type == "consensus_progress":
+                response_summary = self._summarize_responses_briefly(responses or [])
+                prompt = f"""You are the Panel Orchestrator assessing consensus progress.
+
+Question: {query}
+Round: {round_num}
+Discussion Summary: {response_summary}
+
+Write a brief assessment (1-2 sentences) of how the panel is progressing toward consensus. Note areas of alignment and remaining disagreements."""
+
+            elif context_type == "final_synthesis":
+                prompt = f"""You are the Panel Orchestrator concluding a {panel_type} panel discussion.
+
+Question: {query}
+Total Rounds: {round_num}
+
+Write a brief closing statement (2-3 sentences) that:
+1. Thanks the experts for their contributions
+2. Highlights the value of the diverse perspectives
+3. Transitions to the final synthesis
+
+Be professional and conclusive."""
+
+            else:
+                return ""
+
+            request = AgentQueryRequest(
+                message=prompt,
+                agent_id="system",
+                tenant_id="default",
+                user_id="system",
+                enable_rag=False,
+                session_id=str(uuid4())
+            )
+
+            response = await self.agent_orchestrator.process_query(request)
+            return response.response.strip()
+
+        except Exception as e:
+            logger.warning("Failed to generate orchestrator commentary", error=str(e))
+            return self._get_fallback_commentary(context_type, round_num, panel_type)
+
+    def _get_fallback_commentary(self, context_type: str, round_num: int, panel_type: str) -> str:
+        """Provide fallback commentary if LLM generation fails"""
+        fallbacks = {
+            "welcome": f"This {panel_type} panel will bring together multiple expert perspectives to provide comprehensive analysis.",
+            "expert_selection": "I've assembled a diverse panel of experts whose combined expertise addresses the key dimensions of this question.",
+            "round_intro": f"Round {round_num} - Let's {'begin our exploration' if round_num == 1 else 'build on the insights from previous rounds'}.",
+            "round_summary": "The experts have provided valuable perspectives. Let me synthesize the key takeaways.",
+            "consensus_progress": "We're making progress toward a comprehensive understanding of this issue.",
+            "final_synthesis": "Thank you to all experts for their thoughtful contributions. Let me present the final synthesis."
+        }
+        return fallbacks.get(context_type, "")
+
+    def _summarize_responses_briefly(self, responses: List[Dict[str, Any]]) -> str:
+        """Create a brief summary of responses for orchestrator context"""
+        if not responses:
+            return "No responses yet."
+
+        summaries = []
+        for r in responses[-5:]:  # Last 5 responses max
+            name = r.get("agent_name", "Expert")
+            answer = r.get("answer", "")[:150]
+            summaries.append(f"{name}: {answer}...")
+
+        return " | ".join(summaries)
+
+    def _emit_orchestrator_event(
+        self,
+        event_type: str,
+        message: str,
+        metadata: Dict[str, Any] = None
+    ) -> str:
+        """
+        Emit an orchestrator-specific SSE event.
+
+        event_types:
+        - orchestrator_thinking: Orchestrator is analyzing/planning
+        - orchestrator_message: Orchestrator commentary to users
+        - orchestrator_decision: Orchestrator made a decision (expert selection, etc.)
+        - orchestrator_intervention: Orchestrator is redirecting discussion
+        """
+        data = {
+            "orchestrator_name": self.orchestrator_name,
+            "orchestrator_avatar": self.orchestrator_avatar,
+            "message": message,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        if metadata:
+            data.update(metadata)
+
+        return self._sse_event(event_type, data)
+
     async def _store_responses(
         self,
         panel_id: str,
@@ -670,9 +1140,12 @@ class PanelOrchestrator:
         panel: Dict[str, Any]
     ) -> AsyncGenerator[str, None]:
         """
-        Execute panel with streaming responses.
+        Execute panel with streaming responses and orchestrator visibility.
 
         Yields SSE-formatted events as execution progresses:
+        - orchestrator_thinking: Orchestrator is analyzing
+        - orchestrator_message: Orchestrator commentary
+        - orchestrator_decision: Orchestrator made a decision
         - panel_started: Initial panel info
         - round_started: Beginning of each round
         - expert_thinking: Expert is generating response
@@ -683,17 +1156,78 @@ class PanelOrchestrator:
         panel_id = panel["id"]
         query = panel["agenda"][0]["topic"] if panel.get("agenda") else panel["name"]
         mode = panel.get("mode", "parallel")
+        panel_type = self._get_panel_type(panel)
         max_rounds = panel.get("agenda", [{}])[0].get("max_rounds", self.max_rounds)
+        expert_names = [m.get("agents", m).get("name", "Expert") for m in panel.get("members", [])]
 
         try:
+            # =================================================================
+            # PHASE 1: ORCHESTRATOR ANALYZES THE TOPIC
+            # =================================================================
+            yield self._emit_orchestrator_event(
+                "orchestrator_thinking",
+                "Analyzing your question to determine the best approach...",
+                {"phase": "topic_analysis"}
+            )
+
+            # Perform topic analysis
+            topic_analysis = await self._analyze_topic(query, panel_type)
+
+            # Emit topic analysis results
+            yield self._emit_orchestrator_event(
+                "orchestrator_message",
+                f"I've identified this as a **{topic_analysis.get('domain', 'Healthcare')}** question with **{topic_analysis.get('complexity', 'Medium')}** complexity.",
+                {
+                    "phase": "topic_analysis",
+                    "analysis": topic_analysis
+                }
+            )
+
+            # =================================================================
+            # PHASE 2: ORCHESTRATOR WELCOME MESSAGE
+            # =================================================================
+            welcome_message = await self._generate_orchestrator_commentary(
+                "welcome", query, panel_type, topic_analysis=topic_analysis
+            )
+            yield self._emit_orchestrator_event(
+                "orchestrator_message",
+                welcome_message,
+                {"phase": "welcome"}
+            )
+
             # Emit panel started event
             yield self._sse_event("panel_started", {
                 "panel_id": panel_id,
                 "query": query[:200],
                 "mode": mode,
+                "panel_type": panel_type,
                 "max_rounds": max_rounds,
-                "expert_count": len(panel.get("members", []))
+                "expert_count": len(panel.get("members", [])),
+                "topic_analysis": topic_analysis
             })
+
+            # =================================================================
+            # PHASE 3: ORCHESTRATOR EXPLAINS EXPERT SELECTION
+            # =================================================================
+            yield self._emit_orchestrator_event(
+                "orchestrator_thinking",
+                "Selecting the most relevant experts for this discussion...",
+                {"phase": "expert_selection"}
+            )
+
+            expert_selection_message = await self._generate_orchestrator_commentary(
+                "expert_selection", query, panel_type,
+                topic_analysis=topic_analysis, expert_names=expert_names
+            )
+            yield self._emit_orchestrator_event(
+                "orchestrator_decision",
+                expert_selection_message,
+                {
+                    "phase": "expert_selection",
+                    "experts": expert_names,
+                    "selection_rationale": topic_analysis.get("recommended_expertise", [])
+                }
+            )
 
             # Get RAG context if available
             rag_context = None
@@ -703,6 +1237,18 @@ class PanelOrchestrator:
             all_responses = []
 
             for round_num in range(1, max_rounds + 1):
+                # =============================================================
+                # ORCHESTRATOR INTRODUCES THE ROUND
+                # =============================================================
+                round_intro = await self._generate_orchestrator_commentary(
+                    "round_intro", query, panel_type, round_num=round_num
+                )
+                yield self._emit_orchestrator_event(
+                    "orchestrator_message",
+                    round_intro,
+                    {"phase": "round_intro", "round": round_num}
+                )
+
                 # Emit round started
                 yield self._sse_event("round_started", {
                     "round_number": round_num,
@@ -710,6 +1256,7 @@ class PanelOrchestrator:
                 })
 
                 # Execute experts based on mode
+                round_responses = []
                 if mode == "parallel":
                     async for event in self._stream_parallel_round(
                         panel, round_num, query, rag_context, all_responses
@@ -717,20 +1264,40 @@ class PanelOrchestrator:
                         yield event
                         # Collect responses from events
                         if "expert_response" in event:
-                            import json
                             data = json.loads(event.split("data: ")[1].split("\n")[0])
                             all_responses.append(data)
+                            round_responses.append(data)
                 else:
                     async for event in self._stream_sequential_round(
                         panel, round_num, query, rag_context, all_responses
                     ):
                         yield event
                         if "expert_response" in event:
-                            import json
                             data = json.loads(event.split("data: ")[1].split("\n")[0])
                             all_responses.append(data)
+                            round_responses.append(data)
+
+                # =============================================================
+                # ORCHESTRATOR SUMMARIZES THE ROUND
+                # =============================================================
+                if round_responses:
+                    round_summary = await self._generate_orchestrator_commentary(
+                        "round_summary", query, panel_type,
+                        round_num=round_num, responses=round_responses
+                    )
+                    yield self._emit_orchestrator_event(
+                        "orchestrator_message",
+                        round_summary,
+                        {"phase": "round_summary", "round": round_num}
+                    )
 
                 # Calculate and emit consensus update
+                yield self._emit_orchestrator_event(
+                    "orchestrator_thinking",
+                    "Analyzing consensus across expert perspectives...",
+                    {"phase": "consensus_calculation", "round": round_num}
+                )
+
                 yield self._sse_event("consensus_update", {
                     "round_number": round_num,
                     "calculating": True
@@ -744,13 +1311,46 @@ class PanelOrchestrator:
                     "calculating": False
                 })
 
+                # Orchestrator comments on consensus progress
+                consensus_level = consensus.get("consensus_level", 0)
+                consensus_commentary = await self._generate_orchestrator_commentary(
+                    "consensus_progress", query, panel_type,
+                    round_num=round_num, responses=all_responses
+                )
+                yield self._emit_orchestrator_event(
+                    "orchestrator_message",
+                    consensus_commentary,
+                    {
+                        "phase": "consensus_progress",
+                        "round": round_num,
+                        "consensus_level": consensus_level
+                    }
+                )
+
                 # Check for early termination
-                if consensus.get("consensus_level", 0) >= self.min_consensus:
+                if consensus_level >= self.min_consensus:
+                    yield self._emit_orchestrator_event(
+                        "orchestrator_message",
+                        f"Excellent! We've achieved **{consensus_level:.0%} consensus** - strong alignment among experts.",
+                        {"phase": "consensus_reached", "round": round_num}
+                    )
                     yield self._sse_event("consensus_reached", {
                         "round_number": round_num,
-                        "consensus_level": consensus["consensus_level"]
+                        "consensus_level": consensus_level
                     })
                     break
+
+            # =================================================================
+            # FINAL SYNTHESIS WITH ORCHESTRATOR CLOSING
+            # =================================================================
+            final_synthesis_intro = await self._generate_orchestrator_commentary(
+                "final_synthesis", query, panel_type, round_num=round_num
+            )
+            yield self._emit_orchestrator_event(
+                "orchestrator_message",
+                final_synthesis_intro,
+                {"phase": "final_synthesis"}
+            )
 
             # Generate final report
             final_consensus = await self.build_consensus(panel_id, all_responses, round_num)
@@ -762,14 +1362,14 @@ class PanelOrchestrator:
                 "completed_at": datetime.now(timezone.utc).isoformat()
             }).eq("id", panel_id).execute()
 
-            # Emit completion
+            # Emit completion - removed truncation to allow full content
             yield self._sse_event("panel_complete", {
                 "panel_id": panel_id,
                 "status": "completed",
                 "rounds": round_num,
                 "consensus_level": final_consensus.get("consensus_level", 0),
-                "recommendation": final_consensus.get("consensus", "")[:500],
-                "report_preview": report[:1000]
+                "recommendation": final_consensus.get("consensus", ""),
+                "report": report  # Full report, not truncated
             })
 
         except Exception as e:
@@ -789,6 +1389,7 @@ class PanelOrchestrator:
     ) -> AsyncGenerator[str, None]:
         """Stream responses from parallel expert execution"""
         members = panel.get("members", [])
+        panel_type = self._get_panel_type(panel)
 
         # Emit thinking events for all experts
         for member in members:
@@ -808,7 +1409,8 @@ class PanelOrchestrator:
                 query=query,
                 round_num=round_num,
                 rag_context=rag_context,
-                previous_responses=previous_responses
+                previous_responses=previous_responses,
+                panel_type=panel_type
             )
             tasks.append((agent, task))
 
@@ -828,7 +1430,7 @@ class PanelOrchestrator:
                 yield self._sse_event("expert_response", {
                     "agent_id": result.get("agent_id"),
                     "agent_name": result.get("agent_name"),
-                    "content": result.get("answer", "")[:1000],
+                    "content": result.get("answer", ""),  # Full content, no truncation
                     "confidence": result.get("confidence", 0.5),
                     "round_number": round_num
                 })
@@ -843,6 +1445,7 @@ class PanelOrchestrator:
     ) -> AsyncGenerator[str, None]:
         """Stream responses from sequential expert execution"""
         members = panel.get("members", [])
+        panel_type = self._get_panel_type(panel)
         round_responses = []
 
         for member in members:
@@ -862,7 +1465,8 @@ class PanelOrchestrator:
                     query=query,
                     round_num=round_num,
                     rag_context=rag_context,
-                    previous_responses=previous_responses + round_responses
+                    previous_responses=previous_responses + round_responses,
+                    panel_type=panel_type
                 )
 
                 round_responses.append(result)
@@ -871,7 +1475,7 @@ class PanelOrchestrator:
                 yield self._sse_event("expert_response", {
                     "agent_id": result.get("agent_id"),
                     "agent_name": result.get("agent_name"),
-                    "content": result.get("answer", "")[:1000],
+                    "content": result.get("answer", ""),  # Full content, no truncation
                     "confidence": result.get("confidence", 0.5),
                     "round_number": round_num
                 })
@@ -898,8 +1502,32 @@ class PanelOrchestrator:
             "delphi": ("CAB", "sequential"),
             "hybrid": ("Market", "dynamic")
         }
-        
+
         return mapping.get(panel_type, ("Strategic", "parallel"))
+
+    def _get_panel_type(self, panel: Dict[str, Any]) -> str:
+        """Get panel_type from panel dict, falling back to archetype-based inference"""
+        # Use stored panel_type if available
+        if panel.get("panel_type"):
+            return panel["panel_type"]
+
+        # Fallback: infer from archetype and mode
+        archetype = panel.get("archetype", "")
+        mode = panel.get("mode", "parallel")
+
+        # Reverse mapping based on archetype + mode combinations
+        if archetype == "CAB" and mode == "sequential":
+            return "delphi"
+        elif archetype == "CAB" and mode == "debate":
+            return "adversarial"
+        elif archetype == "Ethics":
+            return "socratic"
+        elif archetype == "SAB":
+            return "structured"
+        elif archetype == "Market":
+            return "hybrid"
+        else:
+            return "open"  # Default fallback
 
 
 # Singleton instance

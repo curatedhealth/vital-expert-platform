@@ -61,6 +61,7 @@ class ExpertResponse(TypedDict, total=False):
     citations: List[Dict[str, Any]]
     round_number: int
     timestamp: str
+    position: str  # For adversarial panels: "pro", "con", "moderator"
 
 
 class ConsensusResult(TypedDict, total=False):
@@ -356,12 +357,32 @@ async def _execute_round(state: PanelMissionState) -> Dict[str, Any]:
     if current_round > 0 and round_responses:
         prev_responses = round_responses[-1] if round_responses else []
 
+    # For adversarial panels, assign positions to experts
+    # First half are PRO, second half are CON, last one (if odd) is moderator
+    def get_expert_position(index: int, total: int) -> str:
+        if panel_type != "adversarial":
+            return None
+        if total == 1:
+            return "moderator"
+        elif total == 2:
+            return "pro" if index == 0 else "con"
+        else:
+            # Split: half pro, half con, last one moderator if odd
+            half = total // 2
+            if index < half:
+                return "pro"
+            elif index < half * 2:
+                return "con"
+            else:
+                return "moderator"
+
     # Execute all experts in parallel
-    async def get_expert_response(expert: Dict[str, Any]) -> ExpertResponse:
+    async def get_expert_response(expert: Dict[str, Any], index: int) -> ExpertResponse:
         expert_id = expert.get("id", str(uuid4()))
         expert_name = expert.get("name", "Expert")
         system_prompt = expert.get("system_prompt", "You are a helpful expert.")
         model = expert.get("model", "gpt-4-turbo")
+        position = get_expert_position(index, len(experts))
 
         # Build prompt based on panel type and round
         prompt = _build_expert_prompt(
@@ -371,6 +392,7 @@ async def _execute_round(state: PanelMissionState) -> Dict[str, Any]:
             round_number=current_round + 1,
             expert_name=expert_name,
             previous_responses=prev_responses,
+            expert_position=position,
         )
 
         try:
@@ -394,6 +416,7 @@ async def _execute_round(state: PanelMissionState) -> Dict[str, Any]:
                 citations=[],
                 round_number=current_round + 1,
                 timestamp=datetime.now(timezone.utc).isoformat(),
+                position=position,
             )
 
         except Exception as exc:
@@ -411,11 +434,12 @@ async def _execute_round(state: PanelMissionState) -> Dict[str, Any]:
                 citations=[],
                 round_number=current_round + 1,
                 timestamp=datetime.now(timezone.utc).isoformat(),
+                position=position,
             )
 
     # Execute all experts concurrently
     responses = await asyncio.gather(*[
-        get_expert_response(expert) for expert in experts
+        get_expert_response(expert, idx) for idx, expert in enumerate(experts)
     ])
 
     # Update state
@@ -442,6 +466,89 @@ async def _execute_round(state: PanelMissionState) -> Dict[str, Any]:
     }
 
 
+def _get_adversarial_prompt(position: str, round_number: int) -> str:
+    """Generate position-specific prompt for adversarial debate."""
+    format_instruction = """
+IMPORTANT: Write in plain text only. Do NOT use any markdown formatting like **, *, #, ##, -, or bullet points.
+Write in clear paragraphs with complete sentences. Use line breaks to separate sections.
+"""
+
+    if position == "pro":
+        if round_number == 1:
+            return f"""
+You are the PRO/ADVOCATE in this debate. Your role is to:
+1. Present the strongest case IN FAVOR of the proposition/approach
+2. Identify key benefits, opportunities, and positive outcomes
+3. Provide evidence and examples supporting your position
+4. Anticipate and preemptively address potential criticisms
+
+Structure your argument clearly with:
+Main thesis statement, then 3-4 supporting arguments with evidence, then a conclusion reinforcing your position.
+{format_instruction}
+"""
+        else:
+            return f"""
+You are the PRO/ADVOCATE. This is your REBUTTAL round.
+
+CRITICAL INSTRUCTIONS:
+1. READ THE CON ARGUMENTS ABOVE CAREFULLY
+2. Quote or reference SPECIFIC points the CON made
+3. For EACH major CON argument, provide a direct counter-argument
+4. Explain why their criticisms are flawed, incomplete, or misguided
+5. Strengthen your case with NEW evidence that addresses their concerns
+6. Acknowledge any valid points but explain why they don't undermine your position
+
+Your response must DIRECTLY ENGAGE with what the CON said. Do not just repeat your original arguments.
+Start by saying "In response to the CON's argument that..." or "The CON raises the concern that... however..."
+{format_instruction}
+"""
+    elif position == "con":
+        if round_number == 1:
+            return f"""
+You are the CON/CRITIC in this debate. Your role is to:
+1. Present the strongest case AGAINST the proposition/approach
+2. Identify risks, weaknesses, and potential negative outcomes
+3. Provide evidence and examples supporting your criticisms
+4. Challenge assumptions and identify overlooked problems
+
+Structure your argument clearly with:
+Main counter-thesis statement, then 3-4 critical arguments with evidence, then a conclusion reinforcing your concerns.
+{format_instruction}
+"""
+        else:
+            return f"""
+You are the CON/CRITIC. This is your REBUTTAL round.
+
+CRITICAL INSTRUCTIONS:
+1. READ THE PRO ARGUMENTS ABOVE CAREFULLY
+2. Quote or reference SPECIFIC points the PRO made
+3. For EACH major PRO argument, provide a direct counter-argument
+4. Explain why their supporting evidence is weak, incomplete, or misleading
+5. Introduce NEW criticisms or evidence that undermines their position
+6. Acknowledge any valid points but explain why they don't change your overall assessment
+
+Your response must DIRECTLY ENGAGE with what the PRO said. Do not just repeat your original criticisms.
+Start by saying "The PRO claims that... but this overlooks..." or "While the PRO argues... the reality is..."
+{format_instruction}
+"""
+    else:  # moderator or default
+        return f"""
+You are the MODERATOR/SYNTHESIZER. Your role is to:
+1. Identify the strongest points from BOTH sides
+2. Highlight where the PRO and CON actually AGREE vs. where they genuinely DISAGREE
+3. Point out any arguments that were NOT adequately addressed by either side
+4. Suggest potential middle-ground or compromise positions
+5. Provide a balanced assessment of who made the stronger case and why
+
+Structure your synthesis with:
+1. Summary of PRO's strongest arguments and where they succeeded/failed
+2. Summary of CON's strongest arguments and where they succeeded/failed
+3. Key areas of unresolved disagreement
+4. Your recommended path forward based on the debate
+{format_instruction}
+"""
+
+
 def _build_expert_prompt(
     goal: str,
     context: str,
@@ -449,6 +556,7 @@ def _build_expert_prompt(
     round_number: int,
     expert_name: str,
     previous_responses: List[ExpertResponse],
+    expert_position: str = None,  # For adversarial: "pro", "con", "moderator"
 ) -> str:
     """Build prompt for expert based on panel type and round"""
 
@@ -462,53 +570,124 @@ QUESTION/GOAL: {goal}
 Round {round_number} of discussion.
 """
 
-    # Add previous responses for iterative panels
-    if previous_responses and round_number > 1:
+    # Format instruction to prevent markdown
+    format_instruction = """
+IMPORTANT FORMAT RULE: Write in plain text only. Do NOT use any markdown formatting such as:
+No asterisks for bold or italic, no hash symbols for headings, no bullet points or dashes at start of lines, no code blocks or backticks.
+Write in clear paragraphs with complete sentences. Use line breaks between sections.
+"""
+
+    # For adversarial debates, structure previous responses by position for proper back-and-forth
+    if panel_type == "adversarial" and previous_responses and round_number > 1:
+        # Group responses by position
+        pro_responses = []
+        con_responses = []
+        moderator_responses = []
+
+        for resp in previous_responses:
+            position = resp.get('position', '').lower()
+            content = resp.get('content', '')
+            name = resp.get('expert_name', 'Expert')
+
+            if position == 'pro':
+                pro_responses.append(f"{name}: {content}")
+            elif position == 'con':
+                con_responses.append(f"{name}: {content}")
+            else:
+                moderator_responses.append(f"{name}: {content}")
+
+        # Show the OPPOSING side's arguments prominently for rebuttals
+        if expert_position == "pro":
+            base_prompt += "\n\n=== ARGUMENTS YOU MUST RESPOND TO (CON/CRITIC POSITION) ===\n"
+            if con_responses:
+                for resp in con_responses:
+                    base_prompt += f"\n{resp}\n"
+            else:
+                base_prompt += "\n(No CON arguments yet)\n"
+
+            base_prompt += "\n\n=== YOUR SIDE'S PREVIOUS ARGUMENTS (PRO/ADVOCATE) ===\n"
+            if pro_responses:
+                for resp in pro_responses:
+                    base_prompt += f"\n{resp}\n"
+
+        elif expert_position == "con":
+            base_prompt += "\n\n=== ARGUMENTS YOU MUST RESPOND TO (PRO/ADVOCATE POSITION) ===\n"
+            if pro_responses:
+                for resp in pro_responses:
+                    base_prompt += f"\n{resp}\n"
+            else:
+                base_prompt += "\n(No PRO arguments yet)\n"
+
+            base_prompt += "\n\n=== YOUR SIDE'S PREVIOUS ARGUMENTS (CON/CRITIC) ===\n"
+            if con_responses:
+                for resp in con_responses:
+                    base_prompt += f"\n{resp}\n"
+
+        else:  # moderator
+            base_prompt += "\n\n=== PRO/ADVOCATE ARGUMENTS ===\n"
+            for resp in pro_responses:
+                base_prompt += f"\n{resp}\n"
+            base_prompt += "\n\n=== CON/CRITIC ARGUMENTS ===\n"
+            for resp in con_responses:
+                base_prompt += f"\n{resp}\n"
+
+    # For non-adversarial panels, show previous responses normally (with more context)
+    elif previous_responses and round_number > 1:
         prev_text = "\n\nPREVIOUS ROUND RESPONSES:\n"
         for resp in previous_responses:
-            prev_text += f"\n{resp.get('expert_name', 'Expert')}: {resp.get('content', '')[:500]}...\n"
+            # Increase from 500 to 2000 chars to give more context
+            content = resp.get('content', '')[:2000]
+            if len(resp.get('content', '')) > 2000:
+                content += "..."
+            prev_text += f"\n{resp.get('expert_name', 'Expert')}: {content}\n"
         base_prompt += prev_text
 
     # Panel-type specific instructions
     type_instructions = {
-        "structured": """
-Please provide your analysis in a structured format:
-1. Key Findings
-2. Supporting Evidence
-3. Recommendations
-4. Confidence Level (0-1)
+        "structured": f"""
+Please provide your analysis covering:
+
+Key Findings: What are the main insights?
+
+Supporting Evidence: What data or reasoning supports these findings?
+
+Recommendations: What actions do you suggest?
+
+Confidence Level: How confident are you (express as a percentage)?
+{format_instruction}
 """,
-        "open": """
-Share your thoughts freely. Consider:
-- Novel perspectives
-- Creative solutions
-- Cross-domain insights
+        "open": f"""
+Share your thoughts freely. Consider novel perspectives, creative solutions, and cross-domain insights.
+{format_instruction}
 """,
-        "socratic": """
-Question the assumptions. Address:
-- What assumptions underlie this question?
-- What evidence would change your view?
-- What are we missing?
+        "socratic": f"""
+Question the assumptions. Address: What assumptions underlie this question? What evidence would change your view? What are we missing?
+{format_instruction}
 """,
-        "adversarial": """
-Take a critical stance. Address:
-- Potential weaknesses in current approaches
-- Counter-arguments to consider
-- Risk factors
+        "adversarial": _get_adversarial_prompt(expert_position, round_number),
+        "delphi": f"""
+Provide your independent assessment covering:
+
+Your position: Rate from 1 to 10
+
+Key reasoning: Explain your position
+
+Confidence level: How confident are you?
+
+What would change your view?
+{format_instruction}
 """,
-        "delphi": """
-Provide your independent assessment:
-1. Your position (score 1-10)
-2. Key reasoning
-3. Confidence level
-4. What would change your view?
-""",
-        "hybrid": """
-Provide thorough analysis for human review:
-1. Analysis summary
-2. Key recommendations
-3. Areas needing human judgment
-4. Confidence and limitations
+        "hybrid": f"""
+Provide thorough analysis for human review covering:
+
+Analysis summary
+
+Key recommendations
+
+Areas needing human judgment
+
+Confidence and limitations
+{format_instruction}
 """,
     }
 
@@ -562,7 +741,7 @@ async def _build_consensus(state: PanelMissionState) -> Dict[str, Any]:
             agreement_points=consensus.agreement_points[:5],
             divergent_points=consensus.divergent_points[:5],
             key_themes=consensus.key_themes[:5],
-            recommendation=consensus.recommendation[:1000],
+            recommendation=consensus.recommendation,  # Full recommendation, no truncation
             evidence_overlap=getattr(consensus, 'evidence_overlap', 0.0),
         )
 
@@ -1045,6 +1224,7 @@ async def stream_panel_mission_events(
                                 "content": resp.get("content", ""),
                                 "confidence": resp.get("confidence", 0),
                                 "round": current_round,
+                                "position": resp.get("position"),  # For adversarial debates
                                 "timestamp": datetime.now(timezone.utc).isoformat(),
                             }
 

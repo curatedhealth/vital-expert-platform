@@ -495,6 +495,12 @@ export class PanelAPIClient {
       onMatrixComplete?: (data: any) => void;
       onPanelComplete?: (data: any) => void;
       onError?: (error: any) => void;
+      // Orchestrator callbacks
+      onOrchestratorThinking?: (data: { message: string; phase?: string }) => void;
+      onOrchestratorMessage?: (data: { message: string; phase?: string; message_type?: string }) => void;
+      onOrchestratorDecision?: (data: { message: string; experts?: string[]; rationale?: string[] }) => void;
+      onOrchestratorIntervention?: (data: { message: string; reason: string }) => void;
+      onTopicAnalysis?: (data: { domain?: string; complexity?: string; focus_areas?: string[]; recommended_approach?: string }) => void;
     }
   ): Promise<void> {
     const accessToken = await this.getAccessToken();
@@ -589,6 +595,22 @@ export class PanelAPIClient {
                   break;
                 case 'error':
                   callbacks.onError?.(data);
+                  break;
+                // Orchestrator events
+                case 'orchestrator_thinking':
+                  callbacks.onOrchestratorThinking?.(data);
+                  break;
+                case 'orchestrator_message':
+                  callbacks.onOrchestratorMessage?.(data);
+                  break;
+                case 'orchestrator_decision':
+                  callbacks.onOrchestratorDecision?.(data);
+                  break;
+                case 'orchestrator_intervention':
+                  callbacks.onOrchestratorIntervention?.(data);
+                  break;
+                case 'topic_analysis':
+                  callbacks.onTopicAnalysis?.(data);
                   break;
               }
             } catch (parseError) {
@@ -802,6 +824,22 @@ export interface PanelMissionStreamEvent {
     | 'panel_paused'
     | 'panel_resumed'
     | 'panel_cancelled'
+    // === Token streaming events ===
+    | 'expert_stream_start'
+    | 'expert_token'
+    | 'expert_stream_end'
+    // === Debate-specific events ===
+    | 'turn_started'
+    | 'argument'
+    | 'rebuttal'
+    | 'synthesis'
+    | 'debate_exchange'
+    // === Orchestrator events ===
+    | 'orchestrator_thinking'
+    | 'orchestrator_message'
+    | 'orchestrator_decision'
+    | 'orchestrator_intervention'
+    | 'topic_analysis'
     | 'error';
   data: Record<string, any>;
   timestamp?: string;
@@ -1009,6 +1047,21 @@ export class PanelMissionClient {
       onPanelPaused?: (data: any) => void;
       onPanelCancelled?: (data: any) => void;
       onError?: (error: any) => void;
+      // === Token streaming callbacks ===
+      onExpertStreamStart?: (data: any) => void;
+      onExpertToken?: (data: any) => void;
+      onExpertStreamEnd?: (data: any) => void;
+      // === Debate-specific callbacks ===
+      onTurnStarted?: (data: any) => void;
+      onArgument?: (data: any) => void;
+      onRebuttal?: (data: any) => void;
+      onDebateSynthesis?: (data: any) => void;
+      // === Orchestrator callbacks ===
+      onOrchestratorThinking?: (data: any) => void;
+      onOrchestratorMessage?: (data: any) => void;
+      onOrchestratorDecision?: (data: any) => void;
+      onOrchestratorIntervention?: (data: any) => void;
+      onTopicAnalysis?: (data: any) => void;
     }
   ): Promise<string | null> {
     const response = await this.createMissionStream(request);
@@ -1086,6 +1139,45 @@ export class PanelMissionClient {
                 case 'mission_cancelled':
                   callbacks.onPanelCancelled?.(data);
                   break;
+                // === Token streaming events ===
+                case 'expert_stream_start':
+                  callbacks.onExpertStreamStart?.(data);
+                  break;
+                case 'expert_token':
+                  callbacks.onExpertToken?.(data);
+                  break;
+                case 'expert_stream_end':
+                  callbacks.onExpertStreamEnd?.(data);
+                  break;
+                // === Debate-specific events ===
+                case 'turn_started':
+                  callbacks.onTurnStarted?.(data);
+                  break;
+                case 'argument':
+                  callbacks.onArgument?.(data);
+                  break;
+                case 'rebuttal':
+                  callbacks.onRebuttal?.(data);
+                  break;
+                case 'synthesis':
+                  callbacks.onDebateSynthesis?.(data);
+                  break;
+                // === Orchestrator events ===
+                case 'orchestrator_thinking':
+                  callbacks.onOrchestratorThinking?.(data);
+                  break;
+                case 'orchestrator_message':
+                  callbacks.onOrchestratorMessage?.(data);
+                  break;
+                case 'orchestrator_decision':
+                  callbacks.onOrchestratorDecision?.(data);
+                  break;
+                case 'orchestrator_intervention':
+                  callbacks.onOrchestratorIntervention?.(data);
+                  break;
+                case 'topic_analysis':
+                  callbacks.onTopicAnalysis?.(data);
+                  break;
                 case 'error':
                   callbacks.onError?.(data);
                   break;
@@ -1102,6 +1194,177 @@ export class PanelMissionClient {
 
     return missionId;
   }
+
+  /**
+   * Connect to an existing mission's stream by URL
+   * Used when resuming from wizard-created missions
+   */
+  async connectToMissionStream(
+    streamUrl: string,
+    callbacks: {
+      onPanelStarted?: (data: any) => void;
+      onExpertsSelected?: (data: any) => void;
+      onRoundStarted?: (data: any) => void;
+      onExpertResponse?: (data: any) => void;
+      onRoundComplete?: (data: any) => void;
+      onConsensusUpdate?: (data: any) => void;
+      onCheckpointReached?: (data: any) => void;
+      onSynthesisComplete?: (data: any) => void;
+      onPanelCompleted?: (data: any) => void;
+      onPanelPaused?: (data: any) => void;
+      onPanelCancelled?: (data: any) => void;
+      onError?: (error: any) => void;
+      // === Token streaming callbacks ===
+      onExpertStreamStart?: (data: any) => void;
+      onExpertToken?: (data: any) => void;
+      onExpertStreamEnd?: (data: any) => void;
+      // === Debate-specific callbacks ===
+      onTurnStarted?: (data: any) => void;
+      onArgument?: (data: any) => void;
+      onRebuttal?: (data: any) => void;
+      onDebateSynthesis?: (data: any) => void;
+      // === Orchestrator callbacks ===
+      onOrchestratorThinking?: (data: any) => void;
+      onOrchestratorMessage?: (data: any) => void;
+      onOrchestratorDecision?: (data: any) => void;
+      onOrchestratorIntervention?: (data: any) => void;
+      onTopicAnalysis?: (data: any) => void;
+    }
+  ): Promise<void> {
+    const response = await fetch(streamUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/event-stream',
+      },
+    });
+
+    if (!response.ok) {
+      throw new PanelAPIError(`Failed to connect to mission stream: ${response.status}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new PanelAPIError('No response body');
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let currentEventType = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('event:')) {
+            currentEventType = line.replace('event:', '').trim();
+            continue;
+          }
+
+          if (line.startsWith('data:')) {
+            try {
+              const jsonStr = line.replace('data:', '').trim();
+              if (!jsonStr) continue;
+
+              const data = JSON.parse(jsonStr);
+              const eventType = currentEventType || data.type || 'unknown';
+              currentEventType = '';
+
+              switch (eventType) {
+                case 'panel_started':
+                  callbacks.onPanelStarted?.(data);
+                  break;
+                case 'experts_selected':
+                  callbacks.onExpertsSelected?.(data);
+                  break;
+                case 'round_started':
+                  callbacks.onRoundStarted?.(data);
+                  break;
+                case 'expert_response':
+                  callbacks.onExpertResponse?.(data);
+                  break;
+                case 'round_complete':
+                  callbacks.onRoundComplete?.(data);
+                  break;
+                case 'consensus_update':
+                  callbacks.onConsensusUpdate?.(data);
+                  break;
+                case 'checkpoint_reached':
+                  callbacks.onCheckpointReached?.(data);
+                  break;
+                case 'synthesis_complete':
+                  callbacks.onSynthesisComplete?.(data);
+                  break;
+                case 'panel_completed':
+                case 'mission_completed':
+                  callbacks.onPanelCompleted?.(data);
+                  break;
+                case 'panel_paused':
+                case 'mission_paused':
+                  callbacks.onPanelPaused?.(data);
+                  break;
+                case 'panel_cancelled':
+                case 'mission_cancelled':
+                  callbacks.onPanelCancelled?.(data);
+                  break;
+                // === Token streaming events ===
+                case 'expert_stream_start':
+                  callbacks.onExpertStreamStart?.(data);
+                  break;
+                case 'expert_token':
+                  callbacks.onExpertToken?.(data);
+                  break;
+                case 'expert_stream_end':
+                  callbacks.onExpertStreamEnd?.(data);
+                  break;
+                // === Debate-specific events ===
+                case 'turn_started':
+                  callbacks.onTurnStarted?.(data);
+                  break;
+                case 'argument':
+                  callbacks.onArgument?.(data);
+                  break;
+                case 'rebuttal':
+                  callbacks.onRebuttal?.(data);
+                  break;
+                case 'synthesis':
+                  callbacks.onDebateSynthesis?.(data);
+                  break;
+                // === Orchestrator events ===
+                case 'orchestrator_thinking':
+                  callbacks.onOrchestratorThinking?.(data);
+                  break;
+                case 'orchestrator_message':
+                  callbacks.onOrchestratorMessage?.(data);
+                  break;
+                case 'orchestrator_decision':
+                  callbacks.onOrchestratorDecision?.(data);
+                  break;
+                case 'orchestrator_intervention':
+                  callbacks.onOrchestratorIntervention?.(data);
+                  break;
+                case 'topic_analysis':
+                  callbacks.onTopicAnalysis?.(data);
+                  break;
+                case 'error':
+                  callbacks.onError?.(data);
+                  break;
+              }
+            } catch (parseError) {
+              console.warn('Failed to parse SSE event:', line, parseError);
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
 }
 
 /**
@@ -1114,6 +1377,382 @@ export function getPanelMissionClient(): PanelMissionClient {
     panelMissionClientInstance = new PanelMissionClient();
   }
   return panelMissionClientInstance;
+}
+
+// ============================================================================
+// PANEL WIZARD TYPES (AI-Guided Panel Creation)
+// ============================================================================
+
+export type WizardStep =
+  | 'intent_input'
+  | 'parse_intent'
+  | 'confirm_goals'
+  | 'generate_questions'
+  | 'confirm_questions'
+  | 'suggest_panel_type'
+  | 'confirm_panel_type'
+  | 'search_agents'
+  | 'confirm_agents'
+  | 'generate_proposal'
+  | 'completed';
+
+export type WizardStatus = 'in_progress' | 'completed' | 'draft' | 'launched' | 'abandoned';
+
+export interface WizardObjective {
+  id: string;
+  text: string;
+  is_user_added: boolean;
+}
+
+export interface WizardQuestion {
+  id: string;
+  question: string;
+  rationale?: string;
+  assigned_to: string;
+  priority: 'high' | 'medium' | 'low';
+  expected_output?: string;
+  is_user_added: boolean;
+  order: number;
+}
+
+export interface WizardAgent {
+  agent_id: string;
+  name: string;
+  relevance_score: number;
+  match_reasons: string[];
+  role_in_panel: string;
+  is_user_added: boolean;
+}
+
+export interface WizardAlternativeType {
+  type: string;
+  fit_score: number;
+  rationale: string;
+}
+
+export interface WizardProposal {
+  id: string;
+  name: string;
+  description: string;
+  panel_type: PanelType;
+  domain: string;
+  therapeutic_area?: string;
+  goals: {
+    primary_intent: string;
+    objectives: WizardObjective[];
+    constraints: string[];
+    success_criteria: string[];
+  };
+  questions: WizardQuestion[];
+  agents: WizardAgent[];
+  settings: {
+    mode: string;
+    max_rounds: number;
+    require_consensus: boolean;
+    allow_debate: boolean;
+  };
+  estimated_duration: string;
+  created_at: string;
+  status: string;
+}
+
+export interface WizardState {
+  session_id: string;
+  tenant_id: string;
+  user_id?: string;
+  status: WizardStatus;
+  current_step: WizardStep;
+  awaiting_confirmation?: 'goals' | 'questions' | 'panel_type' | 'agents' | null;
+
+  // Goals
+  raw_prompt?: string;
+  primary_intent?: string;
+  domain?: string;
+  therapeutic_area?: string;
+  objectives: WizardObjective[];
+  constraints: string[];
+  success_criteria: string[];
+  intent_confidence?: number;
+  goals_confirmed: boolean;
+
+  // Questions
+  questions: WizardQuestion[];
+  suggested_question_count?: number;
+  estimated_discussion_time?: string;
+  questions_confirmed: boolean;
+
+  // Panel type
+  recommended_panel_type?: PanelType;
+  panel_type_rationale?: string;
+  panel_type_confidence?: number;
+  alternative_types: WizardAlternativeType[];
+  selected_panel_type?: PanelType;
+  panel_settings: {
+    mode?: string;
+    max_rounds?: number;
+    require_consensus?: boolean;
+    allow_debate?: boolean;
+  };
+  panel_type_confirmed: boolean;
+
+  // Agents
+  recommended_agents: WizardAgent[];
+  selected_agents: WizardAgent[];
+  composition_rationale?: string;
+  diversity_score?: number;
+  agents_confirmed: boolean;
+
+  // Proposal
+  proposal?: WizardProposal;
+  saved_as?: 'draft' | 'template';
+  launched_at?: string;
+
+  // Metadata
+  created_at: string;
+  updated_at: string;
+  error?: string;
+}
+
+export interface StartWizardResponse {
+  session_id: string;
+  status: string;
+  current_step: string;
+  created_at: string;
+}
+
+// ============================================================================
+// PANEL WIZARD CLIENT
+// ============================================================================
+
+export class PanelWizardClient {
+  private baseUrl: string;
+
+  constructor() {
+    this.baseUrl = process.env.NEXT_PUBLIC_AI_ENGINE_URL || 'http://localhost:8000';
+  }
+
+  private async request<T>(
+    method: 'GET' | 'POST' | 'DELETE',
+    path: string,
+    data?: any
+  ): Promise<T> {
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new PanelAPIError(error.detail || 'Wizard API request failed', response.status);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Start a new wizard session
+   */
+  async startSession(initialPrompt?: string): Promise<StartWizardResponse> {
+    return this.request<StartWizardResponse>('POST', '/ask-panel/wizard/start', {
+      initial_prompt: initialPrompt,
+    });
+  }
+
+  /**
+   * Get wizard session state
+   */
+  async getSession(sessionId: string): Promise<WizardState> {
+    return this.request<WizardState>('GET', `/ask-panel/wizard/${sessionId}`);
+  }
+
+  /**
+   * Parse user intent (Step 1)
+   */
+  async parseIntent(sessionId: string, prompt: string): Promise<WizardState> {
+    return this.request<WizardState>('POST', `/ask-panel/wizard/${sessionId}/parse-intent`, {
+      prompt,
+    });
+  }
+
+  /**
+   * Confirm goals (HITL Step 2)
+   */
+  async confirmGoals(
+    sessionId: string,
+    confirmed: boolean,
+    modifications?: {
+      objectives?: WizardObjective[];
+      primary_intent?: string;
+      domain?: string;
+      therapeutic_area?: string;
+      constraints?: string[];
+      success_criteria?: string[];
+    }
+  ): Promise<WizardState> {
+    return this.request<WizardState>('POST', `/ask-panel/wizard/${sessionId}/confirm-goals`, {
+      confirmed,
+      ...modifications,
+    });
+  }
+
+  /**
+   * Generate questions (Step 3)
+   */
+  async generateQuestions(sessionId: string): Promise<WizardState> {
+    return this.request<WizardState>('POST', `/ask-panel/wizard/${sessionId}/generate-questions`);
+  }
+
+  /**
+   * Confirm questions (HITL Step 4)
+   */
+  async confirmQuestions(
+    sessionId: string,
+    confirmed: boolean,
+    questions?: WizardQuestion[]
+  ): Promise<WizardState> {
+    return this.request<WizardState>('POST', `/ask-panel/wizard/${sessionId}/confirm-questions`, {
+      confirmed,
+      questions,
+    });
+  }
+
+  /**
+   * Suggest panel type (Step 5)
+   */
+  async suggestPanelType(sessionId: string): Promise<WizardState> {
+    return this.request<WizardState>('POST', `/ask-panel/wizard/${sessionId}/suggest-panel-type`);
+  }
+
+  /**
+   * Confirm panel type (HITL Step 6)
+   */
+  async confirmPanelType(
+    sessionId: string,
+    confirmed: boolean,
+    selectedType?: PanelType,
+    panelSettings?: Record<string, any>
+  ): Promise<WizardState> {
+    return this.request<WizardState>('POST', `/ask-panel/wizard/${sessionId}/confirm-panel-type`, {
+      confirmed,
+      selected_panel_type: selectedType,
+      panel_settings: panelSettings,
+    });
+  }
+
+  /**
+   * Recommend agents (Step 7)
+   */
+  async recommendAgents(sessionId: string): Promise<WizardState> {
+    return this.request<WizardState>('POST', `/ask-panel/wizard/${sessionId}/recommend-agents`);
+  }
+
+  /**
+   * Confirm agents (HITL Step 8)
+   */
+  async confirmAgents(
+    sessionId: string,
+    confirmed: boolean,
+    selectedAgents?: WizardAgent[]
+  ): Promise<WizardState> {
+    return this.request<WizardState>('POST', `/ask-panel/wizard/${sessionId}/confirm-agents`, {
+      confirmed,
+      selected_agents: selectedAgents,
+    });
+  }
+
+  /**
+   * Finalize wizard and generate proposal (Step 9)
+   */
+  async finalize(sessionId: string): Promise<WizardState> {
+    return this.request<WizardState>('POST', `/ask-panel/wizard/${sessionId}/finalize`);
+  }
+
+  /**
+   * Save as draft
+   */
+  async saveDraft(
+    sessionId: string,
+    name: string,
+    description?: string
+  ): Promise<{ status: string; saved_as: string; session_id: string; name: string }> {
+    return this.request('POST', `/ask-panel/wizard/${sessionId}/save-draft`, {
+      name,
+      description,
+    });
+  }
+
+  /**
+   * Save as template
+   */
+  async saveTemplate(
+    sessionId: string,
+    name: string,
+    description?: string,
+    isPublic?: boolean
+  ): Promise<{
+    status: string;
+    saved_as: string;
+    template_id: string;
+    name: string;
+    is_public: boolean;
+  }> {
+    return this.request('POST', `/ask-panel/wizard/${sessionId}/save-template`, {
+      name,
+      description,
+      is_public: isPublic || false,
+    });
+  }
+
+  /**
+   * Launch panel mission from wizard
+   */
+  async launch(sessionId: string): Promise<{
+    status: string;
+    mission_id: string;
+    panel_type: string;
+    stream_url: string;
+  }> {
+    return this.request('POST', `/ask-panel/wizard/${sessionId}/launch`);
+  }
+
+  /**
+   * List wizard sessions
+   */
+  async listSessions(params?: {
+    status?: WizardStatus;
+    limit?: number;
+  }): Promise<{ sessions: Array<{ session_id: string; status: string; primary_intent: string; created_at: string; updated_at: string }>; total: number }> {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.set('status', params.status);
+    if (params?.limit) queryParams.set('limit', params.limit.toString());
+
+    const query = queryParams.toString();
+    const path = query ? `/ask-panel/wizard/sessions?${query}` : '/ask-panel/wizard/sessions';
+
+    return this.request('GET', path);
+  }
+
+  /**
+   * Delete wizard session
+   */
+  async deleteSession(sessionId: string): Promise<{ status: string; session_id: string }> {
+    return this.request('DELETE', `/ask-panel/wizard/${sessionId}`);
+  }
+}
+
+/**
+ * Singleton instance of PanelWizardClient
+ */
+let panelWizardClientInstance: PanelWizardClient | null = null;
+
+export function getPanelWizardClient(): PanelWizardClient {
+  if (!panelWizardClientInstance) {
+    panelWizardClientInstance = new PanelWizardClient();
+  }
+  return panelWizardClientInstance;
 }
 
 /**

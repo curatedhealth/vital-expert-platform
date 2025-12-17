@@ -15,7 +15,7 @@
  */
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useCallback, Suspense } from 'react';
+import { useState, useCallback, useEffect, Suspense } from 'react';
 import {
   ArrowLeft,
   Loader2,
@@ -27,6 +27,7 @@ import {
   Target,
   Send,
   Play,
+  Wand2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -46,6 +47,7 @@ import {
   SelectValue,
 } from '@/lib/shared/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/lib/auth/supabase-auth-context';
 
 import { usePanelMission } from '@/features/ask-panel/hooks';
 import { PanelAutonomousView } from '@/features/ask-panel/components';
@@ -107,9 +109,12 @@ function PanelAutonomousContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  // Get initial panel type from query params
+  // Get initial panel type and wizard params from query
   const initialType = (searchParams.get('type') as PanelType) || 'structured';
+  const missionIdParam = searchParams.get('missionId');
+  const fromWizard = searchParams.get('fromWizard') === 'true';
 
   // Form state
   const [goal, setGoal] = useState('');
@@ -119,6 +124,9 @@ function PanelAutonomousContent() {
   const [consensusThreshold, setConsensusThreshold] = useState(0.7);
   const [autoApproveCheckpoints, setAutoApproveCheckpoints] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [wizardMissionId, setWizardMissionId] = useState<string | null>(null);
+  const [wizardStreamUrl, setWizardStreamUrl] = useState<string | null>(null);
+  const [isFromWizard, setIsFromWizard] = useState(false);
 
   // Panel mission hook
   const {
@@ -127,12 +135,15 @@ function PanelAutonomousContent() {
     isStreaming,
     isCheckpointPending,
     startMission,
+    connectToMission,
     resolveCheckpoint,
     pauseMission,
     resumeMission,
     cancelMission,
     reset,
   } = usePanelMission({
+    userId: user?.id,
+    autoSave: true,
     onError: (error) => {
       toast({
         title: 'Error',
@@ -159,7 +170,53 @@ function PanelAutonomousContent() {
         variant: type === 'error' ? 'destructive' : 'default',
       });
     },
+    onSaved: (conversationId) => {
+      console.log('[PanelAutonomous] Panel saved to history:', conversationId);
+    },
   });
+
+  // Check for wizard-created mission on mount
+  useEffect(() => {
+    if (fromWizard && missionIdParam) {
+      // Read wizard data from sessionStorage
+      const storedMissionId = sessionStorage.getItem('wizardMissionId');
+      const storedStreamUrl = sessionStorage.getItem('wizardStreamUrl');
+      const storedPanelType = sessionStorage.getItem('wizardPanelType') as PanelType | null;
+      const storedGoal = sessionStorage.getItem('wizardGoal');
+
+      if (storedMissionId && storedStreamUrl) {
+        // Set wizard state
+        setWizardMissionId(storedMissionId);
+        setWizardStreamUrl(storedStreamUrl);
+        setIsFromWizard(true);
+        setHasStarted(true);
+
+        // Set goal and panel type if available
+        if (storedGoal) {
+          setGoal(storedGoal);
+        }
+        if (storedPanelType) {
+          setPanelType(storedPanelType);
+        }
+
+        // Connect to the existing stream
+        connectToMission(
+          storedMissionId,
+          storedStreamUrl,
+          storedPanelType || 'structured',
+          storedGoal || 'Wizard-created panel'
+        );
+
+        // Clear sessionStorage after use
+        sessionStorage.removeItem('wizardMissionId');
+        sessionStorage.removeItem('wizardStreamUrl');
+        sessionStorage.removeItem('wizardPanelType');
+        sessionStorage.removeItem('wizardGoal');
+        sessionStorage.removeItem('wizardQuestions');
+        sessionStorage.removeItem('wizardObjectives');
+      }
+    }
+  }, [fromWizard, missionIdParam, connectToMission]);
 
   // Handle start
   const handleStart = useCallback(() => {
@@ -203,12 +260,23 @@ function PanelAutonomousContent() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                {selectedPanelMeta.icon}
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                isFromWizard
+                  ? 'bg-gradient-to-br from-amber-500 to-orange-500'
+                  : 'bg-gradient-to-br from-purple-500 to-pink-500'
+              }`}>
+                {isFromWizard ? <Wand2 className="h-5 w-5 text-white" /> : selectedPanelMeta.icon}
               </div>
               <div>
-                <h1 className="font-semibold">{selectedPanelMeta.title}</h1>
-                <p className="text-xs text-muted-foreground line-clamp-1">{goal}</p>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-semibold">{selectedPanelMeta.title}</h1>
+                  {isFromWizard && (
+                    <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 text-xs">
+                      AI Wizard
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-1">{goal || state.goal || 'Panel discussion'}</p>
               </div>
             </div>
           </div>

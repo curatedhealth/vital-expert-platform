@@ -6,9 +6,24 @@ import { NextRequest, NextResponse } from 'next/server';
  *
  * GET /api/ask-panel?userId=xxx - Fetch user's panel sessions
  * GET /api/ask-panel?conversationId=xxx - Fetch single panel conversation
+ * POST /api/ask-panel - Save a new panel session to history
  *
  * Panel sessions are stored in the 'conversations' table with metadata.mode = 'panel'
  */
+
+// Helper to get Supabase client
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ||
+                              process.env.NEW_SUPABASE_SERVICE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return null;
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -58,22 +73,22 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'userId parameter is required' },
-        { status: 400 }
-      );
-    }
-
     // Get user's panel sessions from CONVERSATIONS table
     // Filter by metadata.mode = 'panel'
-    const { data: conversations, error } = await supabase
+    // If no userId or userId is 'default-user', get all panel sessions (dev/bypass mode)
+    let query = supabase
       .from('conversations')
       .select('id, title, metadata, context, created_at, updated_at')
-      .eq('user_id', userId)
       .filter('metadata->>mode', 'eq', 'panel')
       .order('updated_at', { ascending: false })
       .limit(50);
+
+    // Only filter by user if a real userId is provided (not bypass mode)
+    if (userId && userId !== 'default-user') {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data: conversations, error } = await query;
 
     if (error) {
       console.error('[Ask Panel API] Failed to fetch panel sessions:', error);
@@ -156,5 +171,156 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('[Ask Panel API] Unexpected error:', error);
     return NextResponse.json({ success: true, sessions: [] });
+  }
+}
+
+/**
+ * POST /api/ask-panel
+ * Save a panel session to history
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      console.warn('[Ask Panel API] Supabase configuration missing - cannot save panel');
+      return NextResponse.json(
+        { error: 'Database configuration missing', success: false },
+        { status: 500 }
+      );
+    }
+
+    const body = await request.json();
+    const {
+      userId,
+      missionId,
+      title,
+      goal,
+      panelType,
+      experts,
+      responses,
+      consensus,
+      finalOutput,
+      totalCost,
+      qualityScore,
+      executionTimeMs,
+    } = body;
+
+    // Validate required fields
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'userId is required', success: false },
+        { status: 400 }
+      );
+    }
+
+    if (!goal) {
+      return NextResponse.json(
+        { error: 'goal is required', success: false },
+        { status: 400 }
+      );
+    }
+
+    // Extract agent IDs and names from experts
+    const agentIds = experts?.map((e: any) => e.id).filter(Boolean) || [];
+    const agentNames = experts?.map((e: any) => e.name).filter(Boolean) || [];
+
+    // Build messages array from responses
+    const messages: any[] = [];
+
+    // Add initial user message (the goal/question)
+    messages.push({
+      role: 'user',
+      content: goal,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Add expert responses as assistant messages
+    if (responses && Array.isArray(responses)) {
+      responses.forEach((response: any) => {
+        messages.push({
+          role: 'assistant',
+          content: response.content,
+          metadata: {
+            expertId: response.expertId,
+            expertName: response.expertName,
+            confidence: response.confidence,
+            round: response.round,
+            position: response.position,
+            vote: response.vote,
+          },
+          timestamp: response.timestamp || new Date().toISOString(),
+        });
+      });
+    }
+
+    // Add final synthesis if present
+    if (finalOutput?.content) {
+      messages.push({
+        role: 'assistant',
+        content: finalOutput.content,
+        metadata: {
+          type: 'synthesis',
+          consensusScore: consensus?.consensusScore,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Create the conversation record
+    const conversationData = {
+      user_id: userId,
+      title: title || `Panel: ${goal.slice(0, 50)}${goal.length > 50 ? '...' : ''}`,
+      metadata: {
+        mode: 'panel',
+        panel_type: panelType || 'structured',
+        mission_id: missionId,
+        agent_ids: agentIds,
+        agent_names: agentNames,
+        consensus_score: consensus?.consensusScore,
+        consensus_level: consensus?.consensusLevel,
+        total_cost: totalCost,
+        quality_score: qualityScore,
+        expert_count: experts?.length || 0,
+      },
+      context: {
+        messages,
+        panel_result: {
+          final_output: finalOutput,
+          consensus,
+          execution_time_ms: executionTimeMs,
+          expert_count: experts?.length || 0,
+          round_count: finalOutput?.roundCount || 1,
+        },
+      },
+    };
+
+    const { data: conversation, error } = await supabase
+      .from('conversations')
+      .insert(conversationData)
+      .select('id, title, created_at')
+      .single();
+
+    if (error) {
+      console.error('[Ask Panel API] Failed to save panel session:', error);
+      return NextResponse.json(
+        { error: 'Failed to save panel session', details: error.message, success: false },
+        { status: 500 }
+      );
+    }
+
+    console.log('[Ask Panel API] Panel session saved:', conversation.id);
+
+    return NextResponse.json({
+      success: true,
+      conversationId: conversation.id,
+      title: conversation.title,
+      message: 'Panel session saved to history',
+    });
+  } catch (error: any) {
+    console.error('[Ask Panel API] Unexpected error saving panel:', error);
+    return NextResponse.json(
+      { error: 'Failed to save panel session', details: error.message, success: false },
+      { status: 500 }
+    );
   }
 }

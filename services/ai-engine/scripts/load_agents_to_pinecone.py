@@ -58,9 +58,11 @@ class AgentEmbeddingPipeline:
         self.pinecone = Pinecone(api_key=pinecone_api_key)
         self.openai_client = OpenAI(api_key=openai_api_key)
         
-        # Initialize or get Pinecone index
-        self.index_name = "vital-medical-agents"
-        self.dimension = 1536  # OpenAI text-embedding-3-small dimension
+        # Initialize or get Pinecone index - use same index/namespace as graphrag_selector
+        self.index_name = os.getenv("PINECONE_AGENTS_INDEX_NAME") or os.getenv("PINECONE_AGENT_INDEX", "vital-knowledge")
+        self.namespace = os.getenv("PINECONE_AGENT_NAMESPACE", "ont-agents")
+        self.dimension = 3072  # OpenAI text-embedding-3-large dimension (matches vital-knowledge index)
+        self.embedding_model = "text-embedding-3-large"
         
         if not dry_run:
             self._init_pinecone_index()
@@ -68,24 +70,16 @@ class AgentEmbeddingPipeline:
         logger.info("✅ All clients initialized")
     
     def _init_pinecone_index(self):
-        """Initialize Pinecone index if it doesn't exist"""
+        """Initialize Pinecone index connection (expects index to already exist)"""
         existing_indexes = [idx.name for idx in self.pinecone.list_indexes()]
-        
+
         if self.index_name not in existing_indexes:
-            logger.info(f"Creating new Pinecone index: {self.index_name}")
-            self.pinecone.create_index(
-                name=self.index_name,
-                dimension=self.dimension,
-                metric="cosine",
-                spec=ServerlessSpec(
-                    cloud="aws",
-                    region="us-east-1"
-                )
-            )
-            logger.info(f"✅ Created index: {self.index_name}")
-        else:
-            logger.info(f"Using existing index: {self.index_name}")
-        
+            logger.error(f"❌ Pinecone index '{self.index_name}' does not exist!")
+            logger.error(f"   Available indexes: {existing_indexes}")
+            logger.error(f"   Please create the index first or set PINECONE_AGENT_INDEX env var")
+            raise ValueError(f"Index {self.index_name} not found")
+
+        logger.info(f"Using existing index: {self.index_name} (namespace: {self.namespace})")
         self.index = self.pinecone.Index(self.index_name)
     
     async def fetch_agents(self) -> List[Dict[str, Any]]:
@@ -215,7 +209,7 @@ class AgentEmbeddingPipeline:
             return [[0.0] * self.dimension for _ in texts]
         
         response = self.openai_client.embeddings.create(
-            model="text-embedding-3-small",
+            model=self.embedding_model,
             input=texts
         )
         
@@ -227,18 +221,18 @@ class AgentEmbeddingPipeline:
     def upsert_to_pinecone(self, vectors: List[Dict[str, Any]]):
         """Upsert vectors to Pinecone in batches"""
         if self.dry_run:
-            logger.info(f"DRY RUN: Would upsert {len(vectors)} vectors to Pinecone")
+            logger.info(f"DRY RUN: Would upsert {len(vectors)} vectors to Pinecone (namespace: {self.namespace})")
             return
-        
-        logger.info(f"Upserting {len(vectors)} vectors to Pinecone...")
-        
-        # Upsert in batches
+
+        logger.info(f"Upserting {len(vectors)} vectors to Pinecone index '{self.index_name}' namespace '{self.namespace}'...")
+
+        # Upsert in batches with namespace
         for i in range(0, len(vectors), self.batch_size):
             batch = vectors[i:i + self.batch_size]
-            self.index.upsert(vectors=batch)
+            self.index.upsert(vectors=batch, namespace=self.namespace)
             logger.info(f"  Upserted batch {i // self.batch_size + 1} ({len(batch)} vectors)")
-        
-        logger.info(f"✅ Upserted all {len(vectors)} vectors")
+
+        logger.info(f"✅ Upserted all {len(vectors)} vectors to namespace '{self.namespace}'")
     
     async def run(self):
         """Main pipeline execution"""
@@ -333,25 +327,32 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Run without actually upserting to Pinecone")
     args = parser.parse_args()
     
-    # Load environment variables
-    required_env_vars = [
-        'SUPABASE_URL',
-        'SUPABASE_SERVICE_KEY',
-        'PINECONE_API_KEY',
-        'OPENAI_API_KEY'
-    ]
-    
-    missing_vars = [var for var in required_env_vars if not os.getenv(var)]
-    if missing_vars:
-        logger.error(f"❌ Missing required environment variables: {', '.join(missing_vars)}")
+    # Load environment variables (support multiple naming conventions)
+    supabase_url = os.getenv('SUPABASE_URL') or os.getenv('NEXT_PUBLIC_SUPABASE_URL')
+    supabase_key = os.getenv('SUPABASE_SERVICE_KEY') or os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('NEW_SUPABASE_SERVICE_KEY')
+    pinecone_key = os.getenv('PINECONE_API_KEY')
+    openai_key = os.getenv('OPENAI_API_KEY')
+
+    missing = []
+    if not supabase_url:
+        missing.append('SUPABASE_URL')
+    if not supabase_key:
+        missing.append('SUPABASE_SERVICE_KEY or SUPABASE_SERVICE_ROLE_KEY')
+    if not pinecone_key:
+        missing.append('PINECONE_API_KEY')
+    if not openai_key:
+        missing.append('OPENAI_API_KEY')
+
+    if missing:
+        logger.error(f"❌ Missing required environment variables: {', '.join(missing)}")
         sys.exit(1)
-    
+
     # Initialize pipeline
     pipeline = AgentEmbeddingPipeline(
-        supabase_url=os.getenv('SUPABASE_URL'),
-        supabase_key=os.getenv('SUPABASE_SERVICE_KEY'),
-        pinecone_api_key=os.getenv('PINECONE_API_KEY'),
-        openai_api_key=os.getenv('OPENAI_API_KEY'),
+        supabase_url=supabase_url,
+        supabase_key=supabase_key,
+        pinecone_api_key=pinecone_key,
+        openai_api_key=openai_key,
         batch_size=args.batch_size,
         dry_run=args.dry_run
     )

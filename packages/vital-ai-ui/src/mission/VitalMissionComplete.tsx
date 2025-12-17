@@ -33,6 +33,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { cn } from '../lib/utils';
+import { VitalStreamText } from '../conversation/VitalStreamText';
 import {
   CheckCircle2,
   XCircle,
@@ -452,7 +453,11 @@ export function VitalMissionComplete({
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-slate-900 mb-3">Executive Summary</h2>
                 <div className="prose prose-slate max-w-none">
-                  <p className="text-slate-700 whitespace-pre-wrap">{result.executiveSummary}</p>
+                  <VitalStreamText
+                    content={result.executiveSummary}
+                    isStreaming={false}
+                    className="text-slate-700"
+                  />
                 </div>
               </div>
 

@@ -149,7 +149,7 @@ class GenericRunner(BaseFamilyRunner[GenericState]):
         self.llm = llm or ChatOpenAI(
             model="gpt-4-turbo-preview",
             temperature=0.25,
-            max_tokens=3000,
+            max_tokens=8000,  # Increased from 3000 to support longer executive summaries
         )
         self.default_steps = default_steps
 

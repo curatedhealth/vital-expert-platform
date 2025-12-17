@@ -156,7 +156,7 @@ class CommunicationRunner(BaseFamilyRunner[CommunicationState]):
         self.llm = llm or ChatOpenAI(
             model="gpt-4-turbo-preview",
             temperature=0.35,
-            max_tokens=3000,
+            max_tokens=8000,  # Increased from 3000 to support longer outputs
         )
         self.min_segments = min_segments
         self.max_segments = max_segments

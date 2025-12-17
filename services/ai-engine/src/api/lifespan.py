@@ -181,10 +181,15 @@ async def _init_supabase_client():
         
         logger.info("✅ Supabase client initialized")
         
-        # Initialize Panel Template Service
-        from services.panel_template_service import initialize_panel_template_service
-        await initialize_panel_template_service(client)
-        logger.info("✅ Panel template service initialized")
+        # Initialize Panel Template Service (with timeout)
+        try:
+            from services.panel_template_service import initialize_panel_template_service
+            await asyncio.wait_for(initialize_panel_template_service(client), timeout=5.0)
+            logger.info("✅ Panel template service initialized")
+        except asyncio.TimeoutError:
+            logger.warning("⚠️ Panel template service initialization timed out - skipping")
+        except Exception as e:
+            logger.warning("⚠️ Panel template service initialization failed", error=str(e))
         
         # Initialize GraphRAG selector
         from services.graphrag_selector import initialize_graphrag_selector

@@ -171,7 +171,7 @@ class MonitoringRunner(BaseFamilyRunner[MonitoringState]):
         self.llm = llm or ChatOpenAI(
             model="gpt-4-turbo-preview",
             temperature=0.2,
-            max_tokens=3000,
+            max_tokens=8000,  # Increased from 3000 to support longer outputs
         )
         self.critical_threshold = critical_threshold
         self.min_delta_confidence = min_delta_confidence

@@ -140,7 +140,7 @@ class StrategyRunner(BaseFamilyRunner[StrategyState]):
         self.llm = llm or ChatOpenAI(
             model="gpt-4-turbo-preview",
             temperature=0.3,
-            max_tokens=3000,
+            max_tokens=8000,  # Increased from 3000 to support longer outputs
         )
         self.scenario_count = max(2, scenario_count)
 

@@ -155,7 +155,7 @@ class ProblemSolvingRunner(BaseFamilyRunner[ProblemSolvingState]):
         self.llm = llm or ChatOpenAI(
             model="gpt-4-turbo-preview",
             temperature=0.3,
-            max_tokens=3000,
+            max_tokens=8000,  # Increased from 3000 to support longer outputs
         )
         self.max_options = max_options
         self.default_criteria = default_criteria or [

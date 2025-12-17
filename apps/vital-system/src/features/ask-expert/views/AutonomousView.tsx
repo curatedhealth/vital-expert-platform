@@ -579,6 +579,7 @@ export function AutonomousView({
           timestamp: new Date(),
           message: step.content || step.step || 'Processing...',
           agentName: step.agentName,
+          agentLevel: step.agentLevel,
           details: { status: step.status, step: step.step },
         }]);
       }
@@ -764,7 +765,7 @@ export function AutonomousView({
     if (phase !== 'complete') return null;
     return {
       outcome: streamState.status === 'error' ? 'failed' : 'success',
-      executiveSummary: streamState.content?.substring(0, 1000) || 'Mission completed successfully.',
+      executiveSummary: streamState.content || 'Mission completed successfully.',
       keyFindings: [], // Would be populated from mission response
       recommendations: [],
       caveats: [],
@@ -944,6 +945,96 @@ export function AutonomousView({
       return goal; // Return original on error
     }
   }, [selectedExpert]);
+
+  // Download a single artifact as a file
+  const handleDownloadArtifact = useCallback((artifactId: string) => {
+    const artifact = streamState.artifacts.find(a => a.id === artifactId);
+    if (!artifact) {
+      logger.error('[AutonomousView] Artifact not found for download', { artifactId });
+      return;
+    }
+
+    const content = artifact.content || '';
+    const title = artifact.title || 'artifact';
+    const safeFileName = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+    // Create blob based on artifact type
+    const isMarkdown = artifact.artifactType === 'report' || artifact.artifactType === 'summary';
+    const extension = isMarkdown ? 'md' : 'txt';
+    const mimeType = isMarkdown ? 'text/markdown' : 'text/plain';
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${safeFileName}.${extension}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    logger.info('[AutonomousView] Artifact downloaded', { artifactId, title, size: content.length });
+  }, [streamState.artifacts]);
+
+  // Download all artifacts as a combined markdown file
+  const handleDownloadAllArtifacts = useCallback(() => {
+    if (streamState.artifacts.length === 0) {
+      logger.warn('[AutonomousView] No artifacts to download');
+      return;
+    }
+
+    // Create combined markdown document
+    const missionTitle = selectedTemplate?.name || missionGoal.substring(0, 50) || 'Research Mission';
+    const timestamp = new Date().toISOString().split('T')[0];
+
+    let combinedContent = `# ${missionTitle}\n\n`;
+    combinedContent += `**Generated:** ${new Date().toLocaleString()}\n`;
+    combinedContent += `**Mission ID:** ${missionId}\n\n`;
+    combinedContent += `---\n\n`;
+
+    // Add executive summary if available
+    if (streamState.content) {
+      combinedContent += `## Executive Summary\n\n${streamState.content}\n\n---\n\n`;
+    }
+
+    // Add each artifact
+    streamState.artifacts.forEach((artifact, index) => {
+      const artifactTitle = artifact.title || `Artifact ${index + 1}`;
+      combinedContent += `## ${artifactTitle}\n\n`;
+      if (artifact.artifactType) {
+        combinedContent += `*Type: ${artifact.artifactType}*\n\n`;
+      }
+      combinedContent += `${artifact.content || 'No content available'}\n\n`;
+      if (index < streamState.artifacts.length - 1) {
+        combinedContent += `---\n\n`;
+      }
+    });
+
+    // Add citations if available
+    if (streamState.citations.length > 0) {
+      combinedContent += `\n---\n\n## Sources\n\n`;
+      streamState.citations.forEach((citation, index) => {
+        combinedContent += `${index + 1}. [${citation.title}](${citation.url || '#'}) - *${citation.source}*\n`;
+      });
+    }
+
+    // Create and download file
+    const safeFileName = missionTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const blob = new Blob([combinedContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${safeFileName}_${timestamp}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    logger.info('[AutonomousView] All artifacts downloaded', {
+      artifactCount: streamState.artifacts.length,
+      totalSize: combinedContent.length
+    });
+  }, [streamState.artifacts, streamState.content, streamState.citations, selectedTemplate, missionGoal, missionId]);
 
   // Handle goal submission from VitalMissionGoalInput (new shared component)
   // Mode 3: Goes to HITL checkpoint flow (goal_confirmation → plan_confirmation → team_validation)
@@ -2037,14 +2128,8 @@ export function AutonomousView({
                 avatar: selectedExpert.avatar,
                 role: selectedExpert.domain || 'Expert',
               }] : []}
-              onDownloadArtifact={(artifactId) => {
-                logger.info('[AutonomousView] Download artifact', { artifactId });
-                // TODO: Implement artifact download
-              }}
-              onDownloadAll={() => {
-                logger.info('[AutonomousView] Download all artifacts');
-                // TODO: Implement bulk download
-              }}
+              onDownloadArtifact={handleDownloadArtifact}
+              onDownloadAll={handleDownloadAllArtifacts}
               onShare={() => {
                 logger.info('[AutonomousView] Share mission results');
                 // TODO: Implement share functionality

@@ -108,6 +108,8 @@ export interface MissionEvent {
   message: string;
   /** Agent that generated the event */
   agentName?: string;
+  /** Agent level (L1-L5) for hierarchy display */
+  agentLevel?: 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
   /** Agent avatar */
   agentAvatar?: string;
   /** Additional details (tool name, artifact info, etc.) */
@@ -464,6 +466,18 @@ export function VitalMissionExecution({
                       {event.agentName && (
                         <span className="text-xs font-medium text-slate-500">
                           {event.agentName}
+                        </span>
+                      )}
+                      {event.agentLevel && (
+                        <span className={cn(
+                          'px-1.5 py-0.5 rounded text-[10px] font-semibold',
+                          event.agentLevel === 'L1' && 'bg-slate-100 text-slate-600',
+                          event.agentLevel === 'L2' && 'bg-blue-100 text-blue-600',
+                          event.agentLevel === 'L3' && 'bg-violet-100 text-violet-600',
+                          event.agentLevel === 'L4' && 'bg-purple-100 text-purple-600',
+                          event.agentLevel === 'L5' && 'bg-fuchsia-100 text-fuchsia-700'
+                        )}>
+                          {event.agentLevel}
                         </span>
                       )}
                       <span className="text-xs text-slate-400">

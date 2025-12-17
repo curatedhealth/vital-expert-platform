@@ -79,3 +79,4 @@ CMD ["celery", "-A", "workers.config", "worker", "-l", "info"]
 
 
 
+

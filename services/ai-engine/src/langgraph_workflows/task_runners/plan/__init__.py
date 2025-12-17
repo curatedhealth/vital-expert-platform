@@ -9,6 +9,12 @@ Runners:
     - DependencyRunner: Map dependencies (DAG construction)
     - ScheduleRunner: Generate schedule (Critical Path Method)
     - ResourceRunner: Allocate resources (Constraint optimization)
+    - IndicatorSetterRunner: Set monitoring indicators
+    - ThresholdManagerRunner: Configure alert thresholds
+    - StrategicObjectiveSetterRunner: Set strategic objectives
+    - PromotionPlannerRunner: Plan promotion campaigns
+    - MigrationPlannerRunner: Plan portfolio migration
+    - SequencingStrategistRunner: Optimize launch sequencing
 
 Core Logic: Critical Path Method / Hierarchical Task Networks (HTN)
 
@@ -52,6 +58,42 @@ from .resource_runner import (
     TaskAllocation,
     ResourceUtilization,
 )
+from .indicator_setter_runner import (
+    IndicatorSetterRunner,
+    IndicatorSetterInput,
+    IndicatorSetterOutput,
+    Indicator,
+)
+from .threshold_manager_runner import (
+    ThresholdManagerRunner,
+    ThresholdManagerInput,
+    ThresholdManagerOutput,
+    ThresholdConfig,
+)
+from .strategic_objective_runner import (
+    StrategicObjectiveSetterRunner,
+    StrategicObjectiveInput,
+    StrategicObjectiveOutput,
+    StrategicObjective,
+)
+from .promotion_planner_runner import (
+    PromotionPlannerRunner,
+    PromotionPlannerInput,
+    PromotionPlannerOutput,
+    Campaign,
+)
+from .migration_planner_runner import (
+    MigrationPlannerRunner,
+    MigrationPlannerInput,
+    MigrationPlannerOutput,
+    MigrationPhase,
+)
+from .sequencing_strategist_runner import (
+    SequencingStrategistRunner,
+    SequencingStrategistInput,
+    SequencingStrategistOutput,
+    LaunchItem,
+)
 
 __all__ = [
     # Runners
@@ -78,4 +120,34 @@ __all__ = [
     "Resource",
     "TaskAllocation",
     "ResourceUtilization",
+    # Indicator Setter
+    "IndicatorSetterRunner",
+    "IndicatorSetterInput",
+    "IndicatorSetterOutput",
+    "Indicator",
+    # Threshold Manager
+    "ThresholdManagerRunner",
+    "ThresholdManagerInput",
+    "ThresholdManagerOutput",
+    "ThresholdConfig",
+    # Strategic Objective
+    "StrategicObjectiveSetterRunner",
+    "StrategicObjectiveInput",
+    "StrategicObjectiveOutput",
+    "StrategicObjective",
+    # Promotion Planner
+    "PromotionPlannerRunner",
+    "PromotionPlannerInput",
+    "PromotionPlannerOutput",
+    "Campaign",
+    # Migration Planner
+    "MigrationPlannerRunner",
+    "MigrationPlannerInput",
+    "MigrationPlannerOutput",
+    "MigrationPhase",
+    # Sequencing Strategist
+    "SequencingStrategistRunner",
+    "SequencingStrategistInput",
+    "SequencingStrategistOutput",
+    "LaunchItem",
 ]

@@ -35,12 +35,54 @@ from .base_task_runner import (
     TaskRunnerCategory,
 )
 from .registry import TaskRunnerRegistry, register_task_runner
+from .unified_registry import (
+    # Enums
+    RunnerType,
+    JTBDLevel,
+    JobStep,
+    AIIntervention,
+    # Models
+    RunnerInfo,
+    RunnerMapping,
+    # Registry
+    UnifiedRunnerRegistry,
+    get_unified_registry,
+    # Convenience functions
+    get_task_runner,
+    get_family_runner,
+    get_runner_for_template,
+    get_runner_for_jtbd,
+    # Mappings
+    JTBD_RUNNER_DEFAULTS,
+    TEMPLATE_FAMILY_MAP,
+)
 
 __all__ = [
+    # Base classes
     "TaskRunner",
     "TaskRunnerInput",
     "TaskRunnerOutput",
     "TaskRunnerCategory",
+    # Task runner registry
     "TaskRunnerRegistry",
     "register_task_runner",
+    # Unified registry enums
+    "RunnerType",
+    "JTBDLevel",
+    "JobStep",
+    "AIIntervention",
+    # Unified registry models
+    "RunnerInfo",
+    "RunnerMapping",
+    # Unified registry class
+    "UnifiedRunnerRegistry",
+    "get_unified_registry",
+    # Convenience functions
+    "get_task_runner",
+    "get_family_runner",
+    "get_runner_for_template",
+    "get_runner_for_jtbd",
+    # Mappings
+    "JTBD_RUNNER_DEFAULTS",
+    "TEMPLATE_FAMILY_MAP",
 ]

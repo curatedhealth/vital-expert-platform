@@ -9,8 +9,10 @@ Runners:
     - DeltaRunner: Detect changes (change detection / CUSUM)
     - AlertRunner: Evaluate alerts (threshold evaluation)
     - TrendRunner: Extrapolate trends (time series projection)
+    - SignalTrendAnalyzerRunner: Analyze weak signals and emerging trends
+    - AlertGeneratorRunner: Generate alert stream from monitoring data
 
-Core Logic: CUSUM / Delta Tracking / Time Series Analysis
+Core Logic: CUSUM / Delta Tracking / Time Series Analysis / Signal Detection
 
 Each runner is designed for:
     - 60-120 second execution time
@@ -44,6 +46,18 @@ from .trend_runner import (
     TrendOutput,
     MetricTrend,
 )
+from .signal_trend_analyzer_runner import (
+    SignalTrendAnalyzerRunner,
+    SignalTrendAnalyzerInput,
+    SignalTrendAnalyzerOutput,
+    Signal,
+)
+from .alert_generator_runner import (
+    AlertGeneratorRunner,
+    AlertGeneratorInput,
+    AlertGeneratorOutput,
+    Alert,
+)
 
 __all__ = [
     # Runners
@@ -68,4 +82,14 @@ __all__ = [
     "TrendInput",
     "TrendOutput",
     "MetricTrend",
+    # Signal Trend Analyzer
+    "SignalTrendAnalyzerRunner",
+    "SignalTrendAnalyzerInput",
+    "SignalTrendAnalyzerOutput",
+    "Signal",
+    # Alert Generator
+    "AlertGeneratorRunner",
+    "AlertGeneratorInput",
+    "AlertGeneratorOutput",
+    "Alert",
 ]

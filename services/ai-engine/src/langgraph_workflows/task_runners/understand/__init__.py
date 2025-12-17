@@ -9,6 +9,9 @@ Runners:
     - ExploreRunner: Deep dive on theme (depth-first analysis)
     - GapDetectRunner: Find missing info (set difference analysis)
     - ExtractRunner: Extract specific info (pattern matching + NER)
+    - CapabilityGapMapperRunner: Map capability gaps
+    - MarketDiagnosticianRunner: Diagnose market dynamics
+    - CompetitivePositionAnalyzerRunner: Analyze competitive positions
 
 Each runner is designed for:
     - 30-120 second execution time
@@ -42,6 +45,23 @@ from .extract_runner import (
     ExtractedEntity,
     ExtractionSpec,
 )
+from .capability_gap_mapper_runner import (
+    CapabilityGapMapperRunner,
+    CapabilityGapMapperInput,
+    CapabilityGapMapperOutput,
+    CapabilityGap,
+)
+from .market_diagnostician_runner import (
+    MarketDiagnosticianRunner,
+    MarketDiagnosticianInput,
+    MarketDiagnosticianOutput,
+)
+from .competitive_position_runner import (
+    CompetitivePositionAnalyzerRunner,
+    CompetitivePositionInput,
+    CompetitivePositionOutput,
+    CompetitorPosition,
+)
 
 __all__ = [
     # Runners
@@ -66,4 +86,18 @@ __all__ = [
     "ExtractOutput",
     "ExtractedEntity",
     "ExtractionSpec",
+    # Capability Gap Mapper
+    "CapabilityGapMapperRunner",
+    "CapabilityGapMapperInput",
+    "CapabilityGapMapperOutput",
+    "CapabilityGap",
+    # Market Diagnostician
+    "MarketDiagnosticianRunner",
+    "MarketDiagnosticianInput",
+    "MarketDiagnosticianOutput",
+    # Competitive Position
+    "CompetitivePositionAnalyzerRunner",
+    "CompetitivePositionInput",
+    "CompetitivePositionOutput",
+    "CompetitorPosition",
 ]

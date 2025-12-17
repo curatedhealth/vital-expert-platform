@@ -9,6 +9,11 @@ Runners:
     - CompareRunner: Side-by-side (pairwise comparison)
     - ScoreRunner: Calculate score (weighted aggregation)
     - BenchmarkRunner: Compare to reference (gap analysis)
+    - TechnologyImpactAssessorRunner: Assess technology impact
+    - PortfolioDisruptionScorerRunner: Score disruption risk
+    - PeopleCapabilityAssessorRunner: Assess capability gaps
+    - PartnerEvaluatorRunner: Evaluate partners (MCDA)
+    - OverlapAnalyzerRunner: Analyze portfolio overlap
 
 Core Logic: Multi-Criteria Decision Analysis (MCDA) / Rubric Application
 
@@ -44,6 +49,36 @@ from .benchmark_runner import (
     BenchmarkOutput,
     DimensionGap,
 )
+from .technology_impact_runner import (
+    TechnologyImpactAssessorRunner,
+    TechnologyImpactInput,
+    TechnologyImpactOutput,
+    TechnologyAssessment,
+)
+from .disruption_scorer_runner import (
+    PortfolioDisruptionScorerRunner,
+    DisruptionScorerInput,
+    DisruptionScorerOutput,
+    DisruptionScore,
+)
+from .capability_assessor_runner import (
+    PeopleCapabilityAssessorRunner,
+    CapabilityAssessorInput,
+    CapabilityAssessorOutput,
+    SkillGap,
+)
+from .partner_evaluator_runner import (
+    PartnerEvaluatorRunner,
+    PartnerEvaluatorInput,
+    PartnerEvaluatorOutput,
+    PartnerAssessment,
+)
+from .overlap_analyzer_runner import (
+    OverlapAnalyzerRunner,
+    OverlapAnalyzerInput,
+    OverlapAnalyzerOutput,
+    OverlapArea,
+)
 
 __all__ = [
     # Runners
@@ -68,4 +103,29 @@ __all__ = [
     "BenchmarkInput",
     "BenchmarkOutput",
     "DimensionGap",
+    # Technology Impact
+    "TechnologyImpactAssessorRunner",
+    "TechnologyImpactInput",
+    "TechnologyImpactOutput",
+    "TechnologyAssessment",
+    # Disruption Scorer
+    "PortfolioDisruptionScorerRunner",
+    "DisruptionScorerInput",
+    "DisruptionScorerOutput",
+    "DisruptionScore",
+    # Capability Assessor
+    "PeopleCapabilityAssessorRunner",
+    "CapabilityAssessorInput",
+    "CapabilityAssessorOutput",
+    "SkillGap",
+    # Partner Evaluator
+    "PartnerEvaluatorRunner",
+    "PartnerEvaluatorInput",
+    "PartnerEvaluatorOutput",
+    "PartnerAssessment",
+    # Overlap Analyzer
+    "OverlapAnalyzerRunner",
+    "OverlapAnalyzerInput",
+    "OverlapAnalyzerOutput",
+    "OverlapArea",
 ]

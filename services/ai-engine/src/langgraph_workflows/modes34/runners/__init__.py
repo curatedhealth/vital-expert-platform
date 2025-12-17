@@ -13,6 +13,7 @@ This module provides specialized runners for each logic family:
 - PROBLEM_SOLVING: Hypothesis → Test → Iterate
 - COMMUNICATION: Audience → Format → Review
 - FORESIGHT: Signal → Impact → Disrupt → Gap → Invest
+- BRAND_STRATEGY: 10 Ps → Positioning → Portfolio Architecture
 - GENERIC: Standard step-by-step execution
 
 Usage:
@@ -68,6 +69,7 @@ from .problem_solving_runner import ProblemSolvingRunner, ProblemSolvingState
 from .communication_runner import CommunicationRunner, CommunicationState
 from .generic_runner import GenericRunner, GenericState
 from .foresight_runner import ForesightRunner, ForesightState
+from .brand_strategy_runner import BrandStrategyRunner, BrandStrategyState
 
 # Export all public symbols
 __all__ = [
@@ -114,6 +116,9 @@ __all__ = [
     # Foresight
     "ForesightRunner",
     "ForesightState",
+    # Brand Strategy
+    "BrandStrategyRunner",
+    "BrandStrategyState",
 ]
 
 

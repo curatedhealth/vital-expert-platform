@@ -64,7 +64,7 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 class FamilyType(str, Enum):
-    """9 Logic Families from v6.0 Architecture"""
+    """10 Logic Families from v6.0 Architecture"""
     DEEP_RESEARCH = "DEEP_RESEARCH"      # ToT → CoT → Reflection
     MONITORING = "MONITORING"            # Polling → Delta → Alert
     EVALUATION = "EVALUATION"            # MCDA scoring
@@ -73,16 +73,21 @@ class FamilyType(str, Enum):
     PROBLEM_SOLVING = "PROBLEM_SOLVING"  # Hypothesis → Test → Iterate
     COMMUNICATION = "COMMUNICATION"      # Audience → Format → Review
     FORESIGHT = "FORESIGHT"              # Signal → Impact → Disrupt → Gap → Invest
+    BRAND_STRATEGY = "BRAND_STRATEGY"    # 10 Ps → Positioning → Portfolio
     GENERIC = "GENERIC"                  # Standard execution
 
 
 class ExecutionPhase(str, Enum):
     """Standard execution phases for all families"""
     INITIALIZE = "initialize"
+    GATHER = "gather"
     PLAN = "plan"
+    ANALYZE = "analyze"
     EXECUTE = "execute"
+    EVALUATE = "evaluate"
     SYNTHESIZE = "synthesize"
     VERIFY = "verify"
+    QUALITY_CHECK = "quality_check"
     COMPLETE = "complete"
 
 

@@ -9,6 +9,9 @@ Runners:
     - ScenarioRunner: Generate scenario (scenario construction)
     - ProjectRunner: Project future (Monte Carlo simulation)
     - UncertaintyRunner: Quantify uncertainty (confidence estimation)
+    - ImplicationModelerRunner: Model strategic implications
+    - ProbabilityEstimatorRunner: Estimate scenario probabilities (Bayesian)
+    - CannibalizationModelerRunner: Model portfolio cannibalization
 
 Core Logic: Monte Carlo Simulation / Scenario Planning
 
@@ -52,6 +55,24 @@ from .uncertainty_runner import (
     UncertaintySource,
     ConfidenceInterval,
 )
+from .implication_modeler_runner import (
+    ImplicationModelerRunner,
+    ImplicationModelerInput,
+    ImplicationModelerOutput,
+    Implication,
+)
+from .probability_estimator_runner import (
+    ProbabilityEstimatorRunner,
+    ProbabilityEstimatorInput,
+    ProbabilityEstimatorOutput,
+    ProbabilityEstimate,
+)
+from .cannibalization_modeler_runner import (
+    CannibalizationModelerRunner,
+    CannibalizationModelerInput,
+    CannibalizationModelerOutput,
+    CannibalizationEffect,
+)
 
 __all__ = [
     # Runners
@@ -78,4 +99,19 @@ __all__ = [
     "UncertaintyOutput",
     "UncertaintySource",
     "ConfidenceInterval",
+    # Implication Modeler
+    "ImplicationModelerRunner",
+    "ImplicationModelerInput",
+    "ImplicationModelerOutput",
+    "Implication",
+    # Probability Estimator
+    "ProbabilityEstimatorRunner",
+    "ProbabilityEstimatorInput",
+    "ProbabilityEstimatorOutput",
+    "ProbabilityEstimate",
+    # Cannibalization Modeler
+    "CannibalizationModelerRunner",
+    "CannibalizationModelerInput",
+    "CannibalizationModelerOutput",
+    "CannibalizationEffect",
 ]

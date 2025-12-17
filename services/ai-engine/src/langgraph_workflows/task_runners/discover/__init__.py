@@ -268,9 +268,138 @@ class InsightRunner(TaskRunner[InsightInput, InsightOutput]):
         except: return {}
 
 
+# =============================================================================
+# DRIVING FORCE IDENTIFIER - Strategic Force Analysis
+# =============================================================================
+
+class DrivingForce(TaskRunnerOutput):
+    force_id: str = Field(default="")
+    force_name: str = Field(default="")
+    force_type: str = Field(default="", description="technology | economic | social | political | environmental")
+    description: str = Field(default="")
+    certainty: str = Field(default="medium", description="low | medium | high")
+    impact: str = Field(default="medium", description="low | medium | high")
+    trajectory: str = Field(default="stable", description="accelerating | stable | decelerating")
+
+class DrivingForceIdentifierInput(TaskRunnerInput):
+    strategic_context: str = Field(default="", description="Strategic question context")
+    time_horizon: str = Field(default="5 years")
+    focus_areas: List[str] = Field(default_factory=list)
+
+class DrivingForceIdentifierOutput(TaskRunnerOutput):
+    driving_forces: List[DrivingForce] = Field(default_factory=list)
+    force_map: Dict[str, Any] = Field(default_factory=dict)
+    key_uncertainties: List[str] = Field(default_factory=list)
+    predetermined_elements: List[str] = Field(default_factory=list)
+
+@register_task_runner
+class DrivingForceIdentifierRunner(TaskRunner[DrivingForceIdentifierInput, DrivingForceIdentifierOutput]):
+    runner_id = "driving_force_identifier"
+    category = TaskRunnerCategory.DISCOVER
+    algorithmic_core = "force_field_analysis"
+    max_duration_seconds = 90
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.4, max_tokens=3000)
+
+    async def execute(self, input: DrivingForceIdentifierInput) -> DrivingForceIdentifierOutput:
+        start_time = datetime.utcnow()
+        try:
+            prompt = f"Identify driving forces for: {input.strategic_context}. Horizon: {input.time_horizon}. Focus: {input.focus_areas}. Return JSON: driving_forces[], force_map{{}}, key_uncertainties[], predetermined_elements[]"
+            response = await self.llm.ainvoke([SystemMessage(content="You identify strategic driving forces."), HumanMessage(content=prompt)])
+            result = self._parse_json(response.content)
+            return DrivingForceIdentifierOutput(
+                success=True,
+                driving_forces=[DrivingForce(**f) for f in result.get("driving_forces", [])],
+                force_map=result.get("force_map", {}),
+                key_uncertainties=result.get("key_uncertainties", []),
+                predetermined_elements=result.get("predetermined_elements", []),
+                quality_score=0.8 if result.get("driving_forces") else 0.4,
+                duration_seconds=(datetime.utcnow()-start_time).total_seconds(),
+                runner_id=self.runner_id
+            )
+        except Exception as e:
+            return DrivingForceIdentifierOutput(success=False, error=str(e), duration_seconds=(datetime.utcnow()-start_time).total_seconds(), runner_id=self.runner_id)
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content: content = content.split("```json")[1].split("```")[0]
+            elif "```" in content: content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except: return {}
+
+
+# =============================================================================
+# WHITESPACE IDENTIFIER - Market Whitespace Analysis
+# =============================================================================
+
+class Whitespace(TaskRunnerOutput):
+    whitespace_id: str = Field(default="")
+    whitespace_name: str = Field(default="")
+    whitespace_type: str = Field(default="", description="unserved_segment | unmet_need | adjacency | innovation")
+    description: str = Field(default="")
+    market_size_potential: str = Field(default="medium", description="small | medium | large")
+    competitive_intensity: str = Field(default="low", description="low | medium | high")
+    entry_barriers: List[str] = Field(default_factory=list)
+    strategic_fit: str = Field(default="medium", description="low | medium | high")
+
+class WhitespaceIdentifierInput(TaskRunnerInput):
+    market_definition: str = Field(default="", description="Market to analyze")
+    current_offerings: List[Dict[str, Any]] = Field(default_factory=list)
+    competitor_landscape: List[Dict[str, Any]] = Field(default_factory=list)
+
+class WhitespaceIdentifierOutput(TaskRunnerOutput):
+    whitespaces: List[Whitespace] = Field(default_factory=list)
+    whitespace_map: Dict[str, Any] = Field(default_factory=dict)
+    priority_whitespaces: List[str] = Field(default_factory=list)
+    entry_recommendations: List[str] = Field(default_factory=list)
+
+@register_task_runner
+class WhitespaceIdentifierRunner(TaskRunner[WhitespaceIdentifierInput, WhitespaceIdentifierOutput]):
+    runner_id = "whitespace_identifier"
+    category = TaskRunnerCategory.DISCOVER
+    algorithmic_core = "whitespace_analysis"
+    max_duration_seconds = 90
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.4, max_tokens=3000)
+
+    async def execute(self, input: WhitespaceIdentifierInput) -> WhitespaceIdentifierOutput:
+        start_time = datetime.utcnow()
+        try:
+            prompt = f"Identify whitespace in: {input.market_definition}. Current: {input.current_offerings[:3]}. Competitors: {input.competitor_landscape[:3]}. Return JSON: whitespaces[], whitespace_map{{}}, priority_whitespaces[], entry_recommendations[]"
+            response = await self.llm.ainvoke([SystemMessage(content="You identify market whitespace opportunities."), HumanMessage(content=prompt)])
+            result = self._parse_json(response.content)
+            return WhitespaceIdentifierOutput(
+                success=True,
+                whitespaces=[Whitespace(**w) for w in result.get("whitespaces", [])],
+                whitespace_map=result.get("whitespace_map", {}),
+                priority_whitespaces=result.get("priority_whitespaces", []),
+                entry_recommendations=result.get("entry_recommendations", []),
+                quality_score=0.8 if result.get("whitespaces") else 0.4,
+                duration_seconds=(datetime.utcnow()-start_time).total_seconds(),
+                runner_id=self.runner_id
+            )
+        except Exception as e:
+            return WhitespaceIdentifierOutput(success=False, error=str(e), duration_seconds=(datetime.utcnow()-start_time).total_seconds(), runner_id=self.runner_id)
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content: content = content.split("```json")[1].split("```")[0]
+            elif "```" in content: content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except: return {}
+
+
 __all__ = [
     "OpportunityRunner", "OpportunityInput", "OpportunityOutput", "Opportunity",
     "HypothesisRunner", "HypothesisInput", "HypothesisOutput", "Hypothesis",
     "ExperimentRunner", "ExperimentInput", "ExperimentOutput", "Experiment",
     "InsightRunner", "InsightInput", "InsightOutput", "Insight",
+    "DrivingForceIdentifierRunner", "DrivingForceIdentifierInput", "DrivingForceIdentifierOutput", "DrivingForce",
+    "WhitespaceIdentifierRunner", "WhitespaceIdentifierInput", "WhitespaceIdentifierOutput", "Whitespace",
 ]

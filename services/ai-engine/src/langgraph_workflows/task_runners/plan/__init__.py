@@ -4,7 +4,7 @@ PLAN Category - Scheduling Runners
 This category contains atomic cognitive operations for project planning
 using scheduling algorithms and optimization.
 
-Runners:
+Runners (14 total):
     - DecomposeRunner: Break down goal (HTN decomposition)
     - DependencyRunner: Map dependencies (DAG construction)
     - ScheduleRunner: Generate schedule (Critical Path Method)
@@ -15,6 +15,10 @@ Runners:
     - PromotionPlannerRunner: Plan promotion campaigns
     - MigrationPlannerRunner: Plan portfolio migration
     - SequencingStrategistRunner: Optimize launch sequencing
+    - EngagementPlannerRunner: Plan stakeholder engagements
+    - EngagementTimelineBuilderRunner: Build engagement timelines
+    - PublicationStrategistRunner: Plan publication strategy
+    - CoachingPlannerRunner: Plan coaching programs
 
 Core Logic: Critical Path Method / Hierarchical Task Networks (HTN)
 
@@ -94,6 +98,30 @@ from .sequencing_strategist_runner import (
     SequencingStrategistOutput,
     LaunchItem,
 )
+from .engagement_planner_runner import (
+    EngagementPlannerRunner,
+    EngagementPlannerInput,
+    EngagementPlannerOutput,
+    PlannedEngagement,
+)
+from .engagement_timeline_runner import (
+    EngagementTimelineBuilderRunner,
+    EngagementTimelineInput,
+    EngagementTimelineOutput,
+    TimelinePhase,
+)
+from .publication_strategist_runner import (
+    PublicationStrategistRunner,
+    PublicationStrategistInput,
+    PublicationStrategistOutput,
+    PlannedPublication,
+)
+from .coaching_planner_runner import (
+    CoachingPlannerRunner,
+    CoachingPlannerInput,
+    CoachingPlannerOutput,
+    CoachingSession,
+)
 
 __all__ = [
     # Runners
@@ -150,4 +178,24 @@ __all__ = [
     "SequencingStrategistInput",
     "SequencingStrategistOutput",
     "LaunchItem",
+    # Engagement Planner
+    "EngagementPlannerRunner",
+    "EngagementPlannerInput",
+    "EngagementPlannerOutput",
+    "PlannedEngagement",
+    # Engagement Timeline
+    "EngagementTimelineBuilderRunner",
+    "EngagementTimelineInput",
+    "EngagementTimelineOutput",
+    "TimelinePhase",
+    # Publication Strategist
+    "PublicationStrategistRunner",
+    "PublicationStrategistInput",
+    "PublicationStrategistOutput",
+    "PlannedPublication",
+    # Coaching Planner
+    "CoachingPlannerRunner",
+    "CoachingPlannerInput",
+    "CoachingPlannerOutput",
+    "CoachingSession",
 ]

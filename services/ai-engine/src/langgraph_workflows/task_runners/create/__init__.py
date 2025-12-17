@@ -4,11 +4,13 @@ CREATE Category - Generation Runners
 This category contains atomic cognitive operations for drafting content,
 expanding sections, applying formatting, and adding citations.
 
-Runners:
+Runners (6 total):
     - DraftRunner: Generate draft (template expansion)
     - ExpandRunner: Expand section (recursive elaboration)
     - FormatRunner: Apply formatting (style transformation)
     - CitationRunner: Add citations (source linking)
+    - NarrativeStorylineConstructorRunner: Construct narrative storylines
+    - ProtocolDeveloperRunner: Develop study protocols
 
 Core Logic: Generative Feedback Loops (GFL) / Latent Space Exploration / Consistency Management
 
@@ -44,6 +46,18 @@ from .citation_runner import (
     Citation,
     Source,
 )
+from .narrative_constructor_runner import (
+    NarrativeStorylineConstructorRunner,
+    NarrativeConstructorInput,
+    NarrativeConstructorOutput,
+    NarrativeElement,
+)
+from .protocol_developer_runner import (
+    ProtocolDeveloperRunner,
+    ProtocolDeveloperInput,
+    ProtocolDeveloperOutput,
+    ProtocolSection,
+)
 
 __all__ = [
     # Runners
@@ -68,4 +82,14 @@ __all__ = [
     "CitationOutput",
     "Citation",
     "Source",
+    # Narrative Constructor
+    "NarrativeStorylineConstructorRunner",
+    "NarrativeConstructorInput",
+    "NarrativeConstructorOutput",
+    "NarrativeElement",
+    # Protocol Developer
+    "ProtocolDeveloperRunner",
+    "ProtocolDeveloperInput",
+    "ProtocolDeveloperOutput",
+    "ProtocolSection",
 ]

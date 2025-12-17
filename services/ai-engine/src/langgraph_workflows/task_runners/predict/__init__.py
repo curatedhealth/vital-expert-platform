@@ -4,7 +4,7 @@ PREDICT Category - Forecasting Runners
 This category contains atomic cognitive operations for forecasting
 using simulation and scenario planning.
 
-Runners:
+Runners (8 total):
     - TrendAnalyzeRunner: Analyze trends (regression analysis)
     - ScenarioRunner: Generate scenario (scenario construction)
     - ProjectRunner: Project future (Monte Carlo simulation)
@@ -12,6 +12,7 @@ Runners:
     - ImplicationModelerRunner: Model strategic implications
     - ProbabilityEstimatorRunner: Estimate scenario probabilities (Bayesian)
     - CannibalizationModelerRunner: Model portfolio cannibalization
+    - ProgramROIModelerRunner: Model program ROI
 
 Core Logic: Monte Carlo Simulation / Scenario Planning
 
@@ -73,6 +74,12 @@ from .cannibalization_modeler_runner import (
     CannibalizationModelerOutput,
     CannibalizationEffect,
 )
+from .program_roi_runner import (
+    ProgramROIModelerRunner,
+    ProgramROIInput,
+    ProgramROIOutput,
+    ROIProjection,
+)
 
 __all__ = [
     # Runners
@@ -114,4 +121,9 @@ __all__ = [
     "CannibalizationModelerInput",
     "CannibalizationModelerOutput",
     "CannibalizationEffect",
+    # Program ROI Modeler
+    "ProgramROIModelerRunner",
+    "ProgramROIInput",
+    "ProgramROIOutput",
+    "ROIProjection",
 ]

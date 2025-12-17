@@ -2,15 +2,18 @@
 VALIDATE Category - Verification Runners
 
 This category contains atomic cognitive operations for verification
-using rule engines, source validation, and semantic coherence.
+using rule engines, source validation, semantic coherence, and
+expert credibility assessment.
 
-Runners:
+Runners (6 total):
     - ComplianceCheckRunner: Check against rules (rule engine)
     - FactCheckRunner: Verify claims (source verification)
     - CitationCheckRunner: Verify citations (reference validation)
     - ConsistencyCheckRunner: Check consistency (semantic coherence)
+    - PlanValidatorRunner: Validate strategic plans (plan verification)
+    - ExpertPositionValidatorRunner: Validate positioning (expert credibility)
 
-Core Logic: Verification Protocol / Constraint Checking
+Core Logic: Verification Protocol / Constraint Checking / Expert Validation
 
 Verification Protocol:
     1. Parse content and validation targets
@@ -51,6 +54,20 @@ from .consistency_check_runner import (
     ConsistencyCheckOutput,
     InconsistencyIssue,
 )
+from .plan_validator_runner import (
+    PlanValidatorRunner,
+    PlanValidatorInput,
+    PlanValidatorOutput,
+    ValidationIssue,
+    ValidationCheck,
+)
+from .expert_position_validator_runner import (
+    ExpertPositionValidatorRunner,
+    ExpertPositionValidatorInput,
+    ExpertPositionValidatorOutput,
+    ExpertValidation,
+    ClaimValidation,
+)
 
 __all__ = [
     # Runners
@@ -58,6 +75,8 @@ __all__ = [
     "FactCheckRunner",
     "CitationCheckRunner",
     "ConsistencyCheckRunner",
+    "PlanValidatorRunner",
+    "ExpertPositionValidatorRunner",
     # Compliance schemas
     "ComplianceCheckInput",
     "ComplianceCheckOutput",
@@ -75,4 +94,14 @@ __all__ = [
     "ConsistencyCheckInput",
     "ConsistencyCheckOutput",
     "InconsistencyIssue",
+    # Plan validator schemas
+    "PlanValidatorInput",
+    "PlanValidatorOutput",
+    "ValidationIssue",
+    "ValidationCheck",
+    # Expert position validator schemas
+    "ExpertPositionValidatorInput",
+    "ExpertPositionValidatorOutput",
+    "ExpertValidation",
+    "ClaimValidation",
 ]

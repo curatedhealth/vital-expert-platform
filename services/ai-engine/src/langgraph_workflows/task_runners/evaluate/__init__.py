@@ -4,7 +4,7 @@ EVALUATE Category - Quality Assessment Runners
 This category contains atomic cognitive operations for evaluating,
 scoring, comparing, and benchmarking entities against criteria.
 
-Runners:
+Runners (12 total):
     - CritiqueRunner: Apply rubric (weighted scoring)
     - CompareRunner: Side-by-side (pairwise comparison)
     - ScoreRunner: Calculate score (weighted aggregation)
@@ -14,6 +14,9 @@ Runners:
     - PeopleCapabilityAssessorRunner: Assess capability gaps
     - PartnerEvaluatorRunner: Evaluate partners (MCDA)
     - OverlapAnalyzerRunner: Analyze portfolio overlap
+    - StakeholderEvidenceAnalystRunner: Analyze stakeholder evidence needs
+    - TeamCapabilityAssessorRunner: Assess team capabilities
+    - IndustryBenchmarkAnalystRunner: Benchmark against industry
 
 Core Logic: Multi-Criteria Decision Analysis (MCDA) / Rubric Application
 
@@ -79,6 +82,24 @@ from .overlap_analyzer_runner import (
     OverlapAnalyzerOutput,
     OverlapArea,
 )
+from .stakeholder_evidence_runner import (
+    StakeholderEvidenceAnalystRunner,
+    StakeholderEvidenceInput,
+    StakeholderEvidenceOutput,
+    EvidenceNeed,
+)
+from .team_capability_runner import (
+    TeamCapabilityAssessorRunner,
+    TeamCapabilityInput,
+    TeamCapabilityOutput,
+    CapabilityAssessment,
+)
+from .industry_benchmark_runner import (
+    IndustryBenchmarkAnalystRunner,
+    IndustryBenchmarkInput,
+    IndustryBenchmarkOutput,
+    BenchmarkComparison,
+)
 
 __all__ = [
     # Runners
@@ -128,4 +149,19 @@ __all__ = [
     "OverlapAnalyzerInput",
     "OverlapAnalyzerOutput",
     "OverlapArea",
+    # Stakeholder Evidence Analyst
+    "StakeholderEvidenceAnalystRunner",
+    "StakeholderEvidenceInput",
+    "StakeholderEvidenceOutput",
+    "EvidenceNeed",
+    # Team Capability Assessor
+    "TeamCapabilityAssessorRunner",
+    "TeamCapabilityInput",
+    "TeamCapabilityOutput",
+    "CapabilityAssessment",
+    # Industry Benchmark Analyst
+    "IndustryBenchmarkAnalystRunner",
+    "IndustryBenchmarkInput",
+    "IndustryBenchmarkOutput",
+    "BenchmarkComparison",
 ]

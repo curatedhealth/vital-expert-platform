@@ -4,11 +4,13 @@ REFINE Category - Optimization Runners
 This category contains atomic cognitive operations for iterative improvement
 through the Reflexion Loop: Critique → Mutate → Verify → Select.
 
-Runners:
+Runners (6 total):
     - CriticRunner: Identify weaknesses (analytical critique)
     - MutateRunner: Generate variation (hill climbing step)
     - VerifyRunner: Test improvement (A/B comparison)
     - SelectRunner: Choose best (fitness selection)
+    - PackagingOptimizerRunner: Optimize packaging (packaging optimization)
+    - ValueOptimizerRunner: Optimize value proposition (value optimization)
 
 Core Logic: Stochastic Hill Climbing / Evolutionary Heuristics / Reflexion Loop
 
@@ -55,6 +57,20 @@ from .select_runner import (
     VariantEvaluation,
     VariantCandidate,
 )
+from .packaging_optimizer_runner import (
+    PackagingOptimizerRunner,
+    PackagingOptimizerInput,
+    PackagingOptimizerOutput,
+    PackageComponent,
+    PackageOption,
+)
+from .value_optimizer_runner import (
+    ValueOptimizerRunner,
+    ValueOptimizerInput,
+    ValueOptimizerOutput,
+    ValueDriver,
+    ValueGap,
+)
 
 __all__ = [
     # Runners
@@ -62,6 +78,8 @@ __all__ = [
     "MutateRunner",
     "VerifyRunner",
     "SelectRunner",
+    "PackagingOptimizerRunner",
+    "ValueOptimizerRunner",
     # Critic schemas
     "CriticInput",
     "CriticOutput",
@@ -79,4 +97,14 @@ __all__ = [
     "SelectOutput",
     "VariantEvaluation",
     "VariantCandidate",
+    # Packaging Optimizer schemas
+    "PackagingOptimizerInput",
+    "PackagingOptimizerOutput",
+    "PackageComponent",
+    "PackageOption",
+    # Value Optimizer schemas
+    "ValueOptimizerInput",
+    "ValueOptimizerOutput",
+    "ValueDriver",
+    "ValueGap",
 ]

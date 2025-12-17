@@ -2,15 +2,17 @@
 PREPARE Category - Readiness Runners
 
 This category contains atomic cognitive operations for gathering context,
-anticipating Q&A, generating briefs, and extracting talking points.
+anticipating Q&A, generating briefs, extracting talking points, and
+setting up monitoring infrastructure.
 
-Runners:
+Runners (5 total):
     - ContextRunner: Gather context (information aggregation)
     - AnticipateRunner: Predict Q&A (Theory of Mind)
     - BriefRunner: Generate brief (narrative construction)
     - TalkingPointRunner: Extract key messages (salience extraction)
+    - MonitoringSetupRunner: Set up monitoring infrastructure (monitoring architecture)
 
-Core Logic: Contextualization / Anticipatory Planning
+Core Logic: Contextualization / Anticipatory Planning / Infrastructure Setup
 
 Each runner is designed for:
     - 60-120 second execution time
@@ -44,6 +46,14 @@ from .talking_point_runner import (
     TalkingPointOutput,
     TalkingPoint,
 )
+from .monitoring_setup_runner import (
+    MonitoringSetupRunner,
+    MonitoringSetupInput,
+    MonitoringSetupOutput,
+    MonitoringMetric,
+    MonitoringDashboard,
+    AlertConfiguration,
+)
 
 __all__ = [
     # Runners
@@ -51,6 +61,7 @@ __all__ = [
     "AnticipateRunner",
     "BriefRunner",
     "TalkingPointRunner",
+    "MonitoringSetupRunner",
     # Context schemas
     "ContextInput",
     "ContextOutput",
@@ -68,4 +79,10 @@ __all__ = [
     "TalkingPointInput",
     "TalkingPointOutput",
     "TalkingPoint",
+    # Monitoring Setup schemas
+    "MonitoringSetupInput",
+    "MonitoringSetupOutput",
+    "MonitoringMetric",
+    "MonitoringDashboard",
+    "AlertConfiguration",
 ]

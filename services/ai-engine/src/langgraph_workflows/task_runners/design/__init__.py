@@ -1,11 +1,24 @@
 """
 DESIGN Task Runners - Design & Architecture.
 
-This module provides task runners for design and architecture:
+This module provides task runners for design and architecture (17 total):
 - RequirementRunner: Gather requirements using requirements elicitation
 - ArchitectRunner: Design architecture using architectural patterns
 - PrototypeRunner: Build prototype using rapid prototyping
 - UsabilityRunner: Test usability using usability heuristics
+- PanelDesignRunner: Design panel discussions
+- WorkflowDesignRunner: Design workflow DAGs
+- EvalDesignRunner: Design evaluation rubrics
+- ResearchDesignRunner: Design research plans
+- ScenarioAxisDefinerRunner: Define scenario axes
+- SignalDefinerRunner: Define monitoring signals
+- ProductPositionerRunner: Design product positioning
+- PlaceChannelDesignerRunner: Design channel architecture
+- ArchitectureGeneratorRunner: Generate portfolio architecture
+- ContentStrategistRunner: Design content strategy
+- RealWorldEvidenceMapperRunner: Map RWE opportunities
+- TrainingProgramDesignerRunner: Design training programs
+- KPIFrameworkDeveloperRunner: Develop KPI frameworks
 
 Core Logic: Design Thinking / Systems Architecture
 
@@ -1054,6 +1067,33 @@ class ArchitectureGeneratorRunner(TaskRunner[ArchitectureGeneratorInput, Archite
         except: return {}
 
 
+# Import file-based runners
+from .content_strategist_runner import (
+    ContentStrategistRunner,
+    ContentStrategistInput,
+    ContentStrategistOutput,
+    ContentPlan,
+)
+from .rwe_mapper_runner import (
+    RealWorldEvidenceMapperRunner,
+    RWEMapperInput,
+    RWEMapperOutput,
+    RWEOpportunity,
+)
+from .training_program_runner import (
+    TrainingProgramDesignerRunner,
+    TrainingProgramInput,
+    TrainingProgramOutput,
+    TrainingModule,
+)
+from .kpi_framework_runner import (
+    KPIFrameworkDeveloperRunner,
+    KPIFrameworkInput,
+    KPIFrameworkOutput,
+    KPIDefinition,
+)
+
+
 __all__ = [
     # Original DESIGN runners
     "RequirementRunner", "RequirementInput", "RequirementOutput", "Requirement",
@@ -1071,4 +1111,9 @@ __all__ = [
     "ProductPositionerRunner", "ProductPositionerInput", "ProductPositionerOutput", "PositioningStatement",
     "PlaceChannelDesignerRunner", "PlaceChannelInput", "PlaceChannelOutput", "Channel",
     "ArchitectureGeneratorRunner", "ArchitectureGeneratorInput", "ArchitectureGeneratorOutput", "PortfolioArchitecture",
+    # Domain-agnostic DESIGN runners
+    "ContentStrategistRunner", "ContentStrategistInput", "ContentStrategistOutput", "ContentPlan",
+    "RealWorldEvidenceMapperRunner", "RWEMapperInput", "RWEMapperOutput", "RWEOpportunity",
+    "TrainingProgramDesignerRunner", "TrainingProgramInput", "TrainingProgramOutput", "TrainingModule",
+    "KPIFrameworkDeveloperRunner", "KPIFrameworkInput", "KPIFrameworkOutput", "KPIDefinition",
 ]

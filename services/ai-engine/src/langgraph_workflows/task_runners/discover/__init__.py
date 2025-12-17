@@ -1,11 +1,14 @@
 """
 DISCOVER Task Runners - Discovery & Innovation.
 
-This module provides task runners for discovery and innovation:
+This module provides task runners for discovery and innovation (7 total):
 - OpportunityRunner: Find opportunities using opportunity scanning
 - HypothesisRunner: Form hypothesis using scientific method
 - ExperimentRunner: Design experiment using experimental design
 - InsightRunner: Generate insights using pattern recognition
+- DrivingForceIdentifierRunner: Identify strategic driving forces
+- WhitespaceIdentifierRunner: Identify market whitespace
+- EvidenceGapIdentifierRunner: Identify evidence gaps
 
 Core Logic: Innovation Process / Discovery Science
 
@@ -395,6 +398,70 @@ class WhitespaceIdentifierRunner(TaskRunner[WhitespaceIdentifierInput, Whitespac
         except: return {}
 
 
+# =============================================================================
+# EVIDENCE GAP IDENTIFIER - Evidence Gap Analysis
+# =============================================================================
+
+class EvidenceGap(TaskRunnerOutput):
+    gap_id: str = Field(default="")
+    gap_name: str = Field(default="")
+    gap_type: str = Field(default="", description="clinical | economic | real_world | comparative | safety")
+    description: str = Field(default="")
+    severity: str = Field(default="medium", description="low | medium | high | critical")
+    stakeholder_impact: List[str] = Field(default_factory=list)
+    recommended_studies: List[str] = Field(default_factory=list)
+    priority: int = Field(default=0)
+
+class EvidenceGapIdentifierInput(TaskRunnerInput):
+    evidence_portfolio: List[Dict[str, Any]] = Field(default_factory=list, description="Current evidence")
+    stakeholder_needs: List[Dict[str, Any]] = Field(default_factory=list, description="Stakeholder evidence needs")
+    strategic_priorities: List[str] = Field(default_factory=list)
+
+class EvidenceGapIdentifierOutput(TaskRunnerOutput):
+    evidence_gaps: List[EvidenceGap] = Field(default_factory=list)
+    gap_matrix: Dict[str, Any] = Field(default_factory=dict)
+    priority_gaps: List[str] = Field(default_factory=list)
+    gap_closure_recommendations: List[Dict[str, Any]] = Field(default_factory=list)
+
+@register_task_runner
+class EvidenceGapIdentifierRunner(TaskRunner[EvidenceGapIdentifierInput, EvidenceGapIdentifierOutput]):
+    runner_id = "evidence_gap_identifier"
+    category = TaskRunnerCategory.DISCOVER
+    algorithmic_core = "evidence_gap_analysis"
+    max_duration_seconds = 90
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.3, max_tokens=3000)
+
+    async def execute(self, input: EvidenceGapIdentifierInput) -> EvidenceGapIdentifierOutput:
+        start_time = datetime.utcnow()
+        try:
+            prompt = f"Identify evidence gaps. Current evidence: {input.evidence_portfolio[:5]}. Needs: {input.stakeholder_needs[:5]}. Priorities: {input.strategic_priorities}. Return JSON: evidence_gaps[], gap_matrix{{}}, priority_gaps[], gap_closure_recommendations[]"
+            response = await self.llm.ainvoke([SystemMessage(content="You identify evidence gaps in portfolios."), HumanMessage(content=prompt)])
+            result = self._parse_json(response.content)
+            return EvidenceGapIdentifierOutput(
+                success=True,
+                evidence_gaps=[EvidenceGap(**g) for g in result.get("evidence_gaps", [])],
+                gap_matrix=result.get("gap_matrix", {}),
+                priority_gaps=result.get("priority_gaps", []),
+                gap_closure_recommendations=result.get("gap_closure_recommendations", []),
+                quality_score=0.8 if result.get("evidence_gaps") else 0.4,
+                duration_seconds=(datetime.utcnow()-start_time).total_seconds(),
+                runner_id=self.runner_id
+            )
+        except Exception as e:
+            return EvidenceGapIdentifierOutput(success=False, error=str(e), duration_seconds=(datetime.utcnow()-start_time).total_seconds(), runner_id=self.runner_id)
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content: content = content.split("```json")[1].split("```")[0]
+            elif "```" in content: content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except: return {}
+
+
 __all__ = [
     "OpportunityRunner", "OpportunityInput", "OpportunityOutput", "Opportunity",
     "HypothesisRunner", "HypothesisInput", "HypothesisOutput", "Hypothesis",
@@ -402,4 +469,5 @@ __all__ = [
     "InsightRunner", "InsightInput", "InsightOutput", "Insight",
     "DrivingForceIdentifierRunner", "DrivingForceIdentifierInput", "DrivingForceIdentifierOutput", "DrivingForce",
     "WhitespaceIdentifierRunner", "WhitespaceIdentifierInput", "WhitespaceIdentifierOutput", "Whitespace",
+    "EvidenceGapIdentifierRunner", "EvidenceGapIdentifierInput", "EvidenceGapIdentifierOutput", "EvidenceGap",
 ]

@@ -259,9 +259,520 @@ class UsabilityRunner(TaskRunner[UsabilityInput, UsabilityOutput]):
         except: return {}
 
 
+# =============================================================================
+# PANEL DESIGN RUNNER
+# =============================================================================
+
+class PanelDesignInput(TaskRunnerInput):
+    """Input for designing panel interviews/discussions."""
+    topic: str = Field(..., description="Topic for the panel discussion")
+    goal: str = Field(..., description="Goal of the panel discussion")
+    panel_size: int = Field(default=3, description="Number of panelists (2-7)")
+    duration_minutes: int = Field(default=60, description="Expected duration in minutes")
+    audience: str = Field(default="general", description="Target audience")
+    format: str = Field(default="moderated", description="moderated | roundtable | debate | interview")
+
+class PanelRole(TaskRunnerOutput):
+    """A role in the panel discussion."""
+    role_id: str = Field(default="")
+    role_name: str = Field(default="")
+    expertise_area: str = Field(default="")
+    perspective: str = Field(default="")
+    key_questions: List[str] = Field(default_factory=list)
+    talking_points: List[str] = Field(default_factory=list)
+
+class DiscussionSegment(TaskRunnerOutput):
+    """A segment of the panel discussion."""
+    segment_id: str = Field(default="")
+    segment_name: str = Field(default="")
+    duration_minutes: int = Field(default=10)
+    objective: str = Field(default="")
+    lead_role: str = Field(default="")
+    discussion_prompts: List[str] = Field(default_factory=list)
+    expected_outcomes: List[str] = Field(default_factory=list)
+
+class PanelDesignOutput(TaskRunnerOutput):
+    """Output from panel design."""
+    panel_title: str = Field(default="")
+    roles: List[PanelRole] = Field(default_factory=list)
+    segments: List[DiscussionSegment] = Field(default_factory=list)
+    opening_statement: str = Field(default="")
+    closing_statement: str = Field(default="")
+    moderation_notes: List[str] = Field(default_factory=list)
+    audience_engagement: List[str] = Field(default_factory=list)
+    panel_design_summary: str = Field(default="")
+
+@register_task_runner
+class PanelDesignRunner(TaskRunner[PanelDesignInput, PanelDesignOutput]):
+    """Design panel interview structure using discussion architecture."""
+    runner_id = "panel_design"
+    name = "Panel Design Runner"
+    description = "Design panel interview using discussion architecture"
+    category = TaskRunnerCategory.DESIGN
+    algorithmic_core = "discussion_architecture"
+    max_duration_seconds = 150
+    InputType = PanelDesignInput
+    OutputType = PanelDesignOutput
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.4, max_tokens=4000)
+
+    async def execute(self, input: PanelDesignInput) -> PanelDesignOutput:
+        start_time = datetime.utcnow()
+        try:
+            prompt = f"""Design a {input.format} panel discussion structure.
+
+Topic: {input.topic}
+Goal: {input.goal}
+Panel Size: {input.panel_size} panelists
+Duration: {input.duration_minutes} minutes
+Audience: {input.audience}
+
+Return JSON with:
+- panel_title: string
+- roles: array of {{role_id, role_name, expertise_area, perspective, key_questions[], talking_points[]}}
+- segments: array of {{segment_id, segment_name, duration_minutes, objective, lead_role, discussion_prompts[], expected_outcomes[]}}
+- opening_statement: string
+- closing_statement: string
+- moderation_notes: array of strings
+- audience_engagement: array of engagement strategies
+- summary: string"""
+
+            response = await self.llm.ainvoke([
+                SystemMessage(content="You are an expert panel discussion architect. Design engaging, balanced panel structures that achieve discussion goals while representing diverse perspectives."),
+                HumanMessage(content=prompt)
+            ])
+            result = self._parse_json(response.content)
+
+            roles = [PanelRole(**r) for r in result.get("roles", [])]
+            segments = [DiscussionSegment(**s) for s in result.get("segments", [])]
+
+            return PanelDesignOutput(
+                success=True,
+                panel_title=result.get("panel_title", ""),
+                roles=roles,
+                segments=segments,
+                opening_statement=result.get("opening_statement", ""),
+                closing_statement=result.get("closing_statement", ""),
+                moderation_notes=result.get("moderation_notes", []),
+                audience_engagement=result.get("audience_engagement", []),
+                panel_design_summary=result.get("summary", ""),
+                confidence_score=0.85,
+                quality_score=len(roles) * 0.15 + len(segments) * 0.1,
+                duration_seconds=(datetime.utcnow()-start_time).total_seconds(),
+                runner_id=self.runner_id
+            )
+        except Exception as e:
+            logger.error(f"PanelDesignRunner error: {e}")
+            return PanelDesignOutput(
+                success=False,
+                error=str(e),
+                duration_seconds=(datetime.utcnow()-start_time).total_seconds(),
+                runner_id=self.runner_id
+            )
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0]
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except:
+            return {}
+
+
+# =============================================================================
+# WORKFLOW DESIGN RUNNER
+# =============================================================================
+
+class WorkflowDesignInput(TaskRunnerInput):
+    """Input for designing workflows."""
+    goal: str = Field(..., description="Goal the workflow should achieve")
+    constraints: List[str] = Field(default_factory=list, description="Constraints on the workflow")
+    inputs_available: List[str] = Field(default_factory=list, description="Available inputs")
+    outputs_required: List[str] = Field(default_factory=list, description="Required outputs")
+    workflow_type: str = Field(default="sequential", description="sequential | parallel | conditional | iterative")
+    max_steps: int = Field(default=10, description="Maximum number of steps")
+
+class WorkflowNode(TaskRunnerOutput):
+    """A node in the workflow DAG."""
+    node_id: str = Field(default="")
+    node_name: str = Field(default="")
+    node_type: str = Field(default="task", description="start | task | decision | fork | join | end")
+    description: str = Field(default="")
+    inputs: List[str] = Field(default_factory=list)
+    outputs: List[str] = Field(default_factory=list)
+    dependencies: List[str] = Field(default_factory=list)
+    estimated_duration: str = Field(default="")
+    responsible_role: str = Field(default="")
+
+class WorkflowEdge(TaskRunnerOutput):
+    """An edge connecting workflow nodes."""
+    edge_id: str = Field(default="")
+    from_node: str = Field(default="")
+    to_node: str = Field(default="")
+    condition: Optional[str] = Field(default=None)
+    edge_type: str = Field(default="sequence", description="sequence | conditional | parallel")
+
+class WorkflowDesignOutput(TaskRunnerOutput):
+    """Output from workflow design."""
+    workflow_name: str = Field(default="")
+    nodes: List[WorkflowNode] = Field(default_factory=list)
+    edges: List[WorkflowEdge] = Field(default_factory=list)
+    entry_point: str = Field(default="")
+    exit_points: List[str] = Field(default_factory=list)
+    critical_path: List[str] = Field(default_factory=list)
+    parallel_opportunities: List[List[str]] = Field(default_factory=list)
+    error_handling: Dict[str, str] = Field(default_factory=dict)
+    workflow_design_summary: str = Field(default="")
+
+@register_task_runner
+class WorkflowDesignRunner(TaskRunner[WorkflowDesignInput, WorkflowDesignOutput]):
+    """Design workflow using DAG construction."""
+    runner_id = "workflow_design"
+    name = "Workflow Design Runner"
+    description = "Design workflow using DAG construction"
+    category = TaskRunnerCategory.DESIGN
+    algorithmic_core = "dag_construction"
+    max_duration_seconds = 150
+    InputType = WorkflowDesignInput
+    OutputType = WorkflowDesignOutput
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.3, max_tokens=4000)
+
+    async def execute(self, input: WorkflowDesignInput) -> WorkflowDesignOutput:
+        start_time = datetime.utcnow()
+        try:
+            prompt = f"""Design a {input.workflow_type} workflow as a DAG (Directed Acyclic Graph).
+
+Goal: {input.goal}
+Constraints: {input.constraints}
+Available Inputs: {input.inputs_available}
+Required Outputs: {input.outputs_required}
+Max Steps: {input.max_steps}
+
+Return JSON with:
+- workflow_name: string
+- nodes: array of {{node_id, node_name, node_type (start|task|decision|fork|join|end), description, inputs[], outputs[], dependencies[], estimated_duration, responsible_role}}
+- edges: array of {{edge_id, from_node, to_node, condition (optional), edge_type (sequence|conditional|parallel)}}
+- entry_point: node_id of start node
+- exit_points: array of node_ids for end nodes
+- critical_path: array of node_ids forming the longest path
+- parallel_opportunities: array of arrays showing parallelizable node groups
+- error_handling: dict of node_id -> error action
+- summary: string"""
+
+            response = await self.llm.ainvoke([
+                SystemMessage(content="You are a workflow architect. Design efficient, well-structured workflows as directed acyclic graphs. Identify parallelization opportunities and critical paths."),
+                HumanMessage(content=prompt)
+            ])
+            result = self._parse_json(response.content)
+
+            nodes = [WorkflowNode(**n) for n in result.get("nodes", [])]
+            edges = [WorkflowEdge(**e) for e in result.get("edges", [])]
+
+            return WorkflowDesignOutput(
+                success=True,
+                workflow_name=result.get("workflow_name", ""),
+                nodes=nodes,
+                edges=edges,
+                entry_point=result.get("entry_point", ""),
+                exit_points=result.get("exit_points", []),
+                critical_path=result.get("critical_path", []),
+                parallel_opportunities=result.get("parallel_opportunities", []),
+                error_handling=result.get("error_handling", {}),
+                workflow_design_summary=result.get("summary", ""),
+                confidence_score=0.85,
+                quality_score=min(len(nodes) * 0.1, 1.0),
+                duration_seconds=(datetime.utcnow()-start_time).total_seconds(),
+                runner_id=self.runner_id
+            )
+        except Exception as e:
+            logger.error(f"WorkflowDesignRunner error: {e}")
+            return WorkflowDesignOutput(
+                success=False,
+                error=str(e),
+                duration_seconds=(datetime.utcnow()-start_time).total_seconds(),
+                runner_id=self.runner_id
+            )
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0]
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except:
+            return {}
+
+
+# =============================================================================
+# EVAL DESIGN RUNNER
+# =============================================================================
+
+class EvalDesignInput(TaskRunnerInput):
+    """Input for designing evaluation frameworks."""
+    subject: str = Field(..., description="Subject to evaluate")
+    criteria: List[str] = Field(default_factory=list, description="Evaluation criteria")
+    evaluation_purpose: str = Field(default="assessment", description="assessment | comparison | certification | improvement")
+    scale_type: str = Field(default="likert", description="likert | percentage | rubric | pass_fail")
+    evaluators: List[str] = Field(default_factory=list, description="Who will use this evaluation")
+
+class EvaluationCriterion(TaskRunnerOutput):
+    """A criterion in the evaluation framework."""
+    criterion_id: str = Field(default="")
+    criterion_name: str = Field(default="")
+    description: str = Field(default="")
+    weight: float = Field(default=1.0, description="Relative weight 0-1")
+    levels: List[Dict[str, Any]] = Field(default_factory=list)
+    indicators: List[str] = Field(default_factory=list)
+    evidence_required: List[str] = Field(default_factory=list)
+
+class RubricLevel(TaskRunnerOutput):
+    """A level in a rubric."""
+    level_id: str = Field(default="")
+    level_name: str = Field(default="")
+    score: float = Field(default=0)
+    description: str = Field(default="")
+    exemplars: List[str] = Field(default_factory=list)
+
+class EvalDesignOutput(TaskRunnerOutput):
+    """Output from evaluation design."""
+    evaluation_name: str = Field(default="")
+    criteria: List[EvaluationCriterion] = Field(default_factory=list)
+    scoring_guide: str = Field(default="")
+    total_weight: float = Field(default=0)
+    passing_threshold: float = Field(default=0)
+    calibration_notes: List[str] = Field(default_factory=list)
+    common_pitfalls: List[str] = Field(default_factory=list)
+    eval_design_summary: str = Field(default="")
+
+@register_task_runner
+class EvalDesignRunner(TaskRunner[EvalDesignInput, EvalDesignOutput]):
+    """Design evaluation framework using rubric construction."""
+    runner_id = "eval_design"
+    name = "Evaluation Design Runner"
+    description = "Design evaluation using rubric construction"
+    category = TaskRunnerCategory.DESIGN
+    algorithmic_core = "rubric_construction"
+    max_duration_seconds = 150
+    InputType = EvalDesignInput
+    OutputType = EvalDesignOutput
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.2, max_tokens=4000)
+
+    async def execute(self, input: EvalDesignInput) -> EvalDesignOutput:
+        start_time = datetime.utcnow()
+        try:
+            prompt = f"""Design an evaluation framework/rubric.
+
+Subject: {input.subject}
+Criteria: {input.criteria if input.criteria else "Suggest appropriate criteria"}
+Purpose: {input.evaluation_purpose}
+Scale Type: {input.scale_type}
+Evaluators: {input.evaluators}
+
+Return JSON with:
+- evaluation_name: string
+- criteria: array of {{criterion_id, criterion_name, description, weight (0-1), levels: [{{level_name, score, description, exemplars[]}}], indicators[], evidence_required[]}}
+- scoring_guide: string explaining how to use the rubric
+- total_weight: sum of weights (should equal 1.0)
+- passing_threshold: minimum score to pass
+- calibration_notes: tips for consistent evaluation
+- common_pitfalls: mistakes to avoid
+- summary: string"""
+
+            response = await self.llm.ainvoke([
+                SystemMessage(content="You are an evaluation design expert. Create clear, fair, and comprehensive evaluation rubrics that enable consistent assessment."),
+                HumanMessage(content=prompt)
+            ])
+            result = self._parse_json(response.content)
+
+            criteria = [EvaluationCriterion(**c) for c in result.get("criteria", [])]
+
+            return EvalDesignOutput(
+                success=True,
+                evaluation_name=result.get("evaluation_name", ""),
+                criteria=criteria,
+                scoring_guide=result.get("scoring_guide", ""),
+                total_weight=float(result.get("total_weight", 1.0)),
+                passing_threshold=float(result.get("passing_threshold", 0.7)),
+                calibration_notes=result.get("calibration_notes", []),
+                common_pitfalls=result.get("common_pitfalls", []),
+                eval_design_summary=result.get("summary", ""),
+                confidence_score=0.85,
+                quality_score=len(criteria) * 0.2,
+                duration_seconds=(datetime.utcnow()-start_time).total_seconds(),
+                runner_id=self.runner_id
+            )
+        except Exception as e:
+            logger.error(f"EvalDesignRunner error: {e}")
+            return EvalDesignOutput(
+                success=False,
+                error=str(e),
+                duration_seconds=(datetime.utcnow()-start_time).total_seconds(),
+                runner_id=self.runner_id
+            )
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0]
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except:
+            return {}
+
+
+# =============================================================================
+# RESEARCH DESIGN RUNNER
+# =============================================================================
+
+class ResearchDesignInput(TaskRunnerInput):
+    """Input for designing research plans."""
+    question: str = Field(..., description="Research question to answer")
+    research_type: str = Field(default="exploratory", description="exploratory | descriptive | explanatory | evaluative")
+    methodology_preference: str = Field(default="mixed", description="qualitative | quantitative | mixed")
+    constraints: List[str] = Field(default_factory=list, description="Time, budget, access constraints")
+    existing_knowledge: List[str] = Field(default_factory=list, description="What is already known")
+
+class ResearchPhase(TaskRunnerOutput):
+    """A phase in the research plan."""
+    phase_id: str = Field(default="")
+    phase_name: str = Field(default="")
+    objective: str = Field(default="")
+    methods: List[str] = Field(default_factory=list)
+    data_sources: List[str] = Field(default_factory=list)
+    deliverables: List[str] = Field(default_factory=list)
+    duration_estimate: str = Field(default="")
+    dependencies: List[str] = Field(default_factory=list)
+
+class DataCollection(TaskRunnerOutput):
+    """Data collection method details."""
+    method_id: str = Field(default="")
+    method_name: str = Field(default="")
+    method_type: str = Field(default="", description="survey | interview | observation | experiment | secondary")
+    sample_description: str = Field(default="")
+    sample_size: str = Field(default="")
+    instruments: List[str] = Field(default_factory=list)
+    analysis_approach: str = Field(default="")
+
+class ResearchDesignOutput(TaskRunnerOutput):
+    """Output from research design."""
+    research_title: str = Field(default="")
+    hypotheses: List[str] = Field(default_factory=list)
+    phases: List[ResearchPhase] = Field(default_factory=list)
+    data_collection: List[DataCollection] = Field(default_factory=list)
+    analysis_plan: str = Field(default="")
+    validity_measures: List[str] = Field(default_factory=list)
+    ethical_considerations: List[str] = Field(default_factory=list)
+    limitations: List[str] = Field(default_factory=list)
+    research_design_summary: str = Field(default="")
+
+@register_task_runner
+class ResearchDesignRunner(TaskRunner[ResearchDesignInput, ResearchDesignOutput]):
+    """Design research plan using research methodology."""
+    runner_id = "research_design"
+    name = "Research Design Runner"
+    description = "Design research using research methodology"
+    category = TaskRunnerCategory.DESIGN
+    algorithmic_core = "research_methodology"
+    max_duration_seconds = 180
+    InputType = ResearchDesignInput
+    OutputType = ResearchDesignOutput
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.3, max_tokens=4500)
+
+    async def execute(self, input: ResearchDesignInput) -> ResearchDesignOutput:
+        start_time = datetime.utcnow()
+        try:
+            prompt = f"""Design a comprehensive research plan.
+
+Research Question: {input.question}
+Research Type: {input.research_type}
+Methodology Preference: {input.methodology_preference}
+Constraints: {input.constraints}
+Existing Knowledge: {input.existing_knowledge}
+
+Return JSON with:
+- research_title: string
+- hypotheses: array of testable hypotheses
+- phases: array of {{phase_id, phase_name, objective, methods[], data_sources[], deliverables[], duration_estimate, dependencies[]}}
+- data_collection: array of {{method_id, method_name, method_type (survey|interview|observation|experiment|secondary), sample_description, sample_size, instruments[], analysis_approach}}
+- analysis_plan: string describing analysis approach
+- validity_measures: array of validity/reliability measures
+- ethical_considerations: array of ethical issues to address
+- limitations: array of known limitations
+- summary: string"""
+
+            response = await self.llm.ainvoke([
+                SystemMessage(content="You are a research methodology expert. Design rigorous, feasible research plans that address research questions while maintaining scientific validity."),
+                HumanMessage(content=prompt)
+            ])
+            result = self._parse_json(response.content)
+
+            phases = [ResearchPhase(**p) for p in result.get("phases", [])]
+            data_collection = [DataCollection(**d) for d in result.get("data_collection", [])]
+
+            return ResearchDesignOutput(
+                success=True,
+                research_title=result.get("research_title", ""),
+                hypotheses=result.get("hypotheses", []),
+                phases=phases,
+                data_collection=data_collection,
+                analysis_plan=result.get("analysis_plan", ""),
+                validity_measures=result.get("validity_measures", []),
+                ethical_considerations=result.get("ethical_considerations", []),
+                limitations=result.get("limitations", []),
+                research_design_summary=result.get("summary", ""),
+                confidence_score=0.85,
+                quality_score=len(phases) * 0.15 + len(data_collection) * 0.1,
+                duration_seconds=(datetime.utcnow()-start_time).total_seconds(),
+                runner_id=self.runner_id
+            )
+        except Exception as e:
+            logger.error(f"ResearchDesignRunner error: {e}")
+            return ResearchDesignOutput(
+                success=False,
+                error=str(e),
+                duration_seconds=(datetime.utcnow()-start_time).total_seconds(),
+                runner_id=self.runner_id
+            )
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0]
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except:
+            return {}
+
+
 __all__ = [
+    # Original DESIGN runners
     "RequirementRunner", "RequirementInput", "RequirementOutput", "Requirement",
     "ArchitectRunner", "ArchitectInput", "ArchitectOutput", "ArchitectureComponent",
     "PrototypeRunner", "PrototypeInput", "PrototypeOutput",
     "UsabilityRunner", "UsabilityInput", "UsabilityOutput", "UsabilityIssue",
+    # New DESIGN runners (Structure Work)
+    "PanelDesignRunner", "PanelDesignInput", "PanelDesignOutput", "PanelRole", "DiscussionSegment",
+    "WorkflowDesignRunner", "WorkflowDesignInput", "WorkflowDesignOutput", "WorkflowNode", "WorkflowEdge",
+    "EvalDesignRunner", "EvalDesignInput", "EvalDesignOutput", "EvaluationCriterion", "RubricLevel",
+    "ResearchDesignRunner", "ResearchDesignInput", "ResearchDesignOutput", "ResearchPhase", "DataCollection",
 ]

@@ -1,5 +1,5 @@
 # PRODUCTION_TAG: PRODUCTION_READY
-# LAST_VERIFIED: 2025-12-17
+# LAST_VERIFIED: 2025-12-14
 # MODES_SUPPORTED: [3, 4]
 """
 Family Runners Module - LangGraph StateGraph Implementations
@@ -12,8 +12,6 @@ This module provides specialized runners for each logic family:
 - INVESTIGATION: Root Cause Analysis → Bayesian reasoning
 - PROBLEM_SOLVING: Hypothesis → Test → Iterate
 - COMMUNICATION: Audience → Format → Review
-- FORESIGHT: Signal → Impact → Disrupt → Gap → Invest
-- BRAND_STRATEGY: 10 Ps → Positioning → Portfolio Architecture
 - GENERIC: Standard step-by-step execution
 
 Usage:
@@ -68,8 +66,6 @@ from .investigation_runner import InvestigationRunner, InvestigationState
 from .problem_solving_runner import ProblemSolvingRunner, ProblemSolvingState
 from .communication_runner import CommunicationRunner, CommunicationState
 from .generic_runner import GenericRunner, GenericState
-from .foresight_runner import ForesightRunner, ForesightState
-from .brand_strategy_runner import BrandStrategyRunner, BrandStrategyState
 
 # Export all public symbols
 __all__ = [
@@ -113,12 +109,6 @@ __all__ = [
     # Generic
     "GenericRunner",
     "GenericState",
-    # Foresight
-    "ForesightRunner",
-    "ForesightState",
-    # Brand Strategy
-    "BrandStrategyRunner",
-    "BrandStrategyState",
 ]
 
 

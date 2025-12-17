@@ -4,7 +4,7 @@ UNDERSTAND Category - Knowledge Acquisition Runners
 This category contains atomic cognitive operations for acquiring, exploring,
 and extracting knowledge from various sources.
 
-Runners (12 total):
+Runners (14 total):
     - ScanRunner: Broad landscape scan (breadth-first exploration)
     - ExploreRunner: Deep dive on theme (depth-first analysis)
     - GapDetectRunner: Find missing info (set difference analysis)
@@ -17,6 +17,8 @@ Runners (12 total):
     - InfluenceNetworkAnalyzerRunner: Analyze influence networks
     - EngagementProfilerRunner: Profile engagement preferences
     - SkillGapAnalyzerRunner: Analyze team skill gaps
+    - EmpathyResearcherRunner: Conduct empathy research (empathy mapping)
+    - ProblemReframerRunner: Reframe problems (perspective shift analysis)
 
 Each runner is designed for:
     - 30-120 second execution time
@@ -98,6 +100,20 @@ from .skill_gap_analyzer_runner import (
     SkillGapAnalyzerOutput,
     SkillGapDetail,
 )
+from .empathy_researcher_runner import (
+    EmpathyResearcherRunner,
+    EmpathyResearcherInput,
+    EmpathyResearcherOutput,
+    EmpathyInsight,
+    UserNeed,
+)
+from .problem_reframer_runner import (
+    ProblemReframerRunner,
+    ProblemReframerInput,
+    ProblemReframerOutput,
+    ReframedProblem,
+    HowMightWe,
+)
 
 __all__ = [
     # Runners
@@ -162,4 +178,16 @@ __all__ = [
     "SkillGapAnalyzerInput",
     "SkillGapAnalyzerOutput",
     "SkillGapDetail",
+    # Empathy Researcher
+    "EmpathyResearcherRunner",
+    "EmpathyResearcherInput",
+    "EmpathyResearcherOutput",
+    "EmpathyInsight",
+    "UserNeed",
+    # Problem Reframer
+    "ProblemReframerRunner",
+    "ProblemReframerInput",
+    "ProblemReframerOutput",
+    "ReframedProblem",
+    "HowMightWe",
 ]

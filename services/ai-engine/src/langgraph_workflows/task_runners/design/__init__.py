@@ -1,7 +1,7 @@
 """
 DESIGN Task Runners - Design & Architecture.
 
-This module provides task runners for design and architecture (17 total):
+This module provides task runners for design and architecture (20 total):
 - RequirementRunner: Gather requirements using requirements elicitation
 - ArchitectRunner: Design architecture using architectural patterns
 - PrototypeRunner: Build prototype using rapid prototyping
@@ -19,6 +19,9 @@ This module provides task runners for design and architecture (17 total):
 - RealWorldEvidenceMapperRunner: Map RWE opportunities
 - TrainingProgramDesignerRunner: Design training programs
 - KPIFrameworkDeveloperRunner: Develop KPI frameworks
+- JourneyMapperRunner: Map user/customer journeys
+- ExperienceMapperRunner: Map experience ecosystems
+- BlueprintDesignerRunner: Design service blueprints
 
 Core Logic: Design Thinking / Systems Architecture
 
@@ -1092,6 +1095,27 @@ from .kpi_framework_runner import (
     KPIFrameworkOutput,
     KPIDefinition,
 )
+from .journey_mapper_runner import (
+    JourneyMapperRunner,
+    JourneyMapperInput,
+    JourneyMapperOutput,
+    JourneyStage,
+)
+from .experience_mapper_runner import (
+    ExperienceMapperRunner,
+    ExperienceMapperInput,
+    ExperienceMapperOutput,
+    ExperienceLayer,
+    ExperienceMoment,
+)
+from .blueprint_designer_runner import (
+    BlueprintDesignerRunner,
+    BlueprintDesignerInput,
+    BlueprintDesignerOutput,
+    ServiceBlueprint,
+    BlueprintAction,
+    BlueprintInteraction,
+)
 
 
 __all__ = [
@@ -1116,4 +1140,8 @@ __all__ = [
     "RealWorldEvidenceMapperRunner", "RWEMapperInput", "RWEMapperOutput", "RWEOpportunity",
     "TrainingProgramDesignerRunner", "TrainingProgramInput", "TrainingProgramOutput", "TrainingModule",
     "KPIFrameworkDeveloperRunner", "KPIFrameworkInput", "KPIFrameworkOutput", "KPIDefinition",
+    # DESIGN THINKING runners
+    "JourneyMapperRunner", "JourneyMapperInput", "JourneyMapperOutput", "JourneyStage",
+    "ExperienceMapperRunner", "ExperienceMapperInput", "ExperienceMapperOutput", "ExperienceLayer", "ExperienceMoment",
+    "BlueprintDesignerRunner", "BlueprintDesignerInput", "BlueprintDesignerOutput", "ServiceBlueprint", "BlueprintAction", "BlueprintInteraction",
 ]

@@ -1,7 +1,7 @@
 """
 DISCOVER Task Runners - Discovery & Innovation.
 
-This module provides task runners for discovery and innovation (7 total):
+This module provides task runners for discovery and innovation (8 total):
 - OpportunityRunner: Find opportunities using opportunity scanning
 - HypothesisRunner: Form hypothesis using scientific method
 - ExperimentRunner: Design experiment using experimental design
@@ -9,6 +9,7 @@ This module provides task runners for discovery and innovation (7 total):
 - DrivingForceIdentifierRunner: Identify strategic driving forces
 - WhitespaceIdentifierRunner: Identify market whitespace
 - EvidenceGapIdentifierRunner: Identify evidence gaps
+- TouchpointIdentifierRunner: Identify experience touchpoints
 
 Core Logic: Innovation Process / Discovery Science
 
@@ -462,6 +463,83 @@ class EvidenceGapIdentifierRunner(TaskRunner[EvidenceGapIdentifierInput, Evidenc
         except: return {}
 
 
+# =============================================================================
+# TOUCHPOINT IDENTIFIER - Experience Touchpoint Discovery
+# =============================================================================
+
+class Touchpoint(TaskRunnerOutput):
+    touchpoint_id: str = Field(default="")
+    touchpoint_name: str = Field(default="")
+    touchpoint_type: str = Field(default="", description="digital | physical | human | communication")
+    channel: str = Field(default="", description="Channel where touchpoint occurs")
+    stage: str = Field(default="", description="Journey stage")
+    description: str = Field(default="")
+    frequency: str = Field(default="medium", description="rare | occasional | frequent | constant")
+    emotional_impact: str = Field(default="neutral", description="negative | neutral | positive | delightful")
+    pain_points: List[str] = Field(default_factory=list)
+    opportunities: List[str] = Field(default_factory=list)
+    owner: str = Field(default="", description="Team/function responsible")
+
+class TouchpointIdentifierInput(TaskRunnerInput):
+    experience_context: str = Field(default="", description="Experience being mapped")
+    journey_stages: List[str] = Field(default_factory=list, description="Stages to analyze")
+    stakeholder_type: str = Field(default="customer", description="Who experiences touchpoints")
+    channels_in_scope: List[str] = Field(default_factory=list, description="Channels to consider")
+
+class TouchpointIdentifierOutput(TaskRunnerOutput):
+    touchpoints: List[Touchpoint] = Field(default_factory=list)
+    touchpoint_map: Dict[str, List[str]] = Field(default_factory=dict, description="Stage -> touchpoints")
+    channel_coverage: Dict[str, int] = Field(default_factory=dict, description="Channel -> count")
+    critical_touchpoints: List[str] = Field(default_factory=list, description="High-impact touchpoints")
+    gap_touchpoints: List[str] = Field(default_factory=list, description="Missing touchpoints")
+
+@register_task_runner
+class TouchpointIdentifierRunner(TaskRunner[TouchpointIdentifierInput, TouchpointIdentifierOutput]):
+    runner_id = "touchpoint_identifier"
+    name = "Touchpoint Identifier Runner"
+    description = "Identify experience touchpoints across journey stages"
+    category = TaskRunnerCategory.DISCOVER
+    algorithmic_core = "touchpoint_discovery"
+    max_duration_seconds = 90
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.4, max_tokens=3000)
+
+    async def execute(self, input: TouchpointIdentifierInput) -> TouchpointIdentifierOutput:
+        start_time = datetime.utcnow()
+        try:
+            prompt = f"""Identify all touchpoints for: {input.experience_context}
+Stakeholder: {input.stakeholder_type}
+Journey stages: {input.journey_stages}
+Channels: {input.channels_in_scope}
+
+Return JSON: touchpoints[], touchpoint_map{{}}, channel_coverage{{}}, critical_touchpoints[], gap_touchpoints[]"""
+            response = await self.llm.ainvoke([SystemMessage(content="You identify experience touchpoints systematically."), HumanMessage(content=prompt)])
+            result = self._parse_json(response.content)
+            return TouchpointIdentifierOutput(
+                success=True,
+                touchpoints=[Touchpoint(**t) for t in result.get("touchpoints", [])],
+                touchpoint_map=result.get("touchpoint_map", {}),
+                channel_coverage=result.get("channel_coverage", {}),
+                critical_touchpoints=result.get("critical_touchpoints", []),
+                gap_touchpoints=result.get("gap_touchpoints", []),
+                quality_score=0.8 if result.get("touchpoints") else 0.4,
+                duration_seconds=(datetime.utcnow()-start_time).total_seconds(),
+                runner_id=self.runner_id
+            )
+        except Exception as e:
+            return TouchpointIdentifierOutput(success=False, error=str(e), duration_seconds=(datetime.utcnow()-start_time).total_seconds(), runner_id=self.runner_id)
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content: content = content.split("```json")[1].split("```")[0]
+            elif "```" in content: content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except: return {}
+
+
 __all__ = [
     "OpportunityRunner", "OpportunityInput", "OpportunityOutput", "Opportunity",
     "HypothesisRunner", "HypothesisInput", "HypothesisOutput", "Hypothesis",
@@ -470,4 +548,5 @@ __all__ = [
     "DrivingForceIdentifierRunner", "DrivingForceIdentifierInput", "DrivingForceIdentifierOutput", "DrivingForce",
     "WhitespaceIdentifierRunner", "WhitespaceIdentifierInput", "WhitespaceIdentifierOutput", "Whitespace",
     "EvidenceGapIdentifierRunner", "EvidenceGapIdentifierInput", "EvidenceGapIdentifierOutput", "EvidenceGap",
+    "TouchpointIdentifierRunner", "TouchpointIdentifierInput", "TouchpointIdentifierOutput", "Touchpoint",
 ]

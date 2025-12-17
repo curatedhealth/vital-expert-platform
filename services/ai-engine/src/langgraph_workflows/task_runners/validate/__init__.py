@@ -5,13 +5,14 @@ This category contains atomic cognitive operations for verification
 using rule engines, source validation, semantic coherence, and
 expert credibility assessment.
 
-Runners (6 total):
+Runners (7 total):
     - ComplianceCheckRunner: Check against rules (rule engine)
     - FactCheckRunner: Verify claims (source verification)
     - CitationCheckRunner: Verify citations (reference validation)
     - ConsistencyCheckRunner: Check consistency (semantic coherence)
     - PlanValidatorRunner: Validate strategic plans (plan verification)
     - ExpertPositionValidatorRunner: Validate positioning (expert credibility)
+    - FeasibilityCheckerRunner: Screen feasibility dimensions (feasibility screening)
 
 Core Logic: Verification Protocol / Constraint Checking / Expert Validation
 
@@ -68,6 +69,12 @@ from .expert_position_validator_runner import (
     ExpertValidation,
     ClaimValidation,
 )
+from .feasibility_checker_runner import (
+    FeasibilityCheckerRunner,
+    FeasibilityCheckerInput,
+    FeasibilityCheckerOutput,
+    FeasibilityCheck,
+)
 
 __all__ = [
     # Runners
@@ -104,4 +111,9 @@ __all__ = [
     "ExpertPositionValidatorOutput",
     "ExpertValidation",
     "ClaimValidation",
+    # Feasibility Checker schemas
+    "FeasibilityCheckerRunner",
+    "FeasibilityCheckerInput",
+    "FeasibilityCheckerOutput",
+    "FeasibilityCheck",
 ]

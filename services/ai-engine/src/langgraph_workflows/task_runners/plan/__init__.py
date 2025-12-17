@@ -4,7 +4,7 @@ PLAN Category - Scheduling Runners
 This category contains atomic cognitive operations for project planning
 using scheduling algorithms and optimization.
 
-Runners (14 total):
+Runners (16 total):
     - DecomposeRunner: Break down goal (HTN decomposition)
     - DependencyRunner: Map dependencies (DAG construction)
     - ScheduleRunner: Generate schedule (Critical Path Method)
@@ -19,6 +19,8 @@ Runners (14 total):
     - EngagementTimelineBuilderRunner: Build engagement timelines
     - PublicationStrategistRunner: Plan publication strategy
     - CoachingPlannerRunner: Plan coaching programs
+    - ImplementationPlannerRunner: Plan solution implementation
+    - PilotPlannerRunner: Plan pilot programs
 
 Core Logic: Critical Path Method / Hierarchical Task Networks (HTN)
 
@@ -122,6 +124,19 @@ from .coaching_planner_runner import (
     CoachingPlannerOutput,
     CoachingSession,
 )
+from .implementation_planner_runner import (
+    ImplementationPlannerRunner,
+    ImplementationPlannerInput,
+    ImplementationPlannerOutput,
+    ImplementationPhase,
+)
+from .pilot_planner_runner import (
+    PilotPlannerRunner,
+    PilotPlannerInput,
+    PilotPlannerOutput,
+    PilotPlan,
+    PilotCriteria,
+)
 
 __all__ = [
     # Runners
@@ -198,4 +213,15 @@ __all__ = [
     "CoachingPlannerInput",
     "CoachingPlannerOutput",
     "CoachingSession",
+    # Implementation Planner
+    "ImplementationPlannerRunner",
+    "ImplementationPlannerInput",
+    "ImplementationPlannerOutput",
+    "ImplementationPhase",
+    # Pilot Planner
+    "PilotPlannerRunner",
+    "PilotPlannerInput",
+    "PilotPlannerOutput",
+    "PilotPlan",
+    "PilotCriteria",
 ]

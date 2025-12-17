@@ -4,13 +4,14 @@ SYNTHESIZE Category - Integration Runners
 This category contains atomic cognitive operations for integrating
 information from multiple sources into coherent outputs.
 
-Runners (6 total):
+Runners (7 total):
     - CollectRunner: Gather sources (aggregation)
     - ThemeRunner: Extract themes (topic modeling)
     - ResolveRunner: Resolve conflicts (dialectical synthesis)
     - NarrateRunner: Build narrative (story arc construction)
     - EvidenceMapperRunner: Map evidence to claims (evidence integration)
     - PositioningFinalizerRunner: Finalize positioning (positioning synthesis)
+    - InsightSynthesizerRunner: Synthesize insights from research (insight synthesis)
 
 Core Logic: Semantic Integration / Conflict Resolution / Narrative Construction
 
@@ -67,6 +68,12 @@ from .positioning_finalizer_runner import (
     FinalPositioning,
     MessagePillar,
 )
+from .insight_synthesizer_runner import (
+    InsightSynthesizerRunner,
+    InsightSynthesizerInput,
+    InsightSynthesizerOutput,
+    SynthesizedInsight,
+)
 
 __all__ = [
     # Runners
@@ -104,4 +111,9 @@ __all__ = [
     "PositioningFinalizerOutput",
     "FinalPositioning",
     "MessagePillar",
+    # Insight Synthesizer schemas
+    "InsightSynthesizerRunner",
+    "InsightSynthesizerInput",
+    "InsightSynthesizerOutput",
+    "SynthesizedInsight",
 ]

@@ -4,7 +4,7 @@ EVALUATE Category - Quality Assessment Runners
 This category contains atomic cognitive operations for evaluating,
 scoring, comparing, and benchmarking entities against criteria.
 
-Runners (12 total):
+Runners (15 total):
     - CritiqueRunner: Apply rubric (weighted scoring)
     - CompareRunner: Side-by-side (pairwise comparison)
     - ScoreRunner: Calculate score (weighted aggregation)
@@ -17,6 +17,9 @@ Runners (12 total):
     - StakeholderEvidenceAnalystRunner: Analyze stakeholder evidence needs
     - TeamCapabilityAssessorRunner: Assess team capabilities
     - IndustryBenchmarkAnalystRunner: Benchmark against industry
+    - PainPointAnalystRunner: Analyze and prioritize pain points
+    - FeasibilityAssessorRunner: Assess multi-dimensional feasibility
+    - FrictionAnalyzerRunner: Analyze friction in experiences
 
 Core Logic: Multi-Criteria Decision Analysis (MCDA) / Rubric Application
 
@@ -100,6 +103,25 @@ from .industry_benchmark_runner import (
     IndustryBenchmarkOutput,
     BenchmarkComparison,
 )
+from .pain_point_analyst_runner import (
+    PainPointAnalystRunner,
+    PainPointAnalystInput,
+    PainPointAnalystOutput,
+    PainPoint,
+)
+from .feasibility_assessor_runner import (
+    FeasibilityAssessorRunner,
+    FeasibilityAssessorInput,
+    FeasibilityAssessorOutput,
+    FeasibilityDimension,
+)
+from .friction_analyzer_runner import (
+    FrictionAnalyzerRunner,
+    FrictionAnalyzerInput,
+    FrictionAnalyzerOutput,
+    FrictionPoint,
+    FrictionReduction,
+)
 
 __all__ = [
     # Runners
@@ -164,4 +186,20 @@ __all__ = [
     "IndustryBenchmarkInput",
     "IndustryBenchmarkOutput",
     "BenchmarkComparison",
+    # Pain Point Analyst
+    "PainPointAnalystRunner",
+    "PainPointAnalystInput",
+    "PainPointAnalystOutput",
+    "PainPoint",
+    # Feasibility Assessor
+    "FeasibilityAssessorRunner",
+    "FeasibilityAssessorInput",
+    "FeasibilityAssessorOutput",
+    "FeasibilityDimension",
+    # Friction Analyzer
+    "FrictionAnalyzerRunner",
+    "FrictionAnalyzerInput",
+    "FrictionAnalyzerOutput",
+    "FrictionPoint",
+    "FrictionReduction",
 ]

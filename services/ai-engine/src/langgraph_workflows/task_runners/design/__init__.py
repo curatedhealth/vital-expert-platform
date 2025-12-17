@@ -764,6 +764,296 @@ Return JSON with:
             return {}
 
 
+# =============================================================================
+# SCENARIO AXIS DEFINER - Strategic Scenario Structure
+# =============================================================================
+
+class ScenarioAxis(TaskRunnerOutput):
+    axis_id: str = Field(default="")
+    axis_name: str = Field(default="")
+    description: str = Field(default="")
+    endpoints: Dict[str, str] = Field(default_factory=dict)  # low/high labels
+    uncertainty_level: str = Field(default="high", description="low | medium | high")
+    impact_level: str = Field(default="high", description="low | medium | high")
+
+class ScenarioAxisInput(TaskRunnerInput):
+    strategic_question: str = Field(default="", description="Strategic question to explore")
+    key_uncertainties: List[str] = Field(default_factory=list, description="Key uncertainties")
+    time_horizon: str = Field(default="5 years", description="Planning horizon")
+
+class ScenarioAxisOutput(TaskRunnerOutput):
+    axes: List[ScenarioAxis] = Field(default_factory=list)
+    scenario_matrix: Dict[str, Any] = Field(default_factory=dict)
+    scenarios: List[Dict[str, Any]] = Field(default_factory=list)
+    axis_selection_rationale: str = Field(default="")
+
+@register_task_runner
+class ScenarioAxisDefinerRunner(TaskRunner[ScenarioAxisInput, ScenarioAxisOutput]):
+    runner_id = "scenario_axis_definer"
+    category = TaskRunnerCategory.DESIGN
+    algorithmic_core = "scenario_axis_design"
+    max_duration_seconds = 90
+    temperature = 0.4
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.4, max_tokens=3000)
+
+    async def execute(self, input: ScenarioAxisInput) -> ScenarioAxisOutput:
+        prompt = f"Define 2 primary scenario axes for: {input.strategic_question}. Uncertainties: {input.key_uncertainties}. Horizon: {input.time_horizon}. Return JSON: axes[], scenario_matrix{{}}, scenarios[], axis_selection_rationale"
+        try:
+            response = await self.llm.ainvoke([SystemMessage(content="You design strategic scenario planning frameworks."), HumanMessage(content=prompt)])
+            result = self._parse_json(response.content)
+            return ScenarioAxisOutput(
+                axes=[ScenarioAxis(**a) for a in result.get("axes", [])],
+                scenario_matrix=result.get("scenario_matrix", {}),
+                scenarios=result.get("scenarios", []),
+                axis_selection_rationale=result.get("axis_selection_rationale", ""),
+                quality_score=0.8 if result.get("axes") else 0.4
+            )
+        except Exception as e:
+            return ScenarioAxisOutput(error=str(e), quality_score=0.0)
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content: content = content.split("```json")[1].split("```")[0]
+            elif "```" in content: content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except: return {}
+
+
+# =============================================================================
+# SIGNAL DEFINER - Signal Taxonomy Design
+# =============================================================================
+
+class SignalDefinition(TaskRunnerOutput):
+    signal_id: str = Field(default="")
+    signal_name: str = Field(default="")
+    signal_category: str = Field(default="", description="market | technology | regulatory | competitive | social")
+    indicators: List[str] = Field(default_factory=list)
+    data_sources: List[str] = Field(default_factory=list)
+    measurement_frequency: str = Field(default="monthly")
+
+class SignalDefinerInput(TaskRunnerInput):
+    monitoring_focus: str = Field(default="", description="What to monitor")
+    scenarios: List[Dict[str, Any]] = Field(default_factory=list, description="Scenarios to track")
+    existing_signals: List[str] = Field(default_factory=list)
+
+class SignalDefinerOutput(TaskRunnerOutput):
+    signal_definitions: List[SignalDefinition] = Field(default_factory=list)
+    signal_taxonomy: Dict[str, Any] = Field(default_factory=dict)
+    monitoring_dashboard: Dict[str, Any] = Field(default_factory=dict)
+
+@register_task_runner
+class SignalDefinerRunner(TaskRunner[SignalDefinerInput, SignalDefinerOutput]):
+    runner_id = "signal_definer"
+    category = TaskRunnerCategory.DESIGN
+    algorithmic_core = "signal_taxonomy_design"
+    max_duration_seconds = 90
+    temperature = 0.3
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.3, max_tokens=3000)
+
+    async def execute(self, input: SignalDefinerInput) -> SignalDefinerOutput:
+        prompt = f"Define monitoring signals for: {input.monitoring_focus}. Scenarios: {input.scenarios[:3]}. Return JSON: signal_definitions[], signal_taxonomy{{}}, monitoring_dashboard{{}}"
+        try:
+            response = await self.llm.ainvoke([SystemMessage(content="You design signal monitoring taxonomies."), HumanMessage(content=prompt)])
+            result = self._parse_json(response.content)
+            return SignalDefinerOutput(
+                signal_definitions=[SignalDefinition(**s) for s in result.get("signal_definitions", [])],
+                signal_taxonomy=result.get("signal_taxonomy", {}),
+                monitoring_dashboard=result.get("monitoring_dashboard", {}),
+                quality_score=0.8 if result.get("signal_definitions") else 0.4
+            )
+        except Exception as e:
+            return SignalDefinerOutput(error=str(e), quality_score=0.0)
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content: content = content.split("```json")[1].split("```")[0]
+            elif "```" in content: content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except: return {}
+
+
+# =============================================================================
+# PRODUCT POSITIONER - Brand Positioning Strategy
+# =============================================================================
+
+class PositioningStatement(TaskRunnerOutput):
+    product_name: str = Field(default="")
+    target_audience: str = Field(default="")
+    frame_of_reference: str = Field(default="")
+    key_benefit: str = Field(default="")
+    reason_to_believe: str = Field(default="")
+    brand_personality: List[str] = Field(default_factory=list)
+
+class ProductPositionerInput(TaskRunnerInput):
+    product_info: Dict[str, Any] = Field(default_factory=dict, description="Product information")
+    competitive_landscape: List[Dict[str, Any]] = Field(default_factory=list)
+    target_segments: List[str] = Field(default_factory=list)
+
+class ProductPositionerOutput(TaskRunnerOutput):
+    positioning: PositioningStatement = Field(default_factory=PositioningStatement)
+    positioning_map: Dict[str, Any] = Field(default_factory=dict)
+    differentiation_points: List[str] = Field(default_factory=list)
+    messaging_pillars: List[Dict[str, Any]] = Field(default_factory=list)
+
+@register_task_runner
+class ProductPositionerRunner(TaskRunner[ProductPositionerInput, ProductPositionerOutput]):
+    runner_id = "product_positioner"
+    category = TaskRunnerCategory.DESIGN
+    algorithmic_core = "positioning_strategy_design"
+    max_duration_seconds = 90
+    temperature = 0.4
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.4, max_tokens=3000)
+
+    async def execute(self, input: ProductPositionerInput) -> ProductPositionerOutput:
+        prompt = f"Create positioning strategy. Product: {input.product_info}. Competitors: {input.competitive_landscape[:3]}. Segments: {input.target_segments}. Return JSON: positioning{{}}, positioning_map{{}}, differentiation_points[], messaging_pillars[]"
+        try:
+            response = await self.llm.ainvoke([SystemMessage(content="You are a brand positioning strategist."), HumanMessage(content=prompt)])
+            result = self._parse_json(response.content)
+            return ProductPositionerOutput(
+                positioning=PositioningStatement(**result.get("positioning", {})),
+                positioning_map=result.get("positioning_map", {}),
+                differentiation_points=result.get("differentiation_points", []),
+                messaging_pillars=result.get("messaging_pillars", []),
+                quality_score=0.8 if result.get("positioning") else 0.4
+            )
+        except Exception as e:
+            return ProductPositionerOutput(error=str(e), quality_score=0.0)
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content: content = content.split("```json")[1].split("```")[0]
+            elif "```" in content: content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except: return {}
+
+
+# =============================================================================
+# PLACE CHANNEL DESIGNER - Channel Architecture
+# =============================================================================
+
+class Channel(TaskRunnerOutput):
+    channel_name: str = Field(default="")
+    channel_type: str = Field(default="", description="direct | distributor | retail | digital | hybrid")
+    target_segment: str = Field(default="")
+    coverage_goal: float = Field(default=0.0, description="Target coverage %")
+    key_partners: List[str] = Field(default_factory=list)
+    margin_structure: Dict[str, float] = Field(default_factory=dict)
+
+class PlaceChannelInput(TaskRunnerInput):
+    product_info: Dict[str, Any] = Field(default_factory=dict)
+    market_context: str = Field(default="")
+    distribution_objectives: List[str] = Field(default_factory=list)
+
+class PlaceChannelOutput(TaskRunnerOutput):
+    channel_architecture: Dict[str, Any] = Field(default_factory=dict)
+    channels: List[Channel] = Field(default_factory=list)
+    channel_mix: Dict[str, float] = Field(default_factory=dict)
+    distribution_strategy: str = Field(default="")
+
+@register_task_runner
+class PlaceChannelDesignerRunner(TaskRunner[PlaceChannelInput, PlaceChannelOutput]):
+    runner_id = "place_channel_designer"
+    category = TaskRunnerCategory.DESIGN
+    algorithmic_core = "channel_architecture_design"
+    max_duration_seconds = 90
+    temperature = 0.3
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.3, max_tokens=3000)
+
+    async def execute(self, input: PlaceChannelInput) -> PlaceChannelOutput:
+        prompt = f"Design distribution channel architecture. Product: {input.product_info}. Market: {input.market_context}. Objectives: {input.distribution_objectives}. Return JSON: channel_architecture{{}}, channels[], channel_mix{{}}, distribution_strategy"
+        try:
+            response = await self.llm.ainvoke([SystemMessage(content="You design distribution channel strategies."), HumanMessage(content=prompt)])
+            result = self._parse_json(response.content)
+            return PlaceChannelOutput(
+                channel_architecture=result.get("channel_architecture", {}),
+                channels=[Channel(**c) for c in result.get("channels", [])],
+                channel_mix=result.get("channel_mix", {}),
+                distribution_strategy=result.get("distribution_strategy", ""),
+                quality_score=0.8 if result.get("channels") else 0.4
+            )
+        except Exception as e:
+            return PlaceChannelOutput(error=str(e), quality_score=0.0)
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content: content = content.split("```json")[1].split("```")[0]
+            elif "```" in content: content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except: return {}
+
+
+# =============================================================================
+# ARCHITECTURE GENERATOR - Portfolio Architecture
+# =============================================================================
+
+class PortfolioArchitecture(TaskRunnerOutput):
+    architecture_type: str = Field(default="", description="house_of_brands | branded_house | endorsed | hybrid")
+    brand_tiers: List[Dict[str, Any]] = Field(default_factory=list)
+    relationship_rules: List[str] = Field(default_factory=list)
+
+class ArchitectureGeneratorInput(TaskRunnerInput):
+    portfolio_elements: List[Dict[str, Any]] = Field(default_factory=list)
+    brand_strategy: str = Field(default="")
+    growth_objectives: List[str] = Field(default_factory=list)
+
+class ArchitectureGeneratorOutput(TaskRunnerOutput):
+    architecture: PortfolioArchitecture = Field(default_factory=PortfolioArchitecture)
+    brand_hierarchy: Dict[str, Any] = Field(default_factory=dict)
+    naming_guidelines: List[str] = Field(default_factory=list)
+    visual_identity_rules: Dict[str, Any] = Field(default_factory=dict)
+
+@register_task_runner
+class ArchitectureGeneratorRunner(TaskRunner[ArchitectureGeneratorInput, ArchitectureGeneratorOutput]):
+    runner_id = "architecture_generator"
+    category = TaskRunnerCategory.DESIGN
+    algorithmic_core = "portfolio_architecture_generation"
+    max_duration_seconds = 90
+    temperature = 0.4
+
+    def __init__(self, llm: Optional[ChatOpenAI] = None, **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.llm = llm or ChatOpenAI(model="gpt-4-turbo-preview", temperature=0.4, max_tokens=3000)
+
+    async def execute(self, input: ArchitectureGeneratorInput) -> ArchitectureGeneratorOutput:
+        prompt = f"Generate portfolio brand architecture. Elements: {input.portfolio_elements}. Strategy: {input.brand_strategy}. Growth: {input.growth_objectives}. Return JSON: architecture{{}}, brand_hierarchy{{}}, naming_guidelines[], visual_identity_rules{{}}"
+        try:
+            response = await self.llm.ainvoke([SystemMessage(content="You design brand portfolio architectures."), HumanMessage(content=prompt)])
+            result = self._parse_json(response.content)
+            return ArchitectureGeneratorOutput(
+                architecture=PortfolioArchitecture(**result.get("architecture", {})),
+                brand_hierarchy=result.get("brand_hierarchy", {}),
+                naming_guidelines=result.get("naming_guidelines", []),
+                visual_identity_rules=result.get("visual_identity_rules", {}),
+                quality_score=0.8 if result.get("architecture") else 0.4
+            )
+        except Exception as e:
+            return ArchitectureGeneratorOutput(error=str(e), quality_score=0.0)
+
+    def _parse_json(self, content: str) -> Dict:
+        import json
+        try:
+            if "```json" in content: content = content.split("```json")[1].split("```")[0]
+            elif "```" in content: content = content.split("```")[1].split("```")[0]
+            return json.loads(content)
+        except: return {}
+
+
 __all__ = [
     # Original DESIGN runners
     "RequirementRunner", "RequirementInput", "RequirementOutput", "Requirement",
@@ -775,4 +1065,10 @@ __all__ = [
     "WorkflowDesignRunner", "WorkflowDesignInput", "WorkflowDesignOutput", "WorkflowNode", "WorkflowEdge",
     "EvalDesignRunner", "EvalDesignInput", "EvalDesignOutput", "EvaluationCriterion", "RubricLevel",
     "ResearchDesignRunner", "ResearchDesignInput", "ResearchDesignOutput", "ResearchPhase", "DataCollection",
+    # Strategic Design runners (FORESIGHT + BRAND_STRATEGY)
+    "ScenarioAxisDefinerRunner", "ScenarioAxisInput", "ScenarioAxisOutput", "ScenarioAxis",
+    "SignalDefinerRunner", "SignalDefinerInput", "SignalDefinerOutput", "SignalDefinition",
+    "ProductPositionerRunner", "ProductPositionerInput", "ProductPositionerOutput", "PositioningStatement",
+    "PlaceChannelDesignerRunner", "PlaceChannelInput", "PlaceChannelOutput", "Channel",
+    "ArchitectureGeneratorRunner", "ArchitectureGeneratorInput", "ArchitectureGeneratorOutput", "PortfolioArchitecture",
 ]

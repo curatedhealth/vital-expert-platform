@@ -584,3 +584,7 @@ class MedicalRAGPipeline:
     async def cleanup(self):
         """Cleanup resources"""
         logger.info("🧹 Medical RAG pipeline cleanup completed")
+
+
+# Alias for backwards compatibility
+MedicalRAG = MedicalRAGPipeline

@@ -358,6 +358,10 @@ class TenantAwareSupabaseClient:
         return result.count or 0
 
 
+# Alias for backwards compatibility
+TenantAwareSupabase = TenantAwareSupabaseClient
+
+
 # Factory function
 def create_tenant_aware_client(supabase_client: SupabaseClient) -> TenantAwareSupabaseClient:
     """

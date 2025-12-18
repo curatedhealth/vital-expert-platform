@@ -663,3 +663,6 @@ async def search_agents(query: str, user_id: str):
 # Automatically traced
 results = await search_agents("diabetes", "user123")
 """
+
+# Alias for backwards compatibility (lowercase 'f')
+LangfuseMonitor = LangFuseMonitor

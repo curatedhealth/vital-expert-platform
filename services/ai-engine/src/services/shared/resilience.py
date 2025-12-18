@@ -466,3 +466,6 @@ async def timeout_handler(coro, timeout: float = 300.0, timeout_message: str = "
     except asyncio.TimeoutError:
         raise asyncio.TimeoutError(timeout_message)
 
+
+# Alias for backwards compatibility
+CircuitBreaker = CircuitBreakerConfig

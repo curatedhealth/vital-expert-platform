@@ -1,7 +1,6 @@
 # VITAL AI Engine - Production Dockerfile (Multi-Stage Build)
-# Stage 1: Build stage - Install dependencies
-# Using Python 3.11 to align with available wheels (spaCy/murmurhash) and reduce build friction
-# Updated: 2025-12-09
+# Build context: services/ directory (run: docker build -f ai-engine/Dockerfile .)
+# Updated: 2025-12-18
 FROM python:3.11-slim as builder
 
 # Set environment variables for build
@@ -22,13 +21,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first for better layer caching
-COPY requirements.txt .
+# Copy shared-kernel package first (internal dependency)
+COPY shared-kernel /app/shared-kernel
+
+# Copy requirements
+COPY ai-engine/requirements-docker.txt .
 
 # Install Python dependencies into a virtual environment
 RUN python -m venv /opt/venv && \
     /opt/venv/bin/pip install --upgrade pip setuptools wheel && \
-    /opt/venv/bin/pip install --prefer-binary --no-cache-dir -r requirements.txt
+    /opt/venv/bin/pip install -e /app/shared-kernel && \
+    /opt/venv/bin/pip install --prefer-binary --no-cache-dir -r requirements-docker.txt
 
 # Stage 2: Runtime stage - Minimal production image
 FROM python:3.11-slim
@@ -53,7 +56,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /opt/venv /opt/venv
 
 # Copy application code
-COPY src/ ./src/
+COPY ai-engine/src/ ./src/
 
 # Create logs directory with proper permissions
 RUN mkdir -p /app/logs && \

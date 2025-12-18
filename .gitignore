@@ -119,6 +119,7 @@ jspm_packages/
 
 # Project specific
 *.txt
+!requirements*.txt
 *.json.backup
 test-*.js
 audit-*.js

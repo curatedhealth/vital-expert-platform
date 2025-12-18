@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 from pydantic import BaseModel
 
 from ..registry.mission_registry import MissionRegistry
-from agents.l5_tools.tool_registry import ToolRegistry
+from agents.tools.tool_registry import ToolRegistry
 
 
 class PreFlightCheckResult(BaseModel):

@@ -1,0 +1,95 @@
+# Structured Panel Definition
+# Formal, systematic analysis with clear structure and comprehensive coverage
+
+id: structured
+name: Structured Panel
+description: >
+  Formal structured analysis with clear roles and systematic coverage.
+  Best for complex questions requiring comprehensive, organized responses.
+version: "1.0.0"
+
+config:
+  default_expert_count: 4
+  min_experts: 2
+  max_experts: 8
+  default_rounds: 2
+  min_rounds: 1
+  max_rounds: 5
+  supports_consensus: true
+  supports_checkpoints: true
+  requires_positions: false
+  expert_selection_method: fusion
+  diversity_weight: 0.4
+  default_consensus_threshold: 0.7
+  early_termination_enabled: true
+
+prompts:
+  initial:
+    id: structured_initial
+    description: Initial round prompt for structured analysis
+    placeholders:
+      - goal
+      - context
+      - round_number
+    template: |
+      You are participating in a structured panel discussion.
+
+      QUESTION/GOAL: {goal}
+
+      {context_section}
+
+      Round {round_number} of discussion.
+
+      {previous_responses_section}
+
+      Please provide your analysis covering:
+
+      Key Findings: What are the main insights?
+
+      Supporting Evidence: What data or reasoning supports these findings?
+
+      Recommendations: What actions do you suggest?
+
+      Confidence Level: How confident are you (express as a percentage)?
+
+  followup:
+    id: structured_followup
+    description: Follow-up round prompt building on previous responses
+    placeholders:
+      - goal
+      - context
+      - round_number
+      - previous_responses
+    template: |
+      You are participating in a structured panel discussion.
+
+      QUESTION/GOAL: {goal}
+
+      {context_section}
+
+      Round {round_number} of discussion.
+
+      PREVIOUS ROUND RESPONSES:
+      {previous_responses}
+
+      Building on the previous discussion, please provide:
+
+      Refined Analysis: How do you refine or update your analysis based on other perspectives?
+
+      Additional Evidence: What new data or reasoning can you add?
+
+      Points of Agreement: Where do you agree with other panelists?
+
+      Points of Disagreement: Where do you see things differently, and why?
+
+      Updated Recommendations: What actions do you now suggest?
+
+      Confidence Level: How confident are you now (express as a percentage)?
+
+format_instructions: |
+  IMPORTANT FORMAT RULE: Write in plain text only. Do NOT use any markdown formatting such as:
+  - No asterisks for bold or italic (no ** or *)
+  - No hash symbols for headings (no # or ##)
+  - No bullet points or dashes at start of lines
+  - No code blocks or backticks
+  Write in clear paragraphs with complete sentences. Use line breaks between sections.

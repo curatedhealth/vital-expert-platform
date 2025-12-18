@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Type
 from dataclasses import dataclass
 import structlog
 
-from .base import BaseRunner, RunnerCategory, PharmaDomain
+from .base_runner_core import BaseRunner, RunnerCategory, PharmaDomain
 
 logger = structlog.get_logger()
 

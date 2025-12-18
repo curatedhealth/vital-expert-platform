@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 
 from ...schemas.mission_state import MissionState
 from ..base_runner import BaseMissionRunner
-from agents.l4_workers.worker_factory import WorkerFactory
+from agents.workers.worker_factory import WorkerFactory
 
 
 class MonitoringRunner(BaseMissionRunner):

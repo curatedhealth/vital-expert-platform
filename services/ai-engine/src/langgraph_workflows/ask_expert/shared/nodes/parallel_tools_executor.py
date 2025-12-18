@@ -1,7 +1,7 @@
 # PRODUCTION_TAG: PRODUCTION_READY
 # LAST_VERIFIED: 2025-12-13
 # MODES_SUPPORTED: [1, 2, 3, 4]
-# DEPENDENCIES: [agents.l5_tools, structlog]
+# DEPENDENCIES: [agents.tools, structlog]
 """
 VITAL Path AI Services - Parallel L5 Tool Executor
 
@@ -33,7 +33,7 @@ from datetime import datetime
 import structlog
 
 # L5 Tool imports
-from agents.l5_tools import (
+from agents.tools import (
     create_l5_tool,
     create_literature_tool,
     create_general_tool,

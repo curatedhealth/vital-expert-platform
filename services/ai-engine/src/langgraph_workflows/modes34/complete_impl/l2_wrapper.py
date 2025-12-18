@@ -1,7 +1,7 @@
 # PRODUCTION_TAG: PRODUCTION_READY
 # LAST_VERIFIED: 2025-12-13
 # MODES_SUPPORTED: [3, 4]
-# DEPENDENCIES: [agents.l2_experts]
+# DEPENDENCIES: [agents.experts]
 """
 L2ExpertWrapper - Enhanced wrapper for L2 Domain Experts with runner integration.
 
@@ -104,13 +104,13 @@ def _lazy_load_experts():
     
     try:
         # Import your actual L2 experts here
-        from ...agents.l2_experts.l2_domain_lead import L2DomainLead
-        from ...agents.l2_experts.l2_regulatory import L2RegulatoryExpert
-        from ...agents.l2_experts.l2_clinical import L2ClinicalExpert
-        from ...agents.l2_experts.l2_safety import L2SafetyExpert
-        from ...agents.l2_experts.l2_market_access import L2MarketAccessExpert
-        from ...agents.l2_experts.l2_medical_affairs import L2MedicalAffairsExpert
-        from ...agents.l2_experts.l2_competitive_intel import L2CompetitiveIntelExpert
+        from ...agents.experts.l2_domain_lead import L2DomainLead
+        from ...agents.experts.l2_regulatory import L2RegulatoryExpert
+        from ...agents.experts.l2_clinical import L2ClinicalExpert
+        from ...agents.experts.l2_safety import L2SafetyExpert
+        from ...agents.experts.l2_market_access import L2MarketAccessExpert
+        from ...agents.experts.l2_medical_affairs import L2MedicalAffairsExpert
+        from ...agents.experts.l2_competitive_intel import L2CompetitiveIntelExpert
         
         EXPERT_REGISTRY.update({
             "domain_lead": L2DomainLead,
@@ -125,7 +125,7 @@ def _lazy_load_experts():
         logger.warning(f"Could not import some L2 experts: {e}")
         # Fallback to domain lead only
         try:
-            from ...agents.l2_experts.l2_domain_lead import L2DomainLead
+            from ...agents.experts.l2_domain_lead import L2DomainLead
             EXPERT_REGISTRY["domain_lead"] = L2DomainLead
         except ImportError:
             pass

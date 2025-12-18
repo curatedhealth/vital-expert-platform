@@ -1,0 +1,46 @@
+id: "investigation_rca_v1"
+name: "Investigation: Root Cause Analysis"
+slug: "investigation_root_cause"
+family: "INVESTIGATION"
+runner: "InvestigationRunner"
+description: "Generate hypotheses, gather evidence, and find root causes with recommendations."
+required_agent_levels:
+  - "L3"
+  - "L4"
+recommended_archetypes:
+  - "IncidentResponder"
+  - "SRE"
+  - "Analyst"
+required_tool_ids:
+  - "search"
+  - "logs"
+optional_tool_ids:
+  - "browser"
+  - "notebook"
+l4_workers:
+  - "hypothesis-lead"
+  - "evidence-collector"
+  - "rca-analyst"
+hitl_phases:
+  plan_approval:
+    blocking: true
+    description: "Review hypotheses before evidence collection."
+  final_review:
+    blocking: false
+    description: "Validate root causes and recommendations."
+mode_4_constraints:
+  - "Require at least two independent evidence sources per root cause."
+  - "Flag unknowns and confidence for each hypothesis."
+tasks:
+  - id: "hypotheses"
+    title: "Generate hypotheses"
+    instructions: "List 3-5 plausible causes with rationale and needed evidence."
+  - id: "evidence"
+    title: "Gather evidence"
+    instructions: "Collect evidence, conflicts, and confidence per hypothesis."
+  - id: "analysis"
+    title: "Analyze root causes"
+    instructions: "Identify likely root causes with probabilities and gaps."
+  - id: "actions"
+    title: "Recommend actions"
+    instructions: "Propose mitigations with owners, effort, and impact."

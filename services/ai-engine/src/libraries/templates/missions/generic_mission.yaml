@@ -1,0 +1,39 @@
+id: "generic_mission_v1"
+name: "Generic Mission"
+slug: "generic_mission"
+family: "GENERIC"
+runner: "GenericRunner"
+description: "Fallback generic mission with simple plan, execution, and summary."
+required_agent_levels:
+  - "L3"
+recommended_archetypes:
+  - "Analyst"
+  - "Generalist"
+required_tool_ids:
+  - "search"
+optional_tool_ids:
+  - "browser"
+  - "notebook"
+l4_workers:
+  - "planner"
+  - "executor"
+hitl_phases:
+  plan_approval:
+    blocking: true
+    description: "Review generic plan before execution."
+  final_review:
+    blocking: false
+    description: "Validate outputs and next steps."
+mode_4_constraints:
+  - "Limit to 3-5 steps unless approved."
+  - "Require confidence score and risks per step."
+tasks:
+  - id: "plan"
+    title: "Draft plan"
+    instructions: "Create 3-5 steps with owner, outcome, and risks."
+  - id: "execute"
+    title: "Execute steps"
+    instructions: "Conceptually execute steps and capture outputs."
+  - id: "finalize"
+    title: "Finalize summary"
+    instructions: "Summarize outputs, risks, and next actions with confidence."

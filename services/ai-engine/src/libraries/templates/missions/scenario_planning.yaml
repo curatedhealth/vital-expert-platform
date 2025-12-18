@@ -1,0 +1,55 @@
+template:
+  id: "scenario_planning"
+  name: "Scenario Planning & Roadmap"
+  slug: "scenario_planning"
+  family: "STRATEGY"
+  runner: "StrategyRunner"
+  description: "Develop 2-3 strategic scenarios, assess SWOT, and deliver a 90-day roadmap with mitigations."
+
+  required_agent_levels: [2, 3]
+  recommended_archetypes:
+    - "strategy_lead"
+    - "commercial_director"
+
+  required_tool_ids: ["L5-RAG"]
+  optional_tool_ids: ["L5-PS", "L5-WEB"]
+
+  l4_workers: ["L4-QA", "L4-GD"]
+
+  hitl_phases:
+    - phase_id: "plan_approval"
+      checkpoint_type: "approval"
+      title: "Approve scenarios and framing"
+      is_blocking: true
+    - phase_id: "final_review"
+      checkpoint_type: "validation"
+      title: "Review roadmap and mitigations"
+      is_blocking: false
+
+  mode_4_constraints:
+    max_cost: 0.25
+    max_iterations: 6
+    max_wall_time_minutes: 20
+    allow_auto_continue: false
+
+  tasks:
+    - id: "frame_decision"
+      name: "Frame Decision"
+      description: "Clarify goal, scope, constraints, and success metrics."
+    - id: "generate_scenarios"
+      name: "Generate Scenarios"
+      description: "Produce 2-3 plausible scenarios with assumptions and signals."
+    - id: "swot"
+      name: "SWOT Assessment"
+      description: "Assess strengths, weaknesses, opportunities, threats, and risk rating."
+    - id: "roadmap"
+      name: "Roadmap & Mitigations"
+      description: "Create 90-day roadmap, risks, mitigations, and owners."
+
+  checkpoints:
+    - type: "plan"
+      description: "Approve scenarios and framing"
+      is_blocking: true
+    - type: "final"
+      description: "Validate roadmap and mitigations"
+      is_blocking: false

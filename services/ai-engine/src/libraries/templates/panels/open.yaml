@@ -1,0 +1,96 @@
+# Open Panel Definition
+# Free-form brainstorming with creative exploration
+
+id: open
+name: Open Panel
+description: >
+  Free-form brainstorming with creative exploration. No rigid structure,
+  allowing experts to share novel perspectives, creative solutions, and
+  cross-domain insights. Best for ideation and innovation challenges.
+version: "1.0.0"
+
+config:
+  default_expert_count: 5
+  min_experts: 3
+  max_experts: 10
+  default_rounds: 2
+  min_rounds: 1
+  max_rounds: 4
+  supports_consensus: true
+  supports_checkpoints: false
+  requires_positions: false
+  expert_selection_method: hybrid
+  diversity_weight: 0.5  # Higher diversity for creativity
+  default_consensus_threshold: 0.6
+  early_termination_enabled: true
+
+prompts:
+  initial:
+    id: open_initial
+    description: First round open exploration
+    placeholders:
+      - goal
+      - context
+      - round_number
+    template: |
+      You are participating in an open panel discussion.
+
+      QUESTION/GOAL: {goal}
+
+      {context_section}
+
+      Round {round_number} of discussion.
+
+      {previous_responses_section}
+
+      Share your thoughts freely. Consider:
+
+      Novel perspectives that others might not have considered
+
+      Creative solutions or approaches to the problem
+
+      Cross-domain insights that could apply here
+
+      Questions that could lead to deeper understanding
+
+      Feel free to think outside the box and propose unconventional ideas.
+
+  followup:
+    id: open_followup
+    description: Follow-up round building on creative ideas
+    placeholders:
+      - goal
+      - context
+      - round_number
+      - previous_responses
+    template: |
+      You are participating in an open panel discussion.
+
+      QUESTION/GOAL: {goal}
+
+      {context_section}
+
+      Round {round_number} of discussion.
+
+      IDEAS SHARED SO FAR:
+      {previous_responses}
+
+      Building on the discussion so far:
+
+      Which ideas from other panelists spark new thoughts for you?
+
+      How might different ideas be combined or synthesized?
+
+      What unexpected connections do you see between perspectives?
+
+      What creative directions haven't been explored yet?
+
+      What bold or unconventional approaches deserve more consideration?
+
+format_instructions: |
+  IMPORTANT FORMAT RULE: Write in plain text only. Do NOT use any markdown formatting such as:
+  - No asterisks for bold or italic (no ** or *)
+  - No hash symbols for headings (no # or ##)
+  - No bullet points or dashes at start of lines
+  - No code blocks or backticks
+  Write in clear paragraphs with complete sentences. Use line breaks between sections.

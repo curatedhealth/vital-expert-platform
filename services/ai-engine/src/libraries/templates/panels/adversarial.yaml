@@ -1,0 +1,164 @@
+# Adversarial Panel Definition
+# Pro/Con debate format with structured rebuttals and moderator synthesis
+
+id: adversarial
+name: Adversarial Panel
+description: >
+  Pro/con debate format with structured rebuttals. Experts are assigned
+  to PRO, CON, or MODERATOR positions. Creates rigorous examination of
+  both sides of an issue through direct engagement and rebuttals.
+version: "1.0.0"
+
+config:
+  default_expert_count: 5
+  min_experts: 3
+  max_experts: 9
+  default_rounds: 2
+  min_rounds: 1
+  max_rounds: 4
+  supports_consensus: true
+  supports_checkpoints: true
+  requires_positions: true
+  expert_selection_method: fusion
+  diversity_weight: 0.2  # Lower diversity - we want experts on each side
+  default_consensus_threshold: 0.5  # Lower threshold - disagreement expected
+  early_termination_enabled: false
+
+positions:
+  pro:
+    name: PRO/Advocate
+    role: Present and defend arguments IN FAVOR of the proposition
+    expert_count: 2
+    speaks_in_rounds: [1, 2, 3, 4]
+
+  con:
+    name: CON/Critic
+    role: Present and defend arguments AGAINST the proposition
+    expert_count: 2
+    speaks_in_rounds: [1, 2, 3, 4]
+
+  moderator:
+    name: Moderator/Synthesizer
+    role: Synthesize arguments and provide balanced assessment
+    expert_count: 1
+    speaks_in_rounds: [2, 3, 4]  # Speaks after initial arguments
+
+prompts:
+  position_prompts:
+    pro:
+      initial:
+        id: adversarial_pro_initial
+        description: First round PRO/advocate argument
+        placeholders:
+          - goal
+          - context
+        template: |
+          You are the PRO/ADVOCATE in this debate. Your role is to:
+          1. Present the strongest case IN FAVOR of the proposition/approach
+          2. Identify key benefits, opportunities, and positive outcomes
+          3. Provide evidence and examples supporting your position
+          4. Anticipate and preemptively address potential criticisms
+
+          Structure your argument clearly with:
+          - Main thesis statement
+          - 3-4 supporting arguments with evidence
+          - Conclusion reinforcing your position
+
+      rebuttal:
+        id: adversarial_pro_rebuttal
+        description: PRO response to CON arguments
+        placeholders:
+          - goal
+          - context
+          - con_arguments
+          - pro_arguments
+        template: |
+          You are the PRO/ADVOCATE. This is your REBUTTAL round.
+
+          CRITICAL INSTRUCTIONS:
+          1. READ THE CON ARGUMENTS ABOVE CAREFULLY
+          2. Quote or reference SPECIFIC points the CON made
+          3. For EACH major CON argument, provide a direct counter-argument
+          4. Explain why their criticisms are flawed, incomplete, or misguided
+          5. Strengthen your case with NEW evidence that addresses their concerns
+          6. Acknowledge any valid points but explain why they don't undermine your position
+
+          Your response must DIRECTLY ENGAGE with what the CON said. Do not just repeat your original arguments.
+          Start by saying "In response to the CON's argument that..." or "The CON raises the concern that... however..."
+
+    con:
+      initial:
+        id: adversarial_con_initial
+        description: First round CON/critic argument
+        placeholders:
+          - goal
+          - context
+        template: |
+          You are the CON/CRITIC in this debate. Your role is to:
+          1. Present the strongest case AGAINST the proposition/approach
+          2. Identify risks, weaknesses, and potential negative outcomes
+          3. Provide evidence and examples supporting your criticisms
+          4. Challenge assumptions and identify overlooked problems
+
+          Structure your argument clearly with:
+          - Main counter-thesis statement
+          - 3-4 critical arguments with evidence
+          - Conclusion reinforcing your concerns
+
+      rebuttal:
+        id: adversarial_con_rebuttal
+        description: CON response to PRO arguments
+        placeholders:
+          - goal
+          - context
+          - pro_arguments
+          - con_arguments
+        template: |
+          You are the CON/CRITIC. This is your REBUTTAL round.
+
+          CRITICAL INSTRUCTIONS:
+          1. READ THE PRO ARGUMENTS ABOVE CAREFULLY
+          2. Quote or reference SPECIFIC points the PRO made
+          3. For EACH major PRO argument, provide a direct counter-argument
+          4. Explain why their supporting evidence is weak, incomplete, or misleading
+          5. Introduce NEW criticisms or evidence that undermines their position
+          6. Acknowledge any valid points but explain why they don't change your overall assessment
+
+          Your response must DIRECTLY ENGAGE with what the PRO said. Do not just repeat your original criticisms.
+          Start by saying "The PRO claims that... but this overlooks..." or "While the PRO argues... the reality is..."
+
+    moderator:
+      synthesis:
+        id: adversarial_moderator
+        description: Moderator balanced assessment
+        placeholders:
+          - goal
+          - pro_arguments
+          - con_arguments
+        template: |
+          You are the MODERATOR/SYNTHESIZER. Your role is to:
+          1. Identify the strongest points from BOTH sides
+          2. Highlight where the PRO and CON actually AGREE vs. where they genuinely DISAGREE
+          3. Point out any arguments that were NOT adequately addressed by either side
+          4. Suggest potential middle-ground or compromise positions
+          5. Provide a balanced assessment of who made the stronger case and why
+
+          Structure your synthesis with:
+          1. Summary of PRO's strongest arguments and where they succeeded/failed
+          2. Summary of CON's strongest arguments and where they succeeded/failed
+          3. Key areas of unresolved disagreement
+          4. Your recommended path forward based on the debate
+
+format_instructions: |
+  IMPORTANT FORMAT RULE: Write in plain text only. Do NOT use any markdown formatting such as:
+  - No asterisks for bold or italic (no ** or *)
+  - No hash symbols for headings (no # or ##)
+  - No bullet points or dashes at start of lines
+  - No code blocks or backticks
+  Write in clear paragraphs with complete sentences. Use line breaks between sections.
+
+response_formatting:
+  show_opposing_arguments_first: true
+  group_by_position: true
+  label_arguments_section: "=== ARGUMENTS YOU MUST RESPOND TO ==="
+  label_own_side_section: "=== YOUR SIDE'S PREVIOUS ARGUMENTS ==="

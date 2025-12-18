@@ -294,7 +294,7 @@ class ToolRegistry:
         # Check if tool exists in L5 implementation
         if slug not in self._l5_tools:
             try:
-                from modules.ask_expert.agents.l5_tools import create_l5_tool
+                from modules.ask_expert.agents.tools import create_l5_tool
                 self._l5_tools[slug] = create_l5_tool(slug)
             except ValueError:
                 # Tool not in L5 implementation
@@ -378,7 +378,7 @@ class ToolRegistry:
         Get list of tool slugs a worker is allowed to use.
         Maps worker IDs to their allowed tools.
         """
-        from modules.ask_expert.agents.l4_workers import get_worker_config
+        from modules.ask_expert.agents.workers import get_worker_config
         
         try:
             config = get_worker_config(worker_id)

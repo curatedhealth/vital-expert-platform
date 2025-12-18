@@ -8,9 +8,9 @@ from typing import Any, Dict, List
 from ...schemas.mission_state import MissionState
 from ..base_runner import BaseMissionRunner
 from agents.base_agent import AgentConfig
-from agents.l3_specialists import L3ContextSpecialist
-from agents.l4_workers.l4_evidence import L4EvidenceSynthesizer
-from agents.l4_workers.l4_analysis import AnalysisL4Worker
+from agents.specialists import L3ContextSpecialist
+from agents.workers.l4_evidence import L4EvidenceSynthesizer
+from agents.workers.l4_analysis import AnalysisL4Worker
 
 
 class DeepResearchRunner(BaseMissionRunner):

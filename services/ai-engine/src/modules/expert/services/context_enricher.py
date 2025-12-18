@@ -8,8 +8,8 @@ import time
 from typing import Any, Dict, List, Optional
 
 from agents.base_agent import AgentConfig
-from agents.l3_specialists.l3_context_specialist import L3ContextSpecialist
-from agents.l4_workers.l4_evidence import L4EvidenceSynthesizer
+from agents.specialists.l3_context_specialist import L3ContextSpecialist
+from agents.workers.l4_evidence import L4EvidenceSynthesizer
 
 
 class ContextEnrichmentService:

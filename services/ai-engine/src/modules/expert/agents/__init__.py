@@ -17,13 +17,13 @@ try:
     from modules.ask_expert.agents import (
         AskExpertL1MasterOrchestrator,
     )
-    from modules.ask_expert.agents.l2_experts import (
+    from modules.ask_expert.agents.experts import (
         AskExpertL2BaseExpert,
         AskExpertL2ClinicalExpert,
         AskExpertL2RegulatoryExpert,
         AskExpertL2SafetyExpert,
     )
-    from modules.ask_expert.agents.l3_specialists import (
+    from modules.ask_expert.agents.specialists import (
         AskExpertL3BaseSpecialist,
     )
     

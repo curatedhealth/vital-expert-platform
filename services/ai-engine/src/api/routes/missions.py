@@ -51,7 +51,7 @@ import structlog
 USE_MASTER_GRAPH = os.getenv("USE_MASTER_GRAPH", "true").lower() == "true"
 from services.publisher import publisher
 from services.mission_repository import mission_repo
-from agents.l3_specialists.l3_context_specialist import L3ContextSpecialist
+from agents.specialists.l3_context_specialist import L3ContextSpecialist
 from agents.base_agent import AgentConfig
 
 

@@ -1,0 +1,42 @@
+id: "communication_campaign_v1"
+name: "Communication: Campaign Plan"
+slug: "communication_campaign"
+family: "COMMUNICATION"
+runner: "CommunicationRunner"
+description: "Segment audiences, craft tailored messages, and plan channels with KPIs."
+required_agent_levels:
+  - "L3"
+  - "L4"
+recommended_archetypes:
+  - "CommsLead"
+  - "PMM"
+  - "CSLead"
+required_tool_ids:
+  - "search"
+optional_tool_ids:
+  - "browser"
+  - "notebook"
+l4_workers:
+  - "audience-analyst"
+  - "message-architect"
+  - "channel-planner"
+hitl_phases:
+  plan_approval:
+    blocking: true
+    description: "Review audience segments before messaging."
+  final_review:
+    blocking: false
+    description: "Validate channel plan and KPIs."
+mode_4_constraints:
+  - "Enforce compliance notes per message."
+  - "Cap spend per channel and require KPI gating."
+tasks:
+  - id: "audience"
+    title: "Audience analysis"
+    instructions: "Segment audience, needs, barriers, and channel preferences."
+  - id: "messaging"
+    title: "Message design"
+    instructions: "Design tailored messages per segment with tone, CTA, and risks."
+  - id: "channels"
+    title: "Channel plan"
+    instructions: "Build channel sequencing with cadence, KPIs, and fallback paths."

@@ -1,7 +1,7 @@
 # PRODUCTION_TAG: PRODUCTION_READY
 # LAST_VERIFIED: 2025-12-13
 # MODES_SUPPORTED: [3, 4]
-# DEPENDENCIES: [agents.l5_tools, agents.l5_tools.tool_registry]
+# DEPENDENCIES: [agents.tools, agents.tools.tool_registry]
 """
 L5 Tool Mapper - Maps runner codes and plan tools to L5 tool slugs.
 
@@ -29,11 +29,11 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 # Import the existing L5 factory (absolute import to avoid package resolution issues)
-from agents.l5_tools import create_l5_tool, get_tool_config
+from agents.tools import create_l5_tool, get_tool_config
 
 # Database-driven tool registry (Phase 2)
 try:
-    from agents.l5_tools.tool_registry import ToolRegistry
+    from agents.tools.tool_registry import ToolRegistry
     TOOL_REGISTRY_AVAILABLE = True
 except ImportError:
     ToolRegistry = None  # type: ignore

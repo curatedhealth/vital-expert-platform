@@ -6,13 +6,13 @@ import asyncio
 from typing import Any, Dict, Optional, Type
 
 from agents.base_agent import AgentConfig, BaseAgent
-from agents.l1_orchestrators.l1_master import L1MasterOrchestrator
-from agents.l2_experts.l2_domain_lead import L2DomainLead
-from agents.l3_specialists.l3_context_specialist import L3ContextSpecialist
-from agents.l3_specialists.l3_domain_analyst import L3DomainAnalyst
-from agents.l4_workers.l4_evidence import L4EvidenceSynthesizer
-from agents.l4_workers.l4_data_processor import L4DataProcessor
-from agents.l5_tools.tool_registry import ToolRegistry
+from agents.orchestrators.l1_master import L1MasterOrchestrator
+from agents.experts.l2_domain_lead import L2DomainLead
+from agents.specialists.l3_context_specialist import L3ContextSpecialist
+from agents.specialists.l3_domain_analyst import L3DomainAnalyst
+from agents.workers.l4_evidence import L4EvidenceSynthesizer
+from agents.workers.l4_data_processor import L4DataProcessor
+from agents.tools.tool_registry import ToolRegistry
 
 
 class L5ToolRunner(BaseAgent):

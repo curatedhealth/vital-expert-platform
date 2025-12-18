@@ -1,0 +1,45 @@
+template:
+  id: "regulatory_watch"
+  name: "Regulatory Watch"
+  slug: "regulatory_watch"
+  family: "MONITORING"
+  runner: "MonitoringRunner"
+  description: "Monitor regulatory signals, detect deltas, and synthesize alerts with recommended actions."
+
+  required_agent_levels: [2, 3]
+  recommended_archetypes:
+    - "reg_affairs_lead"
+    - "compliance_manager"
+
+  required_tool_ids: ["L5-RAG"]
+  optional_tool_ids: ["L5-WEB"]
+
+  l4_workers: ["L4-QA", "L4-GD"]
+
+  hitl_phases:
+    - phase_id: "final_review"
+      checkpoint_type: "validation"
+      title: "Review alerts and actions"
+      is_blocking: false
+
+  mode_4_constraints:
+    max_cost: 0.20
+    max_iterations: 6
+    max_wall_time_minutes: 20
+    allow_auto_continue: false
+
+  tasks:
+    - id: "collect_signals"
+      name: "Collect Signals"
+      description: "Gather recent regulatory updates and signals."
+    - id: "detect_delta"
+      name: "Detect Deltas"
+      description: "Identify changes/risks in the regulatory landscape."
+    - id: "alerting"
+      name: "Alerting"
+      description: "Synthesize alerts with recommended actions and owners."
+
+  checkpoints:
+    - type: "final"
+      description: "Review alerts and actions"
+      is_blocking: false

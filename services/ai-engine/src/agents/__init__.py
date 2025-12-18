@@ -4,39 +4,39 @@ VITAL Path AI Services - Agents Module (Shared)
 Central module for all AI agents in the VITAL platform.
 Contains reusable components across all services.
 
-5-Level Agent Hierarchy:
-- L1: Master Orchestrators (strategic coordination)
-- L2: Domain Experts (domain-specific reasoning)
-- L3: Task Specialists (focused task execution)
-- L4: Context Workers (103 workers, 21 domains)
-- L5: Tools (64+ tools, 17 domains - no LLM cost)
+5-Level Agent Hierarchy (Semantic Naming):
+- orchestrators/: Master Orchestrators (L1 - strategic coordination)
+- experts/: Domain Experts (L2 - domain-specific reasoning)
+- specialists/: Task Specialists (L3 - focused task execution)
+- workers/: Context Workers (L4 - 103 workers, 21 domains)
+- tools/: External Tools (L5 - 64+ tools, no LLM cost)
 
 Usage:
-    # L1 Orchestrators
-    from agents.l1_orchestrators import L1MasterOrchestrator
-    
-    # L2 Experts
-    from agents.l2_experts import L2RegulatoryExpert
-    
-    # L3 Specialists
-    from agents.l3_specialists import L3TaskSpecialist
-    
-    # L4 Workers
-    from agents.l4_workers import create_l4_worker
-    
-    # L5 Tools
-    from agents.l5_tools import create_l5_tool
+    # Orchestrators
+    from agents.orchestrators import L1MasterOrchestrator
+
+    # Experts
+    from agents.experts import L2RegulatoryExpert
+
+    # Specialists
+    from agents.specialists import L3TaskSpecialist
+
+    # Workers
+    from agents.workers import create_l4_worker
+
+    # Tools
+    from agents.tools import create_l5_tool
 """
 
 # L1 Orchestrator exports
-from .l1_orchestrators import (
+from .orchestrators import (
     L1MasterOrchestrator,
     TeamSelectionEvidence,
     MissionTask,
 )
 
 # L2 Expert exports
-from .l2_experts import (
+from .experts import (
     L2DomainExpert,
     L2RegulatoryExpert,
     L2ClinicalExpert,
@@ -44,12 +44,12 @@ from .l2_experts import (
 )
 
 # L3 Specialist exports
-from .l3_specialists import (
+from .specialists import (
     L3TaskSpecialist,
 )
 
 # L4 Worker exports
-from .l4_workers import (
+from .workers import (
     create_l4_worker,
     get_worker_config,
     list_workers_by_category,
@@ -64,7 +64,7 @@ from .l4_workers import (
 )
 
 # L5 Tool exports
-from .l5_tools import (
+from .tools import (
     create_l5_tool,
     get_tool_config,
     list_tools_by_category,

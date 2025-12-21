@@ -3,11 +3,9 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Home } from 'lucide-react'
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import { Home, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 import { AppSidebar } from '@/components/app-sidebar'
-import { MainNavbar } from '@/components/navbar/MainNavbar'
-import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   Breadcrumb,
@@ -18,9 +16,9 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { HeaderActionsProvider, HeaderActionsSlot } from '@/contexts/header-actions-context'
+import { SidebarProvider, useSidebar } from '@/contexts/sidebar-context'
 
 // Routes that should NOT show the global AppSidebar (they have their own navigation)
-// Note: /value now uses the standard sidebar for consistency
 const FULL_WIDTH_ROUTES: string[] = []
 
 // Route label mappings for prettier breadcrumb display
@@ -83,15 +81,126 @@ function generateBreadcrumbs(pathname: string): { label: string; href?: string }
   return items
 }
 
+// ============================================================================
+// SIDEBAR TOGGLE BUTTON - For header
+// ============================================================================
+
+function SidebarToggleButton() {
+  const { isExpanded, toggleSidebar } = useSidebar()
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="h-8 w-8 shrink-0"
+        >
+          {isExpanded ? (
+            <PanelLeftClose className="h-4 w-4" />
+          ) : (
+            <PanelLeftOpen className="h-4 w-4" />
+          )}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        {isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+// ============================================================================
+// MAIN CONTENT - Uses sidebar context for margin
+// ============================================================================
+
+function DashboardContent({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const { sidebarWidth } = useSidebar()
+
+  // Generate breadcrumb items from current path
+  const breadcrumbItems = useMemo(() => generateBreadcrumbs(pathname || ''), [pathname])
+
+  return (
+    <>
+      {/* Fixed Sidebar */}
+      <AppSidebar />
+
+      {/* Main Content Area - offset by sidebar width */}
+      <div
+        className="min-h-screen flex flex-col transition-[margin-left] duration-200 ease-out"
+        style={{ marginLeft: sidebarWidth }}
+      >
+        {/* Header with breadcrumb and actions */}
+        <header className="flex h-10 shrink-0 items-center gap-2 border-b border-border/40 px-4 bg-background/80 backdrop-blur-sm sticky top-0 z-30">
+          {/* Left side: Sidebar toggle + Breadcrumb Navigation */}
+          <div className="flex items-center gap-2">
+            {/* Sidebar Toggle Button */}
+            <SidebarToggleButton />
+
+            {/* Breadcrumb */}
+            {breadcrumbItems.length > 0 ? (
+              <Breadcrumb>
+                <BreadcrumbList className="flex-nowrap items-center gap-1.5 sm:gap-2">
+                  {/* Home link */}
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link href="/dashboard" className="flex items-center text-muted-foreground hover:text-foreground">
+                        <Home className="h-4 w-4" />
+                      </Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="[&>svg]:size-3.5" />
+
+                  {/* Path segments */}
+                  {breadcrumbItems.map((item, index) => {
+                    const isLast = index === breadcrumbItems.length - 1
+                    return (
+                      <React.Fragment key={item.label + index}>
+                        <BreadcrumbItem>
+                          {isLast || !item.href ? (
+                            <BreadcrumbPage className="text-sm font-medium">{item.label}</BreadcrumbPage>
+                          ) : (
+                            <BreadcrumbLink asChild>
+                              <Link href={item.href} className="text-sm text-muted-foreground hover:text-foreground">{item.label}</Link>
+                            </BreadcrumbLink>
+                          )}
+                        </BreadcrumbItem>
+                        {!isLast && item.href && <BreadcrumbSeparator className="[&>svg]:size-3.5" />}
+                      </React.Fragment>
+                    )
+                  })}
+                </BreadcrumbList>
+              </Breadcrumb>
+            ) : null}
+          </div>
+
+          {/* Right side: Dynamic actions slot (always visible) */}
+          <div className="flex-1 flex items-center justify-end gap-2">
+            <HeaderActionsSlot />
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex flex-1 flex-col">
+          {children}
+        </main>
+      </div>
+    </>
+  )
+}
+
+// ============================================================================
+// MAIN LAYOUT EXPORT
+// ============================================================================
+
 export function UnifiedDashboardLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
 
   // Check if current route should be full-width (no global sidebar)
   const isFullWidthRoute = FULL_WIDTH_ROUTES.some(route => pathname?.startsWith(route))
-
-  // Generate breadcrumb items from current path
-  const breadcrumbItems = useMemo(() => generateBreadcrumbs(pathname || ''), [pathname])
 
   useEffect(() => {
     setMounted(true)
@@ -112,9 +221,6 @@ export function UnifiedDashboardLayout({ children }: { children: React.ReactNode
   if (isFullWidthRoute) {
     return (
       <div className="flex min-h-screen w-full flex-col">
-        {/* Main Navbar - Keep consistent */}
-        <MainNavbar />
-
         {/* Full-width Content Area (no global sidebar) */}
         <main className="flex flex-1 flex-col">
           {children}
@@ -123,84 +229,12 @@ export function UnifiedDashboardLayout({ children }: { children: React.ReactNode
     )
   }
 
-  // Standard layout with global sidebar
+  // Standard layout with fixed narrow sidebar
   return (
-    <HeaderActionsProvider>
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full flex-col">
-          {/* Main Navbar - Above Everything */}
-          <MainNavbar />
-
-          {/* Sidebar and Content */}
-          <div className="flex flex-1">
-            <AppSidebar className="!top-16 !h-[calc(100vh-4rem)]" />
-
-            {/* Main Content Area */}
-            <SidebarInset className="flex flex-1 flex-col">
-              {/* Sidebar Toggle Header with Breadcrumb */}
-              <header className="flex h-10 shrink-0 items-center gap-2 border-b px-4">
-                {/* Left side: Sidebar trigger + Breadcrumb */}
-                <div className="flex items-center gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <SidebarTrigger className="-ml-1" />
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      Toggle sidebar (⌘B)
-                    </TooltipContent>
-                  </Tooltip>
-                  <Separator orientation="vertical" className="mr-2 h-4" />
-
-                  {/* Breadcrumb Navigation */}
-                  {breadcrumbItems.length > 0 && (
-                    <Breadcrumb>
-                      <BreadcrumbList className="flex-nowrap items-center gap-1.5 sm:gap-2">
-                        {/* Home link */}
-                        <BreadcrumbItem>
-                          <BreadcrumbLink asChild>
-                            <Link href="/dashboard" className="flex items-center hover:text-foreground">
-                              <Home className="h-4 w-4" />
-                            </Link>
-                          </BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator className="[&>svg]:size-3.5" />
-
-                        {/* Path segments */}
-                        {breadcrumbItems.map((item, index) => {
-                          const isLast = index === breadcrumbItems.length - 1
-                          return (
-                            <React.Fragment key={item.label + index}>
-                              <BreadcrumbItem>
-                                {isLast || !item.href ? (
-                                  <BreadcrumbPage className="text-sm font-medium">{item.label}</BreadcrumbPage>
-                                ) : (
-                                  <BreadcrumbLink asChild>
-                                    <Link href={item.href} className="text-sm text-muted-foreground hover:text-foreground">{item.label}</Link>
-                                  </BreadcrumbLink>
-                                )}
-                              </BreadcrumbItem>
-                              {!isLast && item.href && <BreadcrumbSeparator className="[&>svg]:size-3.5" />}
-                            </React.Fragment>
-                          )
-                        })}
-                      </BreadcrumbList>
-                    </Breadcrumb>
-                  )}
-                </div>
-
-                {/* Right side: Dynamic actions slot - pages can inject content here */}
-                <div className="flex-1 flex items-center justify-end">
-                  <HeaderActionsSlot />
-                </div>
-              </header>
-              {/* Main Content */}
-              <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-                {children}
-              </main>
-            </SidebarInset>
-          </div>
-        </div>
-      </SidebarProvider>
-    </HeaderActionsProvider>
+    <SidebarProvider>
+      <HeaderActionsProvider>
+        <DashboardContent>{children}</DashboardContent>
+      </HeaderActionsProvider>
+    </SidebarProvider>
   )
 }

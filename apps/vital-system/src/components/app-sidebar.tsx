@@ -3,6 +3,8 @@
 import { useMemo, useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
+import { useTheme } from "next-themes"
 
 import { useAuth, sanitizeDisplayName } from "@/lib/auth/supabase-auth-context"
 import { useSidebar, SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_EXPANDED_WIDTH } from "@/contexts/sidebar-context"
@@ -254,6 +256,8 @@ export function AppSidebar({
   const router = useRouter()
   const { user, userProfile } = useAuth()
   const { isExpanded, toggleSidebar, sidebarWidth } = useSidebar()
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
 
   // For hydration safety
   const [mounted, setMounted] = useState(false)
@@ -321,16 +325,31 @@ export function AppSidebar({
             <TooltipTrigger asChild>
               <Link
                 href="/dashboard"
-                className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm hover:opacity-90 transition-opacity flex-shrink-0"
+                className="flex items-center gap-3 hover:opacity-90 transition-opacity flex-shrink-0"
               >
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
+                {isExpanded ? (
+                  <Image
+                    src={isDark ? "/assets/vital/logo/vital-wordmark-dark.svg" : "/assets/vital/logo/vital-wordmark-light.svg"}
+                    alt="VITAL"
+                    width={140}
+                    height={44}
+                    className="h-11 w-auto"
+                    priority
+                  />
+                ) : (
+                  <Image
+                    src={isDark ? "/assets/vital/logo/vital-icon-outline-dark.svg" : "/assets/vital/logo/vital-icon-outline-light.svg"}
+                    alt="VITAL"
+                    width={40}
+                    height={40}
+                    className="h-10 w-10"
+                    priority
+                  />
+                )}
               </Link>
             </TooltipTrigger>
             {!isExpanded && <TooltipContent side="right">VITAL Home</TooltipContent>}
           </Tooltip>
-          {isExpanded && (
-            <span className="text-lg font-semibold text-foreground">VITAL</span>
-          )}
         </div>
 
         {/* New Chat Button */}

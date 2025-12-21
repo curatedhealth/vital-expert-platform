@@ -87,7 +87,7 @@ class RunnerExecutor:
     def db_registry(self):
         """Lazy load database registry to avoid circular imports."""
         if self._db_registry is None:
-            from services.runner_registry import runner_registry
+            from services.workflows.runner_registry import runner_registry
             self._db_registry = runner_registry
         return self._db_registry
 

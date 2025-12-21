@@ -1,0 +1,16 @@
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ve^x Outline Badge Icon - Dark Mode -->
+  <!-- v8 Brand Guidelines: 12px radius, 1.5px border -->
+  
+  <!-- Container -->
+  <rect x="0.75" y="0.75" width="70.5" height="70.5" rx="11.25" stroke="#8B5CF6" stroke-width="1.5" fill="none"/>
+  
+  <!-- V -->
+  <text x="17" y="46" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="28" font-weight="600" letter-spacing="-0.02em" fill="#FAFAFA">V</text>
+  
+  <!-- e -->
+  <text x="36" y="46" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="25" font-weight="400" fill="#8B5CF6">e</text>
+  
+  <!-- x (superscript) -->
+  <text x="53" y="32" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" fill="#8B5CF6">x</text>
+</svg>

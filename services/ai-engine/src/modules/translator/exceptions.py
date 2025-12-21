@@ -61,3 +61,11 @@ class ConditionNotFoundError(TranslatorError):
 
 
 
+
+
+
+
+
+
+
+

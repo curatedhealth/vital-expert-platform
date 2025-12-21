@@ -1,112 +1,38 @@
 "use client"
 
 import * as React from "react"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
 
-interface PopoverProps {
-  children: React.ReactNode
-  /** Controlled open state */
-  open?: boolean
-  /** Callback when open state changes (for controlled mode) */
-  onOpenChange?: (open: boolean) => void
-}
+import { cn } from "@/lib/utils"
 
-interface PopoverTriggerProps {
-  children: React.ReactNode
-  asChild?: boolean
-  onClick?: () => void
-}
+const Popover = PopoverPrimitive.Root
 
-interface PopoverContentProps {
-  children: React.ReactNode
-  className?: string
-  align?: "start" | "center" | "end"
-}
+const PopoverTrigger = PopoverPrimitive.Trigger
 
-const PopoverContext = React.createContext<{
-  isOpen: boolean
-  setIsOpen: (open: boolean) => void
-} | null>(null)
+const PopoverAnchor = PopoverPrimitive.Anchor
 
-export const __Popover = ({ children, open, onOpenChange }: PopoverProps) => {
-  // Internal state for uncontrolled mode
-  const [internalOpen, setInternalOpen] = React.useState(false)
+const PopoverContent = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
+>(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+  <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Content
+      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out",
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2",
+        "data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        className
+      )}
+      {...props}
+    />
+  </PopoverPrimitive.Portal>
+))
+PopoverContent.displayName = PopoverPrimitive.Content.displayName
 
-  // Use controlled or uncontrolled mode
-  const isOpen = open !== undefined ? open : internalOpen
-  const setIsOpen = React.useCallback((newOpen: boolean) => {
-    if (onOpenChange) {
-      onOpenChange(newOpen)
-    }
-    if (open === undefined) {
-      setInternalOpen(newOpen)
-    }
-  }, [open, onOpenChange])
-
-  return (
-    <PopoverContext.Provider value={{ isOpen, setIsOpen }}>
-      <div className="relative">
-        {children}
-      </div>
-    </PopoverContext.Provider>
-  )
-}
-
-export const __PopoverTrigger = ({ children, asChild = false, onClick }: PopoverTriggerProps) => {
-  const context = React.useContext(PopoverContext)
-
-  if (!context) throw new Error("PopoverTrigger must be used within Popover")
-
-  const handleClick = () => {
-    context.setIsOpen(!context.isOpen)
-    onClick?.()
-  }
-
-  if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement<any>, {
-      onClick: handleClick,
-    })
-  }
-
-  return (
-    <button onClick={handleClick}>
-      {children}
-    </button>
-  )
-}
-
-export const __PopoverContent = ({
-  children,
-  className = "",
-  align = "center"
-}: PopoverContentProps) => {
-  const context = React.useContext(PopoverContext)
-
-  if (!context) throw new Error("PopoverContent must be used within Popover")
-
-  if (!context.isOpen) return null
-
-  // eslint-disable-next-line security/detect-object-injection
-  const alignmentClass = {
-    start: "left-0",
-    center: "left-1/2 transform -translate-x-1/2",
-    end: "right-0"
-  }[align]
-
-  return (
-    <div
-      className={`
-        absolute top-full mt-2 z-50 w-72 rounded-md border
-        bg-canvas-surface p-4 shadow-md outline-none
-        ${alignmentClass}
-        ${className}
-      `}
-    >
-      {children}
-    </div>
-  )
-}
-
-// Backwards-compatible named exports expected by existing UI components
-export const Popover = __Popover;
-export const PopoverTrigger = __PopoverTrigger;
-export const PopoverContent = __PopoverContent;
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }

@@ -11,8 +11,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from services.deepagents_tools import VirtualFilesystem
-from services.runner_registry import runner_registry
+from services.workflows.deepagents_tools import VirtualFilesystem
+from services.workflows.runner_registry import runner_registry
 from .registry import get_l4_class
 from .l5_tool_mapper import get_l5_executor, L5ExecutionSummary
 

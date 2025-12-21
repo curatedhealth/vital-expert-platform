@@ -43,7 +43,7 @@ except ImportError:
     REDIS_AVAILABLE = False
 
 from langgraph_compilation import get_postgres_checkpointer
-from services.hitl_service import (
+from .hitl_service import (
     HITLCheckpoint,
     HITLSafetyLevel,
     ApprovalStatus,

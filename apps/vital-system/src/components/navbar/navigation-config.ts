@@ -63,33 +63,39 @@ export interface NavigationSection {
 // ============================================
 
 /**
- * CONSULT - AI consultation services
- * Ask Expert, Ask Panel, Workflows, Solution Builder
+ * SERVICES - Core AI consultation services
+ * Search, Ask (Mode 1&2), Consult (Panel), Delegate (Mode 3&4), Deliver (Workflows)
  */
 export const consultItems: NavigationItem[] = [
   {
-    label: 'Ask Expert',
-    href: '/ask-expert',
-    description: '1:1 expert consultation with AI agents',
+    label: 'Search',
+    href: '/search',
+    description: 'Discover agents, knowledge & tools',
+    icon: Search,
+  },
+  {
+    label: 'Ask',
+    href: '/ask',
+    description: 'Interactive 1:1 expert consultation (Mode 1 & 2)',
     icon: MessageSquare,
   },
   {
-    label: 'Ask Panel',
-    href: '/ask-panel',
+    label: 'Consult',
+    href: '/consult',
     description: 'Multi-expert panel discussions',
     icon: Users,
   },
   {
-    label: 'Workflows',
-    href: '/workflows',
-    description: 'Execute automated AI workflows',
-    icon: Workflow,
+    label: 'Delegate',
+    href: '/delegate',
+    description: 'Deep research & background tasks (Mode 3 & 4)',
+    icon: Brain,
   },
   {
-    label: 'Solution Builder',
-    href: '/solution-builder',
-    description: 'Build custom digital health solutions',
-    icon: Wrench,
+    label: 'Deliver',
+    href: '/deliver',
+    description: 'Execute automated AI workflows',
+    icon: Workflow,
   },
 ]
 

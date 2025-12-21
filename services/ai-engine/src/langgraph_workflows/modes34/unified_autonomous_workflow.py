@@ -78,7 +78,7 @@ from .runners.registry import (
 )
 
 # Legacy fallback
-from services.runner_registry import runner_registry
+from services.workflows.runner_registry import runner_registry
 
 # Phase 1 Research Quality Enhancements
 from .research_quality import (

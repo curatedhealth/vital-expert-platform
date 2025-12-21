@@ -20,7 +20,7 @@ import asyncio
 from typing import Any, Dict, List, Optional
 import structlog
 
-from services.runner_registry import runner_registry
+from services.workflows.runner_registry import runner_registry
 
 # GraphRAG integration
 try:

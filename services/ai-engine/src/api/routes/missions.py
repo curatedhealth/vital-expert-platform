@@ -43,14 +43,14 @@ from langgraph_workflows.shared.events import (
 )
 from langgraph_workflows.modes34.unified_autonomous_workflow import build_master_graph
 from langgraph_workflows.modes34.agent_selector import select_team
-from services.runner_registry import runner_registry
+from services.workflows.runner_registry import runner_registry
 from services.checkpoint_store import checkpoint_store
 from langgraph.graph import END
 import structlog
 
 USE_MASTER_GRAPH = os.getenv("USE_MASTER_GRAPH", "true").lower() == "true"
 from services.publisher import publisher
-from services.mission_repository import mission_repo
+from services.workflows.mission_repository import mission_repo
 from agents.specialists.l3_context_specialist import L3ContextSpecialist
 from agents.base_agent import AgentConfig
 

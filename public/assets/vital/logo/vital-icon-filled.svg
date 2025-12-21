@@ -1,0 +1,16 @@
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ve^x Filled Badge Icon -->
+  <!-- v8 Brand Guidelines: 12px radius, solid violet fill -->
+  
+  <!-- Container -->
+  <rect width="72" height="72" rx="12" fill="#8B5CF6"/>
+  
+  <!-- V -->
+  <text x="17" y="46" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="28" font-weight="600" letter-spacing="-0.02em" fill="#FFFFFF">V</text>
+  
+  <!-- e -->
+  <text x="36" y="46" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="25" font-weight="400" fill="rgba(255,255,255,0.92)">e</text>
+  
+  <!-- x (superscript) -->
+  <text x="53" y="32" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" fill="rgba(255,255,255,0.92)">x</text>
+</svg>

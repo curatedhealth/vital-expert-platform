@@ -12,7 +12,7 @@ from typing import Any, Dict
 from uuid import uuid4
 import structlog
 
-from services.deepagents_tools import VirtualFilesystem
+from services.workflows.deepagents_tools import VirtualFilesystem
 
 logger = structlog.get_logger()
 

@@ -87,7 +87,10 @@ def register_routes(app: FastAPI) -> None:
     
     # 14. Register Agent Sessions routes (Phase 2 - Agent OS)
     _register_agent_sessions_routes(app)
-    
+
+    # 15. Register Runners routes (Task Runners, Family Runners, JTBD mapping)
+    _register_runners_routes(app)
+
     logger.info("✅ All routes registered successfully")
 
 
@@ -338,3 +341,15 @@ def _register_mode3_preparation_routes(app: FastAPI) -> None:
         logger.warning("mode3_preparation_routes_import_failed", error=str(e))
     except Exception as e:
         logger.error("mode3_preparation_routes_error", error=str(e))
+
+
+def _register_runners_routes(app: FastAPI) -> None:
+    """Register Runners routes (Task Runners, Family Runners, JTBD mapping)."""
+    try:
+        from api.routes.runners import router as runners_router
+        app.include_router(runners_router, prefix="", tags=["runners"])
+        logger.info("✅ Runners routes registered (88 task + 8 family runners)")
+    except ImportError as e:
+        logger.warning("runners_routes_import_failed", error=str(e))
+    except Exception as e:
+        logger.error("runners_routes_error", error=str(e))

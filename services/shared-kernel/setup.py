@@ -17,6 +17,6 @@ setup(
             "pytest-asyncio>=0.21.0",
         ]
     },
-    python_requires=">=3.11",
+    python_requires=">=3.9",
 )
 

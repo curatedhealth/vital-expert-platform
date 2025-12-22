@@ -20,17 +20,17 @@ from uuid import UUID, uuid4
 import structlog
 
 from services.llm_service import LLMService, get_llm_service
-from services.consensus_analyzer import (
+from services.panel.consensus_analyzer import (
     AdvancedConsensusAnalyzer,
     ConsensusResult,
     create_consensus_analyzer
 )
-from services.comparison_matrix_builder import (
+from services.panel.comparison_matrix_builder import (
     ComparisonMatrixBuilder,
     ComparisonMatrix,
     create_comparison_matrix_builder
 )
-from services.panel_type_handlers import (
+from services.panel.panel_type_handlers import (
     BasePanelHandler,
     PanelExpert,
     PanelExecutionResult,

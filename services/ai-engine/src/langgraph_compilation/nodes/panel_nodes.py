@@ -463,7 +463,7 @@ async def _analyze_consensus(
 ) -> Dict[str, Any]:
     """Analyze consensus across responses"""
     try:
-        from services.consensus_analyzer import get_consensus_analyzer
+        from services.panel.consensus_analyzer import get_consensus_analyzer
 
         analyzer = get_consensus_analyzer()
         if analyzer:

@@ -16,13 +16,19 @@ Note: RAG services (GraphRAG, search) are in services.rag/
 """
 
 from .query_classifier import QueryClassifier
-from .response_quality import ResponseQualityChecker
+from .response_quality import ResponseQualityService, ResponseQualityResult, get_response_quality_service
 from .citation_prompt_enhancer import CitationPromptEnhancer
 from .mode1_evidence_gatherer import Mode1EvidenceGatherer
 
+# Alias for backwards compatibility
+ResponseQualityChecker = ResponseQualityService
+
 __all__ = [
     "QueryClassifier",
-    "ResponseQualityChecker",
+    "ResponseQualityService",
+    "ResponseQualityResult",
+    "ResponseQualityChecker",  # Alias for compatibility
+    "get_response_quality_service",
     "CitationPromptEnhancer",
     "Mode1EvidenceGatherer",
 ]

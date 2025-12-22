@@ -22,7 +22,7 @@ import structlog
 import random
 
 from services.llm_service import LLMService
-from services.consensus_analyzer import AdvancedConsensusAnalyzer, ConsensusResult
+from services.panel.consensus_analyzer import AdvancedConsensusAnalyzer, ConsensusResult
 from infrastructure.llm.config_service import get_llm_config_for_level
 
 logger = structlog.get_logger()

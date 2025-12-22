@@ -36,7 +36,7 @@ async def build_consensus_node(state: PanelMissionState) -> Dict[str, Any]:
 
     # Build consensus analysis
     try:
-        from services.consensus_analyzer import create_consensus_analyzer
+        from services.panel.consensus_analyzer import create_consensus_analyzer
         from services.llm_service import get_llm_service
 
         llm_service = get_llm_service()

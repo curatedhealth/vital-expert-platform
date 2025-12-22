@@ -163,7 +163,7 @@ async def parallel_consensus_node(state: ParallelState) -> Dict[str, Any]:
     """
     Build consensus from the latest round of responses.
     """
-    from services.consensus_analyzer import create_consensus_analyzer
+    from services.panel.consensus_analyzer import create_consensus_analyzer
     from services.llm_service import get_llm_service
 
     round_responses = state.get("round_responses", [])

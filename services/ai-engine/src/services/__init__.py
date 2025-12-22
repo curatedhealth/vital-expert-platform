@@ -31,11 +31,19 @@ Usage:
 
 # Re-export key services for convenience
 from .shared import LLMService, EmbeddingService, SessionMemoryService
+from .runner_execution_service import (
+    RunnerExecutionService,
+    get_runner_execution_service,
+    ExecutionResult,
+)
 
 __all__ = [
     "LLMService",
     "EmbeddingService",
     "SessionMemoryService",
+    "RunnerExecutionService",
+    "get_runner_execution_service",
+    "ExecutionResult",
 ]
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"

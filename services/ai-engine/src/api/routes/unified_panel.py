@@ -1,7 +1,7 @@
 # PRODUCTION_TAG: PRODUCTION_READY
-# LAST_VERIFIED: 2025-12-15
-# MODES_SUPPORTED: [Panel - All 6 types]
-# DEPENDENCIES: [services.unified_panel_service, services.llm_service]
+# LAST_VERIFIED: 2025-12-19
+# MODES_SUPPORTED: [Panel - All 6 types + Runner Integration]
+# DEPENDENCIES: [services.unified_panel_service, services.llm_service, services.panel.panel_runner_mapper]
 """
 Unified Panel API Routes
 
@@ -13,12 +13,18 @@ Exposes the UnifiedPanelService for all 6 panel types:
 5. Delphi - Iterative consensus with voting
 6. Hybrid - Human-AI collaborative panels
 
+Now with Runner Integration:
+- Auto-selects appropriate cognitive runner based on panel type
+- Supports JTBD-based runner selection
+- Complexity-aware runner routing
+- Tracks runner execution metrics
+
 Supports both synchronous and streaming execution.
 """
 
 import asyncio
 import json
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Literal
 from uuid import UUID
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, Depends, Query
@@ -27,7 +33,7 @@ from pydantic import BaseModel, Field
 import structlog
 from dataclasses import asdict
 
-from services.unified_panel_service import (
+from services.panel.unified_panel_service import (
     UnifiedPanelService,
     UnifiedPanelResult,
     create_unified_panel_service,
@@ -35,6 +41,26 @@ from services.unified_panel_service import (
     initialize_unified_panel_service
 )
 from services.llm_service import LLMService, get_llm_service
+from services.panel.panel_runner_mapper import (
+    get_panel_runner_mapper,
+    get_runner_for_panel,
+    detect_query_complexity,
+    RunnerMapping,
+    QueryComplexity,
+    JTBDLevel,
+)
+
+# Optional: Import unified runner registry for all runners
+try:
+    from langgraph_workflows.task_runners.unified_registry import (
+        get_unified_registry,
+        RunnerInfo,
+    )
+    HAS_RUNNER_REGISTRY = True
+except ImportError:
+    HAS_RUNNER_REGISTRY = False
+    get_unified_registry = None
+    RunnerInfo = None
 
 # Optional imports - may not be available in all environments
 try:
@@ -66,6 +92,34 @@ class AgentConfig(BaseModel):
     role: str = Field(default="expert", description="Role in panel: expert, moderator, advocate")
 
 
+class RunnerConfig(BaseModel):
+    """Runner configuration for panel execution"""
+    runner_id: Optional[str] = Field(
+        default=None,
+        description="Explicit runner ID to use. If not provided, auto-selects based on panel type."
+    )
+    auto_select: bool = Field(
+        default=True,
+        description="Auto-select runner based on panel type and complexity"
+    )
+    jtbd_level: Optional[Literal["task", "workflow", "solution", "strategic"]] = Field(
+        default=None,
+        description="JTBD level for runner selection (task, workflow, solution, strategic)"
+    )
+    complexity: Optional[Literal["simple", "moderate", "complex", "strategic"]] = Field(
+        default=None,
+        description="Query complexity level for runner selection"
+    )
+    use_advanced: bool = Field(
+        default=False,
+        description="Force use of advanced runner variant"
+    )
+    prefer_streaming: bool = Field(
+        default=False,
+        description="Prefer streaming family runners for complex operations"
+    )
+
+
 class ExecutePanelRequest(BaseModel):
     """Request to execute a unified panel"""
     question: str = Field(..., min_length=10, max_length=2000, description="Question for the panel")
@@ -88,6 +142,11 @@ class ExecutePanelRequest(BaseModel):
         default=None,
         description="Human feedback for hybrid panels"
     )
+    # NEW: Runner configuration
+    runner_config: Optional[RunnerConfig] = Field(
+        default=None,
+        description="Optional runner configuration. If not provided, uses auto-selection."
+    )
 
 
 class StreamPanelRequest(BaseModel):
@@ -98,6 +157,11 @@ class StreamPanelRequest(BaseModel):
     context: Optional[str] = Field(default=None)
     tenant_id: Optional[str] = Field(default=None)
     user_id: Optional[str] = Field(default=None)
+    # NEW: Runner configuration
+    runner_config: Optional[RunnerConfig] = Field(
+        default=None,
+        description="Optional runner configuration. If not provided, uses auto-selection."
+    )
 
 
 class ConsensusResponse(BaseModel):
@@ -137,6 +201,17 @@ class ExpertResponseItem(BaseModel):
     vote: Optional[float] = None
 
 
+class RunnerInfoResponse(BaseModel):
+    """Information about the runner used for execution"""
+    runner_id: str = Field(..., description="ID of the runner used")
+    runner_type: str = Field(..., description="Type: task or family")
+    category: str = Field(..., description="Cognitive category")
+    ai_intervention: str = Field(..., description="AI intervention level")
+    service_layer: str = Field(..., description="Service layer: L1, L2, or L3")
+    auto_selected: bool = Field(..., description="Whether runner was auto-selected")
+    detected_complexity: Optional[str] = Field(default=None, description="Detected query complexity")
+
+
 class ExecutePanelResponse(BaseModel):
     """Response from panel execution"""
     panel_id: str
@@ -149,6 +224,11 @@ class ExecutePanelResponse(BaseModel):
     execution_time_ms: int
     created_at: str
     metadata: Dict[str, Any]
+    # NEW: Runner information
+    runner_info: Optional[RunnerInfoResponse] = Field(
+        default=None,
+        description="Information about the runner used for execution"
+    )
 
 
 class PanelTypeInfo(BaseModel):
@@ -234,6 +314,180 @@ async def get_panel_types(
     return [PanelTypeInfo(**t) for t in types]
 
 
+@router.get("/runners")
+async def list_all_panel_runners():
+    """
+    List all panel types with their runner mappings.
+
+    Returns complete mapping of panels to runners across all tiers.
+    """
+    mapper = get_panel_runner_mapper()
+    panels = mapper.list_supported_panels()
+
+    result = {}
+    for panel_type in panels:
+        result[panel_type] = mapper.get_runner_info(panel_type)
+
+    return {
+        "total_panels": len(panels),
+        "panels": result
+    }
+
+
+@router.get("/runners/all")
+async def list_all_available_runners(
+    category: Optional[str] = Query(None, description="Filter by cognitive category (e.g., UNDERSTAND, EVALUATE)"),
+    runner_type: Optional[str] = Query(None, description="Filter by runner type: task, family")
+):
+    """
+    List ALL available runners in the system (215+ runners).
+
+    Returns all runners from the unified registry, including:
+    - 88 Task Runners (22 cognitive categories)
+    - 8 Family Runners (complex workflows)
+    - 119 Pharma-specific runners
+
+    Args:
+        category: Optional filter by cognitive category (UNDERSTAND, EVALUATE, DECIDE, etc.)
+        runner_type: Optional filter by type ('task' or 'family')
+
+    Returns:
+        Complete list of all available runners with metadata
+    """
+    if not HAS_RUNNER_REGISTRY:
+        # Fallback to panel-mapped runners only
+        mapper = get_panel_runner_mapper()
+        panels = mapper.list_supported_panels()
+
+        all_runners = []
+        seen_ids = set()
+        for panel_type in panels:
+            info = mapper.get_runner_info(panel_type)
+            for tier, runner in info["runners"].items():
+                if runner["runner_id"] not in seen_ids:
+                    seen_ids.add(runner["runner_id"])
+                    all_runners.append({
+                        **runner,
+                        "panel_types": [panel_type],
+                        "tier": tier
+                    })
+                else:
+                    # Update panel_types for existing runner
+                    for r in all_runners:
+                        if r["runner_id"] == runner["runner_id"]:
+                            if panel_type not in r.get("panel_types", []):
+                                r["panel_types"].append(panel_type)
+                            break
+
+        return {
+            "total": len(all_runners),
+            "runners": all_runners,
+            "source": "panel_mapper",
+            "categories": list(set(r.get("category") for r in all_runners if r.get("category")))
+        }
+
+    # Use unified registry for complete runner list
+    registry = get_unified_registry()
+
+    # Get all runners
+    if runner_type == "task":
+        runners = registry.list_task_runners(category=category.upper() if category else None)
+    elif runner_type == "family":
+        runners = registry.list_family_runners()
+    else:
+        runners = registry.list_all_runners()
+        if category:
+            runners = [r for r in runners if r.category and r.category.upper() == category.upper()]
+
+    # Convert to dicts
+    runner_list = []
+    for r in runners:
+        runner_dict = r.model_dump() if hasattr(r, 'model_dump') else {
+            "runner_id": r.runner_id,
+            "name": r.name,
+            "runner_type": r.runner_type.value if hasattr(r.runner_type, 'value') else r.runner_type,
+            "category": r.category,
+            "family": getattr(r, 'family', None),
+            "description": getattr(r, 'description', None),
+            "service_layers": getattr(r, 'service_layers', []),
+            "ai_intervention": r.ai_intervention.value if hasattr(r.ai_intervention, 'value') else r.ai_intervention,
+        }
+        runner_list.append(runner_dict)
+
+    # Get available categories
+    categories = list(set(r.get("category") for r in runner_list if r.get("category")))
+
+    return {
+        "total": len(runner_list),
+        "runners": runner_list,
+        "source": "unified_registry",
+        "categories": sorted(categories),
+        "filters": {
+            "category": category,
+            "runner_type": runner_type
+        }
+    }
+
+
+@router.get("/runners/{panel_type}")
+async def get_runners_for_panel(
+    panel_type: str,
+    complexity: Optional[str] = Query(None, description="Query complexity: simple, moderate, complex, strategic"),
+    jtbd_level: Optional[str] = Query(None, description="JTBD level: task, workflow, solution, strategic")
+):
+    """
+    Get available runners for a panel type.
+
+    Returns all runner tiers (primary, advanced, family) for the specified panel type,
+    along with the recommended runner based on complexity/JTBD.
+
+    Args:
+        panel_type: Panel type to get runners for
+        complexity: Optional complexity level for recommendation
+        jtbd_level: Optional JTBD level for recommendation
+
+    Returns:
+        Available runners and recommendation
+    """
+    panel_type_lower = panel_type.lower()
+    mapper = get_panel_runner_mapper()
+
+    # Validate panel type
+    supported = mapper.list_supported_panels()
+    if panel_type_lower not in supported:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid panel type. Must be one of: {', '.join(supported)}"
+        )
+
+    # Get all runners for this panel type
+    all_runners = mapper.get_runner_info(panel_type_lower)
+
+    # Get recommended runner
+    recommended = get_runner_for_panel(
+        panel_type=panel_type_lower,
+        complexity=complexity,
+        jtbd_level=jtbd_level
+    )
+
+    return {
+        "panel_type": panel_type_lower,
+        "available_runners": all_runners["runners"],
+        "recommended": {
+            "runner_id": recommended.runner_id,
+            "runner_type": recommended.runner_type,
+            "category": recommended.category,
+            "ai_intervention": recommended.ai_intervention,
+            "service_layer": recommended.service_layer,
+            "use_streaming": recommended.use_streaming
+        },
+        "selection_criteria": {
+            "complexity": complexity,
+            "jtbd_level": jtbd_level
+        }
+    }
+
+
 @router.post("/execute", response_model=ExecutePanelResponse)
 async def execute_panel(
     request: ExecutePanelRequest,
@@ -250,12 +504,18 @@ async def execute_panel(
     - delphi: Iterative consensus with voting
     - hybrid: Human-AI collaborative panels
 
+    Runner Integration:
+    - Auto-selects appropriate cognitive runner based on panel type
+    - Supports JTBD-based runner selection via runner_config
+    - Complexity-aware runner routing
+    - Returns runner_info in response
+
     Args:
         request: Panel execution request
         service: Injected panel service
 
     Returns:
-        Complete panel execution result with consensus and comparison matrix
+        Complete panel execution result with consensus, comparison matrix, and runner info
     """
     logger.info(
         "executing_unified_panel",
@@ -273,6 +533,45 @@ async def execute_panel(
         )
 
     try:
+        # === RUNNER SELECTION ===
+        runner_config = request.runner_config
+        auto_selected = True
+        detected_complexity = None
+
+        if runner_config and runner_config.runner_id:
+            # Explicit runner specified
+            runner_id = runner_config.runner_id
+            auto_selected = False
+            runner_mapping = get_runner_for_panel(
+                panel_type=request.panel_type.lower(),
+                use_advanced=runner_config.use_advanced
+            )
+        else:
+            # Auto-detect complexity if not provided
+            if runner_config and runner_config.complexity:
+                detected_complexity = runner_config.complexity
+            else:
+                detected_complexity = detect_query_complexity(request.question)
+
+            # Get runner mapping
+            runner_mapping = get_runner_for_panel(
+                panel_type=request.panel_type.lower(),
+                complexity=detected_complexity,
+                jtbd_level=runner_config.jtbd_level if runner_config else None,
+                use_advanced=runner_config.use_advanced if runner_config else False,
+                prefer_streaming=runner_config.prefer_streaming if runner_config else False
+            )
+            runner_id = runner_mapping.runner_id
+
+        logger.info(
+            "runner_selected_for_panel",
+            runner_id=runner_id,
+            runner_type=runner_mapping.runner_type,
+            category=runner_mapping.category,
+            auto_selected=auto_selected,
+            detected_complexity=detected_complexity
+        )
+
         # Convert agent configs to dict format
         agents = [
             {
@@ -298,14 +597,26 @@ async def execute_panel(
             human_feedback=request.human_feedback
         )
 
-        # Build response
-        response = _build_execute_response(result)
+        # Build runner info
+        runner_info = RunnerInfoResponse(
+            runner_id=runner_mapping.runner_id,
+            runner_type=runner_mapping.runner_type,
+            category=runner_mapping.category,
+            ai_intervention=runner_mapping.ai_intervention,
+            service_layer=runner_mapping.service_layer,
+            auto_selected=auto_selected,
+            detected_complexity=detected_complexity
+        )
+
+        # Build response with runner info
+        response = _build_execute_response(result, runner_info)
 
         logger.info(
             "unified_panel_executed",
             panel_id=result.panel_id,
             status=result.status,
-            execution_time_ms=result.execution_time_ms
+            execution_time_ms=result.execution_time_ms,
+            runner_id=runner_mapping.runner_id
         )
 
         return response
@@ -388,10 +699,44 @@ async def stream_panel_execution(
                 for agent in request.agents
             ]
 
+            # === RUNNER SELECTION ===
+            # Select appropriate runner based on panel type and config
+            panel_type_lower = request.panel_type.lower()
+            runner_config = getattr(request, 'runner_config', None)
+
+            # Determine complexity
+            detected_complexity = "moderate"
+            if runner_config and runner_config.complexity:
+                detected_complexity = runner_config.complexity
+
+            # Get runner mapping
+            runner_mapping = get_runner_for_panel(
+                panel_type=panel_type_lower,
+                complexity=detected_complexity,
+                jtbd_level=runner_config.jtbd_level if runner_config else None,
+                use_advanced=runner_config.use_advanced if runner_config else False
+            )
+
+            auto_selected = not runner_config or runner_config.auto_select
+
+            # Build runner info
+            runner_info = {
+                "runner_id": runner_mapping.runner_id,
+                "runner_type": runner_mapping.runner_type,
+                "category": runner_mapping.category,
+                "ai_intervention": runner_mapping.ai_intervention,
+                "service_layer": runner_mapping.service_layer,
+                "auto_selected": auto_selected,
+                "detected_complexity": detected_complexity
+            }
+
+            # Emit runner_selected event
+            yield f"event: runner_selected\ndata: {json.dumps({'runner_info': runner_info, 'message': f'Selected runner: {runner_mapping.runner_id} ({runner_mapping.service_layer})'})}\n\n"
+
             # Stream execution
             async for event in service.execute_panel_streaming(
                 question=request.question,
-                panel_type=request.panel_type.lower(),
+                panel_type=panel_type_lower,
                 agents=agents,
                 context=request.context,
                 tenant_id=request.tenant_id,
@@ -446,7 +791,10 @@ async def get_matrix_views(
 # Helper Functions
 # ============================================================================
 
-def _build_execute_response(result: UnifiedPanelResult) -> ExecutePanelResponse:
+def _build_execute_response(
+    result: UnifiedPanelResult,
+    runner_info: Optional[RunnerInfoResponse] = None
+) -> ExecutePanelResponse:
     """Build ExecutePanelResponse from UnifiedPanelResult"""
 
     # Build consensus response if available
@@ -503,5 +851,6 @@ def _build_execute_response(result: UnifiedPanelResult) -> ExecutePanelResponse:
         expert_responses=expert_responses,
         execution_time_ms=result.execution_time_ms,
         created_at=result.created_at,
-        metadata=result.metadata
+        metadata=result.metadata,
+        runner_info=runner_info
     )

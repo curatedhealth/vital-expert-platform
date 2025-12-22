@@ -15,7 +15,7 @@ Components:
 
 from .panel_orchestrator import PanelOrchestrator
 from .panel_template_service import PanelTemplateService
-from .panel_type_handlers import PanelTypeHandler
+from .panel_type_handlers import BasePanelHandler
 from .unified_panel_service import UnifiedPanelService
 from .consensus_analyzer import AdvancedConsensusAnalyzer
 from .consensus_calculator import SimpleConsensusCalculator
@@ -26,7 +26,7 @@ from .panel_config import PanelConfig, get_panel_config
 __all__ = [
     "PanelOrchestrator",
     "PanelTemplateService",
-    "PanelTypeHandler",
+    "BasePanelHandler",
     "UnifiedPanelService",
     "AdvancedConsensusAnalyzer",
     "SimpleConsensusCalculator",

@@ -29,7 +29,7 @@ from repositories.panel_repository import PanelRepository
 from services.consensus_calculator import SimpleConsensusCalculator
 from services.agent_usage_tracker import AgentUsageTracker
 from services.llm_service import LLMService, get_llm_service
-from services.consensus_analyzer import AdvancedConsensusAnalyzer, get_consensus_analyzer
+from services.panel.consensus_analyzer import AdvancedConsensusAnalyzer, get_consensus_analyzer
 
 logger = structlog.get_logger()
 
